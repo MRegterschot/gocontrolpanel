@@ -10,15 +10,22 @@ import { Button } from "@/components/ui/button";
 import { Form, FormLabel } from "@/components/ui/form";
 import { UserServerRole } from "@/lib/prisma/generated";
 import { getErrorMessage } from "@/lib/utils";
+import { HetznerServerCache } from "@/types/api/hetzner/servers";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { DefaultValues, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AddServerSchema, AddServerSchemaType } from "./add-server-schema";
 
-export default function AddServerForm({ callback }: { callback?: () => void }) {
+export default function AddServerForm({
+  callback,
+  recentlyCreatedServers,
+}: {
+  callback?: () => void;
+  recentlyCreatedServers?: HetznerServerCache[];
+}) {
   const { data: session } = useSession();
 
   const [loading, setLoading] = useState(true);
@@ -48,12 +55,31 @@ export default function AddServerForm({ callback }: { callback?: () => void }) {
     fetch();
   }, []);
 
+  let defaultValues: DefaultValues<AddServerSchemaType> = {
+    port: 5000,
+    userServers: [{ userId: session?.user.id, role: UserServerRole.Admin }],
+  };
+
+  const server =
+    recentlyCreatedServers && recentlyCreatedServers.length > 0
+      ? recentlyCreatedServers[0]
+      : null;
+
+  if (server) {
+    defaultValues = {
+      ...defaultValues,
+      name: server.name,
+      host: server.ip || "",
+      user: "SuperAdmin",
+      password: server.labels["authorization.superadmin.password"] || "",
+      filemanagerUrl: `http://${server.ip}:3300`,
+      filemanagerPassword: server.labels["filemanager.password"] || "",
+    };
+  }
+
   const form = useForm<AddServerSchemaType>({
     resolver: zodResolver(AddServerSchema),
-    defaultValues: {
-      port: 5000,
-      userServers: [{ userId: session?.user.id, role: UserServerRole.Admin }],
-    },
+    defaultValues,
   });
 
   const { control } = form;
@@ -68,17 +94,20 @@ export default function AddServerForm({ callback }: { callback?: () => void }) {
 
   async function onSubmit(values: AddServerSchemaType) {
     try {
-      const { error } = await createServer({
-        ...values,
-        description: values.description || "",
-        userServers:
-          values.userServers?.map((user) => ({
-            userId: user.userId,
-            role: user.role as UserServerRole,
-          })) || [],
-        filemanagerUrl: values.filemanagerUrl || "",
-        filemanagerPassword: values.filemanagerPassword || "",
-      });
+      const { error } = await createServer(
+        {
+          ...values,
+          description: values.description || "",
+          userServers:
+            values.userServers?.map((user) => ({
+              userId: user.userId,
+              role: user.role as UserServerRole,
+            })) || [],
+          filemanagerUrl: values.filemanagerUrl || "",
+          filemanagerPassword: values.filemanagerPassword || "",
+        },
+        values.host === server?.ip ? server.projectId : undefined,
+      );
       if (error) {
         throw new Error(error);
       }

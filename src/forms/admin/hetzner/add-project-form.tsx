@@ -1,6 +1,10 @@
 "use client";
 import { createHetznerProject } from "@/actions/database/hetzner-projects";
-import { getUsersMinimal, UserMinimal } from "@/actions/database/users";
+import {
+  getUsersMinimal,
+  searchUsers,
+  UserMinimal,
+} from "@/actions/database/users";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form, FormLabel } from "@/components/ui/form";
@@ -8,8 +12,9 @@ import { HetznerProjectRole } from "@/lib/prisma/generated";
 import { getErrorMessage, getList } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AddProjectSchema, AddProjectSchemaType } from "./add-project-schema";
 
@@ -18,10 +23,13 @@ export default function AddProjectForm({
 }: {
   callback?: () => void;
 }) {
-  const [users, setUsers] = useState<UserMinimal[]>([]);
+  const { data: session } = useSession();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [searchResults, setSearchResults] = useState<UserMinimal[]>([]);
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
     async function fetchUsers() {
@@ -30,7 +38,7 @@ export default function AddProjectForm({
         if (error) {
           throw new Error(error);
         }
-        setUsers(data);
+        setSearchResults(data);
       } catch (err) {
         setError("Failed to get users: " + getErrorMessage(err));
         toast.error("Failed to fetch users", {
@@ -46,6 +54,21 @@ export default function AddProjectForm({
 
   const form = useForm<AddProjectSchemaType>({
     resolver: zodResolver(AddProjectSchema),
+    defaultValues: {
+      hetznerProjectUsers: [
+        { userId: session?.user.id, role: HetznerProjectRole.Admin },
+      ],
+    },
+  });
+
+  const { control } = form;
+  const {
+    fields: userFields,
+    append,
+    remove,
+  } = useFieldArray({
+    control,
+    name: "hetznerProjectUsers",
   });
 
   async function onSubmit(values: AddProjectSchemaType) {
@@ -72,6 +95,30 @@ export default function AddProjectForm({
       });
     }
   }
+
+  const handleSearch = async (query?: string) => {
+    if (!query?.trim()) {
+      return;
+    }
+    setSearching(true);
+    try {
+      const { data, error } = await searchUsers(query);
+      if (error) {
+        throw new Error(error);
+      }
+      setSearchResults((prev) => {
+        const existingIds = new Set(prev.map((u) => u.id));
+        return [...prev, ...data.filter((u) => !existingIds.has(u.id))];
+      });
+    } catch (error) {
+      setError("Failed to search users: " + getErrorMessage(error));
+      toast.error("Failed to search users", {
+        description: getErrorMessage(error),
+      });
+    } finally {
+      setSearching(false);
+    }
+  };
 
   if (loading) {
     return <span className="text-muted-foreground">Loading...</span>;
@@ -140,18 +187,20 @@ export default function AddProjectForm({
         {/* Users with roles */}
         <div className="flex flex-col gap-2">
           <FormLabel className="text-sm">Users</FormLabel>
-          {form.watch("hetznerProjectUsers")?.map((_, index) => (
+          {userFields.map((_, index) => (
             <div key={index} className="flex items-end gap-2">
               <div className="flex-1">
                 <FormElement
                   name={`hetznerProjectUsers.${index}.userId`}
                   className="w-full"
-                  placeholder="Select user"
-                  options={users.map((u) => ({
+                  placeholder="Search user..."
+                  onSearch={handleSearch}
+                  options={searchResults.map((u) => ({
                     label: u.nickName,
                     value: u.id,
                   }))}
-                  type="select"
+                  isLoading={searching}
+                  type="search"
                 />
               </div>
               <FormElement
@@ -168,13 +217,7 @@ export default function AddProjectForm({
                 type="button"
                 variant="destructive"
                 size={"icon"}
-                onClick={() => {
-                  const currentUsers = form.getValues("hetznerProjectUsers");
-                  form.setValue(
-                    "hetznerProjectUsers",
-                    currentUsers?.filter((_, i) => i !== index),
-                  );
-                }}
+                onClick={() => remove(index)}
               >
                 <IconTrash />
                 <span className="sr-only">Remove User</span>
@@ -185,18 +228,13 @@ export default function AddProjectForm({
           <Button
             type="button"
             variant="outline"
-            onClick={() => {
-              const currentUsers = form.getValues("hetznerProjectUsers") || [];
-              form.setValue("hetznerProjectUsers", [
-                ...currentUsers,
-                { userId: "", role: HetznerProjectRole.Moderator },
-              ]);
-            }}
+            onClick={() => append({ userId: "", role: HetznerProjectRole.Moderator })}
           >
             <IconPlus />
             Add User
           </Button>
         </div>
+        
         <Button
           type="submit"
           className="w-full mt-4"

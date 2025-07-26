@@ -113,3 +113,13 @@ export interface HetznerImagesResponse {
   images: HetznerImage[];
   meta: HetznerMetaPagination;
 }
+
+export interface HetznerServerCache {
+  id: number;
+  projectId: string;
+  name: string;
+  ip?: string;
+  labels: {
+    [key: string]: string;
+  };
+}

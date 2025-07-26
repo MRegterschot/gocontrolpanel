@@ -3,10 +3,15 @@
 import { AddHetznerServerSchemaType } from "@/forms/admin/hetzner/add-hetzner-server-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { axiosHetzner } from "@/lib/axios/hetzner";
-import { getKeyHetznerRateLimit, getRedisClient } from "@/lib/redis";
+import {
+  getKeyHetznerRateLimit,
+  getKeyHetznerRecentlyCreatedServers,
+  getRedisClient,
+} from "@/lib/redis";
 import { generateRandomString } from "@/lib/utils";
 import {
   HetznerServer,
+  HetznerServerCache,
   HetznerServersResponse,
 } from "@/types/api/hetzner/servers";
 import { PaginationResponse, ServerResponse } from "@/types/responses";
@@ -84,6 +89,24 @@ export async function deleteHetznerServer(
         },
       });
 
+      const client = await getRedisClient();
+      const key = getKeyHetznerRecentlyCreatedServers(projectId);
+
+      const servers = await client.lrange(key, 0, -1);
+
+      const updatedServers = servers
+        .map((item) => JSON.parse(item))
+        .filter((server: HetznerServerCache) => server.id !== serverId);
+
+      await client.del(key);
+      if (updatedServers.length > 0) {
+        await client.rpush(
+          key,
+          ...updatedServers.map((s) => JSON.stringify(s)),
+        );
+        await client.expire(key, 60 * 60 * 2); // Keep for 2 hours
+      }
+
       await setRateLimit(projectId, res);
     },
   );
@@ -146,7 +169,8 @@ export async function createHetznerServer(
           data.superAdminPassword || generateRandomString(16),
         admin_password: data.adminPassword || generateRandomString(16),
         user_password: data.userPassword || generateRandomString(16),
-        filemanager_password: data.filemanagerPassword || generateRandomString(16),
+        filemanager_password:
+          data.filemanagerPassword || generateRandomString(16),
       };
 
       const userData = template(dediData);
@@ -177,9 +201,52 @@ export async function createHetznerServer(
         },
       });
 
+      const cachedServer: HetznerServerCache = {
+        id: res.data.server.id,
+        projectId,
+        name: res.data.server.name,
+        ip: res.data.server.public_net.ipv4?.ip,
+        labels: res.data.server.labels,
+      };
+
+      const client = await getRedisClient();
+      const key = getKeyHetznerRecentlyCreatedServers(projectId);
+      await client.lpush(key, JSON.stringify(cachedServer));
+      await client.expire(key, 60 * 60 * 2); // Keep for 2 hours
+
       await setRateLimit(projectId, res);
 
       return res.data.server;
+    },
+  );
+}
+
+export async function getRecentlyCreatedHetznerServers(): Promise<
+  ServerResponse<HetznerServerCache[]>
+> {
+  return doServerActionWithAuth(
+    [`hetzner::moderator`, `hetzner::admin`],
+    async (session) => {
+      const projectIds = session.user.projects.map((p) => p.id);
+
+      if (projectIds.length === 0) {
+        return [];
+      }
+
+      const client = await getRedisClient();
+      const keys = projectIds.map((id) =>
+        getKeyHetznerRecentlyCreatedServers(id),
+      );
+
+      const results = await Promise.all(
+        keys.map((key) => client.lrange(key, 0, -1)),
+      );
+
+      const servers: HetznerServerCache[] = results.flatMap((result) =>
+        result.map((item) => JSON.parse(item)),
+      );
+
+      return servers;
     },
   );
 }

@@ -42,6 +42,13 @@ export default function AddHetznerServerForm({
           throw new Error(error);
         }
         setLocations(data);
+        form.setValue(
+          "location",
+          data.length > 0
+            ? data.find((loc) => loc.name === "fsn1")?.name ||
+              data[0].name
+              : "",
+          );
       } catch (err) {
         setError("Failed to get locations: " + getErrorMessage(err));
         toast.error("Failed to fetch locations", {
@@ -55,6 +62,13 @@ export default function AddHetznerServerForm({
           throw new Error(error);
         }
         setServerTypes(data);
+        form.setValue(
+          "serverType",
+          data.length > 0
+            ? data.find((st) => st.name === "cx22")?.id.toString() ||
+              data[0].id.toString()
+            : "",
+        );
       } catch (err) {
         setError("Failed to get server types: " + getErrorMessage(err));
         toast.error("Failed to fetch server types", {
@@ -68,6 +82,13 @@ export default function AddHetznerServerForm({
           throw new Error(error);
         }
         setImages(data);
+        form.setValue(
+          "image",
+          data.length > 0
+            ? data.find((img) => img.name === "ubuntu-24.04")?.id.toString() ||
+              data[0].id.toString()
+            : "",
+        );
       } catch (err) {
         setError("Failed to get images: " + getErrorMessage(err));
         toast.error("Failed to fetch images", {
@@ -83,23 +104,6 @@ export default function AddHetznerServerForm({
 
   const form = useForm<AddHetznerServerSchemaType>({
     resolver: zodResolver(AddHetznerServerSchema),
-    defaultValues: {
-      location:
-        locations.length > 0
-          ? locations.find((loc) => loc.name === "fsn1")?.name ||
-            locations[0].name
-          : "",
-      serverType:
-        serverTypes.length > 0
-          ? serverTypes.find((st) => st.name === "cpx11")?.id.toString() ||
-            serverTypes[0].id.toString()
-          : "",
-      image:
-        images.length > 0
-          ? images.find((img) => img.name === "ubuntu-24.04")?.id.toString() ||
-            images[0].id.toString()
-          : "",
-    },
   });
 
   async function onSubmit(values: AddHetznerServerSchemaType) {

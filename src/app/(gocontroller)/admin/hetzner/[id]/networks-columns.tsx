@@ -1,8 +1,8 @@
 "use client";
 
-import { deleteHetznerServer } from "@/actions/hetzner/servers";
+import { deleteHetznerNetwork } from "@/actions/hetzner/networks";
 import ConfirmModal from "@/components/modals/confirm-modal";
-import HetznerServerDetailsModal from "@/components/modals/hetzner-server-details";
+import HetznerNetworkDetailsModal from "@/components/modals/hetzner-network-details";
 import Modal from "@/components/modals/modal";
 import { DataTableColumnHeader } from "@/components/table/data-table-column-header";
 import { Button } from "@/components/ui/button";
@@ -15,40 +15,46 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { getErrorMessage, hasPermissionSync } from "@/lib/utils";
 import { routePermissions } from "@/routes";
-import { HetznerServer } from "@/types/api/hetzner/servers";
+import { HetznerNetwork } from "@/types/api/hetzner/networks";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
-export const createColumns = (
+export const createNetworksColumns = (
   refetch: () => void,
   data: {
     projectId: string;
   },
-): ColumnDef<HetznerServer>[] => [
+): ColumnDef<HetznerNetwork>[] => [
   {
     accessorKey: "name",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Server Name"} />
+      <DataTableColumnHeader column={column} title={"Network Name"} />
     ),
   },
   {
-    accessorKey: "status",
-    header: () => <span>Status</span>,
+    accessorKey: "ip_range",
+    header: () => <span>IP Range</span>,
   },
   {
-    accessorKey: "public_net.ipv4.ip",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"IP Address"} />
-    ),
+    accessorKey: "subnets",
+    header: () => <span>Subnets</span>,
+    cell: ({ row }) => {
+      const subnets = row.original.subnets
+        .map((subnet) => subnet.ip_range)
+        .join(", ");
+      return <span>{subnets}</span>;
+    },
   },
   {
-    accessorKey: "server_type.name",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={"Server Type"} />
-    ),
+    accessorKey: "servers",
+    header: () => <span>Servers</span>,
+    cell: ({ row }) => {
+      const servers = row.original.servers.join(", ");
+      return <span>{servers}</span>;
+    },
   },
   {
     accessorKey: "created",
@@ -67,7 +73,7 @@ export const createColumns = (
   {
     id: "actions",
     cell: ({ row }) => {
-      const server = row.original;
+      const network = row.original;
       const { data: session } = useSession();
       const [_, startTransition] = useTransition();
       const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -81,23 +87,23 @@ export const createColumns = (
 
       const handleDelete = () => {
         if (!canDelete) {
-          toast.error("You do not have permission to delete this server.");
+          toast.error("You do not have permission to delete this network.");
           return;
         }
 
         startTransition(async () => {
           try {
-            const { error } = await deleteHetznerServer(
+            const { error } = await deleteHetznerNetwork(
               data.projectId,
-              server.id,
+              network.id,
             );
             if (error) {
               throw new Error(error);
             }
             refetch();
-            toast.success("Server successfully deleted");
+            toast.success("Network successfully deleted");
           } catch (error) {
-            toast.error("Error deleting server", {
+            toast.error("Error deleting network", {
               description: getErrorMessage(error),
             });
           }
@@ -124,7 +130,7 @@ export const createColumns = (
                     variant="destructive"
                     onClick={() => setIsDeleteOpen(true)}
                   >
-                    Delete Server
+                    Delete Network
                   </DropdownMenuItem>
                 </>
               )}
@@ -136,19 +142,15 @@ export const createColumns = (
               isOpen={isDeleteOpen}
               onClose={() => setIsDeleteOpen(false)}
               onConfirm={handleDelete}
-              title="Delete server"
-              description={`Are you sure you want to delete ${server.name}?`}
+              title="Delete network"
+              description={`Are you sure you want to delete ${network.name}?`}
               confirmText="Delete"
               cancelText="Cancel"
             />
           )}
 
           <Modal isOpen={isViewOpen} setIsOpen={setIsViewOpen}>
-            <HetznerServerDetailsModal
-              data={{
-                server,
-              }}
-            />
+            <HetznerNetworkDetailsModal data={network} />
           </Modal>
         </div>
       );
