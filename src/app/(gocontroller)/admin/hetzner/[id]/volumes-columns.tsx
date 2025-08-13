@@ -1,7 +1,10 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
-import { deleteHetznerVolume } from "@/actions/hetzner/volumes";
+import {
+  deleteHetznerVolume,
+  detachVolumeFromServer,
+} from "@/actions/hetzner/volumes";
 import ConfirmModal from "@/components/modals/confirm-modal";
 import HetznerVolumeDetailsModal from "@/components/modals/hetzner-volume-details";
 import Modal from "@/components/modals/modal";
@@ -74,10 +77,17 @@ export const createVolumesColumns = (
       const [_, startTransition] = useTransition();
       const [isDeleteOpen, setIsDeleteOpen] = useState(false);
       const [isViewOpen, setIsViewOpen] = useState(false);
+      const [isDetachOpen, setIsDetachOpen] = useState(false);
 
       const canDelete = hasPermissionSync(
         session,
         routePermissions.admin.hetzner.servers.delete,
+        data.projectId,
+      );
+
+      const canCreate = hasPermissionSync(
+        session,
+        routePermissions.admin.hetzner.servers.create,
         data.projectId,
       );
 
@@ -106,6 +116,31 @@ export const createVolumesColumns = (
         });
       };
 
+      const handleDetach = () => {
+        if (!canCreate) {
+          toast.error("You do not have permission to detach this volume.");
+          return;
+        }
+
+        startTransition(async () => {
+          try {
+            const { error } = await detachVolumeFromServer(
+              data.projectId,
+              volume.id,
+            );
+            if (error) {
+              throw new Error(error);
+            }
+            refetch();
+            toast.success("Volume successfully detached from server");
+          } catch (error) {
+            toast.error("Error detaching volume", {
+              description: getErrorMessage(error),
+            });
+          }
+        });
+      };
+
       return (
         <div className="flex justify-end">
           <DropdownMenu>
@@ -119,6 +154,14 @@ export const createVolumesColumns = (
               <DropdownMenuItem onClick={() => setIsViewOpen(true)}>
                 View Details
               </DropdownMenuItem>
+              {canCreate && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setIsDetachOpen(true)}>
+                    Detach from Server
+                  </DropdownMenuItem>
+                </>
+              )}
               {canDelete && (
                 <>
                   <DropdownMenuSeparator />
@@ -148,6 +191,18 @@ export const createVolumesColumns = (
           <Modal isOpen={isViewOpen} setIsOpen={setIsViewOpen}>
             <HetznerVolumeDetailsModal data={volume} />
           </Modal>
+
+          {canCreate && (
+            <ConfirmModal
+              isOpen={isDetachOpen}
+              onClose={() => setIsDetachOpen(false)}
+              onConfirm={handleDetach}
+              title="Detach volume"
+              description={`Are you sure you want to detach ${volume.name} from its server?`}
+              confirmText="Detach"
+              cancelText="Cancel"
+            />
+          )}
         </div>
       );
     },

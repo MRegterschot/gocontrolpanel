@@ -192,8 +192,8 @@ export async function attachVolumeToServer(
       }
 
       const conn = await connectToSSHServer(
-        server.public_net.ipv4.ip,
-        23,
+        server.public_net.ipv4?.ip,
+        22,
         "root",
         decryptHetznerToken(
           Buffer.from(dbServer.privateKey).toString("base64"),
@@ -207,6 +207,30 @@ export async function attachVolumeToServer(
       } finally {
         conn.end();
       }
+
+      await setRateLimit(projectId, res);
+    },
+  );
+}
+
+export async function detachVolumeFromServer(
+  projectId: string,
+  volumeId: number,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    ["hetzner:servers:create", `hetzner:${projectId}:admin`],
+    async () => {
+      const token = await getApiToken(projectId);
+
+      const res = await axiosHetzner.post(
+        `/volumes/${volumeId}/actions/detach`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
 
       await setRateLimit(projectId, res);
     },

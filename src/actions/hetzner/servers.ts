@@ -266,8 +266,8 @@ export async function createHetznerDatabase(
           "authorization.database.password": dbData.db_password,
         },
         public_net: {
-          enable_ipv4: false,
-          enable_ipv6: true,
+          enable_ipv4: true,
+          enable_ipv6: false,
         },
       };
 

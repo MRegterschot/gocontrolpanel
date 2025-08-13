@@ -20,7 +20,11 @@ export interface HetznerServer {
       id?: number;
       ip: string;
       blocked: boolean;
-      dns_ptr: string;
+    } | null;
+    ipv6: {
+      id?: number;
+      ip: string;
+      blocked: boolean;
     } | null;
   };
   private_net: {

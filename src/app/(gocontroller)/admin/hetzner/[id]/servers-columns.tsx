@@ -181,7 +181,10 @@ export const createServersColumns = (
                     Detach from Network
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setIsAttachVolumeOpen(true)}>
+                  <DropdownMenuItem
+                    onClick={() => setIsAttachVolumeOpen(true)}
+                    disabled={server.status !== "running"}
+                  >
                     Attach Volume
                   </DropdownMenuItem>
                 </>
