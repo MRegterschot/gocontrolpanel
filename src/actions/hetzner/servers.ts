@@ -89,6 +89,35 @@ export async function getHetznerServersPaginated(
   );
 }
 
+export async function getHetznerServerById(
+  projectId: string,
+  serverId: number,
+): Promise<ServerResponse<HetznerServer>> {
+  return doServerActionWithAuth(
+    [
+      "hetzner:servers:view",
+      "hetzner:servers:create",
+      `hetzner:${projectId}:moderator`,
+      `hetzner:${projectId}:admin`,
+    ],
+    async () => {
+      const token = await getApiToken(projectId);
+
+      const res = await axiosHetzner.get<{
+        server: HetznerServer;
+      }>(`/servers/${serverId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      await setRateLimit(projectId, res);
+
+      return res.data.server;
+    },
+  );
+}
+
 export async function deleteHetznerServer(
   projectId: string,
   serverId: number,

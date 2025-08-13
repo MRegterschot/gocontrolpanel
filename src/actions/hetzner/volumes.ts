@@ -3,12 +3,16 @@
 import { AddHetznerVolumeSchemaType } from "@/forms/admin/hetzner/volume/add-hetzner-volume-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { axiosHetzner } from "@/lib/axios/hetzner";
+import { decryptHetznerToken } from "@/lib/hetzner";
+import { connectToSSHServer, executeSSHCommand } from "@/lib/ssh";
 import {
   HetznerVolume,
   HetznerVolumesResponse,
 } from "@/types/api/hetzner/volumes";
 import { PaginationResponse, ServerResponse } from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
+import { getDBHetznerServer } from "../database/hetzner-servers";
+import { getHetznerServerById } from "./servers";
 import { getApiToken, setRateLimit } from "./util";
 
 export async function getHetznerVolumesPaginated(
@@ -105,6 +109,68 @@ export async function createHetznerVolume(
       await setRateLimit(projectId, res);
 
       return res.data.volume;
+    },
+  );
+}
+
+export async function attachVolumeToServer(
+  projectId: string,
+  volumeId: number,
+  serverId: number,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    ["hetzner:servers:create", `hetzner:${projectId}:admin`],
+    async () => {
+      const token = await getApiToken(projectId);
+
+      const res = await axiosHetzner.post(
+        `/volumes/${volumeId}/actions/attach`,
+        { server: serverId, automount: false },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const { data: server, error } = await getHetznerServerById(
+        projectId,
+        serverId,
+      );
+
+      if (error) {
+        throw new Error(error);
+      }
+
+      if (!server.public_net.ipv4) {
+        throw new Error("Server does not have a public network IP.");
+      }
+
+      const dbServer = await getDBHetznerServer(serverId);
+      if (!dbServer || !dbServer.privateKey) {
+        throw new Error(
+          "Could not find server or private key in the database.",
+        );
+      }
+
+      const conn = await connectToSSHServer(
+        server.public_net.ipv4.ip,
+        23,
+        "root",
+        decryptHetznerToken(
+          Buffer.from(dbServer.privateKey).toString("base64"),
+        ),
+      );
+
+      try {
+        const output = await executeSSHCommand(conn, "ls -la");
+
+        console.log("SSH Command Output:", output);
+      } finally {
+        conn.end();
+      }
+
+      await setRateLimit(projectId, res);
     },
   );
 }

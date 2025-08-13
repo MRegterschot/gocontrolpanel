@@ -38,3 +38,23 @@ export function connectToSSHServer(
       });
   });
 }
+
+export async function executeSSHCommand(
+  conn: Client,
+  command: string,
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let output = "";
+    conn.exec(command, (err, stream) => {
+      if (err) return reject(err);
+      stream
+        .on("close", () => resolve(output))
+        .on("data", (data: Buffer) => {
+          output += data.toString();
+        })
+        .stderr.on("data", (data: Buffer) => {
+          reject(new Error(data.toString()));
+        });
+    });
+  });
+}
