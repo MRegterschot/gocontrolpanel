@@ -3,6 +3,7 @@
 
 import { deleteHetznerServer } from "@/actions/hetzner/servers";
 import AttachHetznerServerToNetworkModal from "@/components/modals/attach-hetzner-server-to-network";
+import AttachVolumeToServerModal from "@/components/modals/attach-volume-to-server";
 import ConfirmModal from "@/components/modals/confirm-modal";
 import DetachServerFromNetworkModal from "@/components/modals/detach-server-from-network";
 import HetznerDatabaseDetailsModal from "@/components/modals/hetzner-database-details";
@@ -104,6 +105,7 @@ export const createServersColumns = (
       const [isMetricsOpen, setIsMetricsOpen] = useState(false);
       const [isAttachOpen, setIsAttachOpen] = useState(false);
       const [isDetachOpen, setIsDetachOpen] = useState(false);
+      const [isAttachVolumeOpen, setIsAttachVolumeOpen] = useState(false);
 
       const canDelete = hasPermissionSync(
         session,
@@ -178,6 +180,10 @@ export const createServersColumns = (
                   <DropdownMenuItem onClick={() => setIsDetachOpen(true)}>
                     Detach from Network
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setIsAttachVolumeOpen(true)}>
+                    Attach Volume
+                  </DropdownMenuItem>
                 </>
               )}
               {canDelete && (
@@ -238,6 +244,21 @@ export const createServersColumns = (
                   data={{
                     projectId: data.projectId,
                     serverId: server.id,
+                  }}
+                />
+              </Modal>
+
+              <Modal
+                isOpen={isAttachVolumeOpen}
+                setIsOpen={setIsAttachVolumeOpen}
+              >
+                <AttachVolumeToServerModal
+                  closeModal={() => setIsAttachVolumeOpen(false)}
+                  onSubmit={refetch}
+                  data={{
+                    projectId: data.projectId,
+                    serverId: server.id,
+                    locationId: server.datacenter.location.id,
                   }}
                 />
               </Modal>

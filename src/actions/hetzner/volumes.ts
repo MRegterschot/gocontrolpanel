@@ -62,6 +62,44 @@ export async function getHetznerVolumesPaginated(
   );
 }
 
+export async function getAllVolumes(
+  projectId: string,
+): Promise<ServerResponse<HetznerVolume[]>> {
+  return doServerActionWithAuth(
+    [
+      "hetzner:servers:view",
+      "hetzner:servers:create",
+      `hetzner:${projectId}:moderator`,
+      `hetzner:${projectId}:admin`,
+    ],
+    async () => {
+      const token = await getApiToken(projectId);
+
+      const volumes: HetznerVolume[] = [];
+      let page = 1;
+      let totalEntries = 0;
+
+      do {
+        const res = await axiosHetzner.get<HetznerVolumesResponse>("/volumes", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          params: {
+            page,
+            per_page: 50,
+          },
+        });
+
+        volumes.push(...res.data.volumes);
+        totalEntries = res.data.meta.pagination.total_entries || 0;
+        page++;
+      } while (volumes.length < totalEntries);
+
+      return volumes;
+    },
+  );
+}
+
 export async function deleteHetznerVolume(
   projectId: string,
   volumeId: number,
