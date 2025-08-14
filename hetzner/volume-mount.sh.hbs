@@ -1,0 +1,91 @@
+#!/bin/bash
+set -e
+
+# --- CONFIGURE (Handlebars variables) ---
+DB_IMAGE='{{{db_image}}}'              # e.g., mysql, postgres
+HOST_DB_PATH='{{{mount_path}}}'        # Host path mapped to container, e.g., /var/lib/dbdata/mysql
+HETZNER_VOLUME_DEV='{{{volume_path}}}' # Hetzner volume device, e.g., /dev/disk/by-id/scsi-0HC_Volume_123
+
+TEMP_MOUNT="/mnt/hetzner_db"
+WAIT_SECONDS=15
+
+# --- Wait for the volume device to exist ---
+echo "Waiting up to $WAIT_SECONDS seconds for volume device $HETZNER_VOLUME_DEV..."
+SECONDS_WAITED=0
+while [ ! -b "$HETZNER_VOLUME_DEV" ] && [ $SECONDS_WAITED -lt $WAIT_SECONDS ]; do
+    sleep 1
+    SECONDS_WAITED=$((SECONDS_WAITED + 1))
+done
+
+if [ ! -b "$HETZNER_VOLUME_DEV" ]; then
+    echo "Volume device $HETZNER_VOLUME_DEV did not appear within $WAIT_SECONDS seconds."
+    exit 1
+fi
+
+echo "Volume device $HETZNER_VOLUME_DEV found."
+
+docker ps
+
+# --- Wait for DB container to exist ---
+echo "Waiting for a container with image matching $DB_IMAGE..."
+SECONDS_WAITED=0
+while true; do
+    CONTAINER_NAME=$(docker ps -a --format '{{{fuck_this_scuffed_shit}}}' \
+        | awk -v img="$DB_IMAGE" '$1 ~ "^"img {print $2}' \
+        | head -n 1)
+
+    if [ -n "$CONTAINER_NAME" ]; then
+        echo "Found container: $CONTAINER_NAME"
+        break
+    fi
+
+    if [ $SECONDS_WAITED -ge $WAIT_SECONDS ]; then
+        echo "No container for image $DB_IMAGE found within $WAIT_SECONDS seconds."
+        exit 1
+    fi
+
+    sleep 1
+    SECONDS_WAITED=$((SECONDS_WAITED + 1))
+done
+
+echo "Using container: $CONTAINER_NAME"
+
+# --- Determine DB user name based on image ---
+case "$DB_IMAGE" in
+    mysql|mysql:*) DB_USER_NAME="mysql" ;;
+    mariadb|mariadb:*) DB_USER_NAME="mysql" ;;
+    postgres|postgres:*) DB_USER_NAME="postgres" ;;
+    *) echo "Unknown DB image: $DB_IMAGE"; exit 1 ;;
+esac
+
+# Get UID/GID from image
+DB_UID=$(docker run --rm "$DB_IMAGE" id -u "$DB_USER_NAME")
+DB_GID=$(docker run --rm "$DB_IMAGE" id -g "$DB_USER_NAME")
+echo "DB user inside container: $DB_USER_NAME (UID=$DB_UID, GID=$DB_GID)"
+
+# --- Mount Hetzner volume temporarily ---
+mkdir -p $TEMP_MOUNT
+mount $HETZNER_VOLUME_DEV $TEMP_MOUNT
+mkdir -p $HOST_DB_PATH
+
+# --- Copy existing DB data only if volume is empty ---
+ls -A $TEMP_MOUNT
+if [ -z "$(ls -A $TEMP_MOUNT | grep -v '^lost+found$')" ]; then
+    echo "Volume is empty. Copying existing database data..."
+    docker stop $CONTAINER_NAME
+    sudo rsync -av --progress $HOST_DB_PATH/ $TEMP_MOUNT/
+    chown -R "$DB_UID:$DB_GID" "$TEMP_MOUNT"
+    docker start $CONTAINER_NAME
+else
+    echo "Volume is not empty. Skipping data copy to avoid overwriting existing data."
+fi
+
+# --- Unmount temp path and mount volume to host DB path ---
+umount $TEMP_MOUNT
+mount $HETZNER_VOLUME_DEV $HOST_DB_PATH
+
+# Optional: add to /etc/fstab for auto-mount
+grep -q "$HETZNER_VOLUME_DEV" /etc/fstab || \
+echo "$HETZNER_VOLUME_DEV $HOST_DB_PATH ext4 discard,nofail,defaults 0 0" >> /etc/fstab
+
+echo "Migration complete. Container now uses Hetzner volume at $HOST_DB_PATH"

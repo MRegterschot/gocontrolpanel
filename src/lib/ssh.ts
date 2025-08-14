@@ -1,7 +1,7 @@
 import { generateKeyPairSync } from "crypto";
-import sshpk from "sshpk";
 import "server-only";
 import { Client } from "ssh2";
+import sshpk from "sshpk";
 
 export function generateSSHKeyPair() {
   const { publicKey, privateKey } = generateKeyPairSync("rsa", {
@@ -44,17 +44,58 @@ export async function executeSSHCommand(
   command: string,
 ): Promise<string> {
   return new Promise((resolve, reject) => {
-    let output = "";
+    let stdoutData = "";
+    let stderrData = "";
+
     conn.exec(command, (err, stream) => {
       if (err) return reject(err);
+
       stream
-        .on("close", () => resolve(output))
+        .on("close", (code: number) => {
+          if (code === 0) {
+            resolve(stdoutData);
+          } else {
+            const errorMessage = [
+              `Command failed with exit code ${code}`,
+              "STDOUT:",
+              stdoutData.trim(),
+              "STDERR:",
+              stderrData.trim(),
+            ].join("\n");
+            reject(new Error(errorMessage));
+          }
+        })
         .on("data", (data: Buffer) => {
-          output += data.toString();
+          stdoutData += data.toString();
         })
         .stderr.on("data", (data: Buffer) => {
-          reject(new Error(data.toString()));
+          stderrData += data.toString();
         });
     });
   });
+}
+
+export async function waitForVolumePath(
+  conn: Client,
+  volumePath: string,
+  timeoutMs = 5000,
+  intervalMs = 500,
+) {
+  const start = Date.now();
+  while (true) {
+    try {
+      const output = await executeSSHCommand(
+        conn,
+        `[ -b ${volumePath} ] && echo "exists" || echo "missing"`,
+      );
+      if (output.trim() === "exists") return;
+    } catch {
+      // Ignore command errors, just retry
+    }
+
+    if (Date.now() - start > timeoutMs) {
+      throw new Error(`Volume device ${volumePath} did not appear within ${timeoutMs}ms`);
+    }
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
 }

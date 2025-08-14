@@ -8,9 +8,9 @@ apt install -y docker.io docker-compose-v2 curl unzip
 
 # Fetch Docker Compose setup
 cd /root
-curl -sSLf -o gcp.zip https://github.com/MRegterschot/gocontrolpanel/archive/refs/heads/master.zip
+curl -sSLf -o gcp.zip https://github.com/MRegterschot/gocontrolpanel/archive/refs/heads/70-use-volumes-to-store-database-data-for-hetzner.zip
 unzip gcp.zip
-cd gocontrolpanel-master/hetzner
+cd gocontrolpanel-70-use-volumes-to-store-database-data-for-hetzner/hetzner
 
 COMPOSE_FILES="-f docker-compose.yml"
 
@@ -57,7 +57,7 @@ export PY_ADMINS='{{{server_controller.admins}}}'
 export TM_MASTERSERVER_LOGIN='{{{dedi_login}}}'
 export TM_MASTERSERVER_PASSWORD='{{{dedi_password}}}'
 export TM_SERVER_PASSWORD='{{{room_password}}}'
-export TM_SYSTEM_FORCE_IP_ADDRESS=$(curl -s https://ipinfo.io/ip)
+export TM_SYSTEM_FORCE_IP_ADDRESS=$(curl -s https://api.ipify.org)
 export TM_AUTHORIZATION_SUPERADMIN_PASSWORD='{{{superadmin_password}}}'
 export TM_AUTHORIZATION_ADMIN_PASSWORD='{{{admin_password}}}'
 export TM_AUTHORIZATION_USER_PASSWORD='{{{user_password}}}'

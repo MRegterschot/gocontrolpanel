@@ -102,7 +102,7 @@ export default function Summary({
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex flex-col">
                     <span className="font-semibold">Name</span>
-                    <span className="truncate">{database.name}</span>
+                    <span className="truncate">{database.databaseName}</span>
                   </div>
                 </div>
               ) : (

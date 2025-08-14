@@ -3,6 +3,7 @@
 import { AddHetznerVolumeSchemaType } from "@/forms/admin/hetzner/volume/add-hetzner-volume-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { axiosHetzner } from "@/lib/axios/hetzner";
+import { Handlebars } from "@/lib/handlebars";
 import { decryptHetznerToken } from "@/lib/hetzner";
 import { connectToSSHServer, executeSSHCommand } from "@/lib/ssh";
 import {
@@ -11,6 +12,9 @@ import {
 } from "@/types/api/hetzner/volumes";
 import { PaginationResponse, ServerResponse } from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
+import { readFileSync } from "fs";
+import path from "path";
+import { packageDirectorySync } from "pkg-dir";
 import { getDBHetznerServer } from "../database/hetzner-servers";
 import { getHetznerServerById } from "./servers";
 import {
@@ -19,6 +23,13 @@ import {
   setRateLimit,
   updateHetznerVolume,
 } from "./util";
+
+const root = packageDirectorySync() || process.cwd();
+
+// Mounting template
+const mountTemplatePath = path.join(root, "hetzner", "volume-mount.sh.hbs");
+const mountTemplateContent = readFileSync(mountTemplatePath, "utf-8");
+const mountTemplate = Handlebars.compile(mountTemplateContent);
 
 export async function getHetznerVolumesPaginated(
   pagination: PaginationState,
@@ -228,19 +239,26 @@ export async function attachVolumeToServer(
       const volumePath = `/dev/disk/by-id/scsi-0HC_Volume_${volumeId}`;
       const mountPath = `/var/lib/dbdata/${dbType}`;
 
+      const mountData = {
+        fuck_this_scuffed_shit: "{{.Image}} {{.Names}}",
+        db_image: dbType,
+        mount_path: mountPath,
+        volume_path: volumePath,
+      };
+
+      const mountScript = mountTemplate(mountData);
+
       try {
         // Create mount directory if it doesn't exist
-        await executeSSHCommand(conn, `mkdir -p ${mountPath}`);
-        // Mount the volume
-        await executeSSHCommand(
+        const output = await executeSSHCommand(
           conn,
-          `mount -o discard,defaults ${volumePath} ${mountPath}`,
+          `bash -s <<'END_SCRIPT'\n${mountScript}\nEND_SCRIPT`,
         );
-        // Add volume to fstab for auto-mounting
-        await executeSSHCommand(
-          conn,
-          `echo "${volumePath} ${mountPath} ext4 discard,nofail,defaults 0 0" >> /etc/fstab`,
-        );
+
+        console.log("Mount script output:", output);
+      } catch (err) {
+        await detachVolumeFromServer(projectId, volumeId);
+        throw new Error("Mounting failed")
       } finally {
         conn.end();
       }

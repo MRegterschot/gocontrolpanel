@@ -175,6 +175,11 @@ export async function createAdvancedServerSetup(
           "authorization.admin.password": dediData.admin_password,
           "authorization.user.password": dediData.user_password,
           "filemanager.password": dediData.filemanager_password,
+          ...(database?.local
+            ? {
+                "database.type": database.databaseType || "mysql",
+              }
+            : {}),
         },
         public_net: {
           enable_ipv4: true,
@@ -344,6 +349,11 @@ export async function createSimpleServerSetup(
           "authorization.admin.password": dediData.admin_password,
           "authorization.user.password": dediData.user_password,
           "filemanager.password": dediData.filemanager_password,
+          ...(database?.local
+            ? {
+                "database.type": database.databaseType || "mysql",
+              }
+            : {}),
         },
         public_net: {
           enable_ipv4: true,
