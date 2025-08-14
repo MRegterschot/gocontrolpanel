@@ -6,10 +6,16 @@ apt update
 apt install -y docker.io
 
 db_type="{{{db_type}}}"
+db_base_dir="/var/lib/dbdata/$db_type"
+
+# Create the data directory
+mkdir -p "$db_base_dir"
+chmod 700 "$db_base_dir"
 
 if [ "$db_type" = "postgres" ]; then
 
   docker run -d --restart always \
+    -v "$db_base_dir":/var/lib/postgresql/data \
     -e POSTGRES_USER="{{{db_user}}}" \
     -e POSTGRES_PASSWORD="{{{db_password}}}" \
     -e POSTGRES_DB="{{{db_name}}}" \
@@ -21,6 +27,7 @@ if [ "$db_type" = "postgres" ]; then
 elif [ "$db_type" = "mysql" ]; then
 
   docker run -d --restart always \
+    -v "$db_base_dir":/var/lib/mysql \
     -e MYSQL_ROOT_PASSWORD="{{{db_root_password}}}" \
     -e MYSQL_DATABASE="{{{db_name}}}" \
     -e MYSQL_USER="{{{db_user}}}" \
@@ -35,6 +42,7 @@ elif [ "$db_type" = "mysql" ]; then
 elif [ "$db_type" = "mariadb" ]; then
 
   docker run -d --restart always \
+    -v "$db_base_dir":/var/lib/mysql \
     -e MARIADB_ROOT_PASSWORD="{{{db_root_password}}}" \
     -e MARIADB_DATABASE="{{{db_name}}}" \
     -e MARIADB_USER="{{{db_user}}}" \

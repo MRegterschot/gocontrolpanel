@@ -262,6 +262,7 @@ export const createServersColumns = (
                     projectId: data.projectId,
                     serverId: server.id,
                     locationId: server.datacenter.location.id,
+                    databaseType: server.labels["database.type"],
                   }}
                 />
               </Modal>

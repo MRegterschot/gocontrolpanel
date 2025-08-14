@@ -13,7 +13,12 @@ import { PaginationResponse, ServerResponse } from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
 import { getDBHetznerServer } from "../database/hetzner-servers";
 import { getHetznerServerById } from "./servers";
-import { getApiToken, setRateLimit } from "./util";
+import {
+  getApiToken,
+  getHetznerVolume,
+  setRateLimit,
+  updateHetznerVolume,
+} from "./util";
 
 export async function getHetznerVolumesPaginated(
   pagination: PaginationState,
@@ -161,16 +166,6 @@ export async function attachVolumeToServer(
     async () => {
       const token = await getApiToken(projectId);
 
-      const res = await axiosHetzner.post(
-        `/volumes/${volumeId}/actions/attach`,
-        { server: serverId, automount: false },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
       const { data: server, error } = await getHetznerServerById(
         projectId,
         serverId,
@@ -184,12 +179,42 @@ export async function attachVolumeToServer(
         throw new Error("Server does not have a public network IP.");
       }
 
+      const dbType = server.labels["database.type"];
+      if (!dbType) {
+        throw new Error("Server does not have a database type label.");
+      }
+
       const dbServer = await getDBHetznerServer(serverId);
       if (!dbServer || !dbServer.privateKey) {
         throw new Error(
           "Could not find server or private key in the database.",
         );
       }
+
+      const volume = await getHetznerVolume(projectId, volumeId);
+
+      if (!volume) {
+        throw new Error("Volume not found.");
+      }
+
+      if (
+        volume.labels["database.type"] &&
+        volume.labels["database.type"] !== dbType
+      ) {
+        throw new Error(
+          `Volume is labeled with a different database type: ${volume.labels["database.type"]}`,
+        );
+      }
+
+      const res = await axiosHetzner.post(
+        `/volumes/${volumeId}/actions/attach`,
+        { server: serverId, automount: false },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
 
       const conn = await connectToSSHServer(
         server.public_net.ipv4?.ip,
@@ -200,12 +225,30 @@ export async function attachVolumeToServer(
         ),
       );
 
-      try {
-        const output = await executeSSHCommand(conn, "ls -la");
+      const volumePath = `/dev/disk/by-id/scsi-0HC_Volume_${volumeId}`;
+      const mountPath = `/var/lib/dbdata/${dbType}`;
 
-        console.log("SSH Command Output:", output);
+      try {
+        // Create mount directory if it doesn't exist
+        await executeSSHCommand(conn, `mkdir -p ${mountPath}`);
+        // Mount the volume
+        await executeSSHCommand(
+          conn,
+          `mount -o discard,defaults ${volumePath} ${mountPath}`,
+        );
+        // Add volume to fstab for auto-mounting
+        await executeSSHCommand(
+          conn,
+          `echo "${volumePath} ${mountPath} ext4 discard,nofail,defaults 0 0" >> /etc/fstab`,
+        );
       } finally {
         conn.end();
+      }
+
+      if (!volume.labels["database.type"]) {
+        await updateHetznerVolume(projectId, volumeId, {
+          labels: { "database.type": dbType },
+        });
       }
 
       await setRateLimit(projectId, res);

@@ -12,6 +12,7 @@ export default function AttachVolumeToServerModal({
   projectId: string;
   serverId: number;
   locationId: number;
+  databaseType?: string;
 }>) {
   if (!data) return null;
 
@@ -41,6 +42,7 @@ export default function AttachVolumeToServerModal({
         projectId={data.projectId}
         serverId={data.serverId}
         locationId={data.locationId}
+        databaseType={data.databaseType}
         callback={handleSubmit}
       />
     </Card>

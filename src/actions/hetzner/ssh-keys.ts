@@ -35,3 +35,16 @@ export async function createHetznerSSHKey(
     privateKey: keys.privateKey,
   };
 }
+
+export async function deleteHetznerSSHKey(
+  projectId: string,
+  sshKeyId: number,
+): Promise<void> {
+  const token = await getApiToken(projectId);
+
+  await axiosHetzner.delete(`/ssh_keys/${sshKeyId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}

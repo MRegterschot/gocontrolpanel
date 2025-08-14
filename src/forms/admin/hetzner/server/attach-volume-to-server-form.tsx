@@ -20,11 +20,13 @@ export default function AttachVolumeToServerForm({
   projectId,
   serverId,
   locationId,
+  databaseType,
   callback,
 }: {
   projectId: string;
   serverId: number;
   locationId: number;
+  databaseType?: string;
   callback?: () => void;
 }) {
   const [volumes, setVolumes] = useState<HetznerVolume[]>([]);
@@ -44,7 +46,13 @@ export default function AttachVolumeToServerForm({
         const { data, error } = volumesResult.value;
         if (!error) {
           const filteredData = data.filter(
-            (volume) => !volume.server && volume.location.id === locationId,
+            (volume) =>
+              !volume.server &&
+              volume.location.id === locationId &&
+              // If databaseType is provided, only include volumes that either match the database type or have no type set
+              (!databaseType ||
+                volume.labels["database.type"] === databaseType ||
+                !volume.labels["database.type"]),
           );
           setVolumes(filteredData);
         } else {

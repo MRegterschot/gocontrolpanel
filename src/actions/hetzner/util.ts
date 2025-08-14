@@ -6,6 +6,7 @@ import {
   HetznerServer,
   HetznerServersResponse,
 } from "@/types/api/hetzner/servers";
+import { HetznerVolume } from "@/types/api/hetzner/volumes";
 import { AxiosResponse } from "axios";
 import "server-only";
 
@@ -69,4 +70,46 @@ export async function getHetznerServer(
   await setRateLimit(projectId, res);
 
   return res.data.server;
+}
+
+export async function getHetznerVolume(
+  projectId: string,
+  volumeId: number,
+): Promise<HetznerVolume> {
+  const token = await getApiToken(projectId);
+
+  const res = await axiosHetzner.get<{
+    volume: HetznerVolume;
+  }>(`/volumes/${volumeId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  await setRateLimit(projectId, res);
+
+  return res.data.volume;
+}
+
+export async function updateHetznerVolume(
+  projectId: string,
+  volumeId: number,
+  data: {
+    name?: string;
+    labels?: Record<string, string>;
+  },
+): Promise<HetznerVolume> {
+  const token = await getApiToken(projectId);
+
+  const res = await axiosHetzner.put<{
+    volume: HetznerVolume;
+  }>(`/volumes/${volumeId}`, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  await setRateLimit(projectId, res);
+
+  return res.data.volume;
 }
