@@ -177,7 +177,10 @@ export async function createAdvancedServerSetup(
           "filemanager.password": dediData.filemanager_password,
           ...(database?.local
             ? {
-                "database.type": database.databaseType || "mysql",
+                "database.type": dediData.db.type,
+                "authorization.database.name": dediData.db.name,
+                "authorization.database.user": dediData.db.user,
+                "authorization.database.password": dediData.db.password,
               }
             : {}),
         },
@@ -351,7 +354,10 @@ export async function createSimpleServerSetup(
           "filemanager.password": dediData.filemanager_password,
           ...(database?.local
             ? {
-                "database.type": database.databaseType || "mysql",
+                "database.type": dediData.db.type,
+                "authorization.database.name": dediData.db.name,
+                "authorization.database.user": dediData.db.user,
+                "authorization.database.password": dediData.db.password,
               }
             : {}),
         },

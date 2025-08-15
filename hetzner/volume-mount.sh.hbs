@@ -5,6 +5,10 @@ set -e
 DB_IMAGE='{{{db_image}}}'              # e.g., mysql, postgres
 HOST_DB_PATH='{{{mount_path}}}'        # Host path mapped to container, e.g., /var/lib/dbdata/mysql
 HETZNER_VOLUME_DEV='{{{volume_path}}}' # Hetzner volume device, e.g., /dev/disk/by-id/scsi-0HC_Volume_123
+SERVER_CONTROLLER='{{{server_controller}}}' # e.g., evosc, maniacontrol, minicontrol, pyplanet
+DB_NAME='{{{db_data.name}}}'            # Database name, e.g., gcp_db
+DB_USER='{{{db_data.user}}}'            # Database user, e.g., gcp_user
+DB_PASSWORD='{{{db_data.password}}}'    # Database password, e.g., gcp_password
 
 TEMP_MOUNT="/mnt/hetzner_db"
 WAIT_SECONDS=15
@@ -30,12 +34,12 @@ docker ps
 echo "Waiting for a container with image matching $DB_IMAGE..."
 SECONDS_WAITED=0
 while true; do
-    CONTAINER_NAME=$(docker ps -a --format '{{{fuck_this_scuffed_shit}}}' \
+    DB_CONTAINER_NAME=$(docker ps -a --format '{{{fuck_this_scuffed_shit.image}}} {{{fuck_this_scuffed_shit.names}}}' \
         | awk -v img="$DB_IMAGE" '$1 ~ "^"img {print $2}' \
         | head -n 1)
 
-    if [ -n "$CONTAINER_NAME" ]; then
-        echo "Found container: $CONTAINER_NAME"
+    if [ -n "$DB_CONTAINER_NAME" ]; then
+        echo "Found container: $DB_CONTAINER_NAME"
         break
     fi
 
@@ -48,7 +52,7 @@ while true; do
     SECONDS_WAITED=$((SECONDS_WAITED + 1))
 done
 
-echo "Using container: $CONTAINER_NAME"
+echo "Using container: $DB_CONTAINER_NAME"
 
 # --- Determine DB user name based on image ---
 case "$DB_IMAGE" in
@@ -59,9 +63,38 @@ case "$DB_IMAGE" in
 esac
 
 # Get UID/GID from image
-DB_UID=$(docker run --rm "$DB_IMAGE" id -u "$DB_USER_NAME")
-DB_GID=$(docker run --rm "$DB_IMAGE" id -g "$DB_USER_NAME")
+DB_UID=$(docker exec "$DB_CONTAINER_NAME" id -u "$DB_USER_NAME")
+DB_GID=$(docker exec "$DB_CONTAINER_NAME" id -g "$DB_USER_NAME")
 echo "DB user inside container: $DB_USER_NAME (UID=$DB_UID, GID=$DB_GID)"
+
+if [ -n "$SERVER_CONTROLLER" ]; then
+    echo "Waiting for a container with name matching $SERVER_CONTROLLER..."
+    SECONDS_WAITED=0
+    while true; do
+        SC_CONTAINER_NAME=$(docker ps -a --format '{{{fuck_this_scuffed_shit.names}}}' \
+            | grep -E "-${SERVICE_NAME}-[0-9]+$" \
+            | head -n 1)
+
+        if [ -n "$SC_CONTAINER_NAME" ]; then
+            echo "Found container: $SC_CONTAINER_NAME"
+            break;
+        fi
+
+        if [ $SECONDS_WAITED -ge $WAIT_SECONDS ]; then
+            echo "No container for image $SERVER_CONTROLLER found within $WAIT_SECONDS seconds."
+            exit 1
+        fi
+
+        sleep 1
+        SECONDS_WAITED=$((SECONDS_WAITED + 1))
+    done
+fi
+
+# --- Stopping containers ---
+if [ -n "$SC_CONTAINER_NAME" ]; then
+    docker stop $SC_CONTAINER_NAME
+fi
+docker stop $DB_CONTAINER_NAME
 
 # --- Mount Hetzner volume temporarily ---
 mkdir -p $TEMP_MOUNT
@@ -70,12 +103,10 @@ mkdir -p $HOST_DB_PATH
 
 # --- Copy existing DB data only if volume is empty ---
 ls -A $TEMP_MOUNT
-if [ -z "$(ls -A $TEMP_MOUNT | grep -v '^lost+found$')" ]; then
+if [ -z "$(find "$TEMP_MOUNT" -mindepth 1 ! -name 'lost+found' -print -quit)" ]; then
     echo "Volume is empty. Copying existing database data..."
-    docker stop $CONTAINER_NAME
     sudo rsync -av --progress $HOST_DB_PATH/ $TEMP_MOUNT/
     chown -R "$DB_UID:$DB_GID" "$TEMP_MOUNT"
-    docker start $CONTAINER_NAME
 else
     echo "Volume is not empty. Skipping data copy to avoid overwriting existing data."
 fi
@@ -83,6 +114,17 @@ fi
 # --- Unmount temp path and mount volume to host DB path ---
 umount $TEMP_MOUNT
 mount $HETZNER_VOLUME_DEV $HOST_DB_PATH
+
+if [ -n "$SC_CONTAINER_NAME" ]; then
+    if [ -n "$DB_NAME" ]; then
+        NEW_ENV_VARS=(
+            -e "DB_NAME=$DB_NAME"
+        )
+    fi
+
+    docker start $SC_CONTAINER_NAME
+fi
+docker start $DB_CONTAINER_NAME
 
 # Optional: add to /etc/fstab for auto-mount
 grep -q "$HETZNER_VOLUME_DEV" /etc/fstab || \

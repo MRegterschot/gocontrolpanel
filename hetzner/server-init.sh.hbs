@@ -8,9 +8,9 @@ apt install -y docker.io docker-compose-v2 curl unzip
 
 # Fetch Docker Compose setup
 cd /root
-curl -sSLf -o gcp.zip https://github.com/MRegterschot/gocontrolpanel/archive/refs/heads/70-use-volumes-to-store-database-data-for-hetzner.zip
+curl -sSLf -o gcp.zip https://github.com/MRegterschot/gocontrolpanel/archive/refs/heads/master.zip
 unzip gcp.zip
-cd gocontrolpanel-70-use-volumes-to-store-database-data-for-hetzner/hetzner
+cd gocontrolpanel-master/hetzner
 
 COMPOSE_FILES="-f docker-compose.yml"
 

@@ -239,11 +239,22 @@ export async function attachVolumeToServer(
       const volumePath = `/dev/disk/by-id/scsi-0HC_Volume_${volumeId}`;
       const mountPath = `/var/lib/dbdata/${dbType}`;
 
+      const dbData = {
+        name: volume.labels["authorization.database.name"],
+        user: volume.labels["authorization.database.user"],
+        password: volume.labels["authorization.database.password"],
+      };
+
       const mountData = {
-        fuck_this_scuffed_shit: "{{.Image}} {{.Names}}",
+        fuck_this_scuffed_shit: {
+          image: "{{.Image}}",
+          names: "{{.Names}}"
+        },
         db_image: dbType,
         mount_path: mountPath,
         volume_path: volumePath,
+        server_controller: server.labels["servercontroller.type"],
+        db_data: dbData,
       };
 
       const mountScript = mountTemplate(mountData);
@@ -258,14 +269,27 @@ export async function attachVolumeToServer(
         console.log("Mount script output:", output);
       } catch (err) {
         await detachVolumeFromServer(projectId, volumeId);
-        throw new Error("Mounting failed")
+        throw new Error("Mounting failed");
       } finally {
         conn.end();
       }
 
-      if (!volume.labels["database.type"]) {
+      if (
+        !volume.labels["database.type"] ||
+        !volume.labels["authorization.database.name"] ||
+        !volume.labels["authorization.database.user"] ||
+        !volume.labels["authorization.database.password"]
+      ) {
         await updateHetznerVolume(projectId, volumeId, {
-          labels: { "database.type": dbType },
+          labels: {
+            "database.type": dbType,
+            "authorization.database.name":
+              server.labels["authorization.database.name"],
+            "authorization.database.user":
+              server.labels["authorization.database.user"],
+            "authorization.database.password":
+              server.labels["authorization.database.password"],
+          },
         });
       }
 
