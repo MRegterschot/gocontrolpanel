@@ -4,6 +4,7 @@ import {
   getRateLimit,
 } from "@/actions/hetzner/servers";
 import { getHetznerVolumesPaginated } from "@/actions/hetzner/volumes";
+import PricingContainer from "@/components/hetzner/pricing-container";
 import { PaginationTable } from "@/components/table/pagination-table";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -74,6 +75,7 @@ export default async function ProjectPage({
           <TabsTrigger value="servers">Servers</TabsTrigger>
           <TabsTrigger value="networks">Networks</TabsTrigger>
           <TabsTrigger value="volumes">Volumes</TabsTrigger>
+          <TabsTrigger value="pricing">Pricing</TabsTrigger>
         </TabsList>
 
         <TabsContent value="servers" className="flex flex-col gap-2">
@@ -116,6 +118,10 @@ export default async function ProjectPage({
             sortingField="id"
             filter
           />
+        </TabsContent>
+
+        <TabsContent value="pricing" className="flex flex-col gap-2">
+          <PricingContainer projectId={id} />
         </TabsContent>
       </Tabs>
 

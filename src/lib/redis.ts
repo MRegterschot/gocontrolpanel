@@ -40,3 +40,4 @@ export const getKeyHetznerImages = () => "hetzner:images";
 export const getKeyHetznerLocations = () => "hetzner:locations";
 export const getKeyHetznerRecentlyCreatedServers = (projectId: string) =>
   `hetzner:recently-created-servers:${projectId}`;
+export const getKeyHetznerPricing = () => "hetzner:pricing";
