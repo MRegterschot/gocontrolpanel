@@ -24,7 +24,7 @@ export default function PricingDisplay({ pricing }: PricingDisplayProps) {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4">
-            {pricing.server_types.map((serverType) => (
+            {pricing.server_types?.map((serverType) => (
               <div key={serverType.id} className="border rounded-lg p-4">
                 <div className="flex justify-between items-start mb-2">
                   <div>
@@ -56,7 +56,7 @@ export default function PricingDisplay({ pricing }: PricingDisplayProps) {
                 </div>
 
                 <div className="grid gap-2">
-                  {serverType.prices.map((price, index) => (
+                  {serverType.prices?.map((price, index) => (
                     <div key={index} className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm bg-gray-50 p-2 rounded">
                       <div>
                         <span className="font-semibold">Location:</span> {price.location}
@@ -88,7 +88,7 @@ export default function PricingDisplay({ pricing }: PricingDisplayProps) {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4">
-            {pricing.load_balancer_types.map((lbType) => (
+            {pricing.load_balancer_types?.map((lbType) => (
               <div key={lbType.id} className="border rounded-lg p-4">
                 <div className="flex justify-between items-start mb-2">
                   <div>
@@ -120,7 +120,7 @@ export default function PricingDisplay({ pricing }: PricingDisplayProps) {
                 </div>
 
                 <div className="grid gap-2">
-                  {lbType.prices.map((price, index) => (
+                  {lbType.prices?.map((price, index) => (
                     <div key={index} className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm bg-gray-50 p-2 rounded">
                       <div>
                         <span className="font-semibold">Location:</span> {price.location}
@@ -147,7 +147,7 @@ export default function PricingDisplay({ pricing }: PricingDisplayProps) {
         </CardHeader>
         <CardContent>
           <div className="grid gap-2">
-            {pricing.volume.map((volume, index) => (
+            {pricing.volume?.map((volume, index) => (
               <div key={index} className="grid grid-cols-3 gap-2 text-sm bg-gray-50 p-2 rounded">
                 <div>
                   <span className="font-semibold">Type:</span> {volume.type}
@@ -171,7 +171,7 @@ export default function PricingDisplay({ pricing }: PricingDisplayProps) {
         </CardHeader>
         <CardContent>
           <div className="grid gap-2">
-            {pricing.floating_ip.map((ip, index) => (
+            {pricing.floating_ip?.map((ip, index) => (
               <div key={index} className="grid grid-cols-3 gap-2 text-sm bg-gray-50 p-2 rounded">
                 <div>
                   <span className="font-semibold">Type:</span> {ip.type}
@@ -195,7 +195,7 @@ export default function PricingDisplay({ pricing }: PricingDisplayProps) {
         </CardHeader>
         <CardContent>
           <div className="grid gap-2">
-            {pricing.snapshot.map((snapshot, index) => (
+            {pricing.snapshot?.map((snapshot, index) => (
               <div key={index} className="grid grid-cols-3 gap-2 text-sm bg-gray-50 p-2 rounded">
                 <div>
                   <span className="font-semibold">Type:</span> {snapshot.type}
@@ -219,7 +219,7 @@ export default function PricingDisplay({ pricing }: PricingDisplayProps) {
         </CardHeader>
         <CardContent>
           <div className="grid gap-2">
-            {pricing.image.map((image, index) => (
+            {pricing.image?.map((image, index) => (
               <div key={index} className="grid grid-cols-3 gap-2 text-sm bg-gray-50 p-2 rounded">
                 <div>
                   <span className="font-semibold">Type:</span> {image.type}
@@ -243,7 +243,7 @@ export default function PricingDisplay({ pricing }: PricingDisplayProps) {
         </CardHeader>
         <CardContent>
           <div className="grid gap-2">
-            {pricing.traffic.map((traffic, index) => (
+            {pricing.traffic?.map((traffic, index) => (
               <div key={index} className="grid grid-cols-2 gap-2 text-sm bg-gray-50 p-2 rounded">
                 <div>
                   <span className="font-semibold">Location:</span> {traffic.location}
@@ -264,7 +264,7 @@ export default function PricingDisplay({ pricing }: PricingDisplayProps) {
         </CardHeader>
         <CardContent>
           <div className="grid gap-2">
-            {pricing.server_backup.map((backup, index) => (
+            {pricing.server_backup?.map((backup, index) => (
               <div key={index} className="grid grid-cols-2 gap-2 text-sm bg-gray-50 p-2 rounded">
                 <div>
                   <span className="font-semibold">Location:</span> {backup.location}
