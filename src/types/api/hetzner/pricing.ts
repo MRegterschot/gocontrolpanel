@@ -29,15 +29,6 @@ export interface HetznerServerTypePricing {
   architecture: string;
 }
 
-export interface HetznerVolumePricing {
-  type: string;
-  location: string;
-  price_monthly: {
-    net: string;
-    gross: string;
-  };
-}
-
 export interface HetznerLoadBalancerTypePricing {
   id: number;
   name: string;
@@ -50,57 +41,60 @@ export interface HetznerLoadBalancerTypePricing {
   prices: HetznerPriceItem[];
 }
 
-export interface HetznerFloatingIpPricing {
+export interface HetznerFloatingIpsPricing {
   type: string;
-  location: string;
-  price_monthly: {
-    net: string;
-    gross: string;
-  };
+  prices: {
+    location: string;
+    price_monthly: {
+      net: string;
+      gross: string;
+    };
+  }[];
 }
 
-export interface HetznerImagePricing {
+export interface HetznerPrimaryIpsPricing {
   type: string;
-  location: string;
-  price_monthly: {
-    net: string;
-    gross: string;
-  };
-}
-
-export interface HetznerSnapshotPricing {
-  type: string;
-  location: string;
-  price_monthly: {
-    net: string;
-    gross: string;
-  };
-}
-
-export interface HetznerBackupPricing {
-  location: string;
-  percentage: string;
-}
-
-export interface HetznerTrafficPricing {
-  location: string;
-  price_per_tb: {
-    net: string;
-    gross: string;
-  };
+  prices: {
+    location: string;
+    price_hourly: {
+      net: string;
+      gross: string;
+    };
+    price_monthly: {
+      net: string;
+      gross: string;
+    };
+  }[];
 }
 
 export interface HetznerPricingResponse {
   pricing: {
     currency: string;
     vat_rate: string;
-    image: HetznerImagePricing[];
-    floating_ip: HetznerFloatingIpPricing[];
-    traffic: HetznerTrafficPricing[];
-    server_backup: HetznerBackupPricing[];
+    image: {
+      price_per_gb_month: {
+        net: string;
+        gross: string;
+      };
+    };
+    floating_ip: {
+      price_monthly: {
+        net: string;
+        gross: string;
+      };
+    };
+    floating_ips: HetznerFloatingIpsPricing[];
+    primary_ips: HetznerPrimaryIpsPricing[];
+    server_backup: {
+      percentage: string;
+    };
     server_types: HetznerServerTypePricing[];
     load_balancer_types: HetznerLoadBalancerTypePricing[];
-    volume: HetznerVolumePricing[];
-    snapshot: HetznerSnapshotPricing[];
+    volume: {
+      price_per_gb_month: {
+        net: string;
+        gross: string;
+      };
+    };
   };
 }
