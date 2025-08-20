@@ -146,17 +146,38 @@ export default function PricingDisplay({ pricing }: PricingDisplayProps) {
           <CardTitle>Volume Pricing</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-2">
-            {pricing.volume?.map((volume, index) => (
-              <div key={index} className="grid grid-cols-3 gap-2 text-sm bg-gray-50 p-2 rounded">
-                <div>
-                  <span className="font-semibold">Type:</span> {volume.type}
-                </div>
-                <div>
-                  <span className="font-semibold">Location:</span> {volume.location}
-                </div>
-                <div>
-                  <span className="font-semibold">Monthly per GB:</span> €{parseFloat(volume.price_monthly.gross).toFixed(4)}
+          <div className="text-sm bg-gray-50 p-4 rounded">
+            <div>
+              <span className="font-semibold">Price per GB/month:</span> €{parseFloat(pricing.volume.price_per_gb_month.gross).toFixed(4)}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              Net: €{parseFloat(pricing.volume.price_per_gb_month.net).toFixed(4)}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Floating IPs (Plural - Array) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Floating IPs Pricing</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4">
+            {pricing.floating_ips?.map((floatingIp, index) => (
+              <div key={index} className="border rounded-lg p-4">
+                <h4 className="font-semibold mb-2">{floatingIp.type.toUpperCase()}</h4>
+                <div className="grid gap-2">
+                  {floatingIp.prices?.map((price, priceIndex) => (
+                    <div key={priceIndex} className="grid grid-cols-2 gap-2 text-sm bg-gray-50 p-2 rounded">
+                      <div>
+                        <span className="font-semibold">Location:</span> {price.location}
+                      </div>
+                      <div>
+                        <span className="font-semibold">Monthly:</span> €{parseFloat(price.price_monthly.gross).toFixed(2)}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
@@ -164,23 +185,30 @@ export default function PricingDisplay({ pricing }: PricingDisplayProps) {
         </CardContent>
       </Card>
 
-      {/* Floating IPs */}
+      {/* Primary IPs */}
       <Card>
         <CardHeader>
-          <CardTitle>Floating IP Pricing</CardTitle>
+          <CardTitle>Primary IPs Pricing</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-2">
-            {pricing.floating_ip?.map((ip, index) => (
-              <div key={index} className="grid grid-cols-3 gap-2 text-sm bg-gray-50 p-2 rounded">
-                <div>
-                  <span className="font-semibold">Type:</span> {ip.type}
-                </div>
-                <div>
-                  <span className="font-semibold">Location:</span> {ip.location}
-                </div>
-                <div>
-                  <span className="font-semibold">Monthly:</span> €{parseFloat(ip.price_monthly.gross).toFixed(2)}
+          <div className="grid gap-4">
+            {pricing.primary_ips?.map((primaryIp, index) => (
+              <div key={index} className="border rounded-lg p-4">
+                <h4 className="font-semibold mb-2">{primaryIp.type.toUpperCase()}</h4>
+                <div className="grid gap-2">
+                  {primaryIp.prices?.map((price, priceIndex) => (
+                    <div key={priceIndex} className="grid grid-cols-3 gap-2 text-sm bg-gray-50 p-2 rounded">
+                      <div>
+                        <span className="font-semibold">Location:</span> {price.location}
+                      </div>
+                      <div>
+                        <span className="font-semibold">Hourly:</span> €{parseFloat(price.price_hourly.gross).toFixed(4)}
+                      </div>
+                      <div>
+                        <span className="font-semibold">Monthly:</span> €{parseFloat(price.price_monthly.gross).toFixed(2)}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
@@ -188,26 +216,19 @@ export default function PricingDisplay({ pricing }: PricingDisplayProps) {
         </CardContent>
       </Card>
 
-      {/* Snapshots */}
+      {/* Floating IP (Singular - Object) */}
       <Card>
         <CardHeader>
-          <CardTitle>Snapshot Pricing</CardTitle>
+          <CardTitle>Floating IP Base Pricing</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-2">
-            {pricing.snapshot?.map((snapshot, index) => (
-              <div key={index} className="grid grid-cols-3 gap-2 text-sm bg-gray-50 p-2 rounded">
-                <div>
-                  <span className="font-semibold">Type:</span> {snapshot.type}
-                </div>
-                <div>
-                  <span className="font-semibold">Location:</span> {snapshot.location}
-                </div>
-                <div>
-                  <span className="font-semibold">Monthly per GB:</span> €{parseFloat(snapshot.price_monthly.gross).toFixed(4)}
-                </div>
-              </div>
-            ))}
+          <div className="text-sm bg-gray-50 p-4 rounded">
+            <div>
+              <span className="font-semibold">Monthly:</span> €{parseFloat(pricing.floating_ip.price_monthly.gross).toFixed(2)}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              Net: €{parseFloat(pricing.floating_ip.price_monthly.net).toFixed(2)}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -218,41 +239,13 @@ export default function PricingDisplay({ pricing }: PricingDisplayProps) {
           <CardTitle>Image Pricing</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-2">
-            {pricing.image?.map((image, index) => (
-              <div key={index} className="grid grid-cols-3 gap-2 text-sm bg-gray-50 p-2 rounded">
-                <div>
-                  <span className="font-semibold">Type:</span> {image.type}
-                </div>
-                <div>
-                  <span className="font-semibold">Location:</span> {image.location}
-                </div>
-                <div>
-                  <span className="font-semibold">Monthly per GB:</span> €{parseFloat(image.price_monthly.gross).toFixed(4)}
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Traffic */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Traffic Pricing</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-2">
-            {pricing.traffic?.map((traffic, index) => (
-              <div key={index} className="grid grid-cols-2 gap-2 text-sm bg-gray-50 p-2 rounded">
-                <div>
-                  <span className="font-semibold">Location:</span> {traffic.location}
-                </div>
-                <div>
-                  <span className="font-semibold">Price per TB:</span> €{parseFloat(traffic.price_per_tb.gross).toFixed(2)}
-                </div>
-              </div>
-            ))}
+          <div className="text-sm bg-gray-50 p-4 rounded">
+            <div>
+              <span className="font-semibold">Price per GB/month:</span> €{parseFloat(pricing.image.price_per_gb_month.gross).toFixed(4)}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              Net: €{parseFloat(pricing.image.price_per_gb_month.net).toFixed(4)}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -263,17 +256,10 @@ export default function PricingDisplay({ pricing }: PricingDisplayProps) {
           <CardTitle>Server Backup Pricing</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-2">
-            {pricing.server_backup?.map((backup, index) => (
-              <div key={index} className="grid grid-cols-2 gap-2 text-sm bg-gray-50 p-2 rounded">
-                <div>
-                  <span className="font-semibold">Location:</span> {backup.location}
-                </div>
-                <div>
-                  <span className="font-semibold">Percentage of server cost:</span> {backup.percentage}%
-                </div>
-              </div>
-            ))}
+          <div className="text-sm bg-gray-50 p-4 rounded">
+            <div>
+              <span className="font-semibold">Percentage of server cost:</span> {pricing.server_backup.percentage}%
+            </div>
           </div>
         </CardContent>
       </Card>
