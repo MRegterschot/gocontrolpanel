@@ -43,6 +43,7 @@ const nextConfig: NextConfig = {
     },
   },
   webpack: (config) => {
+    // config.resolve.conditionNames = ["import", "require", "node", "default"];
     config.module.rules.push({
       test: /\.node$/,
       use: [

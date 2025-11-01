@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { SessionWrapper } from "@/providers/session-wrapper";
+import SpacetimeDBProvider from "@/providers/spacetime-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -66,17 +67,19 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}
       >
-        <SessionWrapper>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            {children}
-            <Toaster />
-          </ThemeProvider>
-        </SessionWrapper>
+        <SpacetimeDBProvider>
+          <SessionWrapper>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              {children}
+              <Toaster />
+            </ThemeProvider>
+          </SessionWrapper>
+        </SpacetimeDBProvider>
       </body>
     </html>
   );
