@@ -1,6 +1,5 @@
 {% extends "widget.njk" %}
 {% block widget %}
-
 <frame pos="0 0">
   <quad pos="0 0" z-index="0" size="55 5" bgcolor="222"/>
   <label pos="27.5 -2.25" z-index="0" size="55 5" text="Leaderboard" halign="center" textsize="1" textfont="GameFontSemiBold" valign="center"/>
@@ -9,14 +8,46 @@
 <framemodel id="record">
   <quad pos="0 0" z-index="0" size="5 5" bgcolor="222"/>
   <quad pos="5 0" z-index="0" size="50 5" bgcolor="DDD"/>
-  <label pos="2.25 -2.25" z-index="0" size="5 5" text="1" halign="center" valign="center" textsize="1.25" textcolor="DDD" textfont="GameFontSemiBold"/>
+  <label pos="2.4 -2.25" z-index="0" size="5 5" text="1" halign="center" valign="center" textsize="1.25" textcolor="DDD" textfont="GameFontSemiBold"/>
   <quad pos="6.25 -1" z-index="0" size="4.5 3" bgcolor="FFF" image="file://Media/Flags/NED.dds"/>
-  <label pos="12 -2.25" z-index="0" size="25 5" text="Pusztitopako" textcolor="222" textsize="1.25" textfont="GameFontRegular" valign="center"/>
+  <label pos="12 -2.25" z-index="0" size="27 5" text="Pusztitopako" textcolor="222" textsize="1.25" textfont="GameFontRegular" valign="center"/>
   <label pos="53 -2.25" z-index="0" size="12.5 5" text="1:59.394" valign="center" halign="right" textsize="1" textcolor="222" textfont="GameFontSemiBold"/>
 </framemodel>
 
-{% for i in range(4) %}
-<frameinstance modelid="record" pos="0 {{ (i + 1) * -5.25 }}" />
+<frame id="records-scrollview" pos="0 -5.25" size="55 50">
+<quad size="55 {{ 100 * 5.25 }}" bgcolor="fff" opacity="0" scriptevents="1"/>
+{% for i in range(100) %}
+<frameinstance modelid="record" pos="0 {{ i * -5.25 }}" />
 {% endfor %}
+</frame>
+{% endblock %}
 
+
+{% block globals %}
+#Struct Record {
+  Integer rank;
+  Integer time;
+  Text name;
+  Text login;
+}
+{% endblock %}
+
+
+{% block main %}
+declare Record[] Records for This;
+declare Integer LastRecordsUpdate for This = -1;
+declare Integer lastUpdate = -1;
+declare CMlFrame recordsScrollView;
+recordsScrollView <=> (widget.GetFirstChild("records-scrollview") as CMlFrame);
+recordsScrollView.ScrollActive = True;
+recordsScrollView.ScrollMin = <0., 0.>;
+recordsScrollView.ScrollMax = <0., 100 * 5.25 - 50.>;
+log(recordsScrollView);
+{% endblock %}
+
+
+{% block loop %}
+if (LastRecordsUpdate != lastUpdate) {
+  lastUpdate = LastRecordsUpdate;
+}
 {% endblock %}

@@ -5,15 +5,22 @@
 </frame>
 
 <script><!--
-  
+
+{% block globals %}{% endblock %}
 
 main() {
   declare CMlFrame widget;
   widget <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
 
-  widget.Hide();
-  sleep(300);
   widget.Show();
+
+  {% block main %}{% endblock %}
+
+  while (True) {
+    yield;
+
+    {% block loop %}{% endblock %}
+  }
 }
 
 --></script>

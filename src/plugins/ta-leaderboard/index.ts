@@ -48,32 +48,17 @@ export default class TALeaderboardPlugin extends Plugin {
     this.widget.setPosition("100 60");
 
     this.widget2.setData({
-      localsJson: JSON.stringify([
+      recordsJson: JSON.stringify([
         {
           rank: 1,
           login: "v8vgGbx_TuKkBabAyn7nsQ",
           name: "Marijntje04",
-          score: 123456,
+          time: 123456,
         },
       ]),
     });
 
     this.widget2.display();
     this.widget.display();
-
-    for (let i = 0; i < 5; i++) {
-      this.widget2.setData({
-        localsJson: JSON.stringify([
-          {
-            rank: i + 1,
-            login: "v8vgGbx_TuKkBabAyn7nsQ",
-            name: "Marijntje04",
-            score: 123456,
-          },
-        ]),
-      });
-      this.widget2.display();
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-    }
   }
 }
