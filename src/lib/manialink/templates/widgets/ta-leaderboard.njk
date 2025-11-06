@@ -14,7 +14,7 @@
   <label pos="53 -2.25" z-index="0" size="12.5 5" text="1:59.394" valign="center" halign="right" textsize="1" textcolor="222" textfont="GameFontSemiBold"/>
 </framemodel>
 
-<frame id="records-scrollview" pos="0 -5.25" size="55 50">
+<frame id="records" pos="0 -5.25" size="55 42">
 <quad size="55 {{ 100 * 5.25 }}" bgcolor="fff" opacity="0" scriptevents="1"/>
 {% for i in range(100) %}
 <frameinstance modelid="record" pos="0 {{ i * -5.25 }}" />
@@ -32,22 +32,106 @@
 }
 {% endblock %}
 
+{% block script %}
+Text formatTime(Integer time) {
+  declare Text secondString;
+  declare Text msString;
+
+  if (time <= 0) {
+    return "--:--.---";
+  }
+
+  declare Integer seconds = time / 1000;
+  declare Integer minutes = seconds / 60;
+  declare Integer milliseconds = time - (seconds * 1000);
+  seconds = seconds - (minutes * 60);
+
+  secondString = TL::ToText(seconds);
+
+  if (seconds < 10) {
+    secondString = "0" ^ secondString;
+  }
+
+  if (milliseconds <= 0) {
+    msString = "000";
+  } else if (milliseconds < 10) {
+    msString = "00" ^ TL::ToText(milliseconds);
+  } else if (milliseconds < 100) {
+    msString = "0" ^ TL::ToText(milliseconds);
+  } else {
+    msString = TL::ToText(milliseconds);
+  }
+
+  if (minutes > 0) {
+    return TL::ToText(minutes) ^ ":" ^ secondString ^ "." ^ msString;
+  } else {
+    return secondString ^ "." ^ msString;
+  }
+
+  return "";
+}
+
+Void updateRecordRow(Integer index, Record record) {
+  declare recordsFrame <=> (Page.MainFrame.GetFirstChild("records") as CMlFrame);
+
+  if (index >= recordsFrame.Controls.count) {
+    return;
+  }
+
+  declare recordFrame <=> (recordsFrame.Controls[index + 1] as CMlFrame);
+  (recordFrame.Controls[2] as CMlLabel).SetText(TL::ToText(record.rank));
+  (recordFrame.Controls[3] as CMlQuad).ImageUrl = "file://ZoneFlags/Login/" ^ record.login ^ "/country";
+  (recordFrame.Controls[4] as CMlLabel).SetText(record.name);
+  (recordFrame.Controls[5] as CMlLabel).SetText(formatTime(record.time));
+  recordFrame.DataAttributeSet("login", record.login);
+  recordFrame.Show();
+}
+
+Void updateScroll(Record[] records) {
+  declare recordsFrame <=> (Page.MainFrame.GetFirstChild("records") as CMlFrame);
+  declare Integer recordCount = records.count;
+  declare Real maxY = recordCount * 5.25 - 42;
+  if (maxY < 0) {
+    maxY = 0.;
+  }
+  recordsFrame.ScrollMax = <0., maxY>;
+}
+
+Void updateWidget(Record[] records) {
+  declare recordCount = records.count;
+  declare index = 0;
+
+  foreach (record in records) {
+    updateRecordRow(index, record);
+    index = index + 1;
+  }
+
+  declare recordsFrame <=> (Page.MainFrame.GetFirstChild("records") as CMlFrame);
+  // Hide unused rows
+  while (index < recordsFrame.Controls.count - 1) {
+    declare recordFrame <=> (recordsFrame.Controls[index + 1] as CMlFrame);
+    recordFrame.DataAttributeSet("login", "");
+    recordFrame.Hide();
+    index = index + 1;
+  }
+
+  updateScroll(records);
+}
+{% endblock %}
 
 {% block main %}
 declare Record[] Records for This;
 declare Integer LastRecordsUpdate for This = -1;
 declare Integer lastUpdate = -1;
-declare CMlFrame recordsScrollView;
-recordsScrollView <=> (widget.GetFirstChild("records-scrollview") as CMlFrame);
-recordsScrollView.ScrollActive = True;
-recordsScrollView.ScrollMin = <0., 0.>;
-recordsScrollView.ScrollMax = <0., 100 * 5.25 - 50.>;
-log(recordsScrollView);
+declare recordsFrame <=> (widget.GetFirstChild("records") as CMlFrame);
+recordsFrame.ScrollActive = True;
+recordsFrame.ScrollMin = <0., 0.>;
 {% endblock %}
 
 
 {% block loop %}
 if (LastRecordsUpdate != lastUpdate) {
   lastUpdate = LastRecordsUpdate;
+  updateWidget(Records);
 }
 {% endblock %}
