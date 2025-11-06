@@ -1,7 +1,7 @@
 import { FileManager } from "@/types/filemanager";
 import "server-only";
-import { getClient } from "./dbclient";
-import { appGlobals } from "./global";
+import { getClient } from "../dbclient";
+import { appGlobals } from "../global";
 
 export async function getFileManager(serverId: string): Promise<FileManager> {
   if (!appGlobals.fileManagers?.[serverId]) {

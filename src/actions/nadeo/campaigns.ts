@@ -2,7 +2,7 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { downloadFile, getSeasonalCampaigns } from "@/lib/api/nadeo";
-import { getFileManager } from "@/lib/filemanager";
+import { getFileManager } from "@/lib/managers/file-manager";
 import {
   getKeyCampaign,
   getKeySeasonalCampaigns,

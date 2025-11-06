@@ -1,6 +1,6 @@
 "use server";
 import { doServerActionWithAuth } from "@/lib/actions";
-import { getGbxClient } from "@/lib/gbxclient";
+import { getGbxClient } from "@/lib/managers/gbxclient-manager";
 import { Maps } from "@/lib/prisma/generated";
 import { getKeyJukebox, getRedisClient } from "@/lib/redis";
 import { JukeboxMap } from "@/types/map";

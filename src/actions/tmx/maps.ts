@@ -2,7 +2,7 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { downloadTMXMap, searchTMXMaps } from "@/lib/api/tmx";
-import { getFileManager } from "@/lib/filemanager";
+import { getFileManager } from "@/lib/managers/file-manager";
 import { TMXMapSearch } from "@/types/api/tmx";
 import { ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
@@ -122,7 +122,7 @@ export async function addMapToServer(
       }
 
       const { data: fileName, error } = await downloadMap(serverId, mapId);
-      
+
       if (error) {
         await logAudit(
           session.user.id,

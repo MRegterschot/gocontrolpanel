@@ -2,7 +2,7 @@ import { getPlayerInfo } from "@/actions/gbx/server-only";
 import { AdminCommand } from "@/types/commands";
 import { PlayerChat } from "@/types/gbx/player";
 import "server-only";
-import { GbxClientManager } from "./gbxclient";
+import { GbxClientManager } from "./managers/gbxclient-manager";
 
 export async function handleAdminCommand(
   manager: GbxClientManager,

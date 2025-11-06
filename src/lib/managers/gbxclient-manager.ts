@@ -23,20 +23,24 @@ import { ServerClientInfo } from "@/types/server";
 import { GbxClient } from "@evotm/gbxclient";
 import EventEmitter from "events";
 import "server-only";
-import { ecmOnDriverFinish, ecmOnRoundEnd } from "./api/ecm";
-import { handleAdminCommand } from "./commands";
-import { getClient } from "./dbclient";
-import { appGlobals } from "./global";
+import { ecmOnDriverFinish, ecmOnRoundEnd } from "../api/ecm";
+import { handleAdminCommand } from "../commands";
+import { getClient } from "../dbclient";
+import { appGlobals } from "../global";
 import {
   formatMessage,
   isFinalist,
   isWinner,
   sleep,
   withTimeout,
-} from "./utils";
+} from "../utils";
+import ManialinkManager from "./manialink-manager";
+import PluginManager from "./plugin-manager";
 
 export class GbxClientManager extends EventEmitter {
   client: GbxClient;
+  manialinkManager: ManialinkManager;
+  pluginManager: PluginManager;
   private serverId: string;
   info: ServerClientInfo;
   private isConnected = false;
@@ -73,6 +77,9 @@ export class GbxClientManager extends EventEmitter {
     };
 
     this.client.on("disconnect", this.onDisconnect.bind(this));
+
+    this.manialinkManager = new ManialinkManager(this);
+    this.pluginManager = new PluginManager(this);
 
     appGlobals.gbxClients = appGlobals.gbxClients || {};
     appGlobals.gbxClients[serverId] = this;
@@ -194,6 +201,7 @@ export class GbxClientManager extends EventEmitter {
     await setupListeners(this, server.id);
     await syncMap(this, server.id);
     await syncLiveInfo(this);
+    this.pluginManager.loadPlugins();
 
     return this.client;
   }
@@ -270,6 +278,13 @@ export class GbxClientManager extends EventEmitter {
 export async function getGbxClient(serverId: string): Promise<GbxClient> {
   const manager = await getGbxClientManager(serverId);
   return manager.client;
+}
+
+export async function getManialinkManager(
+  serverId: string,
+): Promise<ManialinkManager> {
+  const manager = await getGbxClientManager(serverId);
+  return manager.manialinkManager;
 }
 
 export async function getGbxClientManager(

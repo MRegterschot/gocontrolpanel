@@ -1,0 +1,20 @@
+{% extends "manialink.njk" %}
+{% block content %}
+<frame id="widget" pos="{{ position | default('0 0') }}" z-index="10" hidden="1">
+{% block widget %}{% endblock %}
+</frame>
+
+<script><!--
+  
+
+main() {
+  declare CMlFrame widget;
+  widget <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+
+  widget.Hide();
+  sleep(300);
+  widget.Show();
+}
+
+--></script>
+{% endblock %}

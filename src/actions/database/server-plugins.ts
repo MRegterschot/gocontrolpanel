@@ -2,7 +2,7 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
-import { getGbxClientManager } from "@/lib/gbxclient";
+import { getGbxClientManager } from "@/lib/managers/gbxclient-manager";
 import { ServerResponse } from "@/types/responses";
 import { logAudit } from "./server-only/audit-logs";
 import { ServerPluginsWithPlugin } from "./server-only/gbx";

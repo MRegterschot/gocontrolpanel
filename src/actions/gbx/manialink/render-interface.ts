@@ -2,8 +2,8 @@
 
 import { logAudit } from "@/actions/database/server-only/audit-logs";
 import { doServerActionWithAuth } from "@/lib/actions";
-import { getGbxClient } from "@/lib/gbxclient";
 import { Handlebars } from "@/lib/handlebars";
+import { getGbxClient } from "@/lib/managers/gbxclient-manager";
 import { Interfaces } from "@/lib/prisma/generated";
 import { ServerResponse } from "@/types/responses";
 import fs from "fs/promises";

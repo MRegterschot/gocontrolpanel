@@ -1,5 +1,5 @@
 import { hasPermission } from "@/lib/auth";
-import { getFileManager } from "@/lib/filemanager";
+import { getFileManager } from "@/lib/managers/file-manager";
 import { routePermissions, routes } from "@/routes";
 import { redirect } from "next/navigation";
 

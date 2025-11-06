@@ -2,7 +2,7 @@ import MappacksTab from "@/components/tmx/tabs/mappacks-tab";
 import MapsTab from "@/components/tmx/tabs/maps-tab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { hasPermission } from "@/lib/auth";
-import { getFileManagerHealth } from "@/lib/filemanager";
+import { getFileManagerHealth } from "@/lib/managers/file-manager";
 import { routePermissions, routes } from "@/routes";
 import { redirect } from "next/navigation";
 

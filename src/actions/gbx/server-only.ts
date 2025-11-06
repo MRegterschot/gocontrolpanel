@@ -1,4 +1,7 @@
-import { GbxClientManager, getGbxClient } from "@/lib/gbxclient";
+import {
+  GbxClientManager,
+  getGbxClient,
+} from "@/lib/managers/gbxclient-manager";
 import { Maps } from "@/lib/prisma/generated";
 import { getKeyActiveMap, getKeyJukebox, getRedisClient } from "@/lib/redis";
 import { SMapInfo } from "@/types/gbx/map";
@@ -14,7 +17,7 @@ import {
 } from "../database/server-only/gbx";
 
 export async function syncPlayerList(manager: GbxClientManager) {
-  const playerList = await manager.client.call("GetPlayerList", 1000, 0);
+  const playerList  = await manager.client.call("GetPlayerList", 1000, 0);
   if (!playerList || !Array.isArray(playerList)) {
     throw new Error("Failed to retrieve player list");
   }
@@ -22,6 +25,7 @@ export async function syncPlayerList(manager: GbxClientManager) {
   const mainServerInfo = await manager.client.call("GetMainServerPlayerInfo");
 
   const players: PlayerInfo[] = [];
+  manager.info.liveInfo.players = {};
   for (const player of playerList) {
     if (!player.Login || player.Login === mainServerInfo.Login) {
       continue; // Skip the main server player
@@ -35,6 +39,13 @@ export async function syncPlayerList(manager: GbxClientManager) {
         spectatorStatus: player.SpectatorStatus,
         teamId: player.TeamId,
       });
+
+      manager.info.liveInfo.players[player.Login] = {
+        ...manager.info.liveInfo.players[player.Login],
+        login: player.Login,
+        name: player.NickName,
+        team: player.TeamId,
+      };
     } catch {
       players.push({
         nickName: "-",
@@ -46,7 +57,6 @@ export async function syncPlayerList(manager: GbxClientManager) {
     }
   }
 
-  manager.info.liveInfo.players = {};
   manager.info.activePlayers = players;
   manager.emit("playerList", players);
   await syncPlayers(players);
