@@ -23,14 +23,14 @@ export default class TALeaderboardPlugin extends Plugin {
   constructor(clientManager: GbxClientManager) {
     super(clientManager);
     this.widget = new Widget(this.clientManager);
-    this.widget.setTemplate("widgets/ta-leaderboard.njk");
+    this.widget.setTemplate("widgets/ta-leaderboard/ta-leaderboard.njk");
     this.widget.setId("ta-leaderboard-widget");
     this.widget.setPosition("100 60");
   }
 
   async onLoad() {
     this.clientManager.addListeners(this.getPluginId(), {
-      startMap: this.onStartMap.bind(this),
+      beginMap: this.onBeginMap.bind(this),
       finish: this.onPlayerFinish.bind(this),
       playerConnect: this.onPlayerConnect.bind(this),
       scores: this.onScores.bind(this),
@@ -129,7 +129,7 @@ export default class TALeaderboardPlugin extends Plugin {
     }
   }
 
-  private async onStartMap() {
+  private async onBeginMap() {
     this.clearLeaderboard();
   }
 

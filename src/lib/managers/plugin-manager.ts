@@ -1,6 +1,7 @@
 import Plugin from "@/plugins";
 import TALeaderboardPlugin from "@/plugins/ta-leaderboard";
 import { GbxClientManager } from "./gbxclient-manager";
+import MapInfoPlugin from "@/plugins/map-info";
 
 export default class PluginManager {
   private clientManager: GbxClientManager;
@@ -17,11 +18,12 @@ export default class PluginManager {
   public async loadPlugins() {
     const pluginsToLoad: Plugin[] = [
       new TALeaderboardPlugin(this.clientManager),
+      new MapInfoPlugin(this.clientManager),
     ];
 
     for (const plugin of pluginsToLoad) {
       if (
-        plugin.getSupportedGamemodes() &&
+        plugin.getSupportedGamemodes().length > 0 &&
         !plugin.getSupportedGamemodes().includes(this.clientManager.info.liveInfo.type)
       ) {
         continue;

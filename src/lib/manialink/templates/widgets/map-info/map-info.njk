@@ -1,0 +1,41 @@
+{% extends "widget.njk" %}
+{% block widget %}
+<frame pos="0 0" id="map">
+  <quad pos="0 0" z-index="0" size="10 10" bgcolor="222"/>
+  <quad pos="10 0" z-index="0" size="45 10" bgcolor="DDD"/>
+  <label pos="5 -4.75" z-index="0" size="10 10" text="" halign="center" valign="center" textsize="2.5" textcolor="DDD" textfont="GameFontRegular"/>
+  <label pos="12 -5.25" z-index="0" size="41 5" text="-" textcolor="222" textsize="1.75" textfont="GameFontSemiBold" valign="bottom"/>
+  <label pos="11.75 -5.5" z-index="0" size="41 5" text="-" textcolor="222" textprefix="$i" textfont="GameFontRegular" valign="top" textsize="1.25"/>
+</frame>
+{% endblock %}
+
+
+{% block globals %}
+#Struct Map {
+  Text name;
+  Text author;
+}
+{% endblock %}
+
+{% block script %}
+Void updateWidget(Map mapInfo) {
+  declare mapFrame <=> (Page.MainFrame.GetFirstChild("map") as CMlFrame);
+
+  (mapFrame.Controls[3] as CMlLabel).SetText(mapInfo.name);
+  (mapFrame.Controls[4] as CMlLabel).SetText(mapInfo.author);
+}
+{% endblock %}
+
+{% block main %}
+declare Map MapInfo for This;
+declare Integer LastMapInfoUpdate for This = -1;
+declare Integer lastUpdate = -1;
+{% endblock %}
+
+
+{% block loop %}
+if (LastMapInfoUpdate != lastUpdate) {
+  lastUpdate = LastMapInfoUpdate;
+  updateWidget(MapInfo);
+}
+{% endblock %}
