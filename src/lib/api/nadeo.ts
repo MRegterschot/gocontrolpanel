@@ -9,6 +9,7 @@ import {
   ClubMembersResponse,
   ClubRoom,
   MapInfo,
+  MapLeaderboardsResponse,
   MonthMapListResponse,
   NadeoTokens,
   SeasonalCampaignsResponse,
@@ -313,6 +314,15 @@ export async function getClubMembers(
 ): Promise<ClubMembersResponse> {
   const url = `${LIVE_URL}/api/token/club/${clubId}/member?length=${length}&offset=${offset}`;
   return await doRequest<ClubMembersResponse>(url, "NadeoLiveServices");
+}
+
+export async function getMapLeaderboard(
+  mapUid: string,
+  length: number = 10,
+  offset: number = 0,
+): Promise<MapLeaderboardsResponse> {
+  const url = `${LIVE_URL}/api/token/leaderboard/group/Personal_Best/map/${mapUid}/top?length=${length}&offset=${offset}&onlyWorld=true`;
+  return await doRequest<MapLeaderboardsResponse>(url, "NadeoLiveServices");
 }
 
 export async function doRequest<T>(

@@ -1,6 +1,7 @@
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import Widget from "@/lib/manialink/widget";
 import Plugin from "..";
+import { SMapInfo } from "@/types/gbx/map";
 
 type MapInfo = {
   name: string;
@@ -44,7 +45,7 @@ export default class MapInfoPlugin extends Plugin {
   }
 
   async updateMapInfo() {
-    const map = await this.clientManager.client.call("GetCurrentMapInfo");
+    const map: SMapInfo = await this.clientManager.client.call("GetCurrentMapInfo");
 
     if (map) {
       this.mapInfo = {

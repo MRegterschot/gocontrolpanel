@@ -2,6 +2,7 @@ import Plugin from "@/plugins";
 import TALeaderboardPlugin from "@/plugins/ta-leaderboard";
 import { GbxClientManager } from "./gbxclient-manager";
 import MapInfoPlugin from "@/plugins/map-info";
+import RecordsInfoPlugin from "@/plugins/records-info";
 
 export default class PluginManager {
   private clientManager: GbxClientManager;
@@ -19,6 +20,7 @@ export default class PluginManager {
     const pluginsToLoad: Plugin[] = [
       new TALeaderboardPlugin(this.clientManager),
       new MapInfoPlugin(this.clientManager),
+      new RecordsInfoPlugin(this.clientManager),
     ];
 
     for (const plugin of pluginsToLoad) {

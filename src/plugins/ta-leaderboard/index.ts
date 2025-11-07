@@ -25,7 +25,7 @@ export default class TALeaderboardPlugin extends Plugin {
     this.widget = new Widget(this.clientManager);
     this.widget.setTemplate("widgets/ta-leaderboard/ta-leaderboard.njk");
     this.widget.setId("ta-leaderboard-widget");
-    this.widget.setPosition("100 60");
+    this.widget.setPosition("100 55");
   }
 
   async onLoad() {
