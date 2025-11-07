@@ -16,6 +16,7 @@ type Record = {
 
 export default class TALeaderboardPlugin extends Plugin {
   static pluginId = "ta-leaderboard";
+  static gamemodes = ["timeattack"];
   private widget: Widget;
   records: Record[] = [];
 
@@ -25,7 +26,9 @@ export default class TALeaderboardPlugin extends Plugin {
     this.widget.setTemplate("widgets/ta-leaderboard.njk");
     this.widget.setId("ta-leaderboard-widget");
     this.widget.setPosition("100 60");
+  }
 
+  async onLoad() {
     this.clientManager.addListeners(this.getPluginId(), {
       startMap: this.onStartMap.bind(this),
       finish: this.onPlayerFinish.bind(this),
@@ -34,9 +37,8 @@ export default class TALeaderboardPlugin extends Plugin {
     });
   }
 
-  async onLoad() {}
-
   async onUnload() {
+    this.widget.hide();
     this.clientManager.removeListeners(this.getPluginId());
   }
 

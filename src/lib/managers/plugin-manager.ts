@@ -8,6 +8,10 @@ export default class PluginManager {
 
   constructor(clientManager: GbxClientManager) {
     this.clientManager = clientManager;
+
+    this.clientManager.addListeners("plugin-manager", {
+      modeChange: this.onModeChange.bind(this),
+    });
   }
 
   public async loadPlugins() {
@@ -16,7 +20,15 @@ export default class PluginManager {
     ];
 
     for (const plugin of pluginsToLoad) {
+      if (
+        plugin.getSupportedGamemodes() &&
+        !plugin.getSupportedGamemodes().includes(this.clientManager.info.liveInfo.type)
+      ) {
+        continue;
+      }
+
       await plugin.onLoad();
+      plugin.setLoaded(true);
       this.plugins.set(plugin.getPluginId(), plugin);
     }
 
@@ -26,13 +38,32 @@ export default class PluginManager {
   public async unloadPlugins() {
     for (const plugin of this.plugins.values()) {
       await plugin.onUnload();
+      plugin.setLoaded(false);
     }
     this.plugins.clear();
   }
 
   public async startPlugins() {
     for (const plugin of this.plugins.values()) {
+      if (!plugin.isLoaded()) continue;
       await plugin.onStart();
+    }
+  }
+
+  private async onModeChange(mode: string) {
+    for (const plugin of this.plugins.values()) {
+      if (!plugin.getSupportedGamemodes()) continue;
+
+      if (plugin.getSupportedGamemodes().includes(mode) && !plugin.isLoaded()) {
+        await plugin.onLoad();
+        plugin.setLoaded(true);
+        await plugin.onStart();
+      }
+
+      if (!plugin.getSupportedGamemodes().includes(mode) && plugin.isLoaded()) {
+        await plugin.onUnload();
+        plugin.setLoaded(false);
+      }
     }
   }
 }

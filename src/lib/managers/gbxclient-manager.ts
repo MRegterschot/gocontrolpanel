@@ -945,7 +945,12 @@ async function syncLiveInfo(manager: GbxClientManager) {
   ] as const;
 
   const matched = types.find((t) => modeLower.includes(t));
+  const _prevType = manager.info.liveInfo.type;
   manager.info.liveInfo.type = matched ?? "rounds";
+
+  if (_prevType && _prevType !== manager.info.liveInfo.type) {
+    manager.emit("modeChange", manager.info.liveInfo.type);
+  }
 
   const match = await createMatch(
     manager.getServerId(),

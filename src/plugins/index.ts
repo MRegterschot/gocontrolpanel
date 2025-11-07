@@ -2,7 +2,9 @@ import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 
 export default abstract class Plugin {
   static pluginId: string;
+  static gamemodes: string[] = [];
   protected clientManager: GbxClientManager;
+  private loaded: boolean = false;
 
   constructor(clientManager: GbxClientManager) {
     this.clientManager = clientManager;
@@ -14,5 +16,17 @@ export default abstract class Plugin {
 
   getPluginId(): string {
     return (this.constructor as typeof Plugin).pluginId;
+  }
+
+  getSupportedGamemodes(): string[] {
+    return (this.constructor as typeof Plugin).gamemodes;
+  }
+
+  isLoaded(): boolean {
+    return this.loaded;
+  }
+
+  public setLoaded(loaded: boolean) {
+    this.loaded = loaded;
   }
 }

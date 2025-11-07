@@ -17,31 +17,28 @@ export default class Widget extends Manialink {
     }
   }
 
+  public async hide() {
+    super.hide();
+    this.updateManialink?.hide();
+  }
+
   public async display() {
     super.display();
-    if (this.updateManialink) {
-      this.updateManialink.display();
-    }
+    this.updateManialink?.display();
   }
 
   public update() {
-    if (this.updateManialink) {
-      this.updateManialink.display();
-    }
+    this.updateManialink?.display();
   }
 
   public setTemplate(template: string) {
     super.setTemplate(template);
-    if (this.updateManialink) {
-      this.updateManialink.setTemplate(this.getUpdateTemplate());
-    }
+    this.updateManialink?.setTemplate(this.getUpdateTemplate());
   }
 
   public setId(id: string) {
     this.id = id;
-    if (this.updateManialink) {
-      this.updateManialink.id = `${id}-update`;
-    }
+    if (this.updateManialink) this.updateManialink.id = `${id}-update`;
   }
 
   private getUpdateTemplate(): string {
