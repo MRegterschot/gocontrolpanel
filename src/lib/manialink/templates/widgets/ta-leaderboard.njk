@@ -86,6 +86,11 @@ PersonalBest[] getPersonalBests(Record[] previousRecords, Record[] currentRecord
 
   foreach (prevRecord in previousRecords) {
     foreach (currRecord in currentRecords) {
+      if (currRecord.time <= 0) {
+        // Skip invalid times
+        continue;
+      }
+
       if (prevRecord.login == currRecord.login) {
         if (currRecord.time < prevRecord.time) {
           personalBests.add(PersonalBest{

@@ -1,6 +1,8 @@
 import { getPlayerInfo } from "@/actions/gbx/server-only";
+import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import Widget from "@/lib/manialink/widget";
 import Plugin from "@/plugins";
+import { Scores } from "@/types/gbx/scores";
 import { Waypoint } from "@/types/gbx/waypoint";
 import { PlayerInfo } from "@/types/player";
 import "server-only";
@@ -14,10 +16,11 @@ type Record = {
 
 export default class TALeaderboardPlugin extends Plugin {
   static pluginId = "ta-leaderboard";
-  widget: Widget | null = null;
+  private widget: Widget;
   records: Record[] = [];
 
-  async onLoad() {
+  constructor(clientManager: GbxClientManager) {
+    super(clientManager);
     this.widget = new Widget(this.clientManager);
     this.widget.setTemplate("widgets/ta-leaderboard.njk");
     this.widget.setId("ta-leaderboard-widget");
@@ -27,15 +30,43 @@ export default class TALeaderboardPlugin extends Plugin {
       startMap: this.onStartMap.bind(this),
       finish: this.onPlayerFinish.bind(this),
       playerConnect: this.onPlayerConnect.bind(this),
+      scores: this.onScores.bind(this),
     });
   }
+
+  async onLoad() {}
 
   async onUnload() {
     this.clientManager.removeListeners(this.getPluginId());
   }
 
   async onStart() {
-    this.displayLeaderboard();
+    this.widget.display();
+    this.clearLeaderboard();
+  }
+
+  async onScores(scores: Scores) {
+    if (scores.responseid !== this.getPluginId()) return;
+
+    this.records = [];
+    for (let i = 0; i < scores.players.length; i++) {
+      const player = scores.players[i];
+      this.records.push({
+        rank: i + 1,
+        login: player.login,
+        name: player.name,
+        time: player.bestracetime,
+      });
+    }
+
+    this.records.sort((a, b) => a.time - b.time);
+
+    for (let i = 0; i < this.records.length; i++) {
+      this.records[i].rank = i + 1;
+    }
+
+    this.widget.setData({ recordsJson: JSON.stringify(this.records) });
+    this.widget.update();
   }
 
   async onPlayerConnect(playerInfo: PlayerInfo) {
@@ -51,8 +82,8 @@ export default class TALeaderboardPlugin extends Plugin {
         time: -1,
       });
 
-      this.widget?.setData({ recordsJson: JSON.stringify(this.records) });
-      this.widget?.update();
+      this.widget.setData({ recordsJson: JSON.stringify(this.records) });
+      this.widget.update();
     }
   }
 
@@ -88,8 +119,8 @@ export default class TALeaderboardPlugin extends Plugin {
           for (let j = 0; j < this.records.length; j++) {
             this.records[j].rank = j + 1;
           }
-          this.widget?.setData({ recordsJson: JSON.stringify(this.records) });
-          this.widget?.update();
+          this.widget.setData({ recordsJson: JSON.stringify(this.records) });
+          this.widget.update();
         }
         break;
       }
@@ -97,25 +128,13 @@ export default class TALeaderboardPlugin extends Plugin {
   }
 
   private async onStartMap() {
-    this.displayLeaderboard();
+    this.clearLeaderboard();
   }
 
-  private async displayLeaderboard() {
-    if (!this.widget) return;
-
-    const players = this.clientManager.info.activePlayers;
-
-    this.records = [];
-    for (let i = 0; i < players.length; i++) {
-      this.records.push({
-        rank: i + 1,
-        login: players[i].login,
-        name: players[i].nickName,
-        time: -1,
-      });
-    }
-
-    this.widget.setData({ recordsJson: JSON.stringify(this.records) });
-    this.widget.display();
+  private async clearLeaderboard() {
+    await this.clientManager.client.callScript(
+      "Trackmania.GetScores",
+      this.getPluginId(),
+    );
   }
 }

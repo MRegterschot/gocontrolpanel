@@ -386,6 +386,7 @@ async function callbackListener(
           await onStartRoundStartScript(manager);
           break;
         case "Trackmania.Scores":
+          manager.emit("scores", params);
           if (params.section === "EndRound") {
             ecmEndRound(manager, params);
             await onEndRoundScript(manager, params);

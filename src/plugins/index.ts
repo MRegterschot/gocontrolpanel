@@ -13,6 +13,6 @@ export default abstract class Plugin {
   abstract onStart(): Promise<void>;
 
   getPluginId(): string {
-    return Plugin.pluginId;
+    return (this.constructor as typeof Plugin).pluginId;
   }
 }
