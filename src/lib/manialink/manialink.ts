@@ -50,4 +50,8 @@ export default class Manialink {
   public setTemplate(template: string) {
     this.template = template;
   }
+
+  public getTemplate(): string {
+    return this.template;
+  }
 }
