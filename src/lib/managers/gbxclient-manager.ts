@@ -610,7 +610,8 @@ function onPlayerFinishScript(manager: GbxClientManager, waypoint: Waypoint) {
   };
 
   manager.setActiveRoundPlayer(playerWaypoint.login, playerWaypoint);
-  manager.emit("finish", manager.info.liveInfo?.activeRound);
+  manager.emit("finish", waypoint);
+  manager.emit("live-finish", manager.info.liveInfo?.activeRound);
 
   if (manager.info.liveInfo?.type !== "timeattack") {
     return;

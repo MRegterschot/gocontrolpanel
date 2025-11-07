@@ -1,18 +1,32 @@
+import { getPlayerInfo } from "@/actions/gbx/server-only";
 import Widget from "@/lib/manialink/widget";
 import Plugin from "@/plugins";
+import { Waypoint } from "@/types/gbx/waypoint";
+import { PlayerInfo } from "@/types/player";
 import "server-only";
+
+type Record = {
+  rank: number;
+  login: string;
+  name: string;
+  time: number;
+};
 
 export default class TALeaderboardPlugin extends Plugin {
   static pluginId = "ta-leaderboard";
   widget: Widget | null = null;
+  records: Record[] = [];
 
   async onLoad() {
     this.widget = new Widget(this.clientManager);
     this.widget.setTemplate("widgets/ta-leaderboard.njk");
     this.widget.setId("ta-leaderboard-widget");
+    this.widget.setPosition("100 60");
 
     this.clientManager.addListeners(this.getPluginId(), {
       startMap: this.onStartMap.bind(this),
+      finish: this.onPlayerFinish.bind(this),
+      playerConnect: this.onPlayerConnect.bind(this),
     });
   }
 
@@ -24,31 +38,84 @@ export default class TALeaderboardPlugin extends Plugin {
     this.displayLeaderboard();
   }
 
-  private async onStartMap(uid: string) {
+  async onPlayerConnect(playerInfo: PlayerInfo) {
+    let playerExists = this.records.some(
+      (record) => record.login === playerInfo.login,
+    );
+
+    if (!playerExists) {
+      this.records.push({
+        rank: this.records.length + 1,
+        login: playerInfo.login,
+        name: playerInfo.nickName,
+        time: -1,
+      });
+
+      this.widget?.setData({ recordsJson: JSON.stringify(this.records) });
+      this.widget?.update();
+    }
+  }
+
+  async onPlayerFinish(waypoint: Waypoint) {
+    let playerExists = this.records.some(
+      (record) => record.login === waypoint.login,
+    );
+
+    if (!playerExists) {
+      const playerInfo = await getPlayerInfo(
+        this.clientManager.client,
+        waypoint.login,
+      );
+
+      this.records.push({
+        rank: this.records.length + 1,
+        login: waypoint.login,
+        name: playerInfo.nickName,
+        time: waypoint.racetime,
+      });
+    }
+
+    for (let i = 0; i < this.records.length; i++) {
+      if (this.records[i].login === waypoint.login) {
+        if (
+          this.records[i].time === -1 ||
+          waypoint.racetime < this.records[i].time
+        ) {
+          this.records[i].time = waypoint.racetime;
+          // Re-sort records
+          this.records.sort((a, b) => a.time - b.time);
+          // Update ranks
+          for (let j = 0; j < this.records.length; j++) {
+            this.records[j].rank = j + 1;
+          }
+          this.widget?.setData({ recordsJson: JSON.stringify(this.records) });
+          this.widget?.update();
+        }
+        break;
+      }
+    }
+  }
+
+  private async onStartMap() {
+    this.displayLeaderboard();
   }
 
   private async displayLeaderboard() {
     if (!this.widget) return;
 
-    this.widget.setPosition("100 60");
+    const players = this.clientManager.info.activePlayers;
 
-    this.widget.display();
-
-    for (let i = 1; i <= 9; i++) {
-      setTimeout(() => {
-        const records = Array.from({ length: i }, (_, idx) => ({
-          rank: idx + 1,
-          login: `v8vgGbx_TuKkBabAyn7nsQ`,
-          name: `Marijntje${String(idx + 1).padStart(2, "0")}`,
-          time: 123456 + idx * 50, // slightly varied times
-        }));
-
-        this.widget?.setData({
-          recordsJson: JSON.stringify(records),
-        });
-
-        this.widget?.update();
-      }, i * 100);
+    this.records = [];
+    for (let i = 0; i < players.length; i++) {
+      this.records.push({
+        rank: i + 1,
+        login: players[i].login,
+        name: players[i].nickName,
+        time: -1,
+      });
     }
+
+    this.widget.setData({ recordsJson: JSON.stringify(this.records) });
+    this.widget.display();
   }
 }

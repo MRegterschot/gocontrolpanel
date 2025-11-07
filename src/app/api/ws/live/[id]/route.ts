@@ -206,7 +206,7 @@ export async function SOCKET(
   const listenerId = crypto.randomUUID();
 
   manager.addListeners(listenerId, {
-    finish: onFinish,
+    "live-finish": onFinish,
     personalBest: onPersonalBest,
     checkpoint: onCheckpoint,
     beginRound: onBeginRound,

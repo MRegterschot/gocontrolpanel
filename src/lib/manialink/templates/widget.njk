@@ -18,6 +18,7 @@ main() {
   declare CMlFrame widget;
   widget <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
 
+  sleep(300);
   widget.Show();
 
   {% block main %}{% endblock %}

@@ -17,6 +17,13 @@ export default class Widget extends Manialink {
     }
   }
 
+  public async display() {
+    super.display();
+    if (this.updateManialink) {
+      this.updateManialink.display();
+    }
+  }
+
   public update() {
     if (this.updateManialink) {
       this.updateManialink.display();
@@ -26,7 +33,6 @@ export default class Widget extends Manialink {
   public setTemplate(template: string) {
     super.setTemplate(template);
     if (this.updateManialink) {
-      console.log(this.getUpdateTemplate());
       this.updateManialink.setTemplate(this.getUpdateTemplate());
     }
   }
