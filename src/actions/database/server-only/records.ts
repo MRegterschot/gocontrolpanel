@@ -10,6 +10,9 @@ export async function getLocalRecord(serverId: string, mapUid: string) {
       serverId,
       mapUid,
       deletedAt: null,
+      time: {
+        gt: 0,
+      },
     },
     orderBy: [
       { time: "asc" },

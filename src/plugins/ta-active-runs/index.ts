@@ -57,6 +57,12 @@ export default class TAActiveRunsPlugin extends Plugin {
   }
 
   async onPlayerConnect(playerInfo: PlayerInfo) {
+    if (
+      getSpectatorStatus(playerInfo.spectatorStatus).spectator ||
+      this.activeRuns.find((r) => r.login === playerInfo.login)
+    )
+      return;
+
     this.activeRuns.push({
       login: playerInfo.login,
       name: playerInfo.nickName,
@@ -68,6 +74,9 @@ export default class TAActiveRunsPlugin extends Plugin {
   }
 
   async onPlayerDisconnect(login: string) {
+    const activeRun = this.activeRuns.find((run) => run.login === login);
+    if (!activeRun) return;
+
     this.activeRuns = this.activeRuns.filter((run) => run.login !== login);
     await this.updateWidget();
   }
@@ -170,7 +179,9 @@ export default class TAActiveRunsPlugin extends Plugin {
       0,
     );
 
-    const mainServerInfo = await this.clientManager.client.call("GetMainServerPlayerInfo");
+    const mainServerInfo = await this.clientManager.client.call(
+      "GetMainServerPlayerInfo",
+    );
 
     this.activeRuns = [];
     if (playerList && Array.isArray(playerList)) {

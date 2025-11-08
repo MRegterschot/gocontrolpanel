@@ -1,7 +1,9 @@
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import Widget from "@/lib/manialink/widget";
+import { getSpectatorStatus } from "@/lib/utils";
 import { Scores } from "@/types/gbx/scores";
 import { LiveInfo } from "@/types/live";
+import { PlayerInfo } from "@/types/player";
 import Plugin from "..";
 
 type Ranking = {
@@ -32,6 +34,10 @@ export default class LiveRankingPlugin extends Plugin {
     this.clientManager.addListeners(this.getPluginId(), {
       scores: this.onScores.bind(this),
       beginMatch: this.onBeginMatch.bind(this),
+      playerConnect: this.onPlayerConnect.bind(this),
+      playerDisconnect: this.onPlayerDisconnect.bind(this),
+      playerInfo: this.onPlayerInfo.bind(this),
+      updatedSettings: this.onUpdatedSettings.bind(this),
     });
 
     const cmType = this.clientManager.info.liveInfo.type;
@@ -49,6 +55,55 @@ export default class LiveRankingPlugin extends Plugin {
   async onStart() {
     this.widget.display();
     this.clearRankings();
+  }
+
+  async onPlayerConnect(playerInfo: PlayerInfo) {
+    if (
+      getSpectatorStatus(playerInfo.spectatorStatus).spectator ||
+      this.rankings.find((r) => r.login === playerInfo.login)
+    )
+      return;
+
+    this.rankings.push({
+      login: playerInfo.login,
+      name: playerInfo.nickName,
+      rank: this.rankings.length + 1,
+      points: 0,
+    });
+
+    await this.updateWidget();
+  }
+
+  async onPlayerDisconnect(login: string) {
+    const ranking = this.rankings.find((r) => r.login === login);
+    if (!ranking || ranking.points > 0) return;
+
+    this.rankings = this.rankings.filter((r) => r.login !== login);
+    await this.updateWidget();
+  }
+
+  async onPlayerInfo(playerInfo: PlayerInfo) {
+    if (getSpectatorStatus(playerInfo.spectatorStatus).spectator) {
+      const ranking = this.rankings.find((r) => r.login === playerInfo.login);
+      if (!ranking || ranking.points > 0) return;
+
+      this.rankings = this.rankings.filter((r) => r.login !== playerInfo.login);
+    } else {
+      const ranking = this.rankings.find((r) => r.login === playerInfo.login);
+
+      if (!ranking) {
+        this.rankings.push({
+          login: playerInfo.login,
+          name: playerInfo.nickName,
+          rank: this.rankings.length + 1,
+          points: 0,
+        });
+      } else {
+        ranking.name = playerInfo.nickName;
+      }
+    }
+
+    await this.updateWidget();
   }
 
   async onBeginMatch() {
