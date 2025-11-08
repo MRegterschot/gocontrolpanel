@@ -12,6 +12,8 @@
   <quad pos="6.25 -1" z-index="0" size="4.5 3" bgcolor="FFF" image="file://Media/Flags/WOR.dds"/>
   <label pos="12 -2.25" z-index="0" size="32 5" text="-" textcolor="222" textsize="1.2" textfont="GameFontRegular" valign="center"/>
   <label pos="53 -2.25" z-index="0" size="7.5 5" text="0" valign="center" halign="right" textsize="1" textcolor="222" textfont="GameFontSemiBold"/>
+
+  <quad class="trigger" pos="0 0" z-index="-2" size="55 5" bgcolor="000" opacity="0" scriptevents="1" />
 </framemodel>
 
 <frame id="rankings" pos="0 -5.25" size="55 42">
@@ -110,5 +112,15 @@ rankingsFrame.ScrollMin = <0., 0.>;
 if (LastRankingsUpdate != lastUpdate) {
   lastUpdate = LastRankingsUpdate;
   updateWidget(Rankings, Mode, PointsLimit);
+}
+{% endblock %}
+
+{% block events %}
+if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::MouseClick) {
+  declare targetLogin = event.Control.Parent.DataAttributeGet("login");
+  if (targetLogin != "") {
+    if(!IsSpectatorClient) RequestSpectatorClient(True);
+    SetSpectateTarget(targetLogin);
+  }
 }
 {% endblock %}
