@@ -4,6 +4,7 @@ import { GbxClientManager } from "./gbxclient-manager";
 import MapInfoPlugin from "@/plugins/map-info";
 import RecordsInfoPlugin from "@/plugins/records-info";
 import TAActiveRunsPlugin from "@/plugins/ta-active-runs";
+import LiveRankingPlugin from "@/plugins/live-ranking";
 
 export default class PluginManager {
   private clientManager: GbxClientManager;
@@ -23,6 +24,7 @@ export default class PluginManager {
       new MapInfoPlugin(this.clientManager),
       new RecordsInfoPlugin(this.clientManager),
       new TAActiveRunsPlugin(this.clientManager),
+      new LiveRankingPlugin(this.clientManager),
     ];
 
     for (const plugin of pluginsToLoad) {
@@ -58,7 +60,7 @@ export default class PluginManager {
 
   private async onModeChange(mode: string) {
     for (const plugin of this.plugins.values()) {
-      if (!plugin.getSupportedGamemodes()) continue;
+      if (plugin.getSupportedGamemodes().length <= 0) continue;
 
       if (plugin.getSupportedGamemodes().includes(mode) && !plugin.isLoaded()) {
         await plugin.onLoad();

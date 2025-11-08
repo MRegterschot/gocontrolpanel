@@ -748,6 +748,8 @@ function ecmEndRound(manager: GbxClientManager, scores: Scores) {
 }
 
 async function onEndRoundScript(manager: GbxClientManager, scores: Scores) {
+  manager.emit("endRound", scores);
+
   if (scores.useteams) {
     scores.teams.forEach((team) => {
       const updatedTeam: Team = {
@@ -792,7 +794,7 @@ async function onEndRoundScript(manager: GbxClientManager, scores: Scores) {
 
   await sleep(300); // wait for the pause status to be updated
 
-  manager.emit("endRound", manager.info.liveInfo);
+  manager.emit("live-endRound", manager.info.liveInfo);
 }
 
 async function onPreEndRoundScript(manager: GbxClientManager, scores: Scores) {

@@ -210,7 +210,7 @@ export async function SOCKET(
     personalBest: onPersonalBest,
     "live-checkpoint": onCheckpoint,
     beginRound: onBeginRound,
-    endRound: onEndRound,
+    "live-endRound": onEndRound,
     beginMap: onBeginMap,
     endMap: onEndMap,
     beginMatch: onBeginMatch,
