@@ -26,6 +26,12 @@ main() {
   while (True) {
     yield;
 
+    foreach(event in PendingEvents){
+      if(event.Control == Null) continue;
+
+      {% block events %}{% endblock %}
+    }
+
     {% block loop %}{% endblock %}
   }
 }

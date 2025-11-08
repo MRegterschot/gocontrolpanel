@@ -15,3 +15,11 @@ export interface PlayerChat {
   IsRegistredCmd: boolean;
   Options: number;
 }
+
+export interface SpectatorStatus {
+  spectator: boolean;
+  temporarySpectator: boolean;
+  pureSpectator: boolean;
+  autoTarget: boolean;
+  currentTargetId: number;
+}

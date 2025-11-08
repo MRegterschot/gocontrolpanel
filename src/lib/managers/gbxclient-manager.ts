@@ -15,7 +15,7 @@ import { PauseStatus } from "@/types/gbx/pause";
 import { PlayerChat, SPlayerInfo } from "@/types/gbx/player";
 import { Elmination, Player, Scores } from "@/types/gbx/scores";
 import { WarmUp, WarmUpStatus } from "@/types/gbx/warmup";
-import { GiveUp, Waypoint } from "@/types/gbx/waypoint";
+import { Waypoint, WaypointEvent } from "@/types/gbx/waypoint";
 import { PlayerRound, PlayerWaypoint, Team } from "@/types/live";
 import { PlayerInfo } from "@/types/player";
 import { ECMPluginConfig } from "@/types/plugins/ecm";
@@ -404,6 +404,8 @@ async function callbackListener(
         case "Trackmania.Event.GiveUp":
           onPlayerGiveUpScript(manager, params);
           break;
+        case "Trackmania.Event.SkipOutro":
+          await onSkipOutro(manager, params);
         case "Trackmania.WarmUp.Start":
           onWarmUpStartScript(manager);
           break;
@@ -416,6 +418,8 @@ async function callbackListener(
         case "Trackmania.Knockout.Elimination":
           await onElimination(manager, params);
           break;
+        case "Trackmania.Event.StartLine":
+          await onStartLine(manager, params);
       }
   }
 }
@@ -430,6 +434,14 @@ async function setupListeners(
   manager.client.on("callback", (method: string, data: any) =>
     callbackListener(manager, serverId, method, data),
   );
+}
+
+async function onStartLine(manager: GbxClientManager, startLine: WaypointEvent) {
+  manager.emit("startLine", startLine);
+}
+
+async function onSkipOutro(manager: GbxClientManager, skipOutro: WaypointEvent) {
+  manager.emit("skipOutro", skipOutro);
 }
 
 async function onPlayerConnect(manager: GbxClientManager, login: string) {
@@ -638,6 +650,7 @@ function onPlayerCheckpointScript(
   manager: GbxClientManager,
   waypoint: Waypoint,
 ) {
+  manager.emit("checkpoint", waypoint);
   const playerWaypoint: PlayerWaypoint = {
     ...manager.info.liveInfo.activeRound?.players?.[waypoint.login],
     login: waypoint.login,
@@ -649,7 +662,7 @@ function onPlayerCheckpointScript(
   };
 
   manager.setActiveRoundPlayer(playerWaypoint.login, playerWaypoint);
-  manager.emit("checkpoint", manager.info.liveInfo?.activeRound);
+  manager.emit("live-checkpoint", manager.info.liveInfo?.activeRound);
 }
 
 function onEndMapStartScript(manager: GbxClientManager, endMap: EndMap) {
@@ -1052,14 +1065,15 @@ async function setScriptSettings(manager: GbxClientManager) {
   }
 }
 
-function onPlayerGiveUpScript(manager: GbxClientManager, giveUp: GiveUp) {
+function onPlayerGiveUpScript(manager: GbxClientManager, giveUp: WaypointEvent) {
+  manager.emit("giveUp", giveUp);
   const playerWaypoint: PlayerWaypoint = {
     ...manager.info.liveInfo.activeRound?.players?.[giveUp.login],
     hasGivenUp: true,
   };
 
   manager.setActiveRoundPlayer(playerWaypoint.login, playerWaypoint);
-  manager.emit("giveUp", manager.info.liveInfo?.activeRound);
+  manager.emit("live-giveUp", manager.info.liveInfo?.activeRound);
 }
 
 function onWarmUpStartScript(manager: GbxClientManager) {
