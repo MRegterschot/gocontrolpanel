@@ -5,6 +5,7 @@ import MapInfoPlugin from "@/plugins/map-info";
 import RecordsInfoPlugin from "@/plugins/records-info";
 import TAActiveRunsPlugin from "@/plugins/ta-active-runs";
 import LiveRankingPlugin from "@/plugins/live-ranking";
+import LiveRoundPlugin from "@/plugins/live-round";
 
 export default class PluginManager {
   private clientManager: GbxClientManager;
@@ -25,6 +26,7 @@ export default class PluginManager {
       new RecordsInfoPlugin(this.clientManager),
       new TAActiveRunsPlugin(this.clientManager),
       new LiveRankingPlugin(this.clientManager),
+      new LiveRoundPlugin(this.clientManager),
     ];
 
     for (const plugin of pluginsToLoad) {

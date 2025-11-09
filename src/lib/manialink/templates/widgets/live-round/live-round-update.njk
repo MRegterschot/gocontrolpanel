@@ -1,0 +1,39 @@
+{% extends "manialink.njk" %}
+
+{% block content %}
+
+<script>
+  <!--
+  #Struct Round {
+    Text login;
+    Text name;
+    Integer rank;
+    Integer points;
+    Integer[] checkpoints;
+    Integer time;
+  }
+
+  #Struct Finish {
+    Text login;
+    Boolean finished;
+  }
+
+  main(){
+    declare Round[] Rounds for This;
+    declare Finish[] Finishes for This;
+    declare Text Mode for This;
+    declare Integer PointsLimit for This;
+    declare Integer LastRoundsUpdate for This;
+    declare Text roundsJson = """{{ data.roundsJson | default('[]') }}""";
+    declare Text finishesJson = """{{ data.finishesJson | default('[]') }}""";
+
+    Rounds.fromjson(roundsJson);
+    Finishes.fromjson(finishesJson);
+    Mode = """{{ data.mode | default('rounds') }}""";
+    PointsLimit = {{ data.pointsLimit | default(-1) }};
+    LastRoundsUpdate = GameTime;
+  }
+  -->
+</script>
+
+{% endblock %}

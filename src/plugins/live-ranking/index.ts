@@ -67,7 +67,7 @@ export default class LiveRankingPlugin extends Plugin {
     this.rankings.push({
       login: playerInfo.login,
       name: playerInfo.nickName,
-      rank: this.rankings.length + 1,
+      rank: 0,
       points: 0,
     });
 
@@ -95,7 +95,7 @@ export default class LiveRankingPlugin extends Plugin {
         this.rankings.push({
           login: playerInfo.login,
           name: playerInfo.nickName,
-          rank: this.rankings.length + 1,
+          rank: 0,
           points: 0,
         });
       } else {
@@ -130,23 +130,23 @@ export default class LiveRankingPlugin extends Plugin {
     for (let i = 0; i < scores.players.length; i++) {
       const player = scores.players[i];
       this.rankings.push({
-        rank: i + 1,
+        rank: 0,
         login: player.login,
         name: player.name,
         points: player.matchpoints,
       });
     }
 
+    await this.updateWidget();
+  }
+
+  async updateWidget() {
     this.rankings.sort((a, b) => b.points - a.points);
 
     for (let i = 0; i < this.rankings.length; i++) {
       this.rankings[i].rank = i + 1;
     }
 
-    await this.updateWidget();
-  }
-
-  async updateWidget() {
     this.widget.setData({
       rankingsJson: JSON.stringify(this.rankings),
       mode: this.mode,

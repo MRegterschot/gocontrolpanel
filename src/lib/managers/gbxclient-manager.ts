@@ -676,6 +676,7 @@ function onStartMapStartScript(manager: GbxClientManager, startMap: StartMap) {
 }
 
 async function onStartRoundStartScript(manager: GbxClientManager) {
+  manager.emit("startRound");
   if (manager.roundNumber !== null && !manager.info.liveInfo.isWarmUp)
     manager.roundNumber++;
 

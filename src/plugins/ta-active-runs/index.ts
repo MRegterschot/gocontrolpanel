@@ -191,6 +191,10 @@ export default class TAActiveRunsPlugin extends Plugin {
           continue; // Skip the main server player
         }
 
+        if (getSpectatorStatus(player.SpectatorStatus).spectator) {
+          continue; // Skip spectators
+        }
+
         this.activeRuns.push({
           login: player.Login,
           name: player.NickName,
