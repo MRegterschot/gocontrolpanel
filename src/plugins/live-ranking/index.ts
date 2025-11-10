@@ -39,12 +39,6 @@ export default class LiveRankingPlugin extends Plugin {
       playerInfo: this.onPlayerInfo.bind(this),
       updatedSettings: this.onUpdatedSettings.bind(this),
     });
-
-    const cmType = this.clientManager.info.liveInfo.type;
-    if (cmType === "rounds" || cmType === "cup") {
-      this.mode = cmType;
-    }
-    this.pointsLimit = this.clientManager.info.liveInfo.pointsLimit || -1;
   }
 
   async onUnload() {
@@ -156,6 +150,12 @@ export default class LiveRankingPlugin extends Plugin {
   }
 
   async clearRankings() {
+    const cmType = this.clientManager.info.liveInfo.type;
+    if (cmType === "rounds" || cmType === "cup") {
+      this.mode = cmType;
+    }
+    this.pointsLimit = this.clientManager.info.liveInfo.pointsLimit || -1;
+
     await this.clientManager.client.callScript(
       "Trackmania.GetScores",
       this.getPluginId(),

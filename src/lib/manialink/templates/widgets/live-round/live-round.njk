@@ -161,6 +161,10 @@ Void updateRoundRow(Integer index, Round round, Round[] rounds, Text mode, Integ
     } else if (round.points == pointsLimit) {
       pointsText = "$D22F";
     }
+  } else if (mode == "rounds" && pointsLimit > 0) {
+    if (round.points >= pointsLimit) {
+      pointsText = "$2C2W";
+    }
   }
 
   (roundFrame.Controls[6] as CMlLabel).SetText(pointsText);

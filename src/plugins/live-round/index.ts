@@ -53,12 +53,6 @@ export default class LiveRoundPlugin extends Plugin {
       updatedSettings: this.onUpdatedSettings.bind(this),
       scores: this.onScores.bind(this),
     });
-
-    const cmType = this.clientManager.info.liveInfo.type;
-    if (cmType === "rounds" || cmType === "cup") {
-      this.mode = cmType;
-    }
-    this.pointsLimit = this.clientManager.info.liveInfo.pointsLimit || -1;
   }
 
   async onUnload() {
@@ -210,6 +204,12 @@ export default class LiveRoundPlugin extends Plugin {
   }
 
   async clearLiveRound() {
+    const cmType = this.clientManager.info.liveInfo.type;
+    if (cmType === "rounds" || cmType === "cup") {
+      this.mode = cmType;
+    }
+    this.pointsLimit = this.clientManager.info.liveInfo.pointsLimit || -1;
+
     const playerList: SPlayerInfo[] = await this.clientManager.client.call(
       "GetPlayerList",
       1000,

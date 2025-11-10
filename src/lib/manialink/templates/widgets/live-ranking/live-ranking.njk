@@ -54,6 +54,10 @@ Void updateRankingRow(Integer index, Ranking ranking, Text mode, Integer pointsL
     } else if (ranking.points == pointsLimit) {
       pointsText = "$D22F";
     }
+  } else if (mode == "rounds" && pointsLimit > 0) {
+    if (ranking.points >= pointsLimit) {
+      pointsText = "$2C2W";
+    }
   }
 
   (rankingFrame.Controls[5] as CMlLabel).SetText(pointsText);

@@ -30,6 +30,7 @@ export default class PluginManager {
     ];
 
     for (const plugin of pluginsToLoad) {
+      this.plugins.set(plugin.getPluginId(), plugin);
       if (
         plugin.getSupportedGamemodes().length > 0 &&
         !plugin.getSupportedGamemodes().includes(this.clientManager.info.liveInfo.type)
@@ -39,7 +40,6 @@ export default class PluginManager {
 
       await plugin.onLoad();
       plugin.setLoaded(true);
-      this.plugins.set(plugin.getPluginId(), plugin);
     }
 
     await this.startPlugins();
@@ -68,6 +68,7 @@ export default class PluginManager {
         await plugin.onLoad();
         plugin.setLoaded(true);
         await plugin.onStart();
+        continue;
       }
 
       if (!plugin.getSupportedGamemodes().includes(mode) && plugin.isLoaded()) {
