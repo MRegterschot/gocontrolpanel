@@ -1,10 +1,12 @@
-import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import nunjucks from "@/lib/nunjucks";
 import "server-only";
+import ManialinkManager, {
+  getManialinkManager,
+} from "../managers/manialink-manager";
 
 export default class Manialink {
   private firstDisplay: boolean = true;
-  protected readonly clientManager: GbxClientManager;
+  protected readonly manialinkManager: ManialinkManager;
 
   public readonly login?: string;
   public id: string = "manialink";
@@ -12,21 +14,18 @@ export default class Manialink {
   private data: unknown;
   private position: string = "0 0";
 
-  constructor(clientManager: GbxClientManager, login?: string) {
-    this.clientManager = clientManager;
+  constructor(manialinkManager: ManialinkManager, login?: string) {
+    this.manialinkManager = manialinkManager;
     this.login = login;
   }
 
   public async display() {
-    this.clientManager.manialinkManager.displayManialink(
-      this,
-      this.firstDisplay,
-    );
+    this.manialinkManager.displayManialink(this, this.firstDisplay);
     this.firstDisplay = false;
   }
 
   public async hide() {
-    this.clientManager.manialinkManager.hideManialink(this);
+    this.manialinkManager.hideManialink(this);
   }
 
   public async render(): Promise<string> {

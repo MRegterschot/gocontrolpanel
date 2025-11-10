@@ -7,6 +7,7 @@ import { Waypoint, WaypointEvent } from "@/types/gbx/waypoint";
 import { LiveInfo } from "@/types/live";
 import { PlayerInfo } from "@/types/player";
 import Plugin from "..";
+import ManialinkManager from "@/lib/managers/manialink-manager";
 
 type Round = {
   login: string;
@@ -32,9 +33,9 @@ export default class LiveRoundPlugin extends Plugin {
   private pointsLimit: number = -1;
   private mode: "rounds" | "cup" = "rounds";
 
-  constructor(clientManager: GbxClientManager) {
+  constructor(clientManager: GbxClientManager, manialinkManager: ManialinkManager) {
     super(clientManager);
-    this.widget = new Widget(this.clientManager);
+    this.widget = new Widget(manialinkManager);
     this.widget.setTemplate("widgets/live-round/live-round.njk");
     this.widget.setId("live-round-widget");
     this.widget.setPosition("-156 73.5");

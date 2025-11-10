@@ -1,5 +1,6 @@
 import { getPlayerInfo } from "@/actions/gbx/server-only";
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
+import ManialinkManager from "@/lib/managers/manialink-manager";
 import Widget from "@/lib/manialink/widget";
 import Plugin from "@/plugins";
 import { Scores } from "@/types/gbx/scores";
@@ -20,9 +21,12 @@ export default class TALeaderboardPlugin extends Plugin {
   private widget: Widget;
   records: Record[] = [];
 
-  constructor(clientManager: GbxClientManager) {
+  constructor(
+    clientManager: GbxClientManager,
+    manialinkManager: ManialinkManager,
+  ) {
     super(clientManager);
-    this.widget = new Widget(this.clientManager);
+    this.widget = new Widget(manialinkManager);
     this.widget.setTemplate("widgets/ta-leaderboard/ta-leaderboard.njk");
     this.widget.setId("ta-leaderboard-widget");
     this.widget.setPosition("100 55");

@@ -2,6 +2,7 @@ import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import Widget from "@/lib/manialink/widget";
 import Plugin from "..";
 import { SMapInfo } from "@/types/gbx/map";
+import ManialinkManager from "@/lib/managers/manialink-manager";
 
 type MapInfo = {
   name: string;
@@ -16,9 +17,9 @@ export default class MapInfoPlugin extends Plugin {
     author: "-",
   };
 
-  constructor(clientManager: GbxClientManager) {
+  constructor(clientManager: GbxClientManager, manialinkManager: ManialinkManager) {
     super(clientManager);
-    this.widget = new Widget(this.clientManager);
+    this.widget = new Widget(manialinkManager);
     this.widget.setTemplate("widgets/map-info/map-info.njk");
     this.widget.setId("map-info-widget");
     this.widget.setPosition("100 85");

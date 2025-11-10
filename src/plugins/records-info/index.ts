@@ -6,6 +6,7 @@ import { SMapInfo } from "@/types/gbx/map";
 import { Waypoint } from "@/types/gbx/waypoint";
 import Plugin from "..";
 import { getAccountNames, getMapLeaderboard } from "@/lib/api/nadeo";
+import ManialinkManager from "@/lib/managers/manialink-manager";
 
 type RecordsInfo = {
   worldRecord: {
@@ -32,9 +33,9 @@ export default class RecordsInfoPlugin extends Plugin {
     },
   };
 
-  constructor(clientManager: GbxClientManager) {
+  constructor(clientManager: GbxClientManager, manialinkManager: ManialinkManager) {
     super(clientManager);
-    this.widget = new Widget(this.clientManager);
+    this.widget = new Widget(manialinkManager);
     this.widget.setTemplate("widgets/records-info/records-info.njk");
     this.widget.setId("records-info-widget");
     this.widget.setPosition("100 73.5");

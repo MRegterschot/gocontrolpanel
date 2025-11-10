@@ -1,12 +1,13 @@
+import ManialinkManager from "../managers/manialink-manager";
 import Manialink from "./manialink";
 
 export default class Widget extends Manialink {
   private updateManialink: Manialink | null = null;
 
-  constructor(clientManager: any, login?: string) {
-    super(clientManager, login);
+  constructor(manialinkManager: ManialinkManager, login?: string) {
+    super(manialinkManager, login);
     this.setTemplate("widget.njk");
-    this.updateManialink = new Manialink(clientManager, login);
+    this.updateManialink = new Manialink(manialinkManager, login);
     this.updateManialink.setTemplate(this.getUpdateTemplate());
   }
 

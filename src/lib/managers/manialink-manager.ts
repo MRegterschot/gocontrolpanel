@@ -1,7 +1,8 @@
-import "server-only";
-import Manialink from "../manialink/manialink";
-import { GbxClientManager } from "./gbxclient-manager";
 import { PlayerInfo } from "@/types/player";
+import "server-only";
+import { appGlobals } from "../global";
+import Manialink from "../manialink/manialink";
+import { GbxClientManager, getGbxClientManager } from "./gbxclient-manager";
 
 export default class ManialinkManager {
   private readonly listenerId: string;
@@ -26,14 +27,28 @@ export default class ManialinkManager {
     // Re-display all public manialinks to the newly connected player
     for (const manialink of Object.values(this.publicManialinks)) {
       const xml = await manialink.render();
-      multi.push(["SendDisplayManialinkPageToLogin", player.login, xml, 0, false]);
+      multi.push([
+        "SendDisplayManialinkPageToLogin",
+        player.login,
+        xml,
+        0,
+        false,
+      ]);
     }
 
     // Re-display all player-specific manialinks to the newly connected player
     if (this.playerManialinks[player.login]) {
-      for (const manialink of Object.values(this.playerManialinks[player.login])) {
+      for (const manialink of Object.values(
+        this.playerManialinks[player.login],
+      )) {
         const xml = await manialink.render();
-        multi.push(["SendDisplayManialinkPageToLogin", player.login, xml, 0, false]);
+        multi.push([
+          "SendDisplayManialinkPageToLogin",
+          player.login,
+          xml,
+          0,
+          false,
+        ]);
       }
     }
 
@@ -42,7 +57,7 @@ export default class ManialinkManager {
 
   private onPlayerDisconnect(login: string) {
     if (!this.playerManialinks[login]) return;
-    
+
     delete this.playerManialinks[login];
   }
 
@@ -140,4 +155,20 @@ export default class ManialinkManager {
       }
     }
   }
+}
+
+export async function getManialinkManager(
+  serverId: string,
+): Promise<ManialinkManager> {
+  if (!appGlobals.manialinkManagers?.[serverId]) {
+    const clientManager = await getGbxClientManager(serverId);
+    appGlobals.manialinkManagers = appGlobals.manialinkManagers || {};
+    appGlobals.manialinkManagers[serverId] = new ManialinkManager(clientManager);
+  }
+
+  if (!appGlobals.manialinkManagers?.[serverId]) {
+    throw new Error(`Manialink manager for server ${serverId} not found`);
+  }
+
+  return appGlobals.manialinkManagers[serverId];
 }

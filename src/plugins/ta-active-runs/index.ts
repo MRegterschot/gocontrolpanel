@@ -5,6 +5,7 @@ import { SPlayerInfo } from "@/types/gbx/player";
 import { Waypoint, WaypointEvent } from "@/types/gbx/waypoint";
 import { PlayerInfo } from "@/types/player";
 import Plugin from "..";
+import ManialinkManager from "@/lib/managers/manialink-manager";
 
 type ActiveRun = {
   login: string;
@@ -20,9 +21,9 @@ export default class TAActiveRunsPlugin extends Plugin {
 
   private activeRuns: ActiveRun[] = [];
 
-  constructor(clientManager: GbxClientManager) {
+  constructor(clientManager: GbxClientManager, manialinkManager: ManialinkManager) {
     super(clientManager);
-    this.widget = new Widget(this.clientManager);
+    this.widget = new Widget(manialinkManager);
     this.widget.setTemplate("widgets/ta-active-runs/ta-active-runs.njk");
     this.widget.setId("ta-active-runs-widget");
     this.widget.setPosition("-156 73.5");
