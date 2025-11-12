@@ -1,5 +1,5 @@
-{% extends "widget.njk" %}
-{% block widget %}
+{{#extend "widget"}}
+{{#content "widget"}}
 <frame pos="0 0">
   <quad pos="0 0" z-index="0" size="55 5" bgcolor="222"/>
   <label pos="27.5 -2.25" z-index="0" size="55 5" text="Live Round" halign="center" textsize="1" textfont="GameFontSemiBold" valign="center"/>
@@ -15,24 +15,24 @@
   <label pos="39.75 -2.25" z-index="0" size="5 5" text="0" halign="right" textcolor="222" textsize="1" textfont="GameFontRegular" valign="center"/>
   <label pos="54 -2.25" z-index="0" size="12.5 5" text="--:--.---" valign="center" halign="right" textsize="1" textcolor="222" textfont="GameFontSemiBold"/>
   
-  <frame pos="49.5 0" size="5 5" id="finish" z-index="-2">
-    <quad pos="0 0" size="5 5" bgcolor="222" z-index="-2" />
-    <label pos="2.5 -2.25" size="5 5" z-index="-1" text="" halign="center" valign="center" textsize="1.25" textcolor="DDD" />
+  <frame pos="47.5 0" size="7 5" id="finish" z-index="-2">
+    <quad pos="0 0" size="7 5" bgcolor="222" z-index="-2" />
+    <label pos="3.5 -2.25" size="6 5" z-index="-1" text="" halign="center" valign="center" textsize="1.25" textcolor="DDD" />
   </frame>
 
-  <quad class="trigger" pos="0 0" z-index="-2" size="55 5" bgcolor="000" opacity="0" scriptevents="1" />
+  <quad class="trigger" pos="0 0" z-index="-2" size="57 5" bgcolor="000" opacity="0" scriptevents="1" />
 </framemodel>
 
-<frame id="rounds" pos="0 -5.25" size="60 42">
-<quad size="55 {{ 100 * 5.25 }}" bgcolor="fff" opacity="0" scriptevents="1"/>
-{% for i in range(100) %}
-<frameinstance modelid="round" pos="0 {{ i * -5.25 }}" />
-{% endfor %}
+<frame id="rounds" pos="0 -5.25" size="62 42">
+<quad size="55 {{ multiply 100 5.25 }}" bgcolor="fff" opacity="0" scriptevents="1"/>
+{{#range 0 100}}
+<frameinstance modelid="round" pos="0 {{ multiply i -5.25 }}" />
+{{/range}}
 </frame>
-{% endblock %}
+{{/content}}
 
 
-{% block globals %}
+{{#content "globals"}}
 #Struct Round {
   Text login;
   Text name;
@@ -44,11 +44,11 @@
 
 #Struct Finish {
   Text login;
-  Boolean finished;
+  Integer points;
 }
-{% endblock %}
+{{/content}}
 
-{% block script %}
+{{#content "script"}}
 Text formatTime(Integer time) {
   declare Text secondString;
   declare Text msString;
@@ -173,7 +173,7 @@ Void updateRoundRow(Integer index, Round round, Round[] rounds, Text mode, Integ
   roundFrame.Show();
 }
 
-Void updateFinish(Text login, Boolean finished) {
+Void updateFinish(Text login, Integer points, Boolean finished) {
   declare roundsFrame <=> (Page.MainFrame.GetFirstChild("rounds") as CMlFrame);
 
   foreach (control in roundsFrame.Controls) {
@@ -187,13 +187,18 @@ Void updateFinish(Text login, Boolean finished) {
 
     if (frameLogin == login) {
       declare frameFinish <=> (roundFrame.GetFirstChild("finish") as CMlFrame);
-      
-      AnimMgr.Flush(frameFinish);
 
+      AnimMgr.Flush(frameFinish);
+      
       if (finished) {
+        if (points == 0) {
+          (frameFinish.Controls[1] as CMlLabel).SetText("");
+        } else {
+          (frameFinish.Controls[1] as CMlLabel).SetText("+" ^ TL::ToText(points));
+        }
         AnimMgr.Add(frameFinish, """<frame pos='55 0' />""", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
       } else {
-        AnimMgr.Add(frameFinish, """<frame pos='49.5 0' />""", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
+        AnimMgr.Add(frameFinish, """<frame pos='47.5 0' />""", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
       }
 
       break;
@@ -203,7 +208,7 @@ Void updateFinish(Text login, Boolean finished) {
 
 Void clearFinishes(Round[] rounds) {
   foreach (round in rounds) {
-    updateFinish(round.login, False);
+    updateFinish(round.login, 0, False);
   }
 }
 
@@ -240,9 +245,9 @@ Void updateWidget(Round[] rounds, Text mode, Integer pointsLimit) {
 
   updateScroll(rounds);
 }
-{% endblock %}
+{{/content}}
 
-{% block main %}
+{{#content "main"}}
 declare Round[] Rounds for This;
 declare Finish[] Finishes for This = [];
 declare Text Mode for This = "rounds";
@@ -253,10 +258,9 @@ declare Finish[] prevFinishes = [];
 declare roundsFrame <=> (widget.GetFirstChild("rounds") as CMlFrame);
 roundsFrame.ScrollActive = True;
 roundsFrame.ScrollMin = <0., 0.>;
-{% endblock %}
+{{/content}}
 
-
-{% block loop %}
+{{#content "loop"}}
 if (LastRoundsUpdate != lastUpdate) {
   lastUpdate = LastRoundsUpdate;
   
@@ -277,17 +281,15 @@ if (LastRoundsUpdate != lastUpdate) {
             }
           }
 
-          if (!found && finish.finished) {
-            updateFinish(finish.login, True);
+          if (!found) {
+            updateFinish(finish.login, finish.points, True);
           }
         }
       } else {
         clearFinishes(Rounds);
         // Re-apply finished players
         foreach (finish in Finishes) {
-          if (finish.finished) {
-            updateFinish(finish.login, True);
-          }
+          updateFinish(finish.login, finish.points, True);
         }
       }
     }
@@ -295,9 +297,9 @@ if (LastRoundsUpdate != lastUpdate) {
     prevFinishes = Finishes;
   }
 }
-{% endblock %}
+{{/content}}
 
-{% block events %}
+{{#content "events"}}
 if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::MouseClick) {
   declare targetLogin = event.Control.Parent.DataAttributeGet("login");
   if (targetLogin != "") {
@@ -305,4 +307,5 @@ if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::Mou
     SetSpectateTarget(targetLogin);
   }
 }
-{% endblock %}
+{{/content}}
+{{/extend}}

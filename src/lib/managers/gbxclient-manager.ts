@@ -34,11 +34,11 @@ import {
   sleep,
   withTimeout,
 } from "../utils";
-import ManialinkManager from "./manialink-manager";
 import PluginManager from "./plugin-manager";
 
 export class GbxClientManager extends EventEmitter {
   client: GbxClient;
+  pluginManager: PluginManager;
   private serverId: string;
   info: ServerClientInfo;
   private isConnected = false;
@@ -76,6 +76,8 @@ export class GbxClientManager extends EventEmitter {
 
     this.client.on("disconnect", this.onDisconnect.bind(this));
 
+    this.pluginManager = new PluginManager(this);
+
     appGlobals.gbxClients = appGlobals.gbxClients || {};
     appGlobals.gbxClients[serverId] = this;
   }
@@ -84,6 +86,7 @@ export class GbxClientManager extends EventEmitter {
     if (!this.isConnected) return;
     console.log(`Disconnected from GBX client for server ${this.serverId}`);
     this.isConnected = false;
+    this.pluginManager.unloadPlugins();
     this.emit("disconnect", this.serverId);
     this.scheduleReconnect(); // retry on disconnect
   }
@@ -196,6 +199,8 @@ export class GbxClientManager extends EventEmitter {
     await setupListeners(this, server.id);
     await syncMap(this, server.id);
     await syncLiveInfo(this);
+
+    this.pluginManager.loadPlugins();
 
     return this.client;
   }
@@ -1047,12 +1052,16 @@ async function setScriptSettings(manager: GbxClientManager) {
 
   // Points repartition
   const pointsRepartition = scriptSettings[prVar];
-  if (typeof pointsRepartition === "string" && pointsRepartition.length > 0) {
-    const list = pointsRepartition
-      .split(",")
-      .map((x: string) => parseInt(x.trim(), 10))
-      .filter((x) => !isNaN(x));
-    manager.info.liveInfo.pointsRepartition = list;
+  if (typeof pointsRepartition === "string") {
+    if (pointsRepartition) {
+      const list = pointsRepartition
+        .split(",")
+        .map((x: string) => parseInt(x.trim(), 10))
+        .filter((x) => !isNaN(x));
+      manager.info.liveInfo.pointsRepartition = list;
+    } else {
+      manager.info.liveInfo.pointsRepartition = [10, 6, 4, 3, 2, 1]; // default
+    }
   } else {
     console.debug(
       "PointsRepartition not found or invalid for server",

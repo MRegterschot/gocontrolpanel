@@ -20,7 +20,7 @@ export default class MapInfoPlugin extends Plugin {
   constructor(clientManager: GbxClientManager, manialinkManager: ManialinkManager) {
     super(clientManager);
     this.widget = new Widget(manialinkManager);
-    this.widget.setTemplate("widgets/map-info/map-info.njk");
+    this.widget.setTemplate("widgets/map-info/map-info");
     this.widget.setId("map-info-widget");
     this.widget.setPosition("100 85");
   }

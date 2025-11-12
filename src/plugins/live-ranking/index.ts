@@ -26,7 +26,7 @@ export default class LiveRankingPlugin extends Plugin {
   constructor(clientManager: GbxClientManager, manialinkManager: ManialinkManager) {
     super(clientManager);
     this.widget = new Widget(manialinkManager);
-    this.widget.setTemplate("widgets/live-ranking/live-ranking.njk");
+    this.widget.setTemplate("widgets/live-ranking/live-ranking");
     this.widget.setId("live-ranking-widget");
     this.widget.setPosition("100 55");
   }

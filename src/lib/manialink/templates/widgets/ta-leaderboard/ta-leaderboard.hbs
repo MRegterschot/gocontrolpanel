@@ -1,5 +1,5 @@
-{% extends "widget.njk" %}
-{% block widget %}
+{{#extend "widget"}}
+{{#content "widget"}}
 <frame pos="0 0">
   <quad pos="0 0" z-index="0" size="55 5" bgcolor="222"/>
   <label pos="27.5 -2.25" z-index="0" size="55 5" text="Leaderboard" halign="center" textsize="1" textfont="GameFontSemiBold" valign="center"/>
@@ -20,15 +20,15 @@
 </framemodel>
 
 <frame id="records" pos="0 -5.25" size="55 42">
-<quad size="55 {{ 100 * 5.25 }}" bgcolor="fff" opacity="0" scriptevents="1"/>
-{% for i in range(100) %}
-<frameinstance modelid="record" pos="0 {{ i * -5.25 }}" />
-{% endfor %}
+<quad size="55 {{ multiply 100 5.25 }}" bgcolor="fff" opacity="0" scriptevents="1"/>
+{{#range 0 100}}
+<frameinstance modelid="record" pos="0 {{ multiply i -5.25 }}" />
+{{/range}}
 </frame>
-{% endblock %}
+{{/content}}
 
 
-{% block globals %}
+{{#content "globals"}}
 #Struct Record {
   Integer rank;
   Integer time;
@@ -40,9 +40,9 @@
   Text login;
   Integer timeDiff;
 }
-{% endblock %}
+{{/content}}
 
-{% block script %}
+{{#content "script"}}
 Text formatTime(Integer time) {
   declare Text secondString;
   declare Text msString;
@@ -181,7 +181,7 @@ Void updatePersonalBest(PersonalBest pb) {
       AnimMgr.Add(personalBestFrame, """<frame pos='""" ^ "40.5 0" ^ """' />""", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
       
       // Hold position while not blocking code
-      AnimMgr.AddChain(personalBestFrame, """<frame pos='""" ^ "40.5 0" ^ """' />""", 2000, CAnimManager::EAnimManagerEasing::ExpInOut);
+      AnimMgr.AddChain(personalBestFrame, """<frame pos='""" ^ "40.5 0" ^ """' />""", 3000, CAnimManager::EAnimManagerEasing::ExpInOut);
 
       // Hide animation
       AnimMgr.AddChain(personalBestFrame, """<frame pos='""" ^ "56 0" ^ """' />""", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
@@ -190,9 +190,9 @@ Void updatePersonalBest(PersonalBest pb) {
     }
   }
 }
-{% endblock %}
+{{/content}}
 
-{% block main %}
+{{#content "main"}}
 declare Record[] Records for This;
 declare Record[] lastRecords = [];
 declare Integer LastRecordsUpdate for This = -1;
@@ -200,10 +200,10 @@ declare Integer lastUpdate = -1;
 declare recordsFrame <=> (widget.GetFirstChild("records") as CMlFrame);
 recordsFrame.ScrollActive = True;
 recordsFrame.ScrollMin = <0., 0.>;
-{% endblock %}
+{{/content}}
 
 
-{% block loop %}
+{{#content "loop"}}
 if (LastRecordsUpdate != lastUpdate) {
   lastUpdate = LastRecordsUpdate;
 
@@ -216,4 +216,5 @@ if (LastRecordsUpdate != lastUpdate) {
     updatePersonalBest(pb);
   }
 }
-{% endblock %}
+{{/content}}
+{{/extend}}

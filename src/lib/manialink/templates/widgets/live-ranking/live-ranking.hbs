@@ -1,5 +1,5 @@
-{% extends "widget.njk" %}
-{% block widget %}
+{{#extend "widget"}}
+{{#content "widget"}}
 <frame pos="0 0">
   <quad pos="0 0" z-index="0" size="55 5" bgcolor="222"/>
   <label pos="27.5 -2.25" z-index="0" size="55 5" text="Live Ranking" halign="center" textsize="1" textfont="GameFontSemiBold" valign="center"/>
@@ -17,24 +17,24 @@
 </framemodel>
 
 <frame id="rankings" pos="0 -5.25" size="55 42">
-<quad size="55 {{ 100 * 5.25 }}" bgcolor="fff" opacity="0" scriptevents="1"/>
-{% for i in range(100) %}
-<frameinstance modelid="ranking" pos="0 {{ i * -5.25 }}" />
-{% endfor %}
+<quad size="55 {{ multiply 100 5.25 }}" bgcolor="fff" opacity="0" scriptevents="1"/>
+{{#range 0 100}}
+  <frameinstance modelid="ranking" pos="0 {{ multiply i -5.25 }}" />
+{{/range}}
 </frame>
-{% endblock %}
+{{/content}}
 
 
-{% block globals %}
+{{#content "globals"}}
 #Struct Ranking {
   Text login;
   Text name;
   Integer rank;
   Integer points;
 }
-{% endblock %}
+{{/content}}
 
-{% block script %}
+{{#content "script"}}
 Void updateRankingRow(Integer index, Ranking ranking, Text mode, Integer pointsLimit) {
   declare rankingsFrame <=> (Page.MainFrame.GetFirstChild("rankings") as CMlFrame);
 
@@ -98,9 +98,9 @@ Void updateWidget(Ranking[] rankings, Text mode, Integer pointsLimit) {
 
   updateScroll(rankings);
 }
-{% endblock %}
+{{/content}}
 
-{% block main %}
+{{#content "main"}}
 declare Ranking[] Rankings for This;
 declare Text Mode for This = "rounds";
 declare Integer PointsLimit for This = -1;
@@ -109,17 +109,16 @@ declare Integer lastUpdate = -1;
 declare rankingsFrame <=> (widget.GetFirstChild("rankings") as CMlFrame);
 rankingsFrame.ScrollActive = True;
 rankingsFrame.ScrollMin = <0., 0.>;
-{% endblock %}
+{{/content}}
 
-
-{% block loop %}
+{{#content "loop"}}
 if (LastRankingsUpdate != lastUpdate) {
   lastUpdate = LastRankingsUpdate;
   updateWidget(Rankings, Mode, PointsLimit);
 }
-{% endblock %}
+{{/content}}
 
-{% block events %}
+{{#content "events"}}
 if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::MouseClick) {
   declare targetLogin = event.Control.Parent.DataAttributeGet("login");
   if (targetLogin != "") {
@@ -127,4 +126,5 @@ if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::Mou
     SetSpectateTarget(targetLogin);
   }
 }
-{% endblock %}
+{{/content}}
+{{/extend}}

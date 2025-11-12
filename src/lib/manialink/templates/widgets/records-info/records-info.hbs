@@ -1,5 +1,5 @@
-{% extends "widget.njk" %}
-{% block widget %}
+{{#extend "widget"}}
+{{#content "widget"}}
 <frame pos="0 0" id="world-record">
   <quad pos="0 0" z-index="0" size="10 5" bgcolor="222"/>
   <quad pos="10 0" z-index="0" size="45 5" bgcolor="DDD"/>
@@ -15,10 +15,10 @@
   <label pos="11.5 -2.25" z-index="0" size="32.5 5" text="-" textcolor="222" textsize="1" textfont="GameFontRegular" valign="center" textprefix="$i"/>
   <label pos="53 -2.25" z-index="0" size="12.5 5" text="--:--.---" valign="center" halign="right" textcolor="222" textsize="1" textfont="GameFontSemiBold"/>
 </frame>
-{% endblock %}
+{{/content}}
 
 
-{% block globals %}
+{{#content "globals"}}
  #Struct RecordInfo {
   Integer time;
   Text nickName;
@@ -28,9 +28,9 @@
   RecordInfo worldRecord;
   RecordInfo localRecord;
 }
-{% endblock %}
+{{/content}}
 
-{% block script %}
+{{#content "script"}}
 Text formatTime(Integer time) {
   declare Text secondString;
   declare Text msString;
@@ -87,18 +87,19 @@ Void updateWidget(RecordsInfo recordsInfo) {
   (localRecordFrame.Controls[3] as CMlLabel).SetText(lrName);
   (localRecordFrame.Controls[4] as CMlLabel).SetText(formatTime(lrTime));
 }
-{% endblock %}
+{{/content}}
 
-{% block main %}
+{{#content "main"}}
 declare RecordsInfo RecordsInfos for This;
 declare Integer LastRecordsInfosUpdate for This = -1;
 declare Integer lastUpdate = -1;
-{% endblock %}
+{{/content}}
 
 
-{% block loop %}
+{{#content "loop"}}
 if (LastRecordsInfosUpdate != lastUpdate) {
   lastUpdate = LastRecordsInfosUpdate;
   updateWidget(RecordsInfos);
 }
-{% endblock %}
+{{/content}}
+{{/extend}}

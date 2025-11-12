@@ -4,7 +4,7 @@ import { AddHetznerDatabaseSchemaType } from "@/forms/admin/hetzner/database/add
 import { AttachHetznerServerToNetworkSchemaType } from "@/forms/admin/hetzner/server/attach-hetzner-server-to-network-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { axiosHetzner } from "@/lib/axios/hetzner";
-import { Handlebars } from "@/lib/handlebars";
+import { HandlebarsServer } from "@/lib/handlebars";
 import {
   getKeyHetznerRateLimit,
   getKeyHetznerRecentlyCreatedServers,
@@ -36,12 +36,12 @@ const root = packageDirectorySync() || process.cwd();
 // Dedi template
 const dediTemplatePath = path.join(root, "hetzner", "server-init.sh.hbs");
 const dediTemplateContent = readFileSync(dediTemplatePath, "utf-8");
-export const dediTemplate = Handlebars.compile(dediTemplateContent);
+export const dediTemplate = HandlebarsServer.compile(dediTemplateContent);
 
 // Database template
 const dbTemplatePath = path.join(root, "hetzner", "database-init.sh.hbs");
 const dbTemplateContent = readFileSync(dbTemplatePath, "utf-8");
-export const dbTemplate = Handlebars.compile(dbTemplateContent);
+export const dbTemplate = HandlebarsServer.compile(dbTemplateContent);
 
 export async function getHetznerServersPaginated(
   pagination: PaginationState,

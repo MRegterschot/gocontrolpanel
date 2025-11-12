@@ -1,8 +1,7 @@
-import nunjucks from "@/lib/nunjucks";
+import { Handlebars } from "@/lib/handlebars";
+import "@/lib/manialink/compiled_templates";
 import "server-only";
-import ManialinkManager, {
-  getManialinkManager,
-} from "../managers/manialink-manager";
+import ManialinkManager from "../managers/manialink-manager";
 
 export default class Manialink {
   private firstDisplay: boolean = true;
@@ -10,7 +9,7 @@ export default class Manialink {
 
   public readonly login?: string;
   public id: string = "manialink";
-  private template: string = "manialink.hbs";
+  private template: string = "manialink";
   private data: unknown;
   private position: string = "0 0";
 
@@ -29,7 +28,9 @@ export default class Manialink {
   }
 
   public async render(): Promise<string> {
-    const manialink = nunjucks.render(this.template, {
+    // @ts-expect-error Handlebars.templates is dynamically generated
+    Handlebars.partials = Handlebars.templates;
+    const manialink = Handlebars.templates[this.template]({
       id: this.id,
       position: this.position,
       data: this.data,

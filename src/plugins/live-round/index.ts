@@ -20,7 +20,7 @@ type Round = {
 
 type Finish = {
   login: string;
-  finished: boolean;
+  points: number;
 }
 
 export default class LiveRoundPlugin extends Plugin {
@@ -31,12 +31,13 @@ export default class LiveRoundPlugin extends Plugin {
   private rounds: Round[] = [];
   private finishes: Finish[] = [];
   private pointsLimit: number = -1;
+  private pointsRepartition: number[] = [];
   private mode: "rounds" | "cup" = "rounds";
 
   constructor(clientManager: GbxClientManager, manialinkManager: ManialinkManager) {
     super(clientManager);
     this.widget = new Widget(manialinkManager);
-    this.widget.setTemplate("widgets/live-round/live-round.njk");
+    this.widget.setTemplate("widgets/live-round/live-round");
     this.widget.setId("live-round-widget");
     this.widget.setPosition("-156 73.5");
   }
@@ -136,6 +137,7 @@ export default class LiveRoundPlugin extends Plugin {
       this.mode = liveInfo.type;
     }
     this.pointsLimit = liveInfo.pointsLimit || -1;
+    this.pointsRepartition = liveInfo.pointsRepartition || [];
 
     this.updateWidget();
   }
@@ -160,7 +162,7 @@ export default class LiveRoundPlugin extends Plugin {
 
         this.finishes.push({
           login: finish.login,
-          finished: true,
+          points: this.pointsRepartition[this.finishes.length] || 0,
         });
 
         await this.updateWidget();
@@ -210,6 +212,7 @@ export default class LiveRoundPlugin extends Plugin {
       this.mode = cmType;
     }
     this.pointsLimit = this.clientManager.info.liveInfo.pointsLimit || -1;
+    this.pointsRepartition = this.clientManager.info.liveInfo.pointsRepartition || [];
 
     const playerList: SPlayerInfo[] = await this.clientManager.client.call(
       "GetPlayerList",

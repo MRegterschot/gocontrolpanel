@@ -6,7 +6,7 @@ export default class Widget extends Manialink {
 
   constructor(manialinkManager: ManialinkManager, login?: string) {
     super(manialinkManager, login);
-    this.setTemplate("widget.njk");
+    this.setTemplate("widget");
     this.updateManialink = new Manialink(manialinkManager, login);
     this.updateManialink.setTemplate(this.getUpdateTemplate());
   }
@@ -43,6 +43,6 @@ export default class Widget extends Manialink {
   }
 
   private getUpdateTemplate(): string {
-    return this.getTemplate().replace(".njk", "-update.njk");
+    return `${this.getTemplate()}-update`;
   }
 }

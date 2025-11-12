@@ -1,8 +1,7 @@
 import { PlayerInfo } from "@/types/player";
 import "server-only";
-import { appGlobals } from "../global";
 import Manialink from "../manialink/manialink";
-import { GbxClientManager, getGbxClientManager } from "./gbxclient-manager";
+import { GbxClientManager } from "./gbxclient-manager";
 
 export default class ManialinkManager {
   private readonly listenerId: string;
@@ -155,20 +154,4 @@ export default class ManialinkManager {
       }
     }
   }
-}
-
-export async function getManialinkManager(
-  serverId: string,
-): Promise<ManialinkManager> {
-  if (!appGlobals.manialinkManagers?.[serverId]) {
-    const clientManager = await getGbxClientManager(serverId);
-    appGlobals.manialinkManagers = appGlobals.manialinkManagers || {};
-    appGlobals.manialinkManagers[serverId] = new ManialinkManager(clientManager);
-  }
-
-  if (!appGlobals.manialinkManagers?.[serverId]) {
-    throw new Error(`Manialink manager for server ${serverId} not found`);
-  }
-
-  return appGlobals.manialinkManagers[serverId];
 }

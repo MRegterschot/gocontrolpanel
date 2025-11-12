@@ -1,5 +1,5 @@
-{% extends "widget.njk" %}
-{% block widget %}
+{{#extend "widget"}}
+{{#content "widget"}}
 <frame pos="0 0">
   <quad pos="0 0" z-index="0" size="55 5" bgcolor="222"/>
   <label pos="27.5 -2.25" z-index="0" size="55 5" text="Active Runs" halign="center" textsize="1" textfont="GameFontSemiBold" valign="center"/>
@@ -17,24 +17,24 @@
 </framemodel>
 
 <frame id="active-runs" pos="0 -5.25" size="55 42">
-<quad size="55 {{ 100 * 5.25 }}" bgcolor="fff" opacity="0" scriptevents="1"/>
-{% for i in range(100) %}
-<frameinstance modelid="active-run" pos="0 {{ i * -5.25 }}" />
-{% endfor %}
+<quad size="55 {{ multiply 100 5.25 }}" bgcolor="fff" opacity="0" scriptevents="1"/>
+{{#range 0 100}}
+<frameinstance modelid="active-run" pos="0 {{ multiply i -5.25 }}" />
+{{/range}}
 </frame>
-{% endblock %}
+{{/content}}
 
 
-{% block globals %}
+{{#content "globals"}}
 #Struct ActiveRun {
   Text login;
   Text name;
   Integer time;
   Integer checkpoint;
 }
-{% endblock %}
+{{/content}}
 
-{% block script %}
+{{#content "script"}}
 Text formatTime(Integer time) {
   declare Text secondString;
   declare Text msString;
@@ -128,26 +128,26 @@ Void updateWidget(ActiveRun[] activeRuns) {
 
   updateScroll(activeRuns);
 }
-{% endblock %}
+{{/content}}
 
-{% block main %}
+{{#content "main"}}
 declare ActiveRun[] ActiveRuns for This;
 declare Integer LastActiveRunsUpdate for This = -1;
 declare Integer lastUpdate = -1;
 declare activeRunsFrame <=> (widget.GetFirstChild("active-runs") as CMlFrame);
 activeRunsFrame.ScrollActive = True;
 activeRunsFrame.ScrollMin = <0., 0.>;
-{% endblock %}
+{{/content}}
 
 
-{% block loop %}
+{{#content "loop"}}
 if (LastActiveRunsUpdate != lastUpdate) {
   lastUpdate = LastActiveRunsUpdate;
   updateWidget(ActiveRuns);
 }
-{% endblock %}
+{{/content}}
 
-{% block events %}
+{{#content "events"}}
 if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::MouseClick) {
   declare targetLogin = event.Control.Parent.DataAttributeGet("login");
   if (targetLogin != "") {
@@ -155,4 +155,5 @@ if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::Mou
     SetSpectateTarget(targetLogin);
   }
 }
-{% endblock %}
+{{/content}}
+{{/extend}}

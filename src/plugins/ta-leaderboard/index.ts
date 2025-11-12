@@ -27,7 +27,7 @@ export default class TALeaderboardPlugin extends Plugin {
   ) {
     super(clientManager);
     this.widget = new Widget(manialinkManager);
-    this.widget.setTemplate("widgets/ta-leaderboard/ta-leaderboard.njk");
+    this.widget.setTemplate("widgets/ta-leaderboard/ta-leaderboard");
     this.widget.setId("ta-leaderboard-widget");
     this.widget.setPosition("100 55");
   }
@@ -76,7 +76,7 @@ export default class TALeaderboardPlugin extends Plugin {
   }
 
   async onPlayerConnect(playerInfo: PlayerInfo) {
-    let playerExists = this.records.some(
+    const playerExists = this.records.some(
       (record) => record.login === playerInfo.login,
     );
 
@@ -94,7 +94,7 @@ export default class TALeaderboardPlugin extends Plugin {
   }
 
   async onPlayerFinish(waypoint: Waypoint) {
-    let playerExists = this.records.some(
+    const playerExists = this.records.some(
       (record) => record.login === waypoint.login,
     );
 

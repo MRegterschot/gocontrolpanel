@@ -5,18 +5,17 @@ import MapInfoPlugin from "@/plugins/map-info";
 import RecordsInfoPlugin from "@/plugins/records-info";
 import TAActiveRunsPlugin from "@/plugins/ta-active-runs";
 import TALeaderboardPlugin from "@/plugins/ta-leaderboard";
-import { appGlobals } from "../global";
-import { GbxClientManager, getGbxClientManager } from "./gbxclient-manager";
-import ManialinkManager, { getManialinkManager } from "./manialink-manager";
+import { GbxClientManager } from "./gbxclient-manager";
+import ManialinkManager from "./manialink-manager";
 
 export default class PluginManager {
   private clientManager: GbxClientManager;
   private manialinkManager: ManialinkManager;
   private plugins: Map<string, Plugin> = new Map();
 
-  constructor(clientManager: GbxClientManager, manialinkManager: ManialinkManager) {
+  constructor(clientManager: GbxClientManager) {
     this.clientManager = clientManager;
-    this.manialinkManager = manialinkManager;
+    this.manialinkManager = new ManialinkManager(this.clientManager);
 
     this.clientManager.addListeners("plugin-manager", {
       modeChange: this.onModeChange.bind(this),
@@ -32,7 +31,6 @@ export default class PluginManager {
       new LiveRankingPlugin(this.clientManager, this.manialinkManager),
       new LiveRoundPlugin(this.clientManager, this.manialinkManager),
     ];
-
     for (const plugin of pluginsToLoad) {
       this.plugins.set(plugin.getPluginId(), plugin);
       if (
@@ -43,11 +41,9 @@ export default class PluginManager {
       ) {
         continue;
       }
-
       await plugin.onLoad();
       plugin.setLoaded(true);
     }
-
     await this.startPlugins();
   }
 
@@ -83,21 +79,4 @@ export default class PluginManager {
       }
     }
   }
-}
-
-export async function getPluginManager(
-  serverId: string,
-): Promise<PluginManager> {
-  if (!appGlobals.pluginManagers?.[serverId]) {
-    const clientManager = await getGbxClientManager(serverId);
-    const manialinkManager = await getManialinkManager(serverId);
-    appGlobals.pluginManagers = appGlobals.pluginManagers || {};
-    appGlobals.pluginManagers[serverId] = new PluginManager(clientManager, manialinkManager);
-  }
-
-  if (!appGlobals.pluginManagers?.[serverId]) {
-    throw new Error(`Plugin manager for server ${serverId} not found`);
-  }
-
-  return appGlobals.pluginManagers[serverId];
 }
