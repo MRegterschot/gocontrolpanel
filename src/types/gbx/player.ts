@@ -23,3 +23,13 @@ export interface SpectatorStatus {
   autoTarget: boolean;
   currentTargetId: number;
 }
+
+export interface PlayerManialinkPageAnswer {
+  PlayerUid: number;
+  Login: string;
+  Answer: string;
+  Entries: {
+    Name: string;
+    Value: string;
+  }[];
+}

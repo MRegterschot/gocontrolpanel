@@ -1,11 +1,11 @@
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
+import ManialinkManager from "@/lib/managers/manialink-manager";
 import Widget from "@/lib/manialink/widget";
 import { getSpectatorStatus } from "@/lib/utils";
 import { Scores } from "@/types/gbx/scores";
 import { LiveInfo } from "@/types/live";
 import { PlayerInfo } from "@/types/player";
 import Plugin from "..";
-import ManialinkManager from "@/lib/managers/manialink-manager";
 
 type Ranking = {
   login: string;
@@ -23,7 +23,10 @@ export default class LiveRankingPlugin extends Plugin {
   private pointsLimit: number = -1;
   private mode: "rounds" | "cup" = "rounds";
 
-  constructor(clientManager: GbxClientManager, manialinkManager: ManialinkManager) {
+  constructor(
+    clientManager: GbxClientManager,
+    manialinkManager: ManialinkManager,
+  ) {
     super(clientManager);
     this.widget = new Widget(manialinkManager);
     this.widget.setTemplate("widgets/live-ranking/live-ranking");
@@ -43,7 +46,7 @@ export default class LiveRankingPlugin extends Plugin {
   }
 
   async onUnload() {
-    this.widget.hide();
+    this.widget.destroy();
     this.clientManager.removeListeners(this.getPluginId());
   }
 

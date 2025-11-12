@@ -12,7 +12,11 @@ import {
 } from "@/actions/gbx/server-only";
 import { EndMap, SMapInfo, StartMap } from "@/types/gbx/map";
 import { PauseStatus } from "@/types/gbx/pause";
-import { PlayerChat, SPlayerInfo } from "@/types/gbx/player";
+import {
+  PlayerChat,
+  PlayerManialinkPageAnswer,
+  SPlayerInfo,
+} from "@/types/gbx/player";
 import { Elmination, Player, Scores } from "@/types/gbx/scores";
 import { WarmUp, WarmUpStatus } from "@/types/gbx/warmup";
 import { Waypoint, WaypointEvent } from "@/types/gbx/waypoint";
@@ -36,6 +40,8 @@ import {
 } from "../utils";
 import PluginManager from "./plugin-manager";
 
+type Listener<T = any> = (data: T) => void;
+
 export class GbxClientManager extends EventEmitter {
   client: GbxClient;
   pluginManager: PluginManager;
@@ -45,6 +51,7 @@ export class GbxClientManager extends EventEmitter {
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private listenerMap: Map<string, Record<string, (...args: any[]) => void>> =
     new Map();
+  private actionListeners = new Map<string, Listener[]>();
   currentMatchId: string | null = null;
   roundNumber: number | null = null;
 
@@ -74,6 +81,10 @@ export class GbxClientManager extends EventEmitter {
       plugins: [],
     };
 
+    this.on(
+      "playerManialinkPageAnswer",
+      this.handlePlayerManialinkPageAnswer.bind(this),
+    );
     this.client.on("disconnect", this.onDisconnect.bind(this));
 
     this.pluginManager = new PluginManager(this);
@@ -110,6 +121,33 @@ export class GbxClientManager extends EventEmitter {
     }
 
     this.listenerMap.delete(listenerId);
+  }
+
+  onAction(eventName: string, callback: Listener): void {
+    if (!this.actionListeners.has(eventName)) {
+      this.actionListeners.set(eventName, []);
+    }
+    this.actionListeners.get(eventName)!.push(callback);
+  }
+
+  emitAction(eventName: string, data: PlayerManialinkPageAnswer): void {
+    const handlers = this.actionListeners.get(eventName);
+    if (handlers) {
+      for (const fn of handlers) fn(data);
+    }
+  }
+
+  offAction(eventName: string, callback: Listener): void {
+    const handlers = this.actionListeners.get(eventName);
+    if (!handlers) return;
+    this.actionListeners.set(
+      eventName,
+      handlers.filter((fn) => fn !== callback),
+    );
+  }
+
+  handlePlayerManialinkPageAnswer(pageAnswer: PlayerManialinkPageAnswer) {
+    this.emitAction(pageAnswer.Answer, pageAnswer);
   }
 
   stopReconnect() {
@@ -201,6 +239,7 @@ export class GbxClientManager extends EventEmitter {
     await syncLiveInfo(this);
 
     this.pluginManager.loadPlugins();
+    this.pluginManager.reloadClientPlugins();
 
     return this.client;
   }
@@ -348,6 +387,16 @@ async function callbackListener(
       };
       await onPlayerChat(manager, chat);
       break;
+    case "ManiaPlanet.PlayerManialinkPageAnswer":
+      const pageAnswer: PlayerManialinkPageAnswer = {
+        PlayerUid: data[0],
+        Login: data[1],
+        Answer: data[2],
+        Entries: data[3],
+      };
+
+      await onPlayerManialinkPageAnswer(manager, pageAnswer);
+      break;
 
     case "ManiaPlanet.ModeScriptCallbackArray":
       if (!data || data.length === 0) return;
@@ -440,6 +489,13 @@ async function onSkipOutro(
   skipOutro: WaypointEvent,
 ) {
   manager.emit("skipOutro", skipOutro);
+}
+
+async function onPlayerManialinkPageAnswer(
+  manager: GbxClientManager,
+  pageAnswer: PlayerManialinkPageAnswer,
+) {
+  manager.emit("playerManialinkPageAnswer", pageAnswer);
 }
 
 async function onPlayerConnect(manager: GbxClientManager, login: string) {

@@ -27,6 +27,10 @@ export default class Manialink {
     this.manialinkManager.hideManialink(this);
   }
 
+  public async destroy() {
+    this.manialinkManager.destroyManialink(this);
+  }
+
   public async render(): Promise<string> {
     // @ts-expect-error Handlebars.templates is dynamically generated
     Handlebars.partials = Handlebars.templates;

@@ -2,13 +2,22 @@ import ManialinkManager from "../managers/manialink-manager";
 import Manialink from "./manialink";
 
 export default class Widget extends Manialink {
+  private hasUpdate: boolean = true;
   private updateManialink: Manialink | null = null;
 
-  constructor(manialinkManager: ManialinkManager, login?: string) {
+  constructor(
+    manialinkManager: ManialinkManager,
+    login?: string,
+    update: boolean = true,
+  ) {
     super(manialinkManager, login);
     this.setTemplate("widget");
-    this.updateManialink = new Manialink(manialinkManager, login);
-    this.updateManialink.setTemplate(this.getUpdateTemplate());
+
+    this.hasUpdate = update;
+    if (this.hasUpdate) {
+      this.updateManialink = new Manialink(manialinkManager, login);
+      this.updateManialink.setTemplate(this.getUpdateTemplate());
+    }
   }
 
   public setData(data: unknown) {
@@ -21,6 +30,11 @@ export default class Widget extends Manialink {
   public async hide() {
     super.hide();
     this.updateManialink?.hide();
+  }
+
+  public async destroy() {
+    super.destroy();
+    this.updateManialink?.destroy();
   }
 
   public async display() {

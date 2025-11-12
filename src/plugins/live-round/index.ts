@@ -58,7 +58,7 @@ export default class LiveRoundPlugin extends Plugin {
   }
 
   async onUnload() {
-    this.widget.hide();
+    this.widget.destroy();
     this.clientManager.removeListeners(this.getPluginId());
   }
 
