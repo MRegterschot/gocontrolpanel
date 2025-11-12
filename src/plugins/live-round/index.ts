@@ -1,4 +1,5 @@
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
+import ManialinkManager from "@/lib/managers/manialink-manager";
 import Widget from "@/lib/manialink/widget";
 import { getSpectatorStatus } from "@/lib/utils";
 import { SPlayerInfo } from "@/types/gbx/player";
@@ -7,7 +8,6 @@ import { Waypoint, WaypointEvent } from "@/types/gbx/waypoint";
 import { LiveInfo } from "@/types/live";
 import { PlayerInfo } from "@/types/player";
 import Plugin from "..";
-import ManialinkManager from "@/lib/managers/manialink-manager";
 
 type Round = {
   login: string;
@@ -21,7 +21,7 @@ type Round = {
 type Finish = {
   login: string;
   points: number;
-}
+};
 
 export default class LiveRoundPlugin extends Plugin {
   static pluginId = "live-round";
@@ -34,7 +34,10 @@ export default class LiveRoundPlugin extends Plugin {
   private pointsRepartition: number[] = [];
   private mode: "rounds" | "cup" = "rounds";
 
-  constructor(clientManager: GbxClientManager, manialinkManager: ManialinkManager) {
+  constructor(
+    clientManager: GbxClientManager,
+    manialinkManager: ManialinkManager,
+  ) {
     super(clientManager);
     this.widget = new Widget(manialinkManager);
     this.widget.setTemplate("widgets/live-round/live-round");
@@ -143,6 +146,8 @@ export default class LiveRoundPlugin extends Plugin {
   }
 
   async onCheckpoint(checkpoint: Waypoint) {
+    if (this.clientManager.info.liveInfo.isWarmUp) return;
+
     for (let i = 0; i < this.rounds.length; i++) {
       if (this.rounds[i].login === checkpoint.login) {
         this.rounds[i].time = checkpoint.racetime;
@@ -155,6 +160,8 @@ export default class LiveRoundPlugin extends Plugin {
   }
 
   async onFinish(finish: Waypoint) {
+    if (this.clientManager.info.liveInfo.isWarmUp) return;
+
     for (let i = 0; i < this.rounds.length; i++) {
       if (this.rounds[i].login === finish.login) {
         this.rounds[i].time = finish.racetime;
@@ -172,6 +179,8 @@ export default class LiveRoundPlugin extends Plugin {
   }
 
   async onGiveUp(giveUp: WaypointEvent) {
+    if (this.clientManager.info.liveInfo.isWarmUp) return;
+
     for (let i = 0; i < this.rounds.length; i++) {
       if (this.rounds[i].login === giveUp.login) {
         this.rounds[i].time = -1;
@@ -183,6 +192,8 @@ export default class LiveRoundPlugin extends Plugin {
   }
 
   async onScores(scores: Scores) {
+    if (this.clientManager.info.liveInfo.isWarmUp) return;
+
     if (
       scores.responseid !== this.getPluginId() &&
       scores.section !== "EndRound"
@@ -192,8 +203,13 @@ export default class LiveRoundPlugin extends Plugin {
     for (let i = 0; i < scores.players.length; i++) {
       for (let j = 0; j < this.rounds.length; j++) {
         if (this.rounds[j].login === scores.players[i].login) {
-          if (scores.players[i].matchpoints > this.pointsLimit && this.pointsLimit > 0) {
-            this.rounds = this.rounds.filter((r) => r.login !== scores.players[i].login);
+          if (
+            scores.players[i].matchpoints > this.pointsLimit &&
+            this.pointsLimit > 0
+          ) {
+            this.rounds = this.rounds.filter(
+              (r) => r.login !== scores.players[i].login,
+            );
           } else {
             this.rounds[j].points = scores.players[i].matchpoints;
           }
@@ -212,7 +228,8 @@ export default class LiveRoundPlugin extends Plugin {
       this.mode = cmType;
     }
     this.pointsLimit = this.clientManager.info.liveInfo.pointsLimit || -1;
-    this.pointsRepartition = this.clientManager.info.liveInfo.pointsRepartition || [];
+    this.pointsRepartition =
+      this.clientManager.info.liveInfo.pointsRepartition || [];
 
     const playerList: SPlayerInfo[] = await this.clientManager.client.call(
       "GetPlayerList",

@@ -94,6 +94,8 @@ export default class TALeaderboardPlugin extends Plugin {
   }
 
   async onPlayerFinish(waypoint: Waypoint) {
+    if (this.clientManager.info.liveInfo.isWarmUp) return;
+
     const playerExists = this.records.some(
       (record) => record.login === waypoint.login,
     );
