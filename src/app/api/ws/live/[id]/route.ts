@@ -1,5 +1,5 @@
 import { parseTokenFromRequest } from "@/lib/auth";
-import { getGbxClientManager } from "@/lib/gbxclient";
+import { getGbxClientManager } from "@/lib/managers/gbxclient-manager";
 import { ActiveRound, LiveInfo } from "@/types/live";
 import { parse } from "node:url";
 
@@ -206,15 +206,15 @@ export async function SOCKET(
   const listenerId = crypto.randomUUID();
 
   manager.addListeners(listenerId, {
-    finish: onFinish,
+    "live-finish": onFinish,
     personalBest: onPersonalBest,
-    checkpoint: onCheckpoint,
+    "live-checkpoint": onCheckpoint,
     beginRound: onBeginRound,
-    endRound: onEndRound,
+    "live-endRound": onEndRound,
     beginMap: onBeginMap,
     endMap: onEndMap,
     beginMatch: onBeginMatch,
-    giveUp: onGiveUp,
+    "live-giveUp": onGiveUp,
     warmUpStart: onWarmUpStart,
     warmUpEnd: onWarmUpEnd,
     warmUpStartRound: onWarmUpStartRound,

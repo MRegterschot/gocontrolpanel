@@ -77,14 +77,18 @@ export default function PluginsForm({
             name="admin.enabled"
             label="Admin Plugin"
             type="checkbox"
-            description="Allows players to notify an admin with the /admin command."
+            description={
+              plugins.find((p) => p.name === "admin")?.description || ""
+            }
           />
 
           <FormElement
             name="ecm.enabled"
             label="eCircuitMania Plugin"
             type="checkbox"
-            description="A plugin to integrate with the eCircuitMania API. This plugin will automatically send match data to eCircuitMania."
+            description={
+              plugins.find((p) => p.name === "ecm")?.description || ""
+            }
           >
             <Modal>
               <EcircuitmaniaPluginModal />
@@ -94,6 +98,62 @@ export default function PluginsForm({
               </Button>
             </Modal>
           </FormElement>
+
+          <FormElement
+            name="map-info.enabled"
+            label="Map Info Plugin"
+            type="checkbox"
+            description={
+              plugins.find((p) => p.name === "map-info")?.description || ""
+            }
+          />
+
+          <FormElement
+            name="records-info.enabled"
+            label="Records Info Plugin"
+            type="checkbox"
+            description={
+              plugins.find((p) => p.name === "records-info")?.description || ""
+            }
+          />
+
+          <FormElement
+            name="live-ranking.enabled"
+            label="Live Ranking Plugin"
+            type="checkbox"
+            description={
+              plugins.find((p) => p.name === "live-ranking")?.description || ""
+            }
+          />
+
+          <FormElement
+            name="live-round.enabled"
+            label="Live Round Plugin"
+            type="checkbox"
+            description={
+              plugins.find((p) => p.name === "live-round")?.description || ""
+            }
+          />
+
+          <FormElement
+            name="ta-leaderboard.enabled"
+            label="TA Leaderboard Plugin"
+            type="checkbox"
+            description={
+              plugins.find((p) => p.name === "ta-leaderboard")?.description ||
+              ""
+            }
+          />
+
+          <FormElement
+            name="ta-active-runs.enabled"
+            label="TA Active Runs Plugin"
+            type="checkbox"
+            description={
+              plugins.find((p) => p.name === "ta-active-runs")?.description ||
+              ""
+            }
+          />
         </div>
 
         <Button

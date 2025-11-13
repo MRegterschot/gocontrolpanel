@@ -1,5 +1,5 @@
 import { parseTokenFromRequest } from "@/lib/auth";
-import { getGbxClientManager } from "@/lib/gbxclient";
+import { getGbxClientManager } from "@/lib/managers/gbxclient-manager";
 import { parse } from "node:url";
 
 export function GET() {

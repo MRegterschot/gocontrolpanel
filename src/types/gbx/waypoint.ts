@@ -15,7 +15,7 @@ export interface Waypoint {
   speed: number;
 }
 
-export interface GiveUp {
+export interface WaypointEvent {
   time: number;
   login: string;
   accountid: string;

@@ -427,3 +427,24 @@ export interface ClubMembersResponse {
   maxPage: number;
   itemCount: number;
 }
+
+export interface LeaderboardEntry {
+  accountId: string;
+  zoneId: string;
+  zoneName: string;
+  position: number;
+  score: number;
+  timestamp: number;
+}
+
+export interface MapLeaderboard {
+  zoneId: string;
+  zoneName: string;
+  top: LeaderboardEntry[];
+}
+
+export interface MapLeaderboardsResponse {
+  groupUid: string;
+  mapUid: string;
+  tops: MapLeaderboard[];
+}

@@ -48,6 +48,7 @@
         "embla-carousel-react": "^8.6.0",
         "fs": "^0.0.1-security",
         "handlebars": "^4.7.8",
+        "handlebars-layouts": "^3.1.4",
         "ioredis": "^5.6.1",
         "is-localhost-ip": "^2.0.0",
         "jsonwebtoken": "^9.0.2",
@@ -986,6 +987,8 @@
     "graphemer": ["graphemer@1.4.0", "", {}, "sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag=="],
 
     "handlebars": ["handlebars@4.7.8", "", { "dependencies": { "minimist": "^1.2.5", "neo-async": "^2.6.2", "source-map": "^0.6.1", "wordwrap": "^1.0.0" }, "optionalDependencies": { "uglify-js": "^3.1.4" }, "bin": { "handlebars": "bin/handlebars" } }, "sha512-vafaFqs8MZkRrSX7sFVUdo3ap/eNiLnb4IakshzvP56X5Nr1iGKAIqdX6tMlm6HcNRIkr6AxO5jFEoJzzpT8aQ=="],
+
+    "handlebars-layouts": ["handlebars-layouts@3.1.4", "", {}, "sha512-2llBmvnj8ueOfxNHdRzJOcgalzZjYVd9+WAl93kPYmlX4WGx7FTHTzNxhK+i9YKY2OSjzfehgpLiIwP/OJr6tw=="],
 
     "has-bigints": ["has-bigints@1.1.0", "", {}, "sha512-R3pbpkcIqv2Pm3dUwgjclDRVmWpTJW2DcMzcIhEXEx1oh/CEMObMm3KLmRJOdvhM7o4uQBnwr8pzRK2sJWIqfg=="],
 

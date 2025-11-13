@@ -1,6 +1,9 @@
 import { parseTokenFromRequest } from "@/lib/auth";
 import { getClient } from "@/lib/dbclient";
-import { GbxClientManager, getGbxClientManager } from "@/lib/gbxclient";
+import {
+  GbxClientManager,
+  getGbxClientManager,
+} from "@/lib/managers/gbxclient-manager";
 import { AdminCommand } from "@/types/commands";
 import { ServerInfo } from "@/types/server";
 

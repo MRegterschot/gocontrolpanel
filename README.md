@@ -79,11 +79,10 @@ View past matches and records, including player scores and match details.
 
 #### Interface Editor
 
-Edit the interface of your server, create your own interface (still in development), manage chat message formatting and manage server plugins.
+Edit the interface of your server, manager server plugins and chat message formatting.
 
-![Interface Editor Page](https://i.imgur.com/yhoEIya.png "Interface Editor Page")
-![Chat Message Editor Page](https://i.imgur.com/atcNlLt.png "Chat Message Editor Page")
-![Plugins Page](https://i.imgur.com/QKagvtZ.png "Plugins Page")
+![Plugins Page](https://i.imgur.com/5LAxOpO.png "Plugins Page")
+![Chat Message Editor Page](https://i.imgur.com/NpvWT3K.png "Chat Message Editor Page")
 
 #### Trackmania Exchange
 

@@ -1,5 +1,6 @@
 import { TBreadcrumb } from "@/components/shell/breadcrumbs";
 import { routes } from "@/routes";
+import { SpectatorStatus } from "@/types/gbx/player";
 import { clsx, type ClassValue } from "clsx";
 import { Session } from "next-auth";
 import { JWT } from "next-auth/jwt";
@@ -423,4 +424,14 @@ export function weekDayNumberToName(dayNum: number): string {
 
   // dayNum should be 0–6
   return days[dayNum] || "Invalid day";
+}
+
+export function getSpectatorStatus(spectatorStatus: number): SpectatorStatus {
+  return {
+    spectator: spectatorStatus % 10 === 1,
+    temporarySpectator: Math.floor(spectatorStatus / 10) % 10 === 1,
+    pureSpectator: Math.floor(spectatorStatus / 100) % 10 === 1,
+    autoTarget: Math.floor(spectatorStatus / 1000) % 10 === 1,
+    currentTargetId: Math.floor(spectatorStatus / 10000),
+  }
 }
