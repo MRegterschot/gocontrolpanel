@@ -36,17 +36,12 @@ export default async function ServerInterfacePage({
         </h4>
       </div>
 
-      <Tabs defaultValue="chat" className="w-full">
+      <Tabs defaultValue="plugins" className="w-full">
         <TabsList className="w-full">
-          <TabsTrigger value="chat">Chat</TabsTrigger>
           <TabsTrigger value="plugins">Plugins</TabsTrigger>
+          <TabsTrigger value="chat">Chat</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="chat" className="flex flex-col gap-6">
-          <Card className="p-6">
-            <ChatConfigForm serverId={id} chatConfig={data} />
-          </Card>
-        </TabsContent>
         <TabsContent value="plugins" className="flex flex-col gap-6">
           <Card className="p-6">
             <PluginsForm
@@ -54,6 +49,11 @@ export default async function ServerInterfacePage({
               plugins={plugins}
               serverPlugins={serverPlugins}
             />
+          </Card>
+        </TabsContent>
+        <TabsContent value="chat" className="flex flex-col gap-6">
+          <Card className="p-6">
+            <ChatConfigForm serverId={id} chatConfig={data} />
           </Card>
         </TabsContent>
       </Tabs>
