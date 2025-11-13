@@ -73,9 +73,11 @@ function ManiaControlSettingsForm() {
   const { data: session } = useSession();
 
   useEffect(() => {
+    if (!session?.user.login) return;
+
     form.setValue(
       "serverController.admins",
-      form.getValues("serverController.admins") || [session?.user.login],
+      form.getValues("serverController.admins") || [session.user.login],
     );
   }, []);
 
@@ -134,9 +136,11 @@ function MiniControlSettingsForm() {
   const { data: session } = useSession();
 
   useEffect(() => {
+    if (!session?.user.login) return;
+
     form.setValue(
       "serverController.admins",
-      form.getValues("serverController.admins") || [session?.user.login],
+      form.getValues("serverController.admins") || [session.user.login],
     );
     form.setValue(
       "serverController.excludedPlugins",
@@ -270,9 +274,11 @@ function PyPlanetSettingsForm() {
   const { data: session } = useSession();
 
   useEffect(() => {
+    if (!session?.user.login) return;
+
     form.setValue(
       "serverController.admins",
-      form.getValues("serverController.admins") || [session?.user.login],
+      form.getValues("serverController.admins") || [session.user.login],
     );
   }, []);
 
