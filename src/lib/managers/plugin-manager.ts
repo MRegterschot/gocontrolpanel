@@ -51,6 +51,9 @@ export default class PluginManager {
         continue;
       }
 
+      // Check if plugin is already loaded
+      if (plugin.isLoaded()) continue;
+
       // Check if plugin is enabled
       const clientPlugin = clientPlugins.find(
         (p) => p.plugin.name === plugin.getPluginId(),
@@ -69,7 +72,6 @@ export default class PluginManager {
       await plugin.onUnload();
       plugin.setLoaded(false);
     }
-    this.plugins.clear();
   }
 
   public async startPlugins() {
