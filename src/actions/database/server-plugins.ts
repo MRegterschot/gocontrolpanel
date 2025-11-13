@@ -56,7 +56,7 @@ export async function updateServerPlugins(
       const manager = await getGbxClientManager(serverId);
 
       manager.info.plugins = updatedPlugins;
-      manager.pluginManager.reloadClientPlugins();
+      manager.pluginManager.reloadPlugins();
 
       await logAudit(
         session.user.id,

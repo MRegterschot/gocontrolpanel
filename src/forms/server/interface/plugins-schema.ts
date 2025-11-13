@@ -17,6 +17,30 @@ export const PluginsSchema = z.object({
         ),
     }),
   }),
+  "map-info": z.object({
+    enabled: z.boolean().optional(),
+    config: z.object({}).optional(),
+  }),
+  "records-info": z.object({
+    enabled: z.boolean().optional(),
+    config: z.object({}).optional(),
+  }),
+  "live-ranking": z.object({
+    enabled: z.boolean().optional(),
+    config: z.object({}).optional(),
+  }),
+  "live-round": z.object({
+    enabled: z.boolean().optional(),
+    config: z.object({}).optional(),
+  }),
+  "ta-leaderboard": z.object({
+    enabled: z.boolean().optional(),
+    config: z.object({}).optional(),
+  }),
+  "ta-active-runs": z.object({
+    enabled: z.boolean().optional(),
+    config: z.object({}).optional(),
+  }),
 });
 
 export type PluginsSchemaType = z.infer<typeof PluginsSchema>;

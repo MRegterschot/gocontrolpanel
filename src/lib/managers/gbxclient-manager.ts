@@ -239,7 +239,7 @@ export class GbxClientManager extends EventEmitter {
     await syncLiveInfo(this);
 
     this.pluginManager.loadPlugins();
-    this.pluginManager.reloadClientPlugins();
+    this.pluginManager.reloadPlugins();
 
     return this.client;
   }

@@ -7,8 +7,7 @@ import { PlayerManialinkPageAnswer } from "@/types/gbx/player";
 import Plugin from "..";
 
 export default class NotifyAdminPlugin extends Plugin {
-  static pluginId = "notify-admin";
-  static defaultLoaded: boolean = false;
+  static pluginId = "admin";
   private widget: Widget;
 
   constructor(

@@ -38,16 +38,25 @@ export default class PluginManager {
   }
 
   public async loadPlugins() {
+    const clientPlugins = this.clientManager.info.plugins;
+
     for (const plugin of this.plugins.values()) {
+      // Check if plugin supports current gamemode
       if (
-        (plugin.getSupportedGamemodes().length > 0 &&
-          !plugin
-            .getSupportedGamemodes()
-            .includes(this.clientManager.info.liveInfo.type)) ||
-        !plugin.getDefaultLoaded()
+        plugin.getSupportedGamemodes().length > 0 &&
+        !plugin
+          .getSupportedGamemodes()
+          .includes(this.clientManager.info.liveInfo.type)
       ) {
         continue;
       }
+
+      // Check if plugin is enabled
+      const clientPlugin = clientPlugins.find(
+        (p) => p.plugin.name === plugin.getPluginId(),
+      );
+      if (!clientPlugin || !clientPlugin.enabled) continue;
+
       await plugin.onLoad();
       plugin.setLoaded(true);
     }
@@ -56,6 +65,7 @@ export default class PluginManager {
 
   public async unloadPlugins() {
     for (const plugin of this.plugins.values()) {
+      if (!plugin.isLoaded()) continue;
       await plugin.onUnload();
       plugin.setLoaded(false);
     }
@@ -90,31 +100,54 @@ export default class PluginManager {
     }
   }
 
-  public reloadClientPlugins() {
+  public async reloadPlugins() {
     const clientPlugins = this.clientManager.info.plugins;
 
-    if (
-      clientPlugins.find((p) => p.plugin.name === "admin" && p.enabled) &&
-      !this.isPluginLoaded("notify-admin")
-    ) {
-      this.loadPluginById("notify-admin");
-    } else if (
-      !clientPlugins.find((p) => p.plugin.name === "admin" && p.enabled) &&
-      this.isPluginLoaded("notify-admin")
-    ) {
-      this.unloadPluginById("notify-admin");
+    for (const plugin of this.plugins.values()) {
+      const clientPlugin = clientPlugins.find(
+        (p) => p.plugin.name === plugin.getPluginId(),
+      );
+
+      // Determine if plugin should be loaded
+      const shouldBeLoaded =
+        clientPlugin &&
+        clientPlugin.enabled &&
+        (plugin.getSupportedGamemodes().length === 0 ||
+          plugin
+            .getSupportedGamemodes()
+            .includes(this.clientManager.info.liveInfo.type));
+
+      // If plugin should be loaded but isn't, load it
+      if (shouldBeLoaded && !plugin.isLoaded()) {
+        await plugin.onLoad();
+        plugin.setLoaded(true);
+        await plugin.onStart();
+
+        // If plugin shouldn't be loaded but is, unload it
+      } else if (!shouldBeLoaded && plugin.isLoaded()) {
+        await plugin.onUnload();
+        plugin.setLoaded(false);
+      }
     }
   }
 
-  private isPluginLoaded(pluginId: string): boolean {
-    const plugin = this.plugins.get(pluginId);
-    if (!plugin) return false;
-
-    return plugin.isLoaded();
-  }
-
   private async onModeChange(mode: string) {
+    const clientPlugins = this.clientManager.info.plugins;
+
     for (const plugin of this.plugins.values()) {
+      const clientPlugin = clientPlugins.find(
+        (p) => p.plugin.name === plugin.getPluginId(),
+      );
+
+      // Skip if plugin is not enabled
+      if (!clientPlugin || !clientPlugin.enabled) {
+        if (plugin.isLoaded()) {
+          await plugin.onUnload();
+          plugin.setLoaded(false);
+        }
+        continue;
+      }
+
       if (plugin.getSupportedGamemodes().length <= 0) continue;
 
       if (plugin.getSupportedGamemodes().includes(mode) && !plugin.isLoaded()) {
