@@ -1,7 +1,7 @@
 import { getPlayerInfo } from "@/actions/gbx/server-only";
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import ManialinkManager from "@/lib/managers/manialink-manager";
-import Widget from "@/lib/manialink/widget";
+import Widget from "@/lib/manialink/components/widget";
 import Plugin from "@/plugins";
 import { Scores } from "@/types/gbx/scores";
 import { Waypoint } from "@/types/gbx/waypoint";

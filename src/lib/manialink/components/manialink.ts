@@ -1,7 +1,7 @@
 import { Handlebars } from "@/lib/handlebars";
 import "@/lib/manialink/compiled_templates";
 import "server-only";
-import ManialinkManager from "../managers/manialink-manager";
+import ManialinkManager from "../../managers/manialink-manager";
 
 export default class Manialink {
   private firstDisplay: boolean = true;

@@ -1,0 +1,17 @@
+{{#extend "widget"}}
+{{#content "widget"}}
+<frame id="action-group" pos="{{ default position "0 0" }}" size="8 8" z-index="10" hidden="1">
+  <frame id="trigger" pos="0 0" size="8 8">
+    <quad size="8 8" bgcolor="222" opacity="0" scriptevents="1" />
+    <label pos="4 4" text="" halign="center" valign="center" textsize="2" textcolor="DDD" />
+  </frame>
+
+  {{#each data.actions}}
+    <frame pos="{{ multiply (add @index 1) -8 }} 0" size="8 8">
+      <quad size="8 8" bgcolor="222" scriptevents="1" />
+      <label pos="4 4" text="{{ this.icon }}" halign="center" valign="center" textsize="2" textcolor="DDD" />
+    </frame>
+  {{/each}}
+</frame>
+{{/content}}
+{{/extend}}

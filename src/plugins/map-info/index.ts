@@ -1,7 +1,7 @@
 import { getMapByUidServer } from "@/actions/database/server-only/maps";
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import ManialinkManager from "@/lib/managers/manialink-manager";
-import Widget from "@/lib/manialink/widget";
+import Widget from "@/lib/manialink/components/widget";
 import { SMapInfo } from "@/types/gbx/map";
 import Plugin from "..";
 

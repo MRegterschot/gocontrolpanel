@@ -1,4 +1,4 @@
-import ManialinkManager from "../managers/manialink-manager";
+import ManialinkManager from "../../managers/manialink-manager";
 import Manialink from "./manialink";
 
 export default class Widget extends Manialink {

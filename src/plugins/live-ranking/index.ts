@@ -1,6 +1,6 @@
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import ManialinkManager from "@/lib/managers/manialink-manager";
-import Widget from "@/lib/manialink/widget";
+import Widget from "@/lib/manialink/components/widget";
 import { getSpectatorStatus } from "@/lib/utils";
 import { Scores } from "@/types/gbx/scores";
 import { LiveInfo } from "@/types/live";

@@ -1,7 +1,7 @@
 import { getPlayerInfo } from "@/actions/gbx/server-only";
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import ManialinkManager from "@/lib/managers/manialink-manager";
-import Widget from "@/lib/manialink/widget";
+import Widget from "@/lib/manialink/components/widget";
 import { AdminCommand } from "@/types/commands";
 import { PlayerManialinkPageAnswer } from "@/types/gbx/player";
 import Plugin from "..";
@@ -46,6 +46,7 @@ export default class NotifyAdminPlugin extends Plugin {
 
   async onStart() {
     this.widget.display();
+    
   }
 
   onPlayerManialinkPageAnswer = async (

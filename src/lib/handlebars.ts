@@ -34,4 +34,8 @@ Handlebars.registerHelper("multiply", function (a: number, b: number) {
   return a * b;
 });
 
+Handlebars.registerHelper("add", function (a: number, b: number) {
+  return a + b;
+});
+
 export { HandlebarsServer, Handlebars };

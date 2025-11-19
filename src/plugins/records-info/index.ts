@@ -1,12 +1,12 @@
 import { getLocalRecord } from "@/actions/database/server-only/records";
 import { getPlayerInfo } from "@/actions/gbx/server-only";
+import { getAccountNames, getMapLeaderboard } from "@/lib/api/nadeo";
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
-import Widget from "@/lib/manialink/widget";
+import ManialinkManager from "@/lib/managers/manialink-manager";
+import Widget from "@/lib/manialink/components/widget";
 import { SMapInfo } from "@/types/gbx/map";
 import { Waypoint } from "@/types/gbx/waypoint";
 import Plugin from "..";
-import { getAccountNames, getMapLeaderboard } from "@/lib/api/nadeo";
-import ManialinkManager from "@/lib/managers/manialink-manager";
 
 type RecordsInfo = {
   worldRecord: {
@@ -33,7 +33,10 @@ export default class RecordsInfoPlugin extends Plugin {
     },
   };
 
-  constructor(clientManager: GbxClientManager, manialinkManager: ManialinkManager) {
+  constructor(
+    clientManager: GbxClientManager,
+    manialinkManager: ManialinkManager,
+  ) {
     super(clientManager);
     this.widget = new Widget(manialinkManager);
     this.widget.setTemplate("widgets/records-info/records-info");
@@ -125,7 +128,7 @@ export default class RecordsInfoPlugin extends Plugin {
       if (onlineLeaderboard.tops.length > 0) {
         if (onlineLeaderboard.tops[0].top.length > 0) {
           const wr = onlineLeaderboard.tops[0].top[0];
-          
+
           const accountNames = await getAccountNames([wr.accountId]);
 
           this.recordsInfo.worldRecord = {
