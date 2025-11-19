@@ -24,13 +24,62 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
       scores: this.onEndRound.bind(this),
       beginMap: this.onBeginMap.bind(this),
     });
+
+    this.clientManager.onCommand("ecm", this.onECMCommand.bind(this));
   }
 
   async onUnload() {
     this.clientManager.removeListeners(this.getPluginId());
+
+    this.clientManager.offCommand("ecm", this.onECMCommand.bind(this));
   }
 
   async onStart() {}
+
+  async onECMCommand(args: string[], login: string) {
+    if (args.length === 0) {
+      this.clientManager.client.call(
+        "ChatSendServerMessageToLogin",
+        `Round number: ${
+          (this.clientManager.roundNumber || 1) + this.roundOffset
+        } | Current offset: ${this.roundOffset}`,
+        login,
+      );
+      return;
+    }
+
+    const subcommand = args[0];
+
+    switch (subcommand) {
+      case "offset":
+        const offset = parseInt(args[1], 10);
+
+        if (isNaN(offset)) {
+          this.clientManager.client.call(
+            "ChatSendServerMessageToLogin",
+            "Invalid offset value",
+            login,
+          );
+          return;
+        }
+
+        this.roundOffset = offset;
+
+        this.clientManager.client.call(
+          "ChatSendServerMessageToLogin",
+          `ECM round offset set to ${this.roundOffset}`,
+          login,
+        );
+        break;
+      default:
+        this.clientManager.client.call(
+          "ChatSendServerMessageToLogin",
+          "Usage: /ecm offset <number>",
+          login,
+        );
+        break;
+    }
+  }
 
   async onPlayerFinish(waypoint: Waypoint) {
     if (!this.isActive()) return;
@@ -70,7 +119,7 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
   }
 
   private isActive(): this is {
-    config: { apiKey: string, isRecording: true };
+    config: { apiKey: string; isRecording: true };
     clientManager: {
       info: {
         activeMap: string;
