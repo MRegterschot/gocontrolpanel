@@ -26,7 +26,6 @@ import { ServerClientInfo } from "@/types/server";
 import { GbxClient } from "@evotm/gbxclient";
 import EventEmitter from "events";
 import "server-only";
-import { handleAdminCommand } from "../commands";
 import { getClient } from "../dbclient";
 import { appGlobals } from "../global";
 import {
@@ -39,6 +38,7 @@ import {
 import PluginManager from "./plugin-manager";
 
 type Listener<T = any> = (data: T) => void;
+type CommandListener = (args: string[], login: string) => void;
 
 export class GbxClientManager extends EventEmitter {
   client: GbxClient;
@@ -50,6 +50,7 @@ export class GbxClientManager extends EventEmitter {
   private listenerMap: Map<string, Record<string, (...args: any[]) => void>> =
     new Map();
   private actionListeners = new Map<string, Listener[]>();
+  private commandListeners = new Map<string, CommandListener[]>();
   currentMatchId: string | null = null;
   roundNumber: number | null = null;
 
@@ -140,6 +141,29 @@ export class GbxClientManager extends EventEmitter {
     if (!handlers) return;
     this.actionListeners.set(
       eventName,
+      handlers.filter((fn) => fn !== callback),
+    );
+  }
+
+  onCommand(commandName: string, callback: CommandListener): void {
+    if (!this.commandListeners.has(commandName)) {
+      this.commandListeners.set(commandName, []);
+    }
+    this.commandListeners.get(commandName)!.push(callback);
+  }
+
+  emitCommand(commandName: string, args: string[], login: string): void {
+    const handlers = this.commandListeners.get(commandName);
+    if (handlers) {
+      for (const fn of handlers) fn(args, login);
+    }
+  }
+
+  offCommand(commandName: string, callback: CommandListener): void {
+    const handlers = this.commandListeners.get(commandName);
+    if (!handlers) return;
+    this.commandListeners.set(
+      commandName,
       handlers.filter((fn) => fn !== callback),
     );
   }
@@ -1144,30 +1168,13 @@ async function onElimination(
   manager.emit("elimination", manager.info.liveInfo);
 }
 
-async function handleCommand(manager: GbxClientManager, chat: PlayerChat) {
-  if (manager.info.plugins.length === 0) return;
-  if (!manager.info.plugins.some((c) => c.enabled)) return;
-
-  const command = chat.Text.split(" ")[0].toLowerCase();
-  const params = chat.Text.split(" ").slice(1);
-
-  const plugin = manager.info.plugins.find((p) =>
-    p.plugin.commands?.some((c) => c.command.toLowerCase() === command),
-  );
-
-  if (!plugin || !plugin.enabled) return;
-
-  switch (command) {
-    case "/admin":
-      await handleAdminCommand(manager, chat, params);
-      break;
-  }
-}
-
 async function onPlayerChat(manager: GbxClientManager, chat: PlayerChat) {
   if (!chat.Login) return;
   if (chat.Text.startsWith("/")) {
-    return await handleCommand(manager, chat);
+    const args = chat.Text.split(" ");
+    const commandName = args[0].toLowerCase().slice(1);
+    const commandArgs = args.slice(1);
+    manager.emitCommand(commandName, commandArgs, chat.Login);
   }
   if (!manager.info.chat?.manualRouting) return;
 

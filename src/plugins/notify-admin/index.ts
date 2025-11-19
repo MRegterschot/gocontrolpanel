@@ -29,14 +29,19 @@ export default class NotifyAdminPlugin extends Plugin {
       "notify-admin-action",
       this.onPlayerManialinkPageAnswer,
     );
+
+    this.clientManager.onCommand("admin", this.onAdminCommand);
   }
 
   async onUnload() {
     this.widget.destroy();
+
     this.clientManager.offAction(
       "notify-admin-action",
       this.onPlayerManialinkPageAnswer,
     );
+
+    this.clientManager.offCommand("admin", this.onAdminCommand);
   }
 
   async onStart() {
@@ -66,6 +71,32 @@ export default class NotifyAdminPlugin extends Plugin {
       "ChatSendServerMessageToLogin",
       "Admins have been notified",
       pageAnswer.Login,
+    );
+
+    this.clientManager.emit("adminCommand", adminCommand);
+  };
+
+  onAdminCommand = async (args: string[], login: string) => {
+    let player = this.clientManager.info.activePlayers.find(
+      (p) => p.login === login,
+    );
+
+    if (!player) {
+      player = await getPlayerInfo(this.clientManager.client, login);
+    }
+
+    const adminCommand: AdminCommand = {
+      serverId: this.clientManager.getServerId(),
+      login: player.login,
+      name: player.nickName,
+      message: args.join(" "),
+      timestamp: new Date(),
+    };
+
+    this.clientManager.client.call(
+      "ChatSendServerMessageToLogin",
+      "Admins have been notified",
+      login,
     );
 
     this.clientManager.emit("adminCommand", adminCommand);
