@@ -45,11 +45,7 @@ export async function updateServerPlugins(
       const updatedPlugins = await db.serverPlugins.findMany({
         where: { serverId },
         include: {
-          plugin: {
-            include: {
-              commands: true,
-            },
-          },
+          plugin: true,
         },
       });
 
@@ -78,11 +74,7 @@ export async function getServerPlugins(
       const plugins = await db.serverPlugins.findMany({
         where: { serverId },
         include: {
-          plugin: {
-            include: {
-              commands: true,
-            },
-          },
+          plugin: true,
         },
       });
 

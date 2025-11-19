@@ -204,11 +204,7 @@ export class GbxClientManager extends EventEmitter {
       include: {
         serverPlugins: {
           include: {
-            plugin: {
-              include: {
-                commands: true,
-              },
-            },
+            plugin: true,
           },
         },
       },
