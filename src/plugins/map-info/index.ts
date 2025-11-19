@@ -1,13 +1,14 @@
+import { getMapByUidServer } from "@/actions/database/server-only/maps";
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
-import Widget from "@/lib/manialink/widget";
-import Plugin from "..";
-import { SMapInfo } from "@/types/gbx/map";
 import ManialinkManager from "@/lib/managers/manialink-manager";
+import Widget from "@/lib/manialink/widget";
+import { SMapInfo } from "@/types/gbx/map";
+import Plugin from "..";
 
 type MapInfo = {
   name: string;
   author: string;
-}
+};
 
 export default class MapInfoPlugin extends Plugin {
   static pluginId = "map-info";
@@ -17,7 +18,10 @@ export default class MapInfoPlugin extends Plugin {
     author: "-",
   };
 
-  constructor(clientManager: GbxClientManager, manialinkManager: ManialinkManager) {
+  constructor(
+    clientManager: GbxClientManager,
+    manialinkManager: ManialinkManager,
+  ) {
     super(clientManager);
     this.widget = new Widget(manialinkManager);
     this.widget.setTemplate("widgets/map-info/map-info");
@@ -46,13 +50,29 @@ export default class MapInfoPlugin extends Plugin {
   }
 
   async updateMapInfo() {
-    const map: SMapInfo = await this.clientManager.client.call("GetCurrentMapInfo");
+    const map: SMapInfo =
+      await this.clientManager.client.call("GetCurrentMapInfo");
 
     if (map) {
-      this.mapInfo = {
-        name: map.Name,
-        author: map.AuthorNickname || map.Author || "-",
-      };
+      if (map.Name && map.AuthorNickname) {
+        this.mapInfo = {
+          name: map.Name,
+          author: map.AuthorNickname,
+        };
+      } else if (map.UId) {
+        const dbMap = await getMapByUidServer(map.UId);
+        if (dbMap) {
+          this.mapInfo = {
+            name: dbMap.name,
+            author: dbMap.authorNickname || "-",
+          };
+        } else {
+          this.mapInfo = {
+            name: "-",
+            author: "-",
+          };
+        }
+      }
     } else {
       this.mapInfo = {
         name: "-",

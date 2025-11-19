@@ -238,8 +238,8 @@ export class GbxClientManager extends EventEmitter {
     await syncMap(this, server.id);
     await syncLiveInfo(this);
 
-    this.pluginManager.loadPlugins();
-    this.pluginManager.reloadPlugins();
+    await this.pluginManager.loadPlugins();
+    await this.pluginManager.reloadPlugins();
 
     return this.client;
   }
@@ -447,6 +447,7 @@ async function callbackListener(
           break;
         case "Trackmania.Event.SkipOutro":
           await onSkipOutro(manager, params);
+          break;
         case "Trackmania.WarmUp.Start":
           onWarmUpStartScript(manager);
           break;
@@ -1066,44 +1067,23 @@ async function setScriptSettings(manager: GbxClientManager) {
   const pointsLimit = Number(scriptSettings[plVar]);
   if (!isNaN(pointsLimit) && pointsLimit > 0) {
     manager.info.liveInfo.pointsLimit = pointsLimit;
-  } else {
-    console.debug(
-      "PointsLimit not found or invalid for server",
-      manager.getServerId(),
-    );
   }
-
   // Rounds limit
   const roundsLimit = Number(scriptSettings["S_RoundsPerMap"]);
   if (!isNaN(roundsLimit) && roundsLimit > 0) {
     manager.info.liveInfo.roundsLimit = roundsLimit;
-  } else {
-    console.debug(
-      "RoundsLimit not found or invalid for server",
-      manager.getServerId(),
-    );
   }
 
   // Map limit
   const mapLimit = Number(scriptSettings[mlVar]);
   if (!isNaN(mapLimit) && mapLimit > 0) {
     manager.info.liveInfo.mapLimit = mapLimit;
-  } else {
-    console.debug(
-      "MapLimit not found or invalid for server",
-      manager.getServerId(),
-    );
   }
 
   // Number of winners
   const nbWinners = Number(scriptSettings["S_NbOfWinners"]);
   if (!isNaN(nbWinners) && nbWinners > 0) {
     manager.info.liveInfo.nbWinners = nbWinners;
-  } else {
-    console.debug(
-      "NbOfWinners not found or invalid for server",
-      manager.getServerId(),
-    );
   }
 
   // Points repartition
@@ -1118,11 +1098,6 @@ async function setScriptSettings(manager: GbxClientManager) {
     } else {
       manager.info.liveInfo.pointsRepartition = [10, 6, 4, 3, 2, 1]; // default
     }
-  } else {
-    console.debug(
-      "PointsRepartition not found or invalid for server",
-      manager.getServerId(),
-    );
   }
 }
 
