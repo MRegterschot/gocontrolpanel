@@ -32,6 +32,13 @@ export default function EcircuitmaniaPluginModal({
         placeholder="Enter your eCircuitMania API Key"
       />
 
+      <FormElement
+        name="ecm.config.isRecording"
+        label="Enable recording"
+        type="checkbox"
+        description="Toggle to enable or disable recording of race data."
+      />
+
       <Button variant={"outline"} onClick={closeModal} className="self-end">
         <IconX />
         Close

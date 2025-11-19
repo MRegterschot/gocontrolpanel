@@ -16,6 +16,7 @@ export default abstract class Plugin<ConfigType = unknown> {
   abstract onStart(): Promise<void>;
 
   setConfig(config: ConfigType) {
+    console.log("Setting config for plugin", this.getPluginId(), config);
     this.config = config;
   }
 

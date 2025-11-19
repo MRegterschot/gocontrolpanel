@@ -64,7 +64,7 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
   }
 
   private isActive(): this is {
-    config: { apiKey: string };
+    config: { apiKey: string, isRecording: true };
     clientManager: {
       info: {
         activeMap: string;
@@ -75,7 +75,8 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
       !!this.clientManager.info.activeMap &&
       !this.clientManager.info.liveInfo.isPaused &&
       !this.clientManager.info.liveInfo.isWarmUp &&
-      !!this.config?.apiKey
+      !!this.config?.apiKey &&
+      !!this.config?.isRecording
     );
   }
 }
