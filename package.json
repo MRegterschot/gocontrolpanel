@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "tsx src/server.ts",
+    "dev": "bun run build:templates && tsx src/server.ts",
     "build": "bun run build:templates && next build",
     "start": "node .next/standalone/server.js",
     "lint": "next lint",

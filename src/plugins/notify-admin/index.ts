@@ -46,7 +46,6 @@ export default class NotifyAdminPlugin extends Plugin {
 
   async onStart() {
     this.widget.display();
-
   }
 
   onPlayerManialinkPageAnswer = async (

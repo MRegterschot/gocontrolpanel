@@ -1,17 +1,39 @@
 {{#extend "widget"}}
 {{#content "widget"}}
-<frame id="action-group" pos="{{ default position "0 0" }}" size="8 8" z-index="10" hidden="1">
-  <frame id="trigger" pos="0 0" size="8 8">
-    <quad size="8 8" bgcolor="222" opacity="0" scriptevents="1" />
-    <label pos="4 4" text="" halign="center" valign="center" textsize="2" textcolor="DDD" />
-  </frame>
-
-  {{#each data.actions}}
-    <frame pos="{{ multiply (add @index 1) -8 }} 0" size="8 8">
-      <quad size="8 8" bgcolor="222" scriptevents="1" />
-      <label pos="4 4" text="{{ this.icon }}" halign="center" valign="center" textsize="2" textcolor="DDD" />
+<frame pos="0 0" size="{{ multiply (add (length data.actions) 1) 5 }} 5" z-index="10">
+  <frame size="{{ multiply (add (length data.actions) 1) 5 }} 5" pos="{{ multiply (length data.actions) -5 }} 0">
+    <frame pos="{{ multiply (length data.actions) 5 }} 0" size="5 5">
+      <quad size="5 5" bgcolor="222" />
+      <label pos="2.6 -2.15" text="" halign="center" valign="center" textsize="2.5" textcolor="DDD" />
     </frame>
-  {{/each}}
+
+    {{#each data.actions}}
+      <frame pos="{{ multiply @index 5 }} 0" size="5 5">
+        <quad size="5 5" bgcolor="DDD" action="{{this.action}}" />
+        {{#if (eq this.type "image")}}
+          <quad image="{{this.icon}}" size="3.5 3.5" pos="0.75 -0.75" />
+        {{else}}
+          <label pos="2.5 -2.1" text="{{this.icon}}" halign="center" valign="center" textsize="2" textcolor="222" />
+        {{/if}}
+      </frame>
+    {{/each}}
+
+    <quad class="trigger" pos="0 0" z-index="2" size="{{ multiply (add (length data.actions) 1) 5 }} 5" bgcolor="000" opacity="0" scriptevents="1" />
+  </frame>
 </frame>
+{{/content}}
+
+{{#content "events"}}
+if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::MouseOver) {
+  AnimMgr.Add(event.Control.Parent, """<frame pos='0 0' />""", 200, CAnimManager::EAnimManagerEasing::ExpInOut);
+  declare triggerIcon <=> ((event.Control.Parent.Controls[0] as CMlFrame).Controls[1] as CMlLabel);
+  AnimMgr.Add(triggerIcon, """<label rot='180' pos='2.25 -2.9' />""", 200, CAnimManager::EAnimManagerEasing::ExpInOut);
+}
+
+if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::MouseOut) {
+  AnimMgr.Add(event.Control.Parent, """<frame pos='{{ multiply (length data.actions) -5 }} 0' />""", 200, CAnimManager::EAnimManagerEasing::ExpInOut);
+  declare triggerIcon <=> ((event.Control.Parent.Controls[0] as CMlFrame).Controls[1] as CMlLabel);
+  AnimMgr.Add(triggerIcon, """<label rot='0' pos='2.6 -2.15' />""", 200, CAnimManager::EAnimManagerEasing::ExpInOut);
+}
 {{/content}}
 {{/extend}}

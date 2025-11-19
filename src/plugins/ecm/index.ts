@@ -35,15 +35,31 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
     });
 
     this.clientManager.onCommand("ecm", this.onECMCommand.bind(this));
+
+    this.clientManager.onAction(this.getPluginId(), this.onECMAction);
   }
 
   async onUnload() {
     this.clientManager.removeListeners(this.getPluginId());
 
     this.clientManager.offCommand("ecm", this.onECMCommand.bind(this));
+
+    this.clientManager.offAction(this.getPluginId(), this.onECMAction);
+    this.manialinkManager.actionGroup.removeAction(this.getPluginId());
   }
 
-  async onStart() {}
+  async onStart() {
+    this.manialinkManager.actionGroup.addAction({
+      name: this.getPluginId(),
+      icon: "https://i.imgur.com/DIjT0pA.png",
+      type: "image",
+      action: this.getPluginId(),
+    });
+  }
+
+  onECMAction = async () => {
+    console.log("ECM Action triggered");
+  };
 
   async onECMCommand(args: string[], login: string) {
     if (args.length === 0) {

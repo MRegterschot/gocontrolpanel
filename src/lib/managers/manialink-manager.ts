@@ -10,7 +10,7 @@ export default class ManialinkManager {
   private publicManialinks: { [id: string]: Manialink } = {};
   private playerManialinks: { [login: string]: { [id: string]: Manialink } } =
     {};
-  protected actionGroup: ActionGroup;
+  public actionGroup: ActionGroup;
 
   constructor(clientManager: GbxClientManager) {
     this.clientManager = clientManager;

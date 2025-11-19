@@ -1,4 +1,94 @@
 var Handlebars = require("handlebars/runtime");  var template = Handlebars.template, templates = Handlebars.templates = Handlebars.templates || {};
+templates['action-group'] = template({"1":function(container,depth0,helpers,partials,data) {
+    var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=container.hooks.helperMissing, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return ((stack1 = (lookupProperty(helpers,"content")||(depth0 && lookupProperty(depth0,"content"))||alias2).call(alias1,"widget",{"name":"content","hash":{},"fn":container.program(2, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":2,"column":0},"end":{"line":24,"column":12}}})) != null ? stack1 : "")
+    + "\n"
+    + ((stack1 = (lookupProperty(helpers,"content")||(depth0 && lookupProperty(depth0,"content"))||alias2).call(alias1,"events",{"name":"content","hash":{},"fn":container.program(8, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":26,"column":0},"end":{"line":38,"column":12}}})) != null ? stack1 : "");
+},"2":function(container,depth0,helpers,partials,data) {
+    var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=container.hooks.helperMissing, alias3=container.escapeExpression, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return "<frame pos=\"0 0\" size=\""
+    + alias3((lookupProperty(helpers,"multiply")||(depth0 && lookupProperty(depth0,"multiply"))||alias2).call(alias1,(lookupProperty(helpers,"add")||(depth0 && lookupProperty(depth0,"add"))||alias2).call(alias1,(lookupProperty(helpers,"length")||(depth0 && lookupProperty(depth0,"length"))||alias2).call(alias1,((stack1 = (depth0 != null ? lookupProperty(depth0,"data") : depth0)) != null ? lookupProperty(stack1,"actions") : stack1),{"name":"length","hash":{},"data":data,"loc":{"start":{"line":3,"column":40},"end":{"line":3,"column":61}}}),1,{"name":"add","hash":{},"data":data,"loc":{"start":{"line":3,"column":35},"end":{"line":3,"column":64}}}),5,{"name":"multiply","hash":{},"data":data,"loc":{"start":{"line":3,"column":23},"end":{"line":3,"column":69}}}))
+    + " 5\" z-index=\"10\">\n  <frame size=\""
+    + alias3((lookupProperty(helpers,"multiply")||(depth0 && lookupProperty(depth0,"multiply"))||alias2).call(alias1,(lookupProperty(helpers,"add")||(depth0 && lookupProperty(depth0,"add"))||alias2).call(alias1,(lookupProperty(helpers,"length")||(depth0 && lookupProperty(depth0,"length"))||alias2).call(alias1,((stack1 = (depth0 != null ? lookupProperty(depth0,"data") : depth0)) != null ? lookupProperty(stack1,"actions") : stack1),{"name":"length","hash":{},"data":data,"loc":{"start":{"line":4,"column":32},"end":{"line":4,"column":53}}}),1,{"name":"add","hash":{},"data":data,"loc":{"start":{"line":4,"column":27},"end":{"line":4,"column":56}}}),5,{"name":"multiply","hash":{},"data":data,"loc":{"start":{"line":4,"column":15},"end":{"line":4,"column":61}}}))
+    + " 5\" pos=\""
+    + alias3((lookupProperty(helpers,"multiply")||(depth0 && lookupProperty(depth0,"multiply"))||alias2).call(alias1,(lookupProperty(helpers,"length")||(depth0 && lookupProperty(depth0,"length"))||alias2).call(alias1,((stack1 = (depth0 != null ? lookupProperty(depth0,"data") : depth0)) != null ? lookupProperty(stack1,"actions") : stack1),{"name":"length","hash":{},"data":data,"loc":{"start":{"line":4,"column":82},"end":{"line":4,"column":103}}}),-5,{"name":"multiply","hash":{},"data":data,"loc":{"start":{"line":4,"column":70},"end":{"line":4,"column":109}}}))
+    + " 0\">\n    <frame pos=\""
+    + alias3((lookupProperty(helpers,"multiply")||(depth0 && lookupProperty(depth0,"multiply"))||alias2).call(alias1,(lookupProperty(helpers,"length")||(depth0 && lookupProperty(depth0,"length"))||alias2).call(alias1,((stack1 = (depth0 != null ? lookupProperty(depth0,"data") : depth0)) != null ? lookupProperty(stack1,"actions") : stack1),{"name":"length","hash":{},"data":data,"loc":{"start":{"line":5,"column":28},"end":{"line":5,"column":49}}}),5,{"name":"multiply","hash":{},"data":data,"loc":{"start":{"line":5,"column":16},"end":{"line":5,"column":54}}}))
+    + " 0\" size=\"5 5\">\n      <quad size=\"5 5\" bgcolor=\"222\" />\n      <label class=\"trigger-icon\" pos=\"2.6 -2.15\" text=\"\" halign=\"center\" valign=\"center\" textsize=\"2.5\" textcolor=\"DDD\" />\n    </frame>\n\n"
+    + ((stack1 = lookupProperty(helpers,"each").call(alias1,((stack1 = (depth0 != null ? lookupProperty(depth0,"data") : depth0)) != null ? lookupProperty(stack1,"actions") : stack1),{"name":"each","hash":{},"fn":container.program(3, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":10,"column":4},"end":{"line":19,"column":13}}})) != null ? stack1 : "")
+    + "\n    <quad class=\"trigger\" pos=\"0 0\" z-index=\"2\" size=\""
+    + alias3((lookupProperty(helpers,"multiply")||(depth0 && lookupProperty(depth0,"multiply"))||alias2).call(alias1,(lookupProperty(helpers,"add")||(depth0 && lookupProperty(depth0,"add"))||alias2).call(alias1,(lookupProperty(helpers,"length")||(depth0 && lookupProperty(depth0,"length"))||alias2).call(alias1,((stack1 = (depth0 != null ? lookupProperty(depth0,"data") : depth0)) != null ? lookupProperty(stack1,"actions") : stack1),{"name":"length","hash":{},"data":data,"loc":{"start":{"line":21,"column":71},"end":{"line":21,"column":92}}}),1,{"name":"add","hash":{},"data":data,"loc":{"start":{"line":21,"column":66},"end":{"line":21,"column":95}}}),5,{"name":"multiply","hash":{},"data":data,"loc":{"start":{"line":21,"column":54},"end":{"line":21,"column":100}}}))
+    + " 5\" bgcolor=\"000\" opacity=\"0\" scriptevents=\"1\" />\n  </frame>\n</frame>\n";
+},"3":function(container,depth0,helpers,partials,data) {
+    var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=container.hooks.helperMissing, alias3=container.escapeExpression, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return "      <frame pos=\""
+    + alias3((lookupProperty(helpers,"multiply")||(depth0 && lookupProperty(depth0,"multiply"))||alias2).call(alias1,(data && lookupProperty(data,"index")),5,{"name":"multiply","hash":{},"data":data,"loc":{"start":{"line":11,"column":18},"end":{"line":11,"column":41}}}))
+    + " 0\" size=\"5 5\">\n        <quad size=\"5 5\" bgcolor=\"DDD\" action=\""
+    + alias3(container.lambda((depth0 != null ? lookupProperty(depth0,"action") : depth0), depth0))
+    + "\" />\n"
+    + ((stack1 = lookupProperty(helpers,"if").call(alias1,(lookupProperty(helpers,"eq")||(depth0 && lookupProperty(depth0,"eq"))||alias2).call(alias1,(depth0 != null ? lookupProperty(depth0,"type") : depth0),"image",{"name":"eq","hash":{},"data":data,"loc":{"start":{"line":13,"column":14},"end":{"line":13,"column":36}}}),{"name":"if","hash":{},"fn":container.program(4, data, 0),"inverse":container.program(6, data, 0),"data":data,"loc":{"start":{"line":13,"column":8},"end":{"line":17,"column":15}}})) != null ? stack1 : "")
+    + "      </frame>\n";
+},"4":function(container,depth0,helpers,partials,data) {
+    var lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return "          <quad image=\""
+    + container.escapeExpression(container.lambda((depth0 != null ? lookupProperty(depth0,"icon") : depth0), depth0))
+    + "\" size=\"3.5 3.5\" pos=\"0.75 -0.75\" />\n";
+},"6":function(container,depth0,helpers,partials,data) {
+    var lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return "          <label pos=\"2.5 -2.1\" text=\""
+    + container.escapeExpression(container.lambda((depth0 != null ? lookupProperty(depth0,"icon") : depth0), depth0))
+    + "\" halign=\"center\" valign=\"center\" textsize=\"2\" textcolor=\"222\" />\n";
+},"8":function(container,depth0,helpers,partials,data) {
+    var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=container.hooks.helperMissing, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return "if (event.Control.HasClass(\"trigger\") && event.Type == CMlScriptEvent::Type::MouseOver) {\n  AnimMgr.Add(event.Control.Parent, \"\"\"<frame pos='0 0' />\"\"\", 200, CAnimManager::EAnimManagerEasing::ExpInOut);\n  declare triggerIcon <=> ((event.Control.Parent.Controls[0] as CMlFrame).Controls[1] as CMlLabel);\n  AnimMgr.Add(triggerIcon, \"\"\"<label rot='180' pos='2.25 -2.9' />\"\"\", 200, CAnimManager::EAnimManagerEasing::ExpInOut);\n}\n\nif (event.Control.HasClass(\"trigger\") && event.Type == CMlScriptEvent::Type::MouseOut) {\n  AnimMgr.Add(event.Control.Parent, \"\"\"<frame pos='"
+    + container.escapeExpression((lookupProperty(helpers,"multiply")||(depth0 && lookupProperty(depth0,"multiply"))||alias2).call(alias1,(lookupProperty(helpers,"length")||(depth0 && lookupProperty(depth0,"length"))||alias2).call(alias1,((stack1 = (depth0 != null ? lookupProperty(depth0,"data") : depth0)) != null ? lookupProperty(stack1,"actions") : stack1),{"name":"length","hash":{},"data":data,"loc":{"start":{"line":34,"column":63},"end":{"line":34,"column":84}}}),-5,{"name":"multiply","hash":{},"data":data,"loc":{"start":{"line":34,"column":51},"end":{"line":34,"column":90}}}))
+    + " 0' />\"\"\", 200, CAnimManager::EAnimManagerEasing::ExpInOut);\n  declare triggerIcon <=> ((event.Control.Parent.Controls[0] as CMlFrame).Controls[1] as CMlLabel);\n  AnimMgr.Add(triggerIcon, \"\"\"<label rot='0' pos='2.6 -2.15' />\"\"\", 200, CAnimManager::EAnimManagerEasing::ExpInOut);\n}\n";
+},"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
+    var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return ((stack1 = (lookupProperty(helpers,"extend")||(depth0 && lookupProperty(depth0,"extend"))||container.hooks.helperMissing).call(depth0 != null ? depth0 : (container.nullContext || {}),"widget",{"name":"extend","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":1,"column":0},"end":{"line":39,"column":11}}})) != null ? stack1 : "");
+},"useData":true});
 templates['manialink'] = template({"1":function(container,depth0,helpers,partials,data) {
     return "";
 },"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {

@@ -5,6 +5,8 @@ import Widget from "./widget";
 type Action = {
   name: string;
   icon: string;
+  type?: "image" | "text";
+  action?: string;
 };
 
 export default class ActionGroup extends Widget {
@@ -13,6 +15,8 @@ export default class ActionGroup extends Widget {
   constructor(manialinkManager: ManialinkManager, login?: string) {
     super(manialinkManager, login, false);
     this.setTemplate("action-group");
+    this.setId("action-group-widget");
+    this.setPosition("-156 85");
   }
 
   public addAction(action: Action) {
@@ -24,6 +28,11 @@ export default class ActionGroup extends Widget {
   public removeAction(actionName: string) {
     this.actions = this.actions.filter((a) => a.name !== actionName);
     this.setData({ actions: this.actions });
-    this.display();
+
+    if (this.actions.length === 0) {
+      this.hide();
+    } else {
+      this.display();
+    }
   }
 }
