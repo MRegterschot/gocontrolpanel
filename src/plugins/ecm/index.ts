@@ -9,6 +9,7 @@ import Plugin from "..";
 
 export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
   static pluginId = "ecm";
+  private roundOffset: number = 0;
 
   constructor(
     clientManager: GbxClientManager,
@@ -21,6 +22,7 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
     this.clientManager.addListeners(this.getPluginId(), {
       finish: this.onPlayerFinish.bind(this),
       scores: this.onEndRound.bind(this),
+      beginMap: this.onBeginMap.bind(this),
     });
   }
 
@@ -61,6 +63,10 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
       roundNum,
       mapId: this.clientManager.info.activeMap,
     });
+  }
+
+  async onBeginMap() {
+    this.roundOffset = 0;
   }
 
   private isActive(): this is {
