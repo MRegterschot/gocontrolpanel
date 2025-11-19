@@ -1,6 +1,7 @@
 import { ecmOnDriverFinish, ecmOnRoundEnd } from "@/lib/api/ecm";
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import ManialinkManager from "@/lib/managers/manialink-manager";
+import Widget from "@/lib/manialink/components/widget";
 import { rankPlayers } from "@/lib/utils";
 import { Scores } from "@/types/gbx/scores";
 import { Waypoint } from "@/types/gbx/waypoint";
@@ -9,13 +10,21 @@ import Plugin from "..";
 
 export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
   static pluginId = "ecm";
+  private widget: Widget;
   private roundOffset: number = 0;
 
   constructor(
     clientManager: GbxClientManager,
     manialinkManager: ManialinkManager,
   ) {
-    super(clientManager);
+    super(clientManager, manialinkManager);
+    this.widget = new Widget(manialinkManager, undefined, false);
+    this.widget.setTemplate("widgets/ecm/ecm");
+    this.widget.setId("ecm-widget");
+    this.widget.setPosition("119 -70");
+    this.widget.setData({
+      ecmAction: "ecm-action",
+    });
   }
 
   async onLoad() {
@@ -87,7 +96,7 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
     ecmOnDriverFinish(this.config.apiKey, {
       finishTime: waypoint.racetime,
       ubisoftUid: waypoint.accountid,
-      roundNum: this.clientManager.roundNumber || 1,
+      roundNum: (this.clientManager.roundNumber || 1) + this.roundOffset,
       mapId: this.clientManager.info.activeMap,
     });
   }
@@ -109,7 +118,7 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
 
     ecmOnRoundEnd(this.config.apiKey, {
       players,
-      roundNum,
+      roundNum: roundNum + this.roundOffset,
       mapId: this.clientManager.info.activeMap,
     });
   }

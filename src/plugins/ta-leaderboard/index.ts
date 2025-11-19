@@ -25,7 +25,7 @@ export default class TALeaderboardPlugin extends Plugin {
     clientManager: GbxClientManager,
     manialinkManager: ManialinkManager,
   ) {
-    super(clientManager);
+    super(clientManager, manialinkManager);
     this.widget = new Widget(manialinkManager);
     this.widget.setTemplate("widgets/ta-leaderboard/ta-leaderboard");
     this.widget.setId("ta-leaderboard-widget");

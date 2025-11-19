@@ -14,7 +14,7 @@ export default class NotifyAdminPlugin extends Plugin {
     clientManager: GbxClientManager,
     manialinkManager: ManialinkManager,
   ) {
-    super(clientManager);
+    super(clientManager, manialinkManager);
     this.widget = new Widget(manialinkManager, undefined, false);
     this.widget.setTemplate("widgets/notify-admin/notify-admin");
     this.widget.setId("notify-admin-widget");
@@ -46,7 +46,7 @@ export default class NotifyAdminPlugin extends Plugin {
 
   async onStart() {
     this.widget.display();
-    
+
   }
 
   onPlayerManialinkPageAnswer = async (

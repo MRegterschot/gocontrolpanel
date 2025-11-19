@@ -38,7 +38,7 @@ export default class LiveRoundPlugin extends Plugin {
     clientManager: GbxClientManager,
     manialinkManager: ManialinkManager,
   ) {
-    super(clientManager);
+    super(clientManager, manialinkManager);
     this.widget = new Widget(manialinkManager);
     this.widget.setTemplate("widgets/live-round/live-round");
     this.widget.setId("live-round-widget");

@@ -37,7 +37,7 @@ export default class RecordsInfoPlugin extends Plugin {
     clientManager: GbxClientManager,
     manialinkManager: ManialinkManager,
   ) {
-    super(clientManager);
+    super(clientManager, manialinkManager);
     this.widget = new Widget(manialinkManager);
     this.widget.setTemplate("widgets/records-info/records-info");
     this.widget.setId("records-info-widget");

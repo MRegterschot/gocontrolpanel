@@ -25,7 +25,7 @@ export default class TAActiveRunsPlugin extends Plugin {
     clientManager: GbxClientManager,
     manialinkManager: ManialinkManager,
   ) {
-    super(clientManager);
+    super(clientManager, manialinkManager);
     this.widget = new Widget(manialinkManager);
     this.widget.setTemplate("widgets/ta-active-runs/ta-active-runs");
     this.widget.setId("ta-active-runs-widget");
