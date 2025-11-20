@@ -7,31 +7,46 @@ export default class Manialink {
   private firstDisplay: boolean = true;
   protected readonly manialinkManager: ManialinkManager;
 
+  private hasUpdate: boolean = true;
+  private updateManialink: Manialink | null = null;
+
   public readonly login?: string;
   public id: string = "manialink";
   private template: string = "manialink";
   private data: unknown;
   private position: string = "0 0";
 
-  constructor(manialinkManager: ManialinkManager, login?: string) {
+  constructor(manialinkManager: ManialinkManager, login?: string, update: boolean = true) {
     this.manialinkManager = manialinkManager;
     this.login = login;
+    this.hasUpdate = update;
+    if (this.hasUpdate) {
+      this.updateManialink = new Manialink(manialinkManager, login, false);
+      this.updateManialink.setTemplate(this.getUpdateTemplate());
+    }
   }
 
-  public async display() {
+  public display() {
     this.manialinkManager.displayManialink(this, this.firstDisplay);
     this.firstDisplay = false;
+    this.updateManialink?.display();
   }
 
-  public async hide() {
+  public hide() {
     this.manialinkManager.hideManialink(this);
+    this.updateManialink?.hide();
   }
 
-  public async destroy() {
+  public destroy() {
     this.manialinkManager.destroyManialink(this);
+    this.updateManialink?.destroy();
   }
 
-  public async render(): Promise<string> {
+  public update() {
+    this.updateManialink?.display();
+  }
+
+  public render(): string {
     // @ts-expect-error Handlebars.templates is dynamically generated
     Handlebars.partials = Handlebars.templates;
     const manialink = Handlebars.templates[this.template]({
@@ -49,13 +64,24 @@ export default class Manialink {
 
   public setData(data: unknown) {
     this.data = data;
+    this.updateManialink?.setData(data);
   }
 
   public setTemplate(template: string) {
     this.template = template;
+    this.updateManialink?.setTemplate(this.getUpdateTemplate());
+  }
+
+  public setId(id: string) {
+    this.id = id;
+    if (this.updateManialink) this.updateManialink.id = `${id}-update`;
   }
 
   public getTemplate(): string {
     return this.template;
+  }
+
+  private getUpdateTemplate(): string {
+    return `${this.getTemplate()}-update`;
   }
 }
