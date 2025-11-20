@@ -3,17 +3,19 @@ import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import ManialinkManager from "@/lib/managers/manialink-manager";
 import Widget from "@/lib/manialink/components/widget";
 import { rankPlayers } from "@/lib/utils";
+import { PlayerManialinkPageAnswer } from "@/types/gbx/player";
 import { Scores } from "@/types/gbx/scores";
 import { Waypoint } from "@/types/gbx/waypoint";
 import { ECMPluginConfig } from "@/types/plugins/ecm";
 import Plugin from "..";
-import { PlayerManialinkPageAnswer } from "@/types/gbx/player";
 import ECMWindow from "./ecm-window";
 
 export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
   static pluginId = "ecm";
   private widget: Widget;
   private roundOffset: number = 0;
+
+  private windows: Map<string, ECMWindow> = new Map();
 
   constructor(
     clientManager: GbxClientManager,
@@ -41,6 +43,11 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
   }
 
   async onUnload() {
+    this.windows.forEach((window) => {
+      window.destroy();
+    });
+    this.windows.clear();
+
     this.clientManager.removeListeners(this.getPluginId());
 
     this.clientManager.offCommand("ecm", this.onECMCommand.bind(this));
@@ -58,8 +65,26 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
     });
   }
 
+  async onConfigUpdate() {
+    this.windows.forEach((window) => {
+      window.updateConfig(this.config);
+    });
+  }
+
   onECMAction = async (data: PlayerManialinkPageAnswer) => {
-    const ecmWindow = new ECMWindow(this.manialinkManager, "eCircuitMania", data.Login);
+    const ecmWindow = new ECMWindow(
+      this.clientManager,
+      this.manialinkManager,
+      this.config,
+      "eCircuitMania",
+      data.Login,
+    );
+
+    ecmWindow.onCloseCallback = () => {
+      this.windows.delete(data.Login);
+    };
+    
+    this.windows.set(data.Login, ecmWindow);
     ecmWindow.display();
   };
 

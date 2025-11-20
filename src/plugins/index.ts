@@ -18,8 +18,11 @@ export default abstract class Plugin<ConfigType = unknown> {
   abstract onUnload(): Promise<void>;
   abstract onStart(): Promise<void>;
 
+  async onConfigUpdate(): Promise<void> {}
+
   setConfig(config: ConfigType) {
     this.config = config;
+    this.onConfigUpdate();
   }
 
   getPluginId(): string {

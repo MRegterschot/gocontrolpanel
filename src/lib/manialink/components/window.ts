@@ -2,6 +2,8 @@ import ManialinkManager from "@/lib/managers/manialink-manager";
 import Manialink from "./manialink";
 
 export default class Window extends Manialink {
+  public onCloseCallback: (() => void) | null = null;
+
   constructor(
     manialinkManager: ManialinkManager,
     title: string,
@@ -24,5 +26,6 @@ export default class Window extends Manialink {
       .getClientManager()
       .offAction(`close-window-${this.getId()}`, this.onClose);
     this.destroy();
+    if (this.onCloseCallback) this.onCloseCallback();
   };
 }

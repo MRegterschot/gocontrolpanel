@@ -1,0 +1,21 @@
+{{#extend "manialink"}}
+{{#content "content"}}
+<script>
+<!--
+#Struct eCMConfig {
+  Text apiKey;
+  Boolean isRecording;
+}
+
+main(){
+  declare eCMConfig ECMConfig for This;
+  declare Integer LastECMConfigUpdate for This;
+  declare Text ecmConfigJson = """{{{ default data.ecmConfigJson '{}' }}}""";
+
+  ECMConfig.fromjson(ecmConfigJson);
+  LastECMConfigUpdate = GameTime;
+}
+-->
+</script>
+{{/content}}
+{{/extend}}
