@@ -18,22 +18,30 @@
       </frame>
     {{/each}}
 
-    <quad class="trigger" pos="0 0" z-index="2" size="{{ multiply (add (length data.actions) 1) 5 }} 5" bgcolor="000" opacity="0" scriptevents="1" />
+    <quad class="trigger" pos="{{ multiply (length data.actions) 5 }} 0" z-index="2" size="5 5" bgcolor="000" opacity="0" scriptevents="1" />
   </frame>
 </frame>
 {{/content}}
 
-{{#content "events"}}
-if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::MouseOver) {
-  AnimMgr.Add(event.Control.Parent, """<frame pos='0 0' />""", 200, CAnimManager::EAnimManagerEasing::ExpInOut);
-  declare triggerIcon <=> ((event.Control.Parent.Controls[0] as CMlFrame).Controls[1] as CMlLabel);
-  AnimMgr.Add(triggerIcon, """<label rot='180' pos='2.25 -2.9' />""", 200, CAnimManager::EAnimManagerEasing::ExpInOut);
-}
+{{#content main}}
+declare Boolean actionGroupIsOpen = false for This;
+{{/content}}
 
-if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::MouseOut) {
-  AnimMgr.Add(event.Control.Parent, """<frame pos='{{ multiply (length data.actions) -5 }} 0' />""", 200, CAnimManager::EAnimManagerEasing::ExpInOut);
-  declare triggerIcon <=> ((event.Control.Parent.Controls[0] as CMlFrame).Controls[1] as CMlLabel);
-  AnimMgr.Add(triggerIcon, """<label rot='0' pos='2.6 -2.15' />""", 200, CAnimManager::EAnimManagerEasing::ExpInOut);
+{{#content "events"}}
+if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::MouseClick) {
+  declare Boolean actionGroupIsOpen for This;
+
+  if (actionGroupIsOpen) {
+    AnimMgr.Add(event.Control.Parent, """<frame pos='{{ multiply (length data.actions) -5 }} 0' />""", 200, CAnimManager::EAnimManagerEasing::ExpInOut);
+    declare triggerIcon <=> ((event.Control.Parent.Controls[0] as CMlFrame).Controls[1] as CMlLabel);
+    AnimMgr.Add(triggerIcon, """<label rot='0' pos='2.6 -2.15' />""", 200, CAnimManager::EAnimManagerEasing::ExpInOut);
+  } else {
+    AnimMgr.Add(event.Control.Parent, """<frame pos='0 0' />""", 200, CAnimManager::EAnimManagerEasing::ExpInOut);
+    declare triggerIcon <=> ((event.Control.Parent.Controls[0] as CMlFrame).Controls[1] as CMlLabel);
+    AnimMgr.Add(triggerIcon, """<label rot='180' pos='2.25 -2.9' />""", 200, CAnimManager::EAnimManagerEasing::ExpInOut);
+  }
+
+  actionGroupIsOpen = !actionGroupIsOpen;
 }
 {{/content}}
 {{/extend}}
