@@ -3,6 +3,11 @@ import "@/lib/manialink/compiled_templates";
 import "server-only";
 import ManialinkManager from "../../managers/manialink-manager";
 
+type Vector2 = {
+  x: number;
+  y: number;
+};
+
 export default class Manialink {
   private firstDisplay: boolean = true;
   protected readonly manialinkManager: ManialinkManager;
@@ -14,9 +19,15 @@ export default class Manialink {
   public id: string = "manialink";
   private template: string = "manialink";
   private data: unknown;
-  private position: string = "0 0";
+  private position: Vector2 = { x: 0, y: 0 };
+  private size: Vector2 = { x: 100, y: 80 };
+  private title: string = "";
 
-  constructor(manialinkManager: ManialinkManager, login?: string, update: boolean = true) {
+  constructor(
+    manialinkManager: ManialinkManager,
+    login?: string,
+    update: boolean = true,
+  ) {
     this.manialinkManager = manialinkManager;
     this.login = login;
     this.hasUpdate = update;
@@ -52,14 +63,29 @@ export default class Manialink {
     const manialink = Handlebars.templates[this.template]({
       id: this.id,
       position: this.position,
+      size: this.size,
+      title: this.title,
       data: this.data,
     });
 
     return manialink;
   }
 
-  public setPosition(position: string) {
+  public setPosition(position: Vector2) {
     this.position = position;
+  }
+
+  public setSize(size: Vector2) {
+    this.size = size;
+  }
+
+  public setTitle(title: string) {
+    this.title = title;
+    this.updateManialink?.setTitle(title);
+  }
+
+  public getTitle(): string {
+    return this.title;
   }
 
   public setData(data: unknown) {
@@ -75,6 +101,10 @@ export default class Manialink {
   public setId(id: string) {
     this.id = id;
     if (this.updateManialink) this.updateManialink.id = `${id}-update`;
+  }
+
+  public getId(): string {
+    return this.id;
   }
 
   public getTemplate(): string {

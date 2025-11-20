@@ -41,7 +41,7 @@ export default class RecordsInfoPlugin extends Plugin {
     this.widget = new Widget(manialinkManager);
     this.widget.setTemplate("widgets/records-info/records-info");
     this.widget.setId("records-info-widget");
-    this.widget.setPosition("100 73.5");
+    this.widget.setPosition({ x: 100, y: 73.5 });
   }
 
   async onLoad() {

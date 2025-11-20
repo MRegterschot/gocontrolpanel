@@ -29,7 +29,7 @@ export default class TALeaderboardPlugin extends Plugin {
     this.widget = new Widget(manialinkManager);
     this.widget.setTemplate("widgets/ta-leaderboard/ta-leaderboard");
     this.widget.setId("ta-leaderboard-widget");
-    this.widget.setPosition("100 55");
+    this.widget.setPosition({ x: 100, y: 55 });
   }
 
   async onLoad() {

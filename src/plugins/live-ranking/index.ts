@@ -31,7 +31,7 @@ export default class LiveRankingPlugin extends Plugin {
     this.widget = new Widget(manialinkManager);
     this.widget.setTemplate("widgets/live-ranking/live-ranking");
     this.widget.setId("live-ranking-widget");
-    this.widget.setPosition("100 55");
+    this.widget.setPosition({ x: 100, y: 55 });
   }
 
   async onLoad() {

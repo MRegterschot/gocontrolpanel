@@ -98,7 +98,7 @@ export default class ManialinkManager {
       }
     }
 
-    const xml = await manialink.render();
+    const xml = manialink.render();
 
     if (manialink.login) {
       this.clientManager.client.send(
@@ -157,5 +157,9 @@ export default class ManialinkManager {
         }
       }
     }
+  }
+
+  public getClientManager(): GbxClientManager {
+    return this.clientManager;
   }
 }

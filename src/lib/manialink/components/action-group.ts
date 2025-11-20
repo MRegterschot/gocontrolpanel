@@ -16,7 +16,7 @@ export default class ActionGroup extends Widget {
     super(manialinkManager, login, false);
     this.setTemplate("action-group");
     this.setId("action-group-widget");
-    this.setPosition("-156 85");
+    this.setPosition({ x: -156, y: 85 });
   }
 
   public addAction(action: Action) {

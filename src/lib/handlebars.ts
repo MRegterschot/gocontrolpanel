@@ -27,12 +27,20 @@ Handlebars.registerHelper(
   },
 );
 
+Handlebars.registerHelper("add", function (a: number, b: number) {
+  return a + b;
+});
+
+Handlebars.registerHelper("subtract", function (a: number, b: number) {
+  return a - b;
+});
+
 Handlebars.registerHelper("multiply", function (a: number, b: number) {
   return a * b;
 });
 
-Handlebars.registerHelper("add", function (a: number, b: number) {
-  return a + b;
+Handlebars.registerHelper("divide", function (a: number, b: number) {
+  return a / b;
 });
 
 export { Handlebars, HandlebarsServer };

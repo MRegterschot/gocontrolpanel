@@ -7,6 +7,8 @@ import { Scores } from "@/types/gbx/scores";
 import { Waypoint } from "@/types/gbx/waypoint";
 import { ECMPluginConfig } from "@/types/plugins/ecm";
 import Plugin from "..";
+import { PlayerManialinkPageAnswer } from "@/types/gbx/player";
+import ECMWindow from "./ecm-window";
 
 export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
   static pluginId = "ecm";
@@ -21,7 +23,7 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
     this.widget = new Widget(manialinkManager, undefined, false);
     this.widget.setTemplate("widgets/ecm/ecm");
     this.widget.setId("ecm-widget");
-    this.widget.setPosition("119 -70");
+    this.widget.setPosition({ x: 119, y: -70 });
     this.widget.setData({
       ecmAction: "ecm-action",
     });
@@ -35,7 +37,6 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
     });
 
     this.clientManager.onCommand("ecm", this.onECMCommand.bind(this));
-
     this.clientManager.onAction(this.getPluginId(), this.onECMAction);
   }
 
@@ -43,8 +44,8 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
     this.clientManager.removeListeners(this.getPluginId());
 
     this.clientManager.offCommand("ecm", this.onECMCommand.bind(this));
-
     this.clientManager.offAction(this.getPluginId(), this.onECMAction);
+
     this.manialinkManager.actionGroup.removeAction(this.getPluginId());
   }
 
@@ -57,8 +58,9 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
     });
   }
 
-  onECMAction = async () => {
-    console.log("ECM Action triggered");
+  onECMAction = async (data: PlayerManialinkPageAnswer) => {
+    const ecmWindow = new ECMWindow(this.manialinkManager, "eCircuitMania", data.Login);
+    ecmWindow.display();
   };
 
   async onECMCommand(args: string[], login: string) {

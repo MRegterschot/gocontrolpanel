@@ -18,7 +18,7 @@ export default class NotifyAdminPlugin extends Plugin {
     this.widget = new Widget(manialinkManager, undefined, false);
     this.widget.setTemplate("widgets/notify-admin/notify-admin");
     this.widget.setId("notify-admin-widget");
-    this.widget.setPosition("119 -70");
+    this.widget.setPosition({ x: 119, y: -70 });
     this.widget.setData({
       notifyAdminAction: "notify-admin-action",
     });
