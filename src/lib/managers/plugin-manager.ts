@@ -43,6 +43,15 @@ export default class PluginManager {
     const clientPlugins = this.clientManager.info.plugins;
 
     for (const plugin of this.plugins.values()) {
+      // Check if plugin is enabled
+      const clientPlugin = clientPlugins.find(
+        (p) => p.plugin.name === plugin.getPluginId(),
+      );
+
+      if (!clientPlugin) continue;
+
+      plugin.setDbPluginId(clientPlugin.plugin.id);
+
       // Check if plugin supports current gamemode
       if (
         plugin.getSupportedGamemodes().length > 0 &&
@@ -56,11 +65,7 @@ export default class PluginManager {
       // Check if plugin is already loaded
       if (plugin.isLoaded()) continue;
 
-      // Check if plugin is enabled
-      const clientPlugin = clientPlugins.find(
-        (p) => p.plugin.name === plugin.getPluginId(),
-      );
-      if (!clientPlugin || !clientPlugin.enabled) continue;
+      if (!clientPlugin.enabled) continue;
 
       plugin.setConfig(clientPlugin.config);
       await plugin.onLoad();

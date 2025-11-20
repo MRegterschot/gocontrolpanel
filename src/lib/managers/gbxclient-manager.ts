@@ -727,10 +727,11 @@ function onStartMapStartScript(manager: GbxClientManager, startMap: StartMap) {
 }
 
 async function onStartRoundStartScript(manager: GbxClientManager) {
-  manager.emit("startRound");
   if (manager.roundNumber !== null && !manager.info.liveInfo.isWarmUp)
     manager.roundNumber++;
-
+  
+  manager.emit("startRound");
+  
   const playerList: SPlayerInfo[] = await manager.client.call(
     "GetPlayerList",
     1000,

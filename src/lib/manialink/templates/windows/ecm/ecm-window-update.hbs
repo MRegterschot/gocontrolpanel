@@ -9,10 +9,12 @@
 
 main(){
   declare eCMConfig ECMConfig for This;
+  declare Integer ECMCurrentRound for This;
   declare Integer LastECMConfigUpdate for This;
   declare Text ecmConfigJson = """{{{ default data.ecmConfigJson '{}' }}}""";
-
+  
   ECMConfig.fromjson(ecmConfigJson);
+  ECMCurrentRound = {{ data.currentRound }};
   LastECMConfigUpdate = GameTime;
 }
 -->

@@ -71,19 +71,37 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
     });
   }
 
+  onRoundOffsetUpdate = (value: number) => {
+    this.roundOffset += value;
+    this.windows.forEach((window) => {
+      window.updateRoundOffset(this.roundOffset);
+    });
+  };
+  
+  onUserConfigUpdate = (config: ECMPluginConfig | null) => {
+    this.config = config;
+    this.windows.forEach((window) => {
+      window.updateConfig(this.config);
+    });
+  };
+
   onECMAction = async (data: PlayerManialinkPageAnswer) => {
     const ecmWindow = new ECMWindow(
       this.clientManager,
       this.manialinkManager,
       this.config,
+      this.roundOffset,
       "eCircuitMania",
       data.Login,
+      this.dbPluginId,
     );
 
     ecmWindow.onCloseCallback = () => {
       this.windows.delete(data.Login);
     };
-    
+    ecmWindow.onRoundOffsetUpdateCallback = this.onRoundOffsetUpdate;
+    ecmWindow.onConfigUpdateCallback = this.onUserConfigUpdate;
+
     this.windows.set(data.Login, ecmWindow);
     ecmWindow.display();
   };
@@ -116,6 +134,9 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
         }
 
         this.roundOffset = offset;
+        this.windows.forEach((window) => {
+          window.updateRoundOffset(this.roundOffset);
+        });
 
         this.clientManager.client.call(
           "ChatSendServerMessageToLogin",

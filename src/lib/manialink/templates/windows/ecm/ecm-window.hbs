@@ -1,7 +1,7 @@
 {{#extend "window"}}
 {{#content "window"}}
-<frame pos="1 -1" id="ecm-window" size="{{ subtract size.x 2 }} {{ subtract size.y 2 }}">
-  <frame id="recording-status" size="{{ subtract size.x 2 }} 5">
+<frame pos="2 -2" id="ecm-window" size="{{ subtract size.x 4 }} {{ subtract size.y 4 }}">
+  <frame id="recording-status" size="{{ subtract size.x 4 }} 5">
     <label text="" pos="0 -2.25" textcolor="{{#if config.isRecording}}2D2{{else}}D22{{/if}}" textsize="1" valign="center" />
     <label text="{{#if config.isRecording}}Recording{{else}}Not Recording{{/if}}" pos="3.5 -2.25" size="20 5" textsize="1" textcolor="222" valign="center" textfont="GameFontRegular" />
 
@@ -12,12 +12,12 @@
     </frame>
   </frame>
 
-  <frame id="api-key-frame" pos="0 -6" size="{{ subtract size.x 2 }} 12.25">
+  <frame id="api-key-frame" pos="0 -6" size="{{ subtract size.x 4 }} 12.25">
     <label text="API Key" pos="0 -2.25" size="25 3" textsize="0.6" textcolor="222" valign="center" textfont="GameFontSemiBold" />
-    <frame id="input-frame" pos="0 -4.5" size="{{ subtract size.x 2 }} 7.75">
-      <quad pos="0 -4.75" size="35 0.25" bgcolor="222" />
-      <entry pos="0 -2.25" default="{{ config.apiKey }}" size="30 5" name="ecm-api-key-entry" id="ecm-api-key-entry" class="ecm-api-key-entry" textsize="1" focusareacolor1="CCC" focusareacolor2="CCC" textcolor="222" scriptevents="1" textformat="Password" valuetype="Ml_String" valign="center" textfont="GameFontRegular" />
-      <label pos="32.5 -2.25" size="5 5" text="" textcolor="222" focusareacolor1="CCC" focusareacolor2="CCC" halign="center" valign="center" textsize="1" scriptevents="1" class="ecm-api-key-entry-toggle" />
+    <frame id="input-frame" pos="0 -4.5" size="{{ subtract size.x 4 }} 7.75">
+      <quad pos="0 -4.75" size="37 0.25" bgcolor="222" />
+      <entry pos="0 -2.25" default="{{ config.apiKey }}" size="32 5" name="ecm-api-key-entry" id="ecm-api-key-entry" class="ecm-api-key-entry" textsize="1" focusareacolor1="CCC" focusareacolor2="CCC" textcolor="222" scriptevents="1" textformat="Password" valuetype="Ml_String" valign="center" textfont="GameFontRegular" />
+      <label pos="34.5 -2.25" size="5 5" text="" textcolor="222" focusareacolor1="CCC" focusareacolor2="CCC" halign="center" valign="center" textsize="1" scriptevents="1" class="ecm-api-key-entry-toggle" />
 
       <frame id="save-api-key" pos="38 0" size="12 5">
         <quad pos="0 0" size="12 5" bgcolor="CCC" action="ecm-save-api-key" />
@@ -25,7 +25,26 @@
         <label pos="6 -2.25" text="Save" textsize="1" textcolor="222" valign="center" halign="center" textfont="GameFontRegular" />
       </frame>
 
-      <label id="error-label" pos="0 -6.25" size="{{ subtract size.x 2 }} 3" textsize="0.6" textcolor="D22" valign="center" textfont="GameFontRegular" />
+      <label id="error-label" pos="0 -6.25" size="{{ subtract size.x 4 }} 3" textsize="0.6" textcolor="D22" valign="center" textfont="GameFontRegular" />
+    </frame>
+  </frame>
+
+  <frame id="round-info-frame" pos="0 -19" size="{{ subtract size.x 4 }} 9.5">
+    <label text="Round info" pos="0 -2.25" size="25 3" textsize="0.6" textcolor="222" valign="center" textfont="GameFontSemiBold" />
+    <frame id="round-info" pos="0 -4.5" size="{{ subtract size.x 4 }} 5">
+      <label text="Round {{ data.currentRound }}" pos="0 -2.25" size="12 5" textsize="1" textcolor="222" valign="center" textfont="GameFontRegular" />
+
+      <frame id="decrease-round-offset" pos="14 0" size="5 5">
+        <quad pos="0 0" size="5 5" bgcolor="CCC" action="ecm-decrease-round-offset" />
+        <quad pos="0 -4.75" size="5 0.25" bgcolor="222" />
+        <label pos="2.5 -2.25" text="-" textsize="1" textcolor="222" valign="center" halign="center" textfont="GameFontRegular" />
+      </frame>
+
+      <frame id="increase-round-offset" pos="20 0" size="5 5">
+        <quad pos="0 0" size="5 5" bgcolor="CCC" action="ecm-increase-round-offset" />
+        <quad pos="0 -4.75" size="5 0.25" bgcolor="222" />
+        <label pos="2.5 -2.25" text="+" textsize="1" textcolor="222" valign="center" halign="center" textfont="GameFontRegular" />
+      </frame>
     </frame>
   </frame>
 </frame>
@@ -71,14 +90,25 @@ Void updateApiKey(eCMConfig ecmConfig) {
   apiKeyEntry.SetText(ecmConfig.apiKey, False);
 }
 
-Void updateWindow(eCMConfig ecmConfig) {
+Void updateRoundInfo(Integer currentRound) {
+  declare window <=> (Page.MainFrame.GetFirstChild("ecm-window") as CMlFrame);
+  declare roundInfoFrame <=> (window.GetFirstChild("round-info-frame") as CMlFrame);
+  declare roundInfo <=> (roundInfoFrame.GetFirstChild("round-info") as CMlFrame);
+  declare roundInfoLabel <=> (roundInfo.Controls[0] as CMlLabel);
+
+  roundInfoLabel.SetText("Round " ^ currentRound);
+}
+
+Void updateWindow(eCMConfig ecmConfig, Integer ecmCurrentRound) {
   updateRecording(ecmConfig);
   updateApiKey(ecmConfig);
+  updateRoundInfo(ecmCurrentRound);
 }
 {{/content}}
 
 {{#content "main"}}
 declare eCMConfig ECMConfig for This;
+declare Integer ECMCurrentRound for This = 1;
 declare Integer LastECMConfigUpdate for This = -1;
 declare Integer lastUpdate = -1;
 {{/content}}
@@ -86,7 +116,7 @@ declare Integer lastUpdate = -1;
 {{#content "loop"}}
 if (LastECMConfigUpdate != lastUpdate) {
   lastUpdate = LastECMConfigUpdate;
-  updateWindow(ECMConfig);
+  updateWindow(ECMConfig, ECMCurrentRound);
 }
 {{/content}}
 
@@ -100,7 +130,7 @@ if (event.Control.HasClass("ecm-api-key-entry") && event.Type == CMlScriptEvent:
     nbUnderscores = 0;
   }
 
-  if (nbUnderscores != 1) {
+  if (TL::Length(entryControl.Value) > 0 && nbUnderscores != 1) {
     errorLabel.SetText("Expected 1 underscore, found " ^ nbUnderscores);
   } else {
     errorLabel.SetText("");

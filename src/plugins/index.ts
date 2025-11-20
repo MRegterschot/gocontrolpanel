@@ -7,6 +7,7 @@ export default abstract class Plugin<ConfigType = unknown> {
   protected clientManager: GbxClientManager;
   protected manialinkManager: ManialinkManager;
   private loaded: boolean = false;
+  protected dbPluginId: string = "";
   protected config: ConfigType | null = null;
 
   constructor(clientManager: GbxClientManager, manialinkManager: ManialinkManager) {
@@ -23,6 +24,10 @@ export default abstract class Plugin<ConfigType = unknown> {
   setConfig(config: ConfigType) {
     this.config = config;
     this.onConfigUpdate();
+  }
+
+  setDbPluginId(dbPluginId: string) {
+    this.dbPluginId = dbPluginId;
   }
 
   getPluginId(): string {
