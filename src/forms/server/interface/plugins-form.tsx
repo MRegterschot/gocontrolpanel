@@ -91,7 +91,7 @@ export default function PluginsForm({
             }
           >
             <Modal>
-              <EcircuitmaniaPluginModal />
+              <EcircuitmaniaPluginModal form={form} />
               <Button variant={"outline"} type="button">
                 <IconSettings />
                 Configure

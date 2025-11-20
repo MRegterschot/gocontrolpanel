@@ -1,14 +1,21 @@
 "use client";
 
-import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import ECMForm from "@/forms/server/interface/ecm/ecm-form";
+import { PluginsSchemaType } from "@/forms/server/interface/plugins-schema";
 import { IconX } from "@tabler/icons-react";
+import { UseFormReturn } from "react-hook-form";
 import { DefaultModalProps } from "../../default-props";
+
+interface EcircuitmaniaPluginModalProps extends DefaultModalProps {
+  form: UseFormReturn<PluginsSchemaType>;
+}
 
 export default function EcircuitmaniaPluginModal({
   closeModal,
-}: DefaultModalProps) {
+  form,
+}: EcircuitmaniaPluginModalProps) {
   const stopPropagation = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
@@ -26,18 +33,7 @@ export default function EcircuitmaniaPluginModal({
         />
       </div>
 
-      <FormElement
-        name="ecm.config.apiKey"
-        label="API Key"
-        placeholder="Enter your eCircuitMania API Key"
-      />
-
-      <FormElement
-        name="ecm.config.isRecording"
-        label="Enable recording"
-        type="checkbox"
-        description="Toggle to enable or disable recording of race data."
-      />
+      <ECMForm form={form} />
 
       <Button variant={"outline"} onClick={closeModal} className="self-end">
         <IconX />

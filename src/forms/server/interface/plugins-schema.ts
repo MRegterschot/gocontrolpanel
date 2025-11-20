@@ -16,6 +16,7 @@ export const PluginsSchema = z.object({
           "API key must contain one underscore",
         ),
       isRecording: z.boolean().optional(),
+      editors: z.array(z.string()).optional(),
     }),
   }),
   "map-info": z.object({
