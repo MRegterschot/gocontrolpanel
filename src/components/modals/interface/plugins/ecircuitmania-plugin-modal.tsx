@@ -1,23 +1,34 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import ECMForm from "@/forms/server/interface/ecm/ecm-form";
-import { PluginsSchemaType } from "@/forms/server/interface/plugins-schema";
+import { ECMPluginConfig } from "@/types/plugins/ecm";
 import { IconX } from "@tabler/icons-react";
-import { UseFormReturn } from "react-hook-form";
 import { DefaultModalProps } from "../../default-props";
 
-interface EcircuitmaniaPluginModalProps extends DefaultModalProps {
-  form: UseFormReturn<PluginsSchemaType>;
-}
-
 export default function EcircuitmaniaPluginModal({
+  serverId,
+  data,
   closeModal,
-  form,
-}: EcircuitmaniaPluginModalProps) {
+  onSubmit,
+}: DefaultModalProps<
+  {
+    pluginId: string;
+    config: ECMPluginConfig;
+  },
+  ECMPluginConfig
+>) {
+  if (!serverId || !data || !data.pluginId) {
+    return null;
+  }
+
   const stopPropagation = (e: React.MouseEvent) => {
     e.stopPropagation();
+  };
+
+  const handleSubmit = (config: ECMPluginConfig) => {
+    closeModal?.();
+    onSubmit?.(config);
   };
 
   return (
@@ -33,12 +44,13 @@ export default function EcircuitmaniaPluginModal({
         />
       </div>
 
-      <ECMForm form={form} />
-
-      <Button variant={"outline"} onClick={closeModal} className="self-end">
-        <IconX />
-        Close
-      </Button>
+      <ECMForm
+        serverId={serverId}
+        pluginId={data?.pluginId}
+        config={data?.config}
+        onSubmit={handleSubmit}
+        onClose={closeModal}
+      />
     </Card>
   );
 }

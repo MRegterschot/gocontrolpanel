@@ -78,6 +78,39 @@ export async function getUsersByIds(
   );
 }
 
+export async function getUsersByLogins(
+  logins: string[],
+): Promise<ServerResponse<UserMinimal[]>> {
+  return doServerActionWithAuth(
+    [
+      "groups:create",
+      "groups:edit",
+      "groups::admin",
+      "servers:create",
+      "servers:edit",
+      "servers::admin",
+      "hetzner:create",
+      "hetzner:edit",
+      "hetzner::admin",
+    ],
+    async () => {
+      const db = getClient();
+      const users = await db.users.findMany({
+        where: {
+          login: { in: logins },
+        },
+        select: {
+          id: true,
+          login: true,
+          nickName: true,
+        },
+      });
+
+      return users;
+    },
+  );
+}
+
 export async function getUsersPaginated(
   pagination: PaginationState,
   sorting: { field: string; order: "asc" | "desc" },
@@ -204,9 +237,11 @@ export async function searchUser(
       }
 
       if (search.length > 3) {
-        const { data: accountNames } = await searchAccountNames([search]);
+        const { data: accountNames, error } = await searchAccountNames([
+          search,
+        ]);
 
-        if (Object.keys(accountNames).length > 0) {
+        if (!error && accountNames && Object.keys(accountNames).length > 0) {
           await db.users.createMany({
             data: Object.entries(accountNames).map(
               ([accountName, accountId]) => ({

@@ -12,7 +12,6 @@ export async function updateServerPlugins(
   plugins: {
     pluginId: string;
     enabled: boolean;
-    config?: Record<string, any>;
   }[],
 ): Promise<ServerResponse> {
   return doServerActionWithAuth(
@@ -31,11 +30,9 @@ export async function updateServerPlugins(
             serverId,
             pluginId: p.pluginId,
             enabled: p.enabled,
-            config: p.config,
           },
           update: {
             enabled: p.enabled,
-            config: p.config,
           },
         }),
       );
@@ -59,6 +56,47 @@ export async function updateServerPlugins(
         serverId,
         "server.interface.plugins.edit",
         plugins,
+      );
+    },
+  );
+}
+
+export async function updateServerPlugin(
+  serverId: string,
+  pluginId: string,
+  config: Record<string, any>,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
+    async (session) => {
+      const db = getClient();
+      await db.serverPlugins.updateMany({
+        where: {
+          serverId,
+          pluginId,
+        },
+        data: {
+          config,
+        },
+      });
+
+      const manager = await getGbxClientManager(serverId);
+
+      const updatedPlugins = await db.serverPlugins.findMany({
+        where: { serverId },
+        include: {
+          plugin: true,
+        },
+      });
+
+      manager.info.plugins = updatedPlugins;
+      manager.pluginManager.reloadPlugins();
+
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.interface.plugins.config.edit",
+        { pluginId, config },
       );
     },
   );
