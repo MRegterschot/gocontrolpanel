@@ -14,6 +14,10 @@ Handlebars.registerHelper("length", function (array: any[]) {
   return array.length;
 });
 
+Handlebars.registerHelper("bool", function (value) {
+  return value ? "True" : "False";
+});
+
 Handlebars.registerHelper(layouts(Handlebars));
 
 Handlebars.registerHelper(

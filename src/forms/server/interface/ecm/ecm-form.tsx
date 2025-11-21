@@ -119,8 +119,9 @@ export default function ECMForm({
         <div className="flex flex-col gap-2">
           <div>
             <FormLabel className="text-sm">Editors</FormLabel>
-            <FormDescription>
-              Users who can manage ECM settings in the server widget.
+            <FormDescription className="max-w-xs whitespace-normal break-words">
+              Users who can manage ECM settings in the server widget. No editors
+              means everyone can manage.
             </FormDescription>
           </div>
           {editorFields.map((_, index) => (

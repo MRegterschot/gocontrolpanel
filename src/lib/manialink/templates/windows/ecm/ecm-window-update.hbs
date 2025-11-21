@@ -2,20 +2,18 @@
 {{#content "content"}}
 <script>
 <!--
-#Struct eCMConfig {
-  Text apiKey;
-  Boolean isRecording;
-}
-
 main(){
-  declare eCMConfig ECMConfig for This;
+  declare Boolean ECMIsEditor for This;
+  declare Text ECMAPIKey for This;
+  declare Boolean ECMIsRecording for This;
   declare Integer ECMCurrentRound for This;
-  declare Integer LastECMConfigUpdate for This;
-  declare Text ecmConfigJson = """{{{ default data.ecmConfigJson '{}' }}}""";
+  declare Integer LastECMUpdate for This;
   
-  ECMConfig.fromjson(ecmConfigJson);
+  ECMIsEditor = {{ bool data.isEditor }};
+  ECMAPIKey = "{{ data.apiKey }}";
+  ECMIsRecording = {{ bool data.isRecording }};
   ECMCurrentRound = {{ data.currentRound }};
-  LastECMConfigUpdate = GameTime;
+  LastECMUpdate = GameTime;
 }
 -->
 </script>

@@ -2,6 +2,7 @@ import ManialinkManager from "@/lib/managers/manialink-manager";
 import Manialink from "./manialink";
 
 export default class Window extends Manialink {
+  public login: string;
   public onCloseCallback: (() => void) | null = null;
 
   constructor(
@@ -12,6 +13,7 @@ export default class Window extends Manialink {
     update: boolean = true,
   ) {
     super(manialinkManager, login, update);
+    this.login = login;
     this.setTitle(title);
     this.setId(id);
     this.setTemplate("window");

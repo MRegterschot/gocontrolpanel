@@ -12,6 +12,7 @@ export default class ECMWindow extends Window {
   private db: PrismaClient;
   private config: ECMPluginConfig | null;
   private roundOffset: number;
+  private isEditor: boolean;
 
   public onRoundOffsetUpdateCallback: ((offset: number) => void) | null = null;
   public onConfigUpdateCallback:
@@ -33,16 +34,14 @@ export default class ECMWindow extends Window {
     this.config = config;
     this.roundOffset = roundOffset;
     this.pluginId = pluginId;
+    this.isEditor = this.userIsEditor();
 
     this.setTemplate("windows/ecm/ecm-window");
     this.setSize({
       x: 54,
       y: 32.5,
     });
-    this.setData({
-      ecmConfigJson: JSON.stringify(this.config ?? {}),
-      currentRound: (this.clientManager.roundNumber || 1) + this.roundOffset,
-    });
+    this.updateData();
 
     this.clientManager.addListeners(`${this.getId()}-${login}`, {
       startRound: this.update.bind(this),
@@ -116,6 +115,7 @@ export default class ECMWindow extends Window {
 
   updateConfig(config: ECMPluginConfig | null) {
     this.config = config;
+    this.isEditor = this.userIsEditor();
     this.update();
   }
 
@@ -124,11 +124,17 @@ export default class ECMWindow extends Window {
     this.update();
   }
 
-  update() {
+  updateData() {
     this.setData({
-      ecmConfigJson: JSON.stringify(this.config ?? {}),
+      isEditor: this.isEditor,
+      apiKey: this.isEditor ? this.config?.apiKey || "" : "",
+      isRecording: this.config?.isRecording || false,
       currentRound: (this.clientManager.roundNumber || 1) + this.roundOffset,
     });
+  }
+
+  update() {
+    this.updateData();
     super.update();
   }
 
@@ -150,5 +156,12 @@ export default class ECMWindow extends Window {
     );
 
     super.destroy();
+  }
+
+  private userIsEditor() {
+    if (this.config?.editors && this.config.editors.length > 0) {
+      return this.config.editors.includes(this.login);
+    }
+    return true;
   }
 }
