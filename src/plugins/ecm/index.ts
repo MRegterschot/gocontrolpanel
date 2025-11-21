@@ -77,7 +77,7 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
       window.updateRoundOffset(this.roundOffset);
     });
   };
-  
+
   onUserConfigUpdate = (config: ECMPluginConfig | null) => {
     this.config = config;
     this.windows.forEach((window) => {
@@ -86,72 +86,11 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
   };
 
   onECMAction = async (data: PlayerManialinkPageAnswer) => {
-    const ecmWindow = new ECMWindow(
-      this.clientManager,
-      this.manialinkManager,
-      this.config,
-      this.roundOffset,
-      "eCircuitMania",
-      data.Login,
-      this.dbPluginId,
-    );
-
-    ecmWindow.onCloseCallback = () => {
-      this.windows.delete(data.Login);
-    };
-    ecmWindow.onRoundOffsetUpdateCallback = this.onRoundOffsetUpdate;
-    ecmWindow.onConfigUpdateCallback = this.onUserConfigUpdate;
-
-    this.windows.set(data.Login, ecmWindow);
-    ecmWindow.display();
+    await this.createWindowForPlayer(data.Login);
   };
 
-  async onECMCommand(args: string[], login: string) {
-    if (args.length === 0) {
-      this.clientManager.client.call(
-        "ChatSendServerMessageToLogin",
-        `Round number: ${
-          (this.clientManager.roundNumber || 1) + this.roundOffset
-        } | Current offset: ${this.roundOffset}`,
-        login,
-      );
-      return;
-    }
-
-    const subcommand = args[0];
-
-    switch (subcommand) {
-      case "offset":
-        const offset = parseInt(args[1], 10);
-
-        if (isNaN(offset)) {
-          this.clientManager.client.call(
-            "ChatSendServerMessageToLogin",
-            "Invalid offset value",
-            login,
-          );
-          return;
-        }
-
-        this.roundOffset = offset;
-        this.windows.forEach((window) => {
-          window.updateRoundOffset(this.roundOffset);
-        });
-
-        this.clientManager.client.call(
-          "ChatSendServerMessageToLogin",
-          `ECM round offset set to ${this.roundOffset}`,
-          login,
-        );
-        break;
-      default:
-        this.clientManager.client.call(
-          "ChatSendServerMessageToLogin",
-          "Usage: /ecm offset <number>",
-          login,
-        );
-        break;
-    }
+  async onECMCommand(_: string[], login: string) {
+    await this.createWindowForPlayer(login);
   }
 
   async onPlayerFinish(waypoint: Waypoint) {
@@ -185,6 +124,29 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
       roundNum: roundNum + this.roundOffset,
       mapId: this.clientManager.info.activeMap,
     });
+  }
+
+  async createWindowForPlayer(login: string) {
+    if (this.windows.has(login)) return;
+
+    const ecmWindow = new ECMWindow(
+      this.clientManager,
+      this.manialinkManager,
+      this.config,
+      this.roundOffset,
+      "eCircuitMania",
+      login,
+      this.dbPluginId,
+    );
+
+    ecmWindow.onCloseCallback = () => {
+      this.windows.delete(login);
+    };
+    ecmWindow.onRoundOffsetUpdateCallback = this.onRoundOffsetUpdate;
+    ecmWindow.onConfigUpdateCallback = this.onUserConfigUpdate;
+
+    this.windows.set(login, ecmWindow);
+    ecmWindow.display();
   }
 
   async onBeginMap() {
