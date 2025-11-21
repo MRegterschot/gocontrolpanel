@@ -11,11 +11,7 @@ import "server-only";
 import { getPlayerInfo } from "../../gbx/server-only";
 
 const serversPluginsSchema = Prisma.validator<Prisma.ServerPluginsInclude>()({
-  plugin: {
-    include: {
-      commands: true,
-    },
-  },
+  plugin: true,
 });
 
 export type ServerPluginsWithPlugin = Prisma.ServerPluginsGetPayload<{

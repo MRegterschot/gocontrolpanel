@@ -1,7 +1,7 @@
 import { getMapByUidServer } from "@/actions/database/server-only/maps";
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import ManialinkManager from "@/lib/managers/manialink-manager";
-import Widget from "@/lib/manialink/widget";
+import Widget from "@/lib/manialink/components/widget";
 import { SMapInfo } from "@/types/gbx/map";
 import Plugin from "..";
 
@@ -22,11 +22,11 @@ export default class MapInfoPlugin extends Plugin {
     clientManager: GbxClientManager,
     manialinkManager: ManialinkManager,
   ) {
-    super(clientManager);
+    super(clientManager, manialinkManager);
     this.widget = new Widget(manialinkManager);
     this.widget.setTemplate("widgets/map-info/map-info");
     this.widget.setId("map-info-widget");
-    this.widget.setPosition("100 85");
+    this.widget.setPosition({ x: 100, y: 85 });
   }
 
   async onLoad() {

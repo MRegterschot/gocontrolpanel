@@ -17,18 +17,15 @@ import {
   PlayerManialinkPageAnswer,
   SPlayerInfo,
 } from "@/types/gbx/player";
-import { Elmination, Player, Scores } from "@/types/gbx/scores";
+import { Elmination, Scores } from "@/types/gbx/scores";
 import { WarmUp, WarmUpStatus } from "@/types/gbx/warmup";
 import { Waypoint, WaypointEvent } from "@/types/gbx/waypoint";
 import { PlayerRound, PlayerWaypoint, Team } from "@/types/live";
 import { PlayerInfo } from "@/types/player";
-import { ECMPluginConfig } from "@/types/plugins/ecm";
 import { ServerClientInfo } from "@/types/server";
 import { GbxClient } from "@evotm/gbxclient";
 import EventEmitter from "events";
 import "server-only";
-import { ecmOnDriverFinish, ecmOnRoundEnd } from "../api/ecm";
-import { handleAdminCommand } from "../commands";
 import { getClient } from "../dbclient";
 import { appGlobals } from "../global";
 import {
@@ -41,6 +38,7 @@ import {
 import PluginManager from "./plugin-manager";
 
 type Listener<T = any> = (data: T) => void;
+type CommandListener = (args: string[], login: string) => void;
 
 export class GbxClientManager extends EventEmitter {
   client: GbxClient;
@@ -52,6 +50,7 @@ export class GbxClientManager extends EventEmitter {
   private listenerMap: Map<string, Record<string, (...args: any[]) => void>> =
     new Map();
   private actionListeners = new Map<string, Listener[]>();
+  private commandListeners = new Map<string, CommandListener[]>();
   currentMatchId: string | null = null;
   roundNumber: number | null = null;
 
@@ -146,6 +145,29 @@ export class GbxClientManager extends EventEmitter {
     );
   }
 
+  onCommand(commandName: string, callback: CommandListener): void {
+    if (!this.commandListeners.has(commandName)) {
+      this.commandListeners.set(commandName, []);
+    }
+    this.commandListeners.get(commandName)!.push(callback);
+  }
+
+  emitCommand(commandName: string, args: string[], login: string): void {
+    const handlers = this.commandListeners.get(commandName);
+    if (handlers) {
+      for (const fn of handlers) fn(args, login);
+    }
+  }
+
+  offCommand(commandName: string, callback: CommandListener): void {
+    const handlers = this.commandListeners.get(commandName);
+    if (!handlers) return;
+    this.commandListeners.set(
+      commandName,
+      handlers.filter((fn) => fn !== callback),
+    );
+  }
+
   handlePlayerManialinkPageAnswer(pageAnswer: PlayerManialinkPageAnswer) {
     this.emitAction(pageAnswer.Answer, pageAnswer);
   }
@@ -182,11 +204,7 @@ export class GbxClientManager extends EventEmitter {
       include: {
         serverPlugins: {
           include: {
-            plugin: {
-              include: {
-                commands: true,
-              },
-            },
+            plugin: true,
           },
         },
       },
@@ -239,7 +257,7 @@ export class GbxClientManager extends EventEmitter {
     await syncLiveInfo(this);
 
     await this.pluginManager.loadPlugins();
-    await this.pluginManager.reloadPlugins();
+    await this.pluginManager.reloadPlugins(false);
 
     return this.client;
   }
@@ -412,7 +430,6 @@ async function callbackListener(
           if (params.isendrace) {
             saveFinishRecord(manager, serverId, params);
             onPlayerFinishScript(manager, params);
-            ecmPlayerFinish(manager, params);
           } else {
             onPlayerCheckpointScript(manager, params);
           }
@@ -429,7 +446,6 @@ async function callbackListener(
         case "Trackmania.Scores":
           manager.emit("scores", params);
           if (params.section === "EndRound") {
-            ecmEndRound(manager, params);
             await onEndRoundScript(manager, params);
           } else if (params.section === "PreEndRound") {
             await onPreEndRoundScript(manager, params);
@@ -629,26 +645,6 @@ function onPodiumStartScript(_: GbxClientManager, serverId: string) {
   onPodiumStart(serverId);
 }
 
-function ecmPlayerFinish(manager: GbxClientManager, waypoint: Waypoint) {
-  if (!manager.info.activeMap) return;
-
-  if (manager.info.liveInfo.isWarmUp || manager.info.liveInfo.isPaused) return;
-
-  const ecmPlugin = manager.info.plugins.find((p) => p.plugin.name === "ecm");
-  if (!ecmPlugin || !ecmPlugin.enabled) return;
-
-  const pluginConfig = ecmPlugin.config as ECMPluginConfig;
-  if (!pluginConfig.apiKey) return;
-
-  // Send data to eCircuitMania
-  ecmOnDriverFinish(pluginConfig.apiKey, {
-    finishTime: waypoint.racetime,
-    ubisoftUid: waypoint.accountid,
-    roundNum: manager.roundNumber || 1,
-    mapId: manager.info.activeMap,
-  });
-}
-
 function saveFinishRecord(
   manager: GbxClientManager,
   serverId: string,
@@ -731,10 +727,11 @@ function onStartMapStartScript(manager: GbxClientManager, startMap: StartMap) {
 }
 
 async function onStartRoundStartScript(manager: GbxClientManager) {
-  manager.emit("startRound");
   if (manager.roundNumber !== null && !manager.info.liveInfo.isWarmUp)
     manager.roundNumber++;
-
+  
+  manager.emit("startRound");
+  
   const playerList: SPlayerInfo[] = await manager.client.call(
     "GetPlayerList",
     1000,
@@ -767,40 +764,6 @@ async function onStartRoundStartScript(manager: GbxClientManager) {
   });
 
   manager.emit("beginRound", manager.info.liveInfo.activeRound);
-}
-
-function ecmEndRound(manager: GbxClientManager, scores: Scores) {
-  const roundNum = manager.roundNumber || 1;
-
-  if (!manager.info.activeMap) return;
-
-  if (manager.info.liveInfo.isWarmUp || manager.info.liveInfo.isPaused) return;
-
-  const ecmPlugin = manager.info.plugins.find((p) => p.plugin.name === "ecm");
-  if (!ecmPlugin || !ecmPlugin.enabled) return;
-
-  const pluginConfig = ecmPlugin.config as ECMPluginConfig;
-  if (!pluginConfig.apiKey) return;
-
-  const rankedPlayers = rankPlayers(
-    scores.players,
-    manager.info.liveInfo.type === "timeattack",
-  );
-
-  const players = rankedPlayers.map((p) => ({
-    finishTime:
-      manager.info.liveInfo.type === "timeattack"
-        ? p.bestracetime
-        : p.prevracetime,
-    ubisoftUid: p.accountid,
-    position: p.position,
-  }));
-
-  ecmOnRoundEnd(pluginConfig.apiKey, {
-    players,
-    roundNum,
-    mapId: manager.info.activeMap,
-  });
 }
 
 async function onEndRoundScript(manager: GbxClientManager, scores: Scores) {
@@ -1202,30 +1165,13 @@ async function onElimination(
   manager.emit("elimination", manager.info.liveInfo);
 }
 
-async function handleCommand(manager: GbxClientManager, chat: PlayerChat) {
-  if (manager.info.plugins.length === 0) return;
-  if (!manager.info.plugins.some((c) => c.enabled)) return;
-
-  const command = chat.Text.split(" ")[0].toLowerCase();
-  const params = chat.Text.split(" ").slice(1);
-
-  const plugin = manager.info.plugins.find((p) =>
-    p.plugin.commands?.some((c) => c.command.toLowerCase() === command),
-  );
-
-  if (!plugin || !plugin.enabled) return;
-
-  switch (command) {
-    case "/admin":
-      await handleAdminCommand(manager, chat, params);
-      break;
-  }
-}
-
 async function onPlayerChat(manager: GbxClientManager, chat: PlayerChat) {
   if (!chat.Login) return;
   if (chat.Text.startsWith("/")) {
-    return await handleCommand(manager, chat);
+    const args = chat.Text.split(" ");
+    const commandName = args[0].toLowerCase().slice(1);
+    const commandArgs = args.slice(1);
+    manager.emitCommand(commandName, commandArgs, chat.Login);
   }
   if (!manager.info.chat?.manualRouting) return;
 
@@ -1248,38 +1194,4 @@ async function onPlayerChat(manager: GbxClientManager, chat: PlayerChat) {
   );
 
   manager.client.call("ChatSendServerMessage", message);
-}
-
-function rankPlayers(
-  players: Player[],
-  ta?: boolean,
-): (Player & { position: number })[] {
-  return [...players]
-    .sort((a, b) => {
-      const racetimeA = ta ? a.bestracetime : a.prevracetime;
-      const racetimeB = ta ? b.bestracetime : b.prevracetime;
-
-      if (racetimeA === -1 && racetimeB === -1) return 0; // order doesn't matter
-      if (racetimeA === -1) return 1; // a goes last
-      if (racetimeB === -1) return -1; // b goes last
-
-      // 1️⃣ Compare total prevracetime
-      if (racetimeA !== racetimeB) return racetimeA - racetimeB;
-
-      // 2️⃣ Tie-break: compare checkpoints from last to first (excluding first checkpoint if needed)
-      const cpA = ta ? a.bestracecheckpoints : a.prevracecheckpoints;
-      const cpB = ta ? b.bestracecheckpoints : b.prevracecheckpoints;
-      const len = Math.min(cpA.length, cpB.length);
-
-      for (let i = len - 1; i >= 0; i--) {
-        if (cpA[i] !== cpB[i]) return cpA[i] - cpB[i];
-      }
-
-      // 3️⃣ Fully equal
-      return 0;
-    })
-    .map((player, index) => ({
-      ...player,
-      position: index + 1,
-    }));
 }

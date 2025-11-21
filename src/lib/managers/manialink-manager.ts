@@ -1,7 +1,8 @@
 import { PlayerInfo } from "@/types/player";
 import "server-only";
-import Manialink from "../manialink/manialink";
+import Manialink from "../manialink/components/manialink";
 import { GbxClientManager } from "./gbxclient-manager";
+import ActionGroup from "../manialink/components/action-group";
 
 export default class ManialinkManager {
   private readonly listenerId: string;
@@ -9,6 +10,7 @@ export default class ManialinkManager {
   private publicManialinks: { [id: string]: Manialink } = {};
   private playerManialinks: { [login: string]: { [id: string]: Manialink } } =
     {};
+  public actionGroup: ActionGroup;
 
   constructor(clientManager: GbxClientManager) {
     this.clientManager = clientManager;
@@ -18,6 +20,8 @@ export default class ManialinkManager {
       playerConnect: this.onPlayerConnect.bind(this),
       playerDisconnect: this.onPlayerDisconnect.bind(this),
     });
+
+    this.actionGroup = new ActionGroup(this);
   }
 
   private async onPlayerConnect(player: PlayerInfo) {
@@ -94,7 +98,7 @@ export default class ManialinkManager {
       }
     }
 
-    const xml = await manialink.render();
+    const xml = manialink.render();
 
     if (manialink.login) {
       this.clientManager.client.send(
@@ -153,5 +157,9 @@ export default class ManialinkManager {
         }
       }
     }
+  }
+
+  public getClientManager(): GbxClientManager {
+    return this.clientManager;
   }
 }

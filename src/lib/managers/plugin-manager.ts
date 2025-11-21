@@ -1,4 +1,5 @@
 import Plugin from "@/plugins";
+import ECMPlugin from "@/plugins/ecm";
 import LiveRankingPlugin from "@/plugins/live-ranking";
 import LiveRoundPlugin from "@/plugins/live-round";
 import MapInfoPlugin from "@/plugins/map-info";
@@ -30,6 +31,7 @@ export default class PluginManager {
       new LiveRankingPlugin(this.clientManager, this.manialinkManager),
       new LiveRoundPlugin(this.clientManager, this.manialinkManager),
       new NotifyAdminPlugin(this.clientManager, this.manialinkManager),
+      new ECMPlugin(this.clientManager, this.manialinkManager),
     ];
 
     for (const plugin of pluginsToLoad) {
@@ -41,6 +43,15 @@ export default class PluginManager {
     const clientPlugins = this.clientManager.info.plugins;
 
     for (const plugin of this.plugins.values()) {
+      // Check if plugin is enabled
+      const clientPlugin = clientPlugins.find(
+        (p) => p.plugin.name === plugin.getPluginId(),
+      );
+
+      if (!clientPlugin) continue;
+
+      plugin.setDbPluginId(clientPlugin.plugin.id);
+
       // Check if plugin supports current gamemode
       if (
         plugin.getSupportedGamemodes().length > 0 &&
@@ -54,12 +65,9 @@ export default class PluginManager {
       // Check if plugin is already loaded
       if (plugin.isLoaded()) continue;
 
-      // Check if plugin is enabled
-      const clientPlugin = clientPlugins.find(
-        (p) => p.plugin.name === plugin.getPluginId(),
-      );
-      if (!clientPlugin || !clientPlugin.enabled) continue;
+      if (!clientPlugin.enabled) continue;
 
+      plugin.setConfig(clientPlugin.config);
       await plugin.onLoad();
       plugin.setLoaded(true);
     }
@@ -85,7 +93,12 @@ export default class PluginManager {
     const plugin = this.plugins.get(pluginId);
     if (!plugin) return;
 
+    const clientPlugin = this.clientManager.info.plugins.find(
+      (p) => p.plugin.name === pluginId,
+    );
+
     if (!plugin.isLoaded()) {
+      plugin.setConfig(clientPlugin?.config || null);
       await plugin.onLoad();
       plugin.setLoaded(true);
     }
@@ -102,7 +115,7 @@ export default class PluginManager {
     }
   }
 
-  public async reloadPlugins() {
+  public async reloadPlugins(updateConfigs: boolean = true) {
     const clientPlugins = this.clientManager.info.plugins;
 
     for (const plugin of this.plugins.values()) {
@@ -121,6 +134,7 @@ export default class PluginManager {
 
       // If plugin should be loaded but isn't, load it
       if (shouldBeLoaded && !plugin.isLoaded()) {
+        plugin.setConfig(clientPlugin.config);
         await plugin.onLoad();
         plugin.setLoaded(true);
         await plugin.onStart();
@@ -129,6 +143,11 @@ export default class PluginManager {
       } else if (!shouldBeLoaded && plugin.isLoaded()) {
         await plugin.onUnload();
         plugin.setLoaded(false);
+      }
+
+      // If plugin is loaded and config has changed, update it
+      else if (shouldBeLoaded && plugin.isLoaded() && updateConfigs) {
+        plugin.setConfig(clientPlugin.config);
       }
     }
   }
@@ -153,6 +172,7 @@ export default class PluginManager {
       if (plugin.getSupportedGamemodes().length <= 0) continue;
 
       if (plugin.getSupportedGamemodes().includes(mode) && !plugin.isLoaded()) {
+        plugin.setConfig(clientPlugin.config);
         await plugin.onLoad();
         plugin.setLoaded(true);
         await plugin.onStart();

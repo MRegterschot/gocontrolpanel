@@ -1,16 +1,34 @@
 "use client";
 
-import FormElement from "@/components/form/form-element";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import ECMForm from "@/forms/server/interface/ecm/ecm-form";
+import { ECMPluginConfig } from "@/types/plugins/ecm";
 import { IconX } from "@tabler/icons-react";
 import { DefaultModalProps } from "../../default-props";
 
 export default function EcircuitmaniaPluginModal({
+  serverId,
+  data,
   closeModal,
-}: DefaultModalProps) {
+  onSubmit,
+}: DefaultModalProps<
+  {
+    pluginId: string;
+    config: ECMPluginConfig;
+  },
+  ECMPluginConfig
+>) {
+  if (!serverId || !data || !data.pluginId) {
+    return null;
+  }
+
   const stopPropagation = (e: React.MouseEvent) => {
     e.stopPropagation();
+  };
+
+  const handleSubmit = (config: ECMPluginConfig) => {
+    closeModal?.();
+    onSubmit?.(config);
   };
 
   return (
@@ -26,16 +44,13 @@ export default function EcircuitmaniaPluginModal({
         />
       </div>
 
-      <FormElement
-        name="ecm.config.apiKey"
-        label="API Key"
-        placeholder="Enter your eCircuitMania API Key"
+      <ECMForm
+        serverId={serverId}
+        pluginId={data?.pluginId}
+        config={data?.config}
+        onSubmit={handleSubmit}
+        onClose={closeModal}
       />
-
-      <Button variant={"outline"} onClick={closeModal} className="self-end">
-        <IconX />
-        Close
-      </Button>
     </Card>
   );
 }

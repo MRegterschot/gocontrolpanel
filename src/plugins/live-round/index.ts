@@ -1,6 +1,6 @@
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import ManialinkManager from "@/lib/managers/manialink-manager";
-import Widget from "@/lib/manialink/widget";
+import Widget from "@/lib/manialink/components/widget";
 import { getSpectatorStatus } from "@/lib/utils";
 import { SPlayerInfo } from "@/types/gbx/player";
 import { Scores } from "@/types/gbx/scores";
@@ -38,11 +38,11 @@ export default class LiveRoundPlugin extends Plugin {
     clientManager: GbxClientManager,
     manialinkManager: ManialinkManager,
   ) {
-    super(clientManager);
+    super(clientManager, manialinkManager);
     this.widget = new Widget(manialinkManager);
     this.widget.setTemplate("widgets/live-round/live-round");
     this.widget.setId("live-round-widget");
-    this.widget.setPosition("-156 73.5");
+    this.widget.setPosition({ x: -156, y: 73.5 });
   }
 
   async onLoad() {

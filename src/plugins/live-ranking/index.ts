@@ -1,6 +1,6 @@
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import ManialinkManager from "@/lib/managers/manialink-manager";
-import Widget from "@/lib/manialink/widget";
+import Widget from "@/lib/manialink/components/widget";
 import { getSpectatorStatus } from "@/lib/utils";
 import { Scores } from "@/types/gbx/scores";
 import { LiveInfo } from "@/types/live";
@@ -27,11 +27,11 @@ export default class LiveRankingPlugin extends Plugin {
     clientManager: GbxClientManager,
     manialinkManager: ManialinkManager,
   ) {
-    super(clientManager);
+    super(clientManager, manialinkManager);
     this.widget = new Widget(manialinkManager);
     this.widget.setTemplate("widgets/live-ranking/live-ranking");
     this.widget.setId("live-ranking-widget");
-    this.widget.setPosition("100 55");
+    this.widget.setPosition({ x: 100, y: 55 });
   }
 
   async onLoad() {
