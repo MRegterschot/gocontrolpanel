@@ -19,6 +19,7 @@ export default async function MappacksTab({
       serverId={serverId}
       fmHealth={fmHealth}
       defaultResults={data.Results}
+      defaultHasMore={data.More}
     />
   );
 }

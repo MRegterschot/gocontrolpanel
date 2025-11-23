@@ -14,16 +14,18 @@ export default function MapSearch({
   serverId,
   fmHealth,
   defaultResults = [],
+  defaultHasMore = false,
 }: {
   serverId: string;
   fmHealth: boolean;
   defaultResults?: TMXMap[];
+  defaultHasMore?: boolean;
 }) {
   const [nameQuery, setNameQuery] = useState("");
   const [authorQuery, setAuthorQuery] = useState("");
 
   const [searchResults, setSearchResults] = useState<TMXMap[]>(defaultResults);
-  const [hasMoreResults, setHasMoreResults] = useState(false);
+  const [hasMoreResults, setHasMoreResults] = useState(defaultHasMore);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
