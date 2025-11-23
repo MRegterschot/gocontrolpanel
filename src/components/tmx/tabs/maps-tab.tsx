@@ -19,6 +19,7 @@ export default async function MapsTab({
       serverId={serverId}
       fmHealth={fmHealth}
       defaultResults={data.Results}
+      defaultHasMore={data.More}
     />
   );
 }
