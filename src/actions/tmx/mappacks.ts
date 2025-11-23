@@ -6,7 +6,7 @@ import {
   searchTMXMappacks,
   searchTMXMaps,
 } from "@/lib/api/tmx";
-import { getFileManager } from "@/lib/filemanager";
+import { getFileManager } from "@/lib/managers/file-manager";
 import { TMXMappackSearch } from "@/types/api/tmx";
 import { ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";

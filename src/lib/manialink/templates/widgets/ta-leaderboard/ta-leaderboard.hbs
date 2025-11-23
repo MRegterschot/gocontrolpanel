@@ -1,0 +1,220 @@
+{{#extend "widget"}}
+{{#content "widget"}}
+<frame pos="0 0">
+  <quad pos="0 0" z-index="0" size="55 5" bgcolor="222"/>
+  <label pos="27.5 -2.25" z-index="0" size="55 5" text="Leaderboard" halign="center" textsize="1" textfont="GameFontSemiBold" valign="center"/>
+</frame>
+
+<framemodel id="record">
+  <quad pos="0 0" z-index="0" size="5 5" bgcolor="222"/>
+  <quad pos="5 0" z-index="0" size="50 5" bgcolor="DDD"/>
+  <label pos="2.4 -2.25" z-index="0" size="5 5" text="0" halign="center" valign="center" textsize="1.25" textcolor="DDD" textfont="GameFontSemiBold"/>
+  <quad pos="6.25 -1" z-index="0" size="4.5 3" bgcolor="FFF" image="file://Media/Flags/WOR.dds"/>
+  <label pos="12 -2.25" z-index="0" size="27 5" text="-" textcolor="222" textsize="1.2" textfont="GameFontRegular" valign="center"/>
+  <label pos="53 -2.25" z-index="0" size="12.5 5" text="--:--.---" valign="center" halign="right" textsize="1" textcolor="222" textfont="GameFontSemiBold"/>
+
+  <frame pos="56 0" size="14.5 5" z-index="2" id="personalBest">
+    <quad pos="0 0" size="14.5 5" bgcolor="22D" z-index="2" />
+    <label pos="7.25 -2.25" size="14.5 5" text="-00.000" z-index="2" halign="center" valign="center" textsize="1" textcolor="DDD" textfont="GameFontSemiBold"/>
+  </frame>
+</framemodel>
+
+<frame id="records" pos="0 -5.25" size="55 42">
+<quad size="55 {{ multiply 100 5.25 }}" bgcolor="fff" opacity="0" scriptevents="1"/>
+{{#range 0 100}}
+<frameinstance modelid="record" pos="0 {{ multiply i -5.25 }}" />
+{{/range}}
+</frame>
+{{/content}}
+
+
+{{#content "globals"}}
+#Struct Record {
+  Integer rank;
+  Integer time;
+  Text name;
+  Text login;
+}
+
+#Struct PersonalBest {
+  Text login;
+  Integer timeDiff;
+}
+{{/content}}
+
+{{#content "script"}}
+Text formatTime(Integer time) {
+  declare Text secondString;
+  declare Text msString;
+
+  if (time <= 0) {
+    return "--:--.---";
+  }
+
+  declare Integer seconds = time / 1000;
+  declare Integer minutes = seconds / 60;
+  declare Integer milliseconds = time - (seconds * 1000);
+  seconds = seconds - (minutes * 60);
+
+  secondString = TL::ToText(seconds);
+
+  if (seconds < 10) {
+    secondString = "0" ^ secondString;
+  }
+
+  if (milliseconds <= 0) {
+    msString = "000";
+  } else if (milliseconds < 10) {
+    msString = "00" ^ TL::ToText(milliseconds);
+  } else if (milliseconds < 100) {
+    msString = "0" ^ TL::ToText(milliseconds);
+  } else {
+    msString = TL::ToText(milliseconds);
+  }
+
+  if (minutes > 0) {
+    return TL::ToText(minutes) ^ ":" ^ secondString ^ "." ^ msString;
+  } else {
+    return secondString ^ "." ^ msString;
+  }
+
+  return "";
+}
+
+PersonalBest[] getPersonalBests(Record[] previousRecords, Record[] currentRecords) {
+  declare PersonalBest[] personalBests = [];
+
+  foreach (prevRecord in previousRecords) {
+    foreach (currRecord in currentRecords) {
+      if (currRecord.time <= 0) {
+        // Skip invalid times
+        continue;
+      }
+
+      if (prevRecord.login == currRecord.login) {
+        if (currRecord.time < prevRecord.time) {
+          personalBests.add(PersonalBest{
+            login = currRecord.login,
+            timeDiff = prevRecord.time - currRecord.time
+          });
+        }
+        break;
+      }
+    }
+  }
+
+  return personalBests;
+}
+
+Void updateRecordRow(Integer index, Record record) {
+  declare recordsFrame <=> (Page.MainFrame.GetFirstChild("records") as CMlFrame);
+
+  if (index >= recordsFrame.Controls.count) {
+    return;
+  }
+
+  declare recordFrame <=> (recordsFrame.Controls[index + 1] as CMlFrame);
+  (recordFrame.Controls[2] as CMlLabel).SetText(TL::ToText(record.rank));
+  (recordFrame.Controls[3] as CMlQuad).ImageUrl = "file://ZoneFlags/Login/" ^ record.login ^ "/country";
+  (recordFrame.Controls[4] as CMlLabel).SetText(record.name);
+  (recordFrame.Controls[5] as CMlLabel).SetText(formatTime(record.time));
+  recordFrame.DataAttributeSet("login", record.login);
+  recordFrame.Show();
+}
+
+Void updateScroll(Record[] records) {
+  declare recordsFrame <=> (Page.MainFrame.GetFirstChild("records") as CMlFrame);
+  declare Integer recordCount = records.count;
+  if (recordCount > recordsFrame.Controls.count) {
+    recordCount = recordsFrame.Controls.count;
+  }
+  declare Real maxY = recordCount * 5.25 - 42;
+  if (maxY < 0) {
+    maxY = 0.;
+  }
+  recordsFrame.ScrollMax = <0., maxY>;
+}
+
+Void updateWidget(Record[] records) {
+  declare recordCount = records.count;
+  declare index = 0;
+
+  foreach (record in records) {
+    updateRecordRow(index, record);
+    index = index + 1;
+  }
+
+  declare recordsFrame <=> (Page.MainFrame.GetFirstChild("records") as CMlFrame);
+  // Hide unused rows
+  while (index < recordsFrame.Controls.count - 1) {
+    declare recordFrame <=> (recordsFrame.Controls[index + 1] as CMlFrame);
+    recordFrame.DataAttributeSet("login", "");
+    recordFrame.Hide();
+    index = index + 1;
+  }
+
+  updateScroll(records);
+}
+
+Void updatePersonalBest(PersonalBest pb) {
+  declare recordsFrame <=> (Page.MainFrame.GetFirstChild("records") as CMlFrame);
+
+  foreach (control in recordsFrame.Controls) {
+    // Skip first control (invisible background quad)
+    if (control == recordsFrame.Controls[0]) {
+      continue;
+    }
+
+    declare recordFrame <=> (control as CMlFrame);
+    declare Text login = recordFrame.DataAttributeGet("login");
+
+    if (login == pb.login) {
+      declare CMlFrame personalBestFrame <=> (recordFrame.GetFirstChild("personalBest") as CMlFrame);
+      declare CMlLabel personalBestLabel = personalBestFrame.Controls[1] as CMlLabel;
+
+      // Update personal best label
+      personalBestLabel.SetText("-" ^ formatTime(pb.timeDiff));
+
+      AnimMgr.Flush(personalBestFrame); // Clear any ongoing animations
+
+      // Start animation
+      AnimMgr.Add(personalBestFrame, """<frame pos='""" ^ "40.5 0" ^ """' />""", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
+      
+      // Hold position while not blocking code
+      AnimMgr.AddChain(personalBestFrame, """<frame pos='""" ^ "40.5 0" ^ """' />""", 3000, CAnimManager::EAnimManagerEasing::ExpInOut);
+
+      // Hide animation
+      AnimMgr.AddChain(personalBestFrame, """<frame pos='""" ^ "56 0" ^ """' />""", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
+
+      break;
+    }
+  }
+}
+{{/content}}
+
+{{#content "main"}}
+declare Record[] Records for This;
+declare Record[] lastRecords = [];
+declare Integer LastRecordsUpdate for This = -1;
+declare Integer lastUpdate = -1;
+declare recordsFrame <=> (widget.GetFirstChild("records") as CMlFrame);
+recordsFrame.ScrollActive = True;
+recordsFrame.ScrollMin = <0., 0.>;
+{{/content}}
+
+
+{{#content "loop"}}
+if (LastRecordsUpdate != lastUpdate) {
+  lastUpdate = LastRecordsUpdate;
+
+  declare PersonalBest[] personalBests = getPersonalBests(lastRecords, Records);
+  lastRecords = Records;
+
+  updateWidget(Records);
+  
+  foreach (pb in personalBests) {
+    updatePersonalBest(pb);
+  }
+}
+{{/content}}
+{{/extend}}

@@ -1,0 +1,105 @@
+{{#extend "widget"}}
+{{#content "widget"}}
+<frame pos="0 0" id="world-record">
+  <quad pos="0 0" z-index="0" size="10 5" bgcolor="222"/>
+  <quad pos="10 0" z-index="0" size="45 5" bgcolor="DDD"/>
+  <label pos="5 -2.25" z-index="0" size="10 5" text="WR" halign="center" valign="center" textsize="1" textcolor="DDD" textfont="GameFontSemiBold"/>
+  <label pos="11.5 -2.25" z-index="0" size="32.5 5" text="-" textcolor="222" textsize="1" textfont="GameFontRegular" valign="center" textprefix="$i"/>
+  <label pos="53 -2.25" z-index="0" size="12.5 5" text="--:--.---" valign="center" halign="right" textcolor="222" textsize="1" textfont="GameFontSemiBold"/>
+</frame>
+
+<frame pos="0 -5.25" id="local-record">
+  <quad pos="0 0" z-index="0" size="10 5" bgcolor="222"/>
+  <quad pos="10 0" z-index="0" size="45 5" bgcolor="DDD"/>
+  <label pos="5 -2.25" z-index="0" size="10 5" text="LR" halign="center" valign="center" textsize="1" textcolor="DDD" textfont="GameFontSemiBold"/>
+  <label pos="11.5 -2.25" z-index="0" size="32.5 5" text="-" textcolor="222" textsize="1" textfont="GameFontRegular" valign="center" textprefix="$i"/>
+  <label pos="53 -2.25" z-index="0" size="12.5 5" text="--:--.---" valign="center" halign="right" textcolor="222" textsize="1" textfont="GameFontSemiBold"/>
+</frame>
+{{/content}}
+
+
+{{#content "globals"}}
+ #Struct RecordInfo {
+  Integer time;
+  Text nickName;
+}
+
+#Struct RecordsInfo {
+  RecordInfo worldRecord;
+  RecordInfo localRecord;
+}
+{{/content}}
+
+{{#content "script"}}
+Text formatTime(Integer time) {
+  declare Text secondString;
+  declare Text msString;
+
+  if (time <= 0) {
+    return "--:--.---";
+  }
+
+  declare Integer seconds = time / 1000;
+  declare Integer minutes = seconds / 60;
+  declare Integer milliseconds = time - (seconds * 1000);
+  seconds = seconds - (minutes * 60);
+
+  secondString = TL::ToText(seconds);
+
+  if (seconds < 10) {
+    secondString = "0" ^ secondString;
+  }
+
+  if (milliseconds <= 0) {
+    msString = "000";
+  } else if (milliseconds < 10) {
+    msString = "00" ^ TL::ToText(milliseconds);
+  } else if (milliseconds < 100) {
+    msString = "0" ^ TL::ToText(milliseconds);
+  } else {
+    msString = TL::ToText(milliseconds);
+  }
+
+  if (minutes > 0) {
+    return TL::ToText(minutes) ^ ":" ^ secondString ^ "." ^ msString;
+  } else {
+    return secondString ^ "." ^ msString;
+  }
+
+  return "";
+}
+
+Void updateWidget(RecordsInfo recordsInfo) {
+  declare worldRecordFrame <=> (Page.MainFrame.GetFirstChild("world-record") as CMlFrame);
+  declare localRecordFrame <=> (Page.MainFrame.GetFirstChild("local-record") as CMlFrame);
+
+  // Update World Record
+  declare Text wrName = recordsInfo.worldRecord.nickName;
+  declare Integer wrTime = recordsInfo.worldRecord.time;
+
+  (worldRecordFrame.Controls[3] as CMlLabel).SetText(wrName);
+  (worldRecordFrame.Controls[4] as CMlLabel).SetText(formatTime(wrTime));
+
+  // Update Local Record
+  declare Text lrName = recordsInfo.localRecord.nickName;
+  declare Integer lrTime = recordsInfo.localRecord.time;
+
+  (localRecordFrame.Controls[3] as CMlLabel).SetText(lrName);
+  (localRecordFrame.Controls[4] as CMlLabel).SetText(formatTime(lrTime));
+}
+{{/content}}
+
+{{#content "main"}}
+declare RecordsInfo RecordsInfos for This;
+declare Integer LastRecordsInfosUpdate for This = -1;
+declare Integer lastUpdate = -1;
+{{/content}}
+
+
+{{#content "loop"}}
+if (LastRecordsInfosUpdate != lastUpdate) {
+  lastUpdate = LastRecordsInfosUpdate;
+  updateWidget(RecordsInfos);
+}
+{{/content}}
+{{/extend}}

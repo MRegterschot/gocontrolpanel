@@ -104,6 +104,7 @@ export default function BlacklistForm({
             </Button>
           </div>
           <Button
+            type="button"
             variant="destructive"
             onClick={() => setConfirmClearBlacklist(true)}
           >

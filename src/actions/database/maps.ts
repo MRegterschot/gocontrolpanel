@@ -2,7 +2,7 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getAccountNames, getMapsInfo } from "@/lib/api/nadeo";
 import { getClient } from "@/lib/dbclient";
-import { getGbxClient } from "@/lib/gbxclient";
+import { getGbxClient } from "@/lib/managers/gbxclient-manager";
 import { Maps, Prisma } from "@/lib/prisma/generated";
 import { SMapInfo } from "@/types/gbx/map";
 import { MapInfoMinimal } from "@/types/map";
@@ -19,6 +19,7 @@ const mapsRecordsSchema = (serverId?: string) =>
     records: {
       where: {
         serverId,
+        time: { gt: 0 },
       },
       distinct: ["login"],
       orderBy: [{ time: "asc" }, { createdAt: "asc" }],

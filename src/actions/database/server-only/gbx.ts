@@ -1,6 +1,6 @@
 import { getMapsInfo } from "@/lib/api/nadeo";
 import { getClient } from "@/lib/dbclient";
-import { getGbxClient } from "@/lib/gbxclient";
+import { getGbxClient } from "@/lib/managers/gbxclient-manager";
 import { Maps, Matches, Prisma, Servers } from "@/lib/prisma/generated";
 import { getKeyActiveMap, getRedisClient } from "@/lib/redis";
 import { Player, Scores } from "@/types/gbx/scores";
@@ -11,11 +11,7 @@ import "server-only";
 import { getPlayerInfo } from "../../gbx/server-only";
 
 const serversPluginsSchema = Prisma.validator<Prisma.ServerPluginsInclude>()({
-  plugin: {
-    include: {
-      commands: true,
-    },
-  },
+  plugin: true,
 });
 
 export type ServerPluginsWithPlugin = Prisma.ServerPluginsGetPayload<{

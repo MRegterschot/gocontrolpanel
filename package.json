@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "tsx src/server.ts",
-    "build": "next build",
+    "dev": "bun run build:templates && tsx src/server.ts",
+    "build": "bun run build:templates && next build",
     "start": "node .next/standalone/server.js",
     "lint": "next lint",
     "pretty": "prettier --write \"**/*.{ts,tsx,json,css}\"",
@@ -13,7 +13,8 @@
     "migrate:create": "bun run generate && prisma migrate dev --name init --create-only --schema ./src/lib/prisma/$DB/schema.prisma",
     "deploy": "bun run generate && prisma migrate deploy --schema ./src/lib/prisma/$DB/schema.prisma",
     "reset": "prisma migrate reset --schema ./src/lib/prisma/$DB/schema.prisma",
-    "prepare": "next-ws patch"
+    "prepare": "next-ws patch",
+    "build:templates": "handlebars src/lib/manialink/templates/ -f src/lib/manialink/compiled_templates.js -e hbs --commonjs handlebars/runtime"
   },
   "overrides": {
     "@radix-ui/react-focus-scope": "1.1.7"
@@ -63,6 +64,7 @@
     "embla-carousel-react": "^8.6.0",
     "fs": "^0.0.1-security",
     "handlebars": "^4.7.8",
+    "handlebars-layouts": "^3.1.4",
     "ioredis": "^5.6.1",
     "is-localhost-ip": "^2.0.0",
     "jsonwebtoken": "^9.0.2",

@@ -1,5 +1,8 @@
 import { parseTokenFromRequest } from "@/lib/auth";
-import { GbxClientManager, getGbxClientManager } from "@/lib/gbxclient";
+import {
+  GbxClientManager,
+  getGbxClientManager,
+} from "@/lib/managers/gbxclient-manager";
 import { ServerInfo } from "@/types/server";
 
 export function GET() {

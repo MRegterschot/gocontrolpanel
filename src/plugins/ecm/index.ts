@@ -1,0 +1,172 @@
+import { ecmOnDriverFinish, ecmOnRoundEnd } from "@/lib/api/ecm";
+import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
+import ManialinkManager from "@/lib/managers/manialink-manager";
+import Widget from "@/lib/manialink/components/widget";
+import { rankPlayers } from "@/lib/utils";
+import { PlayerManialinkPageAnswer } from "@/types/gbx/player";
+import { Scores } from "@/types/gbx/scores";
+import { Waypoint } from "@/types/gbx/waypoint";
+import { ECMPluginConfig } from "@/types/plugins/ecm";
+import Plugin from "..";
+import ECMWindow from "./ecm-window";
+
+export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
+  static pluginId = "ecm";
+  private widget: Widget;
+  private roundOffset: number = 0;
+
+  private windows: Map<string, ECMWindow> = new Map();
+
+  constructor(
+    clientManager: GbxClientManager,
+    manialinkManager: ManialinkManager,
+  ) {
+    super(clientManager, manialinkManager);
+    this.widget = new Widget(manialinkManager, undefined, false);
+    this.widget.setTemplate("widgets/ecm/ecm");
+    this.widget.setId("ecm-widget");
+    this.widget.setPosition({ x: 119, y: -70 });
+    this.widget.setData({
+      ecmAction: "ecm-action",
+    });
+  }
+
+  async onLoad() {
+    this.clientManager.addListeners(this.getPluginId(), {
+      finish: this.onPlayerFinish.bind(this),
+      scores: this.onEndRound.bind(this),
+      beginMap: this.onBeginMap.bind(this),
+    });
+
+    this.clientManager.onCommand("ecm", this.onECMCommand.bind(this));
+    this.clientManager.onAction(this.getPluginId(), this.onECMAction);
+  }
+
+  async onUnload() {
+    this.windows.forEach((window) => {
+      window.destroy();
+    });
+    this.windows.clear();
+
+    this.clientManager.removeListeners(this.getPluginId());
+
+    this.clientManager.offCommand("ecm", this.onECMCommand.bind(this));
+    this.clientManager.offAction(this.getPluginId(), this.onECMAction);
+
+    this.manialinkManager.actionGroup.removeAction(this.getPluginId());
+  }
+
+  async onStart() {
+    this.manialinkManager.actionGroup.addAction({
+      name: this.getPluginId(),
+      icon: "https://i.imgur.com/DIjT0pA.png",
+      type: "image",
+      action: this.getPluginId(),
+    });
+  }
+
+  async onConfigUpdate() {
+    this.windows.forEach((window) => {
+      window.updateConfig(this.config);
+    });
+  }
+
+  onRoundOffsetUpdate = (value: number) => {
+    this.roundOffset += value;
+    this.windows.forEach((window) => {
+      window.updateRoundOffset(this.roundOffset);
+    });
+  };
+
+  onUserConfigUpdate = (config: ECMPluginConfig | null) => {
+    this.config = config;
+    this.windows.forEach((window) => {
+      window.updateConfig(this.config);
+    });
+  };
+
+  onECMAction = async (data: PlayerManialinkPageAnswer) => {
+    await this.createWindowForPlayer(data.Login);
+  };
+
+  async onECMCommand(_: string[], login: string) {
+    await this.createWindowForPlayer(login);
+  }
+
+  async onPlayerFinish(waypoint: Waypoint) {
+    if (!this.isActive()) return;
+
+    ecmOnDriverFinish(this.config.apiKey, {
+      finishTime: waypoint.racetime,
+      ubisoftUid: waypoint.accountid,
+      roundNum: (this.clientManager.roundNumber || 1) + this.roundOffset,
+      mapId: this.clientManager.info.activeMap,
+    });
+  }
+
+  async onEndRound(scores: Scores) {
+    if (scores.section !== "EndRound") return;
+    if (!this.isActive()) return;
+
+    const roundNum = this.clientManager.roundNumber || 1;
+    const isTimeAttack = this.clientManager.info.liveInfo.type === "timeattack";
+
+    const rankedPlayers = rankPlayers(scores.players, isTimeAttack);
+
+    const players = rankedPlayers.map((p) => ({
+      finishTime: isTimeAttack ? p.bestracetime : p.prevracetime,
+      ubisoftUid: p.accountid,
+      position: p.position,
+    }));
+
+    ecmOnRoundEnd(this.config.apiKey, {
+      players,
+      roundNum: roundNum + this.roundOffset,
+      mapId: this.clientManager.info.activeMap,
+    });
+  }
+
+  async createWindowForPlayer(login: string) {
+    if (this.windows.has(login)) return;
+
+    const ecmWindow = new ECMWindow(
+      this.clientManager,
+      this.manialinkManager,
+      this.config,
+      this.roundOffset,
+      "eCircuitMania",
+      login,
+      this.dbPluginId,
+    );
+
+    ecmWindow.onCloseCallback = () => {
+      this.windows.delete(login);
+    };
+    ecmWindow.onRoundOffsetUpdateCallback = this.onRoundOffsetUpdate;
+    ecmWindow.onConfigUpdateCallback = this.onUserConfigUpdate;
+
+    this.windows.set(login, ecmWindow);
+    ecmWindow.display();
+  }
+
+  async onBeginMap() {
+    this.roundOffset = 0;
+  }
+
+  private isActive(): this is {
+    config: { apiKey: string; isRecording: true };
+    clientManager: {
+      info: {
+        activeMap: string;
+      };
+    };
+  } {
+    return (
+      !!this.clientManager.info.activeMap &&
+      !this.clientManager.info.liveInfo.isPaused &&
+      !this.clientManager.info.liveInfo.isWarmUp &&
+      !!this.config?.apiKey &&
+      !!this.config?.isRecording
+    );
+  }
+}

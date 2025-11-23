@@ -1,8 +1,6 @@
-import { getInterfaces } from "@/actions/database/interfaces";
 import { getPlugins } from "@/actions/database/plugins";
 import { getServerPlugins } from "@/actions/database/server-plugins";
 import { getServerChatConfig } from "@/actions/database/servers";
-import InterfaceEditor from "@/components/interface/editor";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChatConfigForm from "@/forms/server/interface/chatconfig-form";
@@ -26,7 +24,6 @@ export default async function ServerInterfacePage({
 
   const { data } = await getServerChatConfig(id);
 
-  const { data: interfaces } = await getInterfaces(id);
   const { data: serverPlugins } = await getServerPlugins(id);
   const { data: plugins } = await getPlugins();
 
@@ -39,31 +36,12 @@ export default async function ServerInterfacePage({
         </h4>
       </div>
 
-      <Tabs defaultValue="interface" className="w-full">
+      <Tabs defaultValue="plugins" className="w-full">
         <TabsList className="w-full">
-          <TabsTrigger value="interface">Interface</TabsTrigger>
-          <TabsTrigger value="chat">Chat</TabsTrigger>
           <TabsTrigger value="plugins">Plugins</TabsTrigger>
+          <TabsTrigger value="chat">Chat</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="interface" className="flex flex-col gap-6 h-full">
-          {process.env.NODE_ENV === "development" ? (
-            <InterfaceEditor
-              serverId={id}
-              defaultInterface={interfaces[0]}
-              defaultInterfaces={interfaces}
-            />
-          ) : (
-            <span className="text-muted-foreground">
-              Interface editor is still in development.
-            </span>
-          )}
-        </TabsContent>
-        <TabsContent value="chat" className="flex flex-col gap-6">
-          <Card className="p-6">
-            <ChatConfigForm serverId={id} chatConfig={data} />
-          </Card>
-        </TabsContent>
         <TabsContent value="plugins" className="flex flex-col gap-6">
           <Card className="p-6">
             <PluginsForm
@@ -71,6 +49,11 @@ export default async function ServerInterfacePage({
               plugins={plugins}
               serverPlugins={serverPlugins}
             />
+          </Card>
+        </TabsContent>
+        <TabsContent value="chat" className="flex flex-col gap-6">
+          <Card className="p-6">
+            <ChatConfigForm serverId={id} chatConfig={data} />
           </Card>
         </TabsContent>
       </Tabs>

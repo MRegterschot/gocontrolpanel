@@ -1,5 +1,6 @@
 import {
   getUsersByIds,
+  getUsersByLogins,
   searchUser,
   UserMinimal,
 } from "@/actions/database/users";
@@ -9,9 +10,13 @@ import { toast } from "sonner";
 
 interface UseSearchUsersProps {
   defaultUsers?: string[];
+  field?: "id" | "login";
 }
 
-export function useSearchUsers({ defaultUsers }: UseSearchUsersProps) {
+export function useSearchUsers({
+  defaultUsers,
+  field = "id",
+}: UseSearchUsersProps) {
   const [searchResults, setSearchResults] = useState<UserMinimal[]>([]);
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(true);
@@ -25,7 +30,16 @@ export function useSearchUsers({ defaultUsers }: UseSearchUsersProps) {
       }
 
       try {
-        const { data, error } = await getUsersByIds(defaultUsers);
+        let data, error;
+
+        if (field === "id") {
+          ({ data, error } = await getUsersByIds(defaultUsers));
+        } else if (field === "login") {
+          ({ data, error } = await getUsersByLogins(defaultUsers));
+        } else {
+          throw new Error("Invalid field for user search");
+        }
+
         if (error) {
           throw new Error(error);
         }

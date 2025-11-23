@@ -2,8 +2,8 @@
 
 import { ServerSettingsSchemaType } from "@/forms/server/settings/settings-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
-import { getFileManager } from "@/lib/filemanager";
-import { getGbxClient } from "@/lib/gbxclient";
+import { getFileManager } from "@/lib/managers/file-manager";
+import { getGbxClient } from "@/lib/managers/gbxclient-manager";
 import { LocalMapInfo } from "@/types/map";
 import { ServerError, ServerResponse } from "@/types/responses";
 import path from "path";

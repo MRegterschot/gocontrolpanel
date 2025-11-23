@@ -2,8 +2,11 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
-import { updateFileManager } from "@/lib/filemanager";
-import { deleteGbxClientManager, getGbxClientManager } from "@/lib/gbxclient";
+import { updateFileManager } from "@/lib/managers/file-manager";
+import {
+  deleteGbxClientManager,
+  getGbxClientManager,
+} from "@/lib/managers/gbxclient-manager";
 import { Prisma, Servers } from "@/lib/prisma/generated";
 import {
   getKeyHetznerRecentlyCreatedServers,

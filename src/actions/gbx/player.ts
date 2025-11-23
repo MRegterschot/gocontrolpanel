@@ -1,7 +1,7 @@
 "use server";
 
 import { doServerActionWithAuth } from "@/lib/actions";
-import { getGbxClient } from "@/lib/gbxclient";
+import { getGbxClient } from "@/lib/managers/gbxclient-manager";
 import { PlayerInfo } from "@/types/player";
 import { ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
@@ -67,12 +67,10 @@ export async function banPlayer(
     async (session) => {
       const client = await getGbxClient(serverId);
       await client.call("Ban", login, reason);
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.players.banlist.add",
-        { login, reason }
-      );
+      await logAudit(session.user.id, serverId, "server.players.banlist.add", {
+        login,
+        reason,
+      });
     },
   );
 }
@@ -95,7 +93,7 @@ export async function unbanPlayer(
         session.user.id,
         serverId,
         "server.players.banlist.remove",
-        login
+        login,
       );
     },
   );
@@ -153,11 +151,7 @@ export async function cleanBanList(serverId: string): Promise<ServerResponse> {
     async (session) => {
       const client = await getGbxClient(serverId);
       await client.call("CleanBanList");
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.players.banlist.clear"
-      );
+      await logAudit(session.user.id, serverId, "server.players.banlist.clear");
     },
   );
 }
@@ -180,7 +174,7 @@ export async function blacklistPlayer(
         session.user.id,
         serverId,
         "server.players.blacklist.add",
-        login
+        login,
       );
     },
   );
@@ -204,7 +198,7 @@ export async function unblacklistPlayer(
         session.user.id,
         serverId,
         "server.players.blacklist.remove",
-        login
+        login,
       );
     },
   );
@@ -315,7 +309,7 @@ export async function cleanBlacklist(
       await logAudit(
         session.user.id,
         serverId,
-        "server.players.blacklist.clear"
+        "server.players.blacklist.clear",
       );
     },
   );
@@ -339,7 +333,7 @@ export async function addGuest(
         session.user.id,
         serverId,
         "server.players.guestlist.add",
-        login
+        login,
       );
     },
   );
@@ -363,7 +357,7 @@ export async function removeGuest(
         session.user.id,
         serverId,
         "server.players.guestlist.remove",
-        login
+        login,
       );
     },
   );
@@ -474,7 +468,7 @@ export async function cleanGuestlist(
       await logAudit(
         session.user.id,
         serverId,
-        "server.players.guestlist.clear"
+        "server.players.guestlist.clear",
       );
     },
   );
@@ -495,12 +489,10 @@ export async function kickPlayer(
     async (session) => {
       const client = await getGbxClient(serverId);
       await client.call("Kick", login, reason);
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.players.kick",
-        { login, reason }
-      );
+      await logAudit(session.user.id, serverId, "server.players.kick", {
+        login,
+        reason,
+      });
     },
   );
 }
@@ -525,7 +517,7 @@ export async function forceSpectator(
         session.user.id,
         serverId,
         "server.players.spectator.set",
-        { login, status }
+        { login, status },
       );
     },
   );

@@ -2,7 +2,7 @@ import "server-only";
 
 import { FileManager } from "@/types/filemanager";
 import Redis from "ioredis";
-import { GbxClientManager } from "./gbxclient";
+import { GbxClientManager } from "./managers/gbxclient-manager";
 import { PrismaClient } from "./prisma/generated";
 
 type GlobalState = {

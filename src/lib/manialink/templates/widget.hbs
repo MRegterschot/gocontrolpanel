@@ -1,0 +1,41 @@
+{{#extend "manialink"}}
+{{#content "content"}}
+<frame id="widget" pos="{{ position.x }} {{ position.y }}" z-index="10" hidden="1">
+{{#block "widget"}}{{/block}}
+</frame>
+
+<script><!--
+#Include "MathLib" as ML
+#Include "TextLib" as TL
+#Include "TimeLib" as TimeLib
+#Include "ColorLib" as CL
+
+{{#block "globals"}}{{/block}}
+
+{{#block "script"}}{{/block}}
+
+main() {
+  declare CMlFrame widget;
+  widget <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+
+  sleep(300);
+  widget.Show();
+
+  {{#block "main"}}{{/block}}
+
+  while (True) {
+    yield;
+
+    foreach(event in PendingEvents){
+      if(event.Control == Null) continue;
+
+      {{#block "events"}}{{/block}}
+    }
+
+    {{#block "loop"}}{{/block}}
+  }
+}
+
+--></script>
+{{/content}}
+{{/extend}}
