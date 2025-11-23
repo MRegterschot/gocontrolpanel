@@ -122,6 +122,11 @@ export default class RecordsInfoPlugin extends Plugin {
           time: localRecord.time,
           nickName: localRecord.user?.nickName || "-",
         };
+      } else {
+        this.recordsInfo.localRecord = {
+          time: 0,
+          nickName: "-",
+        };
       }
 
       const onlineLeaderboard = await getMapLeaderboard(map.UId);
