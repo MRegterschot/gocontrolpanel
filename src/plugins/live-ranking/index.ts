@@ -127,6 +127,20 @@ export default class LiveRankingPlugin extends Plugin {
     this.rankings = [];
     for (let i = 0; i < scores.players.length; i++) {
       const player = scores.players[i];
+
+      if (player.matchpoints === 0) {
+        const activePlayer = this.clientManager.info.activePlayers.find(
+          (p) => p.login === player.login,
+        );
+
+        if (
+          activePlayer &&
+          getSpectatorStatus(activePlayer.spectatorStatus).spectator
+        ) {
+          continue;
+        }
+      }
+
       this.rankings.push({
         rank: 0,
         login: player.login,
