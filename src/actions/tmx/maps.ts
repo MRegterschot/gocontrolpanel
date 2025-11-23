@@ -13,6 +13,7 @@ export async function searchMaps(
   serverId: string,
   queryParams: Record<string, string>,
   after?: number,
+  count: number = 12,
 ): Promise<ServerResponse<TMXMapSearch>> {
   return doServerActionWithAuth(
     [
@@ -32,7 +33,7 @@ export async function searchMaps(
           ...queryParams,
           ...(after ? { after: after.toString() } : {}),
         },
-        12,
+        count,
       );
     },
   );
