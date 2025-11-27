@@ -4,6 +4,7 @@ import { Icon } from "@tabler/icons-react";
 import NavAdmin from "./nav-admin";
 import NavFooter from "./nav-footer";
 import NavGroups from "./nav-groups";
+import NavTournaments from "./nav-tournaments";
 
 export interface NavItem {
   id?: number;
@@ -47,6 +48,7 @@ export default async function Navbar() {
   return (
     <>
       {session && <NavGroups />}
+      {session && <NavTournaments />}
       {session && canViewAdmin && (
         <NavAdmin
           canViewUsers={canViewUsers}

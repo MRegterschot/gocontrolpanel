@@ -1,10 +1,10 @@
 "use client";
 
-import { useConnection } from "@/hooks/use-connection";
-import { useTournaments } from "@/hooks/use-tournaments";
+import { useConnection } from "@/hooks/tournaments/use-connection";
+import { useTournaments } from "@/hooks/tournaments/use-tournaments";
 import { tournamentStore } from "@/stores/tournamentStore";
 
-export default function MessageList() {
+export default function Tournaments() {
   const connection = useConnection();
   const allTournaments = useTournaments();
 

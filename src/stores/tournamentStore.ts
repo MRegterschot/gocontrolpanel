@@ -1,6 +1,6 @@
-import {getDbConnection} from '@/lib/spacetimedb/connection';
-import {onSubscriptionChange} from "@/lib/spacetimedb/subscriptionEvents";
-import { DbConnection, Tournament } from 'tm-tourney-manager-api-ts';
+import { getDbConnection } from "@/lib/spacetimedb/connection";
+import { onSubscriptionChange } from "@/lib/spacetimedb/subscriptionEvents";
+import { DbConnection, Tournament } from "tm-tourney-manager-api-ts";
 
 class TournamentStore {
   private listeners: Set<() => void> = new Set();
@@ -27,12 +27,12 @@ class TournamentStore {
       this.getConnection();
       return this.cachedSnapshot;
     } catch (error) {
-      const isNotSSR = typeof window !== 'undefined';  
-      if(isNotSSR) { 
+      const isNotSSR = typeof window !== "undefined";
+      if (isNotSSR) {
         // This would be an unexpected error on the client-side
-        console.error('Unexpected error while obtaining snapshot:', error);  
+        console.error("Unexpected error while obtaining snapshot:", error);
       }
-      return this.serverSnapshot;  
+      return this.serverSnapshot;
     }
   }
 
@@ -41,17 +41,31 @@ class TournamentStore {
     return this.serverSnapshot;
   }
 
-  public createTournament(name: string){
+  public createTournament(name: string) {
     if (this.connection) {
       this.connection.reducers.createTournament(name);
+    }
+  }
+
+  public getTournamentById(id: bigint): Tournament | undefined {
+    try {
+      this.getConnection(); // allowed only on client
+      return this.cachedSnapshot.find((t) => t.id === id);
+    } catch (error) {
+      // Running on the server → return serverSnapshot safely
+      return this.serverSnapshot.find((t) => t.id === id);
     }
   }
 
   private getConnection(): DbConnection {
     if (!this.connection) {
       this.connection = getDbConnection();
-      this.connection.db.tournament.onInsert((ctx, row) => this.updateSnapshot());
-      this.connection.db.tournament.onDelete((ctx, row) => this.updateSnapshot());
+      this.connection.db.tournament.onInsert((ctx, row) =>
+        this.updateSnapshot(),
+      );
+      this.connection.db.tournament.onDelete((ctx, row) =>
+        this.updateSnapshot(),
+      );
     }
     return this.connection;
   }

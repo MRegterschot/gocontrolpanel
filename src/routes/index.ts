@@ -15,6 +15,11 @@ export const routes = {
     nadeo: "/server/:id/nadeo",
     records: "/server/:id/records",
   },
+  tournaments: {
+    tournament: "/tournaments/:id",
+    bracket: "/tournaments/:id/bracket",
+    registration: "/tournaments/:id/registration",
+  },
   admin: {
     users: "/admin/users",
     servers: "/admin/servers",
@@ -299,6 +304,39 @@ export const breadCrumbs: {
       },
       {
         label: "Records",
+      },
+    ],
+  },
+  {
+    path: routes.tournaments.tournament,
+    breadCrumbs: [
+      {
+        label: "Tournaments",
+      },
+      {
+        label: "Tournament Info",
+      },
+    ],
+  },
+  {
+    path: routes.tournaments.bracket,
+    breadCrumbs: [
+      {
+        label: "Tournaments",
+      },
+      {
+        label: "Bracket",
+      },
+    ],
+  },
+  {
+    path: routes.tournaments.registration,
+    breadCrumbs: [
+      {
+        label: "Tournaments",
+      },
+      {
+        label: "Registration",
       },
     ],
   },
