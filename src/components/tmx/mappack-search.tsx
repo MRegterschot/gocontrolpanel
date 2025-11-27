@@ -14,16 +14,18 @@ export default function MappackSearch({
   serverId,
   fmHealth,
   defaultResults = [],
+  defaultHasMore = false,
 }: {
   serverId: string;
   fmHealth: boolean;
   defaultResults?: TMXMappack[];
+  defaultHasMore?: boolean;
 }) {
   const [nameQuery, setNameQuery] = useState("");
 
   const [searchResults, setSearchResults] =
     useState<TMXMappack[]>(defaultResults);
-  const [hasMoreResults, setHasMoreResults] = useState(false);
+  const [hasMoreResults, setHasMoreResults] = useState(defaultHasMore);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

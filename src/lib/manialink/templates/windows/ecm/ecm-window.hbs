@@ -1,0 +1,171 @@
+{{#extend "window"}}
+{{#content "window"}}
+<frame pos="2 -2" id="ecm-window" size="{{ subtract size.x 4 }} {{ subtract size.y 4 }}" hidden="1">
+  <frame id="recording-status" size="{{ subtract size.x 4 }} 5">
+    <label text="" pos="0 -2.25" textcolor="{{#if data.isRecording}}2D2{{else}}D22{{/if}}" textsize="1" valign="center" />
+    <label text="{{#if data.isRecording}}Recording{{else}}Not Recording{{/if}}" pos="3.5 -2.25" size="20 5" textsize="1" textcolor="222" valign="center" textfont="GameFontRegular" />
+
+    <frame id="toggle-recording" pos="25 0" size="25 5">
+      <quad pos="0 0" size="25 5" bgcolor="CCC" action="ecm-toggle-recording" />
+      <quad pos="0 -4.75" size="25 0.25" bgcolor="222" />
+      <label pos="12.5 -2.25" text="{{#if data.isRecording}}Stop{{else}}Start{{/if}} recording" textsize="1" textcolor="222" valign="center" halign="center" textfont="GameFontRegular" />
+    </frame>
+  </frame>
+
+  <frame id="api-key-frame" pos="0 -6" size="{{ subtract size.x 4 }} 12.25">
+    <label text="API Key" pos="0 -2.25" size="25 3" textsize="0.6" textcolor="222" valign="center" textfont="GameFontSemiBold" />
+    <frame id="input-frame" pos="0 -4.5" size="{{ subtract size.x 4 }} 7.75">
+      <quad pos="0 -4.75" size="37 0.25" bgcolor="222" />
+      <entry pos="0 -2.25" default="{{ data.apiKey }}" size="32 5" name="ecm-api-key-entry" id="ecm-api-key-entry" class="ecm-api-key-entry" textsize="1" focusareacolor1="CCC" focusareacolor2="CCC" textcolor="222" scriptevents="1" textformat="Password" valuetype="Ml_String" valign="center" textfont="GameFontRegular" />
+      <label pos="34.5 -2.25" size="5 5" text="" textcolor="222" focusareacolor1="CCC" focusareacolor2="CCC" halign="center" valign="center" textsize="1" scriptevents="1" class="ecm-api-key-entry-toggle" />
+
+      <frame id="save-api-key" pos="38 0" size="12 5">
+        <quad pos="0 0" size="12 5" bgcolor="CCC" action="ecm-save-api-key" />
+        <quad pos="0 -4.75" size="12 0.25" bgcolor="222" />
+        <label pos="6 -2.25" text="Save" textsize="1" textcolor="222" valign="center" halign="center" textfont="GameFontRegular" />
+      </frame>
+
+      <label id="error-label" pos="0 -6.25" size="{{ subtract size.x 4 }} 3" textsize="0.6" textcolor="D22" valign="center" textfont="GameFontRegular" />
+    </frame>
+  </frame>
+
+  <frame id="round-info-frame" pos="0 -19" size="{{ subtract size.x 4 }} 9.5">
+    <label text="Round info" pos="0 -2.25" size="25 3" textsize="0.6" textcolor="222" valign="center" textfont="GameFontSemiBold" />
+    <frame id="round-info" pos="0 -4.5" size="{{ subtract size.x 4 }} 5">
+      <label text="Round {{ data.currentRound }}" pos="0 -2.25" size="12 5" textsize="1" textcolor="222" valign="center" textfont="GameFontRegular" />
+
+      <frame id="round-controls">
+        <frame id="decrease-round-offset" pos="14 0" size="5 5">
+          <quad pos="0 0" size="5 5" bgcolor="CCC" action="ecm-decrease-round-offset" />
+          <quad pos="0 -4.75" size="5 0.25" bgcolor="222" />
+          <label pos="2.5 -2.25" text="-" textsize="1" textcolor="222" valign="center" halign="center" textfont="GameFontRegular" />
+        </frame>
+
+        <frame id="increase-round-offset" pos="20 0" size="5 5">
+          <quad pos="0 0" size="5 5" bgcolor="CCC" action="ecm-increase-round-offset" />
+          <quad pos="0 -4.75" size="5 0.25" bgcolor="222" />
+          <label pos="2.5 -2.25" text="+" textsize="1" textcolor="222" valign="center" halign="center" textfont="GameFontRegular" />
+        </frame>
+      </frame>
+    </frame>
+  </frame>
+</frame>
+{{/content}}
+
+{{#content "script"}}
+Void updateIsEditor(Boolean isEditor) {
+  declare window <=> (Page.MainFrame.GetFirstChild("ecm-window") as CMlFrame);
+  declare toggleRecordingFrame <=> ((window.GetFirstChild("recording-status") as CMlFrame).GetFirstChild("toggle-recording") as CMlFrame);
+  declare apiKeyFrame <=> (window.GetFirstChild("api-key-frame") as CMlFrame);
+  declare roundInfoFrame <=> (window.GetFirstChild("round-info-frame") as CMlFrame);
+  declare roundControlsFrame <=> ((roundInfoFrame.GetFirstChild("round-info") as CMlFrame).GetFirstChild("round-controls") as CMlFrame);
+
+  if (isEditor) {
+    toggleRecordingFrame.Show();
+    apiKeyFrame.Show();
+    roundInfoFrame.RelativePosition_V3 = <0., -19.>;
+    roundControlsFrame.Show();
+  } else {
+    toggleRecordingFrame.Hide();
+    apiKeyFrame.Hide();
+    roundInfoFrame.RelativePosition_V3 = <0., -6.>;
+    roundControlsFrame.Hide();
+  }
+
+  window.Show();
+}
+
+Void updateRecording(Boolean isRecording) {
+  declare window <=> (Page.MainFrame.GetFirstChild("ecm-window") as CMlFrame);
+  declare statusFrame <=> (window.GetFirstChild("recording-status") as CMlFrame);
+  declare toggleRecordingFrame <=> (statusFrame.GetFirstChild("toggle-recording") as CMlFrame);
+
+  declare recordingStatusLabel <=> statusFrame.Controls[0] as CMlLabel;
+  declare labelText <=> statusFrame.Controls[1] as CMlLabel;
+  declare toggleRecordingLabel <=> toggleRecordingFrame.Controls[2] as CMlLabel;
+
+  declare Real low = 2./16.;
+  declare Real high = 14./16.;
+
+  if (isRecording) {
+    recordingStatusLabel.TextColor = <low,high,low>;
+    labelText.SetText("Recording");
+    toggleRecordingLabel.SetText("Stop recording");
+  } else {
+    recordingStatusLabel.TextColor = <high,low,low>;
+    labelText.SetText("Not Recording");
+    toggleRecordingLabel.SetText("Start recording");
+  }
+}
+
+Void updateApiKey(Text apiKey) {
+  declare window <=> (Page.MainFrame.GetFirstChild("ecm-window") as CMlFrame);
+  declare apiKeyFrame <=> (window.GetFirstChild("api-key-frame") as CMlFrame);
+  declare inputFrame <=> (apiKeyFrame.GetFirstChild("input-frame") as CMlFrame);
+  declare apiKeyEntry <=> (inputFrame.GetFirstChild("ecm-api-key-entry") as CMlEntry);
+
+  apiKeyEntry.SetText(apiKey, False);
+}
+
+Void updateRoundInfo(Integer currentRound) {
+  declare window <=> (Page.MainFrame.GetFirstChild("ecm-window") as CMlFrame);
+  declare roundInfoFrame <=> (window.GetFirstChild("round-info-frame") as CMlFrame);
+  declare roundInfo <=> (roundInfoFrame.GetFirstChild("round-info") as CMlFrame);
+  declare roundInfoLabel <=> (roundInfo.Controls[0] as CMlLabel);
+
+  roundInfoLabel.SetText("Round " ^ currentRound);
+}
+
+Void updateWindow(Boolean ecmIsEditor, Text ecmAPIKey, Boolean ecmIsRecording, Integer ecmCurrentRound) {
+  updateIsEditor(ecmIsEditor);
+  updateRecording(ecmIsRecording);
+  updateApiKey(ecmAPIKey);
+  updateRoundInfo(ecmCurrentRound);
+}
+{{/content}}
+
+{{#content "main"}}
+declare Boolean ECMIsEditor for This = False;
+declare Text ECMAPIKey for This = "";
+declare Boolean ECMIsRecording for This = False;
+declare Integer ECMCurrentRound for This = 1;
+declare Integer LastECMUpdate for This = -1;
+declare Integer lastUpdate = -1;
+{{/content}}
+
+{{#content "loop"}}
+if (LastECMUpdate != lastUpdate) {
+  lastUpdate = LastECMUpdate;
+  updateWindow(ECMIsEditor, ECMAPIKey, ECMIsRecording, ECMCurrentRound);
+}
+{{/content}}
+
+{{#content "events"}}
+if (event.Control.HasClass("ecm-api-key-entry") && event.Type == CMlScriptEvent::Type::EntrySubmit) {
+  declare entryControl <=> (event.Control as CMlEntry);
+  declare errorLabel <=> (entryControl.Parent.GetFirstChild("error-label") as CMlLabel);
+
+  declare Integer nbUnderscores = TL::Split("_", entryControl.Value, False).count - 1;
+  if (nbUnderscores < 0) {
+    nbUnderscores = 0;
+  }
+
+  if (TL::Length(entryControl.Value) > 0 && nbUnderscores != 1) {
+    errorLabel.SetText("Expected 1 underscore, found " ^ nbUnderscores);
+  } else {
+    errorLabel.SetText("");
+  }
+}
+
+if (event.Control.HasClass("ecm-api-key-entry-toggle") && event.Type == CMlScriptEvent::Type::MouseClick) {
+  declare entryControl <=> (event.Control.Parent.GetFirstChild("ecm-api-key-entry") as CMlEntry);
+  if (entryControl.TextFormat == CMlEntry::ETextFormat::Password) {
+    entryControl.TextFormat = CMlEntry::ETextFormat::Basic;
+    (event.Control as CMlLabel).SetText("");
+  } else {
+    entryControl.TextFormat = CMlEntry::ETextFormat::Password;
+    (event.Control as CMlLabel).SetText("");
+  }
+}
+{{/content}}
+{{/extend}}

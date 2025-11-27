@@ -5,7 +5,7 @@ import {
   getCredentialsToken,
   getTokens,
 } from "./lib/api/nadeo";
-import { getGbxClient } from "./lib/gbxclient";
+import { getGbxClientManager } from "./lib/managers/gbxclient-manager";
 
 export async function register() {
   const tokens = await getTokens();
@@ -19,6 +19,6 @@ export async function register() {
   syncAllMaps();
   const servers = await getAllServers();
   for (const server of servers) {
-    await getGbxClient(server.id);
+    await getGbxClientManager(server.id);
   }
 }

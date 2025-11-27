@@ -2,7 +2,7 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
-import { getGbxClientManager } from "@/lib/gbxclient";
+import { getGbxClientManager } from "@/lib/managers/gbxclient-manager";
 import { ServerResponse } from "@/types/responses";
 import { logAudit } from "./server-only/audit-logs";
 import { ServerPluginsWithPlugin } from "./server-only/gbx";
@@ -12,7 +12,6 @@ export async function updateServerPlugins(
   plugins: {
     pluginId: string;
     enabled: boolean;
-    config?: Record<string, any>;
   }[],
 ): Promise<ServerResponse> {
   return doServerActionWithAuth(
@@ -31,11 +30,9 @@ export async function updateServerPlugins(
             serverId,
             pluginId: p.pluginId,
             enabled: p.enabled,
-            config: p.config,
           },
           update: {
             enabled: p.enabled,
-            config: p.config,
           },
         }),
       );
@@ -45,23 +42,61 @@ export async function updateServerPlugins(
       const updatedPlugins = await db.serverPlugins.findMany({
         where: { serverId },
         include: {
-          plugin: {
-            include: {
-              commands: true,
-            },
-          },
+          plugin: true,
         },
       });
 
       const manager = await getGbxClientManager(serverId);
 
       manager.info.plugins = updatedPlugins;
+      manager.pluginManager.reloadPlugins();
 
       await logAudit(
         session.user.id,
         serverId,
         "server.interface.plugins.edit",
         plugins,
+      );
+    },
+  );
+}
+
+export async function updateServerPlugin(
+  serverId: string,
+  pluginId: string,
+  config: Record<string, any>,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
+    async (session) => {
+      const db = getClient();
+      await db.serverPlugins.updateMany({
+        where: {
+          serverId,
+          pluginId,
+        },
+        data: {
+          config,
+        },
+      });
+
+      const manager = await getGbxClientManager(serverId);
+
+      const updatedPlugins = await db.serverPlugins.findMany({
+        where: { serverId },
+        include: {
+          plugin: true,
+        },
+      });
+
+      manager.info.plugins = updatedPlugins;
+      manager.pluginManager.reloadPlugins();
+
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.interface.plugins.config.edit",
+        { pluginId, config },
       );
     },
   );
@@ -77,11 +112,7 @@ export async function getServerPlugins(
       const plugins = await db.serverPlugins.findMany({
         where: { serverId },
         include: {
-          plugin: {
-            include: {
-              commands: true,
-            },
-          },
+          plugin: true,
         },
       });
 

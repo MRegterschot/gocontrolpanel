@@ -1,5 +1,7 @@
 import { TBreadcrumb } from "@/components/shell/breadcrumbs";
 import { routes } from "@/routes";
+import { SpectatorStatus } from "@/types/gbx/player";
+import { Player } from "@/types/gbx/scores";
 import { clsx, type ClassValue } from "clsx";
 import { Session } from "next-auth";
 import { JWT } from "next-auth/jwt";
@@ -423,4 +425,48 @@ export function weekDayNumberToName(dayNum: number): string {
 
   // dayNum should be 0–6
   return days[dayNum] || "Invalid day";
+}
+
+export function getSpectatorStatus(spectatorStatus: number): SpectatorStatus {
+  return {
+    spectator: spectatorStatus % 10 === 1,
+    temporarySpectator: Math.floor(spectatorStatus / 10) % 10 === 1,
+    pureSpectator: Math.floor(spectatorStatus / 100) % 10 === 1,
+    autoTarget: Math.floor(spectatorStatus / 1000) % 10 === 1,
+    currentTargetId: Math.floor(spectatorStatus / 10000),
+  }
+}
+
+export function rankPlayers(
+  players: Player[],
+  ta?: boolean,
+): (Player & { position: number })[] {
+  return [...players]
+    .sort((a, b) => {
+      const racetimeA = ta ? a.bestracetime : a.prevracetime;
+      const racetimeB = ta ? b.bestracetime : b.prevracetime;
+
+      if (racetimeA === -1 && racetimeB === -1) return 0; // order doesn't matter
+      if (racetimeA === -1) return 1; // a goes last
+      if (racetimeB === -1) return -1; // b goes last
+
+      // 1️⃣ Compare total prevracetime
+      if (racetimeA !== racetimeB) return racetimeA - racetimeB;
+
+      // 2️⃣ Tie-break: compare checkpoints from last to first (excluding first checkpoint if needed)
+      const cpA = ta ? a.bestracecheckpoints : a.prevracecheckpoints;
+      const cpB = ta ? b.bestracecheckpoints : b.prevracecheckpoints;
+      const len = Math.min(cpA.length, cpB.length);
+
+      for (let i = len - 1; i >= 0; i--) {
+        if (cpA[i] !== cpB[i]) return cpA[i] - cpB[i];
+      }
+
+      // 3️⃣ Fully equal
+      return 0;
+    })
+    .map((player, index) => ({
+      ...player,
+      position: index + 1,
+    }));
 }

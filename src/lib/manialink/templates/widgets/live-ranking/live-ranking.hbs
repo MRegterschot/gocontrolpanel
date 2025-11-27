@@ -1,0 +1,130 @@
+{{#extend "widget"}}
+{{#content "widget"}}
+<frame pos="0 0">
+  <quad pos="0 0" z-index="0" size="55 5" bgcolor="222"/>
+  <label pos="27.5 -2.25" z-index="0" size="55 5" text="Live Ranking" halign="center" textsize="1" textfont="GameFontSemiBold" valign="center"/>
+</frame>
+
+<framemodel id="ranking">
+  <quad pos="0 0" z-index="0" size="5 5" bgcolor="222"/>
+  <quad pos="5 0" z-index="0" size="50 5" bgcolor="DDD"/>
+  <label pos="2.4 -2.25" z-index="0" size="5 5" text="0" halign="center" valign="center" textsize="1.25" textcolor="DDD" textfont="GameFontSemiBold"/>
+  <quad pos="6.25 -1" z-index="0" size="4.5 3" bgcolor="FFF" image="file://Media/Flags/WOR.dds"/>
+  <label pos="12 -2.25" z-index="0" size="32 5" text="-" textcolor="222" textsize="1.2" textfont="GameFontRegular" valign="center"/>
+  <label pos="53 -2.25" z-index="0" size="7.5 5" text="0" valign="center" halign="right" textsize="1" textcolor="222" textfont="GameFontSemiBold"/>
+
+  <quad class="trigger" pos="0 0" z-index="-2" size="55 5" bgcolor="000" opacity="0" scriptevents="1" />
+</framemodel>
+
+<frame id="rankings" pos="0 -5.25" size="55 42">
+<quad size="55 {{ multiply 100 5.25 }}" bgcolor="fff" opacity="0" scriptevents="1"/>
+{{#range 0 100}}
+  <frameinstance modelid="ranking" pos="0 {{ multiply i -5.25 }}" />
+{{/range}}
+</frame>
+{{/content}}
+
+
+{{#content "globals"}}
+#Struct Ranking {
+  Text login;
+  Text name;
+  Integer rank;
+  Integer points;
+}
+{{/content}}
+
+{{#content "script"}}
+Void updateRankingRow(Integer index, Ranking ranking, Text mode, Integer pointsLimit) {
+  declare rankingsFrame <=> (Page.MainFrame.GetFirstChild("rankings") as CMlFrame);
+
+  if (index >= rankingsFrame.Controls.count) {
+    return;
+  }
+
+  declare rankingFrame <=> (rankingsFrame.Controls[index + 1] as CMlFrame);
+  (rankingFrame.Controls[2] as CMlLabel).SetText(TL::ToText(ranking.rank));
+  (rankingFrame.Controls[3] as CMlQuad).ImageUrl = "file://ZoneFlags/Login/" ^ ranking.login ^ "/country";
+  (rankingFrame.Controls[4] as CMlLabel).SetText(ranking.name);
+  
+  declare Text pointsText = TL::ToText(ranking.points);
+  if (mode == "cup" && pointsLimit > 0) {
+    if (ranking.points > pointsLimit) {
+      pointsText = "$2C2W";
+    } else if (ranking.points == pointsLimit) {
+      pointsText = "$D22F";
+    }
+  } else if (mode == "rounds" && pointsLimit > 0) {
+    if (ranking.points >= pointsLimit) {
+      pointsText = "$2C2W";
+    }
+  }
+
+  (rankingFrame.Controls[5] as CMlLabel).SetText(pointsText);
+  rankingFrame.DataAttributeSet("login", ranking.login);
+  rankingFrame.Show();
+}
+
+Void updateScroll(Ranking[] rankings) {
+  declare rankingsFrame <=> (Page.MainFrame.GetFirstChild("rankings") as CMlFrame);
+  declare Integer rankingCount = rankings.count;
+  if (rankingCount > rankingsFrame.Controls.count) {
+    rankingCount = rankingsFrame.Controls.count;
+  }
+  declare Real maxY = rankingCount * 5.25 - 42;
+  if (maxY < 0) {
+    maxY = 0.;
+  }
+  rankingsFrame.ScrollMax = <0., maxY>;
+}
+
+Void updateWidget(Ranking[] rankings, Text mode, Integer pointsLimit) {
+  declare rankingCount = rankings.count;
+  declare index = 0;
+
+  foreach (ranking in rankings) {
+    updateRankingRow(index, ranking, mode, pointsLimit);
+    index = index + 1;
+  }
+
+  declare rankingsFrame <=> (Page.MainFrame.GetFirstChild("rankings") as CMlFrame);
+  // Hide unused rows
+  while (index < rankingsFrame.Controls.count - 1) {
+    declare rankingFrame <=> (rankingsFrame.Controls[index + 1] as CMlFrame);
+    rankingFrame.DataAttributeSet("login", "");
+    rankingFrame.Hide();
+    index = index + 1;
+  }
+
+  updateScroll(rankings);
+}
+{{/content}}
+
+{{#content "main"}}
+declare Ranking[] Rankings for This;
+declare Text Mode for This = "rounds";
+declare Integer PointsLimit for This = -1;
+declare Integer LastRankingsUpdate for This = -1;
+declare Integer lastUpdate = -1;
+declare rankingsFrame <=> (widget.GetFirstChild("rankings") as CMlFrame);
+rankingsFrame.ScrollActive = True;
+rankingsFrame.ScrollMin = <0., 0.>;
+{{/content}}
+
+{{#content "loop"}}
+if (LastRankingsUpdate != lastUpdate) {
+  lastUpdate = LastRankingsUpdate;
+  updateWidget(Rankings, Mode, PointsLimit);
+}
+{{/content}}
+
+{{#content "events"}}
+if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::MouseClick) {
+  declare targetLogin = event.Control.Parent.DataAttributeGet("login");
+  if (targetLogin != "") {
+    if(!IsSpectatorClient) RequestSpectatorClient(True);
+    SetSpectateTarget(targetLogin);
+  }
+}
+{{/content}}
+{{/extend}}

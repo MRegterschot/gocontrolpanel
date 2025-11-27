@@ -1,0 +1,41 @@
+{{#extend "manialink"}}
+{{#content "content"}}
+<frame id="window" pos="-{{ divide size.x 2 }} {{ divide size.y 2}}" size="{{ size.x }} {{ add size.y 5 }}" z-index="10">
+  <quad pos="0 0" size="{{ size.x }} 5" bgcolor="222" />
+  <label pos="1.5 -2.25" text="{{ title }}" size="{{ subtract size.x 9.5 }} 5" valign="center" halign="left" textsize="1" color="DDD" textfont="GameFontSemiBold" />
+  <label pos="{{ subtract size.x 1.5 }} -2.25" text="" size="5 5" valign="center" halign="right" textsize="1" color="222" action="close-window-{{id}}" focusareacolor2="fff0" />
+
+  <quad pos="0 -5" size="{{ size.x }} {{ size.y }}" bgcolor="DDD" />
+  <frame pos="0 -5" size="{{ size.x }} {{ size.y }}">
+    {{#block "window"}}{{/block}}
+  </frame>
+</frame>
+
+<script><!--
+#Include "MathLib" as ML
+#Include "TextLib" as TL
+#Include "TimeLib" as TimeLib
+#Include "ColorLib" as CL
+
+{{#block "globals"}}{{/block}}
+
+{{#block "script"}}{{/block}}
+
+main() {
+  {{#block "main"}}{{/block}}
+
+  while (True) {
+    yield;
+
+    foreach(event in PendingEvents){
+      if(event.Control == Null) continue;
+
+      {{#block "events"}}{{/block}}
+    }
+
+    {{#block "loop"}}{{/block}}
+  }
+}
+--></script>
+{{/content}}
+{{/extend}}

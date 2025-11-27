@@ -1,0 +1,27 @@
+{{#extend "manialink"}}
+{{#content "content"}}
+<script>
+<!--
+#Struct Ranking {
+  Text login;
+  Text name;
+  Integer rank;
+  Integer points;
+}
+
+main(){
+  declare Ranking[] Rankings for This;
+  declare Text Mode for This;
+  declare Integer PointsLimit for This;
+  declare Integer LastRankingsUpdate for This;
+  declare Text rankingsJson = """{{{ default data.rankingsJson '[]' }}}""";
+
+  Rankings.fromjson(rankingsJson);
+  Mode = """{{ default data.mode "rounds" }}""";
+  PointsLimit = {{ default data.pointsLimit -1 }};
+  LastRankingsUpdate = GameTime;
+}
+-->
+</script>
+{{/content}}
+{{/extend}}

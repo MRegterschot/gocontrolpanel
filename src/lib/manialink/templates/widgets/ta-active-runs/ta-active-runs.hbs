@@ -1,0 +1,159 @@
+{{#extend "widget"}}
+{{#content "widget"}}
+<frame pos="0 0">
+  <quad pos="0 0" z-index="0" size="55 5" bgcolor="222"/>
+  <label pos="27.5 -2.25" z-index="0" size="55 5" text="Active Runs" halign="center" textsize="1" textfont="GameFontSemiBold" valign="center"/>
+</frame>
+
+<framemodel id="active-run">
+  <quad pos="0 0" z-index="0" size="40.5 5" bgcolor="DDD"/>
+  <quad pos="40.5 0" z-index="0" size="14.5 5" bgcolor="BBB"/>
+  <quad pos="1.25 -1" z-index="0" size="4.5 3" bgcolor="FFF" image="file://Media/Flags/WOR.dds"/>
+  <label pos="7 -2.25" z-index="0" size="30.5 5" text="-" textcolor="222" textsize="1.2" textfont="GameFontRegular" valign="center"/>
+  <label pos="39.75 -2.25" z-index="0" size="5 5" text="0" halign="right" textcolor="222" textsize="1" textfont="GameFontRegular" valign="center"/>
+  <label pos="54 -2.25" z-index="0" size="12.5 5" text="--:--.---" valign="center" halign="right" textsize="1" textcolor="222" textfont="GameFontSemiBold"/>
+  
+  <quad class="trigger" pos="0 0" z-index="-2" size="55 5" bgcolor="000" opacity="0" scriptevents="1" />
+</framemodel>
+
+<frame id="active-runs" pos="0 -5.25" size="55 42">
+<quad size="55 {{ multiply 100 5.25 }}" bgcolor="fff" opacity="0" scriptevents="1"/>
+{{#range 0 100}}
+<frameinstance modelid="active-run" pos="0 {{ multiply i -5.25 }}" />
+{{/range}}
+</frame>
+{{/content}}
+
+
+{{#content "globals"}}
+#Struct ActiveRun {
+  Text login;
+  Text name;
+  Integer time;
+  Integer checkpoint;
+}
+{{/content}}
+
+{{#content "script"}}
+Text formatTime(Integer time) {
+  declare Text secondString;
+  declare Text msString;
+
+  if (time <= 0) {
+    return "--:--.---";
+  }
+
+  declare Integer seconds = time / 1000;
+  declare Integer minutes = seconds / 60;
+  declare Integer milliseconds = time - (seconds * 1000);
+  seconds = seconds - (minutes * 60);
+
+  secondString = TL::ToText(seconds);
+
+  if (seconds < 10) {
+    secondString = "0" ^ secondString;
+  }
+
+  if (milliseconds <= 0) {
+    msString = "000";
+  } else if (milliseconds < 10) {
+    msString = "00" ^ TL::ToText(milliseconds);
+  } else if (milliseconds < 100) {
+    msString = "0" ^ TL::ToText(milliseconds);
+  } else {
+    msString = TL::ToText(milliseconds);
+  }
+
+  if (minutes > 0) {
+    return TL::ToText(minutes) ^ ":" ^ secondString ^ "." ^ msString;
+  } else {
+    return secondString ^ "." ^ msString;
+  }
+
+  return "";
+}
+
+Void updateActiveRunRow(Integer index, ActiveRun activeRun) {
+  declare activeRunsFrame <=> (Page.MainFrame.GetFirstChild("active-runs") as CMlFrame);
+
+  if (index >= activeRunsFrame.Controls.count) {
+    return;
+  }
+
+  declare activeRunFrame <=> (activeRunsFrame.Controls[index + 1] as CMlFrame);
+  (activeRunFrame.Controls[2] as CMlQuad).ImageUrl = "file://ZoneFlags/Login/" ^ activeRun.login ^ "/country";
+  (activeRunFrame.Controls[3] as CMlLabel).SetText(activeRun.name);
+  declare Text checkpointText = "0";
+  if (activeRun.checkpoint == -69) {
+    checkpointText = "";
+  } else {
+    checkpointText = TL::ToText(activeRun.checkpoint);
+  }
+  (activeRunFrame.Controls[4] as CMlLabel).SetText(checkpointText);
+  (activeRunFrame.Controls[5] as CMlLabel).SetText(formatTime(activeRun.time));
+  activeRunFrame.DataAttributeSet("login", activeRun.login);
+  activeRunFrame.Show();
+}
+
+Void updateScroll(ActiveRun[] activeRuns) {
+  declare activeRunsFrame <=> (Page.MainFrame.GetFirstChild("active-runs") as CMlFrame);
+  declare Integer activeRunCount = activeRuns.count;
+  if (activeRunCount > activeRunsFrame.Controls.count) {
+    activeRunCount = activeRunsFrame.Controls.count;
+  }
+  declare Real maxY = activeRunCount * 5.25 - 42;
+  if (maxY < 0) {
+    maxY = 0.;
+  }
+  activeRunsFrame.ScrollMax = <0., maxY>;
+}
+
+Void updateWidget(ActiveRun[] activeRuns) {
+  declare activeRunCount = activeRuns.count;
+  declare index = 0;
+
+  foreach (activeRun in activeRuns) {
+    updateActiveRunRow(index, activeRun);
+    index = index + 1;
+  }
+
+  declare activeRunsFrame <=> (Page.MainFrame.GetFirstChild("active-runs") as CMlFrame);
+  // Hide unused rows
+  while (index < activeRunsFrame.Controls.count - 1) {
+    declare activeRunFrame <=> (activeRunsFrame.Controls[index + 1] as CMlFrame);
+    activeRunFrame.DataAttributeSet("login", "");
+    activeRunFrame.Hide();
+    index = index + 1;
+  }
+
+  updateScroll(activeRuns);
+}
+{{/content}}
+
+{{#content "main"}}
+declare ActiveRun[] ActiveRuns for This;
+declare Integer LastActiveRunsUpdate for This = -1;
+declare Integer lastUpdate = -1;
+declare activeRunsFrame <=> (widget.GetFirstChild("active-runs") as CMlFrame);
+activeRunsFrame.ScrollActive = True;
+activeRunsFrame.ScrollMin = <0., 0.>;
+{{/content}}
+
+
+{{#content "loop"}}
+if (LastActiveRunsUpdate != lastUpdate) {
+  lastUpdate = LastActiveRunsUpdate;
+  updateWidget(ActiveRuns);
+}
+{{/content}}
+
+{{#content "events"}}
+if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::MouseClick) {
+  declare targetLogin = event.Control.Parent.DataAttributeGet("login");
+  if (targetLogin != "") {
+    if(!IsSpectatorClient) RequestSpectatorClient(True);
+    SetSpectateTarget(targetLogin);
+  }
+}
+{{/content}}
+{{/extend}}

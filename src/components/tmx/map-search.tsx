@@ -3,9 +3,11 @@
 import { searchMaps } from "@/actions/tmx/maps";
 import { getErrorMessage } from "@/lib/utils";
 import { TMXMap } from "@/types/api/tmx";
-import { IconSearch } from "@tabler/icons-react";
+import { IconDice3, IconSearch } from "@tabler/icons-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import Modal from "../modals/modal";
+import TMXRandomMapModal from "../modals/tmx/random-map-modal";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import TMXMapCard from "./tmx-map-card";
@@ -14,19 +16,25 @@ export default function MapSearch({
   serverId,
   fmHealth,
   defaultResults = [],
+  defaultHasMore = false,
 }: {
   serverId: string;
   fmHealth: boolean;
   defaultResults?: TMXMap[];
+  defaultHasMore?: boolean;
 }) {
   const [nameQuery, setNameQuery] = useState("");
   const [authorQuery, setAuthorQuery] = useState("");
 
   const [searchResults, setSearchResults] = useState<TMXMap[]>(defaultResults);
-  const [hasMoreResults, setHasMoreResults] = useState(false);
+  const [hasMoreResults, setHasMoreResults] = useState(defaultHasMore);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [randomMap, setRandomMap] = useState<TMXMap | null>(null);
+  const [isRandomMapModalOpen, setIsRandomMapModalOpen] = useState(false);
+  const [isRandomMapLoading, setIsRandomMapLoading] = useState(false);
 
   const onSearch = async (more?: boolean) => {
     setLoading(true);
@@ -65,6 +73,38 @@ export default function MapSearch({
     }
   };
 
+  const onRandomMap = async () => {
+    setIsRandomMapLoading(true);
+
+    try {
+      const { data, error } = await searchMaps(
+        serverId,
+        {
+          random: "1",
+        },
+        undefined,
+        1,
+      );
+
+      if (error) {
+        throw new Error(error);
+      }
+
+      if (data.Results.length === 0) {
+        throw new Error("No maps found");
+      }
+
+      setRandomMap(data.Results[0]);
+      setIsRandomMapModalOpen(true);
+    } catch (err) {
+      toast.error("Failed to fetch random map", {
+        description: getErrorMessage(err),
+      });
+    } finally {
+      setIsRandomMapLoading(false);
+    }
+  };
+
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       onSearch();
@@ -73,28 +113,62 @@ export default function MapSearch({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex gap-2 items-end">
-        <Input
-          type="text"
-          placeholder="Search map name..."
-          className="max-w-48"
-          value={nameQuery}
-          onChange={(e) => setNameQuery(e.target.value)}
-          onKeyDown={onKeyDown}
-        />
+      <div className="flex justify-between gap-2 flex-col sm:flex-row">
+        <div className="flex gap-2 items-end">
+          <Input
+            type="text"
+            placeholder="Search map name..."
+            className="max-w-48"
+            value={nameQuery}
+            onChange={(e) => setNameQuery(e.target.value)}
+            onKeyDown={onKeyDown}
+          />
 
-        <Input
-          type="text"
-          placeholder="Search author..."
-          value={authorQuery}
-          className="max-w-48"
-          onChange={(e) => setAuthorQuery(e.target.value)}
-          onKeyDown={onKeyDown}
-        />
-        <Button onClick={() => onSearch()} disabled={loading}>
-          <IconSearch />
-          Search
-        </Button>
+          <Input
+            type="text"
+            placeholder="Search author..."
+            value={authorQuery}
+            className="max-w-48"
+            onChange={(e) => setAuthorQuery(e.target.value)}
+            onKeyDown={onKeyDown}
+          />
+          <Button onClick={() => onSearch()} disabled={loading}>
+            <IconSearch />
+            Search
+          </Button>
+        </div>
+
+        <div>
+          {isRandomMapModalOpen && randomMap && (
+            <Modal
+              isOpen={isRandomMapModalOpen}
+              setIsOpen={() => setIsRandomMapModalOpen(false)}
+            >
+              <TMXRandomMapModal
+                serverId={serverId}
+                data={{
+                  map: randomMap,
+                  fmHealth,
+                }}
+              />
+            </Modal>
+          )}
+
+          <Button
+            variant={"outline"}
+            onClick={onRandomMap}
+            disabled={isRandomMapLoading}
+          >
+            {isRandomMapLoading ? (
+              "Loading..."
+            ) : (
+              <>
+                <IconDice3 />
+                Random Map
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {error && <span>{error}</span>}

@@ -1,3 +1,9 @@
+![Docker Pulls](https://img.shields.io/docker/pulls/marijnregterschot/gocontrolpanel?logo=docker&link=https%3A%2F%2Fhub.docker.com%2Fr%2Fmarijnregterschot%2Fgocontrolpanel)
+![Docker Image Size](https://img.shields.io/docker/image-size/marijnregterschot/gocontrolpanel?logo=docker&link=https%3A%2F%2Fhub.docker.com%2Fr%2Fmarijnregterschot%2Fgocontrolpanel)
+![Docker Version](https://img.shields.io/docker/v/marijnregterschot/gocontrolpanel?logo=docker&link=https%3A%2F%2Fhub.docker.com%2Fr%2Fmarijnregterschot%2Fgocontrolpanel)
+![Discord Widget](https://img.shields.io/discord/1397578984023261284?logo=discord&link=https%3A%2F%2Fdiscord.gg%2FNjbtRvbCY8)
+![Github Commits](https://img.shields.io/github/commit-activity/t/mregterschot/gocontrolpanel?logo=github)
+
 # GoControlPanel
 
 A Dockerized management panel for dedicated Trackmania servers. Works both standalone and with existing stacks like [PyPlanet](#pyplanetevosc-stack-setup) or [EvoSC](#pyplanetevosc-stack-setup) and others.
@@ -79,11 +85,10 @@ View past matches and records, including player scores and match details.
 
 #### Interface Editor
 
-Edit the interface of your server, create your own interface (still in development), manage chat message formatting and manage server plugins.
+Edit the interface of your server, manager server plugins and chat message formatting.
 
-![Interface Editor Page](https://i.imgur.com/yhoEIya.png "Interface Editor Page")
-![Chat Message Editor Page](https://i.imgur.com/atcNlLt.png "Chat Message Editor Page")
-![Plugins Page](https://i.imgur.com/QKagvtZ.png "Plugins Page")
+![Plugins Page](https://i.imgur.com/5LAxOpO.png "Plugins Page")
+![Chat Message Editor Page](https://i.imgur.com/NpvWT3K.png "Chat Message Editor Page")
 
 #### Trackmania Exchange
 

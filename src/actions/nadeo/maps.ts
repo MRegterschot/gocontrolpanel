@@ -2,7 +2,7 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { downloadFile } from "@/lib/api/nadeo";
-import { getFileManager } from "@/lib/filemanager";
+import { getFileManager } from "@/lib/managers/file-manager";
 import { ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
 import { uploadFiles } from "../filemanager";

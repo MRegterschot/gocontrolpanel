@@ -90,22 +90,6 @@ model Records {
   @@map("records")
 }
 
-model Interfaces {
-  id              String @id @default(uuid())
-  name            String
-  interfaceString String @db.Text
-
-  serverId String
-  server   Servers @relation(fields: [serverId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  @@index([deletedAt])
-  @@map("interfaces")
-}
-
 model Groups {
   id          String  @id @default(uuid())
   name        String
@@ -188,7 +172,6 @@ model Servers {
   connectMessage    String?
   disconnectMessage String?
 
-  interfaces    Interfaces[]
   groupServers  GroupServers[]
   userServers   UserServers[]
   serverPlugins ServerPlugins[]
@@ -246,30 +229,11 @@ model Roles {
   @@map("roles")
 }
 
-model Commands {
-  id          String  @id @default(uuid())
-  name        String
-  description String?
-  command     String
-  parameters  Json?
-
-  pluginId String?
-  plugin   Plugins? @relation(fields: [pluginId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  @@index([deletedAt])
-  @@map("commands")
-}
-
 model Plugins {
   id          String  @id @default(uuid())
   name        String  @unique
   description String?
 
-  commands      Commands[]
   serverPlugins ServerPlugins[]
 
   createdAt DateTime  @default(now())

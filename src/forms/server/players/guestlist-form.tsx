@@ -103,6 +103,7 @@ export default function GuestlistForm({
             </Button>
           </div>
           <Button
+            type="button"
             variant="destructive"
             onClick={() => setConfirmClearGuestlist(true)}
           >
