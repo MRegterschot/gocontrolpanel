@@ -1,7 +1,7 @@
 "use client";
 
-import { useConnection } from "@/hooks/useConnection";
-import { useTournaments } from "@/hooks/useTournaments";
+import { useConnection } from "@/hooks/use-connection";
+import { useTournaments } from "@/hooks/use-tournaments";
 import { tournamentStore } from "@/stores/tournamentStore";
 
 export default function MessageList() {
