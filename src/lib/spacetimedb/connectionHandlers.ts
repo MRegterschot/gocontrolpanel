@@ -46,7 +46,7 @@ export const subscribeToQueries = (conn: DbConnection, queries: string[]) => {
       connectionStatus.isSubscribed = true;
       notifySubscriptionApplied();
     })
-    .onError((ctx: ErrorContext) => {
+    .onError((_: ErrorContext) => {
       connectionStatus.isSubscribed = false;
       notifySubscriptionError();
     })

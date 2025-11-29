@@ -1,10 +1,4 @@
-export default async function TournamentBracketPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-
+export default async function TournamentBracketPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">

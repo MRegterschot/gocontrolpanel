@@ -51,7 +51,7 @@ class TournamentStore {
     try {
       this.getConnection(); // allowed only on client
       return this.cachedSnapshot.find((t) => t.id === id);
-    } catch (error) {
+    } catch {
       // Running on the server → return serverSnapshot safely
       return this.serverSnapshot.find((t) => t.id === id);
     }
@@ -60,12 +60,8 @@ class TournamentStore {
   private getConnection(): DbConnection {
     if (!this.connection) {
       this.connection = getDbConnection();
-      this.connection.db.tournament.onInsert((ctx, row) =>
-        this.updateSnapshot(),
-      );
-      this.connection.db.tournament.onDelete((ctx, row) =>
-        this.updateSnapshot(),
-      );
+      this.connection.db.tournament.onInsert(() => this.updateSnapshot());
+      this.connection.db.tournament.onDelete(() => this.updateSnapshot());
     }
     return this.connection;
   }
