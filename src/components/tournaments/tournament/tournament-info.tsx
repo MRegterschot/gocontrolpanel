@@ -2,15 +2,17 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { useTournament } from "@/hooks/tournaments/use-tournament";
+import { tables } from "@/lib/tourney-manager";
 import { IconProgress, IconUser } from "@tabler/icons-react";
+import { eq, useTable, where } from "spacetimedb/react";
 
 export default function TournamentInfo({
   tournamentId,
 }: {
-  tournamentId: bigint;
+  tournamentId: number;
 }) {
-  const tournament = useTournament(tournamentId);
+  const [rows] = useTable(tables.tournament, where(eq('id', tournamentId)));
+  const tournament = rows[0]
 
   if (!tournament) {
     return <span>Tournament not found</span>;

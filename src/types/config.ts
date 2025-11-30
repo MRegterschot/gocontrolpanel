@@ -7,6 +7,10 @@ export interface Config {
   ECM: {
     URL: string;
   };
+  SPACETIME: {
+    URI: string;
+    MODULE: string;
+  };
   DEFAULT_ADMINS: string[];
   DEFAULT_PERMISSIONS: string[];
   NADEO: {

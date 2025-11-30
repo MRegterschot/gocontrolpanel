@@ -14,7 +14,9 @@ export default async function TournamentPage({
         <h4 className="text-muted-foreground">Manage the tournament info.</h4>
       </div>
 
-      <TournamentInfo tournamentId={BigInt(id)} />
+      <TournamentInfo tournamentId={Number(id)} />
     </div>
   );
 }
+
+
