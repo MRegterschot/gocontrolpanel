@@ -1,4 +1,5 @@
 import { auth, hasPermission } from "@/lib/auth";
+import config from "@/lib/config";
 import { routePermissions } from "@/routes";
 import { Icon } from "@tabler/icons-react";
 import NavAdmin from "./nav-admin";
@@ -45,10 +46,12 @@ export default async function Navbar() {
     canViewHetzner ||
     canViewAuditLogs;
 
+  const usingSpacetime = config.SPACETIME.URI && config.SPACETIME.MODULE;
+  
   return (
     <>
       {session && <NavGroups />}
-      {session && <NavTournaments />}
+      {session && usingSpacetime && <NavTournaments />}
       {session && canViewAdmin && (
         <NavAdmin
           canViewUsers={canViewUsers}

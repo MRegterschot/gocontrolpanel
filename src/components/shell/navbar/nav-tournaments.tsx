@@ -27,13 +27,28 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 import { tables } from "@/lib/tourney-manager";
-import { useTable } from "spacetimedb/react";
+import { useSpacetimeDB, useTable } from "spacetimedb/react";
 
 export default function NavTournaments() {
+  const spacetime = useSpacetimeDB();
   const [tournaments] = useTable(tables.tournament);
 
-  if (tournaments.length === 0) {
-    return null;
+  if (!spacetime.isActive) {
+    return (
+      <SidebarGroup className="group-data-[collapsible=icon]:hidden select-none">
+        <SidebarGroupContent className="flex flex-col gap-2">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <span>Not connected to SpacetimeDB</span>
+                </div>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    );
   }
 
   return (

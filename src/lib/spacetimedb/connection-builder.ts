@@ -1,21 +1,26 @@
 "use client";
 
 import { useSpacetimeDB } from "spacetimedb/react";
+import config from "../config";
 import { DbConnection, DbConnectionBuilder } from "../tourney-manager";
-import { onConnect, onConnectError, onDisconnect } from "./connectionHandlers";
+import { onConnect, onConnectError, onDisconnect } from "./connection-handlers";
 
 export const SPACETIME_LOCAL_STORAGE_TOKEN_KEY = "spacetimedb_auth_token";
 
-
-export const getDbConnectionBuilder = (): DbConnectionBuilder => {
+export const getDbConnectionBuilder = (): DbConnectionBuilder | null => {
   const isSSR = typeof window === "undefined";
   if (isSSR) {
     throw new Error("Cannot use SpacetimeDB on the server.");
   }
 
+  const uri = config.SPACETIME.URI;
+  const moduleName = config.SPACETIME.MODULE;
+
+  if (!uri || !moduleName) return null;
+
   return DbConnection.builder()
-    .withUri("http://localhost:1234")
-    .withModuleName("tm-tourney-manager")
+    .withUri(uri)
+    .withModuleName(moduleName)
     .withToken(getAuthToken())
     .onConnect(onConnect)
     .onDisconnect(onDisconnect)
@@ -31,5 +36,5 @@ const getAuthToken = () => {
 export const disconnectDbConnection = () => {
   const spacetime = useSpacetimeDB();
 
-  spacetime.getConnection()?.disconnect()
+  spacetime.getConnection()?.disconnect();
 };
