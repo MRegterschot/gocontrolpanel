@@ -13,7 +13,8 @@ const eslintConfig = [
   {
     ignores: [
       "src/lib/prisma/generated/",
-      "src/lib/manialink/*.js"
+      "src/lib/manialink/*.js",
+      "src/lib/tourney-manager/**.ts",
     ]
   },
   ...compat.extends("next/core-web-vitals", "next/typescript", "prettier"),

@@ -1,6 +1,5 @@
 "use client";
 
-import { useSpacetimeDB } from "spacetimedb/react";
 import config from "../config";
 import { DbConnection, DbConnectionBuilder } from "../tourney-manager";
 import { onConnect, onConnectError, onDisconnect } from "./connection-handlers";
@@ -31,10 +30,4 @@ const getAuthToken = () => {
   const token = localStorage.getItem(SPACETIME_LOCAL_STORAGE_TOKEN_KEY);
   if (token) return token;
   return "";
-};
-
-export const disconnectDbConnection = () => {
-  const spacetime = useSpacetimeDB();
-
-  spacetime.getConnection()?.disconnect();
 };
