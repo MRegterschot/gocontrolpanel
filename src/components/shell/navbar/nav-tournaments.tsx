@@ -15,7 +15,6 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { useTournaments } from "@/hooks/tournaments/use-tournaments";
 import { generatePath } from "@/lib/utils";
 import { routes } from "@/routes";
 import {
@@ -27,8 +26,11 @@ import {
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
+import { tables } from "@/lib/tourney-manager";
+import { useTable } from "spacetimedb/react";
+
 export default function NavTournaments() {
-  const tournaments = useTournaments();
+  const [tournaments] = useTable(tables.tournament);
 
   if (tournaments.length === 0) {
     return null;

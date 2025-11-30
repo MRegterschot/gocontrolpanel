@@ -1,22 +1,14 @@
-"use client";  
+"use client";
 
-import { useEffect } from 'react';  
-import {
- getDbConnection,
- disconnectDbConnection
-} from "@/lib/spacetimedb/connection";  
+import { getDbConnectionBuilder } from '@/lib/spacetimedb/connection_builder';
+import { StrictMode } from 'react';
 
-const SpacetimeDBProvider = ({ children }: { children: React.ReactNode }) => {  
-  useEffect(() => {  
-    getDbConnection();  
+import { SpacetimeDBProvider as BuiltinSpacetimeDbProvider } from "spacetimedb/react"
 
-    return () => {  
-      disconnectDbConnection();  
-    };
-  }, []);  
 
-  // It doesn't need to render anything itself, just pass children through.  
-  return <>{children}</>;  
-};  
+
+const SpacetimeDBProvider = ({ children }: { children: React.ReactNode }) => {
+  return <StrictMode><BuiltinSpacetimeDbProvider connectionBuilder={getDbConnectionBuilder()}>{children}</BuiltinSpacetimeDbProvider></StrictMode>;
+};
 
 export default SpacetimeDBProvider;
