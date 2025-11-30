@@ -23,7 +23,6 @@ const SpacetimeDBProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    // @ts-expect-error - types are wrong in spacetimedb package
     <BuiltinSpacetimeDbProvider connectionBuilder={builder}>
       {children}
     </BuiltinSpacetimeDbProvider>
