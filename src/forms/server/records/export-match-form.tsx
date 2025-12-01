@@ -53,11 +53,9 @@ const POSSIBLE_VALUES = [
 ];
 
 export default function ExportMatchForm({
-  serverId,
   match,
   callback,
 }: {
-  serverId: string;
   match: MatchesWithMapAndRecords;
   callback?: () => void;
 }) {
@@ -123,14 +121,12 @@ export default function ExportMatchForm({
         <FormElement name="filename" label="Filename" />
 
         {headerFields.map((_, index) => (
-          <div className="flex gap-2 w-full justify-between">
+          <div key={index} className="flex gap-2 w-full justify-between">
             <FormElement
-              key={index}
               name={`headers.${index}`}
               rootClassName="w-full"
             />
             <FormElement
-              key={`value-` + index}
               name={`values.${index}`}
               type="select"
               options={POSSIBLE_VALUES}
