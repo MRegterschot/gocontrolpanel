@@ -2,6 +2,7 @@
 "use client";
 import {
   deleteMatch,
+  exportMatchToCSV,
   MatchesWithMapAndRecords,
 } from "@/actions/database/matches";
 import ConfirmModal from "@/components/modals/confirm-modal";
@@ -103,6 +104,24 @@ export const createMatchesColumns = (
         });
       };
 
+      const handleExportToCSV = async () => {
+        try {
+          const { data, error } = await exportMatchToCSV(
+            match.serverId,
+            match.id,
+          );
+          if (error) {
+            throw new Error(error);
+          }
+          console.log(data);
+          toast.success("Match successfully exported");
+        } catch (error) {
+          toast.error("Error exporting match", {
+            description: getErrorMessage(error),
+          });
+        }
+      };
+
       return (
         <div className="flex justify-end">
           <DropdownMenu>
@@ -115,6 +134,9 @@ export const createMatchesColumns = (
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => setIsOpen(true)}>
                 View details
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportToCSV}>
+                Export to CSV
               </DropdownMenuItem>
               {canActions && (
                 <>
