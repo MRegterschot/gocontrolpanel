@@ -13,7 +13,7 @@ export const ServerSettingsSchema = z.object({
       .max(255, "Vote Timeout must be less than or equal 255"),
     CallVoteRatio: z.coerce
       .number()
-      .min(0, "Vote Ratio must be atleast 0")
+      .min(-1, "Vote Ratio must be atleast -1")
       .max(100, "Vote Ratio must be less than or equal 100"),
     HideServer: z.coerce
       .number()
