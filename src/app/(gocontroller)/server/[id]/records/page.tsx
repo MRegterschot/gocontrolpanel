@@ -30,6 +30,7 @@ export default async function ServerRecordsPage({
         <TabsContent value="matches" className="flex flex-col gap-2">
           <PaginationTable
             createColumns={createMatchesColumns}
+            args={id}
             fetchData={getMatchesPaginated}
             fetchArgs={{ serverId: id }}
             filter

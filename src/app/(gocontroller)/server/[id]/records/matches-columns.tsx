@@ -2,11 +2,11 @@
 "use client";
 import {
   deleteMatch,
-  exportMatchToCSV,
   MatchesWithMapAndRecords,
 } from "@/actions/database/matches";
 import ConfirmModal from "@/components/modals/confirm-modal";
 import Modal from "@/components/modals/modal";
+import ExportMatchModal from "@/components/modals/records/export-match";
 import MatchDetailsModal from "@/components/modals/records/match-details";
 import { DataTableColumnHeader } from "@/components/table/data-table-column-header";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import { parseTmTags } from "tmtags";
 
 export const createMatchesColumns = (
   refetch: () => void,
+  serverId: string,
 ): ColumnDef<MatchesWithMapAndRecords>[] => [
   {
     accessorKey: "map.name",
@@ -74,6 +75,7 @@ export const createMatchesColumns = (
       const { data: session } = useSession();
       const [_, startTransition] = useTransition();
       const [isOpen, setIsOpen] = useState(false);
+      const [isExportOpen, setIsExportOpen] = useState(false);
       const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
       const canActions = hasPermissionSync(
@@ -104,24 +106,6 @@ export const createMatchesColumns = (
         });
       };
 
-      const handleExportToCSV = async () => {
-        try {
-          const { data, error } = await exportMatchToCSV(
-            match.serverId,
-            match.id,
-          );
-          if (error) {
-            throw new Error(error);
-          }
-          console.log(data);
-          toast.success("Match successfully exported");
-        } catch (error) {
-          toast.error("Error exporting match", {
-            description: getErrorMessage(error),
-          });
-        }
-      };
-
       return (
         <div className="flex justify-end">
           <DropdownMenu>
@@ -135,7 +119,7 @@ export const createMatchesColumns = (
               <DropdownMenuItem onClick={() => setIsOpen(true)}>
                 View details
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportToCSV}>
+              <DropdownMenuItem onClick={() => setIsExportOpen(true)}>
                 Export to CSV
               </DropdownMenuItem>
               {canActions && (
@@ -166,6 +150,10 @@ export const createMatchesColumns = (
 
           <Modal isOpen={isOpen} setIsOpen={setIsOpen}>
             <MatchDetailsModal data={match} />
+          </Modal>
+
+          <Modal isOpen={isExportOpen} setIsOpen={setIsExportOpen}>
+            <ExportMatchModal data={match} serverId={serverId} />
           </Modal>
         </div>
       );
