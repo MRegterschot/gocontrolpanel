@@ -1,13 +1,17 @@
 "use client";
 
-import { MatchesWithMapAndRecords } from "@/actions/database/matches";
+import {
+  exportMatchToCSV,
+  MatchesWithMapAndRecords,
+} from "@/actions/database/matches";
 import FormElement from "@/components/form/form-element";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
+import { getErrorMessage } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import {
   ExportMatchSchema,
   ExportMatchSchemaType,
@@ -51,9 +55,11 @@ const POSSIBLE_VALUES = [
 export default function ExportMatchForm({
   serverId,
   match,
+  callback,
 }: {
   serverId: string;
   match: MatchesWithMapAndRecords;
+  callback?: () => void;
 }) {
   const form = useForm<ExportMatchSchemaType>({
     resolver: zodResolver(ExportMatchSchema),
@@ -74,7 +80,36 @@ export default function ExportMatchForm({
   });
 
   async function onSubmit(values: ExportMatchSchemaType) {
-    console.log("Exporting match with values:", values);
+    try {
+      const { data, error } = await exportMatchToCSV(
+        match.serverId,
+        match.id,
+        values.headers,
+        values.values,
+      );
+      if (error) {
+        throw new Error(error);
+      }
+
+      const blob = new Blob([data], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = values.filename || `match-${match.id}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Match successfully exported");
+      if (callback) {
+        callback();
+      }
+    } catch (error) {
+      toast.error("Error exporting match", {
+        description: getErrorMessage(error),
+      });
+    }
   }
 
   const headerFields = form.watch("headers");
@@ -85,6 +120,8 @@ export default function ExportMatchForm({
         onSubmit={form.handleSubmit(onSubmit)}
         className="flex flex-col gap-4"
       >
+        <FormElement name="filename" label="Filename" />
+
         {headerFields.map((_, index) => (
           <div className="flex gap-2 w-full justify-between">
             <FormElement

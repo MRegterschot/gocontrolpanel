@@ -28,7 +28,7 @@ export default function ExportMatchModal({
         />
       </div>
 
-      <ExportMatchForm serverId={serverId} match={data} />
+      <ExportMatchForm serverId={serverId} match={data} callback={closeModal} />
     </Card>
   );
 }
