@@ -3,8 +3,10 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { Prisma } from "@/lib/prisma/generated";
+import { getList } from "@/lib/utils";
 import { PaginationResponse, ServerResponse } from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
+import slugid from "slugid";
 import { logAudit } from "./server-only/audit-logs";
 
 const matchesMapRecordsSchema = Prisma.validator<Prisma.MatchesInclude>()({
@@ -129,6 +131,97 @@ export async function deleteMatch(
         "server.records.match.delete",
         matchId,
       );
+    },
+  );
+}
+
+export async function exportMatchToCSV(
+  serverId: string,
+  matchId: string,
+  headers: string[] = [
+    "Time",
+    "Track",
+    "PlayerID",
+    "PlayerName",
+    "Record",
+    "RoundNumber",
+    "Points",
+    "CP",
+  ],
+  values: string[] = [
+    "createdAt",
+    "map.name",
+    "accountId",
+    "user.nickName",
+    "time",
+    "round",
+    "points",
+    "checkpoints",
+  ],
+): Promise<ServerResponse<string>> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:member`,
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:member`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async () => {
+      const db = getClient();
+
+      const match = await db.matches.findUnique({
+        where: { id: matchId, serverId },
+        include: {
+          records: {
+            include: {
+              user: {
+                select: {
+                  nickName: true,
+                },
+              },
+            },
+          },
+          map: true,
+        },
+      });
+
+      if (!match) {
+        throw new Error("Match not found");
+      }
+
+      const csvRows = [];
+      csvRows.push(headers.join(","));
+
+      for (const record of match.records) {
+        const row = values.map((value) => {
+          switch (value) {
+            case "createdAt":
+              return `${record.createdAt.getTime()}`;
+            case "map.name":
+              return `${match.map.name.replace(/"/g, '"')}`;
+            case "accountId":
+              return `${record.login ? slugid.decode(record.login) : ""}`;
+            case "user.nickName":
+              return record.user ? `${record.user.nickName}` : "";
+            case "time":
+              return `${record.time}`;
+            case "round":
+              return `${record.round}`;
+            case "points":
+              return `${record.points}`;
+            case "checkpoints":
+              return `${getList<number>(record.checkpoints).join(" ")}`;
+            default:
+              return "";
+          }
+        });
+
+        csvRows.push(row.join(","));
+      }
+
+      return csvRows.join("\n");
     },
   );
 }
