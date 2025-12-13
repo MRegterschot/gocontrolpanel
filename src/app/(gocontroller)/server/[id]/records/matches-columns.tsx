@@ -6,6 +6,7 @@ import {
 } from "@/actions/database/matches";
 import ConfirmModal from "@/components/modals/confirm-modal";
 import Modal from "@/components/modals/modal";
+import ExportMatchModal from "@/components/modals/records/export-match";
 import MatchDetailsModal from "@/components/modals/records/match-details";
 import { DataTableColumnHeader } from "@/components/table/data-table-column-header";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ import { parseTmTags } from "tmtags";
 
 export const createMatchesColumns = (
   refetch: () => void,
+  serverId: string,
 ): ColumnDef<MatchesWithMapAndRecords>[] => [
   {
     accessorKey: "map.name",
@@ -73,6 +75,7 @@ export const createMatchesColumns = (
       const { data: session } = useSession();
       const [_, startTransition] = useTransition();
       const [isOpen, setIsOpen] = useState(false);
+      const [isExportOpen, setIsExportOpen] = useState(false);
       const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
       const canActions = hasPermissionSync(
@@ -116,6 +119,9 @@ export const createMatchesColumns = (
               <DropdownMenuItem onClick={() => setIsOpen(true)}>
                 View details
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsExportOpen(true)}>
+                Export to CSV
+              </DropdownMenuItem>
               {canActions && (
                 <>
                   <DropdownMenuSeparator />
@@ -144,6 +150,10 @@ export const createMatchesColumns = (
 
           <Modal isOpen={isOpen} setIsOpen={setIsOpen}>
             <MatchDetailsModal data={match} />
+          </Modal>
+
+          <Modal isOpen={isExportOpen} setIsOpen={setIsExportOpen}>
+            <ExportMatchModal data={match} serverId={serverId} />
           </Modal>
         </div>
       );

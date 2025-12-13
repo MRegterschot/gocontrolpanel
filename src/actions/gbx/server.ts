@@ -48,7 +48,10 @@ export async function getServerSettings(
             Password: serverOptions.Password,
             PasswordForSpectator: serverOptions.PasswordForSpectator,
             NextCallVoteTimeOut: serverOptions.CurrentCallVoteTimeOut / 1000,
-            CallVoteRatio: serverOptions.CallVoteRatio * 100,
+            CallVoteRatio:
+              serverOptions.CallVoteRatio < 0
+                ? -1
+                : serverOptions.CallVoteRatio * 100,
             HideServer: serverVisibility,
             NextMaxPlayers: serverOptions.NextMaxPlayers,
             NextMaxSpectators: serverOptions.NextMaxSpectators,
@@ -82,7 +85,11 @@ export async function saveServerSettings(
       const client = await getGbxClient(serverId);
 
       serverSettings.defaultOptions.NextCallVoteTimeOut *= 1000; // Convert to milliseconds
-      serverSettings.defaultOptions.CallVoteRatio /= 100; // Convert to 0-1 range
+      if (serverSettings.defaultOptions.CallVoteRatio < 0) {
+        serverSettings.defaultOptions.CallVoteRatio = -1;
+      } else {
+        serverSettings.defaultOptions.CallVoteRatio /= 100; // Convert to 0-1 range
+      }
       serverSettings.defaultOptions.DisableHorns =
         !serverSettings.defaultOptions.DisableHorns;
       serverSettings.defaultOptions.DisableServiceAnnounces =

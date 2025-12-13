@@ -30,28 +30,28 @@ COMPOSE_FILES="$COMPOSE_FILES -f ../docker-configs/docker-compose.{{{db.type}}}.
 cd '{{{server_controller.type}}}'
 {{/if}}
 
-{{#ifEq server_controller.type "evosc"}}
+{{#eq server_controller.type "evosc"}}
 # Export EvoSC environment variables
-{{/ifEq}}
+{{/eq}}
 
-{{#ifEq server_controller.type "maniacontrol"}}
+{{#eq server_controller.type "maniacontrol"}}
 # Export ManiaControl environment variables
 export MC_ADMINS='{{{server_controller.admins}}}'
-{{/ifEq}}
+{{/eq}}
 
-{{#ifEq server_controller.type "minicontrol"}}
+{{#eq server_controller.type "minicontrol"}}
 # Export MiniControl environment variables  
 export MINI_ADMINS='{{{server_controller.admins}}}'
 export MINI_EXCLUDED_PLUGINS='{{{server_controller.excludedPlugins}}}'
 export MINI_CONTACT_INFO='{{{server_controller.contactInfo}}}'
 export MINI_IDENTIFIER='{{{server_controller.identifier}}}'
 export MINI_SECRET='{{{server_controller.secret}}}'
-{{/ifEq}}
+{{/eq}}
 
-{{#ifEq server_controller.type "pyplanet"}}
+{{#eq server_controller.type "pyplanet"}}
 # Export PyPlanet environment variables
 export PY_ADMINS='{{{server_controller.admins}}}'
-{{/ifEq}}
+{{/eq}}
 
 # Set environment variables
 export TM_MASTERSERVER_LOGIN='{{{dedi_login}}}'
