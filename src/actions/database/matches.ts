@@ -198,21 +198,21 @@ export async function exportMatchToCSV(
         const row = values.map((value) => {
           switch (value) {
             case "createdAt":
-              return `${record.createdAt.getTime()}`;
+              return record.createdAt.getTime();
             case "map.name":
-              return `${match.map.name.replace(/"/g, '"')}`;
+              return match.map.name;
             case "accountId":
-              return `${record.login ? slugid.decode(record.login) : ""}`;
+              return record.login ? slugid.decode(record.login) : "";
             case "user.nickName":
-              return record.user ? `${record.user.nickName}` : "";
+              return record.user ? record.user.nickName : "";
             case "time":
-              return `${record.time}`;
+              return record.time;
             case "round":
-              return `${record.round}`;
+              return record.round;
             case "points":
-              return `${record.points}`;
+              return record.points;
             case "checkpoints":
-              return `${getList<number>(record.checkpoints).join(" ")}`;
+              return getList<number>(record.checkpoints).join(" ");
             default:
               return "";
           }
