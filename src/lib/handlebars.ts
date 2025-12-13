@@ -5,6 +5,7 @@ import Handlebars from "handlebars/runtime";
 Handlebars.registerHelper("boolToNum", (value: boolean) => (value ? 1 : 0));
 
 Handlebars.registerHelper("eq", (a, b) => a === b);
+HandlebarsServer.registerHelper("eq", (a, b) => a === b);
 
 Handlebars.registerHelper("default", function (value, defaultValue) {
   return value || defaultValue;
