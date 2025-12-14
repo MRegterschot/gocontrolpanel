@@ -534,7 +534,13 @@ async function onPlayerConnect(manager: GbxClientManager, login: string) {
     team: playerInfo.teamId,
   });
 
-  if (playerInfo.spectatorStatus === 0) {
+  if (
+    playerInfo.spectatorStatus === 0 &&
+    !(
+      manager.info.liveInfo.mode === "TM_ReverseCup.Script.txt" &&
+      manager.info.liveInfo.players?.[playerInfo.login]?.matchPoints === -10000
+    )
+  ) {
     const playerWaypoint: PlayerWaypoint = {
       login: playerInfo.login,
       accountId: "",
@@ -619,7 +625,11 @@ function onPlayerInfoChanged(
 
   manager.setPlayer(changedInfo.login, playerRound);
 
-  if (playerInfo.SpectatorStatus !== 0) {
+  if (
+    playerInfo.SpectatorStatus !== 0 ||
+    (manager.info.liveInfo.mode === "TM_ReverseCup.Script.txt" &&
+      playerRound.matchPoints === -10000)
+  ) {
     manager.setActiveRoundPlayer(changedInfo.login, undefined);
   } else {
     const playerWaypoint: PlayerWaypoint = {
@@ -729,9 +739,9 @@ function onStartMapStartScript(manager: GbxClientManager, startMap: StartMap) {
 async function onStartRoundStartScript(manager: GbxClientManager) {
   if (manager.roundNumber !== null && !manager.info.liveInfo.isWarmUp)
     manager.roundNumber++;
-  
+
   manager.emit("startRound");
-  
+
   const playerList: SPlayerInfo[] = await manager.client.call(
     "GetPlayerList",
     1000,
@@ -742,8 +752,17 @@ async function onStartRoundStartScript(manager: GbxClientManager) {
     players: {},
   };
 
-  playerList.forEach((player) => {
-    if (player.SpectatorStatus === 0) {
+  playerList
+    .filter((player) => {
+      return (
+        player.SpectatorStatus === 0 &&
+        !(
+          manager.info.liveInfo.mode === "TM_ReverseCup.Script.txt" &&
+          manager.info.liveInfo.players?.[player.Login]?.matchPoints === -10000
+        )
+      );
+    })
+    .forEach((player) => {
       const playerInfo = manager.info.liveInfo.players[player.Login];
 
       const playerWaypoint: PlayerWaypoint = {
@@ -760,8 +779,7 @@ async function onStartRoundStartScript(manager: GbxClientManager) {
       };
 
       manager.setActiveRoundPlayer(playerWaypoint.login, playerWaypoint);
-    }
-  });
+    });
 
   manager.emit("beginRound", manager.info.liveInfo.activeRound);
 }
@@ -935,8 +953,17 @@ async function onScoresScript(manager: GbxClientManager, scores: Scores) {
     players: {},
   };
 
-  playerList.forEach((player) => {
-    if (player.SpectatorStatus === 0) {
+  playerList
+    .filter((player) => {
+      return (
+        player.SpectatorStatus === 0 &&
+        !(
+          manager.info.liveInfo.mode === "TM_ReverseCup.Script.txt" &&
+          manager.info.liveInfo.players?.[player.Login]?.matchPoints === -10000
+        )
+      );
+    })
+    .forEach((player) => {
       const playerInfo = manager.info.liveInfo.players[player.Login];
 
       const playerWaypoint: PlayerWaypoint = {
@@ -950,8 +977,7 @@ async function onScoresScript(manager: GbxClientManager, scores: Scores) {
       };
 
       manager.setActiveRoundPlayer(playerWaypoint.login, playerWaypoint);
-    }
-  });
+    });
 }
 
 async function syncLiveInfo(manager: GbxClientManager) {
@@ -1106,8 +1132,17 @@ async function onWarmUpStartRoundScript(
     players: {},
   };
 
-  playerList.forEach((player) => {
-    if (player.SpectatorStatus === 0) {
+  playerList
+    .filter((player) => {
+      return (
+        player.SpectatorStatus === 0 &&
+        !(
+          manager.info.liveInfo.mode === "TM_ReverseCup.Script.txt" &&
+          manager.info.liveInfo.players?.[player.Login]?.matchPoints === -10000
+        )
+      );
+    })
+    .forEach((player) => {
       const playerInfo = manager.info.liveInfo.players[player.Login];
 
       const playerWaypoint: PlayerWaypoint = {
@@ -1124,8 +1159,7 @@ async function onWarmUpStartRoundScript(
       };
 
       manager.setActiveRoundPlayer(playerWaypoint.login, playerWaypoint);
-    }
-  });
+    });
 
   manager.emit("warmUpStartRound", manager.info.liveInfo);
 }

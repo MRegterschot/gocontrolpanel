@@ -53,7 +53,7 @@ Text formatTime(Integer time) {
   declare Text secondString;
   declare Text msString;
 
-  if (time <= 0) {
+  if (time < 0) {
     return "--:--.---";
   }
 
