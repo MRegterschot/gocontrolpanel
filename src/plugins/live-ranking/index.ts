@@ -21,7 +21,7 @@ export default class LiveRankingPlugin extends Plugin {
 
   private rankings: Ranking[] = [];
   private pointsLimit: number = -1;
-  private mode: "rounds" | "cup" = "rounds";
+  private mode: "rounds" | "cup" | "reversecup" = "rounds";
 
   constructor(
     clientManager: GbxClientManager,
@@ -115,6 +115,10 @@ export default class LiveRankingPlugin extends Plugin {
   async onUpdatedSettings(liveInfo: LiveInfo) {
     if (liveInfo.type === "rounds" || liveInfo.type === "cup") {
       this.mode = liveInfo.type;
+
+      if (liveInfo.mode === "TM_ReverseCup.Script.txt") {
+        this.mode = "reversecup";
+      }
     }
     this.pointsLimit = liveInfo.pointsLimit || -1;
 
@@ -182,6 +186,12 @@ export default class LiveRankingPlugin extends Plugin {
     const cmType = this.clientManager.info.liveInfo.type;
     if (cmType === "rounds" || cmType === "cup") {
       this.mode = cmType;
+
+      if (
+        this.clientManager.info.liveInfo.mode === "TM_ReverseCup.Script.txt"
+      ) {
+        this.mode = "reversecup";
+      }
     }
     this.pointsLimit = this.clientManager.info.liveInfo.pointsLimit || -1;
 
