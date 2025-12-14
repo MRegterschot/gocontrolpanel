@@ -329,6 +329,13 @@ export class GbxClientManager extends EventEmitter {
       delete this.info.liveInfo.players[login];
     }
   }
+
+  reverseCupIsSpectator(playerLogin: string): boolean {
+    return (
+      this.info.liveInfo.mode === "TM_ReverseCup.Script.txt" &&
+      this.info.liveInfo.players?.[playerLogin]?.matchPoints === -10000
+    );
+  }
 }
 
 export async function getGbxClient(serverId: string): Promise<GbxClient> {
@@ -536,10 +543,7 @@ async function onPlayerConnect(manager: GbxClientManager, login: string) {
 
   if (
     playerInfo.spectatorStatus === 0 &&
-    !(
-      manager.info.liveInfo.mode === "TM_ReverseCup.Script.txt" &&
-      manager.info.liveInfo.players?.[playerInfo.login]?.matchPoints === -10000
-    )
+    !manager.reverseCupIsSpectator(playerInfo.login)
   ) {
     const playerWaypoint: PlayerWaypoint = {
       login: playerInfo.login,
@@ -627,8 +631,7 @@ function onPlayerInfoChanged(
 
   if (
     playerInfo.SpectatorStatus !== 0 ||
-    (manager.info.liveInfo.mode === "TM_ReverseCup.Script.txt" &&
-      playerRound.matchPoints === -10000)
+    manager.reverseCupIsSpectator(changedInfo.login)
   ) {
     manager.setActiveRoundPlayer(changedInfo.login, undefined);
   } else {
@@ -756,10 +759,7 @@ async function onStartRoundStartScript(manager: GbxClientManager) {
     .filter((player) => {
       return (
         player.SpectatorStatus === 0 &&
-        !(
-          manager.info.liveInfo.mode === "TM_ReverseCup.Script.txt" &&
-          manager.info.liveInfo.players?.[player.Login]?.matchPoints === -10000
-        )
+        !manager.reverseCupIsSpectator(player.Login)
       );
     })
     .forEach((player) => {
@@ -957,10 +957,7 @@ async function onScoresScript(manager: GbxClientManager, scores: Scores) {
     .filter((player) => {
       return (
         player.SpectatorStatus === 0 &&
-        !(
-          manager.info.liveInfo.mode === "TM_ReverseCup.Script.txt" &&
-          manager.info.liveInfo.players?.[player.Login]?.matchPoints === -10000
-        )
+        !manager.reverseCupIsSpectator(player.Login)
       );
     })
     .forEach((player) => {
@@ -1136,10 +1133,7 @@ async function onWarmUpStartRoundScript(
     .filter((player) => {
       return (
         player.SpectatorStatus === 0 &&
-        !(
-          manager.info.liveInfo.mode === "TM_ReverseCup.Script.txt" &&
-          manager.info.liveInfo.players?.[player.Login]?.matchPoints === -10000
-        )
+        !manager.reverseCupIsSpectator(player.Login)
       );
     })
     .forEach((player) => {

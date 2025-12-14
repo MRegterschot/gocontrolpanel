@@ -29,7 +29,7 @@ export default class ManialinkManager {
 
     // Re-display all public manialinks to the newly connected player
     for (const manialink of Object.values(this.publicManialinks)) {
-      const xml = await manialink.render();
+      const xml = manialink.render();
       multi.push([
         "SendDisplayManialinkPageToLogin",
         player.login,
@@ -44,7 +44,7 @@ export default class ManialinkManager {
       for (const manialink of Object.values(
         this.playerManialinks[player.login],
       )) {
-        const xml = await manialink.render();
+        const xml = manialink.render();
         multi.push([
           "SendDisplayManialinkPageToLogin",
           player.login,

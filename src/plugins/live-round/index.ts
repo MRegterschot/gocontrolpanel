@@ -73,7 +73,8 @@ export default class LiveRoundPlugin extends Plugin {
   async onPlayerConnect(playerInfo: PlayerInfo) {
     if (
       getSpectatorStatus(playerInfo.spectatorStatus).spectator ||
-      this.rounds.find((r) => r.login === playerInfo.login)
+      this.rounds.find((r) => r.login === playerInfo.login) ||
+      this.clientManager.reverseCupIsSpectator(playerInfo.login)
     )
       return;
 
@@ -98,7 +99,10 @@ export default class LiveRoundPlugin extends Plugin {
   }
 
   async onPlayerInfo(playerInfo: PlayerInfo) {
-    if (getSpectatorStatus(playerInfo.spectatorStatus).spectator) {
+    if (
+      getSpectatorStatus(playerInfo.spectatorStatus).spectator ||
+      this.clientManager.reverseCupIsSpectator(playerInfo.login)
+    ) {
       this.rounds = this.rounds.filter((r) => r.login !== playerInfo.login);
     } else {
       const round = this.rounds.find((r) => r.login === playerInfo.login);
@@ -219,6 +223,12 @@ export default class LiveRoundPlugin extends Plugin {
       }
     }
 
+    this.rounds = this.rounds.filter(
+      (r) =>
+        this.clientManager.info.liveInfo.mode !== "TM_ReverseCup.Script.txt" ||
+        r.points !== -10000,
+    );
+
     await this.updateWidget();
   }
 
@@ -243,6 +253,7 @@ export default class LiveRoundPlugin extends Plugin {
 
     this.finishes = [];
     this.rounds = [];
+
     if (playerList && Array.isArray(playerList)) {
       for (let i = 0; i < playerList.length; i++) {
         const player = playerList[i];
@@ -250,7 +261,10 @@ export default class LiveRoundPlugin extends Plugin {
           continue; // Skip the main server player
         }
 
-        if (getSpectatorStatus(player.SpectatorStatus).spectator) {
+        if (
+          getSpectatorStatus(player.SpectatorStatus).spectator ||
+          this.clientManager.reverseCupIsSpectator(player.Login)
+        ) {
           continue; // Skip spectators
         }
 
