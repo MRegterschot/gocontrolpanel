@@ -246,6 +246,22 @@ export function isFinalist(matchPoints: number, pointsLimit?: number): boolean {
   return matchPoints == pointsLimit;
 }
 
+export function isLastChance(matchPoints: number, mode: string): boolean {
+  if (mode !== "TM_ReverseCup.Script.txt") {
+    return false;
+  }
+
+  return -2000 < matchPoints && matchPoints <= -1000; // -1999 to -1000
+}
+
+export function isEliminated(matchPoints: number, mode: string): boolean {
+  if (mode !== "TM_ReverseCup.Script.txt") {
+    return false;
+  }
+
+  return -10000 < matchPoints && matchPoints <= -2000; // -9999 to -2000
+}
+
 export function isWinner(matchPoints: number, pointsLimit?: number): boolean {
   if (pointsLimit === undefined) {
     return false;
@@ -434,7 +450,7 @@ export function getSpectatorStatus(spectatorStatus: number): SpectatorStatus {
     pureSpectator: Math.floor(spectatorStatus / 100) % 10 === 1,
     autoTarget: Math.floor(spectatorStatus / 1000) % 10 === 1,
     currentTargetId: Math.floor(spectatorStatus / 10000),
-  }
+  };
 }
 
 export function rankPlayers(

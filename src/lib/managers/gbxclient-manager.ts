@@ -30,7 +30,9 @@ import { getClient } from "../dbclient";
 import { appGlobals } from "../global";
 import {
   formatMessage,
+  isEliminated,
   isFinalist,
+  isLastChance,
   isWinner,
   sleep,
   withTimeout,
@@ -74,6 +76,7 @@ export class GbxClientManager extends EventEmitter {
         type: "",
         currentMap: "",
         pointsRepartition: [],
+        pointsRepartitionMap: {},
         pauseAvailable: false,
         isPaused: false,
       },
@@ -552,6 +555,8 @@ async function onPlayerConnect(manager: GbxClientManager, login: string) {
       hasFinished: false,
       hasGivenUp: false,
       isFinalist: false,
+      isLastChance: false,
+      isEliminated: false,
       checkpoint: 0,
     };
 
@@ -644,6 +649,14 @@ function onPlayerInfoChanged(
       isFinalist: isFinalist(
         playerRound.matchPoints,
         manager.info.liveInfo.pointsLimit,
+      ),
+      isLastChance: isLastChance(
+        playerRound.matchPoints,
+        manager.info.liveInfo.mode,
+      ),
+      isEliminated: isEliminated(
+        playerRound.matchPoints,
+        manager.info.liveInfo.mode,
       ),
       checkpoint: 0,
     };
@@ -775,6 +788,14 @@ async function onStartRoundStartScript(manager: GbxClientManager) {
           playerInfo.matchPoints,
           manager.info.liveInfo.pointsLimit,
         ),
+        isLastChance: isLastChance(
+          playerInfo.matchPoints,
+          manager.info.liveInfo.mode,
+        ),
+        isEliminated: isEliminated(
+          playerInfo.matchPoints,
+          manager.info.liveInfo.mode,
+        ),
         checkpoint: 0,
       };
 
@@ -814,6 +835,11 @@ async function onEndRoundScript(manager: GbxClientManager, scores: Scores) {
         player.matchpoints,
         manager.info.liveInfo.pointsLimit,
       ),
+      lastChance: isLastChance(player.matchpoints, manager.info.liveInfo.mode),
+      eliminated:
+        manager.info.liveInfo.mode === "TM_ReverseCup.Script.txt"
+          ? isEliminated(player.matchpoints, manager.info.liveInfo.mode)
+          : manager.info.liveInfo.players?.[player.login]?.eliminated,
       winner: isWinner(player.matchpoints, manager.info.liveInfo.pointsLimit),
       bestTime: player.bestracetime,
       bestCheckpoints: player.bestracecheckpoints,
@@ -929,8 +955,9 @@ async function onScoresScript(manager: GbxClientManager, scores: Scores) {
         player.matchpoints,
         manager.info.liveInfo.pointsLimit,
       ),
+      lastChance: isLastChance(player.matchpoints, manager.info.liveInfo.mode),
+      eliminated: isEliminated(player.matchpoints, manager.info.liveInfo.mode),
       winner: isWinner(player.matchpoints, manager.info.liveInfo.pointsLimit),
-      eliminated: false,
       roundPoints: player.roundpoints,
       matchPoints: player.matchpoints,
       bestTime: player.bestracetime,
@@ -970,6 +997,8 @@ async function onScoresScript(manager: GbxClientManager, scores: Scores) {
         hasFinished: false,
         hasGivenUp: false,
         isFinalist: playerInfo.finalist,
+        isLastChance: playerInfo.lastChance,
+        isEliminated: playerInfo.eliminated,
         checkpoint: 0,
       };
 
@@ -1035,6 +1064,7 @@ async function syncLiveInfo(manager: GbxClientManager) {
 async function setScriptSettings(manager: GbxClientManager) {
   const scriptSettings = await manager.client.call("GetModeScriptSettings");
 
+  const mode = manager.info.liveInfo.mode;
   const type = manager.info.liveInfo.type;
   let plVar = "S_PointsLimit";
   let mlVar = "S_MapsPerMatch";
@@ -1073,6 +1103,33 @@ async function setScriptSettings(manager: GbxClientManager) {
   }
 
   // Points repartition
+  if (mode === "TM_ReverseCup.Script.txt") {
+    const complexRepartition = scriptSettings["S_ComplexPointsRepartition"];
+    if (typeof complexRepartition === "string" && complexRepartition) {
+      // Example: {"3": [3, 6, 10], "4,5": [1, 3, 6,10]}
+      try {
+        const repartitionObj = JSON.parse(complexRepartition);
+        const repartitionMap: Record<number, number[]> = {};
+        for (const key in repartitionObj) {
+          const numPlayers = key
+            .split(",")
+            .map((x) => parseInt(x.trim(), 10))
+            .filter((x) => !isNaN(x));
+          const pointsArray: number[] = repartitionObj[key].map((x: any) =>
+            parseInt(x, 10),
+          );
+          numPlayers.forEach((num) => {
+            repartitionMap[num] = pointsArray;
+          });
+        }
+        manager.info.liveInfo.pointsRepartitionMap = repartitionMap;
+        return;
+      } catch (error) {
+        console.error(`Failed to parse complex points repartition: ${error}`);
+      }
+    }
+  }
+
   const pointsRepartition = scriptSettings[prVar];
   if (typeof pointsRepartition === "string") {
     if (pointsRepartition) {
@@ -1148,6 +1205,14 @@ async function onWarmUpStartRoundScript(
         isFinalist: isFinalist(
           playerInfo.matchPoints,
           manager.info.liveInfo.pointsLimit,
+        ),
+        isLastChance: isLastChance(
+          playerInfo.matchPoints,
+          manager.info.liveInfo.mode,
+        ),
+        isEliminated: isEliminated(
+          playerInfo.matchPoints,
+          manager.info.liveInfo.mode,
         ),
         checkpoint: 0,
       };
