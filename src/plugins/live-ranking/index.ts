@@ -58,7 +58,8 @@ export default class LiveRankingPlugin extends Plugin {
   async onPlayerConnect(playerInfo: PlayerInfo) {
     if (
       getSpectatorStatus(playerInfo.spectatorStatus).spectator ||
-      this.rankings.find((r) => r.login === playerInfo.login)
+      this.rankings.find((r) => r.login === playerInfo.login) ||
+      this.clientManager.reverseCupIsSpectator(playerInfo.login)
     )
       return;
 
@@ -81,7 +82,10 @@ export default class LiveRankingPlugin extends Plugin {
   }
 
   async onPlayerInfo(playerInfo: PlayerInfo) {
-    if (getSpectatorStatus(playerInfo.spectatorStatus).spectator) {
+    if (
+      getSpectatorStatus(playerInfo.spectatorStatus).spectator ||
+      this.clientManager.reverseCupIsSpectator(playerInfo.login)
+    ) {
       const ranking = this.rankings.find((r) => r.login === playerInfo.login);
       if (!ranking || ranking.points > 0) return;
 
@@ -127,6 +131,13 @@ export default class LiveRankingPlugin extends Plugin {
     this.rankings = [];
     for (let i = 0; i < scores.players.length; i++) {
       const player = scores.players[i];
+
+      if (
+        this.clientManager.info.liveInfo.mode === "TM_ReverseCup.Script.txt" &&
+        player.matchpoints === -10000
+      ) {
+        continue;
+      }
 
       if (player.matchpoints === 0) {
         const activePlayer = this.clientManager.info.activePlayers.find(
