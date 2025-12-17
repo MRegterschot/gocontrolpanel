@@ -75,6 +75,7 @@ export default class LiveRankingPlugin extends Plugin {
 
   async onPlayerDisconnect(login: string) {
     const ranking = this.rankings.find((r) => r.login === login);
+    console.log(ranking);
     if (!ranking || ranking.points > 0) return;
 
     this.rankings = this.rankings.filter((r) => r.login !== login);
@@ -149,7 +150,7 @@ export default class LiveRankingPlugin extends Plugin {
         );
 
         if (
-          activePlayer &&
+          !activePlayer ||
           getSpectatorStatus(activePlayer.spectatorStatus).spectator
         ) {
           continue;

@@ -480,7 +480,7 @@ async function callbackListener(
 
       switch (methodName) {
         case "Maniaplanet.Podium_Start":
-          onPodiumStartScript(manager, serverId);
+          await onPodiumStartScript(manager, serverId);
           break;
         case "Trackmania.Event.WayPoint":
           if (params.isendrace) {
@@ -709,8 +709,30 @@ function onPlayerInfoChanged(
   manager.emit("playerInfoChanged", manager.info.liveInfo.activeRound);
 }
 
-function onPodiumStartScript(_: GbxClientManager, serverId: string) {
+async function onPodiumStartScript(
+  manager: GbxClientManager,
+  serverId: string,
+) {
   onPodiumStart(serverId);
+
+  const mode = await manager.client.call("GetScriptName");
+  const nextMode: string = mode.NextValue;
+
+  manager.info.liveInfo.mode = nextMode;
+  const modeLower = nextMode.toLowerCase();
+
+  const types = [
+    "timeattack",
+    "rounds",
+    "cup",
+    "tmwc",
+    "tmwt",
+    "teams",
+    "knockout",
+  ] as const;
+
+  const matched = types.find((t) => modeLower.includes(t));
+  manager.info.liveInfo.type = matched ?? "rounds";
 }
 
 function saveFinishRecord(
@@ -1106,7 +1128,6 @@ async function syncLiveInfo(manager: GbxClientManager) {
 async function setScriptSettings(manager: GbxClientManager) {
   const scriptSettings = await manager.client.call("GetModeScriptSettings");
 
-  const mode = manager.info.liveInfo.mode;
   const type = manager.info.liveInfo.type;
   let plVar = "S_PointsLimit";
   let mlVar = "S_MapsPerMatch";
