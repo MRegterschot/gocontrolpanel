@@ -77,6 +77,7 @@ export class GbxClientManager extends EventEmitter {
         currentMap: "",
         pointsRepartition: [],
         pointsRepartitionMap: {},
+        fastForwardPointsRepartition: false,
         pauseAvailable: false,
         isPaused: false,
       },
@@ -338,6 +339,35 @@ export class GbxClientManager extends EventEmitter {
       this.info.liveInfo.mode === "TM_ReverseCup.Script.txt" &&
       this.info.liveInfo.players?.[playerLogin]?.matchPoints === -10000
     );
+  }
+
+  reverseCupGetPointsRepartition(nbPlayers: number): number[] {
+    const repartitionMap = this.info.liveInfo.pointsRepartitionMap;
+    let repartition: number[] = [];
+
+    if (repartitionMap && repartitionMap[nbPlayers]) {
+      repartition = repartitionMap[nbPlayers];
+    } else {
+      repartition = this.info.liveInfo.pointsRepartition;
+    }
+    
+    if (
+      this.info.liveInfo.fastForwardPointsRepartition &&
+      nbPlayers > repartition.length
+    ) {
+      for (const playerRound of Object.values(
+        this.info.liveInfo.players || {},
+      )) {
+        if (nbPlayers <= repartition.length) break;
+
+        const points = playerRound.matchPoints;
+        if (points > -10000 && points <= -2000) {
+          repartition = repartition.slice(1);
+        }
+      }
+    }
+
+    return repartition;
   }
 }
 
@@ -1123,12 +1153,14 @@ async function setScriptSettings(manager: GbxClientManager) {
           });
         }
         manager.info.liveInfo.pointsRepartitionMap = repartitionMap;
-        return;
       } catch (error) {
         console.error(`Failed to parse complex points repartition: ${error}`);
       }
     }
   }
+
+  manager.info.liveInfo.fastForwardPointsRepartition =
+    !!scriptSettings["S_FastForwardPointsRepartition"];
 
   const pointsRepartition = scriptSettings[prVar];
   if (typeof pointsRepartition === "string") {

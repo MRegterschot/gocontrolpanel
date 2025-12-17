@@ -175,9 +175,31 @@ export default class LiveRoundPlugin extends Plugin {
         this.rounds[i].time = finish.racetime;
         this.rounds[i].checkpoints = finish.curracecheckpoints;
 
+        const position = Math.min(
+          this.finishes.length,
+          this.pointsRepartition.length - 1,
+        );
+        let points = this.pointsRepartition[position] || 0;
+
+        if (this.mode === "reversecup") {
+          const playerCount = this.rounds.filter(
+            (r) => r.points > -2000,
+          ).length;
+
+          const repartition =
+            this.clientManager.reverseCupGetPointsRepartition(playerCount);
+
+          const position = Math.min(
+            this.finishes.length,
+            repartition.length - 1,
+          );
+
+          points = -repartition[position] || 0;
+        }
+
         this.finishes.push({
           login: finish.login,
-          points: this.pointsRepartition[this.finishes.length] || 0,
+          points,
         });
 
         await this.updateWidget();
@@ -240,7 +262,9 @@ export default class LiveRoundPlugin extends Plugin {
     const cmType = this.clientManager.info.liveInfo.type;
     if (cmType === "rounds" || cmType === "cup") {
       this.mode = cmType;
-      if (this.clientManager.info.liveInfo.mode === "TM_ReverseCup.Script.txt") {
+      if (
+        this.clientManager.info.liveInfo.mode === "TM_ReverseCup.Script.txt"
+      ) {
         this.mode = "reversecup";
       }
     }

@@ -11,6 +11,7 @@ export interface LiveInfo {
   nbWinners?: number;
   pointsRepartition: number[];
   pointsRepartitionMap: Record<number, number[]>;
+  fastForwardPointsRepartition: boolean;
   pauseAvailable: boolean;
   isPaused: boolean;
   maps: string[];

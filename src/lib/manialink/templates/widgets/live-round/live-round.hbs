@@ -200,7 +200,12 @@ Void updateFinish(Text login, Integer points, Boolean finished) {
         if (points == 0) {
           (frameFinish.Controls[1] as CMlLabel).SetText("");
         } else {
-          (frameFinish.Controls[1] as CMlLabel).SetText("+" ^ TL::ToText(points));
+          declare Text pointsText = "+" ^ TL::ToText(points);
+          if (points < 0) {
+            pointsText = "-" ^ TL::ToText(-points);
+          }
+          
+          (frameFinish.Controls[1] as CMlLabel).SetText(pointsText);
         }
         AnimMgr.Add(frameFinish, """<frame pos='55 0' />""", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
       } else {
