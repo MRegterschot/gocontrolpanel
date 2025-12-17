@@ -25,14 +25,13 @@ type Finish = {
 
 export default class LiveRoundPlugin extends Plugin {
   static pluginId = "live-round";
-  static gamemodes = ["rounds", "cup"];
+  static gamemodes = ["rounds", "cup", "reversecup"];
   private widget: Widget;
 
   private rounds: Round[] = [];
   private finishes: Finish[] = [];
   private pointsLimit: number = -1;
   private pointsRepartition: number[] = [];
-  private mode: "rounds" | "cup" | "reversecup" = "rounds";
 
   constructor(
     clientManager: GbxClientManager,
@@ -48,6 +47,7 @@ export default class LiveRoundPlugin extends Plugin {
   async onLoad() {
     this.clientManager.addListeners(this.getPluginId(), {
       beginMap: this.onBeginMap.bind(this),
+      beginMatch: this.onBeginMatch.bind(this),
       playerConnect: this.onPlayerConnect.bind(this),
       playerInfo: this.onPlayerInfo.bind(this),
       playerDisconnect: this.onPlayerDisconnect.bind(this),
@@ -149,14 +149,11 @@ export default class LiveRoundPlugin extends Plugin {
     this.clearLiveRound();
   }
 
-  async onUpdatedSettings(liveInfo: LiveInfo) {
-    if (liveInfo.type === "rounds" || liveInfo.type === "cup") {
-      this.mode = liveInfo.type;
+  async onBeginMatch() {
+    this.clearLiveRound();
+  }
 
-      if (this.clientManager.isReverseCupMode()) {
-        this.mode = "reversecup";
-      }
-    }
+  async onUpdatedSettings(liveInfo: LiveInfo) {
     this.pointsLimit = liveInfo.pointsLimit || -1;
     this.pointsRepartition = liveInfo.pointsRepartition || [];
 
@@ -191,7 +188,7 @@ export default class LiveRoundPlugin extends Plugin {
         );
         let points = this.pointsRepartition[position] || 0;
 
-        if (this.mode === "reversecup") {
+        if (this.clientManager.info.liveInfo.type === "reversecup") {
           const playerCount = this.rounds.filter(
             (r) => r.points > -2000,
           ).length;
@@ -260,20 +257,15 @@ export default class LiveRoundPlugin extends Plugin {
     }
 
     this.rounds = this.rounds.filter(
-      (r) => !this.clientManager.isReverseCupMode() || r.points > -2000,
+      (r) =>
+        this.clientManager.info.liveInfo.type !== "reversecup" ||
+        r.points > -2000,
     );
 
     await this.updateWidget();
   }
 
   async clearLiveRound() {
-    const cmType = this.clientManager.info.liveInfo.type;
-    if (cmType === "rounds" || cmType === "cup") {
-      this.mode = cmType;
-      if (this.clientManager.isReverseCupMode()) {
-        this.mode = "reversecup";
-      }
-    }
     this.pointsLimit = this.clientManager.info.liveInfo.pointsLimit || -1;
     this.pointsRepartition =
       this.clientManager.info.liveInfo.pointsRepartition || [];
@@ -356,7 +348,7 @@ export default class LiveRoundPlugin extends Plugin {
     this.widget.setData({
       roundsJson: JSON.stringify(this.rounds),
       finishesJson: JSON.stringify(this.finishes),
-      mode: this.mode,
+      mode: this.clientManager.info.liveInfo.type,
       pointsLimit: this.pointsLimit,
     });
     this.widget.update();

@@ -16,12 +16,11 @@ type Ranking = {
 
 export default class LiveRankingPlugin extends Plugin {
   static pluginId = "live-ranking";
-  static gamemodes = ["rounds", "cup"];
+  static gamemodes = ["rounds", "cup", "reversecup"];
   private widget: Widget;
 
   private rankings: Ranking[] = [];
   private pointsLimit: number = -1;
-  private mode: "rounds" | "cup" | "reversecup" = "rounds";
 
   constructor(
     clientManager: GbxClientManager,
@@ -75,7 +74,6 @@ export default class LiveRankingPlugin extends Plugin {
 
   async onPlayerDisconnect(login: string) {
     const ranking = this.rankings.find((r) => r.login === login);
-    console.log(ranking);
     if (!ranking || ranking.points > 0) return;
 
     this.rankings = this.rankings.filter((r) => r.login !== login);
@@ -114,13 +112,6 @@ export default class LiveRankingPlugin extends Plugin {
   }
 
   async onUpdatedSettings(liveInfo: LiveInfo) {
-    if (liveInfo.type === "rounds" || liveInfo.type === "cup") {
-      this.mode = liveInfo.type;
-
-      if (this.clientManager.isReverseCupMode()) {
-        this.mode = "reversecup";
-      }
-    }
     this.pointsLimit = liveInfo.pointsLimit || -1;
 
     this.updateWidget();
@@ -138,7 +129,7 @@ export default class LiveRankingPlugin extends Plugin {
       const player = scores.players[i];
 
       if (
-        this.clientManager.isReverseCupMode() &&
+        this.clientManager.info.liveInfo.type === "reversecup" &&
         player.matchpoints === -10000
       ) {
         continue;
@@ -177,21 +168,13 @@ export default class LiveRankingPlugin extends Plugin {
 
     this.widget.setData({
       rankingsJson: JSON.stringify(this.rankings),
-      mode: this.mode,
+      mode: this.clientManager.info.liveInfo.type,
       pointsLimit: this.pointsLimit,
     });
     this.widget.update();
   }
 
   async clearRankings() {
-    const cmType = this.clientManager.info.liveInfo.type;
-    if (cmType === "rounds" || cmType === "cup") {
-      this.mode = cmType;
-
-      if (this.clientManager.isReverseCupMode()) {
-        this.mode = "reversecup";
-      }
-    }
     this.pointsLimit = this.clientManager.info.liveInfo.pointsLimit || -1;
 
     await this.clientManager.client.callScript(

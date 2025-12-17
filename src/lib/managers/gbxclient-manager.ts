@@ -335,12 +335,8 @@ export class GbxClientManager extends EventEmitter {
     }
   }
 
-  isReverseCupMode(): boolean {
-    return this.info.liveInfo.mode.toLowerCase().includes("reversecup");
-  }
-
   reverseCupGetPlayerStatus(playerLogin: string): PlayerStatus {
-    const isReverseCupMode = this.isReverseCupMode();
+    const isReverseCupMode = this.info.liveInfo.type === "reversecup";
 
     if (!isReverseCupMode) {
       return { spectator: false, eliminated: false, lastChance: false };
@@ -686,7 +682,7 @@ function onPlayerInfoChanged(
   ) {
     manager.setActiveRoundPlayer(changedInfo.login, undefined);
   } else {
-    const isReverseCupMode = manager.isReverseCupMode();
+    const isReverseCupMode = manager.info.liveInfo.type === "reversecup";
 
     const playerWaypoint: PlayerWaypoint = {
       login: changedInfo.login,
@@ -724,6 +720,7 @@ async function onPodiumStartScript(
   const types = [
     "timeattack",
     "rounds",
+    "reversecup",
     "cup",
     "tmwc",
     "tmwt",
@@ -842,7 +839,7 @@ async function onStartRoundStartScript(manager: GbxClientManager) {
     .forEach((player) => {
       const playerInfo = manager.info.liveInfo.players[player.Login];
 
-      const isReverseCupMode = manager.isReverseCupMode();
+      const isReverseCupMode = manager.info.liveInfo.type === "reversecup";
 
       const playerWaypoint: PlayerWaypoint = {
         login: player.Login,
@@ -886,7 +883,7 @@ async function onEndRoundScript(manager: GbxClientManager, scores: Scores) {
     });
   }
 
-  const isReverseCupMode = manager.isReverseCupMode();
+  const isReverseCupMode = manager.info.liveInfo.type === "reversecup";
 
   scores.players.forEach((player) => {
     const playerRound: PlayerRound = {
@@ -1007,7 +1004,7 @@ async function onScoresScript(manager: GbxClientManager, scores: Scores) {
   for (let i = 0; i < scores.players.length; i++) {
     const player = scores.players[i];
 
-    const isReverseCupMode = manager.isReverseCupMode();
+    const isReverseCupMode = manager.info.liveInfo.type === "reversecup";
 
     const playerRound: PlayerRound = {
       login: player.login,
@@ -1087,6 +1084,7 @@ async function syncLiveInfo(manager: GbxClientManager) {
   const types = [
     "timeattack",
     "rounds",
+    "reversecup",
     "cup",
     "tmwc",
     "tmwt",
@@ -1144,29 +1142,37 @@ async function setScriptSettings(manager: GbxClientManager) {
 
   // Points limit
   const pointsLimit = Number(scriptSettings[plVar]);
-  if (!isNaN(pointsLimit) && pointsLimit > 0) {
+  if (!isNaN(pointsLimit)) {
     manager.info.liveInfo.pointsLimit = pointsLimit;
+  } else {
+    manager.info.liveInfo.pointsLimit = 0;
   }
   // Rounds limit
   const roundsLimit = Number(scriptSettings["S_RoundsPerMap"]);
-  if (!isNaN(roundsLimit) && roundsLimit > 0) {
+  if (!isNaN(roundsLimit)) {
     manager.info.liveInfo.roundsLimit = roundsLimit;
+  } else {
+    manager.info.liveInfo.roundsLimit = 0;
   }
 
   // Map limit
   const mapLimit = Number(scriptSettings[mlVar]);
-  if (!isNaN(mapLimit) && mapLimit > 0) {
+  if (!isNaN(mapLimit)) {
     manager.info.liveInfo.mapLimit = mapLimit;
+  } else {
+    manager.info.liveInfo.mapLimit = 0;
   }
 
   // Number of winners
   const nbWinners = Number(scriptSettings["S_NbOfWinners"]);
-  if (!isNaN(nbWinners) && nbWinners > 0) {
+  if (!isNaN(nbWinners)) {
     manager.info.liveInfo.nbWinners = nbWinners;
+  } else {
+    manager.info.liveInfo.nbWinners = 1;
   }
 
   // Points repartition
-  if (manager.isReverseCupMode()) {
+  if (type === "reversecup") {
     const complexRepartition = scriptSettings["S_ComplexPointsRepartition"];
     if (typeof complexRepartition === "string" && complexRepartition) {
       // Example: {"3": [3, 6, 10], "4,5": [1, 3, 6,10]}
@@ -1261,7 +1267,7 @@ async function onWarmUpStartRoundScript(
     .forEach((player) => {
       const playerInfo = manager.info.liveInfo.players[player.Login];
 
-      const isReverseCupMode = manager.isReverseCupMode();
+      const isReverseCupMode = manager.info.liveInfo.type === "reversecup";
 
       const playerWaypoint: PlayerWaypoint = {
         login: player.Login,
