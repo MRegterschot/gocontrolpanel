@@ -74,7 +74,7 @@ export default class LiveRankingPlugin extends Plugin {
 
   async onPlayerDisconnect(login: string) {
     const ranking = this.rankings.find((r) => r.login === login);
-    if (!ranking || ranking.points > 0) return;
+    if (!ranking) return;
 
     this.rankings = this.rankings.filter((r) => r.login !== login);
     await this.updateWidget();
