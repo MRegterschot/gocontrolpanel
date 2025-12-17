@@ -259,8 +259,6 @@ export default class LiveRoundPlugin extends Plugin {
       }
     }
 
-    console.log(this.rounds);
-
     this.rounds = this.rounds.filter(
       (r) => !this.clientManager.isReverseCupMode() || r.points > -2000,
     );
