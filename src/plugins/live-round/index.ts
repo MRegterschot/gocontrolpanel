@@ -71,10 +71,15 @@ export default class LiveRoundPlugin extends Plugin {
   }
 
   async onPlayerConnect(playerInfo: PlayerInfo) {
+    const playerStatus = this.clientManager.reverseCupGetPlayerStatus(
+      playerInfo.login,
+    );
+
     if (
       getSpectatorStatus(playerInfo.spectatorStatus).spectator ||
       this.rounds.find((r) => r.login === playerInfo.login) ||
-      this.clientManager.reverseCupIsSpectator(playerInfo.login)
+      playerStatus.spectator ||
+      playerStatus.eliminated
     )
       return;
 
@@ -99,9 +104,14 @@ export default class LiveRoundPlugin extends Plugin {
   }
 
   async onPlayerInfo(playerInfo: PlayerInfo) {
+    const playerStatus = this.clientManager.reverseCupGetPlayerStatus(
+      playerInfo.login,
+    );
+
     if (
       getSpectatorStatus(playerInfo.spectatorStatus).spectator ||
-      this.clientManager.reverseCupIsSpectator(playerInfo.login)
+      playerStatus.spectator ||
+      playerStatus.eliminated
     ) {
       this.rounds = this.rounds.filter((r) => r.login !== playerInfo.login);
     } else {
@@ -252,7 +262,7 @@ export default class LiveRoundPlugin extends Plugin {
     this.rounds = this.rounds.filter(
       (r) =>
         this.clientManager.info.liveInfo.mode !== "TM_ReverseCup.Script.txt" ||
-        r.points !== -10000,
+        r.points > -2000,
     );
 
     await this.updateWidget();
@@ -292,11 +302,16 @@ export default class LiveRoundPlugin extends Plugin {
           continue; // Skip the main server player
         }
 
+        const playerStatus = this.clientManager.reverseCupGetPlayerStatus(
+          player.Login,
+        );
+
         if (
           getSpectatorStatus(player.SpectatorStatus).spectator ||
-          this.clientManager.reverseCupIsSpectator(player.Login)
+          playerStatus.spectator ||
+          playerStatus.eliminated
         ) {
-          continue; // Skip spectators
+          continue; // Skip spectators and eliminated players
         }
 
         this.rounds.push({

@@ -15,9 +15,10 @@ import { PauseStatus } from "@/types/gbx/pause";
 import {
   PlayerChat,
   PlayerManialinkPageAnswer,
+  PlayerStatus,
   SPlayerInfo,
 } from "@/types/gbx/player";
-import { Elmination, Scores } from "@/types/gbx/scores";
+import { Elimination, Scores } from "@/types/gbx/scores";
 import { WarmUp, WarmUpStatus } from "@/types/gbx/warmup";
 import { Waypoint, WaypointEvent } from "@/types/gbx/waypoint";
 import { PlayerRound, PlayerWaypoint, Team } from "@/types/live";
@@ -334,11 +335,24 @@ export class GbxClientManager extends EventEmitter {
     }
   }
 
-  reverseCupIsSpectator(playerLogin: string): boolean {
-    return (
-      this.info.liveInfo.mode === "TM_ReverseCup.Script.txt" &&
-      this.info.liveInfo.players?.[playerLogin]?.matchPoints === -10000
-    );
+  reverseCupGetPlayerStatus(playerLogin: string): PlayerStatus {
+    if (this.info.liveInfo.mode !== "TM_ReverseCup.Script.txt") {
+      return { spectator: false, eliminated: false, lastChance: false };
+    }
+
+    const playerRound = this.info.liveInfo.players?.[playerLogin];
+
+    return {
+      spectator: playerRound?.matchPoints === -10000,
+      eliminated: isEliminated(
+        playerRound?.matchPoints || -1,
+        this.info.liveInfo.mode,
+      ),
+      lastChance: isLastChance(
+        playerRound?.matchPoints || -1,
+        this.info.liveInfo.mode,
+      ),
+    };
   }
 
   reverseCupGetPointsRepartition(nbPlayers: number): number[] {
@@ -350,7 +364,7 @@ export class GbxClientManager extends EventEmitter {
     } else {
       repartition = this.info.liveInfo.pointsRepartition;
     }
-    
+
     if (
       this.info.liveInfo.fastForwardPointsRepartition &&
       nbPlayers > repartition.length
@@ -576,7 +590,7 @@ async function onPlayerConnect(manager: GbxClientManager, login: string) {
 
   if (
     playerInfo.spectatorStatus === 0 &&
-    !manager.reverseCupIsSpectator(playerInfo.login)
+    !manager.reverseCupGetPlayerStatus(playerInfo.login).spectator
   ) {
     const playerWaypoint: PlayerWaypoint = {
       login: playerInfo.login,
@@ -666,7 +680,7 @@ function onPlayerInfoChanged(
 
   if (
     playerInfo.SpectatorStatus !== 0 ||
-    manager.reverseCupIsSpectator(changedInfo.login)
+    manager.reverseCupGetPlayerStatus(changedInfo.login).spectator
   ) {
     manager.setActiveRoundPlayer(changedInfo.login, undefined);
   } else {
@@ -802,7 +816,7 @@ async function onStartRoundStartScript(manager: GbxClientManager) {
     .filter((player) => {
       return (
         player.SpectatorStatus === 0 &&
-        !manager.reverseCupIsSpectator(player.Login)
+        !manager.reverseCupGetPlayerStatus(player.Login).spectator
       );
     })
     .forEach((player) => {
@@ -1014,7 +1028,7 @@ async function onScoresScript(manager: GbxClientManager, scores: Scores) {
     .filter((player) => {
       return (
         player.SpectatorStatus === 0 &&
-        !manager.reverseCupIsSpectator(player.Login)
+        !manager.reverseCupGetPlayerStatus(player.Login).spectator
       );
     })
     .forEach((player) => {
@@ -1222,7 +1236,7 @@ async function onWarmUpStartRoundScript(
     .filter((player) => {
       return (
         player.SpectatorStatus === 0 &&
-        !manager.reverseCupIsSpectator(player.Login)
+        !manager.reverseCupGetPlayerStatus(player.Login).spectator
       );
     })
     .forEach((player) => {
@@ -1270,7 +1284,7 @@ async function onEcho(
 
 async function onElimination(
   manager: GbxClientManager,
-  elimination: Elmination,
+  elimination: Elimination,
 ) {
   elimination.accountids.forEach((accountId) => {
     const player = Object.values(manager.info.liveInfo.players).find(
