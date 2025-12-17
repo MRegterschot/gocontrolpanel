@@ -116,7 +116,7 @@ export default class LiveRankingPlugin extends Plugin {
     if (liveInfo.type === "rounds" || liveInfo.type === "cup") {
       this.mode = liveInfo.type;
 
-      if (liveInfo.mode === "TM_ReverseCup.Script.txt") {
+      if (this.clientManager.isReverseCupMode()) {
         this.mode = "reversecup";
       }
     }
@@ -137,7 +137,7 @@ export default class LiveRankingPlugin extends Plugin {
       const player = scores.players[i];
 
       if (
-        this.clientManager.info.liveInfo.mode === "TM_ReverseCup.Script.txt" &&
+        this.clientManager.isReverseCupMode() &&
         player.matchpoints === -10000
       ) {
         continue;
@@ -187,9 +187,7 @@ export default class LiveRankingPlugin extends Plugin {
     if (cmType === "rounds" || cmType === "cup") {
       this.mode = cmType;
 
-      if (
-        this.clientManager.info.liveInfo.mode === "TM_ReverseCup.Script.txt"
-      ) {
+      if (this.clientManager.isReverseCupMode()) {
         this.mode = "reversecup";
       }
     }

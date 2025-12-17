@@ -153,7 +153,7 @@ export default class LiveRoundPlugin extends Plugin {
     if (liveInfo.type === "rounds" || liveInfo.type === "cup") {
       this.mode = liveInfo.type;
 
-      if (liveInfo.mode === "TM_ReverseCup.Script.txt") {
+      if (this.clientManager.isReverseCupMode()) {
         this.mode = "reversecup";
       }
     }
@@ -260,9 +260,7 @@ export default class LiveRoundPlugin extends Plugin {
     }
 
     this.rounds = this.rounds.filter(
-      (r) =>
-        this.clientManager.info.liveInfo.mode !== "TM_ReverseCup.Script.txt" ||
-        r.points > -2000,
+      (r) => !this.clientManager.isReverseCupMode() || r.points > -2000,
     );
 
     await this.updateWidget();
@@ -272,9 +270,7 @@ export default class LiveRoundPlugin extends Plugin {
     const cmType = this.clientManager.info.liveInfo.type;
     if (cmType === "rounds" || cmType === "cup") {
       this.mode = cmType;
-      if (
-        this.clientManager.info.liveInfo.mode === "TM_ReverseCup.Script.txt"
-      ) {
+      if (this.clientManager.isReverseCupMode()) {
         this.mode = "reversecup";
       }
     }

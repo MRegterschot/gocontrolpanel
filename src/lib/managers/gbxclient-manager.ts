@@ -335,8 +335,14 @@ export class GbxClientManager extends EventEmitter {
     }
   }
 
+  isReverseCupMode(): boolean {
+    return this.info.liveInfo.mode.toLowerCase().includes("reversecup");
+  }
+
   reverseCupGetPlayerStatus(playerLogin: string): PlayerStatus {
-    if (this.info.liveInfo.mode !== "TM_ReverseCup.Script.txt") {
+    const isReverseCupMode = this.isReverseCupMode();
+
+    if (!isReverseCupMode) {
       return { spectator: false, eliminated: false, lastChance: false };
     }
 
@@ -344,14 +350,10 @@ export class GbxClientManager extends EventEmitter {
 
     return {
       spectator: playerRound?.matchPoints === -10000,
-      eliminated: isEliminated(
-        playerRound?.matchPoints || -1,
-        this.info.liveInfo.mode,
-      ),
-      lastChance: isLastChance(
-        playerRound?.matchPoints || -1,
-        this.info.liveInfo.mode,
-      ),
+      eliminated:
+        isReverseCupMode && isEliminated(playerRound?.matchPoints ?? -1),
+      lastChance:
+        isReverseCupMode && isLastChance(playerRound?.matchPoints ?? -1),
     };
   }
 
@@ -684,6 +686,8 @@ function onPlayerInfoChanged(
   ) {
     manager.setActiveRoundPlayer(changedInfo.login, undefined);
   } else {
+    const isReverseCupMode = manager.isReverseCupMode();
+
     const playerWaypoint: PlayerWaypoint = {
       login: changedInfo.login,
       accountId: "",
@@ -694,14 +698,8 @@ function onPlayerInfoChanged(
         playerRound.matchPoints,
         manager.info.liveInfo.pointsLimit,
       ),
-      isLastChance: isLastChance(
-        playerRound.matchPoints,
-        manager.info.liveInfo.mode,
-      ),
-      isEliminated: isEliminated(
-        playerRound.matchPoints,
-        manager.info.liveInfo.mode,
-      ),
+      isLastChance: isReverseCupMode && isLastChance(playerRound.matchPoints),
+      isEliminated: isReverseCupMode && isEliminated(playerRound.matchPoints),
       checkpoint: 0,
     };
 
@@ -822,6 +820,8 @@ async function onStartRoundStartScript(manager: GbxClientManager) {
     .forEach((player) => {
       const playerInfo = manager.info.liveInfo.players[player.Login];
 
+      const isReverseCupMode = manager.isReverseCupMode();
+
       const playerWaypoint: PlayerWaypoint = {
         login: player.Login,
         accountId: playerInfo.accountId,
@@ -832,14 +832,8 @@ async function onStartRoundStartScript(manager: GbxClientManager) {
           playerInfo.matchPoints,
           manager.info.liveInfo.pointsLimit,
         ),
-        isLastChance: isLastChance(
-          playerInfo.matchPoints,
-          manager.info.liveInfo.mode,
-        ),
-        isEliminated: isEliminated(
-          playerInfo.matchPoints,
-          manager.info.liveInfo.mode,
-        ),
+        isLastChance: isReverseCupMode && isLastChance(playerInfo.matchPoints),
+        isEliminated: isReverseCupMode && isEliminated(playerInfo.matchPoints),
         checkpoint: 0,
       };
 
@@ -870,6 +864,8 @@ async function onEndRoundScript(manager: GbxClientManager, scores: Scores) {
     });
   }
 
+  const isReverseCupMode = manager.isReverseCupMode();
+
   scores.players.forEach((player) => {
     const playerRound: PlayerRound = {
       ...manager.info.liveInfo.players?.[player.login],
@@ -879,11 +875,10 @@ async function onEndRoundScript(manager: GbxClientManager, scores: Scores) {
         player.matchpoints,
         manager.info.liveInfo.pointsLimit,
       ),
-      lastChance: isLastChance(player.matchpoints, manager.info.liveInfo.mode),
-      eliminated:
-        manager.info.liveInfo.mode === "TM_ReverseCup.Script.txt"
-          ? isEliminated(player.matchpoints, manager.info.liveInfo.mode)
-          : manager.info.liveInfo.players?.[player.login]?.eliminated,
+      lastChance: isReverseCupMode && isLastChance(player.matchpoints),
+      eliminated: isReverseCupMode
+        ? isEliminated(player.matchpoints)
+        : manager.info.liveInfo.players?.[player.login]?.eliminated,
       winner: isWinner(player.matchpoints, manager.info.liveInfo.pointsLimit),
       bestTime: player.bestracetime,
       bestCheckpoints: player.bestracecheckpoints,
@@ -989,6 +984,9 @@ async function onScoresScript(manager: GbxClientManager, scores: Scores) {
 
   for (let i = 0; i < scores.players.length; i++) {
     const player = scores.players[i];
+
+    const isReverseCupMode = manager.isReverseCupMode();
+
     const playerRound: PlayerRound = {
       login: player.login,
       accountId: player.accountid,
@@ -999,8 +997,8 @@ async function onScoresScript(manager: GbxClientManager, scores: Scores) {
         player.matchpoints,
         manager.info.liveInfo.pointsLimit,
       ),
-      lastChance: isLastChance(player.matchpoints, manager.info.liveInfo.mode),
-      eliminated: isEliminated(player.matchpoints, manager.info.liveInfo.mode),
+      lastChance: isReverseCupMode && isLastChance(player.matchpoints),
+      eliminated: isReverseCupMode && isEliminated(player.matchpoints),
       winner: isWinner(player.matchpoints, manager.info.liveInfo.pointsLimit),
       roundPoints: player.roundpoints,
       matchPoints: player.matchpoints,
@@ -1147,7 +1145,7 @@ async function setScriptSettings(manager: GbxClientManager) {
   }
 
   // Points repartition
-  if (mode === "TM_ReverseCup.Script.txt") {
+  if (manager.isReverseCupMode()) {
     const complexRepartition = scriptSettings["S_ComplexPointsRepartition"];
     if (typeof complexRepartition === "string" && complexRepartition) {
       // Example: {"3": [3, 6, 10], "4,5": [1, 3, 6,10]}
@@ -1242,6 +1240,8 @@ async function onWarmUpStartRoundScript(
     .forEach((player) => {
       const playerInfo = manager.info.liveInfo.players[player.Login];
 
+      const isReverseCupMode = manager.isReverseCupMode();
+
       const playerWaypoint: PlayerWaypoint = {
         login: player.Login,
         accountId: playerInfo.accountId,
@@ -1252,14 +1252,8 @@ async function onWarmUpStartRoundScript(
           playerInfo.matchPoints,
           manager.info.liveInfo.pointsLimit,
         ),
-        isLastChance: isLastChance(
-          playerInfo.matchPoints,
-          manager.info.liveInfo.mode,
-        ),
-        isEliminated: isEliminated(
-          playerInfo.matchPoints,
-          manager.info.liveInfo.mode,
-        ),
+        isLastChance: isReverseCupMode && isLastChance(playerInfo.matchPoints),
+        isEliminated: isReverseCupMode && isEliminated(playerInfo.matchPoints),
         checkpoint: 0,
       };
 

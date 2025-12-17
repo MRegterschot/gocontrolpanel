@@ -246,19 +246,11 @@ export function isFinalist(matchPoints: number, pointsLimit?: number): boolean {
   return matchPoints == pointsLimit;
 }
 
-export function isLastChance(matchPoints: number, mode: string): boolean {
-  if (mode !== "TM_ReverseCup.Script.txt") {
-    return false;
-  }
-
+export function isLastChance(matchPoints: number): boolean {
   return -2000 < matchPoints && matchPoints <= -1000; // -1999 to -1000
 }
 
-export function isEliminated(matchPoints: number, mode: string): boolean {
-  if (mode !== "TM_ReverseCup.Script.txt") {
-    return false;
-  }
-
+export function isEliminated(matchPoints: number): boolean {
   return -10000 < matchPoints && matchPoints <= -2000; // -9999 to -2000
 }
 
