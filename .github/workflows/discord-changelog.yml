@@ -22,6 +22,10 @@ jobs:
             -H "Content-Type: application/json" \
             -d "{
               \"username\": \"Release Bot\",
+              \"content\": \"<@&1449473451785191464>\",
+              \"allowed_mentions\": {
+                \"roles\": [\"1449473451785191464\"]
+              },
               \"embeds\": [{
                 \"title\": \"📦 New Release: $RELEASE_NAME ($RELEASE_TAG)\",
                 \"description\": $SANITIZED_BODY,
