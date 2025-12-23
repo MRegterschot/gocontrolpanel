@@ -14,7 +14,7 @@ export default __t.object("Map", {
   uid: __t.string(),
   name: __t.string(),
   filename: __t.string(),
-  author: __t.string(),
+  authorLogin: __t.string(),
   authorNickname: __t.string(),
   environment: __t.string(),
   mood: __t.string(),

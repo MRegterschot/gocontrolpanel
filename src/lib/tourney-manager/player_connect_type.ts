@@ -11,7 +11,7 @@ import {
 } from "spacetimedb";
 
 export default __t.object("PlayerConnect", {
-  login: __t.string(),
+  accountId: __t.string(),
   isSpectator: __t.bool(),
 });
 

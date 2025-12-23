@@ -14,6 +14,7 @@ import {
 const CompetitionKind = __t.enum("CompetitionKind", {MatchV1: __t.u32(),
   CompetitionV1: __t.u32(),
   MapMonitorV1: __t.u32(),
+  MonitoringV1: __t.u32(),
   ServerV1: __t.u32(),
 });
 

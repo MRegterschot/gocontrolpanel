@@ -17,8 +17,8 @@ import Competitions from "./competitions_type";
 
 export default __t.row({
   id: __t.u32().primaryKey(),
-  tournamentId: __t.u32(),
-  parentId: __t.option(__t.u32()),
+  tournamentId: __t.u32().name("tournament_id"),
+  parentId: __t.option(__t.u32()).name("parent_id"),
   name: __t.string(),
   get status() {
     return CompetitionStatus;
@@ -28,9 +28,9 @@ export default __t.row({
     return Scheduling;
   },
   get registrationRules() {
-    return RegistrationRules;
+    return RegistrationRules.name("registration_rules");
   },
-  entryPoints: __t.option(__t.array(__t.u32())),
+  entryPoints: __t.option(__t.array(__t.u32())).name("entry_points"),
   get competitions() {
     return Competitions;
   },

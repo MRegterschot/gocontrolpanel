@@ -9,19 +9,18 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
-import TournamentStatus from "./tournament_status_type";
+import MonitoringSettings from "./monitoring_settings_type";
 
 
-export default __t.object("TabTournament", {
+export default __t.object("TmMonitoring", {
   id: __t.u32(),
-  creator: __t.string(),
-  owners: __t.array(__t.string()),
-  name: __t.string(),
-  description: __t.string(),
-  get status() {
-    return TournamentStatus;
-  },
+  tournament: __t.u32(),
   competition: __t.u32(),
+  get settings() {
+    return MonitoringSettings;
+  },
+  name: __t.option(__t.string()),
+  active: __t.bool(),
 });
 
 

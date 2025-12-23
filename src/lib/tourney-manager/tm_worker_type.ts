@@ -9,19 +9,12 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
-import CompetitionKind from "./competition_kind_type";
-import StartEnd from "./start_end_type";
 
-
-export default __t.object("Node", {
-  get weight() {
-    return CompetitionKind;
-  },
-  get next() {
-    return StartEnd;
-  },
-  output: __t.bool(),
-  input: __t.bool(),
+export default __t.object("TmWorker", {
+  tmLogin: __t.string(),
+  identity: __t.identity(),
+  ownerId: __t.string(),
+  online: __t.bool(),
 });
 
 

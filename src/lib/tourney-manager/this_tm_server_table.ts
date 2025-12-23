@@ -14,9 +14,9 @@ import ServerState from "./server_state_type";
 
 
 export default __t.row({
-  id: __t.string(),
+  tmLogin: __t.string().name("tm_login"),
   identity: __t.identity(),
-  ownerId: __t.string(),
+  ownerId: __t.string().name("owner_id"),
   online: __t.bool(),
   get config() {
     return ServerConfig;
@@ -25,5 +25,5 @@ export default __t.row({
     return ServerState;
   },
   capturable: __t.bool(),
-  activeMatch: __t.option(__t.u32()),
+  activeMatch: __t.option(__t.u32()).name("active_match"),
 });

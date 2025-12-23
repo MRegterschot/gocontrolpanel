@@ -11,6 +11,7 @@ import {
 } from "spacetimedb";
 
 export default __t.object("TmMapRecord", {
+  id: __t.u32(),
   mapUid: __t.string(),
   playerUid: __t.string(),
   timestamp: __t.timestamp(),

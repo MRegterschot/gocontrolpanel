@@ -11,9 +11,9 @@ import {
 } from "spacetimedb";
 
 export default __t.row({
-  matchId: __t.u32(),
-  mapUid: __t.string(),
-  playerUid: __t.string(),
+  matchId: __t.u32().name("match_id"),
+  mapUid: __t.string().name("map_uid"),
+  playerUid: __t.string().name("player_uid"),
   timestamp: __t.timestamp(),
   time: __t.u32(),
 });

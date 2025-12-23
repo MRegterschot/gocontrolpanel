@@ -12,7 +12,6 @@ import {
 
 export default __t.object("WayPoint", {
   accountId: __t.string(),
-  login: __t.string(),
   time: __t.u32(),
   racetime: __t.u32(),
   laptime: __t.u32(),

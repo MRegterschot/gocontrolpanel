@@ -11,7 +11,7 @@ import {
 } from "spacetimedb";
 
 export default __t.object("PlayerDisconnect", {
-  login: __t.string(),
+  accountId: __t.string(),
   disconnectReason: __t.string(),
 });
 

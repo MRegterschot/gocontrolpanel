@@ -9,19 +9,17 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
-import CompetitionKind from "./competition_kind_type";
-import StartEnd from "./start_end_type";
+import TournamentStatus from "./tournament_status_type";
 
 
-export default __t.object("Node", {
-  get weight() {
-    return CompetitionKind;
+export default __t.row({
+  id: __t.u32().primaryKey(),
+  creator: __t.string(),
+  owners: __t.array(__t.string()),
+  name: __t.string(),
+  description: __t.string(),
+  get status() {
+    return TournamentStatus;
   },
-  get next() {
-    return StartEnd;
-  },
-  output: __t.bool(),
-  input: __t.bool(),
+  competition: __t.u32(),
 });
-
-

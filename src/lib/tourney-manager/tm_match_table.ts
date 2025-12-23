@@ -19,20 +19,20 @@ import MatchLeaderboardRules from "./match_leaderboard_rules_type";
 
 export default __t.row({
   id: __t.u32().primaryKey(),
-  tournamentId: __t.u32(),
-  competitionId: __t.u32(),
+  tournamentId: __t.u32().name("tournament_id"),
+  competitionId: __t.u32().name("competition_id"),
   get scheduling() {
     return Scheduling;
   },
-  serverId: __t.option(__t.string()),
+  serverId: __t.option(__t.string()).name("server_id"),
   get preMatchConfig() {
-    return __t.option(ServerConfig);
+    return __t.option(ServerConfig).name("pre_match_config");
   },
   get matchConfig() {
-    return __t.option(ServerConfig);
+    return __t.option(ServerConfig).name("match_config");
   },
   get postMatchConfig() {
-    return __t.option(ServerConfig);
+    return __t.option(ServerConfig).name("post_match_config");
   },
   get status() {
     return MatchStatus;
@@ -41,7 +41,7 @@ export default __t.row({
     return MatchState;
   },
   get permittedEntities() {
-    return MatchEntityRules;
+    return MatchEntityRules.name("permitted_entities");
   },
   get leaderboard() {
     return MatchLeaderboardRules;

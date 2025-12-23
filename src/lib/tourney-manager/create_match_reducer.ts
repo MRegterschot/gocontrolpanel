@@ -11,7 +11,6 @@ import {
 } from "spacetimedb";
 
 export default {
-  tournamentId: __t.u32(),
   competitionId: __t.u32(),
   withTemplate: __t.option(__t.u32()),
 };

@@ -9,9 +9,19 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
+import TournamentStatus from "./tournament_status_type";
 
-export const params = {
-  login: __t.string(),
-  password: __t.string(),
-};
-export const returnType = __t.unit()
+
+export default __t.object("TournamentV1", {
+  id: __t.u32(),
+  creator: __t.string(),
+  owners: __t.array(__t.string()),
+  name: __t.string(),
+  description: __t.string(),
+  get status() {
+    return TournamentStatus;
+  },
+  competition: __t.u32(),
+});
+
+

@@ -12,7 +12,6 @@ import {
 
 export default {
   name: __t.string(),
-  tournamentId: __t.u32(),
   parentId: __t.u32(),
   withTemplate: __t.option(__t.u32()),
 };

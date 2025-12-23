@@ -15,6 +15,6 @@ import ModeRules from "./mode_rules_type";
 export default __t.row({
   rules: __t.bool(),
   get modeRules() {
-    return ModeRules;
+    return ModeRules.name("mode_rules");
   },
 });

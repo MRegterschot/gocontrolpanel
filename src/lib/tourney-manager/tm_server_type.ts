@@ -14,7 +14,7 @@ import ServerState from "./server_state_type";
 
 
 export default __t.object("TmServer", {
-  id: __t.string(),
+  tmLogin: __t.string(),
   identity: __t.identity(),
   ownerId: __t.string(),
   online: __t.bool(),

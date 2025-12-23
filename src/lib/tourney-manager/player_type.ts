@@ -13,7 +13,6 @@ import RoundTime from "./round_time_type";
 
 
 export default __t.object("Player", {
-  login: __t.string(),
   accountId: __t.string(),
   name: __t.string(),
   team: __t.i32(),

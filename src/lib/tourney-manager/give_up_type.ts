@@ -12,7 +12,6 @@ import {
 
 export default __t.object("GiveUp", {
   accountId: __t.string(),
-  login: __t.string(),
   time: __t.u32(),
 });
 

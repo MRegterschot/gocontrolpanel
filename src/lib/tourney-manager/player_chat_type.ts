@@ -11,7 +11,7 @@ import {
 } from "spacetimedb";
 
 export default __t.object("PlayerChat", {
-  login: __t.string(),
+  accountId: __t.string(),
   text: __t.string(),
   isRegisteredCmd: __t.bool(),
   options: __t.i32(),

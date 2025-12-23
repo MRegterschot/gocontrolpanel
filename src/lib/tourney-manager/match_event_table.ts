@@ -14,8 +14,8 @@ import Event from "./event_type";
 
 
 export default __t.row({
-  tournamentId: __t.u32(),
-  matchId: __t.u32(),
+  tournamentId: __t.u32().name("tournament_id"),
+  matchId: __t.u32().name("match_id"),
   get state() {
     return MatchState;
   },
