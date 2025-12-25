@@ -9,9 +9,16 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
+import DataConnectionSettings from "./data_connection_settings_type";
 
-export default {
-  compId: __t.u32(),
-  fromNode: __t.u32(),
-  toNode: __t.u32(),
-};
+
+// The tagged union or sum type for the algebraic type `ConnectionSettings`.
+const ConnectionSettings = __t.enum("ConnectionSettings", {Waiting: __t.unit(),
+  get Data() {
+    return DataConnectionSettings;
+  },
+});
+
+export default ConnectionSettings;
+
+

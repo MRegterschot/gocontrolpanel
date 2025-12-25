@@ -1,4 +1,5 @@
 import TournamentInfo from "@/components/tournaments/tournament/tournament-info";
+import TournamentStages from "@/components/tournaments/tournament/tournament-competition-tree";
 
 export default async function TournamentPage({
   params,
@@ -15,8 +16,7 @@ export default async function TournamentPage({
       </div>
 
       <TournamentInfo tournamentId={Number(id)} />
+      <TournamentStages tournamentId={Number(id)} />
     </div>
   );
 }
-
-

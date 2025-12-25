@@ -9,19 +9,21 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
-import CompetitionKind from "./competition_kind_type";
-import StartEnd from "./start_end_type";
+import NodeKindRef from "./node_kind_ref_type";
+import ConnectionSettings from "./connection_settings_type";
 
 
-export default __t.object("Node", {
-  get weight() {
-    return CompetitionKind;
+export default __t.object("CompetitionConnection", {
+  competitionId: __t.u32(),
+  get connectionFrom() {
+    return NodeKindRef;
   },
-  get next() {
-    return StartEnd;
+  get connectionTo() {
+    return NodeKindRef;
   },
-  output: __t.bool(),
-  input: __t.bool(),
+  get connectionSettings() {
+    return ConnectionSettings;
+  },
 });
 
 

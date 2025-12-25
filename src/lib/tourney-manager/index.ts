@@ -31,8 +31,6 @@ import {
 } from "spacetimedb";
 
 // Import and reexport all reducer arg types
-import AddDependencyReducer from "./add_dependency_reducer";
-export { AddDependencyReducer };
 import ClientConnectedReducer from "./client_connected_reducer";
 export { ClientConnectedReducer };
 import CompetitionRegisterPlayerReducer from "./competition_register_player_reducer";
@@ -41,6 +39,8 @@ import CompetitionUnregisterPlayerReducer from "./competition_unregister_player_
 export { CompetitionUnregisterPlayerReducer };
 import CreateCompetitionReducer from "./create_competition_reducer";
 export { CreateCompetitionReducer };
+import CreateConnectionReducer from "./create_connection_reducer";
+export { CreateConnectionReducer };
 import CreateEnvVarReducer from "./create_env_var_reducer";
 export { CreateEnvVarReducer };
 import CreateEventTemplateReducer from "./create_event_template_reducer";
@@ -87,6 +87,8 @@ export { PostRoundReplayProcedure };
 // Import and reexport all table handle types
 import CompetitionRow from "./competition_table";
 export { CompetitionRow };
+import CompetitionConnectionRow from "./competition_connection_table";
+export { CompetitionConnectionRow };
 import CompetitionRecordRow from "./competition_record_table";
 export { CompetitionRecordRow };
 import CompetitionScheduleRow from "./competition_schedule_table";
@@ -115,6 +117,12 @@ import MyTournamentRow from "./my_tournament_table";
 export { MyTournamentRow };
 import RegistrationPlayerRow from "./registration_player_table";
 export { RegistrationPlayerRow };
+import TabCompetitionRow from "./tab_competition_table";
+export { TabCompetitionRow };
+import TabCompetitionConnectionRow from "./tab_competition_connection_table";
+export { TabCompetitionConnectionRow };
+import TabTmServerRow from "./tab_tm_server_table";
+export { TabTmServerRow };
 import TabTournamentRow from "./tab_tournament_table";
 export { TabTournamentRow };
 import ThisTmServerRow from "./this_tm_server_table";
@@ -155,20 +163,20 @@ import ChatSendToUserArgs from "./chat_send_to_user_args_type";
 export { ChatSendToUserArgs };
 import Common from "./common_type";
 export { Common };
-import Competition from "./competition_type";
-export { Competition };
-import CompetitionKind from "./competition_kind_type";
-export { CompetitionKind };
+import CompetitionConnection from "./competition_connection_type";
+export { CompetitionConnection };
 import CompetitionSchedule from "./competition_schedule_type";
 export { CompetitionSchedule };
 import CompetitionStatus from "./competition_status_type";
 export { CompetitionStatus };
-import Competitions from "./competitions_type";
-export { Competitions };
+import CompetitionV1 from "./competition_v_1_type";
+export { CompetitionV1 };
+import ConnectionSettings from "./connection_settings_type";
+export { ConnectionSettings };
 import Custom from "./custom_type";
 export { Custom };
-import Edge from "./edge_type";
-export { Edge };
+import DataConnectionSettings from "./data_connection_settings_type";
+export { DataConnectionSettings };
 import EndMapEnd from "./end_map_end_type";
 export { EndMapEnd };
 import EndMapStart from "./end_map_start_type";
@@ -237,8 +245,8 @@ import MonitoringSettingsClub from "./monitoring_settings_club_type";
 export { MonitoringSettingsClub };
 import MonitoringSettingsMap from "./monitoring_settings_map_type";
 export { MonitoringSettingsMap };
-import Node from "./node_type";
-export { Node };
+import NodeKindRef from "./node_kind_ref_type";
+export { NodeKindRef };
 import PlayLoopEnd from "./play_loop_end_type";
 export { PlayLoopEnd };
 import PlayLoopStart from "./play_loop_start_type";
@@ -281,8 +289,6 @@ import ServerOptions from "./server_options_type";
 export { ServerOptions };
 import ServerState from "./server_state_type";
 export { ServerState };
-import StartEnd from "./start_end_type";
-export { StartEnd };
 import StartLine from "./start_line_type";
 export { StartLine };
 import StartMap from "./start_map_type";
@@ -295,6 +301,8 @@ import StartServer from "./start_server_type";
 export { StartServer };
 import StartTurn from "./start_turn_type";
 export { StartTurn };
+import TabCompetitionConnection from "./tab_competition_connection_type";
+export { TabCompetitionConnection };
 import Team from "./team_type";
 export { Team };
 import TmCompRecord from "./tm_comp_record_type";
@@ -307,14 +315,14 @@ import TmMonitoring from "./tm_monitoring_type";
 export { TmMonitoring };
 import TmRecord from "./tm_record_type";
 export { TmRecord };
-import TmServer from "./tm_server_type";
-export { TmServer };
 import TmServerConfig from "./tm_server_config_type";
 export { TmServerConfig };
 import TmServerMethodCall from "./tm_server_method_call_type";
 export { TmServerMethodCall };
 import TmServerMethodResponse from "./tm_server_method_response_type";
 export { TmServerMethodResponse };
+import TmServerV1 from "./tm_server_v_1_type";
+export { TmServerV1 };
 import TmWorker from "./tm_worker_type";
 export { TmWorker };
 import TmWorkerJobs from "./tm_worker_jobs_type";
@@ -340,17 +348,6 @@ export { WayPoint };
 
 /** The schema information for all tables in this module. This is defined the same was as the tables would have been defined in the server. */
 const tablesSchema = __schema(
-  __table({
-    name: 'competition',
-    indexes: [
-      { name: 'id', algorithm: 'btree', columns: [
-        'id',
-      ] },
-    ],
-    constraints: [
-      { name: 'competition_id_key', constraint: 'unique', columns: ['id'] },
-    ],
-  }, CompetitionRow),
   __table({
     name: 'competition_schedule',
     indexes: [
@@ -426,6 +423,51 @@ const tablesSchema = __schema(
     ],
   }, RegistrationPlayerRow),
   __table({
+    name: 'tab_competition',
+    indexes: [
+      { name: 'id', algorithm: 'btree', columns: [
+        'id',
+      ] },
+    ],
+    constraints: [
+      { name: 'tab_competition_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, TabCompetitionRow),
+  __table({
+    name: 'tab_competition_connection',
+    indexes: [
+      { name: 'competition_id', algorithm: 'btree', columns: [
+        'competitionId',
+      ] },
+      { name: 'connection_exists', algorithm: 'btree', columns: [
+        'connectionFromVariant',
+        'connectionFrom',
+        'connectionToVariant',
+        'connectionTo',
+      ] },
+    ],
+    constraints: [
+    ],
+  }, TabCompetitionConnectionRow),
+  __table({
+    name: 'tab_tm_server',
+    indexes: [
+      { name: 'identity', algorithm: 'btree', columns: [
+        'identity',
+      ] },
+      { name: 'owner_id', algorithm: 'btree', columns: [
+        'ownerId',
+      ] },
+      { name: 'tm_login', algorithm: 'btree', columns: [
+        'tmLogin',
+      ] },
+    ],
+    constraints: [
+      { name: 'tab_tm_server_identity_key', constraint: 'unique', columns: ['identity'] },
+      { name: 'tab_tm_server_tm_login_key', constraint: 'unique', columns: ['tmLogin'] },
+    ],
+  }, TabTmServerRow),
+  __table({
     name: 'tab_tournament',
     indexes: [
       { name: 'id', algorithm: 'btree', columns: [
@@ -490,21 +532,6 @@ const tablesSchema = __schema(
     ],
   }, TmMonitoringRow),
   __table({
-    name: 'tm_server',
-    indexes: [
-      { name: 'identity', algorithm: 'btree', columns: [
-        'identity',
-      ] },
-      { name: 'tm_login', algorithm: 'btree', columns: [
-        'tmLogin',
-      ] },
-    ],
-    constraints: [
-      { name: 'tm_server_identity_key', constraint: 'unique', columns: ['identity'] },
-      { name: 'tm_server_tm_login_key', constraint: 'unique', columns: ['tmLogin'] },
-    ],
-  }, TmServerRow),
-  __table({
     name: 'tm_server_config',
     indexes: [
       { name: 'id', algorithm: 'btree', columns: [
@@ -565,12 +592,12 @@ const tablesSchema = __schema(
   __table({
     name: 'user',
     indexes: [
-      { name: 'id', algorithm: 'btree', columns: [
-        'id',
+      { name: 'account_id', algorithm: 'btree', columns: [
+        'accountId',
       ] },
     ],
     constraints: [
-      { name: 'user_id_key', constraint: 'unique', columns: ['id'] },
+      { name: 'user_account_id_key', constraint: 'unique', columns: ['accountId'] },
     ],
   }, UserRow),
   __table({
@@ -584,6 +611,20 @@ const tablesSchema = __schema(
       { name: 'user_identity_identity_key', constraint: 'unique', columns: ['identity'] },
     ],
   }, UserIdentityRow),
+  __table({
+    name: 'competition',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, CompetitionRow),
+  __table({
+    name: 'competition_connection',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, CompetitionConnectionRow),
   __table({
     name: 'competition_record',
     indexes: [
@@ -634,6 +675,13 @@ const tablesSchema = __schema(
     ],
   }, ThisTmServerRow),
   __table({
+    name: 'tm_server',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, TmServerRow),
+  __table({
     name: 'tournament',
     indexes: [
     ],
@@ -644,10 +692,10 @@ const tablesSchema = __schema(
 
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
 const reducersSchema = __reducers(
-  __reducerSchema("add_dependency", AddDependencyReducer),
   __reducerSchema("competition_register_player", CompetitionRegisterPlayerReducer),
   __reducerSchema("competition_unregister_player", CompetitionUnregisterPlayerReducer),
   __reducerSchema("create_competition", CreateCompetitionReducer),
+  __reducerSchema("create_connection", CreateConnectionReducer),
   __reducerSchema("create_env_var", CreateEnvVarReducer),
   __reducerSchema("create_event_template", CreateEventTemplateReducer),
   __reducerSchema("create_match", CreateMatchReducer),

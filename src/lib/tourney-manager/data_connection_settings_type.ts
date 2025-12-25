@@ -9,17 +9,10 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
-import Node from "./node_type";
-import Edge from "./edge_type";
 
-
-export default __t.object("Competitions", {
-  get nodes() {
-    return __t.array(Node);
-  },
-  get edges() {
-    return __t.array(Edge);
-  },
+export default __t.object("DataConnectionSettings", {
+  countTop: __t.option(__t.u8()),
+  countBottom: __t.option(__t.u8()),
 });
 
 

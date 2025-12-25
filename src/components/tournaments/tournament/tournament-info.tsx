@@ -11,8 +11,12 @@ export default function TournamentInfo({
 }: {
   tournamentId: number;
 }) {
-  const [rows] = useTable(tables.tournament, where(eq('id', tournamentId)));
-  const tournament = rows[0]
+  const [tournamentRows] = useTable(
+    tables.tournament,
+    where(eq("id", tournamentId)),
+  );
+
+  const tournament = tournamentRows[0];
 
   if (!tournament) {
     return <span>Tournament not found</span>;

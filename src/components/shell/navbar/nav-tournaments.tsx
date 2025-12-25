@@ -19,7 +19,6 @@ import { generatePath } from "@/lib/utils";
 import { routes } from "@/routes";
 import {
   IconInfoCircle,
-  IconTournament,
   IconTrophy,
   IconUsersGroup,
 } from "@tabler/icons-react";
@@ -85,18 +84,6 @@ export default function NavTournaments() {
                         >
                           <IconInfoCircle />
                           <span>Tournament Info</span>
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild>
-                        <Link
-                          href={generatePath(routes.tournaments.bracket, {
-                            id: tournament.id.toString(),
-                          })}
-                        >
-                          <IconTournament />
-                          <span>Bracket</span>
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>

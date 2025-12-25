@@ -9,10 +9,18 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
+import ConnectionSettings from "./connection_settings_type";
 
-export default __t.object("StartEnd", {
-  start: __t.u32(),
-  end: __t.u32(),
+
+export default __t.object("TabCompetitionConnection", {
+  competitionId: __t.u32(),
+  connectionFrom: __t.u32(),
+  connectionTo: __t.u32(),
+  connectionFromVariant: __t.u8(),
+  connectionToVariant: __t.u8(),
+  get connectionSettings() {
+    return ConnectionSettings;
+  },
 });
 
 

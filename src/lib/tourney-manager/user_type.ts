@@ -11,7 +11,7 @@ import {
 } from "spacetimedb";
 
 export default __t.object("User", {
-  id: __t.string(),
+  accountId: __t.string(),
   name: __t.string(),
   clubTag: __t.string(),
   online: __t.bool(),

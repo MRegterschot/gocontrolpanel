@@ -9,16 +9,15 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
-import StartEnd from "./start_end_type";
 
-
-export default __t.object("Edge", {
-  get next() {
-    return StartEnd;
-  },
-  get node() {
-    return StartEnd;
-  },
+// The tagged union or sum type for the algebraic type `NodeKindRef`.
+const NodeKindRef = __t.enum("NodeKindRef", {MatchV1: __t.u32(),
+  CompetitionV1: __t.u32(),
+  MapMonitorV1: __t.u32(),
+  MonitoringV1: __t.u32(),
+  ServerV1: __t.u32(),
 });
+
+export default NodeKindRef;
 
 

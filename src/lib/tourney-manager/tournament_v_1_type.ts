@@ -21,7 +21,6 @@ export default __t.object("TournamentV1", {
   get status() {
     return TournamentStatus;
   },
-  competition: __t.u32(),
 });
 
 

@@ -15,7 +15,7 @@ import RegistrationRules from "./registration_rules_type";
 
 
 export default __t.row({
-  id: __t.u32(),
+  id: __t.u32().primaryKey(),
   tournamentId: __t.u32().name("tournament_id"),
   parentId: __t.option(__t.u32()).name("parent_id"),
   name: __t.string(),

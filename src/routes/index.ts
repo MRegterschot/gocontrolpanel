@@ -17,7 +17,6 @@ export const routes = {
   },
   tournaments: {
     tournament: "/tournaments/:id",
-    bracket: "/tournaments/:id/bracket",
     registration: "/tournaments/:id/registration",
   },
   admin: {
@@ -315,17 +314,6 @@ export const breadCrumbs: {
       },
       {
         label: "Tournament Info",
-      },
-    ],
-  },
-  {
-    path: routes.tournaments.bracket,
-    breadCrumbs: [
-      {
-        label: "Tournaments",
-      },
-      {
-        label: "Bracket",
       },
     ],
   },

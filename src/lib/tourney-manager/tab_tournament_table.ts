@@ -21,5 +21,4 @@ export default __t.row({
   get status() {
     return TournamentStatus;
   },
-  competition: __t.u32(),
 });
