@@ -1,10 +1,14 @@
+"use client";
+
+import Modal from "@/components/modals/modal";
+import CreateCompetitionModal from "@/components/modals/tournaments/competition/create-competition";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { CompetitionNode } from "@/hooks/tournaments/competitions/use-competition-tree";
 import { cn } from "@/lib/utils";
-import { IconChevronUp, IconProgress } from "@tabler/icons-react";
+import { IconChevronUp, IconPlus, IconProgress } from "@tabler/icons-react";
 import { useState } from "react";
 import Registration from "./registration";
 
@@ -27,7 +31,7 @@ export default function CompetitionTree({
     <div>
       <div className="flex gap-4">
         <div className="flex flex-col items-center">
-          <Card className="rounded-full w-12 min-h-12 grid place-items-center font-bold text-lg">
+          <Card className="rounded-full w-12 min-h-12 grid place-items-center font-semibold">
             {sectionIndex + 1}
             {String.fromCharCode(97 + subsectionIndex)}
           </Card>
@@ -48,7 +52,14 @@ export default function CompetitionTree({
                 <Registration registrationRules={tree.registrationRules} />
               </div>
             </div>
-            <div>{tree.estimate?.toString()}</div>
+
+            <Modal>
+              <CreateCompetitionModal data={tree.id} />
+              <Button variant={"outline"}>
+                <IconPlus />
+                Add Stage
+              </Button>
+            </Modal>
           </div>
 
           <Separator />
