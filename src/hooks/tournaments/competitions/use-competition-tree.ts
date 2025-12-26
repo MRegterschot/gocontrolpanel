@@ -3,9 +3,8 @@ import { useMemo } from "react";
 import { Infer } from "spacetimedb";
 import { eq, useTable, where } from "spacetimedb/react";
 
-type CompetitionBase = Mutable<Infer<typeof CompetitionV1>>;
+type CompetitionBase = Infer<typeof CompetitionV1>;
 
-// Our new tree node type
 export interface CompetitionNode extends CompetitionBase {
   children: CompetitionNode[];
 }
@@ -16,51 +15,36 @@ export function useCompetitionTree(tournamentId: number) {
     where(eq("tournamentId", tournamentId)),
   );
 
-  console.log(competitionRows);
+  const tree = useMemo<CompetitionNode | null>(() => {
+    if (!competitionRows || competitionRows.length === 0) return null;
 
-  const [competitionConnectionRows] = useTable(
-    tables.competitionConnection,
-    where(eq("tournamentId", tournamentId)),
-  );
-
-  console.log(competitionConnectionRows);
-
-  const [matchRows] = useTable(
-    tables.tmMatch,
-    where(eq("tournamentId", tournamentId)),
-  );
-
-  const tree = useMemo(() => {
-    if (!competitionRows) return null;
-
-    // Store originals for lookup
-    const compMap = new Map(competitionRows.map((c) => [c.id, c]));
+    const compMap = new Map<number, CompetitionBase>(
+      competitionRows.map((c) => [c.id, c]),
+    );
 
     function buildNode(id: number): CompetitionNode | null {
       const comp = compMap.get(id);
       if (!comp) return null;
 
-      const node = {
+      const node: CompetitionNode = {
         ...comp,
-        children: [] as CompetitionNode[],
+        children: [],
       };
 
-      // for (const link of comp.nodes) {
-      //   if (link.weight.tag === "CompetitionV1") {
-      //     const childId = link.weight.value;
-      //     const childNode = buildNode(childId);
-      //     if (childNode) node.children.push(childNode);
-      //   }
-      // }
+      const childRows = competitionRows.filter((c) => c.parentId === id);
+      for (const child of childRows) {
+        const childNode = buildNode(child.id);
+        if (childNode) node.children.push(childNode);
+      }
 
       return node;
     }
 
-    const root = competitionRows.find((c) => !c.parentId);
-    if (!root) return null; // defensive fallback
+    const root = competitionRows.find((c) => c.parentId == null);
+    if (!root) return null;
 
     return buildNode(root.id);
-  }, [competitionRows]);
+  }, [competitionRows, tournamentId]);
 
   return { tree };
 }
