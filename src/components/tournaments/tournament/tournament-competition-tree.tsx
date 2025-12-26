@@ -14,8 +14,6 @@ export default function TournamentCompetitionTree({
     return <p>No stages found for this tournament.</p>;
   }
 
-  console.log("Rendering competition tree", tree);
-
   return (
     <div className="flex flex-col">
       {tree.children.map((child, i) => (

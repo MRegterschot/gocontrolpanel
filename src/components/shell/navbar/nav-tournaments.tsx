@@ -19,12 +19,15 @@ import { generatePath } from "@/lib/utils";
 import { routes } from "@/routes";
 import {
   IconInfoCircle,
+  IconPlus,
   IconTrophy,
   IconUsersGroup,
 } from "@tabler/icons-react";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
+import Modal from "@/components/modals/modal";
+import CreateTournamentModal from "@/components/modals/tournaments/tournament/create-tournament";
 import { tables } from "@/lib/tourney-manager";
 import { useSpacetimeDB, useTable } from "spacetimedb/react";
 
@@ -104,6 +107,16 @@ export default function NavTournaments() {
               </SidebarMenuItem>
             </Collapsible>
           ))}
+
+          <SidebarMenuItem>
+            <Modal>
+              <CreateTournamentModal />
+              <SidebarMenuButton className="cursor-pointer">
+                <IconPlus />
+                <span>Create Tournament</span>
+              </SidebarMenuButton>
+            </Modal>
+          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
