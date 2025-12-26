@@ -1,9 +1,9 @@
-import { Competition, tables } from "@/lib/tourney-manager";
+import { CompetitionV1, tables } from "@/lib/tourney-manager";
 import { useMemo } from "react";
 import { Infer } from "spacetimedb";
 import { eq, useTable, where } from "spacetimedb/react";
 
-type CompetitionBase = Mutable<Infer<typeof Competition>>;
+type CompetitionBase = Mutable<Infer<typeof CompetitionV1>>;
 
 // Our new tree node type
 export interface CompetitionNode extends CompetitionBase {
@@ -11,8 +11,22 @@ export interface CompetitionNode extends CompetitionBase {
 }
 
 export function useCompetitionTree(tournamentId: number) {
-  const [competitionRows, isLoading] = useTable(
+  const [competitionRows] = useTable(
     tables.competition,
+    where(eq("tournamentId", tournamentId)),
+  );
+
+  console.log(competitionRows);
+
+  const [competitionConnectionRows] = useTable(
+    tables.competitionConnection,
+    where(eq("tournamentId", tournamentId)),
+  );
+
+  console.log(competitionConnectionRows);
+
+  const [matchRows] = useTable(
+    tables.tmMatch,
     where(eq("tournamentId", tournamentId)),
   );
 
@@ -31,13 +45,13 @@ export function useCompetitionTree(tournamentId: number) {
         children: [] as CompetitionNode[],
       };
 
-      for (const link of comp.competitions.nodes) {
-        if (link.weight.tag === "CompetitionV1") {
-          const childId = link.weight.value;
-          const childNode = buildNode(childId);
-          if (childNode) node.children.push(childNode);
-        }
-      }
+      // for (const link of comp.nodes) {
+      //   if (link.weight.tag === "CompetitionV1") {
+      //     const childId = link.weight.value;
+      //     const childNode = buildNode(childId);
+      //     if (childNode) node.children.push(childNode);
+      //   }
+      // }
 
       return node;
     }
@@ -48,5 +62,5 @@ export function useCompetitionTree(tournamentId: number) {
     return buildNode(root.id);
   }, [competitionRows]);
 
-  return { tree, isLoading };
+  return { tree };
 }

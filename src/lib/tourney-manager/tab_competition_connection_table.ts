@@ -14,6 +14,7 @@ import ConnectionSettings from "./connection_settings_type";
 
 export default __t.row({
   competitionId: __t.u32().name("competition_id"),
+  tournamentId: __t.u32().name("tournament_id"),
   connectionFrom: __t.u32().name("connection_from"),
   connectionTo: __t.u32().name("connection_to"),
   connectionFromVariant: __t.u8().name("connection_from_variant"),

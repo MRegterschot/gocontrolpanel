@@ -8,11 +8,7 @@ export default function TournamentCompetitionTree({
 }: {
   tournamentId: number;
 }) {
-  const { tree, isLoading } = useCompetitionTree(tournamentId);
-
-  if (isLoading) {
-    return <p>Loading stages...</p>;
-  }
+  const { tree } = useCompetitionTree(tournamentId);
 
   if (!tree) {
     return <p>No stages found for this tournament.</p>;
@@ -20,7 +16,7 @@ export default function TournamentCompetitionTree({
 
   return (
     <div className="flex flex-col">
-      <CompetitionTree tree={tree} sectionIndex={0}  />
+      <CompetitionTree tree={tree} sectionIndex={0} />
     </div>
   );
 }

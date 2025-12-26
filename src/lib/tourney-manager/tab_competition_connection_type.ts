@@ -14,6 +14,7 @@ import ConnectionSettings from "./connection_settings_type";
 
 export default __t.object("TabCompetitionConnection", {
   competitionId: __t.u32(),
+  tournamentId: __t.u32(),
   connectionFrom: __t.u32(),
   connectionTo: __t.u32(),
   connectionFromVariant: __t.u8(),
