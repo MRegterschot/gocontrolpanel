@@ -4,11 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { CompetitionNode } from "@/hooks/tournaments/competitions/use-competition-tree";
 import { cn } from "@/lib/utils";
-import {
-  IconChevronDown,
-  IconChevronUp,
-  IconProgress,
-} from "@tabler/icons-react";
+import { IconChevronUp, IconProgress } from "@tabler/icons-react";
 import { useState } from "react";
 import Registration from "./registration";
 
@@ -25,7 +21,7 @@ export default function CompetitionTree({
   subsectionIndex = 0,
   isLast = true,
 }: CompetitionTreeProps) {
-  const [isOpen, setIsOpen] = useState(!tree.parentId);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div>
@@ -40,18 +36,22 @@ export default function CompetitionTree({
 
         <Card className="flex-1 gap-2 mb-4 p-4 min-h-20">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
               <h3 className="text-lg font-semibold">{tree.name}</h3>
-              <Badge variant="outline">
-                <IconProgress />
-                {tree.status.tag}
-              </Badge>
+
+              <div className="space-x-2">
+                <Badge variant="outline" className="rounded-full">
+                  <IconProgress />
+                  {tree.status.tag}
+                </Badge>
+
+                <Registration registrationRules={tree.registrationRules} />
+              </div>
             </div>
             <div>{tree.estimate?.toString()}</div>
           </div>
 
           <Separator />
-          <Registration registrationRules={tree.registrationRules} />
         </Card>
       </div>
       {tree.children.length > 0 && (
@@ -86,7 +86,9 @@ export default function CompetitionTree({
                     variant="ghost"
                     className="shrink-0 px-2"
                   >
-                    {isOpen ? <IconChevronUp /> : <IconChevronDown />}
+                    <IconChevronUp
+                      className={cn(isOpen ? "rotate-0" : "rotate-180")}
+                    />
                   </Button>
                   <Separator className="flex-1" />
                 </div>

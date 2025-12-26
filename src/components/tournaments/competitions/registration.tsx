@@ -1,4 +1,11 @@
+import { Badge } from "@/components/ui/badge";
 import { RegistrationRules } from "@/lib/tourney-manager";
+import {
+  IconLogin2,
+  IconSitemap,
+  IconUser,
+  IconUsers,
+} from "@tabler/icons-react";
 import { Infer } from "spacetimedb";
 
 interface RegistrationProps {
@@ -7,34 +14,34 @@ interface RegistrationProps {
 
 export default function Registration({ registrationRules }: RegistrationProps) {
   if (registrationRules.tag === "Open") {
-    return <p>Registration is open to all participants.</p>;
+    return (
+      <Badge variant={"outline"} className="rounded-full">
+        <IconLogin2 />
+        Registrations open
+      </Badge>
+    );
   } else if (registrationRules.tag === "Inherit") {
-    return <p>Registration rules are inherited from the parent competition.</p>;
+    return (
+      <Badge variant={"outline"} className="rounded-full">
+        <IconSitemap />
+        Registration rules inherited
+      </Badge>
+    );
   } else if (registrationRules.tag === "Players") {
     return (
-      <div>
-        <p>
-          Registration is limited to {registrationRules.value.playerLimit}{" "}
-          players.
-        </p>
-      </div>
+      <Badge variant={"outline"} className="rounded-full">
+        <IconUser />
+        Max {registrationRules.value.playerLimit} players
+      </Badge>
     );
   } else if (registrationRules.tag === "Team") {
     return (
-      <div>
-        <p>
-          Registration is limited to {registrationRules.value.teamLimit} teams.
-        </p>
-        <div>
-          <strong>Team Sizes:</strong>
-          <ul>
-            <li>Minimum: {registrationRules.value.teamSizeMin}</li>
-            <li>Maximum: {registrationRules.value.teamSizeMax}</li>
-          </ul>
-        </div>
-      </div>
+      <Badge variant={"outline"} className="rounded-full">
+        <IconUsers />
+        Max {registrationRules.value.teamLimit} teams
+      </Badge>
     );
   } else {
-    return <p>Unknown registration rules.</p>;
+    return null;
   }
 }
