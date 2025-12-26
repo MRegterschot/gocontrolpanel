@@ -28,6 +28,13 @@ export default function TournamentInfo({
 
   const rootCompetition = competitionRows.find((c) => !c.parentId);
 
+  const [userRows] = useTable(
+    tables.user,
+    where(eq("accountId", tournament?.creator)),
+  );
+
+  const creatorUser = userRows[0];
+
   if (!tournament) {
     return <span>Tournament not found</span>;
   }
@@ -43,18 +50,13 @@ export default function TournamentInfo({
           </Badge>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Badge variant={"outline"}>
-            <IconUser />
-            {tournament.creator}
-          </Badge>
-
-          {tournament.owners.map((owner) => (
-            <Badge key={owner} variant={"secondary"}>
+        <div>
+          {creatorUser && (
+            <Badge variant={"outline"}>
               <IconUser />
-              {owner}
+              {creatorUser.name}
             </Badge>
-          ))}
+          )}
         </div>
 
         {tournament.description && (
