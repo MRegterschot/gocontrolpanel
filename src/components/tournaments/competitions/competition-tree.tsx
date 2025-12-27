@@ -2,14 +2,15 @@
 
 import Modal from "@/components/modals/modal";
 import CreateCompetitionModal from "@/components/modals/tournaments/competition/create-competition";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { CompetitionNode } from "@/hooks/tournaments/competitions/use-competition-tree";
 import { cn } from "@/lib/utils";
-import { IconChevronUp, IconPlus, IconProgress } from "@tabler/icons-react";
+import { IconChevronUp, IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
+import CompetitionStatusBadge from "../status/competition-status-badge";
+import MatchStatusBadge from "../status/match-status-badge";
 import Registration from "./registration";
 
 interface CompetitionTreeProps {
@@ -39,15 +40,14 @@ export default function CompetitionTree({
         </div>
 
         <Card className="flex-1 gap-2 mb-4 p-4 min-h-20">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
             <div className="flex items-center gap-4">
-              <h3 className="text-lg font-semibold">{tree.name}</h3>
+              <h3 className="text-lg font-semibold truncate max-w-28 lg:max-w-92 xl:max-w-128">
+                {tree.name}
+              </h3>
 
               <div className="space-x-2">
-                <Badge variant="outline" className="rounded-full">
-                  <IconProgress />
-                  {tree.status.tag}
-                </Badge>
+                <CompetitionStatusBadge status={tree.status} />
 
                 <Registration
                   registrationSettings={tree.registrationSettings}
@@ -65,6 +65,23 @@ export default function CompetitionTree({
           </div>
 
           <Separator />
+
+          {tree.matches.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No matches in this stage.
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {tree.matches.map((match, i) => (
+                <Card key={match.id} className="p-2 rounded-lg">
+                  <div className="flex gap-2 items-center">
+                    <span className="text-sm">Match {i + 1}</span>
+                    <MatchStatusBadge status={match.status} />
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </Card>
       </div>
       {tree.children.length > 0 && (

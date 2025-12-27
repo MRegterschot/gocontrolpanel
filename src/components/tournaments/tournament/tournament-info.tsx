@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { tables } from "@/lib/tourney-manager";
-import { IconPlus, IconProgress, IconUser } from "@tabler/icons-react";
+import { IconPlus, IconUser } from "@tabler/icons-react";
 import { eq, useTable, where } from "spacetimedb/react";
+import TournamentStatusBadge from "../status/tournament-status-badge";
 
 export default function TournamentInfo({
   tournamentId,
@@ -40,14 +41,16 @@ export default function TournamentInfo({
   }
 
   return (
-    <Card className="p-4 flex flex-row justify-between gap-4 items-end">
+    <Card className="p-4 flex flex-col sm:flex-row justify-between gap-4 sm:items-end">
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-4">
-          <h2 className="text-lg font-bold">{tournament.name}</h2>
-          <Badge variant={"outline"}>
-            <IconProgress />
-            {tournament.status.tag}
-          </Badge>
+          <h2
+            className="text-lg font-bold truncate max-w-48 lg:max-w-92 xl:max-w-128"
+            title={tournament.name}
+          >
+            {tournament.name}
+          </h2>
+          <TournamentStatusBadge status={tournament.status} />
         </div>
 
         <div>

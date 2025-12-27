@@ -1,4 +1,4 @@
-import { CompetitionV1, tables } from "@/lib/tourney-manager";
+import { CompetitionV1, tables, TmMatchV1 } from "@/lib/tourney-manager";
 import { useMemo } from "react";
 import { Infer } from "spacetimedb";
 import { eq, useTable, where } from "spacetimedb/react";
@@ -7,11 +7,17 @@ type CompetitionBase = Infer<typeof CompetitionV1>;
 
 export interface CompetitionNode extends CompetitionBase {
   children: CompetitionNode[];
+  matches: Infer<typeof TmMatchV1>[];
 }
 
 export function useCompetitionTree(tournamentId: number) {
   const [competitionRows] = useTable(
     tables.competition,
+    where(eq("tournamentId", tournamentId)),
+  );
+
+  const [matchRows] = useTable(
+    tables.tmMatch,
     where(eq("tournamentId", tournamentId)),
   );
 
@@ -29,6 +35,7 @@ export function useCompetitionTree(tournamentId: number) {
       const node: CompetitionNode = {
         ...comp,
         children: [],
+        matches: matchRows.filter((m) => m.competitionId === id),
       };
 
       const childRows = competitionRows.filter((c) => c.parentId === id);
@@ -44,7 +51,9 @@ export function useCompetitionTree(tournamentId: number) {
     if (!root) return null;
 
     return buildNode(root.id);
-  }, [competitionRows, tournamentId]);
+  }, [competitionRows, matchRows, tournamentId]);
+
+  console.log("Competition Tree:", tree);
 
   return { tree };
 }
