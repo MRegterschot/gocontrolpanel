@@ -87,7 +87,7 @@ function pathToRegex(path: string) {
 }
 
 export function getCurrentId(pathname: string): string | null {
-  for (const route of Object.values(routes.servers)) {
+  for (const route of [...Object.values(routes.servers), ...Object.values(routes.tournaments)]) {
     const regex = pathToRegex(route);
     const match = pathname?.match(regex);
     if (match) {

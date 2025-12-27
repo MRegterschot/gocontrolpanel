@@ -15,7 +15,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { generatePath } from "@/lib/utils";
+import { generatePath, getCurrentId } from "@/lib/utils";
 import { routes } from "@/routes";
 import {
   IconInfoCircle,
@@ -29,9 +29,13 @@ import Link from "next/link";
 import Modal from "@/components/modals/modal";
 import CreateTournamentModal from "@/components/modals/tournaments/tournament/create-tournament";
 import { tables } from "@/lib/tourney-manager";
+import { usePathname } from "next/navigation";
 import { useSpacetimeDB, useTable } from "spacetimedb/react";
 
 export default function NavTournaments() {
+  const pathname = usePathname();
+  const activeId = getCurrentId(pathname);
+
   const spacetime = useSpacetimeDB();
   const [tournaments] = useTable(tables.tournament);
 
@@ -63,6 +67,7 @@ export default function NavTournaments() {
               key={tournament.id}
               asChild
               className="group/collapsible"
+              defaultOpen={activeId === tournament.id.toString()}
             >
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
