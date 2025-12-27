@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { Textarea } from "../ui/textarea";
 
 interface RenderInputProps<TControl extends FieldValues> {
   field: ControllerRenderProps<TControl>;
@@ -196,6 +197,16 @@ export default function RenderInput<TControl extends FieldValues>({
           loading={isLoading}
           className={className}
           placeholder={placeholder}
+        />
+      );
+    case "textarea":
+      return (
+        <Textarea
+          placeholder={placeholder}
+          disabled={isDisabled || isLoading}
+          className={className}
+          autoFocus={autoFocus}
+          {...field}
         />
       );
     default:
