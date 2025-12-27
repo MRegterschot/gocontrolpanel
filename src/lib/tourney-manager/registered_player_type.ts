@@ -10,13 +10,10 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
-// The tagged union or sum type for the algebraic type `CompetitionStatus`.
-const CompetitionStatus = __t.enum("CompetitionStatus", {Planning: __t.unit(),
-  Registration: __t.unit(),
-  Ongoing: __t.unit(),
-  Completed: __t.unit(),
+export default __t.object("RegisteredPlayer", {
+  competitionId: __t.u32(),
+  accountId: __t.string(),
+  registeredAt: __t.timestamp(),
 });
-
-export default CompetitionStatus;
 
 

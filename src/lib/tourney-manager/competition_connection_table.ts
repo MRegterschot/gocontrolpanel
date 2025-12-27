@@ -14,8 +14,8 @@ import ConnectionSettings from "./connection_settings_type";
 
 
 export default __t.row({
-  competitionId: __t.u32().name("competition_id"),
   tournamentId: __t.u32().name("tournament_id"),
+  competitionId: __t.u32().name("competition_id"),
   get connectionFrom() {
     return NodeKindRef.name("connection_from");
   },

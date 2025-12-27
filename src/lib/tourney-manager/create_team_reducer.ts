@@ -10,12 +10,7 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
-// The tagged union or sum type for the algebraic type `Scheduling`.
-const Scheduling = __t.enum("Scheduling", {Manual: __t.unit(),
-  Independant: __t.unit(),
-  Inherited: __t.u32(),
-});
-
-export default Scheduling;
-
-
+export default {
+  competitionId: __t.u32(),
+  name: __t.string(),
+};

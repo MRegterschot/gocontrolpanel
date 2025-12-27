@@ -10,12 +10,11 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
-export default __t.object("EventConfig", {
-  id: __t.u32(),
-  owner: __t.string(),
-  public: __t.bool(),
-  name: __t.string(),
-  registration: __t.option(__t.timeDuration()),
+export default __t.object("RegistrationTeamSettings", {
+  teamLimit: __t.option(__t.u32()),
+  teamSizeMin: __t.u8(),
+  teamSizeMax: __t.u8(),
+  registrationDeadline: __t.timestamp(),
 });
 
 

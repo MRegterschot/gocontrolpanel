@@ -33,10 +33,8 @@ import {
 // Import and reexport all reducer arg types
 import ClientConnectedReducer from "./client_connected_reducer";
 export { ClientConnectedReducer };
-import CompetitionRegisterPlayerReducer from "./competition_register_player_reducer";
-export { CompetitionRegisterPlayerReducer };
-import CompetitionUnregisterPlayerReducer from "./competition_unregister_player_reducer";
-export { CompetitionUnregisterPlayerReducer };
+import CompetitionRegistrationSettingsReducer from "./competition_registration_settings_reducer";
+export { CompetitionRegistrationSettingsReducer };
 import CreateCompetitionReducer from "./create_competition_reducer";
 export { CreateCompetitionReducer };
 import CreateConnectionReducer from "./create_connection_reducer";
@@ -49,8 +47,12 @@ import CreateMatchReducer from "./create_match_reducer";
 export { CreateMatchReducer };
 import CreateMonitorReducer from "./create_monitor_reducer";
 export { CreateMonitorReducer };
+import CreateScheduleReducer from "./create_schedule_reducer";
+export { CreateScheduleReducer };
 import CreateServerConfigReducer from "./create_server_config_reducer";
 export { CreateServerConfigReducer };
+import CreateTeamReducer from "./create_team_reducer";
+export { CreateTeamReducer };
 import CreateTournamentReducer from "./create_tournament_reducer";
 export { CreateTournamentReducer };
 import IdentityDisconnectedReducer from "./identity_disconnected_reducer";
@@ -59,18 +61,24 @@ import MatchAssignServerReducer from "./match_assign_server_reducer";
 export { MatchAssignServerReducer };
 import MatchConfiguredReducer from "./match_configured_reducer";
 export { MatchConfiguredReducer };
-import OnTournamentEventScheduleReducer from "./on_tournament_event_schedule_reducer";
-export { OnTournamentEventScheduleReducer };
+import OnScheduleTriggeredReducer from "./on_schedule_triggered_reducer";
+export { OnScheduleTriggeredReducer };
 import PostEventReducer from "./post_event_reducer";
 export { PostEventReducer };
 import PostRecordReducer from "./post_record_reducer";
 export { PostRecordReducer };
+import RegisterPlayerReducer from "./register_player_reducer";
+export { RegisterPlayerReducer };
 import ServerMethodCallReducer from "./server_method_call_reducer";
 export { ServerMethodCallReducer };
 import ServerMethodResponseReducer from "./server_method_response_reducer";
 export { ServerMethodResponseReducer };
+import TournamentEditDescriptionReducer from "./tournament_edit_description_reducer";
+export { TournamentEditDescriptionReducer };
 import TryStartMatchReducer from "./try_start_match_reducer";
 export { TryStartMatchReducer };
+import UnregisterPlayerReducer from "./unregister_player_reducer";
+export { UnregisterPlayerReducer };
 import UpdateMatchConfigReducer from "./update_match_config_reducer";
 export { UpdateMatchConfigReducer };
 import UpdatePreMatchConfigReducer from "./update_pre_match_config_reducer";
@@ -91,12 +99,8 @@ import CompetitionConnectionRow from "./competition_connection_table";
 export { CompetitionConnectionRow };
 import CompetitionRecordRow from "./competition_record_table";
 export { CompetitionRecordRow };
-import CompetitionScheduleRow from "./competition_schedule_table";
-export { CompetitionScheduleRow };
 import EnvRow from "./env_table";
 export { EnvRow };
-import EventConfigRow from "./event_config_table";
-export { EventConfigRow };
 import GeneratorRow from "./generator_table";
 export { GeneratorRow };
 import MapRecordRow from "./map_record_table";
@@ -115,16 +119,26 @@ import MyJobsRow from "./my_jobs_table";
 export { MyJobsRow };
 import MyTournamentRow from "./my_tournament_table";
 export { MyTournamentRow };
-import RegistrationPlayerRow from "./registration_player_table";
-export { RegistrationPlayerRow };
+import ScheduleRow from "./schedule_table";
+export { ScheduleRow };
 import TabCompetitionRow from "./tab_competition_table";
 export { TabCompetitionRow };
 import TabCompetitionConnectionRow from "./tab_competition_connection_table";
 export { TabCompetitionConnectionRow };
+import TabRegisteredPlayerRow from "./tab_registered_player_table";
+export { TabRegisteredPlayerRow };
+import TabRegisteredTeamRow from "./tab_registered_team_table";
+export { TabRegisteredTeamRow };
+import TabScheduleRow from "./tab_schedule_table";
+export { TabScheduleRow };
+import TabTmMatchRow from "./tab_tm_match_table";
+export { TabTmMatchRow };
 import TabTmServerRow from "./tab_tm_server_table";
 export { TabTmServerRow };
 import TabTournamentRow from "./tab_tournament_table";
 export { TabTournamentRow };
+import TabUserRow from "./tab_user_table";
+export { TabUserRow };
 import ThisTmServerRow from "./this_tm_server_table";
 export { ThisTmServerRow };
 import TmMapRecordRow from "./tm_map_record_table";
@@ -165,8 +179,6 @@ import Common from "./common_type";
 export { Common };
 import CompetitionConnection from "./competition_connection_type";
 export { CompetitionConnection };
-import CompetitionSchedule from "./competition_schedule_type";
-export { CompetitionSchedule };
 import CompetitionStatus from "./competition_status_type";
 export { CompetitionStatus };
 import CompetitionV1 from "./competition_v_1_type";
@@ -175,8 +187,6 @@ import ConnectionSettings from "./connection_settings_type";
 export { ConnectionSettings };
 import Custom from "./custom_type";
 export { Custom };
-import DataConnectionSettings from "./data_connection_settings_type";
-export { DataConnectionSettings };
 import EndMapEnd from "./end_map_end_type";
 export { EndMapEnd };
 import EndMapStart from "./end_map_start_type";
@@ -197,8 +207,6 @@ import Env from "./env_type";
 export { Env };
 import Event from "./event_type";
 export { Event };
-import EventConfig from "./event_config_type";
-export { EventConfig };
 import Generator from "./generator_type";
 export { Generator };
 import GiveUp from "./give_up_type";
@@ -261,14 +269,16 @@ import PlayerDisconnect from "./player_disconnect_type";
 export { PlayerDisconnect };
 import Podium from "./podium_type";
 export { Podium };
-import RegistrationPlayer from "./registration_player_type";
-export { RegistrationPlayer };
-import RegistrationPlayerRules from "./registration_player_rules_type";
-export { RegistrationPlayerRules };
-import RegistrationRules from "./registration_rules_type";
-export { RegistrationRules };
-import RegistrationTeamRules from "./registration_team_rules_type";
-export { RegistrationTeamRules };
+import RegisteredPlayer from "./registered_player_type";
+export { RegisteredPlayer };
+import RegisteredTeam from "./registered_team_type";
+export { RegisteredTeam };
+import RegistrationPlayerSettings from "./registration_player_settings_type";
+export { RegistrationPlayerSettings };
+import RegistrationSettings from "./registration_settings_type";
+export { RegistrationSettings };
+import RegistrationTeamSettings from "./registration_team_settings_type";
+export { RegistrationTeamSettings };
 import Respawn from "./respawn_type";
 export { Respawn };
 import RespawnBavaviour from "./respawn_bavaviour_type";
@@ -279,8 +289,8 @@ import Rounds from "./rounds_type";
 export { Rounds };
 import RoundsLeaderboard from "./rounds_leaderboard_type";
 export { RoundsLeaderboard };
-import Scheduling from "./scheduling_type";
-export { Scheduling };
+import ScheduleV1 from "./schedule_v_1_type";
+export { ScheduleV1 };
 import Scores from "./scores_type";
 export { Scores };
 import ServerConfig from "./server_config_type";
@@ -309,8 +319,8 @@ import TmCompRecord from "./tm_comp_record_type";
 export { TmCompRecord };
 import TmMapRecord from "./tm_map_record_type";
 export { TmMapRecord };
-import TmMatch from "./tm_match_type";
-export { TmMatch };
+import TmMatchV1 from "./tm_match_v_1_type";
+export { TmMatchV1 };
 import TmMonitoring from "./tm_monitoring_type";
 export { TmMonitoring };
 import TmRecord from "./tm_record_type";
@@ -349,17 +359,6 @@ export { WayPoint };
 /** The schema information for all tables in this module. This is defined the same was as the tables would have been defined in the server. */
 const tablesSchema = __schema(
   __table({
-    name: 'competition_schedule',
-    indexes: [
-      { name: 'scheduled_id', algorithm: 'btree', columns: [
-        'scheduledId',
-      ] },
-    ],
-    constraints: [
-      { name: 'competition_schedule_scheduled_id_key', constraint: 'unique', columns: ['scheduledId'] },
-    ],
-  }, CompetitionScheduleRow),
-  __table({
     name: 'env',
     indexes: [
       { name: 'key', algorithm: 'btree', columns: [
@@ -370,13 +369,6 @@ const tablesSchema = __schema(
       { name: 'env_key_key', constraint: 'unique', columns: ['key'] },
     ],
   }, EnvRow),
-  __table({
-    name: 'event_config',
-    indexes: [
-    ],
-    constraints: [
-    ],
-  }, EventConfigRow),
   __table({
     name: 'generator',
     indexes: [
@@ -416,13 +408,6 @@ const tablesSchema = __schema(
     ],
   }, MatchTemplateRow),
   __table({
-    name: 'registration_player',
-    indexes: [
-    ],
-    constraints: [
-    ],
-  }, RegistrationPlayerRow),
-  __table({
     name: 'tab_competition',
     indexes: [
       { name: 'id', algorithm: 'btree', columns: [
@@ -449,6 +434,48 @@ const tablesSchema = __schema(
     constraints: [
     ],
   }, TabCompetitionConnectionRow),
+  __table({
+    name: 'tab_registered_player',
+    indexes: [
+      { name: 'competition_id', algorithm: 'btree', columns: [
+        'competitionId',
+      ] },
+    ],
+    constraints: [
+    ],
+  }, TabRegisteredPlayerRow),
+  __table({
+    name: 'tab_registered_team',
+    indexes: [
+      { name: 'competition_id', algorithm: 'btree', columns: [
+        'competitionId',
+      ] },
+    ],
+    constraints: [
+    ],
+  }, TabRegisteredTeamRow),
+  __table({
+    name: 'tab_schedule',
+    indexes: [
+      { name: 'scheduled_id', algorithm: 'btree', columns: [
+        'scheduledId',
+      ] },
+    ],
+    constraints: [
+      { name: 'tab_schedule_scheduled_id_key', constraint: 'unique', columns: ['scheduledId'] },
+    ],
+  }, TabScheduleRow),
+  __table({
+    name: 'tab_tm_match',
+    indexes: [
+      { name: 'id', algorithm: 'btree', columns: [
+        'id',
+      ] },
+    ],
+    constraints: [
+      { name: 'tab_tm_match_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, TabTmMatchRow),
   __table({
     name: 'tab_tm_server',
     indexes: [
@@ -483,6 +510,17 @@ const tablesSchema = __schema(
     ],
   }, TabTournamentRow),
   __table({
+    name: 'tab_user',
+    indexes: [
+      { name: 'account_id', algorithm: 'btree', columns: [
+        'accountId',
+      ] },
+    ],
+    constraints: [
+      { name: 'tab_user_account_id_key', constraint: 'unique', columns: ['accountId'] },
+    ],
+  }, TabUserRow),
+  __table({
     name: 'tm_map_record',
     indexes: [
       { name: 'id', algorithm: 'btree', columns: [
@@ -497,17 +535,6 @@ const tablesSchema = __schema(
       { name: 'tm_map_record_id_key', constraint: 'unique', columns: ['id'] },
     ],
   }, TmMapRecordRow),
-  __table({
-    name: 'tm_match',
-    indexes: [
-      { name: 'id', algorithm: 'btree', columns: [
-        'id',
-      ] },
-    ],
-    constraints: [
-      { name: 'tm_match_id_key', constraint: 'unique', columns: ['id'] },
-    ],
-  }, TmMatchRow),
   __table({
     name: 'tm_match_record',
     indexes: [
@@ -590,17 +617,6 @@ const tablesSchema = __schema(
     ],
   }, TmWorkerJobsRow),
   __table({
-    name: 'user',
-    indexes: [
-      { name: 'account_id', algorithm: 'btree', columns: [
-        'accountId',
-      ] },
-    ],
-    constraints: [
-      { name: 'user_account_id_key', constraint: 'unique', columns: ['accountId'] },
-    ],
-  }, UserRow),
-  __table({
     name: 'user_identity',
     indexes: [
       { name: 'identity', algorithm: 'btree', columns: [
@@ -668,12 +684,26 @@ const tablesSchema = __schema(
     ],
   }, MyTournamentRow),
   __table({
+    name: 'schedule',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, ScheduleRow),
+  __table({
     name: 'this_tm_server',
     indexes: [
     ],
     constraints: [
     ],
   }, ThisTmServerRow),
+  __table({
+    name: 'tm_match',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, TmMatchRow),
   __table({
     name: 'tm_server',
     indexes: [
@@ -688,28 +718,39 @@ const tablesSchema = __schema(
     constraints: [
     ],
   }, TournamentRow),
+  __table({
+    name: 'user',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, UserRow),
 );
 
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
 const reducersSchema = __reducers(
-  __reducerSchema("competition_register_player", CompetitionRegisterPlayerReducer),
-  __reducerSchema("competition_unregister_player", CompetitionUnregisterPlayerReducer),
+  __reducerSchema("competition_registration_settings", CompetitionRegistrationSettingsReducer),
   __reducerSchema("create_competition", CreateCompetitionReducer),
   __reducerSchema("create_connection", CreateConnectionReducer),
   __reducerSchema("create_env_var", CreateEnvVarReducer),
   __reducerSchema("create_event_template", CreateEventTemplateReducer),
   __reducerSchema("create_match", CreateMatchReducer),
   __reducerSchema("create_monitor", CreateMonitorReducer),
+  __reducerSchema("create_schedule", CreateScheduleReducer),
   __reducerSchema("create_server_config", CreateServerConfigReducer),
+  __reducerSchema("create_team", CreateTeamReducer),
   __reducerSchema("create_tournament", CreateTournamentReducer),
   __reducerSchema("match_assign_server", MatchAssignServerReducer),
   __reducerSchema("match_configured", MatchConfiguredReducer),
-  __reducerSchema("on_tournament_event_schedule", OnTournamentEventScheduleReducer),
+  __reducerSchema("on_schedule_triggered", OnScheduleTriggeredReducer),
   __reducerSchema("post_event", PostEventReducer),
   __reducerSchema("post_record", PostRecordReducer),
+  __reducerSchema("register_player", RegisterPlayerReducer),
   __reducerSchema("server_method_call", ServerMethodCallReducer),
   __reducerSchema("server_method_response", ServerMethodResponseReducer),
+  __reducerSchema("tournament_edit_description", TournamentEditDescriptionReducer),
   __reducerSchema("try_start_match", TryStartMatchReducer),
+  __reducerSchema("unregister_player", UnregisterPlayerReducer),
   __reducerSchema("update_match_config", UpdateMatchConfigReducer),
   __reducerSchema("update_pre_match_config", UpdatePreMatchConfigReducer),
 );

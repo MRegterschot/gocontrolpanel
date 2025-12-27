@@ -11,7 +11,8 @@ import {
 } from "spacetimedb";
 
 export default __t.row({
-  competition: __t.u32(),
-  playerId: __t.string().name("player_id"),
-  registeredAt: __t.timestamp().name("registered_at"),
+  scheduledId: __t.u64().name("scheduled_id"),
+  scheduledAt: __t.scheduleAt().name("scheduled_at"),
+  competitionId: __t.u32().name("competition_id"),
+  tournamentId: __t.u32().name("tournament_id"),
 });

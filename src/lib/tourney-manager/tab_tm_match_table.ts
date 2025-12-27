@@ -17,7 +17,7 @@ import MatchLeaderboardRules from "./match_leaderboard_rules_type";
 
 
 export default __t.row({
-  id: __t.u32(),
+  id: __t.u32().primaryKey(),
   tournamentId: __t.u32().name("tournament_id"),
   competitionId: __t.u32().name("competition_id"),
   serverId: __t.option(__t.string()).name("server_id"),

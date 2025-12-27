@@ -13,9 +13,9 @@ import {
 // The tagged union or sum type for the algebraic type `NodeKindRef`.
 const NodeKindRef = __t.enum("NodeKindRef", {MatchV1: __t.u32(),
   CompetitionV1: __t.u32(),
-  MapMonitorV1: __t.u32(),
   MonitoringV1: __t.u32(),
   ServerV1: __t.u32(),
+  SchedulingV1: __t.u32(),
 });
 
 export default NodeKindRef;

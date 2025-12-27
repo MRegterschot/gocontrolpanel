@@ -11,6 +11,7 @@ import {
 } from "spacetimedb";
 
 import NodeKindRef from "./node_kind_ref_type";
+import ConnectionSettings from "./connection_settings_type";
 
 export default {
   get connectionFrom() {
@@ -18,5 +19,8 @@ export default {
   },
   get connectionTo() {
     return NodeKindRef;
+  },
+  get setting() {
+    return ConnectionSettings;
   },
 };

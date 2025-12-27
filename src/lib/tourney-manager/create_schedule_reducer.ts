@@ -10,8 +10,7 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
-export default __t.object("RegistrationPlayerRules", {
-  playerLimit: __t.option(__t.u32()),
-});
-
-
+export default {
+  competitionId: __t.u32(),
+  scheduledAt: __t.timestamp(),
+};

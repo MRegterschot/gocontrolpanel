@@ -49,7 +49,9 @@ export default function CompetitionTree({
                   {tree.status.tag}
                 </Badge>
 
-                <Registration registrationRules={tree.registrationRules} />
+                <Registration
+                  registrationSettings={tree.registrationSettings}
+                />
               </div>
             </div>
 

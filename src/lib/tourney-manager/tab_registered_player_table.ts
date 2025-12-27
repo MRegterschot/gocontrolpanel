@@ -10,9 +10,8 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
-export default __t.object("DataConnectionSettings", {
-  countTop: __t.option(__t.u8()),
-  countBottom: __t.option(__t.u8()),
+export default __t.row({
+  competitionId: __t.u32().name("competition_id"),
+  accountId: __t.string().name("account_id"),
+  registeredAt: __t.timestamp().name("registered_at"),
 });
-
-

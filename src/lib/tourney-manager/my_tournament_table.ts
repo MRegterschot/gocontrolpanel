@@ -17,6 +17,8 @@ export default __t.row({
   creator: __t.string(),
   owners: __t.array(__t.string()),
   name: __t.string(),
+  startingAt: __t.option(__t.timestamp()).name("starting_at"),
+  endingAt: __t.option(__t.timestamp()).name("ending_at"),
   description: __t.string(),
   get status() {
     return TournamentStatus;

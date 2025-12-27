@@ -10,10 +10,7 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
-export default __t.object("CompetitionSchedule", {
-  scheduledId: __t.u64(),
-  scheduledAt: __t.scheduleAt(),
-  text: __t.string(),
-});
-
-
+export default {
+  tounrnamentId: __t.u32(),
+  description: __t.string(),
+};

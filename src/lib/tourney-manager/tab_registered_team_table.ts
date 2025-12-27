@@ -11,9 +11,7 @@ import {
 } from "spacetimedb";
 
 export default __t.row({
-  id: __t.u32(),
-  owner: __t.string(),
-  public: __t.bool(),
-  name: __t.string(),
-  registration: __t.option(__t.timeDuration()),
+  competitionId: __t.u32().name("competition_id"),
+  accountId: __t.string().name("account_id"),
+  registeredAt: __t.timestamp().name("registered_at"),
 });

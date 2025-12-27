@@ -10,8 +10,7 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 import CompetitionStatus from "./competition_status_type";
-import Scheduling from "./scheduling_type";
-import RegistrationRules from "./registration_rules_type";
+import RegistrationSettings from "./registration_settings_type";
 
 
 export default __t.object("CompetitionV1", {
@@ -22,12 +21,10 @@ export default __t.object("CompetitionV1", {
   get status() {
     return CompetitionStatus;
   },
-  estimate: __t.option(__t.timeDuration()),
-  get scheduling() {
-    return Scheduling;
-  },
-  get registrationRules() {
-    return RegistrationRules;
+  startingAt: __t.option(__t.timestamp()),
+  endingAt: __t.option(__t.timestamp()),
+  get registrationSettings() {
+    return RegistrationSettings;
   },
 });
 

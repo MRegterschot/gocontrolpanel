@@ -10,10 +10,9 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
-import CompetitionSchedule from "./competition_schedule_type";
+export default __t.object("RegistrationPlayerSettings", {
+  playerLimit: __t.option(__t.u32()),
+  registrationDeadline: __t.timestamp(),
+});
 
-export default {
-  get arg() {
-    return CompetitionSchedule;
-  },
-};
+
