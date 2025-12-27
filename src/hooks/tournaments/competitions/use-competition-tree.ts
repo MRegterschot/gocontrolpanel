@@ -44,6 +44,8 @@ export function useCompetitionTree(tournamentId: number) {
         if (childNode) node.children.push(childNode);
       }
 
+      node.children.sort((a, b) => a.id - b.id); // Sort children by ID so order is consistent
+
       return node;
     }
 
