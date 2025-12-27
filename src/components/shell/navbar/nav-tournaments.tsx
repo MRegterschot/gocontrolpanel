@@ -1,9 +1,5 @@
 "use client";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible } from "@/components/ui/collapsible";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -11,19 +7,10 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { generatePath, getCurrentId } from "@/lib/utils";
 import { routes } from "@/routes";
-import {
-  IconInfoCircle,
-  IconPlus,
-  IconTrophy,
-  IconUsersGroup,
-} from "@tabler/icons-react";
-import { ChevronRight } from "lucide-react";
+import { IconPlus, IconTrophy } from "@tabler/icons-react";
 import Link from "next/link";
 
 import Modal from "@/components/modals/modal";
@@ -70,45 +57,19 @@ export default function NavTournaments() {
               defaultOpen={activeId === tournament.id.toString()}
             >
               <SidebarMenuItem>
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuButton tooltip={tournament.name} asChild>
-                    <div className="select-none cursor-pointer">
-                      <IconTrophy />
-                      <span className="overflow-hidden text-ellipsis text-nowrap flex items-center">
-                        {tournament.name}
-                      </span>
-                      <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                    </div>
-                  </SidebarMenuButton>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarMenuSub>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild>
-                        <Link
-                          href={generatePath(routes.tournaments.tournament, {
-                            id: tournament.id.toString(),
-                          })}
-                        >
-                          <IconInfoCircle />
-                          <span>Tournament Info</span>
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild>
-                        <Link
-                          href={generatePath(routes.tournaments.registration, {
-                            id: tournament.id.toString(),
-                          })}
-                        >
-                          <IconUsersGroup />
-                          <span>Registrations</span>
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  </SidebarMenuSub>
-                </CollapsibleContent>
+                <SidebarMenuButton tooltip={tournament.name} asChild>
+                  <Link
+                    href={generatePath(routes.tournaments.tournament, {
+                      id: tournament.id.toString(),
+                    })}
+                    className="select-none cursor-pointer"
+                  >
+                    <IconTrophy />
+                    <span className="overflow-hidden text-ellipsis text-nowrap flex items-center">
+                      {tournament.name}
+                    </span>
+                  </Link>
+                </SidebarMenuButton>
               </SidebarMenuItem>
             </Collapsible>
           ))}

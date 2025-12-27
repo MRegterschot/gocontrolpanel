@@ -17,7 +17,6 @@ export const routes = {
   },
   tournaments: {
     tournament: "/tournaments/:id",
-    registration: "/tournaments/:id/registration",
   },
   admin: {
     users: "/admin/users",
@@ -314,17 +313,6 @@ export const breadCrumbs: {
       },
       {
         label: "Tournament Info",
-      },
-    ],
-  },
-  {
-    path: routes.tournaments.registration,
-    breadCrumbs: [
-      {
-        label: "Tournaments",
-      },
-      {
-        label: "Registration",
       },
     ],
   },

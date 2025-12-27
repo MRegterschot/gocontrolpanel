@@ -1,5 +1,5 @@
-import TournamentInfo from "@/components/tournaments/tournament/tournament-info";
 import TournamentStages from "@/components/tournaments/tournament/tournament-competition-tree";
+import TournamentInfo from "@/components/tournaments/tournament/tournament-info";
 
 export default async function TournamentPage({
   params,
@@ -15,8 +15,10 @@ export default async function TournamentPage({
         <h4 className="text-muted-foreground">Manage the tournament info.</h4>
       </div>
 
-      <TournamentInfo tournamentId={Number(id)} />
-      <TournamentStages tournamentId={Number(id)} />
+      <div className="flex flex-col sm:gap-2 gap-4">
+        <TournamentInfo tournamentId={Number(id)} />
+        <TournamentStages tournamentId={Number(id)} />
+      </div>
     </div>
   );
 }

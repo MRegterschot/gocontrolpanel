@@ -2,13 +2,21 @@
 
 import Modal from "@/components/modals/modal";
 import CreateCompetitionModal from "@/components/modals/tournaments/competition/create-competition";
+import EditRegistrationSettingsModal from "@/components/modals/tournaments/competition/edit-registration-settings";
 import CreateMatchModal from "@/components/modals/tournaments/match/create-match";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { CompetitionNode } from "@/hooks/tournaments/competitions/use-competition-tree";
 import { cn } from "@/lib/utils";
-import { IconChevronUp, IconPlus } from "@tabler/icons-react";
+import { IconChevronUp } from "@tabler/icons-react";
+import { MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 import CompetitionStatusBadge from "../status/competition-status-badge";
 import MatchStatusBadge from "../status/match-status-badge";
@@ -29,9 +37,14 @@ export default function CompetitionTree({
 }: CompetitionTreeProps) {
   const [isOpen, setIsOpen] = useState(false);
 
+  const [isEditRegistrationSettingsOpen, setIsEditRegistrationSettingsOpen] =
+    useState(false);
+  const [isAddMatchOpen, setIsAddMatchOpen] = useState(false);
+  const [isAddStageOpen, setIsAddStageOpen] = useState(false);
+
   return (
     <div>
-      <div className="flex gap-4">
+      <div className="flex gap-2 sm:gap-4">
         <div className="flex flex-col items-center">
           <Card className="rounded-full w-12 min-h-12 grid place-items-center font-semibold">
             {sectionIndex + 1}
@@ -42,8 +55,8 @@ export default function CompetitionTree({
 
         <Card className="flex-1 gap-2 mb-4 p-3 min-h-20">
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-            <div className="flex items-center gap-4">
-              <h3 className="text-lg font-semibold truncate max-w-28 lg:max-w-92 xl:max-w-128">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-lg font-semibold truncate max-w-60 lg:max-w-128">
                 {tree.name}
               </h3>
 
@@ -56,21 +69,48 @@ export default function CompetitionTree({
               </div>
             </div>
 
-            <div className="flex gap-2">
-              <Modal>
-                <CreateMatchModal data={tree.id} />
-                <Button variant={"outline"}>
-                  <IconPlus />
-                  Add Match
-                </Button>
+            <div className="flex gap-2 items-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => setIsEditRegistrationSettingsOpen(true)}
+                  >
+                    Edit registration settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setIsAddMatchOpen(true)}>
+                    Add match
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem onClick={() => setIsAddStageOpen(true)}>
+                    Add stage
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Modal
+                isOpen={isEditRegistrationSettingsOpen}
+                setIsOpen={setIsEditRegistrationSettingsOpen}
+              >
+                <EditRegistrationSettingsModal
+                  data={{
+                    competitionId: tree.id,
+                    registrationSettings: tree.registrationSettings,
+                  }}
+                />
               </Modal>
 
-              <Modal>
+              <Modal isOpen={isAddMatchOpen} setIsOpen={setIsAddMatchOpen}>
+                <CreateMatchModal data={tree.id} />
+              </Modal>
+
+              <Modal isOpen={isAddStageOpen} setIsOpen={setIsAddStageOpen}>
                 <CreateCompetitionModal data={tree.id} />
-                <Button variant={"outline"}>
-                  <IconPlus />
-                  Add Stage
-                </Button>
               </Modal>
             </div>
           </div>
@@ -98,6 +138,7 @@ export default function CompetitionTree({
           )}
         </Card>
       </div>
+
       {tree.children.length > 0 && (
         <div className="flex gap-4 w-full">
           {!isLast && !isOpen && (
