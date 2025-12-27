@@ -1,12 +1,9 @@
 "use client";
 
-import Modal from "@/components/modals/modal";
-import CreateCompetitionModal from "@/components/modals/tournaments/competition/create-competition";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { tables } from "@/lib/tourney-manager";
-import { IconPlus, IconUser } from "@tabler/icons-react";
+import { IconUser } from "@tabler/icons-react";
 import { eq, useTable, where } from "spacetimedb/react";
 import TournamentStatusBadge from "../status/tournament-status-badge";
 
@@ -21,13 +18,6 @@ export default function TournamentInfo({
   );
 
   const tournament = tournamentRows[0];
-
-  const [competitionRows] = useTable(
-    tables.competition,
-    where(eq("tournamentId", tournament?.id || -1)), // Use -1 to ensure no matches if tournament is undefined
-  );
-
-  const rootCompetition = competitionRows.find((c) => !c.parentId);
 
   const [userRows] = useTable(
     tables.user,
@@ -68,16 +58,6 @@ export default function TournamentInfo({
           </p>
         )}
       </div>
-
-      {rootCompetition && (
-        <Modal>
-          <CreateCompetitionModal data={rootCompetition.id} />
-          <Button variant={"outline"}>
-            <IconPlus />
-            Add Stage
-          </Button>
-        </Modal>
-      )}
     </Card>
   );
 }

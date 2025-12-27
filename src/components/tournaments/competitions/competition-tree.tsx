@@ -39,7 +39,7 @@ export default function CompetitionTree({
           {(!isLast || isOpen) && <div className="w-px bg-border h-full"></div>}
         </div>
 
-        <Card className="flex-1 gap-2 mb-4 p-4 min-h-20">
+        <Card className="flex-1 gap-2 mb-4 p-3 min-h-20">
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
             <div className="flex items-center gap-4">
               <h3 className="text-lg font-semibold truncate max-w-28 lg:max-w-92 xl:max-w-128">
@@ -73,7 +73,10 @@ export default function CompetitionTree({
           ) : (
             <div className="flex flex-wrap gap-2">
               {tree.matches.map((match, i) => (
-                <Card key={match.id} className="p-2 rounded-lg">
+                <Card
+                  key={match.id}
+                  className="p-2 rounded-lg cursor-pointer hover:border-white transition-all"
+                >
                   <div className="flex gap-2 items-center">
                     <span className="text-sm">Match {i + 1}</span>
                     <MatchStatusBadge status={match.status} />

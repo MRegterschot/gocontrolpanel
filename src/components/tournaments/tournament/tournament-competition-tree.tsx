@@ -16,15 +16,7 @@ export default function TournamentCompetitionTree({
 
   return (
     <div className="flex flex-col">
-      {tree.children.map((child, i) => (
-        <CompetitionTree
-          key={child.id}
-          tree={child}
-          sectionIndex={0}
-          subsectionIndex={i}
-          isLast={i === tree.children.length - 1}
-        />
-      ))}
+      <CompetitionTree tree={tree} sectionIndex={0} />
     </div>
   );
 }
