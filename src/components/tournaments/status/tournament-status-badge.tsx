@@ -3,7 +3,6 @@ import {
   Icon,
   IconCalendarEventFilled,
   IconFlag,
-  IconLogin2,
   IconProgress,
   IconSpeakerphone,
 } from "@tabler/icons-react";

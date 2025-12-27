@@ -4,10 +4,7 @@ import {
   IconCalendarEventFilled,
   IconFlag,
   IconLogin2,
-  IconPlayerTrackNext,
-  IconPointFilled,
   IconProgress,
-  IconSettings,
 } from "@tabler/icons-react";
 import { Infer } from "spacetimedb";
 import { Badge } from "../../ui/badge";
