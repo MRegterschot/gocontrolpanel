@@ -3,13 +3,13 @@ import { RegistrationSettings } from "@/lib/tourney-manager";
 import { IconUser, IconUsers } from "@tabler/icons-react";
 import { Infer } from "spacetimedb";
 
-interface RegistrationProps {
+interface RegistrationBadgeProps {
   registrationSettings: Infer<typeof RegistrationSettings>;
 }
 
-export default function Registration({
+export default function RegistrationBadge({
   registrationSettings,
-}: RegistrationProps) {
+}: RegistrationBadgeProps) {
   if (registrationSettings.tag === "Players") {
     return (
       <Badge variant={"outline"} className="rounded-full">

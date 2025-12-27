@@ -12,7 +12,6 @@ import {
 import ServerConfig from "./server_config_type";
 import MatchState from "./match_state_type";
 import MatchStatus from "./match_status_type";
-import MatchEntityRules from "./match_entity_rules_type";
 
 
 export default __t.object("TmMatchV1", {
@@ -34,9 +33,6 @@ export default __t.object("TmMatchV1", {
   },
   get state() {
     return MatchState;
-  },
-  get permittedEntities() {
-    return MatchEntityRules;
   },
 });
 

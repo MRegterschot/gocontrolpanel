@@ -221,8 +221,6 @@ import Map from "./map_type";
 export { Map };
 import MapPoolConfig from "./map_pool_config_type";
 export { MapPoolConfig };
-import MatchEntityRules from "./match_entity_rules_type";
-export { MatchEntityRules };
 import MatchEvent from "./match_event_type";
 export { MatchEvent };
 import MatchGhost from "./match_ghost_type";

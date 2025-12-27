@@ -12,7 +12,7 @@ import { IconChevronUp, IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
 import CompetitionStatusBadge from "../status/competition-status-badge";
 import MatchStatusBadge from "../status/match-status-badge";
-import Registration from "./registration";
+import RegistrationBadge from "./registration-badge";
 
 interface CompetitionTreeProps {
   tree: CompetitionNode;
@@ -50,7 +50,7 @@ export default function CompetitionTree({
               <div className="space-x-2">
                 <CompetitionStatusBadge status={tree.status} />
 
-                <Registration
+                <RegistrationBadge
                   registrationSettings={tree.registrationSettings}
                 />
               </div>

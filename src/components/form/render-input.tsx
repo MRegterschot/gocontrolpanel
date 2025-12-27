@@ -11,6 +11,7 @@ import {
 } from "react-hook-form";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
+import { DatetimePicker } from "../ui/datetime-picker";
 import { Input } from "../ui/input";
 import { MultiSelect } from "../ui/multi-select";
 import { SearchInput } from "../ui/search-input";
@@ -207,6 +208,14 @@ export default function RenderInput<TControl extends FieldValues>({
           className={className}
           autoFocus={autoFocus}
           {...field}
+        />
+      );
+    case "datetime":
+      return (
+        <DatetimePicker
+          value={field.value}
+          onChange={field.onChange}
+          disabled={isDisabled || isLoading}
         />
       );
     default:

@@ -62,7 +62,10 @@ export default function TournamentInfo({
         <div className="flex flex-col gap-1 text-sm">
           <div className="flex gap-2 items-center">
             <span>Description</span>
-            <IconEdit size={16} onClick={() => setIsEditingDescription(prev => !prev)} />
+            <IconEdit
+              size={16}
+              onClick={() => setIsEditingDescription((prev) => !prev)}
+            />
           </div>
 
           {isEditingDescription ? (
