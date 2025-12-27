@@ -12,9 +12,10 @@ import {
 import TournamentStatus from "./tournament_status_type";
 
 
-export default __t.object("TournamentV1", {
+export default __t.object("MyTournamentV1", {
   id: __t.u32(),
   creator: __t.string(),
+  creatorName: __t.string(),
   name: __t.string(),
   startingAt: __t.option(__t.timestamp()),
   endingAt: __t.option(__t.timestamp()),

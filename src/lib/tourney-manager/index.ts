@@ -227,8 +227,6 @@ import MatchEvent from "./match_event_type";
 export { MatchEvent };
 import MatchGhost from "./match_ghost_type";
 export { MatchGhost };
-import MatchLeaderboardRules from "./match_leaderboard_rules_type";
-export { MatchLeaderboardRules };
 import MatchStandings from "./match_standings_type";
 export { MatchStandings };
 import MatchState from "./match_state_type";
@@ -253,6 +251,8 @@ import MonitoringSettingsClub from "./monitoring_settings_club_type";
 export { MonitoringSettingsClub };
 import MonitoringSettingsMap from "./monitoring_settings_map_type";
 export { MonitoringSettingsMap };
+import MyTournamentV1 from "./my_tournament_v_1_type";
+export { MyTournamentV1 };
 import NodeKindRef from "./node_kind_ref_type";
 export { NodeKindRef };
 import PlayLoopEnd from "./play_loop_end_type";
@@ -287,8 +287,6 @@ import RoundTime from "./round_time_type";
 export { RoundTime };
 import Rounds from "./rounds_type";
 export { Rounds };
-import RoundsLeaderboard from "./rounds_leaderboard_type";
-export { RoundsLeaderboard };
 import ScheduleV1 from "./schedule_v_1_type";
 export { ScheduleV1 };
 import Scores from "./scores_type";
@@ -497,6 +495,9 @@ const tablesSchema = __schema(
   __table({
     name: 'tab_tournament',
     indexes: [
+      { name: 'creator', algorithm: 'btree', columns: [
+        'creator',
+      ] },
       { name: 'id', algorithm: 'btree', columns: [
         'id',
       ] },
