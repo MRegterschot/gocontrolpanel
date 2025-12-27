@@ -1,5 +1,4 @@
 "use client";
-import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { reducers } from "@/lib/tourney-manager";
@@ -10,40 +9,40 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useReducer } from "spacetimedb/react";
 import {
-  CreateCompetitionSchema,
-  CreateCompetitionSchemaType,
-} from "./create-competition-schema";
+  CreateMatchSchema,
+  CreateMatchSchemaType,
+} from "./create-match-schema";
 
-export default function CreateCompetitionForm({
-  parentId,
+export default function CreateMatchForm({
+  competitionId,
   callback,
 }: {
-  parentId: number;
+  competitionId: number;
   callback?: () => void;
 }) {
-  const createCompetition = useReducer(reducers.createCompetition);
+  const createMatch = useReducer(reducers.createMatch);
 
-  const form = useForm<CreateCompetitionSchemaType>({
-    resolver: zodResolver(CreateCompetitionSchema),
+  const form = useForm<CreateMatchSchemaType>({
+    resolver: zodResolver(CreateMatchSchema),
     defaultValues: {
-      parentId: parentId,
+      competitionId: competitionId,
       withTemplate: undefined,
     },
   });
 
-  async function onSubmit(values: CreateCompetitionSchemaType) {
+  async function onSubmit(values: CreateMatchSchemaType) {
     try {
-      createCompetition({
+      createMatch({
         ...values,
         withTemplate: values.withTemplate ?? undefined,
       });
 
-      toast.success("Stage successfully created");
+      toast.success("Match successfully created");
       if (callback) {
         callback();
       }
     } catch (error) {
-      toast.error("Failed to create stage", {
+      toast.error("Failed to create match", {
         description: getErrorMessage(error),
       });
     }
@@ -55,20 +54,13 @@ export default function CreateCompetitionForm({
         onSubmit={form.handleSubmit(onSubmit)}
         className="flex flex-col gap-4"
       >
-        <FormElement
-          name="name"
-          label="Stage Name"
-          placeholder="Enter stage name"
-          isRequired
-        />
-
         <Button
           type="submit"
           className="w-full mt-4"
           disabled={form.formState.isSubmitting}
         >
           <IconPlus />
-          Create Stage
+          Create Match
         </Button>
       </form>
     </Form>

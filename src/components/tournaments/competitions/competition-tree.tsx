@@ -2,6 +2,7 @@
 
 import Modal from "@/components/modals/modal";
 import CreateCompetitionModal from "@/components/modals/tournaments/competition/create-competition";
+import CreateMatchModal from "@/components/modals/tournaments/match/create-match";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -55,13 +56,23 @@ export default function CompetitionTree({
               </div>
             </div>
 
-            <Modal>
-              <CreateCompetitionModal data={tree.id} />
-              <Button variant={"outline"}>
-                <IconPlus />
-                Add Stage
-              </Button>
-            </Modal>
+            <div className="flex gap-2">
+              <Modal>
+                <CreateMatchModal data={tree.id} />
+                <Button variant={"outline"}>
+                  <IconPlus />
+                  Add Match
+                </Button>
+              </Modal>
+
+              <Modal>
+                <CreateCompetitionModal data={tree.id} />
+                <Button variant={"outline"}>
+                  <IconPlus />
+                  Add Stage
+                </Button>
+              </Modal>
+            </div>
           </div>
 
           <Separator />
@@ -71,13 +82,13 @@ export default function CompetitionTree({
               No matches in this stage.
             </p>
           ) : (
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-2">
               {tree.matches.map((match, i) => (
                 <Card
                   key={match.id}
                   className="p-2 rounded-lg cursor-pointer hover:border-white transition-all"
                 >
-                  <div className="flex gap-2 items-center">
+                  <div className="flex gap-2 items-center justify-between">
                     <span className="text-sm">Match {i + 1}</span>
                     <MatchStatusBadge status={match.status} />
                   </div>
