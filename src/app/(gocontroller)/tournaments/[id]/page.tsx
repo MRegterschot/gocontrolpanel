@@ -15,7 +15,7 @@ export default async function TournamentPage({
         <h4 className="text-muted-foreground">Manage the tournament info.</h4>
       </div>
 
-      <div className="flex flex-col sm:gap-2 gap-4">
+      <div className="flex flex-col gap-2 sm:gap-4">
         <TournamentInfo tournamentId={Number(id)} />
         <TournamentStages tournamentId={Number(id)} />
       </div>
