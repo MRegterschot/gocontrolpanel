@@ -10,17 +10,7 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
-import NodeKindHandle from "./node_kind_handle_type";
-import ConnectionSettings from "./connection_settings_type";
-
-export default {
-  get connectionFrom() {
-    return NodeKindHandle;
-  },
-  get connectionTo() {
-    return NodeKindHandle;
-  },
-  get setting() {
-    return ConnectionSettings;
-  },
-};
+export default __t.row({
+  accountId: __t.string().name("account_id"),
+  score: __t.u32(),
+});

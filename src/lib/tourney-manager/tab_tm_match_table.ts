@@ -10,8 +10,8 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 import ServerConfig from "./server_config_type";
-import MatchState from "./match_state_type";
 import MatchStatus from "./match_status_type";
+import MatchState from "./match_state_type";
 
 
 export default __t.row({

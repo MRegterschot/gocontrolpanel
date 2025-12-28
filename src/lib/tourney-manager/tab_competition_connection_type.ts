@@ -22,6 +22,7 @@ export default __t.object("TabCompetitionConnection", {
   get connectionSettings() {
     return ConnectionSettings;
   },
+  resolved: __t.bool(),
 });
 
 

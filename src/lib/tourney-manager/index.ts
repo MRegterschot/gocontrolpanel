@@ -57,6 +57,8 @@ import CreateTournamentReducer from "./create_tournament_reducer";
 export { CreateTournamentReducer };
 import IdentityDisconnectedReducer from "./identity_disconnected_reducer";
 export { IdentityDisconnectedReducer };
+import InternalGraphResolutionNodeFinishedReducer from "./internal_graph_resolution_node_finished_reducer";
+export { InternalGraphResolutionNodeFinishedReducer };
 import MatchAssignServerReducer from "./match_assign_server_reducer";
 export { MatchAssignServerReducer };
 import MatchConfiguredReducer from "./match_configured_reducer";
@@ -103,10 +105,10 @@ import EnvRow from "./env_table";
 export { EnvRow };
 import GeneratorRow from "./generator_table";
 export { GeneratorRow };
+import LeaderbaordRow from "./leaderbaord_table";
+export { LeaderbaordRow };
 import MapRecordRow from "./map_record_table";
 export { MapRecordRow };
-import MatchEventRow from "./match_event_table";
-export { MatchEventRow };
 import MatchGhostRow from "./match_ghost_table";
 export { MatchGhostRow };
 import MatchRecordRow from "./match_record_table";
@@ -119,6 +121,8 @@ import MyJobsRow from "./my_jobs_table";
 export { MyJobsRow };
 import MyTournamentRow from "./my_tournament_table";
 export { MyTournamentRow };
+import RegisteredPlayerRow from "./registered_player_table";
+export { RegisteredPlayerRow };
 import ScheduleRow from "./schedule_table";
 export { ScheduleRow };
 import TabCompetitionRow from "./tab_competition_table";
@@ -133,6 +137,8 @@ import TabScheduleRow from "./tab_schedule_table";
 export { TabScheduleRow };
 import TabTmMatchRow from "./tab_tm_match_table";
 export { TabTmMatchRow };
+import TabTmMatchEventRow from "./tab_tm_match_event_table";
+export { TabTmMatchEventRow };
 import TabTmServerRow from "./tab_tm_server_table";
 export { TabTmServerRow };
 import TabTournamentRow from "./tab_tournament_table";
@@ -213,6 +219,8 @@ import GiveUp from "./give_up_type";
 export { GiveUp };
 import KickArgs from "./kick_args_type";
 export { KickArgs };
+import LeaderboardEntry from "./leaderboard_entry_type";
+export { LeaderboardEntry };
 import LoadingMapEnd from "./loading_map_end_type";
 export { LoadingMapEnd };
 import LoadingMapStart from "./loading_map_start_type";
@@ -221,8 +229,6 @@ import Map from "./map_type";
 export { Map };
 import MapPoolConfig from "./map_pool_config_type";
 export { MapPoolConfig };
-import MatchEvent from "./match_event_type";
-export { MatchEvent };
 import MatchGhost from "./match_ghost_type";
 export { MatchGhost };
 import MatchStandings from "./match_standings_type";
@@ -251,8 +257,8 @@ import MonitoringSettingsMap from "./monitoring_settings_map_type";
 export { MonitoringSettingsMap };
 import MyTournamentV1 from "./my_tournament_v_1_type";
 export { MyTournamentV1 };
-import NodeKindRef from "./node_kind_ref_type";
-export { NodeKindRef };
+import NodeKindHandle from "./node_kind_handle_type";
+export { NodeKindHandle };
 import PlayLoopEnd from "./play_loop_end_type";
 export { PlayLoopEnd };
 import PlayLoopStart from "./play_loop_start_type";
@@ -315,6 +321,8 @@ import TmCompRecord from "./tm_comp_record_type";
 export { TmCompRecord };
 import TmMapRecord from "./tm_map_record_type";
 export { TmMapRecord };
+import TmMatchEvent from "./tm_match_event_type";
+export { TmMatchEvent };
 import TmMatchV1 from "./tm_match_v_1_type";
 export { TmMatchV1 };
 import TmMonitoring from "./tm_monitoring_type";
@@ -372,19 +380,6 @@ const tablesSchema = __schema(
     constraints: [
     ],
   }, GeneratorRow),
-  __table({
-    name: 'match_event',
-    indexes: [
-      { name: 'event', algorithm: 'btree', columns: [
-        'event',
-      ] },
-      { name: 'event_match', algorithm: 'btree', columns: [
-        'matchId',
-      ] },
-    ],
-    constraints: [
-    ],
-  }, MatchEventRow),
   __table({
     name: 'match_ghost',
     indexes: [
@@ -472,6 +467,19 @@ const tablesSchema = __schema(
       { name: 'tab_tm_match_id_key', constraint: 'unique', columns: ['id'] },
     ],
   }, TabTmMatchRow),
+  __table({
+    name: 'tab_tm_match_event',
+    indexes: [
+      { name: 'event', algorithm: 'btree', columns: [
+        'event',
+      ] },
+      { name: 'event_match', algorithm: 'btree', columns: [
+        'matchId',
+      ] },
+    ],
+    constraints: [
+    ],
+  }, TabTmMatchEventRow),
   __table({
     name: 'tab_tm_server',
     indexes: [
@@ -648,6 +656,13 @@ const tablesSchema = __schema(
     ],
   }, CompetitionRecordRow),
   __table({
+    name: 'leaderbaord',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, LeaderbaordRow),
+  __table({
     name: 'map_record',
     indexes: [
     ],
@@ -682,6 +697,13 @@ const tablesSchema = __schema(
     constraints: [
     ],
   }, MyTournamentRow),
+  __table({
+    name: 'registered_player',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, RegisteredPlayerRow),
   __table({
     name: 'schedule',
     indexes: [
@@ -739,6 +761,7 @@ const reducersSchema = __reducers(
   __reducerSchema("create_server_config", CreateServerConfigReducer),
   __reducerSchema("create_team", CreateTeamReducer),
   __reducerSchema("create_tournament", CreateTournamentReducer),
+  __reducerSchema("internal_graph_resolution_node_finished", InternalGraphResolutionNodeFinishedReducer),
   __reducerSchema("match_assign_server", MatchAssignServerReducer),
   __reducerSchema("match_configured", MatchConfiguredReducer),
   __reducerSchema("on_schedule_triggered", OnScheduleTriggeredReducer),
@@ -796,7 +819,7 @@ export type SubscriptionHandle = __SubscriptionHandleImpl<typeof REMOTE_MODULE>;
 export class SubscriptionBuilder extends __SubscriptionBuilderImpl<typeof REMOTE_MODULE> {}
 
 /** Builder class to configure a new database connection to the remote SpacetimeDB instance. */
-export class DbConnectionBuilder extends __DbConnectionBuilder<__DbConnectionImpl<typeof REMOTE_MODULE>> {}
+export class DbConnectionBuilder extends __DbConnectionBuilder<DbConnection> {}
 
 /** The typed database connection to manage connections to the remote SpacetimeDB instance. This class has type information specific to the generated module. */
 export class DbConnection extends __DbConnectionImpl<typeof REMOTE_MODULE> {

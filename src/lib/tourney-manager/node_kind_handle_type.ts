@@ -9,19 +9,15 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
-import MatchState from "./match_state_type";
-import Event from "./event_type";
 
-
-export default __t.object("MatchEvent", {
-  tournamentId: __t.u32(),
-  matchId: __t.u32(),
-  get state() {
-    return MatchState;
-  },
-  get event() {
-    return Event;
-  },
+// The tagged union or sum type for the algebraic type `NodeKindHandle`.
+const NodeKindHandle = __t.enum("NodeKindHandle", {MatchV1: __t.u32(),
+  CompetitionV1: __t.u32(),
+  MonitoringV1: __t.u32(),
+  ServerV1: __t.u32(),
+  SchedulingV1: __t.u32(),
 });
+
+export default NodeKindHandle;
 
 

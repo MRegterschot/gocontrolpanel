@@ -22,4 +22,5 @@ export default __t.row({
   get connectionSettings() {
     return ConnectionSettings.name("connection_settings");
   },
+  resolved: __t.bool(),
 });

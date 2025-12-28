@@ -1,5 +1,6 @@
 "use client";
 
+import ConfirmModal from "@/components/modals/confirm-modal";
 import Modal from "@/components/modals/modal";
 import CreateCompetitionModal from "@/components/modals/tournaments/competition/create-competition";
 import EditRegistrationSettingsModal from "@/components/modals/tournaments/competition/edit-registration-settings";
@@ -10,14 +11,19 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { CompetitionNode } from "@/hooks/tournaments/competitions/use-competition-tree";
+import { reducers } from "@/lib/tourney-manager";
 import { cn } from "@/lib/utils";
 import { IconChevronUp } from "@tabler/icons-react";
 import { MoreHorizontal } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useState } from "react";
+import { toast } from "sonner";
+import { useReducer } from "spacetimedb/react";
 import CompetitionStatusBadge from "../status/competition-status-badge";
 import MatchStatusBadge from "../status/match-status-badge";
 import RegistrationBadge from "./registration-badge";
@@ -35,12 +41,52 @@ export default function CompetitionTree({
   subsectionIndex = 0,
   isLast = true,
 }: CompetitionTreeProps) {
+  const { data: session } = useSession();
+
+  const register = useReducer(reducers.registerPlayer);
+  const unregister = useReducer(reducers.unregisterPlayer);
+
+  // Stage children toggle
   const [isOpen, setIsOpen] = useState(false);
 
+  // Modals
   const [isEditRegistrationSettingsOpen, setIsEditRegistrationSettingsOpen] =
     useState(false);
   const [isAddMatchOpen, setIsAddMatchOpen] = useState(false);
   const [isAddStageOpen, setIsAddStageOpen] = useState(false);
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+
+  const isRegistered = tree.registeredPlayers.some(
+    (rp) => rp.accountId === "3467014a-c1cc-4aae-99fe-6beb5eca232a", //session?.user.id
+  );
+
+  const handleRegisterToggle = () => {
+    if (!session?.user.id) {
+      toast.error("You must be logged in to register");
+      return;
+    }
+
+    if (tree.registrationSettings.tag === "None") {
+      toast.error("Registration is not open for this competition");
+      return;
+    }
+
+    try {
+      if (isRegistered) {
+        unregister({
+          competitionId: tree.id,
+        });
+        toast.success("Unregistered successfully");
+      } else {
+        register({
+          competitionId: tree.id,
+        });
+        toast.success("Registered successfully");
+      }
+    } catch (error) {
+      toast.error("Failed to update registration");
+    }
+  };
 
   return (
     <div>
@@ -78,11 +124,17 @@ export default function CompetitionTree({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  {tree.registrationSettings.tag !== "None" && (
+                    <DropdownMenuItem onClick={() => setIsRegisterOpen(true)}>
+                      {isRegistered ? "Unregister" : "Register"}
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem
                     onClick={() => setIsEditRegistrationSettingsOpen(true)}
                   >
                     Edit registration settings
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setIsAddMatchOpen(true)}>
                     Add match
                   </DropdownMenuItem>
@@ -92,6 +144,25 @@ export default function CompetitionTree({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              <ConfirmModal
+                isOpen={isRegisterOpen}
+                onClose={() => setIsRegisterOpen(false)}
+                variant={isRegistered ? "destructive" : "default"}
+                onConfirm={handleRegisterToggle}
+                title={
+                  isRegistered
+                    ? "Unregister from competition"
+                    : "Register for competition"
+                }
+                description={
+                  isRegistered
+                    ? `Are you sure you want to unregister from ${tree.name}?`
+                    : `Do you want to register for ${tree.name}?`
+                }
+                confirmText={isRegistered ? "Unregister" : "Register"}
+                cancelText="Cancel"
+              />
 
               <Modal
                 isOpen={isEditRegistrationSettingsOpen}

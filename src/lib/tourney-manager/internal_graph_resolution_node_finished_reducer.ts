@@ -10,14 +10,11 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
-// The tagged union or sum type for the algebraic type `NodeKindRef`.
-const NodeKindRef = __t.enum("NodeKindRef", {MatchV1: __t.u32(),
-  CompetitionV1: __t.u32(),
-  MonitoringV1: __t.u32(),
-  ServerV1: __t.u32(),
-  SchedulingV1: __t.u32(),
-});
+import NodeKindHandle from "./node_kind_handle_type";
 
-export default NodeKindRef;
-
-
+export default {
+  competitionId: __t.u32(),
+  get trigger() {
+    return NodeKindHandle;
+  },
+};

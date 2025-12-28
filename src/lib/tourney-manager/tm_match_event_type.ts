@@ -9,21 +9,18 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
-import NodeKindHandle from "./node_kind_handle_type";
-import ConnectionSettings from "./connection_settings_type";
+import Event from "./event_type";
+import MatchState from "./match_state_type";
 
 
-export default __t.object("CompetitionConnection", {
+export default __t.object("TmMatchEvent", {
   tournamentId: __t.u32(),
-  competitionId: __t.u32(),
-  get connectionFrom() {
-    return NodeKindHandle;
+  matchId: __t.u32(),
+  get state() {
+    return MatchState;
   },
-  get connectionTo() {
-    return NodeKindHandle;
-  },
-  get connectionSettings() {
-    return ConnectionSettings;
+  get event() {
+    return Event;
   },
 });
 

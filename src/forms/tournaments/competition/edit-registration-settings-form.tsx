@@ -203,8 +203,6 @@ export default function EditRegistrationSettingsForm({
 
         <Button
           type="submit"
-          className="w-20"
-          size={"sm"}
           disabled={form.formState.isSubmitting}
         >
           <IconDeviceFloppy />
