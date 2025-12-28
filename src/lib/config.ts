@@ -11,8 +11,8 @@ const config: Config = {
     URL: "https://us-central1-fantasy-trackmania.cloudfunctions.net",
   },
   SPACETIME: {
-    URI: process.env.NEXT_PUBLIC_SPACETIME_URI || "",
-    MODULE: process.env.NEXT_PUBLIC_SPACETIME_MODULE || "",
+    URI: process.env.SPACETIME_URI || "",
+    MODULE: process.env.SPACETIME_MODULE || "",
   },
   DEFAULT_ADMINS: process.env.DEFAULT_ADMINS
     ? process.env.DEFAULT_ADMINS.split(",")

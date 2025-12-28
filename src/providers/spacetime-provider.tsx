@@ -1,32 +1,43 @@
 "use client";
 
-import config from "@/lib/config";
 import { getDbConnectionBuilder } from "@/lib/spacetimedb/connection-builder";
 import { useEffect, useState } from "react";
-import { SpacetimeDBProvider as BuiltinSpacetimeDbProvider } from "spacetimedb/react";
+import { SpacetimeDBProvider as Provider } from "spacetimedb/react";
 
-const SpacetimeDBProvider = ({ children }: { children: React.ReactNode }) => {
-  const [builder, setBuilder] = useState<ReturnType<
-    typeof getDbConnectionBuilder
+export default function SpacetimeDBProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [builder, setBuilder] = useState<Awaited<
+    ReturnType<typeof getDbConnectionBuilder>
   > | null>(null);
+  const [checkedEnv, setCheckedEnv] = useState(false);
 
   useEffect(() => {
-    setBuilder(getDbConnectionBuilder());
+    let active = true;
+
+    (async () => {
+      const b = await getDbConnectionBuilder();
+      if (!active) return;
+
+      if (!b) {
+        setCheckedEnv(true);
+        return;
+      }
+
+      setBuilder(b);
+      setCheckedEnv(true);
+    })();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
-  if (!config.SPACETIME.URI || !config.SPACETIME.MODULE) {
-    return <>{children}</>;
-  }
+  if (!checkedEnv) return null;
 
-  if (!builder) {
-    return null;
-  }
+  if (!builder) return <>{children}</>;
 
-  return (
-    <BuiltinSpacetimeDbProvider connectionBuilder={builder}>
-      {children}
-    </BuiltinSpacetimeDbProvider>
-  );
-};
-
-export default SpacetimeDBProvider;
+  return <Provider connectionBuilder={builder}>{children}</Provider>;
+}
