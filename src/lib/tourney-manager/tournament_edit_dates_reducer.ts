@@ -10,5 +10,8 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
-export default __t.row({
-});
+export default {
+  tounrnamentId: __t.u32(),
+  startingAt: __t.option(__t.timestamp()),
+  endingAt: __t.option(__t.timestamp()),
+};

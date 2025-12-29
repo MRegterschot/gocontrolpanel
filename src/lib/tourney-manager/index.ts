@@ -75,6 +75,8 @@ import ServerMethodCallReducer from "./server_method_call_reducer";
 export { ServerMethodCallReducer };
 import ServerMethodResponseReducer from "./server_method_response_reducer";
 export { ServerMethodResponseReducer };
+import TournamentEditDatesReducer from "./tournament_edit_dates_reducer";
+export { TournamentEditDatesReducer };
 import TournamentEditDescriptionReducer from "./tournament_edit_description_reducer";
 export { TournamentEditDescriptionReducer };
 import TryStartMatchReducer from "./try_start_match_reducer";
@@ -105,24 +107,22 @@ import EnvRow from "./env_table";
 export { EnvRow };
 import GeneratorRow from "./generator_table";
 export { GeneratorRow };
-import LeaderbaordRow from "./leaderbaord_table";
-export { LeaderbaordRow };
 import MapRecordRow from "./map_record_table";
 export { MapRecordRow };
 import MatchGhostRow from "./match_ghost_table";
 export { MatchGhostRow };
+import MatchLeaderbaordRow from "./match_leaderbaord_table";
+export { MatchLeaderbaordRow };
 import MatchRecordRow from "./match_record_table";
 export { MatchRecordRow };
-import MatchStandingsRow from "./match_standings_table";
-export { MatchStandingsRow };
+import MatchRoundRow from "./match_round_table";
+export { MatchRoundRow };
 import MatchTemplateRow from "./match_template_table";
 export { MatchTemplateRow };
 import MyJobsRow from "./my_jobs_table";
 export { MyJobsRow };
 import MyTournamentRow from "./my_tournament_table";
 export { MyTournamentRow };
-import RegisteredPlayerRow from "./registered_player_table";
-export { RegisteredPlayerRow };
 import ScheduleRow from "./schedule_table";
 export { ScheduleRow };
 import TabCompetitionRow from "./tab_competition_table";
@@ -139,6 +139,8 @@ import TabTmMatchRow from "./tab_tm_match_table";
 export { TabTmMatchRow };
 import TabTmMatchEventRow from "./tab_tm_match_event_table";
 export { TabTmMatchEventRow };
+import TabTmMatchStateRow from "./tab_tm_match_state_table";
+export { TabTmMatchStateRow };
 import TabTmServerRow from "./tab_tm_server_table";
 export { TabTmServerRow };
 import TabTournamentRow from "./tab_tournament_table";
@@ -231,10 +233,6 @@ import MapPoolConfig from "./map_pool_config_type";
 export { MapPoolConfig };
 import MatchGhost from "./match_ghost_type";
 export { MatchGhost };
-import MatchStandings from "./match_standings_type";
-export { MatchStandings };
-import MatchState from "./match_state_type";
-export { MatchState };
 import MatchStatus from "./match_status_type";
 export { MatchStatus };
 import MatchTemplate from "./match_template_type";
@@ -287,6 +285,8 @@ import Respawn from "./respawn_type";
 export { Respawn };
 import RespawnBavaviour from "./respawn_bavaviour_type";
 export { RespawnBavaviour };
+import RoundStandings from "./round_standings_type";
+export { RoundStandings };
 import RoundTime from "./round_time_type";
 export { RoundTime };
 import Rounds from "./rounds_type";
@@ -323,6 +323,8 @@ import TmMapRecord from "./tm_map_record_type";
 export { TmMapRecord };
 import TmMatchEvent from "./tm_match_event_type";
 export { TmMatchEvent };
+import TmMatchState from "./tm_match_state_type";
+export { TmMatchState };
 import TmMatchV1 from "./tm_match_v_1_type";
 export { TmMatchV1 };
 import TmMonitoring from "./tm_monitoring_type";
@@ -473,13 +475,29 @@ const tablesSchema = __schema(
       { name: 'event', algorithm: 'btree', columns: [
         'event',
       ] },
-      { name: 'event_match', algorithm: 'btree', columns: [
+      { name: 'match_id', algorithm: 'btree', columns: [
         'matchId',
+      ] },
+      { name: 'match_round_wu', algorithm: 'btree', columns: [
+        'matchId',
+        'round',
+        'isWarmup',
       ] },
     ],
     constraints: [
     ],
   }, TabTmMatchEventRow),
+  __table({
+    name: 'tab_tm_match_state',
+    indexes: [
+      { name: 'id', algorithm: 'btree', columns: [
+        'id',
+      ] },
+    ],
+    constraints: [
+      { name: 'tab_tm_match_state_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, TabTmMatchStateRow),
   __table({
     name: 'tab_tm_server',
     indexes: [
@@ -656,19 +674,19 @@ const tablesSchema = __schema(
     ],
   }, CompetitionRecordRow),
   __table({
-    name: 'leaderbaord',
-    indexes: [
-    ],
-    constraints: [
-    ],
-  }, LeaderbaordRow),
-  __table({
     name: 'map_record',
     indexes: [
     ],
     constraints: [
     ],
   }, MapRecordRow),
+  __table({
+    name: 'match_leaderbaord',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MatchLeaderbaordRow),
   __table({
     name: 'match_record',
     indexes: [
@@ -677,12 +695,12 @@ const tablesSchema = __schema(
     ],
   }, MatchRecordRow),
   __table({
-    name: 'match_standings',
+    name: 'match_round',
     indexes: [
     ],
     constraints: [
     ],
-  }, MatchStandingsRow),
+  }, MatchRoundRow),
   __table({
     name: 'my_jobs',
     indexes: [
@@ -697,13 +715,6 @@ const tablesSchema = __schema(
     constraints: [
     ],
   }, MyTournamentRow),
-  __table({
-    name: 'registered_player',
-    indexes: [
-    ],
-    constraints: [
-    ],
-  }, RegisteredPlayerRow),
   __table({
     name: 'schedule',
     indexes: [
@@ -770,6 +781,7 @@ const reducersSchema = __reducers(
   __reducerSchema("register_player", RegisterPlayerReducer),
   __reducerSchema("server_method_call", ServerMethodCallReducer),
   __reducerSchema("server_method_response", ServerMethodResponseReducer),
+  __reducerSchema("tournament_edit_dates", TournamentEditDatesReducer),
   __reducerSchema("tournament_edit_description", TournamentEditDescriptionReducer),
   __reducerSchema("try_start_match", TryStartMatchReducer),
   __reducerSchema("unregister_player", UnregisterPlayerReducer),

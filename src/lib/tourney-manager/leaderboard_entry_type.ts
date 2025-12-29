@@ -12,7 +12,8 @@ import {
 
 export default __t.object("LeaderboardEntry", {
   accountId: __t.string(),
-  score: __t.u32(),
+  accountName: __t.string(),
+  score: __t.i32(),
 });
 
 

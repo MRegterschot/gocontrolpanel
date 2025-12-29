@@ -10,15 +10,15 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 import Event from "./event_type";
-import MatchState from "./match_state_type";
 
 
 export default __t.object("TmMatchEvent", {
-  tournamentId: __t.u32(),
   matchId: __t.u32(),
-  get state() {
-    return MatchState;
-  },
+  restarted: __t.u16(),
+  round: __t.u16(),
+  warmup: __t.u16(),
+  isWarmup: __t.bool(),
+  paused: __t.bool(),
   get event() {
     return Event;
   },

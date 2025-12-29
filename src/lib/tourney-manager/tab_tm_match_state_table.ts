@@ -11,6 +11,10 @@ import {
 } from "spacetimedb";
 
 export default __t.row({
-  accountId: __t.string().name("account_id"),
-  score: __t.u32(),
+  id: __t.u32().primaryKey(),
+  restarted: __t.u16(),
+  round: __t.u16(),
+  warmup: __t.u16(),
+  isWarmup: __t.bool().name("is_warmup"),
+  paused: __t.bool(),
 });

@@ -10,8 +10,13 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
-export default __t.row({
-  competitionId: __t.u32().name("competition_id"),
-  accountId: __t.string().name("account_id"),
-  registeredAt: __t.timestamp().name("registered_at"),
+export default __t.object("TmMatchState", {
+  id: __t.u32(),
+  restarted: __t.u16(),
+  round: __t.u16(),
+  warmup: __t.u16(),
+  isWarmup: __t.bool(),
+  paused: __t.bool(),
 });
+
+

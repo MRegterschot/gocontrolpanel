@@ -35,9 +35,6 @@ export default function TournamentInfo({
     return <span>Tournament not found</span>;
   }
 
-  tournament.startingAt = Timestamp.fromDate(new Date());
-  tournament.endingAt = Timestamp.fromDate(new Date());
-
   return (
     <Card className="p-4 flex flex-col sm:flex-row justify-between gap-4 sm:items-end">
       <div className="flex flex-1 flex-col gap-2">

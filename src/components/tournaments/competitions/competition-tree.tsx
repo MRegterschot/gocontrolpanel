@@ -89,9 +89,6 @@ export default function CompetitionTree({
     }
   };
 
-  tree.startingAt = Timestamp.fromDate(new Date());
-  tree.endingAt = Timestamp.fromDate(new Date());
-
   return (
     <div>
       <div className="flex gap-2 sm:gap-4">

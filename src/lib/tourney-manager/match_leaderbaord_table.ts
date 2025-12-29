@@ -10,6 +10,8 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
-export default __t.object("MatchStandings", {});
-
-
+export default __t.row({
+  accountId: __t.string().name("account_id"),
+  accountName: __t.string().name("account_name"),
+  score: __t.i32(),
+});

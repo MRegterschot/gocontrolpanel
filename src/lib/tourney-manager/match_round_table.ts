@@ -10,12 +10,8 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
-export default __t.object("MatchState", {
-  restarted: __t.u16(),
-  round: __t.u16(),
-  warmup: __t.u16(),
-  isWarmup: __t.bool(),
-  paused: __t.bool(),
+export default __t.row({
+  accountId: __t.string().name("account_id"),
+  accountName: __t.string().name("account_name"),
+  score: __t.i32(),
 });
-
-
