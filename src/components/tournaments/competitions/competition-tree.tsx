@@ -18,11 +18,12 @@ import { Separator } from "@/components/ui/separator";
 import { CompetitionNode } from "@/hooks/tournaments/competitions/use-competition-tree";
 import { reducers } from "@/lib/tourney-manager";
 import { cn } from "@/lib/utils";
-import { IconChevronUp } from "@tabler/icons-react";
+import { IconCalendar, IconChevronUp } from "@tabler/icons-react";
 import { MoreHorizontal } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Timestamp } from "spacetimedb";
 import { useReducer } from "spacetimedb/react";
 import CompetitionStatusBadge from "../status/competition-status-badge";
 import MatchStatusBadge from "../status/match-status-badge";
@@ -88,11 +89,14 @@ export default function CompetitionTree({
     }
   };
 
+  tree.startingAt = Timestamp.fromDate(new Date());
+  tree.endingAt = Timestamp.fromDate(new Date());
+
   return (
     <div>
       <div className="flex gap-2 sm:gap-4">
         <div className="flex flex-col items-center">
-          <Card className="rounded-full w-12 min-h-12 grid place-items-center font-semibold">
+          <Card className="rounded-full w-10 min-h-10 sm:w-12 sm:min-h-12 grid place-items-center font-semibold text-sm sm:text-base">
             {sectionIndex + 1}
             {String.fromCharCode(97 + subsectionIndex)}
           </Card>
@@ -100,89 +104,121 @@ export default function CompetitionTree({
         </div>
 
         <Card className="flex-1 gap-2 mb-4 p-3 min-h-20">
-          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-lg font-semibold truncate max-w-60 lg:max-w-128">
-                {tree.name}
-              </h3>
+          <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-2">
+            <div className="flex flex-1 flex-col gap-1 sm:gap-0">
+              <div className="flex justify-between items-start sm:items-center gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                  <h3 className="text-lg font-semibold truncate max-w-51 lg:max-w-118 xl:max-w-180">
+                    {tree.name}
+                  </h3>
 
-              <div className="space-x-2">
-                <CompetitionStatusBadge status={tree.status} />
+                  <CompetitionStatusBadge status={tree.status} />
+                </div>
 
+                <div className="flex gap-2 items-center ml-auto">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Open menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {tree.registrationSettings.tag !== "None" && (
+                        <DropdownMenuItem
+                          onClick={() => setIsRegisterOpen(true)}
+                        >
+                          {isRegistered ? "Unregister" : "Register"}
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem
+                        onClick={() => setIsEditRegistrationSettingsOpen(true)}
+                      >
+                        Edit registration settings
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setIsAddMatchOpen(true)}>
+                        Add match
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem onClick={() => setIsAddStageOpen(true)}>
+                        Add stage
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <ConfirmModal
+                    isOpen={isRegisterOpen}
+                    onClose={() => setIsRegisterOpen(false)}
+                    variant={isRegistered ? "destructive" : "default"}
+                    onConfirm={handleRegisterToggle}
+                    title={
+                      isRegistered
+                        ? "Unregister from competition"
+                        : "Register for competition"
+                    }
+                    description={
+                      isRegistered
+                        ? `Are you sure you want to unregister from ${tree.name}?`
+                        : `Do you want to register for ${tree.name}?`
+                    }
+                    confirmText={isRegistered ? "Unregister" : "Register"}
+                    cancelText="Cancel"
+                  />
+
+                  <Modal
+                    isOpen={isEditRegistrationSettingsOpen}
+                    setIsOpen={setIsEditRegistrationSettingsOpen}
+                  >
+                    <EditRegistrationSettingsModal
+                      data={{
+                        competitionId: tree.id,
+                        registrationSettings: tree.registrationSettings,
+                      }}
+                    />
+                  </Modal>
+
+                  <Modal isOpen={isAddMatchOpen} setIsOpen={setIsAddMatchOpen}>
+                    <CreateMatchModal data={tree.id} />
+                  </Modal>
+
+                  <Modal isOpen={isAddStageOpen} setIsOpen={setIsAddStageOpen}>
+                    <CreateCompetitionModal data={tree.id} />
+                  </Modal>
+                </div>
+              </div>
+
+              {(tree.startingAt || tree.endingAt) && (
+                <div className="flex gap-2 items-center text-muted-foreground text-sm">
+                  <IconCalendar size={16} />
+
+                  {tree.startingAt && (
+                    <span>
+                      {tree.startingAt.toDate().toLocaleDateString("en-UK", {
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </span>
+                  )}
+
+                  {tree.startingAt && tree.endingAt && <span>-</span>}
+
+                  {tree.endingAt && (
+                    <span>
+                      {tree.endingAt.toDate().toLocaleDateString("en-UK", {
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              <div className="space-x-2 sm:mt-1">
                 <RegistrationBadge
                   registrationSettings={tree.registrationSettings}
                 />
               </div>
-            </div>
-
-            <div className="flex gap-2 items-center">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Open menu</span>
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {tree.registrationSettings.tag !== "None" && (
-                    <DropdownMenuItem onClick={() => setIsRegisterOpen(true)}>
-                      {isRegistered ? "Unregister" : "Register"}
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem
-                    onClick={() => setIsEditRegistrationSettingsOpen(true)}
-                  >
-                    Edit registration settings
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setIsAddMatchOpen(true)}>
-                    Add match
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem onClick={() => setIsAddStageOpen(true)}>
-                    Add stage
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <ConfirmModal
-                isOpen={isRegisterOpen}
-                onClose={() => setIsRegisterOpen(false)}
-                variant={isRegistered ? "destructive" : "default"}
-                onConfirm={handleRegisterToggle}
-                title={
-                  isRegistered
-                    ? "Unregister from competition"
-                    : "Register for competition"
-                }
-                description={
-                  isRegistered
-                    ? `Are you sure you want to unregister from ${tree.name}?`
-                    : `Do you want to register for ${tree.name}?`
-                }
-                confirmText={isRegistered ? "Unregister" : "Register"}
-                cancelText="Cancel"
-              />
-
-              <Modal
-                isOpen={isEditRegistrationSettingsOpen}
-                setIsOpen={setIsEditRegistrationSettingsOpen}
-              >
-                <EditRegistrationSettingsModal
-                  data={{
-                    competitionId: tree.id,
-                    registrationSettings: tree.registrationSettings,
-                  }}
-                />
-              </Modal>
-
-              <Modal isOpen={isAddMatchOpen} setIsOpen={setIsAddMatchOpen}>
-                <CreateMatchModal data={tree.id} />
-              </Modal>
-
-              <Modal isOpen={isAddStageOpen} setIsOpen={setIsAddStageOpen}>
-                <CreateCompetitionModal data={tree.id} />
-              </Modal>
             </div>
           </div>
 

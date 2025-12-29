@@ -15,15 +15,20 @@ export default function RegistrationBadge({
       <>
         <Badge variant={"outline"} className="rounded-full">
           <IconUser />
-          Max {registrationSettings.value.playerLimit ?? 0} players
+          Max {registrationSettings.value.playerLimit ?? 0}
         </Badge>
 
         <Badge variant={"outline"} className="rounded-full">
           <IconStopwatch />
-          Registration closes{" "}
           {registrationSettings.value.registrationDeadline
             .toDate()
-            .toLocaleString()}
+            .toLocaleString("en-UK", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
         </Badge>
       </>
     );
@@ -31,22 +36,27 @@ export default function RegistrationBadge({
     return (
       <>
         <Badge variant={"outline"} className="rounded-full">
-          <IconUsers />
-          Max {registrationSettings.value.teamLimit} teams
+          <IconUser />
+          Max {registrationSettings.value.teamLimit}
         </Badge>
 
         <Badge variant={"outline"} className="rounded-full">
-          <IconUser />
+          <IconUsers />
           {registrationSettings.value.teamSizeMin} -{" "}
-          {registrationSettings.value.teamSizeMax} players per team
+          {registrationSettings.value.teamSizeMax}
         </Badge>
 
         <Badge variant={"outline"} className="rounded-full">
           <IconStopwatch />
-          Registration closes{" "}
           {registrationSettings.value.registrationDeadline
             .toDate()
-            .toLocaleString()}
+            .toLocaleString("en-UK", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
         </Badge>
       </>
     );
