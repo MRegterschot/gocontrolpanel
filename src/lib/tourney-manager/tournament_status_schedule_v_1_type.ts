@@ -12,14 +12,13 @@ import {
 import TournamentStatus from "./tournament_status_type";
 
 
-export default __t.row({
-  id: __t.u32(),
-  creator: __t.string(),
-  name: __t.string(),
-  startingAt: __t.timestamp().name("starting_at"),
-  endingAt: __t.timestamp().name("ending_at"),
-  description: __t.string(),
-  get status() {
+export default __t.object("TournamentStatusScheduleV1", {
+  scheduledId: __t.u64(),
+  scheduledAt: __t.scheduleAt(),
+  tournamentId: __t.u32(),
+  get newStatus() {
     return TournamentStatus;
   },
 });
+
+

@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus } from "@tabler/icons-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { Timestamp } from "spacetimedb";
 import { useReducer } from "spacetimedb/react";
 import {
   CreateTournamentSchema,
@@ -27,7 +28,12 @@ export default function CreateTournamentForm({
 
   async function onSubmit(values: CreateTournamentSchemaType) {
     try {
-      createTournament(values);
+      createTournament({
+        ...values,
+        description: values.description || "",
+        startingAt: Timestamp.fromDate(values.startDate),
+        endingAt: Timestamp.fromDate(values.endDate),
+      });
 
       toast.success("Tournament successfully created");
       if (callback) {
@@ -50,6 +56,27 @@ export default function CreateTournamentForm({
           name="name"
           label="Tournament Name"
           placeholder="Enter tournament name"
+          isRequired
+        />
+
+        <FormElement
+          name="description"
+          label="Description"
+          placeholder="Enter tournament description"
+          type="textarea"
+        />
+
+        <FormElement
+          name="startDate"
+          label="Start Date"
+          type="datetime"
+          isRequired
+        />
+
+        <FormElement
+          name="endDate"
+          label="End Date"
+          type="datetime"
           isRequired
         />
 

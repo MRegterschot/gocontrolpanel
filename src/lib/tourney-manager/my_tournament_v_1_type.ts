@@ -17,8 +17,8 @@ export default __t.object("MyTournamentV1", {
   creator: __t.string(),
   creatorName: __t.string(),
   name: __t.string(),
-  startingAt: __t.option(__t.timestamp()),
-  endingAt: __t.option(__t.timestamp()),
+  startingAt: __t.timestamp(),
+  endingAt: __t.timestamp(),
   description: __t.string(),
   get status() {
     return TournamentStatus;

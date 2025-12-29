@@ -33,6 +33,8 @@ import {
 // Import and reexport all reducer arg types
 import ClientConnectedReducer from "./client_connected_reducer";
 export { ClientConnectedReducer };
+import CompetitionEditNameReducer from "./competition_edit_name_reducer";
+export { CompetitionEditNameReducer };
 import CompetitionRegistrationSettingsReducer from "./competition_registration_settings_reducer";
 export { CompetitionRegistrationSettingsReducer };
 import CreateCompetitionReducer from "./create_competition_reducer";
@@ -65,6 +67,8 @@ import MatchConfiguredReducer from "./match_configured_reducer";
 export { MatchConfiguredReducer };
 import OnScheduleTriggeredReducer from "./on_schedule_triggered_reducer";
 export { OnScheduleTriggeredReducer };
+import OnTournamentStatusScheduleTriggeredReducer from "./on_tournament_status_schedule_triggered_reducer";
+export { OnTournamentStatusScheduleTriggeredReducer };
 import PostEventReducer from "./post_event_reducer";
 export { PostEventReducer };
 import PostRecordReducer from "./post_record_reducer";
@@ -79,6 +83,10 @@ import TournamentEditDatesReducer from "./tournament_edit_dates_reducer";
 export { TournamentEditDatesReducer };
 import TournamentEditDescriptionReducer from "./tournament_edit_description_reducer";
 export { TournamentEditDescriptionReducer };
+import TournamentEditNameReducer from "./tournament_edit_name_reducer";
+export { TournamentEditNameReducer };
+import TournamentUpdateStatusReducer from "./tournament_update_status_reducer";
+export { TournamentUpdateStatusReducer };
 import TryStartMatchReducer from "./try_start_match_reducer";
 export { TryStartMatchReducer };
 import UnregisterPlayerReducer from "./unregister_player_reducer";
@@ -123,6 +131,8 @@ import MyJobsRow from "./my_jobs_table";
 export { MyJobsRow };
 import MyTournamentRow from "./my_tournament_table";
 export { MyTournamentRow };
+import RegisteredPlayerRow from "./registered_player_table";
+export { RegisteredPlayerRow };
 import ScheduleRow from "./schedule_table";
 export { ScheduleRow };
 import TabCompetitionRow from "./tab_competition_table";
@@ -145,6 +155,8 @@ import TabTmServerRow from "./tab_tm_server_table";
 export { TabTmServerRow };
 import TabTournamentRow from "./tab_tournament_table";
 export { TabTournamentRow };
+import TabTournamentStatusScheduleRow from "./tab_tournament_status_schedule_table";
+export { TabTournamentStatusScheduleRow };
 import TabUserRow from "./tab_user_table";
 export { TabUserRow };
 import ThisTmServerRow from "./this_tm_server_table";
@@ -345,6 +357,8 @@ import TmWorkerJobs from "./tm_worker_jobs_type";
 export { TmWorkerJobs };
 import TournamentStatus from "./tournament_status_type";
 export { TournamentStatus };
+import TournamentStatusScheduleV1 from "./tournament_status_schedule_v_1_type";
+export { TournamentStatusScheduleV1 };
 import TournamentV1 from "./tournament_v_1_type";
 export { TournamentV1 };
 import UnloadingMapEnd from "./unloading_map_end_type";
@@ -535,6 +549,21 @@ const tablesSchema = __schema(
     ],
   }, TabTournamentRow),
   __table({
+    name: 'tab_tournament_status_schedule',
+    indexes: [
+      { name: 'scheduled_id', algorithm: 'btree', columns: [
+        'scheduledId',
+      ] },
+      { name: 'tournament_id', algorithm: 'btree', columns: [
+        'tournamentId',
+      ] },
+    ],
+    constraints: [
+      { name: 'tab_tournament_status_schedule_scheduled_id_key', constraint: 'unique', columns: ['scheduledId'] },
+      { name: 'tab_tournament_status_schedule_tournament_id_key', constraint: 'unique', columns: ['tournamentId'] },
+    ],
+  }, TabTournamentStatusScheduleRow),
+  __table({
     name: 'tab_user',
     indexes: [
       { name: 'account_id', algorithm: 'btree', columns: [
@@ -716,6 +745,13 @@ const tablesSchema = __schema(
     ],
   }, MyTournamentRow),
   __table({
+    name: 'registered_player',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, RegisteredPlayerRow),
+  __table({
     name: 'schedule',
     indexes: [
     ],
@@ -761,6 +797,7 @@ const tablesSchema = __schema(
 
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
 const reducersSchema = __reducers(
+  __reducerSchema("competition_edit_name", CompetitionEditNameReducer),
   __reducerSchema("competition_registration_settings", CompetitionRegistrationSettingsReducer),
   __reducerSchema("create_competition", CreateCompetitionReducer),
   __reducerSchema("create_connection", CreateConnectionReducer),
@@ -776,6 +813,7 @@ const reducersSchema = __reducers(
   __reducerSchema("match_assign_server", MatchAssignServerReducer),
   __reducerSchema("match_configured", MatchConfiguredReducer),
   __reducerSchema("on_schedule_triggered", OnScheduleTriggeredReducer),
+  __reducerSchema("on_tournament_status_schedule_triggered", OnTournamentStatusScheduleTriggeredReducer),
   __reducerSchema("post_event", PostEventReducer),
   __reducerSchema("post_record", PostRecordReducer),
   __reducerSchema("register_player", RegisterPlayerReducer),
@@ -783,6 +821,8 @@ const reducersSchema = __reducers(
   __reducerSchema("server_method_response", ServerMethodResponseReducer),
   __reducerSchema("tournament_edit_dates", TournamentEditDatesReducer),
   __reducerSchema("tournament_edit_description", TournamentEditDescriptionReducer),
+  __reducerSchema("tournament_edit_name", TournamentEditNameReducer),
+  __reducerSchema("tournament_update_status", TournamentUpdateStatusReducer),
   __reducerSchema("try_start_match", TryStartMatchReducer),
   __reducerSchema("unregister_player", UnregisterPlayerReducer),
   __reducerSchema("update_match_config", UpdateMatchConfigReducer),

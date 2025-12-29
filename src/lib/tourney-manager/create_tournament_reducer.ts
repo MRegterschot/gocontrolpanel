@@ -12,4 +12,7 @@ import {
 
 export default {
   name: __t.string(),
+  description: __t.string(),
+  startingAt: __t.timestamp(),
+  endingAt: __t.timestamp(),
 };

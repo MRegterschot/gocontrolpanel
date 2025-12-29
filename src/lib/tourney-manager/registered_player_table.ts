@@ -9,17 +9,9 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
-import TournamentStatus from "./tournament_status_type";
-
 
 export default __t.row({
-  id: __t.u32(),
-  creator: __t.string(),
-  name: __t.string(),
-  startingAt: __t.timestamp().name("starting_at"),
-  endingAt: __t.timestamp().name("ending_at"),
-  description: __t.string(),
-  get status() {
-    return TournamentStatus;
-  },
+  competitionId: __t.u32().name("competition_id"),
+  accountId: __t.string().name("account_id"),
+  registeredAt: __t.timestamp().name("registered_at"),
 });
