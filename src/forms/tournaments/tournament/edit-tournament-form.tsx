@@ -1,0 +1,139 @@
+"use client";
+import FormElement from "@/components/form/form-element";
+import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
+import { reducers, TournamentV1 } from "@/lib/tourney-manager";
+import { getErrorMessage } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { IconDeviceFloppy } from "@tabler/icons-react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { Infer, Timestamp } from "spacetimedb";
+import { useReducer } from "spacetimedb/react";
+import {
+  EditTournamentSchema,
+  EditTournamentSchemaType,
+} from "./edit-tournament-schema";
+
+export default function EditTournamentForm({
+  tournament,
+  callback,
+}: {
+  tournament: Infer<typeof TournamentV1>;
+  callback?: () => void;
+}) {
+  const editTournamentName = useReducer(reducers.tournamentEditName);
+  const editTournamentDescription = useReducer(
+    reducers.tournamentEditDescription,
+  );
+  const editTournamentDates = useReducer(reducers.tournamentEditDates);
+
+  const form = useForm<EditTournamentSchemaType>({
+    resolver: zodResolver(EditTournamentSchema),
+    defaultValues: {
+      name: tournament.name,
+      description: tournament.description,
+      startDate: tournament.startingAt.toDate(),
+      endDate: tournament.endingAt.toDate(),
+    },
+  });
+
+  async function onSubmit(values: EditTournamentSchemaType) {
+    if (tournament.name !== values.name) {
+      try {
+        editTournamentName({
+          tournamentId: tournament.id,
+          name: values.name,
+        });
+      } catch (error) {
+        toast.error("Failed to update name", {
+          description: getErrorMessage(error),
+        });
+      }
+    }
+
+    if (tournament.description !== values.description) {
+      try {
+        editTournamentDescription({
+          tournamentId: tournament.id,
+          description: values.description || "",
+        });
+        if (callback) {
+          callback();
+        }
+      } catch (error) {
+        toast.error("Failed to update description", {
+          description: getErrorMessage(error),
+        });
+      }
+    }
+
+    if (
+      tournament.startingAt.toDate().getTime() !== values.startDate.getTime() ||
+      tournament.endingAt.toDate().getTime() !== values.endDate.getTime()
+    ) {
+      try {
+        editTournamentDates({
+          tournamentId: tournament.id,
+          startingAt: Timestamp.fromDate(values.startDate),
+          endingAt: Timestamp.fromDate(values.endDate),
+        });
+        if (callback) {
+          callback();
+        }
+      } catch (error) {
+        toast.error("Failed to update tournament dates", {
+          description: getErrorMessage(error),
+        });
+      }
+    }
+
+    toast.success("Tournament successfully updated");
+  }
+
+  return (
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="flex flex-col gap-4"
+      >
+        <FormElement
+          name="name"
+          label="Tournament Name"
+          placeholder="Enter tournament name"
+          isRequired
+        />
+
+        <FormElement
+          name="description"
+          label="Description"
+          placeholder="Enter tournament description"
+          type="textarea"
+        />
+
+        <FormElement
+          name="startDate"
+          label="Start Date"
+          type="datetime"
+          isRequired
+        />
+
+        <FormElement
+          name="endDate"
+          label="End Date"
+          type="datetime"
+          isRequired
+        />
+
+        <Button
+          type="submit"
+          className="w-full mt-4"
+          disabled={form.formState.isSubmitting}
+        >
+          <IconDeviceFloppy />
+          Save
+        </Button>
+      </form>
+    </Form>
+  );
+}

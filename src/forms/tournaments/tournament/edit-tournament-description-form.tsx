@@ -36,7 +36,7 @@ export default function EditTournamentDescriptionForm({
   async function onSubmit(values: EditTournamentDescriptionSchemaType) {
     try {
       editTournamentDescription({
-        tounrnamentId: tournament.id,
+        tournamentId: tournament.id,
         description: values.description || "",
       });
       toast.success("Description successfully updated");

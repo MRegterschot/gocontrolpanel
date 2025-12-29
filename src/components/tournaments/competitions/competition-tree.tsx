@@ -112,7 +112,7 @@ export default function CompetitionTree({
                   <CompetitionStatusBadge status={tree.status} />
                 </div>
 
-                <div className="flex gap-2 items-center ml-auto">
+                <div className="ml-auto">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
