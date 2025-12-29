@@ -126,7 +126,12 @@ export default function TournamentInfo({
 
           <div className="flex flex-col">
             {(tournament.startingAt || tournament.endingAt) && (
-              <div className="flex gap-2 items-center text-muted-foreground text-sm">
+              <div
+                className="flex gap-2 items-center text-muted-foreground text-sm"
+                title={`
+                ${tournament.startingAt ? tournament.startingAt.toDate().toLocaleString() : "N/A"} - ${tournament.endingAt ? tournament.endingAt.toDate().toLocaleString() : "N/A"}
+              `}
+              >
                 <IconCalendar size={16} />
 
                 {tournament.startingAt && (
