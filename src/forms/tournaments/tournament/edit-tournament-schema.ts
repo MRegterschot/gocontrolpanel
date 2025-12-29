@@ -2,7 +2,7 @@ import z from "zod";
 
 export const EditTournamentSchema = z
   .object({
-    name: z.string(),
+    name: z.string().min(1, { message: "Tournament name is required" }),
     description: z.string().optional(),
     startDate: z.date(),
     endDate: z.date(),

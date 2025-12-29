@@ -58,9 +58,6 @@ export default function EditTournamentForm({
           tournamentId: tournament.id,
           description: values.description || "",
         });
-        if (callback) {
-          callback();
-        }
       } catch (error) {
         toast.error("Failed to update description", {
           description: getErrorMessage(error),
@@ -78,9 +75,6 @@ export default function EditTournamentForm({
           startingAt: Timestamp.fromDate(values.startDate),
           endingAt: Timestamp.fromDate(values.endDate),
         });
-        if (callback) {
-          callback();
-        }
       } catch (error) {
         toast.error("Failed to update tournament dates", {
           description: getErrorMessage(error),
@@ -89,6 +83,7 @@ export default function EditTournamentForm({
     }
 
     toast.success("Tournament successfully updated");
+    callback?.();
   }
 
   return (

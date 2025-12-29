@@ -102,8 +102,10 @@ export default function NavTournaments() {
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton asChild>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <span>Passed Tournaments</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">
+                        Passed Tournaments
+                      </span>
                       <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                     </div>
                   </SidebarMenuButton>

@@ -3,6 +3,7 @@
 import ConfirmModal from "@/components/modals/confirm-modal";
 import Modal from "@/components/modals/modal";
 import CreateCompetitionModal from "@/components/modals/tournaments/competition/create-competition";
+import EditCompetitionModal from "@/components/modals/tournaments/competition/edit-competition";
 import EditRegistrationSettingsModal from "@/components/modals/tournaments/competition/edit-registration-settings";
 import CreateMatchModal from "@/components/modals/tournaments/match/create-match";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,6 @@ import { MoreHorizontal } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Timestamp } from "spacetimedb";
 import { useReducer } from "spacetimedb/react";
 import CompetitionStatusBadge from "../status/competition-status-badge";
 import MatchStatusBadge from "../status/match-status-badge";
@@ -56,6 +56,7 @@ export default function CompetitionTree({
   const [isAddMatchOpen, setIsAddMatchOpen] = useState(false);
   const [isAddStageOpen, setIsAddStageOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [isEditCompetitionOpen, setIsEditCompetitionOpen] = useState(false);
 
   const isRegistered = tree.registeredPlayers.some(
     (rp) => rp.accountId === "3467014a-c1cc-4aae-99fe-6beb5eca232a", //session?.user.id
@@ -122,12 +123,20 @@ export default function CompetitionTree({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       {tree.registrationSettings.tag !== "None" && (
-                        <DropdownMenuItem
-                          onClick={() => setIsRegisterOpen(true)}
-                        >
-                          {isRegistered ? "Unregister" : "Register"}
-                        </DropdownMenuItem>
+                        <>
+                          <DropdownMenuItem
+                            onClick={() => setIsRegisterOpen(true)}
+                          >
+                            {isRegistered ? "Unregister" : "Register"}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                        </>
                       )}
+                      <DropdownMenuItem
+                        onClick={() => setIsEditCompetitionOpen(true)}
+                      >
+                        Edit stage
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => setIsEditRegistrationSettingsOpen(true)}
                       >
@@ -162,6 +171,13 @@ export default function CompetitionTree({
                     confirmText={isRegistered ? "Unregister" : "Register"}
                     cancelText="Cancel"
                   />
+
+                  <Modal
+                    isOpen={isEditCompetitionOpen}
+                    setIsOpen={setIsEditCompetitionOpen}
+                  >
+                    <EditCompetitionModal data={tree} />
+                  </Modal>
 
                   <Modal
                     isOpen={isEditRegistrationSettingsOpen}
