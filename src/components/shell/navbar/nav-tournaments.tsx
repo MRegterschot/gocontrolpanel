@@ -1,7 +1,12 @@
 "use client";
-import { Collapsible } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   SidebarGroup,
+  SidebarGroupAction,
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
@@ -16,6 +21,7 @@ import Link from "next/link";
 import Modal from "@/components/modals/modal";
 import CreateTournamentModal from "@/components/modals/tournaments/tournament/create-tournament";
 import { tables } from "@/lib/tourney-manager";
+import { ChevronRight } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useSpacetimeDB, useTable } from "spacetimedb/react";
 
@@ -24,7 +30,19 @@ export default function NavTournaments() {
   const activeId = getCurrentId(pathname);
 
   const spacetime = useSpacetimeDB();
-  const [tournaments] = useTable(tables.tournament);
+  const [tournamentRows] = useTable(tables.tournament);
+  const tournaments = [...tournamentRows];
+
+  const upcomingTournaments = tournaments
+    .filter((t) => t.endingAt.toDate() >= new Date())
+    // Sort by starting date ascending, closest first
+    .sort(
+      (a, b) =>
+        a.startingAt.toDate().getTime() - b.startingAt.toDate().getTime(),
+    );
+  const passedTournaments = tournaments.filter(
+    (t) => t.endingAt.toDate() < new Date(),
+  );
 
   if (!spacetime.isActive) {
     return (
@@ -47,42 +65,73 @@ export default function NavTournaments() {
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden select-none">
       <SidebarGroupLabel>Tournaments</SidebarGroupLabel>
+      <SidebarGroupAction>
+        <Modal>
+          <CreateTournamentModal />
+          <IconPlus /> <span className="sr-only">Create Tournament</span>
+        </Modal>
+      </SidebarGroupAction>
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
-          {tournaments.map((tournament) => (
-            <Collapsible
-              key={tournament.id}
-              asChild
-              className="group/collapsible"
-              defaultOpen={activeId === tournament.id.toString()}
-            >
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip={tournament.name} asChild>
-                  <Link
-                    href={generatePath(routes.tournaments.tournament, {
-                      id: tournament.id.toString(),
-                    })}
-                    className="select-none cursor-pointer"
-                  >
-                    <IconTrophy />
-                    <span className="overflow-hidden text-ellipsis text-nowrap flex items-center">
-                      {tournament.name}
-                    </span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </Collapsible>
+          {upcomingTournaments.map((tournament) => (
+            <SidebarMenuItem key={tournament.id}>
+              <SidebarMenuButton tooltip={tournament.name} asChild>
+                <Link
+                  href={generatePath(routes.tournaments.tournament, {
+                    id: tournament.id.toString(),
+                  })}
+                  className="select-none cursor-pointer"
+                >
+                  <IconTrophy />
+                  <span className="overflow-hidden text-ellipsis text-nowrap flex items-center">
+                    {tournament.name}
+                  </span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           ))}
 
-          <SidebarMenuItem>
-            <Modal>
-              <CreateTournamentModal />
-              <SidebarMenuButton className="cursor-pointer">
-                <IconPlus />
-                <span>Create Tournament</span>
-              </SidebarMenuButton>
-            </Modal>
-          </SidebarMenuItem>
+          {passedTournaments.length > 0 && (
+            <Collapsible
+              asChild
+              className="group/collapsible"
+              defaultOpen={passedTournaments.some(
+                (t) => t.id.toString() === activeId,
+              )}
+            >
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton asChild>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span>Passed Tournaments</span>
+                      <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                    </div>
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenu className="mt-2">
+                    {passedTournaments.map((tournament) => (
+                      <SidebarMenuItem key={tournament.id}>
+                        <SidebarMenuButton tooltip={tournament.name} asChild>
+                          <Link
+                            href={generatePath(routes.tournaments.tournament, {
+                              id: tournament.id.toString(),
+                            })}
+                            className="select-none cursor-pointer"
+                          >
+                            <IconTrophy />
+                            <span className="overflow-hidden text-ellipsis text-nowrap flex items-center">
+                              {tournament.name}
+                            </span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </CollapsibleContent>
+              </SidebarMenuItem>
+            </Collapsible>
+          )}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
