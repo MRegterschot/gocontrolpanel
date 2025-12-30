@@ -45,23 +45,24 @@ export default function EditTournamentForm({
       tournament.endingAt.toDate().getTime() !== values.endDate.getTime();
 
     // Don't allow modifying startDate if tournament already started
-    if (
-      startDateModified &&
-      (tournament.status.tag === "Ongoing" || tournament.status.tag === "Ended")
-    ) {
+    if (startDateModified && new Date() >= tournament.startingAt.toDate()) {
       toast.error(
         "Cannot modify start date of a tournament that has already started",
       );
-      form.resetField("startDate", { defaultValue: tournament.startingAt.toDate() });
+      form.resetField("startDate", {
+        defaultValue: tournament.startingAt.toDate(),
+      });
       return;
     }
 
     // Don't allow modifying ending_at if tournament already ended
-    if (endDateModified && tournament.status.tag === "Ended") {
+    if (endDateModified && new Date() >= tournament.endingAt.toDate()) {
       toast.error(
         "Cannot modify end date of a tournament that has already ended",
       );
-      form.resetField("endDate", { defaultValue: tournament.endingAt.toDate() });
+      form.resetField("endDate", {
+        defaultValue: tournament.endingAt.toDate(),
+      });
       return;
     }
 
