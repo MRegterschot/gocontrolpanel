@@ -39,6 +39,32 @@ export default function EditTournamentForm({
   });
 
   async function onSubmit(values: EditTournamentSchemaType) {
+    const startDateModified =
+      tournament.startingAt.toDate().getTime() !== values.startDate.getTime();
+    const endDateModified =
+      tournament.endingAt.toDate().getTime() !== values.endDate.getTime();
+
+    // Don't allow modifying startDate if tournament already started
+    if (
+      startDateModified &&
+      (tournament.status.tag === "Ongoing" || tournament.status.tag === "Ended")
+    ) {
+      toast.error(
+        "Cannot modify start date of a tournament that has already started",
+      );
+      form.resetField("startDate", { defaultValue: tournament.startingAt.toDate() });
+      return;
+    }
+
+    // Don't allow modifying ending_at if tournament already ended
+    if (endDateModified && tournament.status.tag === "Ended") {
+      toast.error(
+        "Cannot modify end date of a tournament that has already ended",
+      );
+      form.resetField("endDate", { defaultValue: tournament.endingAt.toDate() });
+      return;
+    }
+
     if (tournament.name !== values.name) {
       try {
         editTournamentName({
@@ -65,10 +91,7 @@ export default function EditTournamentForm({
       }
     }
 
-    if (
-      tournament.startingAt.toDate().getTime() !== values.startDate.getTime() ||
-      tournament.endingAt.toDate().getTime() !== values.endDate.getTime()
-    ) {
+    if (startDateModified || endDateModified) {
       try {
         editTournamentDates({
           tournamentId: tournament.id,
@@ -111,6 +134,10 @@ export default function EditTournamentForm({
           label="Start Date"
           type="datetime"
           isRequired
+          isDisabled={
+            tournament.status.tag === "Ongoing" ||
+            tournament.status.tag === "Ended"
+          }
         />
 
         <FormElement
@@ -118,6 +145,7 @@ export default function EditTournamentForm({
           label="End Date"
           type="datetime"
           isRequired
+          isDisabled={tournament.status.tag === "Ended"}
         />
 
         <Button
