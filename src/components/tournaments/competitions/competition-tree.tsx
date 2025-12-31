@@ -18,7 +18,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { CompetitionNode } from "@/hooks/tournaments/competitions/use-competition-tree";
 import { reducers } from "@/lib/tourney-manager";
-import { cn } from "@/lib/utils";
+import { cn, getErrorMessage } from "@/lib/utils";
 import { IconCalendar, IconChevronUp } from "@tabler/icons-react";
 import { MoreHorizontal } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -86,7 +86,9 @@ export default function CompetitionTree({
         toast.success("Registered successfully");
       }
     } catch (error) {
-      toast.error("Failed to update registration");
+      toast.error("Failed to update registration", {
+        description: getErrorMessage(error),
+      });
     }
   };
 
