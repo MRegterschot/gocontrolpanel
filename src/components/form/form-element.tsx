@@ -1,3 +1,4 @@
+import { IconHelp } from "@tabler/icons-react";
 import clsx from "clsx";
 import { Path, useFormContext } from "react-hook-form";
 import {
@@ -8,6 +9,7 @@ import {
   FormLabel,
   FormMessage,
 } from "../ui/form";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import RenderInput from "./render-input";
 
 interface FormElementProps<TControl> {
@@ -27,6 +29,7 @@ interface FormElementProps<TControl> {
   min?: number;
   max?: number;
   onSearch?: (query?: string) => void;
+  tooltip?: string;
   className?: string;
   rootClassName?: string;
   children?: React.ReactNode;
@@ -49,6 +52,7 @@ export default function FormElement<TControl>({
   min,
   max,
   onSearch,
+  tooltip,
   className,
   rootClassName,
   children,
@@ -102,6 +106,16 @@ export default function FormElement<TControl>({
                     >
                       (Required)
                     </span>
+                  )}
+                  {tooltip && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <IconHelp size={16} />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {tooltip}
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                 </FormLabel>
               )}

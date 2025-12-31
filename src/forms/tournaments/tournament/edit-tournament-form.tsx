@@ -139,6 +139,7 @@ export default function EditTournamentForm({
             tournament.status.tag === "Ongoing" ||
             tournament.status.tag === "Ended"
           }
+          tooltip="Can't edit the start date once the tournament has started."
         />
 
         <FormElement
@@ -147,6 +148,7 @@ export default function EditTournamentForm({
           type="datetime"
           isRequired
           isDisabled={tournament.status.tag === "Ended"}
+          tooltip="Can't edit the end date once the tournament has ended."
         />
 
         <Button
