@@ -12,10 +12,15 @@ export const ModeConfigSchema = z.discriminatedUnion("tag", [
 
 export type ModeConfigSchemaType = z.infer<typeof ModeConfigSchema>;
 
-export const MapPoolConfigSchema = z.object({
-  start: z.number().int().nonnegative(),
-  mapUids: z.array(z.string()),
-});
+export const MapPoolConfigSchema = z
+  .object({
+    start: z.coerce.number().int().nonnegative(),
+    mapUids: z.array(z.string()),
+  })
+  .refine((data) => data.start <= data.mapUids.length, {
+    message: "Start index must be less than or equal to the number of maps",
+    path: ["start"],
+  });
 
 export type MapPoolConfigSchemaType = z.infer<typeof MapPoolConfigSchema>;
 

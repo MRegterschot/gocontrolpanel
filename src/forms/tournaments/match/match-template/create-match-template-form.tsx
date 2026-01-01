@@ -46,7 +46,7 @@ export default function CreateMatchTemplateForm({
 
   const nextStep = async () => {
     if (step !== "summary") {
-      const valid = await form.trigger("name");
+      const valid = await form.trigger();
       if (!valid) return;
     }
 
@@ -69,7 +69,10 @@ export default function CreateMatchTemplateForm({
     }
   };
 
-  const previousStep = () => {
+  const previousStep = async () => {
+    const valid = await form.trigger();
+    if (!valid) return;
+
     switch (step) {
       case "server":
         setStep("general");
@@ -128,7 +131,7 @@ export default function CreateMatchTemplateForm({
           <ModeForm form={form} onNext={nextStep} onBack={previousStep} />
         </TabsContent>
         <TabsContent value="maps">
-          <MapsForm onNext={nextStep} onBack={previousStep} />
+          <MapsForm form={form} onNext={nextStep} onBack={previousStep} />
         </TabsContent>
         <TabsContent value="summary">
           <MatchTemplateSummary

@@ -17,7 +17,7 @@ export const ConfigFinishTimeoutSchema = z.discriminatedUnion("tag", [
   z.object({ tag: z.literal("BasedOnMedal") }),
   z.object({
     tag: z.literal("Seconds"),
-    value: z.number().int().nonnegative(),
+    value: z.coerce.number().int().nonnegative(),
   }),
 ]);
 
@@ -30,7 +30,7 @@ export const ConfigWarmupDurationSchema = z.discriminatedUnion("tag", [
   z.object({ tag: z.literal("BasedOnMedal") }),
   z.object({
     tag: z.literal("Seconds"),
-    value: z.number().int().nonnegative(),
+    value: z.coerce.number().int().nonnegative(),
   }),
 ]);
 
@@ -42,7 +42,7 @@ export const ConfigWarmupTimeoutSchema = z.discriminatedUnion("tag", [
   z.object({ tag: z.literal("BasedOnMedal") }),
   z.object({
     tag: z.literal("Seconds"),
-    value: z.number().int().nonnegative(),
+    value: z.coerce.number().int().nonnegative(),
   }),
 ]);
 
@@ -55,7 +55,7 @@ export const ConfigLapsNumberSchema = z.discriminatedUnion("tag", [
   z.object({ tag: z.literal("Independent") }),
   z.object({
     tag: z.literal("Laps"),
-    value: z.number().int().nonnegative(),
+    value: z.coerce.number().int().nonnegative(),
   }),
 ]);
 
@@ -65,7 +65,7 @@ export const ConfigMapsPerMatchSchema = z.discriminatedUnion("tag", [
   z.object({ tag: z.literal("One") }),
   z.object({
     tag: z.literal("Maps"),
-    value: z.number().int().nonnegative(),
+    value: z.coerce.number().int().nonnegative(),
   }),
 ]);
 
@@ -77,7 +77,7 @@ export const ConfigPointsLimitSchema = z.discriminatedUnion("tag", [
   z.object({ tag: z.literal("Unlimited") }),
   z.object({
     tag: z.literal("PointsLimit"),
-    value: z.number().int().nonnegative(),
+    value: z.coerce.number().int().nonnegative(),
   }),
 ]);
 
@@ -89,6 +89,6 @@ export const ConfigRoundsPerMapSchema = z.discriminatedUnion("tag", [
   z.object({ tag: z.literal("Unlimited") }),
   z.object({
     tag: z.literal("Rounds"),
-    value: z.number().int().nonnegative(),
+    value: z.coerce.number().int().nonnegative(),
   }),
 ]);

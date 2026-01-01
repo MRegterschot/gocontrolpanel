@@ -10,7 +10,7 @@ export const ConfigCommonSchema = z.object({
   chatTime: z.coerce.number().int().nonnegative(),
   respawnBehaviour: ConfigRespawnBehaviourSchema,
 
-  delayBeforeNextMap: z.number().int().nonnegative(),
+  delayBeforeNextMap: z.coerce.number().int().nonnegative(),
 
   synchronizePlayersAtMapStart: z.boolean(),
   synchronizePlayersAtRoundStart: z.boolean(),
@@ -19,7 +19,7 @@ export const ConfigCommonSchema = z.object({
 
   warmupDuration: ConfigWarmupDurationSchema,
   warmupTimeout: ConfigWarmupTimeoutSchema,
-  warmupNumber: z.number().int().nonnegative(),
+  warmupNumber: z.coerce.number().int().nonnegative(),
 
   decoImageUrlCheckpoint: z.string(),
   decoImageUrlDecalSponsor4X1: z.string(),

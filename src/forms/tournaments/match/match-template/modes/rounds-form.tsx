@@ -80,6 +80,7 @@ export default function RoundsForm({
           type="select"
           options={FINISH_TIMEOUT_OPTIONS}
           className="w-full max-w-40"
+          placeholder="Finish timeout"
           isRequired
         />
 
@@ -91,6 +92,7 @@ export default function RoundsForm({
             className="max-w-20"
             min={0}
             isRequired
+            placeholder="30"
           />
         )}
 
@@ -102,6 +104,7 @@ export default function RoundsForm({
           options={MAPS_PER_MATCH_OPTIONS}
           className="w-full max-w-32"
           isRequired
+          placeholder="Maps per match"
         />
 
         {mapsPerMatch === "Maps" && (
@@ -112,6 +115,7 @@ export default function RoundsForm({
             className="max-w-20"
             min={1}
             isRequired
+            placeholder="3"
           />
         )}
 
@@ -137,6 +141,7 @@ export default function RoundsForm({
           options={POINTS_LIMIT_OPTIONS}
           className="w-full max-w-32"
           isRequired
+          placeholder="Points limit"
         />
 
         {pointsLimit === "PointsLimit" && (
@@ -147,6 +152,7 @@ export default function RoundsForm({
             className="max-w-20"
             min={1}
             isRequired
+            placeholder="50"
           />
         )}
 
@@ -155,6 +161,7 @@ export default function RoundsForm({
           label="Points Repartition"
           type="array-number"
           isRequired
+          placeholder="10,6,4,3,2,1"
         />
 
         <FormElement
@@ -165,6 +172,7 @@ export default function RoundsForm({
           options={ROUNDS_PER_MAP_OPTIONS}
           className="w-full max-w-32"
           isRequired
+          placeholder="Rounds per map"
         />
 
         {roundsPerMap === "Rounds" && (
@@ -175,6 +183,7 @@ export default function RoundsForm({
             className="max-w-20"
             min={1}
             isRequired
+            placeholder="3"
           />
         )}
       </div>

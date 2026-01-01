@@ -218,6 +218,36 @@ export default function RenderInput<TControl extends FieldValues>({
           disabled={isDisabled || isLoading}
         />
       );
+    case "array-number": {
+      const [raw, setRaw] = useState(
+        Array.isArray(field.value) ? field.value.join(",") : "",
+      );
+
+      const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setRaw(value);
+
+        const parsed = value
+          .split(",")
+          .map((v) => v.trim())
+          .filter((v) => v !== "" && !isNaN(Number(v)))
+          .map(Number);
+
+        field.onChange(parsed);
+      };
+
+      return (
+        <Input
+          type="text"
+          placeholder={placeholder}
+          disabled={isDisabled || isLoading}
+          className={className}
+          autoFocus={autoFocus}
+          value={raw}
+          onChange={handleChange}
+        />
+      );
+    }
     default:
       return (
         <Input

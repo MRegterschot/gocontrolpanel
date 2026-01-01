@@ -11,7 +11,7 @@ export const ConfigRoundsSchema = z.object({
   mapsPerMatch: ConfigMapsPerMatchSchema,
   pointsLimit: ConfigPointsLimitSchema,
   useCustomPointsRepartition: z.boolean(),
-  pointsRepartition: z.array(z.number().int().nonnegative()),
+  pointsRepartition: z.array(z.coerce.number().int().nonnegative()),
   roundsPerMap: ConfigRoundsPerMapSchema,
   useTieBreaker: z.boolean(),
 });
