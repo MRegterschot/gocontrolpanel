@@ -1,13 +1,18 @@
 import z from "zod";
-import { ConfigFinishTimeoutSchema } from "./enums";
+import {
+  ConfigFinishTimeoutSchema,
+  ConfigMapsPerMatchSchema,
+  ConfigPointsLimitSchema,
+  ConfigRoundsPerMapSchema,
+} from "./enums";
 
 export const ConfigRoundsSchema = z.object({
   finishTimeout: ConfigFinishTimeoutSchema,
-  mapsPerMatch: z.number().int(),
-  pointsLimit: z.number().int().nonnegative(),
+  mapsPerMatch: ConfigMapsPerMatchSchema,
+  pointsLimit: ConfigPointsLimitSchema,
   useCustomPointsRepartition: z.boolean(),
   pointsRepartition: z.array(z.number().int().nonnegative()),
-  roundsPerMap: z.number().int(),
+  roundsPerMap: ConfigRoundsPerMapSchema,
   useTieBreaker: z.boolean(),
 });
 

@@ -12,6 +12,7 @@ import {
 import GeneralForm from "./general-form";
 import MapsForm from "./maps-form";
 import ModeForm from "./mode-form";
+import { DEFAULT_ROUNDS_CONFIG } from "./modes/rounds-form";
 import ServerForm from "./server-form";
 import MatchTemplateSummary from "./summary";
 
@@ -31,7 +32,10 @@ export default function CreateMatchTemplateForm({
       config: {
         options: {},
         common: DEFAULT_COMMON_CONFIG,
-        mode: {},
+        mode: {
+          tag: "Rounds",
+          value: DEFAULT_ROUNDS_CONFIG,
+        },
         maps: {
           start: 0,
           mapUids: ["olsKnq_qAghcVAnEkoeUnVHFZei"],
@@ -121,7 +125,7 @@ export default function CreateMatchTemplateForm({
           <CommonForm form={form} onNext={nextStep} onBack={previousStep} />
         </TabsContent>
         <TabsContent value="mode">
-          <ModeForm onNext={nextStep} onBack={previousStep} />
+          <ModeForm form={form} onNext={nextStep} onBack={previousStep} />
         </TabsContent>
         <TabsContent value="maps">
           <MapsForm onNext={nextStep} onBack={previousStep} />

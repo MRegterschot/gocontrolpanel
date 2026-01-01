@@ -104,7 +104,7 @@ export default function CommonForm({
   const lapsNumber = form.watch("config.common.forceLapsNumber.tag");
 
   return (
-    <form className="gap-4 grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-8">
+    <form className="gap-4 grid sm:grid-cols-2 lg:grid-cols-4 sm:gap-8">
       <div className="flex flex-col gap-4">
         <FormElement
           name={"config.common.chatTime"}
@@ -154,6 +154,9 @@ export default function CommonForm({
           placeholder="Synchronize players at round start"
           type="checkbox"
         />
+      </div>
+
+      <div className="flex flex-col gap-4">
         <FormElement
           name={"config.common.trustClientSimulation"}
           label="Trust Client Simulation"
@@ -162,9 +165,7 @@ export default function CommonForm({
           placeholder="Tust client simulation"
           type="checkbox"
         />
-      </div>
 
-      <div className="flex flex-col gap-4">
         <FormElement
           name={"config.common.useCrudeExtrapolation"}
           label="Use Crude Extrapolation"
@@ -219,6 +220,9 @@ export default function CommonForm({
             type="number"
           />
         )}
+      </div>
+
+      <div className="flex flex-col gap-4">
         <FormElement
           name={"config.common.warmupNumber"}
           className="max-w-32"
@@ -251,6 +255,7 @@ export default function CommonForm({
             type="number"
           />
         )}
+
         <FormElement
           name={"config.common.decoImageUrlCheckpoint"}
           label="Deco Image URL Checkpoint"
@@ -259,9 +264,7 @@ export default function CommonForm({
           placeholder="Deco image url checkpoint"
           type="text"
         />
-      </div>
 
-      <div className="flex flex-col gap-4">
         <FormElement
           name={"config.common.decoImageUrlDecalSponsor4X1"}
           label="Deco Image URL Decal Sponsor 4X1"
@@ -270,7 +273,9 @@ export default function CommonForm({
           placeholder="Deco image url decal sponsor 4x1"
           type="text"
         />
+      </div>
 
+      <div className="flex flex-col gap-4">
         <FormElement
           name={"config.common.decoImageUrlScreen16X1"}
           label="Deco Image URL Screen 16X1"

@@ -60,3 +60,35 @@ export const ConfigLapsNumberSchema = z.discriminatedUnion("tag", [
 ]);
 
 export type ConfigLapsNumberSchemaType = z.infer<typeof ConfigLapsNumberSchema>;
+
+export const ConfigMapsPerMatchSchema = z.discriminatedUnion("tag", [
+  z.object({ tag: z.literal("One") }),
+  z.object({
+    tag: z.literal("Maps"),
+    value: z.number().int().nonnegative(),
+  }),
+]);
+
+export type ConfigMapsPerMatchSchemaType = z.infer<
+  typeof ConfigMapsPerMatchSchema
+>;
+
+export const ConfigPointsLimitSchema = z.discriminatedUnion("tag", [
+  z.object({ tag: z.literal("Unlimited") }),
+  z.object({
+    tag: z.literal("PointsLimit"),
+    value: z.number().int().nonnegative(),
+  }),
+]);
+
+export type ConfigPointsLimitSchemaType = z.infer<
+  typeof ConfigPointsLimitSchema
+>;
+
+export const ConfigRoundsPerMapSchema = z.discriminatedUnion("tag", [
+  z.object({ tag: z.literal("Unlimited") }),
+  z.object({
+    tag: z.literal("Rounds"),
+    value: z.number().int().nonnegative(),
+  }),
+]);
