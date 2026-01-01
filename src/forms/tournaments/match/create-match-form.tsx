@@ -1,16 +1,17 @@
 "use client";
+import FormElement from "@/components/form/form-element";
 import Modal from "@/components/modals/modal";
 import CreateMatchTemplateModal from "@/components/modals/tournaments/match/create-match-template";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { reducers } from "@/lib/tourney-manager";
+import { reducers, tables } from "@/lib/tourney-manager";
 import { getErrorMessage } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { useReducer } from "spacetimedb/react";
+import { useReducer, useTable } from "spacetimedb/react";
 import {
   CreateMatchSchema,
   CreateMatchSchemaType,
@@ -27,6 +28,8 @@ export default function CreateMatchForm({
 
   const [isCreateMatchTemplateModalOpen, setIsCreateMatchTemplateModalOpen] =
     useState(false);
+
+  const [matchTemplateRows] = useTable(tables.myMatchTemplate);
 
   const form = useForm<CreateMatchSchemaType>({
     resolver: zodResolver(CreateMatchSchema),
@@ -61,15 +64,28 @@ export default function CreateMatchForm({
           onSubmit={form.handleSubmit(onSubmit)}
           className="flex flex-col gap-4"
         >
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={() => setIsCreateMatchTemplateModalOpen(true)}
-          >
-            <IconPlus />
-            Create Match Template
-          </Button>
+          <div className="flex flex-1 gap-2 items-end">
+            <FormElement
+              name="withTemplate"
+              label="Match Template"
+              type="select"
+              rootClassName="flex-1"
+              placeholder="Select template"
+              className="w-full"
+              options={matchTemplateRows.map((template) => ({
+                label: template.name,
+                value: template.id.toString(),
+              }))}
+            />
+            <Button
+              type="button"
+              size={"icon"}
+              variant="outline"
+              onClick={() => setIsCreateMatchTemplateModalOpen(true)}
+            >
+              <IconPlus />
+            </Button>
+          </div>
 
           <Button
             type="submit"
