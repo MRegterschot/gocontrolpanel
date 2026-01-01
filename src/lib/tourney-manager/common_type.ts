@@ -9,15 +9,17 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
-import RespawnBavaviour from "./respawn_bavaviour_type";
+import RespawnBehaviour from "./respawn_behaviour_type";
 import WarmupDuration from "./warmup_duration_type";
+import WarmupTimeout from "./warmup_timeout_type";
 
 
 export default __t.object("Common", {
   chatTime: __t.u32(),
   get respawnBehaviour() {
-    return RespawnBavaviour;
+    return RespawnBehaviour;
   },
+  delayBeforeNextMap: __t.u32(),
   synchronizePlayersAtMapStart: __t.bool(),
   synchronizePlayersAtRoundStart: __t.bool(),
   trustClientSimulation: __t.bool(),
@@ -25,13 +27,16 @@ export default __t.object("Common", {
   get warmupDuration() {
     return WarmupDuration;
   },
+  get warmupTimeout() {
+    return WarmupTimeout;
+  },
   warmupNumber: __t.u32(),
   decoImageUrlCheckpoint: __t.string(),
   decoImageUrlDecalSponsor4X1: __t.string(),
   decoImageUrlScreen16X1: __t.string(),
-  decoImageUrlScreen19X9: __t.string(),
+  decoImageUrlScreen16X9: __t.string(),
   decoImageUrlScreen8X1: __t.string(),
-  decoImageUrlWhoAmI: __t.string(),
+  decoImageUrlWhoAmIUrl: __t.string(),
   forceLapsNumber: __t.i32(),
 });
 

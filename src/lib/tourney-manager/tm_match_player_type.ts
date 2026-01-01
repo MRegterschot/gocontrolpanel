@@ -9,19 +9,10 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
-import FinishTimeout from "./finish_timeout_type";
 
-
-export default __t.object("Rounds", {
-  get finishTimeout() {
-    return FinishTimeout;
-  },
-  mapsPerMatch: __t.i32(),
-  pointsLimit: __t.u32(),
-  useCustomPointsRepartition: __t.bool(),
-  pointsRepartition: __t.array(__t.u32()),
-  roundsPerMap: __t.i32(),
-  useTieBreaker: __t.bool(),
+export default __t.object("TmMatchPlayer", {
+  matchId: __t.u32(),
+  accountId: __t.string(),
 });
 
 

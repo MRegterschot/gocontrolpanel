@@ -17,7 +17,6 @@ export default __t.row({
   tmLogin: __t.string().name("tm_login"),
   identity: __t.identity(),
   ownerId: __t.string().name("owner_id"),
-  online: __t.bool(),
   get config() {
     return ServerConfig;
   },

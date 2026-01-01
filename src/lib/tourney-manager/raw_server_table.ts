@@ -13,11 +13,10 @@ import ServerConfig from "./server_config_type";
 import ServerState from "./server_state_type";
 
 
-export default __t.object("TmServerV1", {
-  tmLogin: __t.string(),
+export default __t.row({
+  tmLogin: __t.string().name("tm_login"),
   identity: __t.identity(),
-  ownerId: __t.string(),
-  online: __t.bool(),
+  ownerId: __t.string().name("owner_id"),
   get config() {
     return ServerConfig;
   },
@@ -26,7 +25,5 @@ export default __t.object("TmServerV1", {
   },
   capturable: __t.bool(),
   verified: __t.bool(),
-  activeMatch: __t.option(__t.u32()),
+  activeMatch: __t.option(__t.u32()).name("active_match"),
 });
-
-

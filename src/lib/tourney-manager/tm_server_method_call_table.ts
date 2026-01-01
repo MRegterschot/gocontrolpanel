@@ -15,7 +15,7 @@ import MethodCall from "./method_call_type";
 export default __t.row({
   id: __t.u32().primaryKey(),
   serverId: __t.string().name("server_id"),
-  userId: __t.string().name("user_id"),
+  accountId: __t.string().name("account_id"),
   get method() {
     return MethodCall;
   },
