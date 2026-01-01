@@ -251,6 +251,8 @@ import GiveUp from "./give_up_type";
 export { GiveUp };
 import KickArgs from "./kick_args_type";
 export { KickArgs };
+import LapsNumber from "./laps_number_type";
+export { LapsNumber };
 import LeaderboardEntry from "./leaderboard_entry_type";
 export { LeaderboardEntry };
 import LoadingMapEnd from "./loading_map_end_type";

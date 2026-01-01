@@ -12,6 +12,7 @@ import {
 import RespawnBehaviour from "./respawn_behaviour_type";
 import WarmupDuration from "./warmup_duration_type";
 import WarmupTimeout from "./warmup_timeout_type";
+import LapsNumber from "./laps_number_type";
 
 
 export default __t.object("Common", {
@@ -37,7 +38,9 @@ export default __t.object("Common", {
   decoImageUrlScreen16X9: __t.string(),
   decoImageUrlScreen8X1: __t.string(),
   decoImageUrlWhoAmIUrl: __t.string(),
-  forceLapsNumber: __t.i32(),
+  get forceLapsNumber() {
+    return LapsNumber;
+  },
 });
 
 

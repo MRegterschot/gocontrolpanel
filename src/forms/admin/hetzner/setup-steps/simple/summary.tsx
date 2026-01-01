@@ -122,7 +122,7 @@ export default function Summary({
             Previous
           </Button>
           <Button
-            className="flex-1 max-w-32"
+            className="flex-1 max-w-fit"
             disabled={!form.formState.isValid || form.formState.isSubmitting}
             type="submit"
           >
