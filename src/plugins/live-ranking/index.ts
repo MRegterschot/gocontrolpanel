@@ -16,12 +16,11 @@ type Ranking = {
 
 export default class LiveRankingPlugin extends Plugin {
   static pluginId = "live-ranking";
-  static gamemodes = ["rounds", "cup"];
+  static gamemodes = ["rounds", "cup", "reversecup"];
   private widget: Widget;
 
   private rankings: Ranking[] = [];
   private pointsLimit: number = -1;
-  private mode: "rounds" | "cup" = "rounds";
 
   constructor(
     clientManager: GbxClientManager,
@@ -58,7 +57,8 @@ export default class LiveRankingPlugin extends Plugin {
   async onPlayerConnect(playerInfo: PlayerInfo) {
     if (
       getSpectatorStatus(playerInfo.spectatorStatus).spectator ||
-      this.rankings.find((r) => r.login === playerInfo.login)
+      this.rankings.find((r) => r.login === playerInfo.login) ||
+      this.clientManager.reverseCupGetPlayerStatus(playerInfo.login).spectator
     )
       return;
 
@@ -74,14 +74,17 @@ export default class LiveRankingPlugin extends Plugin {
 
   async onPlayerDisconnect(login: string) {
     const ranking = this.rankings.find((r) => r.login === login);
-    if (!ranking || ranking.points > 0) return;
+    if (!ranking) return;
 
     this.rankings = this.rankings.filter((r) => r.login !== login);
     await this.updateWidget();
   }
 
   async onPlayerInfo(playerInfo: PlayerInfo) {
-    if (getSpectatorStatus(playerInfo.spectatorStatus).spectator) {
+    if (
+      getSpectatorStatus(playerInfo.spectatorStatus).spectator ||
+      this.clientManager.reverseCupGetPlayerStatus(playerInfo.login).spectator
+    ) {
       const ranking = this.rankings.find((r) => r.login === playerInfo.login);
       if (!ranking || ranking.points > 0) return;
 
@@ -109,9 +112,6 @@ export default class LiveRankingPlugin extends Plugin {
   }
 
   async onUpdatedSettings(liveInfo: LiveInfo) {
-    if (liveInfo.type === "rounds" || liveInfo.type === "cup") {
-      this.mode = liveInfo.type;
-    }
     this.pointsLimit = liveInfo.pointsLimit || -1;
 
     this.updateWidget();
@@ -128,13 +128,20 @@ export default class LiveRankingPlugin extends Plugin {
     for (let i = 0; i < scores.players.length; i++) {
       const player = scores.players[i];
 
+      if (
+        this.clientManager.info.liveInfo.type === "reversecup" &&
+        player.matchpoints === -10000
+      ) {
+        continue;
+      }
+
       if (player.matchpoints === 0) {
         const activePlayer = this.clientManager.info.activePlayers.find(
           (p) => p.login === player.login,
         );
 
         if (
-          activePlayer &&
+          !activePlayer ||
           getSpectatorStatus(activePlayer.spectatorStatus).spectator
         ) {
           continue;
@@ -161,17 +168,13 @@ export default class LiveRankingPlugin extends Plugin {
 
     this.widget.setData({
       rankingsJson: JSON.stringify(this.rankings),
-      mode: this.mode,
+      mode: this.clientManager.info.liveInfo.type,
       pointsLimit: this.pointsLimit,
     });
     this.widget.update();
   }
 
   async clearRankings() {
-    const cmType = this.clientManager.info.liveInfo.type;
-    if (cmType === "rounds" || cmType === "cup") {
-      this.mode = cmType;
-    }
     this.pointsLimit = this.clientManager.info.liveInfo.pointsLimit || -1;
 
     await this.clientManager.client.callScript(
