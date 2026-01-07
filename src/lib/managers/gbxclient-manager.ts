@@ -443,7 +443,7 @@ async function callbackListener(
       await onPlayerInfoChanged(manager, data[0]);
       break;
     case "ManiaPlanet.BeginMap":
-      onBeginMap(manager, data[0]);
+      await onBeginMap(manager, data[0]);
       break;
     case "ManiaPlanet.EndMap":
       onEndMap(manager, data[0]);
@@ -982,8 +982,9 @@ function onPauseStatusScript(manager: GbxClientManager, status: PauseStatus) {
   manager.info.liveInfo.isPaused = status.active;
 }
 
-function onBeginMap(manager: GbxClientManager, mapInfo: SMapInfo) {
+async function onBeginMap(manager: GbxClientManager, mapInfo: SMapInfo) {
   syncMap(manager, manager.getServerId());
+  await syncPlayerList(manager);
 
   manager.info.liveInfo.currentMap = mapInfo.UId;
   manager.roundNumber = manager.info.liveInfo.type === "timeattack" ? null : 0;

@@ -98,10 +98,7 @@ export default class PlayerInfoPlugin extends Plugin {
 
     if (players.length === 0) {
       this.playerInfos = {};
-      this.widget.setData({
-        playerInfos: JSON.stringify(this.playerInfos),
-      });
-      this.widget.update();
+      this.updateWidget();
       return;
     }
 
@@ -110,6 +107,8 @@ export default class PlayerInfoPlugin extends Plugin {
       map.UId,
       players,
     );
+
+    console.log("Fetched player records", records);
 
     this.playerInfos = {};
 
@@ -128,6 +127,8 @@ export default class PlayerInfoPlugin extends Plugin {
   }
 
   updateWidget() {
+    console.log("Updating player info widget", this.playerInfos);
+
     this.widget.setData({
       playerInfosJson: JSON.stringify(Object.values(this.playerInfos)),
     });

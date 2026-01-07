@@ -14,10 +14,7 @@ export async function getLocalRecord(serverId: string, mapUid: string) {
         gt: 0,
       },
     },
-    orderBy: [
-      { time: "asc" },
-      { createdAt: "asc" },
-    ],
+    orderBy: [{ time: "asc" }, { createdAt: "asc" }],
     include: {
       user: {
         select: {
@@ -33,7 +30,7 @@ export async function getLocalRecord(serverId: string, mapUid: string) {
 export async function getPlayerRecords(
   serverId: string,
   mapUid: string,
-  login: string[]
+  login: string[],
 ) {
   const db = getClient();
 
@@ -49,6 +46,10 @@ export async function getPlayerRecords(
         gt: 0,
       },
     },
+    orderBy: {
+      time: "asc",
+    },
+    distinct: ["login"],
     include: {
       user: {
         select: {

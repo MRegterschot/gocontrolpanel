@@ -314,7 +314,6 @@ if (LastRoundsUpdate != lastUpdate) {
 if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::MouseClick) {
   declare targetLogin = event.Control.Parent.DataAttributeGet("login");
   if (targetLogin != "") {
-    if(!IsSpectatorClient) RequestSpectatorClient(True);
     SetSpectateTarget(targetLogin);
   }
 }
