@@ -4,7 +4,6 @@ import ManialinkManager from "@/lib/managers/manialink-manager";
 import Widget from "@/lib/manialink/components/widget";
 import { SMapInfo } from "@/types/gbx/map";
 import { Waypoint } from "@/types/gbx/waypoint";
-import { ActivePlayerInfo } from "@/types/player";
 import Plugin from "..";
 
 type PlayerInfo = {
@@ -63,7 +62,7 @@ export default class PlayerInfoPlugin extends Plugin {
     this.updatePlayerInfos();
   }
 
-  async onPlayerConnect(playerInfo: ActivePlayerInfo) {
+  async onPlayerConnect(playerInfo: PlayerInfo) {
     if (this.playerInfos[playerInfo.login]) return;
 
     const map = this.clientManager.getActiveMap();
@@ -108,8 +107,6 @@ export default class PlayerInfoPlugin extends Plugin {
       players,
     );
 
-    console.log("Fetched player records", records);
-
     this.playerInfos = {};
 
     for (const player of this.clientManager.info.activePlayers) {
@@ -127,8 +124,6 @@ export default class PlayerInfoPlugin extends Plugin {
   }
 
   updateWidget() {
-    console.log("Updating player info widget", this.playerInfos);
-
     this.widget.setData({
       playerInfosJson: JSON.stringify(Object.values(this.playerInfos)),
     });

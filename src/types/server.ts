@@ -1,6 +1,6 @@
 import { ServerPluginsWithPlugin } from "@/actions/database/server-only/gbx";
 import { LiveInfo } from "./live";
-import { ActivePlayerInfo } from "./player";
+import { PlayerInfo } from "./player";
 
 export interface ServerInfo {
   id: string;
@@ -18,7 +18,7 @@ export interface ChatConfig {
 
 export interface ServerClientInfo {
   activeMap?: string;
-  activePlayers: ActivePlayerInfo[];
+  activePlayers: PlayerInfo[];
   liveInfo: LiveInfo;
   chat?: ChatConfig;
   plugins: ServerPluginsWithPlugin[];

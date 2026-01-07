@@ -4,7 +4,7 @@ import Widget from "@/lib/manialink/components/widget";
 import { getSpectatorStatus } from "@/lib/utils";
 import { SPlayerInfo } from "@/types/gbx/player";
 import { Waypoint, WaypointEvent } from "@/types/gbx/waypoint";
-import { ActivePlayerInfo, PlayerInfo } from "@/types/player";
+import { PlayerInfo } from "@/types/player";
 import Plugin from "..";
 
 type ActiveRun = {
@@ -60,7 +60,7 @@ export default class TAActiveRunsPlugin extends Plugin {
     this.clearActiveRuns();
   }
 
-  async onPlayerConnect(playerInfo: ActivePlayerInfo) {
+  async onPlayerConnect(playerInfo: PlayerInfo) {
     if (
       getSpectatorStatus(playerInfo.spectatorStatus).spectator ||
       this.activeRuns.find((r) => r.login === playerInfo.login)

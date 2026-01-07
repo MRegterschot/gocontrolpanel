@@ -1,4 +1,3 @@
-import { getUserInfoByLogin } from "@/actions/database/server-only/auth";
 import {
   createMatch,
   saveMatchRecord,
@@ -23,7 +22,7 @@ import { Elimination, Scores } from "@/types/gbx/scores";
 import { WarmUp, WarmUpStatus } from "@/types/gbx/warmup";
 import { Waypoint, WaypointEvent } from "@/types/gbx/waypoint";
 import { PlayerRound, PlayerWaypoint, Team } from "@/types/live";
-import { ActivePlayerInfo } from "@/types/player";
+import { PlayerInfo } from "@/types/player";
 import { ServerClientInfo } from "@/types/server";
 import { GbxClient } from "@evotm/gbxclient";
 import EventEmitter from "events";
@@ -280,7 +279,7 @@ export class GbxClientManager extends EventEmitter {
     return this.info.activeMap;
   }
 
-  addActivePlayer(player: ActivePlayerInfo): void {
+  addActivePlayer(player: PlayerInfo): void {
     const existingIndex = this.info.activePlayers.findIndex(
       (p) => p.login === player.login,
     );
@@ -440,10 +439,10 @@ async function callbackListener(
       await onPlayerDisconnect(manager, data[0]);
       break;
     case "ManiaPlanet.PlayerInfoChanged":
-      await onPlayerInfoChanged(manager, data[0]);
+      onPlayerInfoChanged(manager, data[0]);
       break;
     case "ManiaPlanet.BeginMap":
-      await onBeginMap(manager, data[0]);
+      onBeginMap(manager, data[0]);
       break;
     case "ManiaPlanet.EndMap":
       onEndMap(manager, data[0]);
@@ -586,38 +585,22 @@ async function onPlayerConnect(manager: GbxClientManager, login: string) {
       `Failed to sync player ${playerInfo.login} on connect: ${error}`,
     );
   }
+  manager.addActivePlayer(playerInfo);
+  manager.emit("playerConnect", playerInfo);
 
-  let userInfo;
-  try {
-    userInfo = await getUserInfoByLogin(playerInfo.login);
-  } catch (error) {
-    console.error(
-      `Failed to get user info for player ${playerInfo.login} on connect: ${error}`,
-    );
-  }
-
-  let player: ActivePlayerInfo = {
-    ...playerInfo,
-    device: userInfo?.device || "Unknown",
-    camera: userInfo?.camera || "Unknown",
-  };
-
-  manager.addActivePlayer(player);
-  manager.emit("playerConnect", player);
-
-  manager.setPlayer(player.login, {
-    ...manager.info.liveInfo.players?.[player.login],
-    login: player.login,
-    name: player.nickName,
-    team: player.teamId,
+  manager.setPlayer(playerInfo.login, {
+    ...manager.info.liveInfo.players?.[playerInfo.login],
+    login: playerInfo.login,
+    name: playerInfo.nickName,
+    team: playerInfo.teamId,
   });
 
   if (
-    player.spectatorStatus === 0 &&
-    !manager.reverseCupGetPlayerStatus(player.login).spectator
+    playerInfo.spectatorStatus === 0 &&
+    !manager.reverseCupGetPlayerStatus(playerInfo.login).spectator
   ) {
     const playerWaypoint: PlayerWaypoint = {
-      login: player.login,
+      login: playerInfo.login,
       accountId: "",
       time: 0,
       hasFinished: false,
@@ -630,7 +613,7 @@ async function onPlayerConnect(manager: GbxClientManager, login: string) {
 
     manager.setActiveRoundPlayer(playerWaypoint.login, playerWaypoint);
   } else {
-    manager.setActiveRoundPlayer(player.login, undefined);
+    manager.setActiveRoundPlayer(playerInfo.login, undefined);
   }
 
   manager.emit("playerConnectInfo", manager.info.liveInfo);
@@ -676,29 +659,19 @@ async function onPlayerDisconnect(manager: GbxClientManager, login: string) {
   manager.emit("playerDisconnectInfo", manager.info.liveInfo.activeRound);
 }
 
-async function onPlayerInfoChanged(
+function onPlayerInfoChanged(
   manager: GbxClientManager,
   playerInfo: SPlayerInfo,
 ) {
-  if (!playerInfo.Login) return;
-  let userInfo;
-  try {
-    userInfo = await getUserInfoByLogin(playerInfo.Login);
-  } catch (error) {
-    console.error(
-      `Failed to get user info for player ${playerInfo.Login} on info change: ${error}`,
-    );
-  }
-
-  const changedInfo: ActivePlayerInfo = {
+  const changedInfo: PlayerInfo = {
     login: playerInfo.Login,
     nickName: playerInfo.NickName,
     playerId: playerInfo.PlayerId,
     spectatorStatus: playerInfo.SpectatorStatus,
     teamId: playerInfo.TeamId,
-    device: userInfo?.device || "Unknown",
-    camera: userInfo?.camera || "Unknown",
   };
+
+  if (!changedInfo.login) return;
 
   manager.removeActivePlayer(changedInfo.login);
   manager.addActivePlayer(changedInfo);
@@ -982,9 +955,8 @@ function onPauseStatusScript(manager: GbxClientManager, status: PauseStatus) {
   manager.info.liveInfo.isPaused = status.active;
 }
 
-async function onBeginMap(manager: GbxClientManager, mapInfo: SMapInfo) {
+function onBeginMap(manager: GbxClientManager, mapInfo: SMapInfo) {
   syncMap(manager, manager.getServerId());
-  await syncPlayerList(manager);
 
   manager.info.liveInfo.currentMap = mapInfo.UId;
   manager.roundNumber = manager.info.liveInfo.type === "timeattack" ? null : 0;

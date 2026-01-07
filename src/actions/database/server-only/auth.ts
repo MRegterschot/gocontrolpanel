@@ -1,6 +1,5 @@
 import { getClient } from "@/lib/dbclient";
 import { Prisma, Servers, Users } from "@/lib/prisma/generated";
-import { getKeyUserInfo, getRedisClient } from "@/lib/redis";
 import { getList } from "@/lib/utils";
 import "server-only";
 
@@ -191,90 +190,4 @@ export async function getPublicGroupsWithServers(): Promise<
     name: group.name,
     servers: group.groupServers.map((gs) => gs.server),
   }));
-}
-
-type UserInfo = Pick<
-  Users,
-  "login" | "nickName" | "path" | "device" | "camera"
->;
-
-export async function getUserInfoByLogin(
-  login: string,
-): Promise<UserInfo | null> {
-  const redis = await getRedisClient();
-  const db = getClient();
-
-  const key = getKeyUserInfo(login);
-
-  const cached = await redis.get(key);
-  if (cached) {
-    return JSON.parse(cached) as UserInfo;
-  }
-
-  const user = await db.users.findUnique({
-    where: {
-      login,
-    },
-    select: {
-      login: true,
-      nickName: true,
-      path: true,
-      device: true,
-      camera: true,
-    },
-  });
-
-  if (user) {
-    await redis.set(key, JSON.stringify(user), "EX", 60 * 60 * 24); // Cache for 24 hours
-  }
-
-  return user;
-}
-
-export async function getUserInfosByLogin(
-  logins: string[],
-): Promise<{ [key: string]: UserInfo }> {
-  const redis = await getRedisClient();
-  const db = getClient();
-
-  const userInfos: { [key: string]: UserInfo } = {};
-  const loginsToFetch: string[] = [];
-
-  // First try to get from cache
-  for (const login of logins) {
-    const key = getKeyUserInfo(login);
-    const cached = await redis.get(key);
-    if (cached) {
-      userInfos[login] = JSON.parse(cached) as UserInfo;
-    } else {
-      loginsToFetch.push(login);
-    }
-  }
-
-  // Fetch missing from database
-  if (loginsToFetch.length > 0) {
-    const users = await db.users.findMany({
-      where: {
-        login: {
-          in: loginsToFetch,
-        },
-      },
-      select: {
-        login: true,
-        nickName: true,
-        path: true,
-        device: true,
-        camera: true,
-      },
-    });
-
-    for (const user of users) {
-      userInfos[user.login] = user;
-
-      const key = getKeyUserInfo(user.login);
-      await redis.set(key, JSON.stringify(user), "EX", 60 * 60 * 24); // Cache for 24 hours
-    }
-  }
-
-  return userInfos;
 }

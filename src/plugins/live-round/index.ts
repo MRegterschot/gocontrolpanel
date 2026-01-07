@@ -6,7 +6,7 @@ import { SPlayerInfo } from "@/types/gbx/player";
 import { Scores } from "@/types/gbx/scores";
 import { Waypoint, WaypointEvent } from "@/types/gbx/waypoint";
 import { LiveInfo } from "@/types/live";
-import { ActivePlayerInfo, PlayerInfo } from "@/types/player";
+import { PlayerInfo } from "@/types/player";
 import Plugin from "..";
 
 type Round = {
@@ -70,7 +70,7 @@ export default class LiveRoundPlugin extends Plugin {
     this.clearLiveRound();
   }
 
-  async onPlayerConnect(playerInfo: ActivePlayerInfo) {
+  async onPlayerConnect(playerInfo: PlayerInfo) {
     const playerStatus = this.clientManager.reverseCupGetPlayerStatus(
       playerInfo.login,
     );

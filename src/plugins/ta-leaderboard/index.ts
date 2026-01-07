@@ -5,7 +5,7 @@ import Widget from "@/lib/manialink/components/widget";
 import Plugin from "@/plugins";
 import { Scores } from "@/types/gbx/scores";
 import { Waypoint } from "@/types/gbx/waypoint";
-import { ActivePlayerInfo } from "@/types/player";
+import { PlayerInfo } from "@/types/player";
 import "server-only";
 
 type Record = {
@@ -75,7 +75,7 @@ export default class TALeaderboardPlugin extends Plugin {
     this.widget.update();
   }
 
-  async onPlayerConnect(playerInfo: ActivePlayerInfo) {
+  async onPlayerConnect(playerInfo: PlayerInfo) {
     const playerExists = this.records.some(
       (record) => record.login === playerInfo.login,
     );

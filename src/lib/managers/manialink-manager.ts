@@ -1,4 +1,4 @@
-import { ActivePlayerInfo } from "@/types/player";
+import { PlayerInfo } from "@/types/player";
 import "server-only";
 import ActionGroup from "../manialink/components/action-group";
 import Manialink from "../manialink/components/manialink";
@@ -24,7 +24,7 @@ export default class ManialinkManager {
     this.actionGroup = new ActionGroup(this);
   }
 
-  private async onPlayerConnect(player: ActivePlayerInfo) {
+  private async onPlayerConnect(player: PlayerInfo) {
     const multi = [];
 
     // Re-display all public manialinks to the newly connected player

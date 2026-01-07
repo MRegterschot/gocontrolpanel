@@ -46,10 +46,7 @@ model Users {
   ubiUid        String?
   permissions   Json    @default("[]")
   authenticated Boolean @default(false)
-
-  device String?
-  camera String?
-
+  
   notifications Notifications[]
   auditLogs     AuditLogs[]
 
