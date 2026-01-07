@@ -518,6 +518,73 @@ templates['widgets/notify-admin/notify-admin'] = template({"1":function(containe
 
   return ((stack1 = (lookupProperty(helpers,"extend")||(depth0 && lookupProperty(depth0,"extend"))||container.hooks.helperMissing).call(depth0 != null ? depth0 : (container.nullContext || {}),"widget",{"name":"extend","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":1,"column":0},"end":{"line":11,"column":11}}})) != null ? stack1 : "");
 },"useData":true});
+templates['widgets/player-info/player-info-update'] = template({"1":function(container,depth0,helpers,partials,data) {
+    var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return ((stack1 = (lookupProperty(helpers,"content")||(depth0 && lookupProperty(depth0,"content"))||container.hooks.helperMissing).call(depth0 != null ? depth0 : (container.nullContext || {}),"content",{"name":"content","hash":{},"fn":container.program(2, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":2,"column":0},"end":{"line":23,"column":12}}})) != null ? stack1 : "");
+},"2":function(container,depth0,helpers,partials,data) {
+    var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return "<script>\n<!--\n#Struct PlayerInfo {\n  Text login;\n  Text name;\n  Integer personalBest;\n  Text device;\n  Text camera;\n}\n\nmain(){\n  declare PlayerInfo[] PlayerInfos for This;\n  declare Integer LastPlayerInfosUpdate for This;\n  declare Text playerInfosJson = \"\"\""
+    + ((stack1 = (lookupProperty(helpers,"default")||(depth0 && lookupProperty(depth0,"default"))||container.hooks.helperMissing).call(depth0 != null ? depth0 : (container.nullContext || {}),((stack1 = (depth0 != null ? lookupProperty(depth0,"data") : depth0)) != null ? lookupProperty(stack1,"playerInfosJson") : stack1),"[]",{"name":"default","hash":{},"data":data,"loc":{"start":{"line":16,"column":36},"end":{"line":16,"column":77}}})) != null ? stack1 : "")
+    + "\"\"\";\n\n  PlayerInfos.fromjson(playerInfosJson);\n  LastPlayerInfosUpdate = GameTime;\n}\n-->\n</script>\n";
+},"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
+    var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return ((stack1 = (lookupProperty(helpers,"extend")||(depth0 && lookupProperty(depth0,"extend"))||container.hooks.helperMissing).call(depth0 != null ? depth0 : (container.nullContext || {}),"manialink",{"name":"extend","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":1,"column":0},"end":{"line":24,"column":11}}})) != null ? stack1 : "");
+},"useData":true});
+templates['widgets/player-info/player-info'] = template({"1":function(container,depth0,helpers,partials,data) {
+    var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=container.hooks.helperMissing, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return ((stack1 = (lookupProperty(helpers,"content")||(depth0 && lookupProperty(depth0,"content"))||alias2).call(alias1,"widget",{"name":"content","hash":{},"fn":container.program(2, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":2,"column":0},"end":{"line":40,"column":12}}})) != null ? stack1 : "")
+    + "\n\n"
+    + ((stack1 = (lookupProperty(helpers,"content")||(depth0 && lookupProperty(depth0,"content"))||alias2).call(alias1,"globals",{"name":"content","hash":{},"fn":container.program(4, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":43,"column":0},"end":{"line":51,"column":12}}})) != null ? stack1 : "")
+    + "\n"
+    + ((stack1 = (lookupProperty(helpers,"content")||(depth0 && lookupProperty(depth0,"content"))||alias2).call(alias1,"script",{"name":"content","hash":{},"fn":container.program(6, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":53,"column":0},"end":{"line":95,"column":12}}})) != null ? stack1 : "")
+    + "\n"
+    + ((stack1 = (lookupProperty(helpers,"content")||(depth0 && lookupProperty(depth0,"content"))||alias2).call(alias1,"main",{"name":"content","hash":{},"fn":container.program(8, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":97,"column":0},"end":{"line":102,"column":12}}})) != null ? stack1 : "")
+    + "\n\n"
+    + ((stack1 = (lookupProperty(helpers,"content")||(depth0 && lookupProperty(depth0,"content"))||alias2).call(alias1,"loop",{"name":"content","hash":{},"fn":container.program(10, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":105,"column":0},"end":{"line":113,"column":12}}})) != null ? stack1 : "");
+},"2":function(container,depth0,helpers,partials,data) {
+    return "<frame pos=\"0 0\" id=\"player-info-container\">\n  <frame pos=\"0 0\" id=\"player-name\">\n    <quad pos=\"0 0\" z-index=\"0\" size=\"7 7\" bgcolor=\"222\"/>\n    <quad pos=\"7 0\" z-index=\"0\" size=\"48 7\" bgcolor=\"DDD\"/>\n    <quad pos=\"3.5 -3.5\" z-index=\"0\" size=\"4.5 4.5\" bgcolor=\"DDD\" image=\"file://Media/Flags/WOR.dds\" halign=\"center\" valign=\"center\" />\n    <label pos=\"8.5 -3.25\" z-index=\"0\" size=\"47 7\" text=\"Marijntje04\" valign=\"center\" textcolor=\"222\" textsize=\"2\" textfont=\"GameFontSemiBold\"/>\n  </frame>\n\n  <frame pos=\"0 -8\" id=\"player-info-title\">\n    <quad pos=\"0 0\" z-index=\"0\" size=\"55 5\" bgcolor=\"222\"/>\n    <label pos=\"27.5 -2.25\" z-index=\"0\" size=\"55 5\" text=\"Player Info\" halign=\"center\" textsize=\"1\" textfont=\"GameFontSemiBold\" valign=\"center\"/>\n  </frame>\n\n  <frame pos=\"0 -13.25\" id=\"records-info\">\n    <quad pos=\"0 0\" z-index=\"0\" size=\"8 8\" bgcolor=\"222\"/>\n    <quad pos=\"8 0\" z-index=\"0\" size=\"19.5 8\" bgcolor=\"DDD\"/>\n    <label pos=\"4 -3.75\" z-index=\"0\" size=\"8 8\" text=\"PB\" halign=\"center\" valign=\"center\" textsize=\"1.5\" textcolor=\"DDD\" textfont=\"GameFontBlack\"/>\n    <label pos=\"17.75 -3.75\" z-index=\"0\" size=\"15.5 8\" text=\"--:--.---\" valign=\"center\" halign=\"center\" textcolor=\"222\" textsize=\"1.5\" textfont=\"GameFontSemiBold\"/>\n\n    <quad pos=\"27.5 0\" z-index=\"0\" size=\"8 8\" bgcolor=\"222\"/>\n    <quad pos=\"35.5 0\" z-index=\"0\" size=\"19.5 8\" bgcolor=\"DDD\"/>\n    <label pos=\"31.5 -3.75\" z-index=\"0\" size=\"8 8\" text=\"LR\" halign=\"center\" valign=\"center\" textsize=\"1.5\" textcolor=\"DDD\" textfont=\"GameFontBlack\"/>\n    <label pos=\"45.25 -3.75\" z-index=\"0\" size=\"15.5 8\" text=\"--:--.---\" valign=\"center\" halign=\"center\" textcolor=\"222\" textsize=\"1.5\" textfont=\"GameFontSemiBold\"/>\n  </frame>\n\n  <frame pos=\"0 -21.5\" id=\"other-info\">\n    <quad pos=\"0 0\" z-index=\"0\" size=\"8 8\" bgcolor=\"222\"/>\n    <quad pos=\"8 0\" z-index=\"0\" size=\"19.5 8\" bgcolor=\"DDD\"/>\n    <label pos=\"4 -3.75\" z-index=\"0\" size=\"8 8\" text=\"\" halign=\"center\" valign=\"center\" textsize=\"1.5\" textcolor=\"DDD\" textfont=\"GameFontBlack\"/>\n    <label pos=\"17.75 -3.75\" z-index=\"0\" size=\"15.5 8\" text=\"Keyboard\" valign=\"center\" halign=\"center\" textcolor=\"222\" textsize=\"1.5\" textfont=\"GameFontSemiBold\"/>\n\n    <quad pos=\"27.5 0\" z-index=\"0\" size=\"8 8\" bgcolor=\"222\"/>\n    <quad pos=\"35.5 0\" z-index=\"0\" size=\"19.5 8\" bgcolor=\"DDD\"/>\n    <label pos=\"31.5 -3.75\" z-index=\"0\" size=\"8 8\" text=\"\" halign=\"center\" valign=\"center\" textsize=\"1.5\" textcolor=\"DDD\" textfont=\"GameFontBlack\"/>\n    <label pos=\"45.25 -3.75\" z-index=\"0\" size=\"15.5 8\" text=\"Unknown\" valign=\"center\" halign=\"center\" textcolor=\"222\" textsize=\"1.5\" textfont=\"GameFontSemiBold\"/>\n  </frame>\n</frame>\n";
+},"4":function(container,depth0,helpers,partials,data) {
+    return "#Struct PlayerInfo {\n  Text login;\n  Text name;\n  Integer personalBest;\n  Text device;\n  Text camera;\n}\n";
+},"6":function(container,depth0,helpers,partials,data) {
+    return "Text formatTime(Integer time) {\n  declare Text secondString;\n  declare Text msString;\n\n  if (time <= 0) {\n    return \"--:--.---\";\n  }\n\n  declare Integer seconds = time / 1000;\n  declare Integer minutes = seconds / 60;\n  declare Integer milliseconds = time - (seconds * 1000);\n  seconds = seconds - (minutes * 60);\n\n  secondString = TL::ToText(seconds);\n\n  if (seconds < 10) {\n    secondString = \"0\" ^ secondString;\n  }\n\n  if (milliseconds <= 0) {\n    msString = \"000\";\n  } else if (milliseconds < 10) {\n    msString = \"00\" ^ TL::ToText(milliseconds);\n  } else if (milliseconds < 100) {\n    msString = \"0\" ^ TL::ToText(milliseconds);\n  } else {\n    msString = TL::ToText(milliseconds);\n  }\n\n  if (minutes > 0) {\n    return TL::ToText(minutes) ^ \":\" ^ secondString ^ \".\" ^ msString;\n  } else {\n    return secondString ^ \".\" ^ msString;\n  }\n\n  return \"\";\n}\n\nVoid updateWidget(PlayerInfo[] playerInfos) {\n  log(playerInfos);\n}\n";
+},"8":function(container,depth0,helpers,partials,data) {
+    return "declare PlayerInfo[] PlayerInfos for This;\ndeclare Integer LastPlayerInfosUpdate for This = -1;\ndeclare Integer lastUpdate = -1;\ndeclare Text spectatorTargetLogin = \"\";\n";
+},"10":function(container,depth0,helpers,partials,data) {
+    return "if (LastPlayerInfosUpdate != lastUpdate) {\n  lastUpdate = LastPlayerInfosUpdate;\n\n  if (spectatorTargetLogin != \"\") {\n    updateWidget(PlayerInfos);\n  }\n}\n";
+},"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
+    var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return ((stack1 = (lookupProperty(helpers,"extend")||(depth0 && lookupProperty(depth0,"extend"))||container.hooks.helperMissing).call(depth0 != null ? depth0 : (container.nullContext || {}),"widget",{"name":"extend","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":1,"column":0},"end":{"line":114,"column":11}}})) != null ? stack1 : "");
+},"useData":true});
 templates['widgets/records-info/records-info-update'] = template({"1":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
@@ -633,7 +700,7 @@ templates['widgets/ta-active-runs/ta-active-runs'] = template({"1":function(cont
     + "\n\n"
     + ((stack1 = (lookupProperty(helpers,"content")||(depth0 && lookupProperty(depth0,"content"))||alias2).call(alias1,"loop",{"name":"content","hash":{},"fn":container.program(11, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":143,"column":0},"end":{"line":148,"column":12}}})) != null ? stack1 : "")
     + "\n"
-    + ((stack1 = (lookupProperty(helpers,"content")||(depth0 && lookupProperty(depth0,"content"))||alias2).call(alias1,"events",{"name":"content","hash":{},"fn":container.program(13, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":150,"column":0},"end":{"line":158,"column":12}}})) != null ? stack1 : "");
+    + ((stack1 = (lookupProperty(helpers,"content")||(depth0 && lookupProperty(depth0,"content"))||alias2).call(alias1,"events",{"name":"content","hash":{},"fn":container.program(13, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":150,"column":0},"end":{"line":157,"column":12}}})) != null ? stack1 : "");
 },"2":function(container,depth0,helpers,partials,data) {
     var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=container.hooks.helperMissing, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
@@ -667,7 +734,7 @@ templates['widgets/ta-active-runs/ta-active-runs'] = template({"1":function(cont
 },"11":function(container,depth0,helpers,partials,data) {
     return "if (LastActiveRunsUpdate != lastUpdate) {\n  lastUpdate = LastActiveRunsUpdate;\n  updateWidget(ActiveRuns);\n}\n";
 },"13":function(container,depth0,helpers,partials,data) {
-    return "if (event.Control.HasClass(\"trigger\") && event.Type == CMlScriptEvent::Type::MouseClick) {\n  declare targetLogin = event.Control.Parent.DataAttributeGet(\"login\");\n  if (targetLogin != \"\") {\n    if(!IsSpectatorClient) RequestSpectatorClient(True);\n    SetSpectateTarget(targetLogin);\n  }\n}\n";
+    return "if (event.Control.HasClass(\"trigger\") && event.Type == CMlScriptEvent::Type::MouseClick) {\n  declare targetLogin = event.Control.Parent.DataAttributeGet(\"login\");\n  if (targetLogin != \"\") {\n    SetSpectateTarget(targetLogin);\n  }\n}\n";
 },"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
         if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
@@ -676,7 +743,7 @@ templates['widgets/ta-active-runs/ta-active-runs'] = template({"1":function(cont
         return undefined
     };
 
-  return ((stack1 = (lookupProperty(helpers,"extend")||(depth0 && lookupProperty(depth0,"extend"))||container.hooks.helperMissing).call(depth0 != null ? depth0 : (container.nullContext || {}),"widget",{"name":"extend","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":1,"column":0},"end":{"line":159,"column":11}}})) != null ? stack1 : "");
+  return ((stack1 = (lookupProperty(helpers,"extend")||(depth0 && lookupProperty(depth0,"extend"))||container.hooks.helperMissing).call(depth0 != null ? depth0 : (container.nullContext || {}),"widget",{"name":"extend","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":1,"column":0},"end":{"line":158,"column":11}}})) != null ? stack1 : "");
 },"useData":true});
 templates['widgets/ta-leaderboard/ta-leaderboard-update'] = template({"1":function(container,depth0,helpers,partials,data) {
     var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {

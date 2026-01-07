@@ -4,7 +4,7 @@ import Widget from "@/lib/manialink/components/widget";
 import { getSpectatorStatus } from "@/lib/utils";
 import { Scores } from "@/types/gbx/scores";
 import { LiveInfo } from "@/types/live";
-import { PlayerInfo } from "@/types/player";
+import { ActivePlayerInfo, PlayerInfo } from "@/types/player";
 import Plugin from "..";
 
 type Ranking = {
@@ -54,7 +54,7 @@ export default class LiveRankingPlugin extends Plugin {
     this.clearRankings();
   }
 
-  async onPlayerConnect(playerInfo: PlayerInfo) {
+  async onPlayerConnect(playerInfo: ActivePlayerInfo) {
     if (
       getSpectatorStatus(playerInfo.spectatorStatus).spectator ||
       this.rankings.find((r) => r.login === playerInfo.login) ||

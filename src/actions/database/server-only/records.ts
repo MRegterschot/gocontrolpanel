@@ -29,3 +29,34 @@ export async function getLocalRecord(serverId: string, mapUid: string) {
 
   return record;
 }
+
+export async function getPlayerRecords(
+  serverId: string,
+  mapUid: string,
+  login: string[]
+) {
+  const db = getClient();
+
+  const records = await db.records.findMany({
+    where: {
+      serverId,
+      mapUid,
+      login: {
+        in: login,
+      },
+      deletedAt: null,
+      time: {
+        gt: 0,
+      },
+    },
+    include: {
+      user: {
+        select: {
+          nickName: true,
+        },
+      },
+    },
+  });
+
+  return records;
+}

@@ -163,6 +163,15 @@ export default function PluginsForm({
                 ""
               }
             />
+
+            <FormElement
+              name="player-info"
+              label="Player Info Plugin"
+              type="checkbox"
+              description={
+                plugins.find((p) => p.name === "player-info")?.description || ""
+              }
+            />
           </div>
 
           <Button

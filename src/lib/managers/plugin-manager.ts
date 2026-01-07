@@ -9,6 +9,7 @@ import TAActiveRunsPlugin from "@/plugins/ta-active-runs";
 import TALeaderboardPlugin from "@/plugins/ta-leaderboard";
 import { GbxClientManager } from "./gbxclient-manager";
 import ManialinkManager from "./manialink-manager";
+import PlayerInfoPlugin from "@/plugins/player-info";
 
 export default class PluginManager {
   private clientManager: GbxClientManager;
@@ -32,6 +33,7 @@ export default class PluginManager {
       new LiveRoundPlugin(this.clientManager, this.manialinkManager),
       new NotifyAdminPlugin(this.clientManager, this.manialinkManager),
       new ECMPlugin(this.clientManager, this.manialinkManager),
+      new PlayerInfoPlugin(this.clientManager, this.manialinkManager),
     ];
 
     for (const plugin of pluginsToLoad) {

@@ -1,8 +1,8 @@
-import { PlayerInfo } from "@/types/player";
+import { ActivePlayerInfo } from "@/types/player";
 import "server-only";
+import ActionGroup from "../manialink/components/action-group";
 import Manialink from "../manialink/components/manialink";
 import { GbxClientManager } from "./gbxclient-manager";
-import ActionGroup from "../manialink/components/action-group";
 
 export default class ManialinkManager {
   private readonly listenerId: string;
@@ -24,7 +24,7 @@ export default class ManialinkManager {
     this.actionGroup = new ActionGroup(this);
   }
 
-  private async onPlayerConnect(player: PlayerInfo) {
+  private async onPlayerConnect(player: ActivePlayerInfo) {
     const multi = [];
 
     // Re-display all public manialinks to the newly connected player

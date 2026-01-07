@@ -2,7 +2,7 @@ import { parseTokenFromRequest } from "@/lib/auth";
 import { getGbxClientManager } from "@/lib/managers/gbxclient-manager";
 import { hasPermissionsJWTSync } from "@/lib/utils";
 import { routePermissions } from "@/routes";
-import { PlayerInfo } from "@/types/player";
+import { ActivePlayerInfo, PlayerInfo } from "@/types/player";
 import { parse } from "node:url";
 
 export function GET() {
@@ -50,7 +50,7 @@ export async function SOCKET(
     }),
   );
 
-  const onPlayerConnect = (playerInfo: PlayerInfo) =>
+  const onPlayerConnect = (playerInfo: ActivePlayerInfo) =>
     client.send(
       JSON.stringify({
         type: "playerConnect",

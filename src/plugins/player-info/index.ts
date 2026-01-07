@@ -1,0 +1,136 @@
+import { getPlayerRecords } from "@/actions/database/server-only/records";
+import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
+import ManialinkManager from "@/lib/managers/manialink-manager";
+import Widget from "@/lib/manialink/components/widget";
+import { SMapInfo } from "@/types/gbx/map";
+import { Waypoint } from "@/types/gbx/waypoint";
+import { ActivePlayerInfo } from "@/types/player";
+import Plugin from "..";
+
+type PlayerInfo = {
+  login: string;
+  name: string;
+  personalBest: number;
+  device: string;
+  camera: string;
+};
+
+export default class PlayerInfoPlugin extends Plugin {
+  static pluginId = "player-info";
+  private widget: Widget;
+  private playerInfos: { [key: string]: PlayerInfo } = {};
+
+  constructor(
+    clientManager: GbxClientManager,
+    manialinkManager: ManialinkManager,
+  ) {
+    super(clientManager, manialinkManager);
+    this.widget = new Widget(manialinkManager);
+    this.widget.setTemplate("widgets/player-info/player-info");
+    this.widget.setId("player-info-widget");
+    this.widget.setPosition({ x: -156, y: -49 });
+  }
+
+  async onLoad() {
+    this.clientManager.addListeners(this.getPluginId(), {
+      beginMap: this.onBeginMap.bind(this),
+      playerConnect: this.onPlayerConnect.bind(this),
+      finish: this.onFinish.bind(this),
+    });
+  }
+
+  async onUnload() {
+    this.widget.destroy();
+    this.clientManager.removeListeners(this.getPluginId());
+  }
+
+  async onStart() {
+    this.widget.display();
+    this.updatePlayerInfos();
+  }
+
+  async onFinish(finish: Waypoint) {
+    const playerInfo = this.playerInfos[finish.login];
+    if (!playerInfo) return;
+
+    if (!playerInfo.personalBest || finish.racetime < playerInfo.personalBest) {
+      playerInfo.personalBest = finish.racetime;
+      this.updateWidget();
+    }
+  }
+
+  async onBeginMap() {
+    this.updatePlayerInfos();
+  }
+
+  async onPlayerConnect(playerInfo: ActivePlayerInfo) {
+    if (this.playerInfos[playerInfo.login]) return;
+
+    const map = this.clientManager.getActiveMap();
+
+    let personalBest = 0;
+    if (map) {
+      const records = await getPlayerRecords(
+        this.clientManager.getServerId(),
+        map,
+        [playerInfo.login],
+      );
+      const record = records.find((r) => r.login === playerInfo.login);
+      personalBest = record ? record.time : 0;
+    }
+
+    this.playerInfos[playerInfo.login] = {
+      login: playerInfo.login,
+      name: playerInfo.nickName,
+      personalBest,
+      device: playerInfo.device || "Unknown",
+      camera: playerInfo.camera || "Unknown",
+    };
+
+    this.updateWidget();
+  }
+
+  async updatePlayerInfos() {
+    const map: SMapInfo =
+      await this.clientManager.client.call("GetCurrentMapInfo");
+
+    const players = this.clientManager.info.activePlayers.map((p) => p.login);
+
+    if (players.length === 0) {
+      this.playerInfos = {};
+      this.widget.setData({
+        playerInfos: JSON.stringify(this.playerInfos),
+      });
+      this.widget.update();
+      return;
+    }
+
+    const records = await getPlayerRecords(
+      this.clientManager.getServerId(),
+      map.UId,
+      players,
+    );
+
+    this.playerInfos = {};
+
+    for (const player of this.clientManager.info.activePlayers) {
+      const record = records.find((r) => r.login === player.login);
+      this.playerInfos[player.login] = {
+        login: player.login,
+        name: player.nickName,
+        personalBest: record ? record.time : 0,
+        device: player.device || "Unknown",
+        camera: player.camera || "Unknown",
+      };
+    }
+
+    this.updateWidget();
+  }
+
+  updateWidget() {
+    this.widget.setData({
+      playerInfosJson: JSON.stringify(Object.values(this.playerInfos)),
+    });
+    this.widget.update();
+  }
+}

@@ -4,7 +4,7 @@ import Widget from "@/lib/manialink/components/widget";
 import { getSpectatorStatus } from "@/lib/utils";
 import { SPlayerInfo } from "@/types/gbx/player";
 import { Waypoint, WaypointEvent } from "@/types/gbx/waypoint";
-import { PlayerInfo } from "@/types/player";
+import { ActivePlayerInfo, PlayerInfo } from "@/types/player";
 import Plugin from "..";
 
 type ActiveRun = {
@@ -60,7 +60,7 @@ export default class TAActiveRunsPlugin extends Plugin {
     this.clearActiveRuns();
   }
 
-  async onPlayerConnect(playerInfo: PlayerInfo) {
+  async onPlayerConnect(playerInfo: ActivePlayerInfo) {
     if (
       getSpectatorStatus(playerInfo.spectatorStatus).spectator ||
       this.activeRuns.find((r) => r.login === playerInfo.login)
@@ -74,7 +74,7 @@ export default class TAActiveRunsPlugin extends Plugin {
       checkpoint: 0,
     });
 
-    await this.updateWidget();
+    this.updateWidget();
   }
 
   async onPlayerDisconnect(login: string) {
@@ -82,7 +82,7 @@ export default class TAActiveRunsPlugin extends Plugin {
     if (!activeRun) return;
 
     this.activeRuns = this.activeRuns.filter((run) => run.login !== login);
-    await this.updateWidget();
+    this.updateWidget();
   }
 
   async onPlayerInfo(playerInfo: PlayerInfo) {
@@ -113,7 +113,7 @@ export default class TAActiveRunsPlugin extends Plugin {
       }
     }
 
-    await this.updateWidget();
+    this.updateWidget();
   }
 
   async onStartLine(startLine: WaypointEvent) {
@@ -122,7 +122,7 @@ export default class TAActiveRunsPlugin extends Plugin {
         this.activeRuns[i].time = 0;
         this.activeRuns[i].checkpoint = 0;
 
-        await this.updateWidget();
+        this.updateWidget();
         return;
       }
     }
@@ -134,7 +134,7 @@ export default class TAActiveRunsPlugin extends Plugin {
         this.activeRuns[i].time = checkpoint.racetime;
         this.activeRuns[i].checkpoint = checkpoint.checkpointinrace + 1;
 
-        await this.updateWidget();
+        this.updateWidget();
         return;
       }
     }
@@ -146,7 +146,7 @@ export default class TAActiveRunsPlugin extends Plugin {
         this.activeRuns[i].time = finish.racetime;
         this.activeRuns[i].checkpoint = -69; // Finished
 
-        await this.updateWidget();
+        this.updateWidget();
         return;
       }
     }
@@ -158,7 +158,7 @@ export default class TAActiveRunsPlugin extends Plugin {
         this.activeRuns[i].time = 0;
         this.activeRuns[i].checkpoint = 0;
 
-        await this.updateWidget();
+        this.updateWidget();
         return;
       }
     }
@@ -170,7 +170,7 @@ export default class TAActiveRunsPlugin extends Plugin {
         this.activeRuns[i].time = 0;
         this.activeRuns[i].checkpoint = 0;
 
-        await this.updateWidget();
+        this.updateWidget();
         return;
       }
     }
@@ -208,10 +208,10 @@ export default class TAActiveRunsPlugin extends Plugin {
       }
     }
 
-    await this.updateWidget();
+    this.updateWidget();
   }
 
-  async updateWidget() {
+  updateWidget() {
     this.activeRuns.sort((a, b) => {
       // Sort by checkpoint (higher is better except -69 which means finished)
       if (a.checkpoint === -69 && b.checkpoint !== -69) return 1;

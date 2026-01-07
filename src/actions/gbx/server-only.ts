@@ -6,10 +6,11 @@ import { Maps } from "@/lib/prisma/generated";
 import { getKeyActiveMap, getKeyJukebox, getRedisClient } from "@/lib/redis";
 import { SMapInfo } from "@/types/gbx/map";
 import { JukeboxMap } from "@/types/map";
-import { PlayerInfo } from "@/types/player";
+import { ActivePlayerInfo, PlayerInfo } from "@/types/player";
 import { ServerError } from "@/types/responses";
 import { GbxClient } from "@evotm/gbxclient";
 import "server-only";
+import { getUserInfosByLogin } from "../database/server-only/auth";
 import {
   createMap,
   getMapByUid,
@@ -17,14 +18,20 @@ import {
 } from "../database/server-only/gbx";
 
 export async function syncPlayerList(manager: GbxClientManager) {
-  const playerList  = await manager.client.call("GetPlayerList", 1000, 0);
+  const playerList = await manager.client.call("GetPlayerList", 1000, 0);
   if (!playerList || !Array.isArray(playerList)) {
     throw new Error("Failed to retrieve player list");
   }
 
   const mainServerInfo = await manager.client.call("GetMainServerPlayerInfo");
 
-  const players: PlayerInfo[] = [];
+  const userInfos = await getUserInfosByLogin(
+    playerList
+      .map((p) => p.Login)
+      .filter((login) => login && login !== mainServerInfo.Login),
+  );
+
+  const players: ActivePlayerInfo[] = [];
   manager.info.liveInfo.players = {};
   for (const player of playerList) {
     if (!player.Login || player.Login === mainServerInfo.Login) {
@@ -38,6 +45,8 @@ export async function syncPlayerList(manager: GbxClientManager) {
         playerId: player.PlayerId,
         spectatorStatus: player.SpectatorStatus,
         teamId: player.TeamId,
+        device: userInfos[player.Login]?.device || "Unknown",
+        camera: userInfos[player.Login]?.camera || "Unknown",
       });
 
       manager.info.liveInfo.players[player.Login] = {
@@ -53,6 +62,8 @@ export async function syncPlayerList(manager: GbxClientManager) {
         playerId: 0,
         spectatorStatus: 0,
         teamId: 0,
+        device: "Unknown",
+        camera: "Unknown",
       });
     }
   }
