@@ -47,9 +47,6 @@ model Users {
   permissions   String[] @default([])
   authenticated Boolean  @default(false)
 
-  device String?
-  camera String?
-
   notifications Notifications[]
   auditLogs     AuditLogs[]
 
