@@ -105,13 +105,28 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
   }
 
   async onEndRound(scores: Scores) {
-    if (scores.section !== "EndRound") return;
+    if (
+      this.clientManager.info.liveInfo.type !== "reversecup" &&
+      scores.section !== "EndRound"
+    )
+      return;
+    if (
+      this.clientManager.info.liveInfo.type === "reversecup" &&
+      scores.section !== "PreEndRound"
+    )
+      return;
     if (!this.isActive()) return;
 
     const roundNum = this.clientManager.roundNumber || 1;
     const isTimeAttack = this.clientManager.info.liveInfo.type === "timeattack";
 
-    const rankedPlayers = rankPlayers(scores.players, isTimeAttack);
+    let scoresPlayers = scores.players;
+
+    if (this.clientManager.info.liveInfo.type === "reversecup") {
+      scoresPlayers = scores.players.filter((p) => p.matchpoints > -2000);
+    }
+
+    const rankedPlayers = rankPlayers(scoresPlayers, isTimeAttack);
 
     const players = rankedPlayers.map((p) => ({
       finishTime: isTimeAttack ? p.bestracetime : p.prevracetime,
