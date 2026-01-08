@@ -92,7 +92,7 @@ Text formatTime(Integer time) {
 Void updateWidget(PlayerInfo[] playerInfos, Text spectatorTargetLogin, Text spectatorTargetName, Text playerLogin) {
   declare playerInfoContainerFrame <=> (Page.MainFrame.GetFirstChild("player-info-container") as CMlFrame);
 
-  if (spectatorTargetLogin == "") {
+  if (spectatorTargetLogin == "" || spectatorTargetLogin == playerLogin) {
     playerInfoContainerFrame.Hide();
     return;
   }
@@ -150,7 +150,7 @@ if (LastPlayerInfosUpdate != lastUpdate) {
 
 if (GUIPlayer != Null) {
   if (spectatorTargetLogin != GUIPlayer.User.Login) {
-    spectatorTargetLogin = "v8vgGbx_TuKkBabAyn7nsQ";
+    spectatorTargetLogin = GUIPlayer.User.Login;
     spectatorTargetName = GUIPlayer.User.Name;
     updateWidget(PlayerInfos, spectatorTargetLogin, spectatorTargetName, playerLogin);
   }
