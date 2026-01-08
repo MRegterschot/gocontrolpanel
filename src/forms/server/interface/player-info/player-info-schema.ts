@@ -5,6 +5,8 @@ export const PlayerInfoPluginSchema = z.object({
     .array(
       z.object({
         login: z.string(),
+        device: z.string().optional(),
+        camera: z.string().optional(),
       }),
     )
     .optional(),

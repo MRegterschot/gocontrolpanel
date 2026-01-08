@@ -4,12 +4,14 @@ import { ServerPluginsWithPlugin } from "@/actions/database/server-only/gbx";
 import { updateServerPlugins } from "@/actions/database/server-plugins";
 import FormElement from "@/components/form/form-element";
 import EcircuitmaniaPluginModal from "@/components/modals/interface/plugins/ecircuitmania-plugin-modal";
+import PlayerInfoPluginModal from "@/components/modals/interface/plugins/player-info-plugin-modal";
 import Modal from "@/components/modals/modal";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Plugins } from "@/lib/prisma/generated";
 import { getErrorMessage } from "@/lib/utils";
 import { ECMPluginConfig } from "@/types/plugins/ecm";
+import { PlayerInfoPluginConfig } from "@/types/plugins/player-info";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconDeviceFloppy, IconSettings } from "@tabler/icons-react";
 import { useState } from "react";
@@ -171,7 +173,16 @@ export default function PluginsForm({
               description={
                 plugins.find((p) => p.name === "player-info")?.description || ""
               }
-            />
+            >
+              <Button
+                variant={"outline"}
+                type="button"
+                onClick={() => setConfigModalOpen("player-info")}
+              >
+                <IconSettings />
+                Configure
+              </Button>
+            </FormElement>
           </div>
 
           <Button
@@ -198,6 +209,23 @@ export default function PluginsForm({
           }}
           onSubmit={(config) => {
             handleConfigUpdate("ecm", config);
+          }}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={configModalOpen === "player-info"}
+        setIsOpen={() => setConfigModalOpen(undefined)}
+      >
+        <PlayerInfoPluginModal
+          serverId={serverId}
+          data={{
+            pluginId: plugins.find((p) => p.name === "player-info")?.id || "",
+            config: serverPlugins.find((sp) => sp.plugin.name === "player-info")
+              ?.config as PlayerInfoPluginConfig,
+          }}
+          onSubmit={(config) => {
+            handleConfigUpdate("player-info", config);
           }}
         />
       </Modal>
