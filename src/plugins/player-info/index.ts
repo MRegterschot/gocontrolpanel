@@ -4,6 +4,8 @@ import ManialinkManager from "@/lib/managers/manialink-manager";
 import Widget from "@/lib/manialink/components/widget";
 import { SMapInfo } from "@/types/gbx/map";
 import { Waypoint } from "@/types/gbx/waypoint";
+import { type PlayerInfo as TPlayerInfo } from "@/types/player";
+import { PlayerInfoPluginConfig } from "@/types/plugins/player-info";
 import Plugin from "..";
 
 type PlayerInfo = {
@@ -14,7 +16,7 @@ type PlayerInfo = {
   camera: string;
 };
 
-export default class PlayerInfoPlugin extends Plugin {
+export default class PlayerInfoPlugin extends Plugin<PlayerInfoPluginConfig | null> {
   static pluginId = "player-info";
   private widget: Widget;
   private playerInfos: { [key: string]: PlayerInfo } = {};
@@ -48,6 +50,15 @@ export default class PlayerInfoPlugin extends Plugin {
     this.updatePlayerInfos();
   }
 
+  async onConfigUpdate() {
+    for (const playerInfo of Object.values(this.playerInfos)) {
+      playerInfo.device = "Unknown";
+      playerInfo.camera = "Unknown";
+    }
+
+    this.updatePlayerInfos();
+  }
+
   async onFinish(finish: Waypoint) {
     const playerInfo = this.playerInfos[finish.login];
     if (!playerInfo) return;
@@ -62,7 +73,7 @@ export default class PlayerInfoPlugin extends Plugin {
     this.updatePlayerInfos();
   }
 
-  async onPlayerConnect(playerInfo: PlayerInfo) {
+  async onPlayerConnect(playerInfo: TPlayerInfo) {
     if (this.playerInfos[playerInfo.login]) return;
 
     const map = this.clientManager.getActiveMap();
@@ -78,12 +89,16 @@ export default class PlayerInfoPlugin extends Plugin {
       personalBest = record ? record.time : 0;
     }
 
+    const playerConfig = this.config?.playerInfos?.find(
+      (pi) => pi.login === playerInfo.login,
+    );
+
     this.playerInfos[playerInfo.login] = {
       login: playerInfo.login,
       name: playerInfo.nickName,
       personalBest,
-      device: playerInfo.device || "Unknown",
-      camera: playerInfo.camera || "Unknown",
+      device: playerConfig?.device || "Unknown",
+      camera: playerConfig?.camera || "Unknown",
     };
 
     this.updateWidget();
@@ -111,12 +126,15 @@ export default class PlayerInfoPlugin extends Plugin {
 
     for (const player of this.clientManager.info.activePlayers) {
       const record = records.find((r) => r.login === player.login);
+      const playerInfo = this.config?.playerInfos?.find(
+        (pi) => pi.login === player.login,
+      );
       this.playerInfos[player.login] = {
         login: player.login,
         name: player.nickName,
         personalBest: record ? record.time : 0,
-        device: player.device || "Unknown",
-        camera: player.camera || "Unknown",
+        device: playerInfo?.device || "Unknown",
+        camera: playerInfo?.camera || "Unknown",
       };
     }
 
