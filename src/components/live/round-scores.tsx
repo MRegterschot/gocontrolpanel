@@ -1,6 +1,11 @@
 import { cn, formatTime } from "@/lib/utils";
-import { LiveInfo } from "@/types/live";
-import { IconHash, IconStar, IconTrophyFilled } from "@tabler/icons-react";
+import { LiveInfo, PlayerRound } from "@/types/live";
+import {
+  IconFlag2,
+  IconHash,
+  IconTrophyFilled,
+  IconX,
+} from "@tabler/icons-react";
 import { Badge } from "../ui/badge";
 import {
   Table,
@@ -34,6 +39,11 @@ export default function RoundScores({ liveInfo }: RoundScoresProps) {
           <TableBody>
             {liveInfo.players &&
               Object.values(liveInfo.players)
+                .filter(
+                  (player) =>
+                    liveInfo.type === "reversecup" &&
+                    player.matchPoints > -10000,
+                )
                 .sort((a, b) => {
                   if (b.matchPoints !== a.matchPoints) {
                     return b.matchPoints - a.matchPoints;
@@ -55,12 +65,10 @@ export default function RoundScores({ liveInfo }: RoundScoresProps) {
                     </TableCell>
                     <TableCell>{player.name}</TableCell>
                     <TableCell>
-                      {player.winner ? (
-                        <IconTrophyFilled size={20} />
-                      ) : player.finalist ? (
-                        <IconStar size={20} />
+                      {liveInfo.type === "reversecup" ? (
+                        <ReverseCupPoints player={player} />
                       ) : (
-                        <span>{player.matchPoints}</span>
+                        <RoundPoints player={player} />
                       )}
                     </TableCell>
 
@@ -72,4 +80,24 @@ export default function RoundScores({ liveInfo }: RoundScoresProps) {
       </div>
     </div>
   );
+}
+
+function ReverseCupPoints({ player }: { player: PlayerRound }) {
+  if (player.eliminated) {
+    return <IconX size={20} />;
+  } else if (player.lastChance) {
+    return <IconFlag2 size={20} />;
+  } else {
+    return <span>{player.matchPoints}</span>;
+  }
+}
+
+function RoundPoints({ player }: { player: PlayerRound }) {
+  if (player.winner) {
+    return <IconTrophyFilled size={20} />;
+  } else if (player.finalist) {
+    return <IconFlag2 size={20} />;
+  } else {
+    return <span>{player.matchPoints}</span>;
+  }
 }

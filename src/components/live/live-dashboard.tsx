@@ -216,7 +216,7 @@ export default function LiveDashboard({ serverId }: { serverId: string }) {
           {["teams", "tmwt", "tmwc"].includes(liveInfo.type) && (
             <TeamScores liveInfo={liveInfo} />
           )}
-          {["rounds", "cup"].includes(liveInfo.type) && (
+          {["rounds", "cup", "reversecup"].includes(liveInfo.type) && (
             <RoundScores liveInfo={liveInfo} />
           )}
           {["timeattack"].includes(liveInfo.type) && (
