@@ -30,7 +30,7 @@ export async function getLocalRecord(serverId: string, mapUid: string) {
 export async function getPlayerRecords(
   serverId: string,
   mapUid: string,
-  login: string[],
+  logins: string[],
 ) {
   const db = getClient();
 
@@ -39,7 +39,7 @@ export async function getPlayerRecords(
       serverId,
       mapUid,
       login: {
-        in: login,
+        in: logins,
       },
       deletedAt: null,
       time: {

@@ -52,11 +52,15 @@ export default class PlayerInfoPlugin extends Plugin<PlayerInfoPluginConfig | nu
 
   async onConfigUpdate() {
     for (const playerInfo of Object.values(this.playerInfos)) {
-      playerInfo.device = "Unknown";
-      playerInfo.camera = "Unknown";
+      const configInfo = this.config?.playerInfos?.find(
+        (pi) => pi.login === playerInfo.login,
+      );
+
+      playerInfo.device = configInfo?.device || "Unknown";
+      playerInfo.camera = configInfo?.camera || "Unknown";
     }
 
-    this.updatePlayerInfos();
+    this.updateWidget();
   }
 
   async onFinish(finish: Waypoint) {
