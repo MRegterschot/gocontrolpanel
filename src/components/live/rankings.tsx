@@ -1,6 +1,12 @@
 import { formatTime } from "@/lib/utils";
 import { PlayerRound, Team } from "@/types/live";
-import { IconFlag2, IconHash, IconTrophy, IconTrophyFilled, IconX } from "@tabler/icons-react";
+import {
+  IconFlag2,
+  IconHash,
+  IconTrophy,
+  IconTrophyFilled,
+  IconX,
+} from "@tabler/icons-react";
 import { Badge } from "../ui/badge";
 import { Card } from "../ui/card";
 import {
@@ -42,6 +48,10 @@ export default function Rankings({ players, teams, type }: RankingsProps) {
         <TableBody>
           {players &&
             Object.values(players)
+              .filter(
+                (player) =>
+                  type === "reversecup" && player.matchPoints > -10000,
+              )
               .sort((a, b) => {
                 if (b.matchPoints !== a.matchPoints) {
                   return b.matchPoints - a.matchPoints;
