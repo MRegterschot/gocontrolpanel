@@ -17,7 +17,7 @@ import {
 } from "../database/server-only/gbx";
 
 export async function syncPlayerList(manager: GbxClientManager) {
-  const playerList  = await manager.client.call("GetPlayerList", 1000, 0);
+  const playerList = await manager.client.call("GetPlayerList", 1000, 0);
   if (!playerList || !Array.isArray(playerList)) {
     throw new Error("Failed to retrieve player list");
   }

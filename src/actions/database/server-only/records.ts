@@ -14,10 +14,7 @@ export async function getLocalRecord(serverId: string, mapUid: string) {
         gt: 0,
       },
     },
-    orderBy: [
-      { time: "asc" },
-      { createdAt: "asc" },
-    ],
+    orderBy: [{ time: "asc" }, { createdAt: "asc" }],
     include: {
       user: {
         select: {
@@ -28,4 +25,39 @@ export async function getLocalRecord(serverId: string, mapUid: string) {
   });
 
   return record;
+}
+
+export async function getPlayerRecords(
+  serverId: string,
+  mapUid: string,
+  logins: string[],
+) {
+  const db = getClient();
+
+  const records = await db.records.findMany({
+    where: {
+      serverId,
+      mapUid,
+      login: {
+        in: logins,
+      },
+      deletedAt: null,
+      time: {
+        gt: 0,
+      },
+    },
+    orderBy: {
+      time: "asc",
+    },
+    distinct: ["login"],
+    include: {
+      user: {
+        select: {
+          nickName: true,
+        },
+      },
+    },
+  });
+
+  return records;
 }

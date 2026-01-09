@@ -280,9 +280,18 @@ export class GbxClientManager extends EventEmitter {
   }
 
   addActivePlayer(player: PlayerInfo): void {
-    if (!this.info.activePlayers.includes(player)) {
-      this.info.activePlayers.push(player);
+    const existingIndex = this.info.activePlayers.findIndex(
+      (p) => p.login === player.login,
+    );
+
+    // Update existing player info
+    if (existingIndex !== -1) {
+      this.info.activePlayers[existingIndex] = player;
+      return;
     }
+
+    // Else add new player
+    this.info.activePlayers.push(player);
   }
 
   removeActivePlayer(playerLogin: string): void {

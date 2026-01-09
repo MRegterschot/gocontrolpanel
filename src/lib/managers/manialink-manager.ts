@@ -1,8 +1,8 @@
 import { PlayerInfo } from "@/types/player";
 import "server-only";
+import ActionGroup from "../manialink/components/action-group";
 import Manialink from "../manialink/components/manialink";
 import { GbxClientManager } from "./gbxclient-manager";
-import ActionGroup from "../manialink/components/action-group";
 
 export default class ManialinkManager {
   private readonly listenerId: string;
