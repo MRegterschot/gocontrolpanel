@@ -57,6 +57,7 @@ export default function AddGroupForm({ callback }: { callback?: () => void }) {
     resolver: zodResolver(AddGroupSchema),
     defaultValues: {
       public: false,
+      shareRecords: false,
       groupMembers: [{ userId: session?.user.id, role: GroupRole.Admin }],
     },
   });
@@ -132,6 +133,13 @@ export default function AddGroupForm({ callback }: { callback?: () => void }) {
           label="Public Group"
           type="checkbox"
           description="Makes group visible to all users"
+        />
+
+        <FormElement
+          name="shareRecords"
+          label="Share Records"
+          type="checkbox"
+          description="Share local records across servers in this group"
         />
 
         <FormElement

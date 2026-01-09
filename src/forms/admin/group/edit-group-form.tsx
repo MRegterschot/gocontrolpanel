@@ -143,6 +143,13 @@ export default function EditGroupForm({
         />
 
         <FormElement
+          name="shareRecords"
+          label="Share Records"
+          type="checkbox"
+          description="Share local records across servers in this group"
+        />
+
+        <FormElement
           name="groupServers"
           label="Servers"
           placeholder="Select servers"
