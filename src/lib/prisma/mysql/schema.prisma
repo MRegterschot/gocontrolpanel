@@ -46,7 +46,7 @@ model Users {
   ubiUid        String?
   permissions   Json    @default("[]")
   authenticated Boolean @default(false)
-  
+
   notifications Notifications[]
   auditLogs     AuditLogs[]
 
@@ -91,10 +91,11 @@ model Records {
 }
 
 model Groups {
-  id          String  @id @default(uuid())
-  name        String
-  description String
-  public      Boolean @default(false)
+  id           String  @id @default(uuid())
+  name         String
+  description  String
+  public       Boolean @default(false)
+  shareRecords Boolean @default(false)
 
   groupServers GroupServers[]
   groupMembers GroupMember[]

@@ -4,10 +4,35 @@ import "server-only";
 export async function getLocalRecord(serverId: string, mapUid: string) {
   const db = getClient();
 
+  // Find all groups that include this server and have shareRecords enabled, return all server ids in these groups
+  const groups = await db.groups.findMany({
+    where: {
+      groupServers: {
+        some: {
+          serverId,
+        },
+      },
+      shareRecords: true,
+    },
+    include: {
+      groupServers: {
+        select: {
+          serverId: true,
+        },
+      },
+    },
+  });
+
+  const serverIds = groups.flatMap((group) =>
+    group.groupServers.map((gs) => gs.serverId),
+  );
+
   // Find the best record for the given map on the given server, if multiple records with equal time exist, return the earliest one
   const record = await db.records.findFirst({
     where: {
-      serverId,
+      serverId: {
+        in: serverIds,
+      },
       mapUid,
       deletedAt: null,
       time: {
