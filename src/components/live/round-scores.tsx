@@ -41,7 +41,7 @@ export default function RoundScores({ liveInfo }: RoundScoresProps) {
               Object.values(liveInfo.players)
                 .filter(
                   (player) =>
-                    liveInfo.type === "reversecup" &&
+                    liveInfo.type !== "reversecup" ||
                     player.matchPoints > -10000,
                 )
                 .sort((a, b) => {

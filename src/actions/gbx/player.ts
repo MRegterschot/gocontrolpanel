@@ -522,3 +522,96 @@ export async function forceSpectator(
     },
   );
 }
+
+export async function setPlayerRoundPoints(
+  serverId: string,
+  login: string,
+  points: number,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      const client = await getGbxClient(serverId);
+      await client.callScript(
+        "Trackmania.SetPlayerPoints",
+        login,
+        points,
+        "",
+        "",
+      );
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.players.roundpoints.set",
+        { login, points },
+      );
+    },
+  );
+}
+
+export async function setPlayerMapPoints(
+  serverId: string,
+  login: string,
+  points: number,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      const client = await getGbxClient(serverId);
+      await client.callScript(
+        "Trackmania.SetPlayerPoints",
+        login,
+        "",
+        points,
+        "",
+      );
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.players.mappoints.set",
+        { login, points },
+      );
+    },
+  );
+}
+
+export async function setPlayerMatchPoints(
+  serverId: string,
+  login: string,
+  points: number,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      const client = await getGbxClient(serverId);
+      await client.callScript(
+        "Trackmania.SetPlayerPoints",
+        login,
+        "",
+        "",
+        points,
+      );
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.players.matchpoints.set",
+        { login, points },
+      );
+    },
+  );
+}

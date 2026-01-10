@@ -50,7 +50,7 @@ export default function Rankings({ players, teams, type }: RankingsProps) {
             Object.values(players)
               .filter(
                 (player) =>
-                  type === "reversecup" && player.matchPoints > -10000,
+                  type !== "reversecup" || player.matchPoints > -10000,
               )
               .sort((a, b) => {
                 if (b.matchPoints !== a.matchPoints) {
