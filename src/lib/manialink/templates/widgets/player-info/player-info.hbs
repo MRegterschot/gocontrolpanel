@@ -45,6 +45,7 @@
   Text login;
   Text name;
   Integer personalBest;
+  Integer localRecord;
   Text device;
   Text camera;
 }
@@ -113,7 +114,7 @@ Void updateWidget(PlayerInfo[] playerInfos, Text spectatorTargetLogin, Text spec
 
     // Update Records Info
     (recordsInfoFrame.Controls[3] as CMlLabel).SetText(formatTime(playerInfo.personalBest));
-    (recordsInfoFrame.Controls[7] as CMlLabel).SetText(formatTime(playerInfo.personalBest));
+    (recordsInfoFrame.Controls[7] as CMlLabel).SetText(formatTime(playerInfo.localRecord));
 
     // Update Other Info
     (otherInfoFrame.Controls[3] as CMlLabel).SetText(playerInfo.device);
