@@ -22,6 +22,7 @@ export default class Manialink {
   private position: Vector2 = { x: 0, y: 0 };
   private size: Vector2 = { x: 100, y: 80 };
   private title: string = "";
+  private hideWhileDriving: boolean = false;
 
   constructor(
     manialinkManager: ManialinkManager,
@@ -65,6 +66,7 @@ export default class Manialink {
       position: this.position,
       size: this.size,
       title: this.title,
+      hideWhileDriving: this.hideWhileDriving,
       data: this.data,
     });
 
@@ -96,6 +98,10 @@ export default class Manialink {
   public setTemplate(template: string) {
     this.template = template;
     this.updateManialink?.setTemplate(this.getUpdateTemplate());
+  }
+
+  public setHideWhileDriving(hide: boolean) {
+    this.hideWhileDriving = hide;
   }
 
   public setId(id: string) {
