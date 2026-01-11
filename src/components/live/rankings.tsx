@@ -17,14 +17,23 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
+import PlayerActions from "./player-actions";
 
 interface RankingsProps {
+  serverId: string;
   players?: Record<string, PlayerRound>;
   teams?: Record<number, Team>;
   type: string;
+  canActions?: boolean;
 }
 
-export default function Rankings({ players, teams, type }: RankingsProps) {
+export default function Rankings({
+  serverId,
+  players,
+  teams,
+  type,
+  canActions,
+}: RankingsProps) {
   return (
     <Card className="p-4">
       <h2 className="text-lg font-bold">Rankings</h2>
@@ -42,6 +51,7 @@ export default function Rankings({ players, teams, type }: RankingsProps) {
               <TableHead className="font-bold">Points</TableHead>
             )}
             <TableHead className="font-bold">Best Time</TableHead>
+            {canActions && <TableHead className="w-0 pr-4" />}
           </TableRow>
         </TableHeader>
 
@@ -92,6 +102,11 @@ export default function Rankings({ players, teams, type }: RankingsProps) {
                     </TableCell>
                   )}
                   <TableCell>{formatTime(player.bestTime)}</TableCell>
+                  {canActions && (
+                    <TableCell>
+                      <PlayerActions serverId={serverId} player={player} />
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
         </TableBody>

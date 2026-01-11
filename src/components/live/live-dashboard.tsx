@@ -239,9 +239,11 @@ export default function LiveDashboard({ serverId }: { serverId: string }) {
           canActions={canActions}
         />
         <Rankings
+          serverId={serverId}
           players={liveInfo.players}
           teams={liveInfo.teams}
           type={liveInfo.type}
+          canActions={canActions}
         />
       </div>
     </div>

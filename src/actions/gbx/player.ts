@@ -540,7 +540,7 @@ export async function setPlayerRoundPoints(
       await client.callScript(
         "Trackmania.SetPlayerPoints",
         login,
-        points,
+        points.toString(),
         "",
         "",
       );
@@ -572,7 +572,7 @@ export async function setPlayerMapPoints(
         "Trackmania.SetPlayerPoints",
         login,
         "",
-        points,
+        points.toString(),
         "",
       );
       await logAudit(
@@ -604,7 +604,7 @@ export async function setPlayerMatchPoints(
         login,
         "",
         "",
-        points,
+        points.toString(),
       );
       await logAudit(
         session.user.id,
