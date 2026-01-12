@@ -541,15 +541,6 @@ export async function setPlayerRoundPoints(
     ],
     async (session) => {
       const manager = await getGbxClientManager(serverId);
-
-      const type = manager.info.liveInfo.type;
-
-      if (type === "tmwt" || type === "tmwc") {
-        throw new Error(
-          "Setting round points is not supported in TMWT and TMWC modes",
-        );
-      }
-
       await manager.client.callScript(
         "Trackmania.SetPlayerPoints",
         login,
@@ -591,15 +582,6 @@ export async function setPlayerMapPoints(
     ],
     async (session) => {
       const manager = await getGbxClientManager(serverId);
-
-      const type = manager.info.liveInfo.type;
-
-      if (type !== "tmwt" && type !== "tmwc") {
-        throw new Error(
-          "Setting map points is only supported in TMWT and TMWC modes",
-        );
-      }
-
       await manager.client.callScript(
         "Trackmania.SetPlayerPoints",
         login,
