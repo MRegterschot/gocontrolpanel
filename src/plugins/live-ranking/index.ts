@@ -3,7 +3,7 @@ import ManialinkManager from "@/lib/managers/manialink-manager";
 import Widget from "@/lib/manialink/components/widget";
 import { getSpectatorStatus } from "@/lib/utils";
 import { Scores } from "@/types/gbx/scores";
-import { LiveInfo } from "@/types/live";
+import { LiveInfo, PlayerRound } from "@/types/live";
 import { PlayerInfo } from "@/types/player";
 import Plugin from "..";
 
@@ -16,12 +16,11 @@ type Ranking = {
 
 export default class LiveRankingPlugin extends Plugin {
   static pluginId = "live-ranking";
-  static gamemodes = ["rounds", "cup"];
+  static gamemodes = ["rounds", "cup", "reversecup"];
   private widget: Widget;
 
   private rankings: Ranking[] = [];
   private pointsLimit: number = -1;
-  private mode: "rounds" | "cup" = "rounds";
 
   constructor(
     clientManager: GbxClientManager,
@@ -42,6 +41,7 @@ export default class LiveRankingPlugin extends Plugin {
       playerDisconnect: this.onPlayerDisconnect.bind(this),
       playerInfo: this.onPlayerInfo.bind(this),
       updatedSettings: this.onUpdatedSettings.bind(this),
+      playerUpdated: this.onPlayerUpdated.bind(this),
     });
   }
 
@@ -58,7 +58,8 @@ export default class LiveRankingPlugin extends Plugin {
   async onPlayerConnect(playerInfo: PlayerInfo) {
     if (
       getSpectatorStatus(playerInfo.spectatorStatus).spectator ||
-      this.rankings.find((r) => r.login === playerInfo.login)
+      this.rankings.find((r) => r.login === playerInfo.login) ||
+      this.clientManager.reverseCupGetPlayerStatus(playerInfo.login).spectator
     )
       return;
 
@@ -74,14 +75,17 @@ export default class LiveRankingPlugin extends Plugin {
 
   async onPlayerDisconnect(login: string) {
     const ranking = this.rankings.find((r) => r.login === login);
-    if (!ranking || ranking.points > 0) return;
+    if (!ranking) return;
 
     this.rankings = this.rankings.filter((r) => r.login !== login);
     await this.updateWidget();
   }
 
   async onPlayerInfo(playerInfo: PlayerInfo) {
-    if (getSpectatorStatus(playerInfo.spectatorStatus).spectator) {
+    if (
+      getSpectatorStatus(playerInfo.spectatorStatus).spectator ||
+      this.clientManager.reverseCupGetPlayerStatus(playerInfo.login).spectator
+    ) {
       const ranking = this.rankings.find((r) => r.login === playerInfo.login);
       if (!ranking || ranking.points > 0) return;
 
@@ -104,14 +108,20 @@ export default class LiveRankingPlugin extends Plugin {
     await this.updateWidget();
   }
 
+  async onPlayerUpdated(playerRound: PlayerRound) {
+    const ranking = this.rankings.find((r) => r.login === playerRound.login);
+    if (!ranking) return;
+
+    ranking.points = playerRound.matchPoints;
+
+    await this.updateWidget();
+  }
+
   async onBeginMatch() {
     this.clearRankings();
   }
 
   async onUpdatedSettings(liveInfo: LiveInfo) {
-    if (liveInfo.type === "rounds" || liveInfo.type === "cup") {
-      this.mode = liveInfo.type;
-    }
     this.pointsLimit = liveInfo.pointsLimit || -1;
 
     this.updateWidget();
@@ -128,13 +138,20 @@ export default class LiveRankingPlugin extends Plugin {
     for (let i = 0; i < scores.players.length; i++) {
       const player = scores.players[i];
 
+      if (
+        this.clientManager.info.liveInfo.type === "reversecup" &&
+        player.matchpoints === -10000
+      ) {
+        continue;
+      }
+
       if (player.matchpoints === 0) {
         const activePlayer = this.clientManager.info.activePlayers.find(
           (p) => p.login === player.login,
         );
 
         if (
-          activePlayer &&
+          !activePlayer ||
           getSpectatorStatus(activePlayer.spectatorStatus).spectator
         ) {
           continue;
@@ -161,17 +178,13 @@ export default class LiveRankingPlugin extends Plugin {
 
     this.widget.setData({
       rankingsJson: JSON.stringify(this.rankings),
-      mode: this.mode,
+      mode: this.clientManager.info.liveInfo.type,
       pointsLimit: this.pointsLimit,
     });
     this.widget.update();
   }
 
   async clearRankings() {
-    const cmType = this.clientManager.info.liveInfo.type;
-    if (cmType === "rounds" || cmType === "cup") {
-      this.mode = cmType;
-    }
     this.pointsLimit = this.clientManager.info.liveInfo.pointsLimit || -1;
 
     await this.clientManager.client.callScript(

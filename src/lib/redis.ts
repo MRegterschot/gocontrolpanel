@@ -83,3 +83,4 @@ export const getKeyClubMembersPaginated = (
   `nadeo:club:${clubId}:members:page=${pagination.pageIndex}:size=${pagination.pageSize}`;
 export const getKeyClubMembersCount = (clubId: number) =>
   `nadeo:club:${clubId}:members:count`;
+export const getKeyUserInfo = (login: string) => `users:user-info:${login}`;

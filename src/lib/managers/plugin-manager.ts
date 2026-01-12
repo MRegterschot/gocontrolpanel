@@ -9,6 +9,7 @@ import TAActiveRunsPlugin from "@/plugins/ta-active-runs";
 import TALeaderboardPlugin from "@/plugins/ta-leaderboard";
 import { GbxClientManager } from "./gbxclient-manager";
 import ManialinkManager from "./manialink-manager";
+import PlayerInfoPlugin from "@/plugins/player-info";
 
 export default class PluginManager {
   private clientManager: GbxClientManager;
@@ -32,6 +33,7 @@ export default class PluginManager {
       new LiveRoundPlugin(this.clientManager, this.manialinkManager),
       new NotifyAdminPlugin(this.clientManager, this.manialinkManager),
       new ECMPlugin(this.clientManager, this.manialinkManager),
+      new PlayerInfoPlugin(this.clientManager, this.manialinkManager),
     ];
 
     for (const plugin of pluginsToLoad) {
@@ -99,6 +101,7 @@ export default class PluginManager {
 
     if (!plugin.isLoaded()) {
       plugin.setConfig(clientPlugin?.config || null);
+      plugin.setDbPluginId(clientPlugin?.plugin.id || "");
       await plugin.onLoad();
       plugin.setLoaded(true);
     }
@@ -135,6 +138,7 @@ export default class PluginManager {
       // If plugin should be loaded but isn't, load it
       if (shouldBeLoaded && !plugin.isLoaded()) {
         plugin.setConfig(clientPlugin.config);
+        plugin.setDbPluginId(clientPlugin.plugin.id);
         await plugin.onLoad();
         plugin.setLoaded(true);
         await plugin.onStart();
@@ -148,6 +152,7 @@ export default class PluginManager {
       // If plugin is loaded and config has changed, update it
       else if (shouldBeLoaded && plugin.isLoaded() && updateConfigs) {
         plugin.setConfig(clientPlugin.config);
+        plugin.setDbPluginId(clientPlugin.plugin.id);
       }
     }
   }
@@ -173,6 +178,7 @@ export default class PluginManager {
 
       if (plugin.getSupportedGamemodes().includes(mode) && !plugin.isLoaded()) {
         plugin.setConfig(clientPlugin.config);
+        plugin.setDbPluginId(clientPlugin.plugin.id);
         await plugin.onLoad();
         plugin.setLoaded(true);
         await plugin.onStart();

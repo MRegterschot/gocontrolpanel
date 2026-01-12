@@ -70,15 +70,39 @@ export async function updateServerPlugin(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
       const db = getClient();
-      await db.serverPlugins.updateMany({
+
+      // Check if plugin exists for server
+      const existingPlugin = await db.serverPlugins.findUnique({
         where: {
-          serverId,
-          pluginId,
-        },
-        data: {
-          config,
+          serverId_pluginId: {
+            serverId,
+            pluginId,
+          },
         },
       });
+
+      // If not, create it with the config
+      if (!existingPlugin) {
+        await db.serverPlugins.create({
+          data: {
+            serverId,
+            pluginId,
+            enabled: false,
+            config,
+          },
+        });
+        return;
+      } else {
+        await db.serverPlugins.updateMany({
+          where: {
+            serverId,
+            pluginId,
+          },
+          data: {
+            config,
+          },
+        });
+      }
 
       const manager = await getGbxClientManager(serverId);
 

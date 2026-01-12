@@ -5,7 +5,7 @@ import { getSpectatorStatus } from "@/lib/utils";
 import { SPlayerInfo } from "@/types/gbx/player";
 import { Scores } from "@/types/gbx/scores";
 import { Waypoint, WaypointEvent } from "@/types/gbx/waypoint";
-import { LiveInfo } from "@/types/live";
+import { LiveInfo, PlayerRound } from "@/types/live";
 import { PlayerInfo } from "@/types/player";
 import Plugin from "..";
 
@@ -25,14 +25,13 @@ type Finish = {
 
 export default class LiveRoundPlugin extends Plugin {
   static pluginId = "live-round";
-  static gamemodes = ["rounds", "cup"];
+  static gamemodes = ["rounds", "cup", "reversecup"];
   private widget: Widget;
 
   private rounds: Round[] = [];
   private finishes: Finish[] = [];
   private pointsLimit: number = -1;
   private pointsRepartition: number[] = [];
-  private mode: "rounds" | "cup" = "rounds";
 
   constructor(
     clientManager: GbxClientManager,
@@ -48,6 +47,7 @@ export default class LiveRoundPlugin extends Plugin {
   async onLoad() {
     this.clientManager.addListeners(this.getPluginId(), {
       beginMap: this.onBeginMap.bind(this),
+      beginMatch: this.onBeginMatch.bind(this),
       playerConnect: this.onPlayerConnect.bind(this),
       playerInfo: this.onPlayerInfo.bind(this),
       playerDisconnect: this.onPlayerDisconnect.bind(this),
@@ -57,6 +57,7 @@ export default class LiveRoundPlugin extends Plugin {
       giveUp: this.onGiveUp.bind(this),
       updatedSettings: this.onUpdatedSettings.bind(this),
       scores: this.onScores.bind(this),
+      playerUpdated: this.onPlayerUpdated.bind(this),
     });
   }
 
@@ -71,9 +72,15 @@ export default class LiveRoundPlugin extends Plugin {
   }
 
   async onPlayerConnect(playerInfo: PlayerInfo) {
+    const playerStatus = this.clientManager.reverseCupGetPlayerStatus(
+      playerInfo.login,
+    );
+
     if (
       getSpectatorStatus(playerInfo.spectatorStatus).spectator ||
-      this.rounds.find((r) => r.login === playerInfo.login)
+      this.rounds.find((r) => r.login === playerInfo.login) ||
+      playerStatus.spectator ||
+      playerStatus.eliminated
     )
       return;
 
@@ -98,7 +105,15 @@ export default class LiveRoundPlugin extends Plugin {
   }
 
   async onPlayerInfo(playerInfo: PlayerInfo) {
-    if (getSpectatorStatus(playerInfo.spectatorStatus).spectator) {
+    const playerStatus = this.clientManager.reverseCupGetPlayerStatus(
+      playerInfo.login,
+    );
+
+    if (
+      getSpectatorStatus(playerInfo.spectatorStatus).spectator ||
+      playerStatus.spectator ||
+      playerStatus.eliminated
+    ) {
       this.rounds = this.rounds.filter((r) => r.login !== playerInfo.login);
     } else {
       const round = this.rounds.find((r) => r.login === playerInfo.login);
@@ -127,6 +142,15 @@ export default class LiveRoundPlugin extends Plugin {
     await this.updateWidget();
   }
 
+  async onPlayerUpdated(playerRound: PlayerRound) {
+    const round = this.rounds.find((r) => r.login === playerRound.login);
+    if (!round) return;
+
+    round.points = playerRound.matchPoints;
+
+    await this.updateWidget();
+  }
+
   async onStartRound() {
     this.clearLiveRound();
   }
@@ -135,10 +159,11 @@ export default class LiveRoundPlugin extends Plugin {
     this.clearLiveRound();
   }
 
+  async onBeginMatch() {
+    this.clearLiveRound();
+  }
+
   async onUpdatedSettings(liveInfo: LiveInfo) {
-    if (liveInfo.type === "rounds" || liveInfo.type === "cup") {
-      this.mode = liveInfo.type;
-    }
     this.pointsLimit = liveInfo.pointsLimit || -1;
     this.pointsRepartition = liveInfo.pointsRepartition || [];
 
@@ -167,9 +192,31 @@ export default class LiveRoundPlugin extends Plugin {
         this.rounds[i].time = finish.racetime;
         this.rounds[i].checkpoints = finish.curracecheckpoints;
 
+        const position = Math.min(
+          this.finishes.length,
+          this.pointsRepartition.length - 1,
+        );
+        let points = this.pointsRepartition[position] || 0;
+
+        if (this.clientManager.info.liveInfo.type === "reversecup") {
+          const playerCount = this.rounds.filter(
+            (r) => r.points > -2000,
+          ).length;
+
+          const repartition =
+            this.clientManager.reverseCupGetPointsRepartition(playerCount);
+
+          const position = Math.min(
+            this.finishes.length,
+            repartition.length - 1,
+          );
+
+          points = -repartition[position] || 0;
+        }
+
         this.finishes.push({
           login: finish.login,
-          points: this.pointsRepartition[this.finishes.length] || 0,
+          points,
         });
 
         await this.updateWidget();
@@ -219,14 +266,16 @@ export default class LiveRoundPlugin extends Plugin {
       }
     }
 
+    this.rounds = this.rounds.filter(
+      (r) =>
+        this.clientManager.info.liveInfo.type !== "reversecup" ||
+        r.points > -2000,
+    );
+
     await this.updateWidget();
   }
 
   async clearLiveRound() {
-    const cmType = this.clientManager.info.liveInfo.type;
-    if (cmType === "rounds" || cmType === "cup") {
-      this.mode = cmType;
-    }
     this.pointsLimit = this.clientManager.info.liveInfo.pointsLimit || -1;
     this.pointsRepartition =
       this.clientManager.info.liveInfo.pointsRepartition || [];
@@ -243,6 +292,7 @@ export default class LiveRoundPlugin extends Plugin {
 
     this.finishes = [];
     this.rounds = [];
+
     if (playerList && Array.isArray(playerList)) {
       for (let i = 0; i < playerList.length; i++) {
         const player = playerList[i];
@@ -250,8 +300,16 @@ export default class LiveRoundPlugin extends Plugin {
           continue; // Skip the main server player
         }
 
-        if (getSpectatorStatus(player.SpectatorStatus).spectator) {
-          continue; // Skip spectators
+        const playerStatus = this.clientManager.reverseCupGetPlayerStatus(
+          player.Login,
+        );
+
+        if (
+          getSpectatorStatus(player.SpectatorStatus).spectator ||
+          playerStatus.spectator ||
+          playerStatus.eliminated
+        ) {
+          continue; // Skip spectators and eliminated players
         }
 
         this.rounds.push({
@@ -300,7 +358,7 @@ export default class LiveRoundPlugin extends Plugin {
     this.widget.setData({
       roundsJson: JSON.stringify(this.rounds),
       finishesJson: JSON.stringify(this.finishes),
-      mode: this.mode,
+      mode: this.clientManager.info.liveInfo.type,
       pointsLimit: this.pointsLimit,
     });
     this.widget.update();

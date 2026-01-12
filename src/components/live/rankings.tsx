@@ -1,6 +1,12 @@
 import { formatTime } from "@/lib/utils";
 import { PlayerRound, Team } from "@/types/live";
-import { IconHash, IconTrophy, IconTrophyFilled } from "@tabler/icons-react";
+import {
+  IconFlag2,
+  IconHash,
+  IconTrophy,
+  IconTrophyFilled,
+  IconX,
+} from "@tabler/icons-react";
 import { Badge } from "../ui/badge";
 import { Card } from "../ui/card";
 import {
@@ -11,14 +17,23 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
+import PlayerActions from "./player-actions";
 
 interface RankingsProps {
+  serverId: string;
   players?: Record<string, PlayerRound>;
   teams?: Record<number, Team>;
   type: string;
+  canActions?: boolean;
 }
 
-export default function Rankings({ players, teams, type }: RankingsProps) {
+export default function Rankings({
+  serverId,
+  players,
+  teams,
+  type,
+  canActions,
+}: RankingsProps) {
   return (
     <Card className="p-4">
       <h2 className="text-lg font-bold">Rankings</h2>
@@ -36,12 +51,17 @@ export default function Rankings({ players, teams, type }: RankingsProps) {
               <TableHead className="font-bold">Points</TableHead>
             )}
             <TableHead className="font-bold">Best Time</TableHead>
+            {canActions && <TableHead className="w-0 pr-4" />}
           </TableRow>
         </TableHeader>
 
         <TableBody>
           {players &&
             Object.values(players)
+              .filter(
+                (player) =>
+                  type !== "reversecup" || player.matchPoints > -10000,
+              )
               .sort((a, b) => {
                 if (b.matchPoints !== a.matchPoints) {
                   return b.matchPoints - a.matchPoints;
@@ -59,7 +79,18 @@ export default function Rankings({ players, teams, type }: RankingsProps) {
                   {["teams", "tmwt", "tmwc"].includes(type) && (
                     <TableCell>{teams && teams[player.team]?.name}</TableCell>
                   )}
-                  {!["timeattack", "knockout"].includes(type) && (
+                  {["reversecup"].includes(type) && (
+                    <TableCell>
+                      {player.eliminated ? (
+                        <IconX size={20} />
+                      ) : player.lastChance ? (
+                        <IconFlag2 size={20} />
+                      ) : (
+                        <span>{player.matchPoints}</span>
+                      )}
+                    </TableCell>
+                  )}
+                  {!["timeattack", "knockout", "reversecup"].includes(type) && (
                     <TableCell>
                       {player.winner ? (
                         <IconTrophyFilled size={20} />
@@ -71,6 +102,11 @@ export default function Rankings({ players, teams, type }: RankingsProps) {
                     </TableCell>
                   )}
                   <TableCell>{formatTime(player.bestTime)}</TableCell>
+                  {canActions && (
+                    <TableCell>
+                      <PlayerActions serverId={serverId} player={player} />
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
         </TableBody>

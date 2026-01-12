@@ -24,6 +24,12 @@ export interface SpectatorStatus {
   currentTargetId: number;
 }
 
+export interface PlayerStatus {
+  spectator: boolean;
+  eliminated: boolean;
+  lastChance: boolean;
+}
+
 export interface PlayerManialinkPageAnswer {
   PlayerUid: number;
   Login: string;

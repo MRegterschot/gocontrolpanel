@@ -1,0 +1,166 @@
+{{#extend "widget"}}
+{{#content "widget"}}
+<frame pos="0 0" id="player-info-container" hidden="1">
+  <frame pos="0 0" id="player-name">
+    <quad pos="0 0" z-index="0" size="7 7" bgcolor="222"/>
+    <quad pos="7 0" z-index="0" size="48 7" bgcolor="DDD"/>
+    <quad pos="3.5 -3.5" z-index="0" size="4.5 3" bgcolor="222" image="file://Media/Flags/WOR.dds" halign="center" valign="center" />
+    <label pos="8.5 -3.25" z-index="0" size="47 7" text="" valign="center" textcolor="222" textsize="2" textfont="GameFontSemiBold"/>
+  </frame>
+
+  <frame pos="0 -8" id="player-info-title">
+    <quad pos="0 0" z-index="0" size="55 5" bgcolor="222"/>
+    <label pos="27.5 -2.25" z-index="0" size="55 5" text="Player Info" halign="center" textsize="1" textfont="GameFontSemiBold" valign="center"/>
+  </frame>
+
+  <frame pos="0 -13.25" id="records-info">
+    <quad pos="0 0" z-index="0" size="8 8" bgcolor="222"/>
+    <quad pos="8 0" z-index="0" size="19.5 8" bgcolor="DDD"/>
+    <label pos="4 -3.75" z-index="0" size="8 8" text="PB" halign="center" valign="center" textsize="1.5" textcolor="DDD" textfont="GameFontBlack"/>
+    <label pos="17.75 -3.75" z-index="0" size="15.5 8" text="--:--.---" valign="center" halign="center" textcolor="222" textsize="1.5" textfont="GameFontSemiBold"/>
+
+    <quad pos="27.5 0" z-index="0" size="8 8" bgcolor="222"/>
+    <quad pos="35.5 0" z-index="0" size="19.5 8" bgcolor="DDD"/>
+    <label pos="31.5 -3.75" z-index="0" size="8 8" text="LR" halign="center" valign="center" textsize="1.5" textcolor="DDD" textfont="GameFontBlack"/>
+    <label pos="45.25 -3.75" z-index="0" size="15.5 8" text="--:--.---" valign="center" halign="center" textcolor="222" textsize="1.5" textfont="GameFontSemiBold"/>
+  </frame>
+
+  <frame pos="0 -21.5" id="other-info">
+    <quad pos="0 0" z-index="0" size="8 8" bgcolor="222"/>
+    <quad pos="8 0" z-index="0" size="19.5 8" bgcolor="DDD"/>
+    <label pos="4 -3.75" z-index="0" size="8 8" text="" halign="center" valign="center" textsize="1.5" textcolor="DDD" textfont="GameFontBlack"/>
+    <label pos="17.75 -3.75" z-index="0" size="15.5 8" text="" valign="center" halign="center" textcolor="222" textsize="1.5" textfont="GameFontSemiBold"/>
+
+    <quad pos="27.5 0" z-index="0" size="8 8" bgcolor="222"/>
+    <quad pos="35.5 0" z-index="0" size="19.5 8" bgcolor="DDD"/>
+    <label pos="31.5 -3.75" z-index="0" size="8 8" text="" halign="center" valign="center" textsize="1.5" textcolor="DDD" textfont="GameFontBlack"/>
+    <label pos="45.25 -3.75" z-index="0" size="15.5 8" text="" valign="center" halign="center" textcolor="222" textsize="1.5" textfont="GameFontSemiBold"/>
+  </frame>
+</frame>
+{{/content}}
+
+
+{{#content "globals"}}
+#Struct PlayerInfo {
+  Text login;
+  Text name;
+  Integer personalBest;
+  Integer localRecord;
+  Text device;
+  Text camera;
+}
+{{/content}}
+
+{{#content "script"}}
+Text formatTime(Integer time) {
+  declare Text secondString;
+  declare Text msString;
+
+  if (time <= 0) {
+    return "--:--.---";
+  }
+
+  declare Integer seconds = time / 1000;
+  declare Integer minutes = seconds / 60;
+  declare Integer milliseconds = time - (seconds * 1000);
+  seconds = seconds - (minutes * 60);
+
+  secondString = TL::ToText(seconds);
+
+  if (seconds < 10) {
+    secondString = "0" ^ secondString;
+  }
+
+  if (milliseconds <= 0) {
+    msString = "000";
+  } else if (milliseconds < 10) {
+    msString = "00" ^ TL::ToText(milliseconds);
+  } else if (milliseconds < 100) {
+    msString = "0" ^ TL::ToText(milliseconds);
+  } else {
+    msString = TL::ToText(milliseconds);
+  }
+
+  if (minutes > 0) {
+    return TL::ToText(minutes) ^ ":" ^ secondString ^ "." ^ msString;
+  } else {
+    return secondString ^ "." ^ msString;
+  }
+
+  return "";
+}
+
+Void updateWidget(PlayerInfo[] playerInfos, Text spectatorTargetLogin, Text spectatorTargetName, Text playerLogin) {
+  declare playerInfoContainerFrame <=> (Page.MainFrame.GetFirstChild("player-info-container") as CMlFrame);
+
+  if (spectatorTargetLogin == "" || spectatorTargetLogin == playerLogin) {
+    playerInfoContainerFrame.Hide();
+    return;
+  }
+
+  foreach (playerInfo in playerInfos) {
+    if (playerInfo.login != spectatorTargetLogin) {
+      continue;
+    }
+
+    declare playerNameFrame <=> (playerInfoContainerFrame.GetFirstChild("player-name") as CMlFrame);
+    declare playerInfoTitleFrame <=> (playerInfoContainerFrame.GetFirstChild("player-info-title") as CMlFrame);
+    declare recordsInfoFrame <=> (playerInfoContainerFrame.GetFirstChild("records-info") as CMlFrame);
+    declare otherInfoFrame <=> (playerInfoContainerFrame.GetFirstChild("other-info") as CMlFrame);
+
+    // Update Player Info
+    (playerNameFrame.Controls[2] as CMlQuad).ImageUrl = "file://ZoneFlags/Login/" ^ spectatorTargetLogin ^ "/country";
+    (playerNameFrame.Controls[3] as CMlLabel).SetText(spectatorTargetName);
+
+    // Update Records Info
+    (recordsInfoFrame.Controls[3] as CMlLabel).SetText(formatTime(playerInfo.personalBest));
+    (recordsInfoFrame.Controls[7] as CMlLabel).SetText(formatTime(playerInfo.localRecord));
+
+    // Update Other Info
+    (otherInfoFrame.Controls[3] as CMlLabel).SetText(playerInfo.device);
+    (otherInfoFrame.Controls[7] as CMlLabel).SetText(playerInfo.camera);
+
+    playerInfoContainerFrame.Show();
+
+    break;
+  }
+
+}
+{{/content}}
+
+{{#content "main"}}
+declare PlayerInfo[] PlayerInfos for This;
+declare Integer LastPlayerInfosUpdate for This = -1;
+declare Integer lastUpdate = -1;
+declare Text spectatorTargetLogin = "";
+declare Text spectatorTargetName = "";
+declare Text playerLogin = "";
+{{/content}}
+
+
+{{#content "loop"}}
+if (playerLogin == "" && InputPlayer != Null) {
+  playerLogin = InputPlayer.User.Login;
+  updateWidget(PlayerInfos, spectatorTargetLogin, spectatorTargetName, playerLogin);
+}
+
+if (LastPlayerInfosUpdate != lastUpdate) {
+  lastUpdate = LastPlayerInfosUpdate;
+  updateWidget(PlayerInfos, spectatorTargetLogin, spectatorTargetName, playerLogin);
+}
+
+if (GUIPlayer != Null) {
+  if (spectatorTargetLogin != GUIPlayer.User.Login) {
+    spectatorTargetLogin = GUIPlayer.User.Login;
+    spectatorTargetName = GUIPlayer.User.Name;
+    updateWidget(PlayerInfos, spectatorTargetLogin, spectatorTargetName, playerLogin);
+  }
+} else {
+  if (spectatorTargetLogin != "") {
+    spectatorTargetLogin = "";
+    spectatorTargetName = "";
+    updateWidget(PlayerInfos, spectatorTargetLogin, spectatorTargetName, playerLogin);
+  }
+}
+{{/content}}
+{{/extend}}
