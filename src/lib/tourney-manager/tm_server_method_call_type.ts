@@ -15,7 +15,7 @@ import MethodCall from "./method_call_type";
 export default __t.object("TmServerMethodCall", {
   id: __t.u32(),
   serverId: __t.string(),
-  accountId: __t.string(),
+  accountId: __t.uuid(),
   get method() {
     return MethodCall;
   },

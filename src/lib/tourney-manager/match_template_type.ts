@@ -14,7 +14,7 @@ import ServerConfig from "./server_config_type";
 
 export default __t.object("MatchTemplate", {
   id: __t.u32(),
-  creator: __t.string(),
+  creator: __t.uuid(),
   name: __t.string(),
   get config() {
     return ServerConfig;

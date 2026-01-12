@@ -86,7 +86,7 @@
     "recharts": "^2.15.1",
     "slugid": "^5.0.1",
     "sonner": "^2.0.3",
-    "spacetimedb": "^1.11.2",
+    "spacetimedb": "^1.11.4",
     "ssh2": "^1.16.0",
     "sshpk": "^1.18.0",
     "tailwind-merge": "^3.0.2",

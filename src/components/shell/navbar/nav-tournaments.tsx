@@ -30,7 +30,7 @@ export default function NavTournaments() {
   const activeId = getCurrentId(pathname);
 
   const spacetime = useSpacetimeDB();
-  const [tournamentRows] = useTable(tables.tournament);
+  const [tournamentRows] = useTable(tables.myTournament);
   const tournaments = [...tournamentRows];
 
   const upcomingTournaments = tournaments
@@ -111,7 +111,7 @@ export default function NavTournaments() {
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <SidebarMenu className="mt-2">
+                  <SidebarMenu>
                     {passedTournaments.map((tournament) => (
                       <SidebarMenuItem key={tournament.id}>
                         <SidebarMenuButton tooltip={tournament.name} asChild>

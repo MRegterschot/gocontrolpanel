@@ -12,7 +12,7 @@ import {
 
 export default __t.object("RegisteredTeam", {
   competitionId: __t.u32(),
-  accountId: __t.string(),
+  accountId: __t.uuid(),
   registeredAt: __t.timestamp(),
 });
 

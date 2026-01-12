@@ -12,6 +12,6 @@ import {
 
 export default __t.row({
   competitionId: __t.u32().name("competition_id"),
-  accountId: __t.string().name("account_id"),
+  accountId: __t.uuid().name("account_id"),
   registeredAt: __t.timestamp().name("registered_at"),
 });

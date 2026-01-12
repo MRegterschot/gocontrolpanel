@@ -12,7 +12,7 @@ import {
 
 export default __t.object("TmRecord", {
   mapUid: __t.string(),
-  playerUid: __t.string(),
+  accountId: __t.uuid(),
   timestamp: __t.timestamp(),
   time: __t.u32(),
   zone: __t.string(),

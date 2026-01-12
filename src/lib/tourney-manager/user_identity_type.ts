@@ -12,7 +12,7 @@ import {
 
 export default __t.object("UserIdentity", {
   identity: __t.identity(),
-  accountId: __t.string(),
+  accountId: __t.uuid(),
 });
 
 

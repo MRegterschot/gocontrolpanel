@@ -14,7 +14,7 @@ import TournamentStatus from "./tournament_status_type";
 
 export default __t.row({
   id: __t.u32().primaryKey(),
-  creator: __t.string(),
+  creatorAccountId: __t.uuid().name("creator_account_id"),
   name: __t.string(),
   startingAt: __t.timestamp().name("starting_at"),
   endingAt: __t.timestamp().name("ending_at"),

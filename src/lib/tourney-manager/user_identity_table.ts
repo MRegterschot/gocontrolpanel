@@ -12,5 +12,5 @@ import {
 
 export default __t.row({
   identity: __t.identity().primaryKey(),
-  accountId: __t.string().name("account_id"),
+  accountId: __t.uuid().name("account_id"),
 });

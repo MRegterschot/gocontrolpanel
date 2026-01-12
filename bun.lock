@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "gocontrolpanel",
@@ -70,7 +71,7 @@
         "recharts": "^2.15.1",
         "slugid": "^5.0.1",
         "sonner": "^2.0.3",
-        "spacetimedb": "^1.11.2",
+        "spacetimedb": "^1.11.4",
         "ssh2": "^1.16.0",
         "sshpk": "^1.18.0",
         "tailwind-merge": "^3.0.2",
@@ -1429,7 +1430,7 @@
 
     "source-map-support": ["source-map-support@0.5.21", "", { "dependencies": { "buffer-from": "^1.0.0", "source-map": "^0.6.0" } }, "sha512-uBHU3L3czsIyYXKX88fdrGovxdSCoTGDRZ6SYXtSRxLZUzHg5P/66Ht6uoUlHu9EZod+inXhKo3qQgwXUT/y1w=="],
 
-    "spacetimedb": ["spacetimedb@1.11.2", "", { "dependencies": { "base64-js": "^1.5.1", "fast-text-encoding": "^1.0.0", "headers-polyfill": "^4.0.3", "prettier": "^3.3.3", "statuses": "^2.0.2", "url-polyfill": "^1.1.14" }, "peerDependencies": { "react": "^18.0.0 || ^19.0.0-0 || ^19.0.0", "undici": "^6.19.2" }, "optionalPeers": ["react", "undici"] }, "sha512-o08+FMUXC7vz79jYKvreArbTfOr2x9A7zcyOFSt/HVjvmwdvBIatsqu2vyc02UqipDF+G6z1psgMmkxN6TK+SQ=="],
+    "spacetimedb": ["spacetimedb@1.11.4", "", { "dependencies": { "base64-js": "^1.5.1", "fast-text-encoding": "^1.0.0", "headers-polyfill": "^4.0.3", "prettier": "^3.3.3", "statuses": "^2.0.2", "url-polyfill": "^1.1.14" }, "peerDependencies": { "react": "^18.0.0 || ^19.0.0-0 || ^19.0.0", "undici": "^6.19.2" }, "optionalPeers": ["react", "undici"] }, "sha512-Xcb42UH2dAysThPrCUARTDxeeJWAf6QrJThS89LigegLmjFd1/KvJ9k/yMrXz75JdSlJZhFvttjKZff3CakqRQ=="],
 
     "ssh2": ["ssh2@1.16.0", "", { "dependencies": { "asn1": "^0.2.6", "bcrypt-pbkdf": "^1.0.2" }, "optionalDependencies": { "cpu-features": "~0.0.10", "nan": "^2.20.0" } }, "sha512-r1X4KsBGedJqo7h8F5c4Ybpcr5RjyP+aWIG007uBPRjmdQWfEiVLzSK71Zji1B9sKxwaCvD8y8cwSkYrlLiRRg=="],
 

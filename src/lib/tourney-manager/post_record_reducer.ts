@@ -12,6 +12,6 @@ import {
 
 export default {
   mapUid: __t.string(),
-  playerUid: __t.string(),
+  accountId: __t.uuid(),
   time: __t.u32(),
 };
