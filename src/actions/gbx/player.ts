@@ -540,14 +540,33 @@ export async function setPlayerRoundPoints(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
-      await client.callScript(
+      const manager = await getGbxClientManager(serverId);
+
+      const type = manager.info.liveInfo.type;
+
+      if (type === "tmwt" || type === "tmwc") {
+        throw new Error(
+          "Setting round points is not supported in TMWT and TMWC modes",
+        );
+      }
+
+      await manager.client.callScript(
         "Trackmania.SetPlayerPoints",
         login,
         points.toString(),
         "",
         "",
       );
+
+      const playerRound: PlayerRound = {
+        ...manager.info.liveInfo.players[login],
+        roundPoints: points,
+      };
+
+      manager.setPlayer(login, playerRound);
+
+      manager.emit("playerUpdated", playerRound);
+
       await logAudit(
         session.user.id,
         serverId,
@@ -571,14 +590,33 @@ export async function setPlayerMapPoints(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
-      await client.callScript(
+      const manager = await getGbxClientManager(serverId);
+
+      const type = manager.info.liveInfo.type;
+
+      if (type !== "tmwt" && type !== "tmwc") {
+        throw new Error(
+          "Setting map points is only supported in TMWT and TMWC modes",
+        );
+      }
+
+      await manager.client.callScript(
         "Trackmania.SetPlayerPoints",
         login,
         "",
         points.toString(),
         "",
       );
+
+      const playerRound: PlayerRound = {
+        ...manager.info.liveInfo.players[login],
+        roundPoints: points,
+      };
+
+      manager.setPlayer(login, playerRound);
+
+      manager.emit("playerUpdated", playerRound);
+
       await logAudit(
         session.user.id,
         serverId,
