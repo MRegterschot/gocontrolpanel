@@ -1,7 +1,11 @@
 "use server";
 
 import { doServerActionWithAuth } from "@/lib/actions";
-import { getGbxClient } from "@/lib/managers/gbxclient-manager";
+import {
+  getGbxClient,
+  getGbxClientManager,
+} from "@/lib/managers/gbxclient-manager";
+import { PlayerRound } from "@/types/live";
 import { PlayerInfo } from "@/types/player";
 import { ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
@@ -598,14 +602,24 @@ export async function setPlayerMatchPoints(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
-      await client.callScript(
+      const manager = await getGbxClientManager(serverId);
+      await manager.client.callScript(
         "Trackmania.SetPlayerPoints",
         login,
         "",
         "",
         points.toString(),
       );
+
+      const playerRound: PlayerRound = {
+        ...manager.info.liveInfo.players[login],
+        matchPoints: points,
+      };
+
+      manager.setPlayer(login, playerRound);
+
+      manager.emit("playerUpdated", playerRound);
+
       await logAudit(
         session.user.id,
         serverId,

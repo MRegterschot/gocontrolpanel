@@ -156,6 +156,19 @@ export default function LiveDashboard({ serverId }: { serverId: string }) {
         setLiveInfo(data.info);
         break;
       }
+      case "playerUpdated": {
+        setLiveInfo((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            players: {
+              ...prev.players,
+              [data.round.login]: data.round,
+            },
+          };
+        });
+        break;
+      }
     }
   }, []);
 
@@ -190,7 +203,7 @@ export default function LiveDashboard({ serverId }: { serverId: string }) {
   if (!liveInfo) {
     return <div className="text-sm">Loading...</div>;
   }
-  
+
   return (
     <div className="grid w-full gap-4 grid-cols-1 min-[1200px]:grid-cols-2 min-[1528px]:grid-cols-[auto_1fr_auto]">
       <LiveRound

@@ -5,7 +5,7 @@ import { getSpectatorStatus } from "@/lib/utils";
 import { SPlayerInfo } from "@/types/gbx/player";
 import { Scores } from "@/types/gbx/scores";
 import { Waypoint, WaypointEvent } from "@/types/gbx/waypoint";
-import { LiveInfo } from "@/types/live";
+import { LiveInfo, PlayerRound } from "@/types/live";
 import { PlayerInfo } from "@/types/player";
 import Plugin from "..";
 
@@ -57,6 +57,7 @@ export default class LiveRoundPlugin extends Plugin {
       giveUp: this.onGiveUp.bind(this),
       updatedSettings: this.onUpdatedSettings.bind(this),
       scores: this.onScores.bind(this),
+      playerUpdated: this.onPlayerUpdated.bind(this),
     });
   }
 
@@ -137,6 +138,15 @@ export default class LiveRoundPlugin extends Plugin {
         }
       }
     }
+
+    await this.updateWidget();
+  }
+
+  async onPlayerUpdated(playerRound: PlayerRound) {
+    const round = this.rounds.find((r) => r.login === playerRound.login);
+    if (!round) return;
+
+    round.points = playerRound.matchPoints;
 
     await this.updateWidget();
   }

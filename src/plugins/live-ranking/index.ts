@@ -3,7 +3,7 @@ import ManialinkManager from "@/lib/managers/manialink-manager";
 import Widget from "@/lib/manialink/components/widget";
 import { getSpectatorStatus } from "@/lib/utils";
 import { Scores } from "@/types/gbx/scores";
-import { LiveInfo } from "@/types/live";
+import { LiveInfo, PlayerRound } from "@/types/live";
 import { PlayerInfo } from "@/types/player";
 import Plugin from "..";
 
@@ -41,6 +41,7 @@ export default class LiveRankingPlugin extends Plugin {
       playerDisconnect: this.onPlayerDisconnect.bind(this),
       playerInfo: this.onPlayerInfo.bind(this),
       updatedSettings: this.onUpdatedSettings.bind(this),
+      playerUpdated: this.onPlayerUpdated.bind(this),
     });
   }
 
@@ -103,6 +104,15 @@ export default class LiveRankingPlugin extends Plugin {
         ranking.name = playerInfo.nickName;
       }
     }
+
+    await this.updateWidget();
+  }
+
+  async onPlayerUpdated(playerRound: PlayerRound) {
+    const ranking = this.rankings.find((r) => r.login === playerRound.login);
+    if (!ranking) return;
+
+    ranking.points = playerRound.matchPoints;
 
     await this.updateWidget();
   }
