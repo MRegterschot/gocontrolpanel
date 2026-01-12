@@ -120,7 +120,7 @@ export default function CompetitionTree({
               }),
             );
           }}
-          className="flex-1 gap-2 mb-4 p-3 min-h-20 cursor-pointer [&:has(.match-card:hover)]:border-border hover:border-white transition-all"
+          className="flex-1 gap-2 mb-4 p-3 min-h-20 cursor-pointer [&:has(.match-card:hover)]:border-border [&:has(.dropdown-menu:hover)]:border-border hover:border-white transition-all"
         >
           <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-2">
             <div className="flex flex-1 flex-col gap-1 sm:gap-0">
@@ -133,7 +133,10 @@ export default function CompetitionTree({
                   <CompetitionStatusBadge status={tree.status} />
                 </div>
 
-                <div className="ml-auto">
+                <div
+                  className="dropdown-menu ml-auto"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">

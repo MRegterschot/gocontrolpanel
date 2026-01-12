@@ -41,7 +41,7 @@ export default function TournamentInfo({
 
   const [userRows] = useTable(
     tables.user,
-    where(eq("accountId", tournament?.creator)),
+    where(eq("accountId", tournament?.creatorAccountId)),
   );
 
   const creatorUser = userRows[0];
