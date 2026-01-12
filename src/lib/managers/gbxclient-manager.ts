@@ -56,6 +56,7 @@ export class GbxClientManager extends EventEmitter {
   private commandListeners = new Map<string, CommandListener[]>();
   currentMatchId: string | null = null;
   roundNumber: number | null = null;
+  modeChanged: boolean = false;
 
   constructor(serverId: string) {
     super();
@@ -738,7 +739,12 @@ async function onPodiumStartScript(
   ] as const;
 
   const matched = types.find((t) => modeLower.includes(t));
+  const _prevType = manager.info.liveInfo.type;
   manager.info.liveInfo.type = matched ?? "rounds";
+
+  if (_prevType && _prevType !== manager.info.liveInfo.type) {
+    manager.modeChanged = true;
+  }
 }
 
 function saveFinishRecord(
@@ -1105,7 +1111,11 @@ async function syncLiveInfo(manager: GbxClientManager) {
   const _prevType = manager.info.liveInfo.type;
   manager.info.liveInfo.type = matched ?? "rounds";
 
-  if (_prevType && _prevType !== manager.info.liveInfo.type) {
+  if (
+    (_prevType && _prevType !== manager.info.liveInfo.type) ||
+    manager.modeChanged
+  ) {
+    manager.modeChanged = false;
     manager.emit("modeChange", manager.info.liveInfo.type);
   }
 
