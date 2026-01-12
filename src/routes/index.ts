@@ -17,6 +17,7 @@ export const routes = {
   },
   tournaments: {
     tournament: "/tournaments/:id",
+    stage: "/tournaments/:id/stages/:stageId",
   },
   admin: {
     users: "/admin/users",

@@ -18,12 +18,15 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { CompetitionNode } from "@/hooks/tournaments/competitions/use-competition-tree";
 import { reducers } from "@/lib/tourney-manager";
-import { cn, getErrorMessage } from "@/lib/utils";
+import { cn, generatePath, getErrorMessage } from "@/lib/utils";
+import { routes } from "@/routes";
 import { IconCalendar, IconChevronUp } from "@tabler/icons-react";
 import { MoreHorizontal } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Uuid } from "spacetimedb";
 import { useReducer } from "spacetimedb/react";
 import CompetitionStatusBadge from "../status/competition-status-badge";
 import MatchStatusBadge from "../status/match-status-badge";
@@ -43,12 +46,13 @@ export default function CompetitionTree({
   isLast = true,
 }: CompetitionTreeProps) {
   const { data: session } = useSession();
+  const router = useRouter();
 
   const register = useReducer(reducers.registerPlayer);
   const unregister = useReducer(reducers.unregisterPlayer);
 
   // Stage children toggle
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(sectionIndex === 0);
 
   // Modals
   const [isEditRegistrationSettingsOpen, setIsEditRegistrationSettingsOpen] =
@@ -59,7 +63,10 @@ export default function CompetitionTree({
   const [isEditCompetitionOpen, setIsEditCompetitionOpen] = useState(false);
 
   const isRegistered = tree.registeredPlayers.some(
-    (rp) => rp.accountId === "3467014a-c1cc-4aae-99fe-6beb5eca232a", //session?.user.id
+    (rp) =>
+      rp.accountId.compareTo(
+        Uuid.parse("3467014a-c1cc-4aae-99fe-6beb5eca232a"), //session?.user.id
+      ) === 0,
   );
 
   const handleRegisterToggle = () => {
@@ -103,7 +110,18 @@ export default function CompetitionTree({
           {(!isLast || isOpen) && <div className="w-px bg-border h-full"></div>}
         </div>
 
-        <Card className="flex-1 gap-2 mb-4 p-3 min-h-20">
+        <Card
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(
+              generatePath(routes.tournaments.stage, {
+                id: tree.tournamentId.toString(),
+                stageId: tree.id.toString(),
+              }),
+            );
+          }}
+          className="flex-1 gap-2 mb-4 p-3 min-h-20 cursor-pointer [&:has(.match-card:hover)]:border-border hover:border-white transition-all"
+        >
           <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-2">
             <div className="flex flex-1 flex-col gap-1 sm:gap-0">
               <div className="flex justify-between items-start sm:items-center gap-4">
@@ -248,7 +266,11 @@ export default function CompetitionTree({
               {tree.matches.map((match, i) => (
                 <Card
                   key={match.id}
-                  className="p-2 rounded-lg cursor-pointer hover:border-white transition-all"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    console.log("match", match.id);
+                  }}
+                  className="match-card p-2 rounded-lg cursor-pointer hover:border-white transition-all"
                 >
                   <div className="flex gap-2 items-center justify-between">
                     <span className="text-sm">Match {i + 1}</span>
