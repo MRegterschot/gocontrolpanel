@@ -7,7 +7,7 @@ type CompetitionBase = Infer<typeof CompetitionV1>;
 
 export type Bracket = {
   nodes: Infer<typeof TmMatchV1>[];
-  edges: { from: number; to: number }[];
+  edges: { from: number; to: number; type: "Waiting" | "Data" }[];
 };
 
 export function useCompetitionBracket(competition: CompetitionBase) {
@@ -33,6 +33,7 @@ export function useCompetitionBracket(competition: CompetitionBase) {
       .map((conn) => ({
         from: conn.connectionFrom.value,
         to: conn.connectionTo.value,
+        type: conn.connectionSettings.tag,
       }));
 
     return { nodes, edges };

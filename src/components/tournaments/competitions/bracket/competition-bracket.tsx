@@ -1,6 +1,7 @@
 "use client";
 import { Card } from "@/components/ui/card";
 import { useCompetitionBracket } from "@/hooks/tournaments/competitions/use-competition-bracket";
+import { layoutBracket } from "@/lib/bracket-layout";
 import { CompetitionV1 } from "@/lib/tourney-manager";
 import {
   addEdge,
@@ -16,8 +17,9 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useTheme } from "next-themes";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type MouseEvent } from "react";
 import { Infer } from "spacetimedb";
+import "./bracket.css";
 import MatchEdge from "./edges/match-edge";
 import MatchNode, { type MatchNodeType } from "./nodes/match-node";
 
@@ -40,32 +42,33 @@ export default function CompetitionBracket({
 
   const bracket = useCompetitionBracket(competition);
 
-  console.log("bracket", bracket);
-
   const [nodes, setNodes] = useState<MatchNodeType[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
 
   useEffect(() => {
-    const newNodes: MatchNodeType[] = bracket.nodes.map((node, i) => ({
-      id: `match-${node.id}`,
-      position: { x: i * 200, y: 0 },
-      data: { label: `Match ${node.id}` },
+    const rawNodes: MatchNodeType[] = bracket.nodes.map((n) => ({
+      id: `match-${n.id}`,
       type: "match",
+      data: { label: `Match ${n.id}` },
+      position: { x: 0, y: 0 },
     }));
 
-    setNodes(newNodes);
-  }, [bracket.nodes]);
-
-  useEffect(() => {
-    const newEdges: Edge[] = bracket.edges.map((edge) => ({
-      id: `edge-${edge.from}-to-${edge.to}`,
-      source: `match-${edge.from}`,
-      target: `match-${edge.to}`,
+    const rawEdges: Edge[] = bracket.edges.map((e) => ({
+      id: `edge-${e.from}-${e.to}`,
+      source: `match-${e.from}`,
+      target: `match-${e.to}`,
       type: "matchEdge",
+      className: `${e.type.toLowerCase()}-edge`,
     }));
 
-    setEdges(newEdges);
-  }, [bracket.edges]);
+    const { nodes, edges } = layoutBracket(rawNodes, rawEdges);
+
+    console.log("Laid out nodes:", nodes);
+    console.log("Laid out edges:", edges);
+
+    setNodes(nodes);
+    setEdges(edges);
+  }, [bracket.nodes, bracket.edges]);
 
   const onNodesChange: OnNodesChange<MatchNodeType> = useCallback(
     (changes) =>
@@ -93,6 +96,10 @@ export default function CompetitionBracket({
     [setEdges],
   );
 
+  const onEdgeClick = useCallback((_: MouseEvent, edge: Edge) => {
+    console.log("edge clicked", edge);
+  }, []);
+
   return (
     <Card className="w-full h-[50vh]">
       <ReactFlow
@@ -102,6 +109,7 @@ export default function CompetitionBracket({
         edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onEdgeClick={onEdgeClick}
         onConnect={onConnect}
         fitView
         colorMode={theme as ColorMode}

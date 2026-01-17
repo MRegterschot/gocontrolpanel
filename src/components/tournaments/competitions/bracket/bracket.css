@@ -1,0 +1,7 @@
+.data-edge .react-flow__edge-path {
+  stroke: var(--color-primary);
+}
+
+.waiting-edge .react-flow__edge-path {
+  stroke-dasharray: 5,5;
+}
