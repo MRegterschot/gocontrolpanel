@@ -1,4 +1,4 @@
-import CompetitionInfo from "@/components/tournaments/competitions/competition-info";
+import CompetitionDashboard from "@/components/tournaments/competitions/competition-dashboard";
 
 export default async function TournamentPage({
   params,
@@ -16,9 +16,7 @@ export default async function TournamentPage({
         </h4>
       </div>
 
-      <div className="flex flex-col gap-2 sm:gap-4">
-        <CompetitionInfo competitionId={Number(stageId)} />
-      </div>
+      <CompetitionDashboard competitionId={Number(stageId)} />
     </div>
   );
 }

@@ -15,22 +15,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { reducers, tables } from "@/lib/tourney-manager";
+import { CompetitionV1, reducers, tables } from "@/lib/tourney-manager";
 import { getErrorMessage } from "@/lib/utils";
 import { IconCalendar } from "@tabler/icons-react";
 import { MoreHorizontal } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Uuid } from "spacetimedb";
+import { Infer, Uuid } from "spacetimedb";
 import { eq, useReducer, useTable, where } from "spacetimedb/react";
 import CompetitionStatusBadge from "../status/competition-status-badge";
 import RegistrationBadge from "./registration-badge";
 
 export default function CompetitionInfo({
-  competitionId,
+  competition,
 }: {
-  competitionId: number;
+  competition: Infer<typeof CompetitionV1>;
 }) {
   const { data: session } = useSession();
 
@@ -44,21 +44,10 @@ export default function CompetitionInfo({
   const [isAddMatchOpen, setIsAddMatchOpen] = useState(false);
   const [isAddStageOpen, setIsAddStageOpen] = useState(false);
 
-  const [competitionRows] = useTable(
-    tables.competition,
-    where(eq("id", competitionId)),
-  );
-
-  const competition = competitionRows[0];
-
   const [registeredPlayerRows] = useTable(
     tables.registeredPlayer,
-    where(eq("competitionId", competitionId)),
+    where(eq("competitionId", competition.id)),
   );
-
-  if (!competition) {
-    return <span>Competition not found</span>;
-  }
 
   const isRegistered = registeredPlayerRows.some(
     (rp) =>
