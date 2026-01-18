@@ -11,9 +11,10 @@ import {
 } from "spacetimedb";
 
 export default __t.object("RegisteredTeam", {
-  competitionId: __t.u32(),
   accountId: __t.uuid(),
   registeredAt: __t.timestamp(),
+  competitionId: __t.u32(),
+  name: __t.string(),
 });
 
 

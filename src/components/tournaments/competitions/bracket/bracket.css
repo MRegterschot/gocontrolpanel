@@ -2,6 +2,10 @@
   stroke: var(--color-primary);
 }
 
+.data-edge.selected:is(:focus, :not(:focus)) .react-flow__edge-path {
+  stroke: var(--color-primary-selected);
+}
+
 .waiting-edge .react-flow__edge-path {
   stroke-dasharray: 5,5;
 }

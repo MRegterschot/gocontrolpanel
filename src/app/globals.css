@@ -87,6 +87,7 @@ input[type="checkbox"][aria-hidden="true"] {
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-primary-selected: var(--primary-selected);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -108,6 +109,7 @@ input[type="checkbox"][aria-hidden="true"] {
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.141 0.005 285.823);
   --primary: oklch(0.74 0.19736 151.3708);
+  --primary-selected: oklch(0.74 0.19736 151.3708 / 0.6);
   --primary-foreground: oklch(0.95 0.02 120);
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);

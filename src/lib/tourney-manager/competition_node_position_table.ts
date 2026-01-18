@@ -9,10 +9,16 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
+import NodeKindHandle from "./node_kind_handle_type";
+import Vec2 from "./vec_2_type";
+
 
 export default __t.row({
-  accountId: __t.uuid().name("account_id"),
-  registeredAt: __t.timestamp().name("registered_at"),
   competitionId: __t.u32().name("competition_id"),
-  name: __t.string(),
+  get node() {
+    return NodeKindHandle;
+  },
+  get position() {
+    return Vec2;
+  },
 });

@@ -11,6 +11,7 @@ import {
   OnConnect,
   OnEdgesChange,
   OnNodesChange,
+  Panel,
   ReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -20,6 +21,8 @@ import { Infer } from "spacetimedb";
 import "./bracket.css";
 import MatchEdge, { MatchEdgeType } from "./edges/match-edge";
 import MatchNode, { type MatchNodeType } from "./nodes/match-node";
+import AddMatchButton from "./panel/add-match";
+import SaveLayoutButton from "./panel/save-layout";
 
 const nodeTypes = {
   match: MatchNode,
@@ -45,16 +48,16 @@ export default function CompetitionBracket({
 
   useEffect(() => {
     const rawNodes: MatchNodeType[] = bracket.nodes.map((n) => ({
-      id: `match-${n.id}`,
+      id: n.id.toString(),
       type: "match",
-      data: { label: `Match ${n.id}` },
-      position: { x: 0, y: 0 },
+      data: { label: `Match ${n.id}`, defaultPosition: n.position },
+      position: n.position,
     }));
 
     const rawEdges: MatchEdgeType[] = bracket.edges.map((e) => ({
       id: `edge-${e.from}-${e.to}`,
-      source: `match-${e.from}`,
-      target: `match-${e.to}`,
+      source: e.from.toString(),
+      target: e.to.toString(),
       type: "matchEdge",
       className: `${e.type.toLowerCase()}-edge`,
       data: {
@@ -93,6 +96,7 @@ export default function CompetitionBracket({
   );
 
   const onEdgeClick = useCallback((_: MouseEvent, edge: MatchEdgeType) => {
+    if (edge.selected) return;
     console.log("edge clicked", edge);
   }, []);
 
@@ -114,6 +118,10 @@ export default function CompetitionBracket({
         }}
       >
         <Background />
+        <Panel position="top-right" className="flex flex-col gap-2">
+          <SaveLayoutButton />
+          <AddMatchButton competitionId={competition.id} />
+        </Panel>
       </ReactFlow>
     </Card>
   );

@@ -3,7 +3,10 @@
 import { Card } from "@/components/ui/card";
 import { Handle, Node, NodeProps, Position } from "@xyflow/react";
 
-export type MatchNodeType = Node<{ label: string }>;
+export type MatchNodeType = Node<{
+  label: string;
+  defaultPosition: { x: number; y: number };
+}>;
 
 export default function MatchNode(props: NodeProps<MatchNodeType>) {
   return (

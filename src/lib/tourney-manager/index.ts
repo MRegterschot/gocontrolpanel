@@ -40,6 +40,8 @@ import CompetitionConnectionDataUpdateReducer from "./competition_connection_dat
 export { CompetitionConnectionDataUpdateReducer };
 import CompetitionEditNameReducer from "./competition_edit_name_reducer";
 export { CompetitionEditNameReducer };
+import CompetitionNodePositionUpdateReducer from "./competition_node_position_update_reducer";
+export { CompetitionNodePositionUpdateReducer };
 import CompetitionRegistrationSettingsReducer from "./competition_registration_settings_reducer";
 export { CompetitionRegistrationSettingsReducer };
 import CreateCompetitionReducer from "./create_competition_reducer";
@@ -116,6 +118,8 @@ import CompetitionConnectionRow from "./competition_connection_table";
 export { CompetitionConnectionRow };
 import CompetitionConnectionDataRow from "./competition_connection_data_table";
 export { CompetitionConnectionDataRow };
+import CompetitionNodePositionRow from "./competition_node_position_table";
+export { CompetitionNodePositionRow };
 import CompetitionRecordRow from "./competition_record_table";
 export { CompetitionRecordRow };
 import EnvRow from "./env_table";
@@ -156,6 +160,8 @@ import TabCompetitionConnectionRow from "./tab_competition_connection_table";
 export { TabCompetitionConnectionRow };
 import TabCompetitionConnectionDataRow from "./tab_competition_connection_data_table";
 export { TabCompetitionConnectionDataRow };
+import TabCompetitionNodePositionRow from "./tab_competition_node_position_table";
+export { TabCompetitionNodePositionRow };
 import TabRawServerOfflineRow from "./tab_raw_server_offline_table";
 export { TabRawServerOfflineRow };
 import TabRawServerOnlineRow from "./tab_raw_server_online_table";
@@ -224,6 +230,8 @@ import CompetitionConnectionData from "./competition_connection_data_type";
 export { CompetitionConnectionData };
 import CompetitionConnectionDataOption from "./competition_connection_data_option_type";
 export { CompetitionConnectionDataOption };
+import CompetitionNodePosition from "./competition_node_position_type";
+export { CompetitionNodePosition };
 import CompetitionStatus from "./competition_status_type";
 export { CompetitionStatus };
 import CompetitionV1 from "./competition_v_1_type";
@@ -360,6 +368,8 @@ import StartTurn from "./start_turn_type";
 export { StartTurn };
 import TabCompetitionConnection from "./tab_competition_connection_type";
 export { TabCompetitionConnection };
+import TabCompetitionNodePosition from "./tab_competition_node_position_type";
+export { TabCompetitionNodePosition };
 import Team from "./team_type";
 export { Team };
 import TmCompRecord from "./tm_comp_record_type";
@@ -402,6 +412,8 @@ import User from "./user_type";
 export { User };
 import UserIdentity from "./user_identity_type";
 export { UserIdentity };
+import Vec2 from "./vec_2_type";
+export { Vec2 };
 import WarmupDuration from "./warmup_duration_type";
 export { WarmupDuration };
 import WarmupRound from "./warmup_round_type";
@@ -490,6 +502,24 @@ const tablesSchema = __schema(
       { name: 'tab_competition_connection_data_connection_id_key', constraint: 'unique', columns: ['connectionId'] },
     ],
   }, TabCompetitionConnectionDataRow),
+  __table({
+    name: 'tab_competition_node_position',
+    indexes: [
+      { name: 'competition_id', algorithm: 'btree', columns: [
+        'competitionId',
+      ] },
+      { name: 'id', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { name: 'node_position', algorithm: 'btree', columns: [
+        'nodeVariant',
+        'nodeId',
+      ] },
+    ],
+    constraints: [
+      { name: 'tab_competition_node_position_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, TabCompetitionNodePositionRow),
   __table({
     name: 'tab_raw_server_offline',
     indexes: [
@@ -798,6 +828,13 @@ const tablesSchema = __schema(
     ],
   }, CompetitionConnectionDataRow),
   __table({
+    name: 'competition_node_position',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, CompetitionNodePositionRow),
+  __table({
     name: 'competition_record',
     indexes: [
     ],
@@ -929,6 +966,7 @@ const tablesSchema = __schema(
 const reducersSchema = __reducers(
   __reducerSchema("competition_connection_data_update", CompetitionConnectionDataUpdateReducer),
   __reducerSchema("competition_edit_name", CompetitionEditNameReducer),
+  __reducerSchema("competition_node_position_update", CompetitionNodePositionUpdateReducer),
   __reducerSchema("competition_registration_settings", CompetitionRegistrationSettingsReducer),
   __reducerSchema("create_competition", CreateCompetitionReducer),
   __reducerSchema("create_connection", CreateConnectionReducer),
