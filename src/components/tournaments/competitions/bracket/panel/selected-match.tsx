@@ -1,5 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { reducers } from "@/lib/tourney-manager";
 import { useReducer } from "spacetimedb/react";
 import { MatchNodeType } from "../nodes/match-node";
@@ -22,13 +23,13 @@ export default function SelectedMatchPanel({
   };
 
   return (
-    <div className="p-2 rounded-md shadow-md">
-      <h3 className="font-semibold mb-2">Match Details</h3>
+    <Card className="p-2 gap-2">
+      <h3 className="font-semibold">Match Details</h3>
       <p>Match ID: {match.id}</p>
       <p>Match Name: {match.data.label}</p>
       <Button variant={"destructive"} onClick={onDeleteMatch}>
         Delete Match
       </Button>
-    </div>
+    </Card>
   );
 }
