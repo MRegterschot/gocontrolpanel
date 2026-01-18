@@ -17,6 +17,7 @@ export default __t.object("TmMatchV1", {
   id: __t.u32(),
   tournamentId: __t.u32(),
   competitionId: __t.u32(),
+  name: __t.string(),
   serverId: __t.option(__t.string()),
   get preMatchConfig() {
     return __t.option(ServerConfig);

@@ -64,6 +64,13 @@ export default function CreateMatchForm({
           onSubmit={form.handleSubmit(onSubmit)}
           className="flex flex-col gap-4"
         >
+          <FormElement
+            name="name"
+            label="Match Name"
+            type="text"
+            placeholder="Enter match name"
+          />
+
           <div className="flex flex-1 gap-2 items-end">
             <FormElement
               name="withTemplate"

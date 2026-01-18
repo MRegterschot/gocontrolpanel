@@ -11,7 +11,5 @@ import {
 } from "spacetimedb";
 
 export default {
-  name: __t.string(),
-  competitionId: __t.u32(),
-  withTemplate: __t.option(__t.u32()),
+  matchId: __t.u32(),
 };

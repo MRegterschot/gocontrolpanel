@@ -23,6 +23,7 @@ import MatchEdge, { MatchEdgeType } from "./edges/match-edge";
 import MatchNode, { type MatchNodeType } from "./nodes/match-node";
 import AddMatchButton from "./panel/add-match";
 import SaveLayoutButton from "./panel/save-layout";
+import SelectedMatchPanel from "./panel/selected-match";
 
 const nodeTypes = {
   match: MatchNode,
@@ -46,11 +47,13 @@ export default function CompetitionBracket({
   const [nodes, setNodes] = useState<MatchNodeType[]>([]);
   const [edges, setEdges] = useState<MatchEdgeType[]>([]);
 
+  const [selectedNode, setSelectedNode] = useState<MatchNodeType | null>(null);
+
   useEffect(() => {
     const rawNodes: MatchNodeType[] = bracket.nodes.map((n) => ({
       id: n.id.toString(),
       type: "match",
-      data: { label: `Match ${n.id}`, defaultPosition: n.position },
+      data: { label: n.name, defaultPosition: n.position },
       position: n.position,
     }));
 
@@ -95,6 +98,10 @@ export default function CompetitionBracket({
     [setEdges],
   );
 
+  const onNodeClick = useCallback((_: MouseEvent, node: MatchNodeType) => {
+    setSelectedNode((prev) => (prev?.id === node.id ? null : node));
+  }, []);
+
   const onEdgeClick = useCallback((_: MouseEvent, edge: MatchEdgeType) => {
     if (edge.selected) return;
     console.log("edge clicked", edge);
@@ -109,8 +116,12 @@ export default function CompetitionBracket({
         edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
         onConnect={onConnect}
+        snapGrid={[10, 10]}
+        snapToGrid={true}
+        minZoom={0.25}
         fitView
         colorMode={theme as ColorMode}
         style={{
@@ -118,6 +129,14 @@ export default function CompetitionBracket({
         }}
       >
         <Background />
+        <Panel position="top-left">
+          {selectedNode && (
+            <SelectedMatchPanel
+              match={selectedNode}
+              clearSelection={() => setSelectedNode(null)}
+            />
+          )}
+        </Panel>
         <Panel position="top-right" className="flex flex-col gap-2">
           <SaveLayoutButton />
           <AddMatchButton competitionId={competition.id} />

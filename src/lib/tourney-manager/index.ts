@@ -66,6 +66,8 @@ import CreateTeamReducer from "./create_team_reducer";
 export { CreateTeamReducer };
 import CreateTournamentReducer from "./create_tournament_reducer";
 export { CreateTournamentReducer };
+import DeleteMatchReducer from "./delete_match_reducer";
+export { DeleteMatchReducer };
 import InternalGraphResolutionNodeFinishedReducer from "./internal_graph_resolution_node_finished_reducer";
 export { InternalGraphResolutionNodeFinishedReducer };
 import MatchAssignServerReducer from "./match_assign_server_reducer";
@@ -979,6 +981,7 @@ const reducersSchema = __reducers(
   __reducerSchema("create_server_config", CreateServerConfigReducer),
   __reducerSchema("create_team", CreateTeamReducer),
   __reducerSchema("create_tournament", CreateTournamentReducer),
+  __reducerSchema("delete_match", DeleteMatchReducer),
   __reducerSchema("internal_graph_resolution_node_finished", InternalGraphResolutionNodeFinishedReducer),
   __reducerSchema("match_assign_server", MatchAssignServerReducer),
   __reducerSchema("match_configured", MatchConfiguredReducer),

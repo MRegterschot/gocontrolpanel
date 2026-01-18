@@ -17,6 +17,7 @@ export default __t.row({
   id: __t.u32().primaryKey(),
   tournamentId: __t.u32().name("tournament_id"),
   competitionId: __t.u32().name("competition_id"),
+  name: __t.string(),
   serverId: __t.option(__t.string()).name("server_id"),
   get preMatchConfig() {
     return __t.option(ServerConfig).name("pre_match_config");
