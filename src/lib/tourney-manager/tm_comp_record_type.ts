@@ -13,7 +13,7 @@ import {
 export default __t.object("TmCompRecord", {
   matchId: __t.u32(),
   mapUid: __t.string(),
-  playerUid: __t.string(),
+  accountId: __t.uuid(),
   timestamp: __t.timestamp(),
   time: __t.u32(),
 });

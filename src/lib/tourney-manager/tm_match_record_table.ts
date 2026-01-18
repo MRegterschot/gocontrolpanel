@@ -13,7 +13,7 @@ import {
 export default __t.row({
   matchId: __t.u32().name("match_id"),
   mapUid: __t.string().name("map_uid"),
-  playerUid: __t.string().name("player_uid"),
+  accountId: __t.uuid().name("account_id"),
   timestamp: __t.timestamp(),
   time: __t.u32(),
 });

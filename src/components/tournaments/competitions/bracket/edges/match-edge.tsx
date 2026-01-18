@@ -1,5 +1,7 @@
 "use client";
-import { BaseEdge, getSimpleBezierPath, Position } from "@xyflow/react";
+import { BaseEdge, Edge, getSimpleBezierPath, Position } from "@xyflow/react";
+
+export type MatchEdgeType = Edge<{ type: string }>;
 
 interface MatchEdgeProps {
   id: string;

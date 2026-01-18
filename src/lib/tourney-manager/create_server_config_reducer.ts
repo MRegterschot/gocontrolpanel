@@ -13,7 +13,6 @@ import {
 import ServerConfig from "./server_config_type";
 
 export default {
-  id: __t.string(),
   get config() {
     return ServerConfig;
   },

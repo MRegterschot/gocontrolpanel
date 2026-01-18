@@ -1,7 +1,6 @@
 "use client";
 import { Card } from "@/components/ui/card";
 import { useCompetitionBracket } from "@/hooks/tournaments/competitions/use-competition-bracket";
-import { layoutBracket } from "@/lib/bracket-layout";
 import { CompetitionV1 } from "@/lib/tourney-manager";
 import {
   addEdge,
@@ -9,7 +8,6 @@ import {
   applyNodeChanges,
   Background,
   ColorMode,
-  Edge,
   OnConnect,
   OnEdgesChange,
   OnNodesChange,
@@ -20,7 +18,7 @@ import { useTheme } from "next-themes";
 import { useCallback, useEffect, useState, type MouseEvent } from "react";
 import { Infer } from "spacetimedb";
 import "./bracket.css";
-import MatchEdge from "./edges/match-edge";
+import MatchEdge, { MatchEdgeType } from "./edges/match-edge";
 import MatchNode, { type MatchNodeType } from "./nodes/match-node";
 
 const nodeTypes = {
@@ -43,7 +41,7 @@ export default function CompetitionBracket({
   const bracket = useCompetitionBracket(competition);
 
   const [nodes, setNodes] = useState<MatchNodeType[]>([]);
-  const [edges, setEdges] = useState<Edge[]>([]);
+  const [edges, setEdges] = useState<MatchEdgeType[]>([]);
 
   useEffect(() => {
     const rawNodes: MatchNodeType[] = bracket.nodes.map((n) => ({
@@ -53,21 +51,19 @@ export default function CompetitionBracket({
       position: { x: 0, y: 0 },
     }));
 
-    const rawEdges: Edge[] = bracket.edges.map((e) => ({
+    const rawEdges: MatchEdgeType[] = bracket.edges.map((e) => ({
       id: `edge-${e.from}-${e.to}`,
       source: `match-${e.from}`,
       target: `match-${e.to}`,
       type: "matchEdge",
       className: `${e.type.toLowerCase()}-edge`,
+      data: {
+        type: e.type,
+      },
     }));
 
-    const { nodes, edges } = layoutBracket(rawNodes, rawEdges);
-
-    console.log("Laid out nodes:", nodes);
-    console.log("Laid out edges:", edges);
-
-    setNodes(nodes);
-    setEdges(edges);
+    setNodes(rawNodes);
+    setEdges(rawEdges);
   }, [bracket.nodes, bracket.edges]);
 
   const onNodesChange: OnNodesChange<MatchNodeType> = useCallback(
@@ -76,7 +72,7 @@ export default function CompetitionBracket({
     [setNodes],
   );
 
-  const onEdgesChange: OnEdgesChange = useCallback(
+  const onEdgesChange: OnEdgesChange<MatchEdgeType> = useCallback(
     (changes) =>
       setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
     [setEdges],
@@ -96,7 +92,7 @@ export default function CompetitionBracket({
     [setEdges],
   );
 
-  const onEdgeClick = useCallback((_: MouseEvent, edge: Edge) => {
+  const onEdgeClick = useCallback((_: MouseEvent, edge: MatchEdgeType) => {
     console.log("edge clicked", edge);
   }, []);
 

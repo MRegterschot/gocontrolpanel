@@ -10,9 +10,10 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
-// The tagged union or sum type for the algebraic type `ModeRules`.
-const ModeRules = __t.enum("ModeRules", {});
-
-export default ModeRules;
-
-
+export default __t.row({
+  competitionId: __t.u32().name("competition_id"),
+  connectionId: __t.u32().primaryKey().name("connection_id"),
+  countTop: __t.option(__t.u8()).name("count_top"),
+  countBottom: __t.option(__t.u8()).name("count_bottom"),
+  customList: __t.byteArray().name("custom_list"),
+});

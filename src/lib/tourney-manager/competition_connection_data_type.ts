@@ -9,12 +9,13 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
-import ModeRules from "./mode_rules_type";
 
-
-export default __t.row({
-  rules: __t.bool(),
-  get modeRules() {
-    return ModeRules.name("mode_rules");
-  },
+export default __t.object("CompetitionConnectionData", {
+  competitionId: __t.u32(),
+  connectionId: __t.u32(),
+  countTop: __t.option(__t.u8()),
+  countBottom: __t.option(__t.u8()),
+  customList: __t.byteArray(),
 });
+
+

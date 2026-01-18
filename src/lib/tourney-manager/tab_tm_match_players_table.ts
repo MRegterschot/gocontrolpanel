@@ -12,5 +12,5 @@ import {
 
 export default __t.row({
   matchId: __t.u32().name("match_id"),
-  accountId: __t.string().name("account_id"),
+  accountId: __t.uuid().name("account_id"),
 });

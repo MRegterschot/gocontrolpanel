@@ -9,15 +9,13 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
-import ServerConfig from "./server_config_type";
 
-
-export default __t.object("TmServerConfig", {
-  id: __t.u32(),
-  accountId: __t.uuid(),
-  get config() {
-    return ServerConfig;
-  },
+// The tagged union or sum type for the algebraic type `CompetitionConnectionDataOption`.
+const CompetitionConnectionDataOption = __t.enum("CompetitionConnectionDataOption", {First: __t.u8(),
+  Last: __t.u8(),
+  Custom: __t.byteArray(),
 });
+
+export default CompetitionConnectionDataOption;
 
 

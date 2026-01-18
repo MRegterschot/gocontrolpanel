@@ -8,7 +8,7 @@ export type MatchNodeType = Node<{ label: string }>;
 export default function MatchNode(props: NodeProps<MatchNodeType>) {
   return (
     <Card>
-      <div style={{ padding: 10 }}>
+      <div className="p-12">
         <strong>{props.data.label}</strong>
       </div>
       <Handle type="source" position={Position.Left} />

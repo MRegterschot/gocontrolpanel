@@ -13,6 +13,7 @@ import ConnectionSettings from "./connection_settings_type";
 
 
 export default __t.row({
+  id: __t.u32().primaryKey(),
   competitionId: __t.u32().name("competition_id"),
   tournamentId: __t.u32().name("tournament_id"),
   connectionFrom: __t.u32().name("connection_from"),
