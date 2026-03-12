@@ -4,6 +4,7 @@ export const AddGroupSchema = z.object({
   name: z.string().min(1, { message: "Group name is required" }),
   description: z.string().optional(),
   public: z.boolean(),
+  shareRecords: z.boolean(),
   groupServers: z.array(z.string()).optional(),
   groupMembers: z
     .array(

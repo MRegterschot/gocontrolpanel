@@ -15,9 +15,10 @@ import { PauseStatus } from "@/types/gbx/pause";
 import {
   PlayerChat,
   PlayerManialinkPageAnswer,
+  PlayerStatus,
   SPlayerInfo,
 } from "@/types/gbx/player";
-import { Elmination, Scores } from "@/types/gbx/scores";
+import { Elimination, Scores } from "@/types/gbx/scores";
 import { WarmUp, WarmUpStatus } from "@/types/gbx/warmup";
 import { Waypoint, WaypointEvent } from "@/types/gbx/waypoint";
 import { PlayerRound, PlayerWaypoint, Team } from "@/types/live";
@@ -30,7 +31,9 @@ import { getClient } from "../dbclient";
 import { appGlobals } from "../global";
 import {
   formatMessage,
+  isEliminated,
   isFinalist,
+  isLastChance,
   isWinner,
   sleep,
   withTimeout,
@@ -53,6 +56,7 @@ export class GbxClientManager extends EventEmitter {
   private commandListeners = new Map<string, CommandListener[]>();
   currentMatchId: string | null = null;
   roundNumber: number | null = null;
+  modeChanged: boolean = false;
 
   constructor(serverId: string) {
     super();
@@ -74,6 +78,8 @@ export class GbxClientManager extends EventEmitter {
         type: "",
         currentMap: "",
         pointsRepartition: [],
+        pointsRepartitionMap: {},
+        fastForwardPointsRepartition: false,
         pauseAvailable: false,
         isPaused: false,
       },
@@ -275,9 +281,18 @@ export class GbxClientManager extends EventEmitter {
   }
 
   addActivePlayer(player: PlayerInfo): void {
-    if (!this.info.activePlayers.includes(player)) {
-      this.info.activePlayers.push(player);
+    const existingIndex = this.info.activePlayers.findIndex(
+      (p) => p.login === player.login,
+    );
+
+    // Update existing player info
+    if (existingIndex !== -1) {
+      this.info.activePlayers[existingIndex] = player;
+      return;
     }
+
+    // Else add new player
+    this.info.activePlayers.push(player);
   }
 
   removeActivePlayer(playerLogin: string): void {
@@ -328,6 +343,53 @@ export class GbxClientManager extends EventEmitter {
     } else {
       delete this.info.liveInfo.players[login];
     }
+  }
+
+  reverseCupGetPlayerStatus(playerLogin: string): PlayerStatus {
+    const isReverseCupMode = this.info.liveInfo.type === "reversecup";
+
+    if (!isReverseCupMode) {
+      return { spectator: false, eliminated: false, lastChance: false };
+    }
+
+    const playerRound = this.info.liveInfo.players?.[playerLogin];
+
+    return {
+      spectator: playerRound?.matchPoints === -10000,
+      eliminated:
+        isReverseCupMode && isEliminated(playerRound?.matchPoints ?? -1),
+      lastChance:
+        isReverseCupMode && isLastChance(playerRound?.matchPoints ?? -1),
+    };
+  }
+
+  reverseCupGetPointsRepartition(nbPlayers: number): number[] {
+    const repartitionMap = this.info.liveInfo.pointsRepartitionMap;
+    let repartition: number[] = [];
+
+    if (repartitionMap && repartitionMap[nbPlayers]) {
+      repartition = repartitionMap[nbPlayers];
+    } else {
+      repartition = this.info.liveInfo.pointsRepartition;
+    }
+
+    if (
+      this.info.liveInfo.fastForwardPointsRepartition &&
+      nbPlayers > repartition.length
+    ) {
+      for (const playerRound of Object.values(
+        this.info.liveInfo.players || {},
+      )) {
+        if (nbPlayers <= repartition.length) break;
+
+        const points = playerRound.matchPoints;
+        if (points > -10000 && points <= -2000) {
+          repartition = repartition.slice(1);
+        }
+      }
+    }
+
+    return repartition;
   }
 }
 
@@ -424,7 +486,7 @@ async function callbackListener(
 
       switch (methodName) {
         case "Maniaplanet.Podium_Start":
-          onPodiumStartScript(manager, serverId);
+          await onPodiumStartScript(manager, serverId);
           break;
         case "Trackmania.Event.WayPoint":
           if (params.isendrace) {
@@ -534,7 +596,10 @@ async function onPlayerConnect(manager: GbxClientManager, login: string) {
     team: playerInfo.teamId,
   });
 
-  if (playerInfo.spectatorStatus === 0) {
+  if (
+    playerInfo.spectatorStatus === 0 &&
+    !manager.reverseCupGetPlayerStatus(playerInfo.login).spectator
+  ) {
     const playerWaypoint: PlayerWaypoint = {
       login: playerInfo.login,
       accountId: "",
@@ -542,6 +607,8 @@ async function onPlayerConnect(manager: GbxClientManager, login: string) {
       hasFinished: false,
       hasGivenUp: false,
       isFinalist: false,
+      isLastChance: false,
+      isEliminated: false,
       checkpoint: 0,
     };
 
@@ -619,9 +686,14 @@ function onPlayerInfoChanged(
 
   manager.setPlayer(changedInfo.login, playerRound);
 
-  if (playerInfo.SpectatorStatus !== 0) {
+  if (
+    playerInfo.SpectatorStatus !== 0 ||
+    manager.reverseCupGetPlayerStatus(changedInfo.login).spectator
+  ) {
     manager.setActiveRoundPlayer(changedInfo.login, undefined);
   } else {
+    const isReverseCupMode = manager.info.liveInfo.type === "reversecup";
+
     const playerWaypoint: PlayerWaypoint = {
       login: changedInfo.login,
       accountId: "",
@@ -632,6 +704,8 @@ function onPlayerInfoChanged(
         playerRound.matchPoints,
         manager.info.liveInfo.pointsLimit,
       ),
+      isLastChance: isReverseCupMode && isLastChance(playerRound.matchPoints),
+      isEliminated: isReverseCupMode && isEliminated(playerRound.matchPoints),
       checkpoint: 0,
     };
 
@@ -641,8 +715,36 @@ function onPlayerInfoChanged(
   manager.emit("playerInfoChanged", manager.info.liveInfo.activeRound);
 }
 
-function onPodiumStartScript(_: GbxClientManager, serverId: string) {
+async function onPodiumStartScript(
+  manager: GbxClientManager,
+  serverId: string,
+) {
   onPodiumStart(serverId);
+
+  const mode = await manager.client.call("GetScriptName");
+  const nextMode: string = mode.NextValue;
+
+  manager.info.liveInfo.mode = nextMode;
+  const modeLower = nextMode.toLowerCase();
+
+  const types = [
+    "timeattack",
+    "rounds",
+    "reversecup",
+    "cup",
+    "tmwc",
+    "tmwt",
+    "teams",
+    "knockout",
+  ] as const;
+
+  const matched = types.find((t) => modeLower.includes(t));
+  const _prevType = manager.info.liveInfo.type;
+  manager.info.liveInfo.type = matched ?? "rounds";
+
+  if (_prevType && _prevType !== manager.info.liveInfo.type) {
+    manager.modeChanged = true;
+  }
 }
 
 function saveFinishRecord(
@@ -729,9 +831,9 @@ function onStartMapStartScript(manager: GbxClientManager, startMap: StartMap) {
 async function onStartRoundStartScript(manager: GbxClientManager) {
   if (manager.roundNumber !== null && !manager.info.liveInfo.isWarmUp)
     manager.roundNumber++;
-  
+
   manager.emit("startRound");
-  
+
   const playerList: SPlayerInfo[] = await manager.client.call(
     "GetPlayerList",
     1000,
@@ -742,9 +844,17 @@ async function onStartRoundStartScript(manager: GbxClientManager) {
     players: {},
   };
 
-  playerList.forEach((player) => {
-    if (player.SpectatorStatus === 0) {
+  playerList
+    .filter((player) => {
+      return (
+        player.SpectatorStatus === 0 &&
+        !manager.reverseCupGetPlayerStatus(player.Login).spectator
+      );
+    })
+    .forEach((player) => {
       const playerInfo = manager.info.liveInfo.players[player.Login];
+
+      const isReverseCupMode = manager.info.liveInfo.type === "reversecup";
 
       const playerWaypoint: PlayerWaypoint = {
         login: player.Login,
@@ -756,12 +866,13 @@ async function onStartRoundStartScript(manager: GbxClientManager) {
           playerInfo.matchPoints,
           manager.info.liveInfo.pointsLimit,
         ),
+        isLastChance: isReverseCupMode && isLastChance(playerInfo.matchPoints),
+        isEliminated: isReverseCupMode && isEliminated(playerInfo.matchPoints),
         checkpoint: 0,
       };
 
       manager.setActiveRoundPlayer(playerWaypoint.login, playerWaypoint);
-    }
-  });
+    });
 
   manager.emit("beginRound", manager.info.liveInfo.activeRound);
 }
@@ -787,6 +898,8 @@ async function onEndRoundScript(manager: GbxClientManager, scores: Scores) {
     });
   }
 
+  const isReverseCupMode = manager.info.liveInfo.type === "reversecup";
+
   scores.players.forEach((player) => {
     const playerRound: PlayerRound = {
       ...manager.info.liveInfo.players?.[player.login],
@@ -796,6 +909,10 @@ async function onEndRoundScript(manager: GbxClientManager, scores: Scores) {
         player.matchpoints,
         manager.info.liveInfo.pointsLimit,
       ),
+      lastChance: isReverseCupMode && isLastChance(player.matchpoints),
+      eliminated: isReverseCupMode
+        ? isEliminated(player.matchpoints)
+        : manager.info.liveInfo.players?.[player.login]?.eliminated,
       winner: isWinner(player.matchpoints, manager.info.liveInfo.pointsLimit),
       bestTime: player.bestracetime,
       bestCheckpoints: player.bestracecheckpoints,
@@ -901,6 +1018,9 @@ async function onScoresScript(manager: GbxClientManager, scores: Scores) {
 
   for (let i = 0; i < scores.players.length; i++) {
     const player = scores.players[i];
+
+    const isReverseCupMode = manager.info.liveInfo.type === "reversecup";
+
     const playerRound: PlayerRound = {
       login: player.login,
       accountId: player.accountid,
@@ -911,8 +1031,9 @@ async function onScoresScript(manager: GbxClientManager, scores: Scores) {
         player.matchpoints,
         manager.info.liveInfo.pointsLimit,
       ),
+      lastChance: isReverseCupMode && isLastChance(player.matchpoints),
+      eliminated: isReverseCupMode && isEliminated(player.matchpoints),
       winner: isWinner(player.matchpoints, manager.info.liveInfo.pointsLimit),
-      eliminated: false,
       roundPoints: player.roundpoints,
       matchPoints: player.matchpoints,
       bestTime: player.bestracetime,
@@ -935,8 +1056,14 @@ async function onScoresScript(manager: GbxClientManager, scores: Scores) {
     players: {},
   };
 
-  playerList.forEach((player) => {
-    if (player.SpectatorStatus === 0) {
+  playerList
+    .filter((player) => {
+      return (
+        player.SpectatorStatus === 0 &&
+        !manager.reverseCupGetPlayerStatus(player.Login).spectator
+      );
+    })
+    .forEach((player) => {
       const playerInfo = manager.info.liveInfo.players[player.Login];
 
       const playerWaypoint: PlayerWaypoint = {
@@ -946,12 +1073,13 @@ async function onScoresScript(manager: GbxClientManager, scores: Scores) {
         hasFinished: false,
         hasGivenUp: false,
         isFinalist: playerInfo.finalist,
+        isLastChance: playerInfo.lastChance,
+        isEliminated: playerInfo.eliminated,
         checkpoint: 0,
       };
 
       manager.setActiveRoundPlayer(playerWaypoint.login, playerWaypoint);
-    }
-  });
+    });
 }
 
 async function syncLiveInfo(manager: GbxClientManager) {
@@ -971,6 +1099,7 @@ async function syncLiveInfo(manager: GbxClientManager) {
   const types = [
     "timeattack",
     "rounds",
+    "reversecup",
     "cup",
     "tmwc",
     "tmwt",
@@ -982,7 +1111,11 @@ async function syncLiveInfo(manager: GbxClientManager) {
   const _prevType = manager.info.liveInfo.type;
   manager.info.liveInfo.type = matched ?? "rounds";
 
-  if (_prevType && _prevType !== manager.info.liveInfo.type) {
+  if (
+    (_prevType && _prevType !== manager.info.liveInfo.type) ||
+    manager.modeChanged
+  ) {
+    manager.modeChanged = false;
     manager.emit("modeChange", manager.info.liveInfo.type);
   }
 
@@ -1028,28 +1161,65 @@ async function setScriptSettings(manager: GbxClientManager) {
 
   // Points limit
   const pointsLimit = Number(scriptSettings[plVar]);
-  if (!isNaN(pointsLimit) && pointsLimit > 0) {
+  if (!isNaN(pointsLimit)) {
     manager.info.liveInfo.pointsLimit = pointsLimit;
+  } else {
+    manager.info.liveInfo.pointsLimit = 0;
   }
   // Rounds limit
   const roundsLimit = Number(scriptSettings["S_RoundsPerMap"]);
-  if (!isNaN(roundsLimit) && roundsLimit > 0) {
+  if (!isNaN(roundsLimit)) {
     manager.info.liveInfo.roundsLimit = roundsLimit;
+  } else {
+    manager.info.liveInfo.roundsLimit = 0;
   }
 
   // Map limit
   const mapLimit = Number(scriptSettings[mlVar]);
-  if (!isNaN(mapLimit) && mapLimit > 0) {
+  if (!isNaN(mapLimit)) {
     manager.info.liveInfo.mapLimit = mapLimit;
+  } else {
+    manager.info.liveInfo.mapLimit = 0;
   }
 
   // Number of winners
   const nbWinners = Number(scriptSettings["S_NbOfWinners"]);
-  if (!isNaN(nbWinners) && nbWinners > 0) {
+  if (!isNaN(nbWinners)) {
     manager.info.liveInfo.nbWinners = nbWinners;
+  } else {
+    manager.info.liveInfo.nbWinners = 1;
   }
 
   // Points repartition
+  if (type === "reversecup") {
+    const complexRepartition = scriptSettings["S_ComplexPointsRepartition"];
+    if (typeof complexRepartition === "string" && complexRepartition) {
+      // Example: {"3": [3, 6, 10], "4,5": [1, 3, 6,10]}
+      try {
+        const repartitionObj = JSON.parse(complexRepartition);
+        const repartitionMap: Record<number, number[]> = {};
+        for (const key in repartitionObj) {
+          const numPlayers = key
+            .split(",")
+            .map((x) => parseInt(x.trim(), 10))
+            .filter((x) => !isNaN(x));
+          const pointsArray: number[] = repartitionObj[key].map((x: any) =>
+            parseInt(x, 10),
+          );
+          numPlayers.forEach((num) => {
+            repartitionMap[num] = pointsArray;
+          });
+        }
+        manager.info.liveInfo.pointsRepartitionMap = repartitionMap;
+      } catch (error) {
+        console.error(`Failed to parse complex points repartition: ${error}`);
+      }
+    }
+  }
+
+  manager.info.liveInfo.fastForwardPointsRepartition =
+    !!scriptSettings["S_FastForwardPointsRepartition"];
+
   const pointsRepartition = scriptSettings[prVar];
   if (typeof pointsRepartition === "string") {
     if (pointsRepartition) {
@@ -1106,9 +1276,17 @@ async function onWarmUpStartRoundScript(
     players: {},
   };
 
-  playerList.forEach((player) => {
-    if (player.SpectatorStatus === 0) {
+  playerList
+    .filter((player) => {
+      return (
+        player.SpectatorStatus === 0 &&
+        !manager.reverseCupGetPlayerStatus(player.Login).spectator
+      );
+    })
+    .forEach((player) => {
       const playerInfo = manager.info.liveInfo.players[player.Login];
+
+      const isReverseCupMode = manager.info.liveInfo.type === "reversecup";
 
       const playerWaypoint: PlayerWaypoint = {
         login: player.Login,
@@ -1120,12 +1298,13 @@ async function onWarmUpStartRoundScript(
           playerInfo.matchPoints,
           manager.info.liveInfo.pointsLimit,
         ),
+        isLastChance: isReverseCupMode && isLastChance(playerInfo.matchPoints),
+        isEliminated: isReverseCupMode && isEliminated(playerInfo.matchPoints),
         checkpoint: 0,
       };
 
       manager.setActiveRoundPlayer(playerWaypoint.login, playerWaypoint);
-    }
-  });
+    });
 
   manager.emit("warmUpStartRound", manager.info.liveInfo);
 }
@@ -1145,7 +1324,7 @@ async function onEcho(
 
 async function onElimination(
   manager: GbxClientManager,
-  elimination: Elmination,
+  elimination: Elimination,
 ) {
   elimination.accountids.forEach((accountId) => {
     const player = Object.values(manager.info.liveInfo.players).find(

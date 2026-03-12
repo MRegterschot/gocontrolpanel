@@ -156,6 +156,19 @@ export default function LiveDashboard({ serverId }: { serverId: string }) {
         setLiveInfo(data.info);
         break;
       }
+      case "playerUpdated": {
+        setLiveInfo((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            players: {
+              ...prev.players,
+              [data.round.login]: data.round,
+            },
+          };
+        });
+        break;
+      }
     }
   }, []);
 
@@ -216,7 +229,7 @@ export default function LiveDashboard({ serverId }: { serverId: string }) {
           {["teams", "tmwt", "tmwc"].includes(liveInfo.type) && (
             <TeamScores liveInfo={liveInfo} />
           )}
-          {["rounds", "cup"].includes(liveInfo.type) && (
+          {["rounds", "cup", "reversecup"].includes(liveInfo.type) && (
             <RoundScores liveInfo={liveInfo} />
           )}
           {["timeattack"].includes(liveInfo.type) && (
@@ -239,9 +252,11 @@ export default function LiveDashboard({ serverId }: { serverId: string }) {
           canActions={canActions}
         />
         <Rankings
+          serverId={serverId}
           players={liveInfo.players}
           teams={liveInfo.teams}
           type={liveInfo.type}
+          canActions={canActions}
         />
       </div>
     </div>

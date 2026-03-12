@@ -33,6 +33,6 @@ export interface Player {
   prevracecheckpoints: number[];
 }
 
-export interface Elmination {
+export interface Elimination {
   accountids: string[];
 }

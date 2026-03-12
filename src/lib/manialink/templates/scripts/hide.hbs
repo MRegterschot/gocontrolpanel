@@ -1,0 +1,52 @@
+<script><!--
+declare Vec2 widgetBasePosition;
+declare CMlFrame HS_Target;
+declare Boolean HS_Hidden;
+
+Void hs_hide(Integer duration) {
+  HS_Hidden = True;
+  declare Real x;
+  if (widgetBasePosition[0] < 0.0) {
+    x = (HS_Target.Size[0] * -HS_Target.RelativeScale) - 322.0;
+  } else {
+    x = 322.0;
+  }
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ x ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::ExpInOut);
+}
+
+Void hs_show(Integer duration) {
+  HS_Hidden = False;
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ widgetBasePosition[0] ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::CircOut);
+}
+
+Void hidescript() {
+  if (HS_Target == Null){
+    HS_Target <=> (Page.MainFrame.GetFirstChild("{{target}}") as CMlFrame);
+  }
+
+  declare hideSpeed = 10;
+
+  if (InputPlayer == Null) {
+    if (HS_Hidden) {
+      hs_show(600);
+    }
+    return;
+  }
+
+  declare Boolean overHidespeed = ML::Abs(InputPlayer.Speed * 3.6) > hideSpeed;
+
+  if (overHidespeed && !HS_Hidden) {
+    hs_hide(1000);
+
+    while(InputPlayer.Speed * 3.6 > hideSpeed){
+      yield;
+      hidescript();
+    }
+  }
+  
+  if (!overHidespeed && HS_Hidden) {
+    sleep(1000);
+    hs_show(600);
+  }
+}
+--></script>

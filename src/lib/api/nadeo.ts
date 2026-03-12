@@ -10,6 +10,7 @@ import {
   ClubRoom,
   MapInfo,
   MapLeaderboardsResponse,
+  MapRecordsResponse,
   MonthMapListResponse,
   NadeoTokens,
   SeasonalCampaignsResponse,
@@ -323,6 +324,21 @@ export async function getMapLeaderboard(
 ): Promise<MapLeaderboardsResponse> {
   const url = `${LIVE_URL}/api/token/leaderboard/group/Personal_Best/map/${mapUid}/top?length=${length}&offset=${offset}&onlyWorld=true`;
   return await doRequest<MapLeaderboardsResponse>(url, "NadeoLiveServices");
+}
+
+export async function getMapRecordsByAccounts(
+  mapUid: string,
+  accountIds: string[],
+): Promise<MapRecordsResponse> {
+  const { data, error } = await getMapsInfo([mapUid]);
+  if (error || data.length === 0) {
+    throw new Error("Failed to get map info for records retrieval");
+  }
+
+  const mapId = data[0].mapId;
+
+  const url = `${PROD_URL}/v2/mapRecords/by-account?accountIdList=${accountIds.join(",")}&mapId=${mapId}`;
+  return await doRequest<MapRecordsResponse>(url);
 }
 
 export async function doRequest<T>(

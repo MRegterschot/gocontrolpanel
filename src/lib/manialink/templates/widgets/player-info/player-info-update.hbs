@@ -1,0 +1,25 @@
+{{#extend "manialink"}}
+{{#content "content"}}
+<script>
+<!--
+#Struct PlayerInfo {
+  Text login;
+  Text name;
+  Integer personalBest;
+  Integer localRecord;
+  Text device;
+  Text camera;
+}
+
+main(){
+  declare PlayerInfo[] PlayerInfos for This;
+  declare Integer LastPlayerInfosUpdate for This;
+  declare Text playerInfosJson = """{{{ default data.playerInfosJson '[]' }}}""";
+
+  PlayerInfos.fromjson(playerInfosJson);
+  LastPlayerInfosUpdate = GameTime;
+}
+-->
+</script>
+{{/content}}
+{{/extend}}

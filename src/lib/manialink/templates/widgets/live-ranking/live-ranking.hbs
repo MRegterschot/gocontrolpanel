@@ -9,7 +9,7 @@
   <quad pos="0 0" z-index="0" size="5 5" bgcolor="222"/>
   <quad pos="5 0" z-index="0" size="50 5" bgcolor="DDD"/>
   <label pos="2.4 -2.25" z-index="0" size="5 5" text="0" halign="center" valign="center" textsize="1.25" textcolor="DDD" textfont="GameFontSemiBold"/>
-  <quad pos="6.25 -1" z-index="0" size="4.5 3" bgcolor="FFF" image="file://Media/Flags/WOR.dds"/>
+  <quad pos="6.25 -1" z-index="0" size="4.5 3" bgcolor="DDD" image="file://Media/Flags/WOR.dds"/>
   <label pos="12 -2.25" z-index="0" size="32 5" text="-" textcolor="222" textsize="1.2" textfont="GameFontRegular" valign="center"/>
   <label pos="53 -2.25" z-index="0" size="7.5 5" text="0" valign="center" halign="right" textsize="1" textcolor="222" textfont="GameFontSemiBold"/>
 
@@ -57,6 +57,12 @@ Void updateRankingRow(Integer index, Ranking ranking, Text mode, Integer pointsL
   } else if (mode == "rounds" && pointsLimit > 0) {
     if (ranking.points >= pointsLimit) {
       pointsText = "$2C2W";
+    }
+  } else if (mode == "reversecup") {
+    if (-2000 < ranking.points && ranking.points <= -1000) {
+      pointsText = "$D22LC";
+    } else if (ranking.points <= -2000) {
+      pointsText = "$D22E";
     }
   }
 

@@ -12,11 +12,19 @@
 
 {{#block "globals"}}{{/block}}
 
-{{#block "script"}}{{/block}}
+declare CMlFrame widget;
+--></script>
 
+{{> scripts/hide target="widget"}}
+
+<script><!--
+{{#block "script"}}{{/block}}
+--></script>
+
+<script><!--
 main() {
-  declare CMlFrame widget;
   widget <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  widgetBasePosition = widget.AbsolutePosition_V3;
 
   sleep(300);
   widget.Show();
@@ -33,6 +41,10 @@ main() {
     }
 
     {{#block "loop"}}{{/block}}
+
+    {{#if hideWhileDriving}}
+      hidescript();
+    {{/if}}
   }
 }
 

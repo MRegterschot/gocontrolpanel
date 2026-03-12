@@ -9,6 +9,7 @@ export const PluginsSchema = z.object({
   "live-round": z.boolean().optional(),
   "ta-leaderboard": z.boolean().optional(),
   "ta-active-runs": z.boolean().optional(),
+  "player-info": z.boolean().optional(),
 });
 
 export type PluginsSchemaType = z.infer<typeof PluginsSchema>;

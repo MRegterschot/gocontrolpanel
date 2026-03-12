@@ -8,7 +8,7 @@
 <framemodel id="active-run">
   <quad pos="0 0" z-index="0" size="40.5 5" bgcolor="DDD"/>
   <quad pos="40.5 0" z-index="0" size="14.5 5" bgcolor="BBB"/>
-  <quad pos="1.25 -1" z-index="0" size="4.5 3" bgcolor="FFF" image="file://Media/Flags/WOR.dds"/>
+  <quad pos="1.25 -1" z-index="0" size="4.5 3" bgcolor="DDD" image="file://Media/Flags/WOR.dds"/>
   <label pos="7 -2.25" z-index="0" size="30.5 5" text="-" textcolor="222" textsize="1.2" textfont="GameFontRegular" valign="center"/>
   <label pos="39.75 -2.25" z-index="0" size="5 5" text="0" halign="right" textcolor="222" textsize="1" textfont="GameFontRegular" valign="center"/>
   <label pos="54 -2.25" z-index="0" size="12.5 5" text="--:--.---" valign="center" halign="right" textsize="1" textcolor="222" textfont="GameFontSemiBold"/>
@@ -151,7 +151,6 @@ if (LastActiveRunsUpdate != lastUpdate) {
 if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::MouseClick) {
   declare targetLogin = event.Control.Parent.DataAttributeGet("login");
   if (targetLogin != "") {
-    if(!IsSpectatorClient) RequestSpectatorClient(True);
     SetSpectateTarget(targetLogin);
   }
 }

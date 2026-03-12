@@ -1,7 +1,11 @@
 "use server";
 
 import { doServerActionWithAuth } from "@/lib/actions";
-import { getGbxClient } from "@/lib/managers/gbxclient-manager";
+import {
+  getGbxClient,
+  getGbxClientManager,
+} from "@/lib/managers/gbxclient-manager";
+import { PlayerRound } from "@/types/live";
 import { PlayerInfo } from "@/types/player";
 import { ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
@@ -518,6 +522,129 @@ export async function forceSpectator(
         serverId,
         "server.players.spectator.set",
         { login, status },
+      );
+    },
+  );
+}
+
+export async function setPlayerRoundPoints(
+  serverId: string,
+  login: string,
+  points: number,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      const manager = await getGbxClientManager(serverId);
+      await manager.client.callScript(
+        "Trackmania.SetPlayerPoints",
+        login,
+        points.toString(),
+        "",
+        "",
+      );
+
+      const playerRound: PlayerRound = {
+        ...manager.info.liveInfo.players[login],
+        roundPoints: points,
+      };
+
+      manager.setPlayer(login, playerRound);
+
+      manager.emit("playerUpdated", playerRound);
+
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.players.roundpoints.set",
+        { login, points },
+      );
+    },
+  );
+}
+
+export async function setPlayerMapPoints(
+  serverId: string,
+  login: string,
+  points: number,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      const manager = await getGbxClientManager(serverId);
+      await manager.client.callScript(
+        "Trackmania.SetPlayerPoints",
+        login,
+        "",
+        points.toString(),
+        "",
+      );
+
+      const playerRound: PlayerRound = {
+        ...manager.info.liveInfo.players[login],
+        roundPoints: points,
+      };
+
+      manager.setPlayer(login, playerRound);
+
+      manager.emit("playerUpdated", playerRound);
+
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.players.mappoints.set",
+        { login, points },
+      );
+    },
+  );
+}
+
+export async function setPlayerMatchPoints(
+  serverId: string,
+  login: string,
+  points: number,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      const manager = await getGbxClientManager(serverId);
+      await manager.client.callScript(
+        "Trackmania.SetPlayerPoints",
+        login,
+        "",
+        "",
+        points.toString(),
+      );
+
+      const playerRound: PlayerRound = {
+        ...manager.info.liveInfo.players[login],
+        matchPoints: points,
+      };
+
+      manager.setPlayer(login, playerRound);
+
+      manager.emit("playerUpdated", playerRound);
+
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.players.matchpoints.set",
+        { login, points },
       );
     },
   );

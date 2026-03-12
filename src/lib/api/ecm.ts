@@ -11,6 +11,8 @@ export async function ecmOnDriverFinish(
 ): Promise<void> {
   const { matchId, authToken } = getMatchIdAndAuthToken(apiKey);
 
+  console.log("Sending ECM driver finish event", { matchId, body });
+
   await axiosECM.post("/match-addRoundTime?matchId=" + matchId, body, {
     headers: {
       Authorization: authToken,
@@ -23,6 +25,8 @@ export async function ecmOnRoundEnd(
   body: ECMRoundEndArgs,
 ): Promise<void> {
   const { matchId, authToken } = getMatchIdAndAuthToken(apiKey);
+
+  console.log("Sending ECM round end event", { matchId, body });
 
   await axiosECM.post("/match-addRound?matchId=" + matchId, body, {
     headers: {

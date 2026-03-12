@@ -7,9 +7,9 @@ RUN apk add --no-cache libc6-compat curl bash
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* bun.lock* ./
 RUN curl -fsSL https://bun.sh/install | bash \
-  && /root/.bun/bin/bun install --no-save
+  && /root/.bun/bin/bun install --frozen-lockfile
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -30,7 +30,7 @@ ENV DB=$DB_TYPE
 
 RUN bun run generate
 
-RUN bun run build;
+RUN bun run build
 
 # Production image, copy all the files and run next
 FROM base AS runner

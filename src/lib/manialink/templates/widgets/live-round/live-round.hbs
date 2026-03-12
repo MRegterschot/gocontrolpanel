@@ -10,9 +10,9 @@
   <quad pos="5 0" z-index="0" size="35.5 5" bgcolor="DDD"/>
   <quad pos="40.5 0" z-index="0" size="14.5 5" bgcolor="BBB"/>
   <label pos="2.4 -2.25" z-index="0" size="5 5" text="0" halign="center" valign="center" textsize="1.25" textcolor="DDD" textfont="GameFontSemiBold"/>
-  <quad pos="6.25 -1" z-index="0" size="4.5 3" bgcolor="FFF" image="file://Media/Flags/WOR.dds"/>
+  <quad pos="6.25 -1" z-index="0" size="4.5 3" bgcolor="DDD" image="file://Media/Flags/WOR.dds"/>
   <label pos="12 -2.25" z-index="0" size="25.5 5" text="-" textcolor="222" textsize="1.2" textfont="GameFontRegular" valign="center"/>
-  <label pos="39.75 -2.25" z-index="0" size="5 5" text="0" halign="right" textcolor="222" textsize="1" textfont="GameFontRegular" valign="center"/>
+  <label pos="39.75 -2.25" z-index="0" size="5 5" text="0" halign="right" textcolor="222" textsize="1" textfont="GameFontSemiBold" valign="center"/>
   <label pos="54 -2.25" z-index="0" size="12.5 5" text="--:--.---" valign="center" halign="right" textsize="1" textcolor="222" textfont="GameFontSemiBold"/>
   
   <frame pos="47.5 0" size="7 5" id="finish" z-index="-2">
@@ -53,7 +53,7 @@ Text formatTime(Integer time) {
   declare Text secondString;
   declare Text msString;
 
-  if (time <= 0) {
+  if (time < 0) {
     return "--:--.---";
   }
 
@@ -165,6 +165,12 @@ Void updateRoundRow(Integer index, Round round, Round[] rounds, Text mode, Integ
     if (round.points >= pointsLimit) {
       pointsText = "$2C2W";
     }
+  } else if (mode == "reversecup") {
+    if (-2000 < round.points && round.points <= -1000) {
+      pointsText = "$D22LC";
+    } else if (round.points <= -2000) {
+      pointsText = "$D22E";
+    }
   }
 
   (roundFrame.Controls[6] as CMlLabel).SetText(pointsText);
@@ -194,7 +200,12 @@ Void updateFinish(Text login, Integer points, Boolean finished) {
         if (points == 0) {
           (frameFinish.Controls[1] as CMlLabel).SetText("");
         } else {
-          (frameFinish.Controls[1] as CMlLabel).SetText("+" ^ TL::ToText(points));
+          declare Text pointsText = "+" ^ TL::ToText(points);
+          if (points < 0) {
+            pointsText = "-" ^ TL::ToText(-points);
+          }
+          
+          (frameFinish.Controls[1] as CMlLabel).SetText(pointsText);
         }
         AnimMgr.Add(frameFinish, """<frame pos='55 0' />""", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
       } else {
@@ -303,7 +314,6 @@ if (LastRoundsUpdate != lastUpdate) {
 if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::MouseClick) {
   declare targetLogin = event.Control.Parent.DataAttributeGet("login");
   if (targetLogin != "") {
-    if(!IsSpectatorClient) RequestSpectatorClient(True);
     SetSpectateTarget(targetLogin);
   }
 }

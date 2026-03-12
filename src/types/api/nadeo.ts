@@ -448,3 +448,25 @@ export interface MapLeaderboardsResponse {
   mapUid: string;
   tops: MapLeaderboard[];
 }
+
+export type MapRecord = {
+  accountId: string;
+  filename: string;
+  gameMode: string;
+  gameModeCustomData: string;
+  mapId: string;
+  mapRecordId: string;
+  medal: number;
+  recordScore: {
+    respawnCount: number;
+    score: number;
+    time: number;
+  };
+  removed: boolean;
+  scopeId: string | null;
+  scopeType: string;
+  timestamp: string;
+  url: string;
+};
+
+export type MapRecordsResponse = MapRecord[];

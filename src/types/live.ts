@@ -10,6 +10,8 @@ export interface LiveInfo {
   mapLimit?: number;
   nbWinners?: number;
   pointsRepartition: number[];
+  pointsRepartitionMap: Record<number, number[]>;
+  fastForwardPointsRepartition: boolean;
   pauseAvailable: boolean;
   isPaused: boolean;
   maps: string[];
@@ -32,6 +34,7 @@ export interface PlayerRound {
   team: number;
   rank: number;
   finalist: boolean;
+  lastChance: boolean;
   winner: boolean;
   eliminated: boolean;
   roundPoints: number;
@@ -54,5 +57,7 @@ export interface PlayerWaypoint {
   hasFinished: boolean;
   hasGivenUp: boolean;
   isFinalist: boolean;
+  isLastChance: boolean;
+  isEliminated: boolean;
   checkpoint: number;
 }
