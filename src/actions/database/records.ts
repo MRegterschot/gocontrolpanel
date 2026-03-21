@@ -10,7 +10,14 @@ export async function exportRecords(
   mapUid?: string,
 ): Promise<ServerResponse<Records[]>> {
   return doServerActionWithAuth(
-    [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
+    [
+      `servers:${serverId}:member`,
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:member`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
     async () => {
       const db = getClient();
 
