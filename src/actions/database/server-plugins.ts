@@ -144,3 +144,29 @@ export async function getServerPlugins(
     },
   );
 }
+
+export async function exportServerPluginConfig(
+  serverId: string,
+  pluginId: string,
+): Promise<ServerResponse<Record<string, any>>> {
+  return doServerActionWithAuth(
+    [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
+    async () => {
+      const db = getClient();
+      const plugin = await db.serverPlugins.findUnique({
+        where: {
+          serverId_pluginId: {
+            serverId,
+            pluginId,
+          },
+        },
+      });
+
+      if (!plugin) {
+        throw new Error("Plugin not found for server");
+      }
+
+      return plugin.config as Record<string, any>;
+    },
+  );
+}

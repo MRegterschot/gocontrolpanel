@@ -2,6 +2,7 @@ import { getMapRecordsPaginated } from "@/actions/database/maps";
 import { getMatchesPaginated } from "@/actions/database/matches";
 import { PaginationTable } from "@/components/table/pagination-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ServerRecordsActions from "./actions";
 import { createMapsColumns } from "./maps-columns";
 import { createMatchesColumns } from "./matches-columns";
 
@@ -14,11 +15,14 @@ export default async function ServerRecordsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold">Records</h1>
-        <h4 className="text-muted-foreground">
-          View and manage server records.
-        </h4>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold">Records</h1>
+          <h4 className="text-muted-foreground">
+            View and manage server records.
+          </h4>
+        </div>
+        <ServerRecordsActions serverId={id} />
       </div>
 
       <Tabs defaultValue="matches" className="w-full">
