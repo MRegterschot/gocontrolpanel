@@ -20,7 +20,7 @@ import {
 import { generatePath, hasPermissionSync } from "@/lib/utils";
 import { useNotifications } from "@/providers/notification-provider";
 import { useServers } from "@/providers/servers-provider";
-import { routePermissions, routes } from "@/routes";
+import { connectionRoutes, routePermissions, routes } from "@/routes";
 import {
   IconActivity,
   IconAdjustmentsAlt,
@@ -50,6 +50,7 @@ interface ServerNavGroup {
       url: string;
       icon?: React.ElementType;
       auth?: boolean;
+      needsConnection?: boolean;
     }[];
   }[];
 }
@@ -85,6 +86,9 @@ export default function NavGroups() {
                     routePermissions.servers.settings,
                     server.id,
                   ),
+                  needsConnection: connectionRoutes.includes(
+                    routes.servers.settings,
+                  ),
                 },
                 {
                   name: "Game",
@@ -92,6 +96,9 @@ export default function NavGroups() {
                     id: server.id,
                   }),
                   icon: IconDeviceGamepad,
+                  needsConnection: connectionRoutes.includes(
+                    routes.servers.game,
+                  ),
                 },
                 {
                   name: "Maps",
@@ -103,6 +110,9 @@ export default function NavGroups() {
                     session,
                     routePermissions.servers.maps,
                     server.id,
+                  ),
+                  needsConnection: connectionRoutes.includes(
+                    routes.servers.maps,
                   ),
                 },
                 {
@@ -116,6 +126,9 @@ export default function NavGroups() {
                     routePermissions.servers.players,
                     server.id,
                   ),
+                  needsConnection: connectionRoutes.includes(
+                    routes.servers.players,
+                  ),
                 },
                 {
                   name: "Live",
@@ -123,6 +136,9 @@ export default function NavGroups() {
                     id: server.id,
                   }),
                   icon: IconActivity,
+                  needsConnection: connectionRoutes.includes(
+                    routes.servers.live,
+                  ),
                 },
                 {
                   name: "Records",
@@ -130,6 +146,9 @@ export default function NavGroups() {
                     id: server.id,
                   }),
                   icon: IconStopwatch,
+                  needsConnection: connectionRoutes.includes(
+                    routes.servers.records,
+                  ),
                 },
                 {
                   name: "Interface",
@@ -141,6 +160,9 @@ export default function NavGroups() {
                     session,
                     routePermissions.servers.interface,
                     server.id,
+                  ),
+                  needsConnection: connectionRoutes.includes(
+                    routes.servers.interface,
                   ),
                 },
                 {
@@ -154,6 +176,9 @@ export default function NavGroups() {
                     routePermissions.servers.tmx,
                     server.id,
                   ),
+                  needsConnection: connectionRoutes.includes(
+                    routes.servers.tmx,
+                  ),
                 },
                 {
                   name: "Nadeo",
@@ -165,6 +190,9 @@ export default function NavGroups() {
                     session,
                     routePermissions.servers.nadeo,
                     server.id,
+                  ),
+                  needsConnection: connectionRoutes.includes(
+                    routes.servers.nadeo,
                   ),
                 },
               ],
@@ -181,6 +209,9 @@ export default function NavGroups() {
                   session,
                   routePermissions.servers.files,
                   server.id,
+                ),
+                needsConnection: connectionRoutes.includes(
+                  routes.servers.files,
                 ),
               });
             }
@@ -256,66 +287,62 @@ export default function NavGroups() {
                   className="group/collapsible"
                 >
                   <SidebarMenuItem>
-                    {server.isConnected ? (
-                      <>
-                        <CollapsibleTrigger asChild>
-                          <SidebarMenuButton tooltip={server.name} asChild>
-                            <div className="select-none cursor-pointer">
-                              {server.icon && <server.icon />}
-                              <span className="overflow-hidden text-ellipsis text-nowrap flex items-center">
-                                {server.name}
-                                {notifications.some(
-                                  (n) => n.serverId === server.id && !n.read,
-                                ) && (
-                                  <span className="ml-2 h-3 w-3 text-center rounded-full bg-destructive text-[8px]">
-                                    {
-                                      notifications.filter(
-                                        (n) =>
-                                          n.serverId === server.id && !n.read,
-                                      ).length
-                                    }
-                                  </span>
-                                )}
-                              </span>
-                              <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                            </div>
-                          </SidebarMenuButton>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent>
-                          <SidebarMenuSub>
-                            {server.items
-                              .filter((i) => i.auth || i.auth === undefined)
-                              .map((item) => (
-                                <SidebarMenuSubItem key={item.name}>
-                                  <SidebarMenuSubButton asChild>
-                                    {item.url ? (
-                                      <Link href={item.url}>
-                                        {item.icon && <item.icon />}
-                                        <span>{item.name}</span>
-                                      </Link>
-                                    ) : (
-                                      <div>
-                                        {item.icon && <item.icon />}
-                                        <span>{item.name}</span>
-                                      </div>
-                                    )}
-                                  </SidebarMenuSubButton>
-                                </SidebarMenuSubItem>
-                              ))}
-                          </SidebarMenuSub>
-                        </CollapsibleContent>
-                      </>
-                    ) : (
-                      <SidebarMenuButton
-                        asChild
-                        className="text-foreground/50 pointer-events-none"
-                      >
-                        <div>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton tooltip={server.name} asChild>
+                        <div className="select-none cursor-pointer">
                           {server.icon && <server.icon />}
-                          <span>{server.name}</span>
+                          <span className="overflow-hidden text-ellipsis text-nowrap flex items-center">
+                            {server.name}
+                            {notifications.some(
+                              (n) => n.serverId === server.id && !n.read,
+                            ) && (
+                              <span className="ml-2 h-3 w-3 text-center rounded-full bg-destructive text-[8px]">
+                                {
+                                  notifications.filter(
+                                    (n) => n.serverId === server.id && !n.read,
+                                  ).length
+                                }
+                              </span>
+                            )}
+                          </span>
+                          <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                         </div>
                       </SidebarMenuButton>
-                    )}
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {server.items
+                          .filter((i) => i.auth || i.auth === undefined)
+                          .map((item) => (
+                            <SidebarMenuSubItem key={item.name}>
+                              {!(
+                                !server.isConnected && item.needsConnection
+                              ) ? (
+                                <SidebarMenuSubButton asChild>
+                                  {item.url ? (
+                                    <Link href={item.url}>
+                                      {item.icon && <item.icon />}
+                                      <span>{item.name}</span>
+                                    </Link>
+                                  ) : (
+                                    <div>
+                                      {item.icon && <item.icon />}
+                                      <span>{item.name}</span>
+                                    </div>
+                                  )}
+                                </SidebarMenuSubButton>
+                              ) : (
+                                <SidebarMenuSubButton asChild isDisabled>
+                                  <div>
+                                    {item.icon && <item.icon />}
+                                    <span>{item.name}</span>
+                                  </div>
+                                </SidebarMenuSubButton>
+                              )}
+                            </SidebarMenuSubItem>
+                          ))}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
                   </SidebarMenuItem>
                 </Collapsible>
               ) : (
