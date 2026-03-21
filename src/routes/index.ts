@@ -27,6 +27,17 @@ export const routes = {
   login: "/login",
 };
 
+export const connectionRoutes = [
+  routes.servers.settings,
+  routes.servers.game,
+  routes.servers.maps,
+  routes.servers.players,
+  routes.servers.live,
+  routes.servers.files,
+  routes.servers.editor,
+  routes.servers.interface,
+];
+
 export const routePermissions = {
   servers: {
     settings: ["servers:id:admin", "group:servers:id:admin"],
