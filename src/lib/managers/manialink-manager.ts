@@ -184,6 +184,26 @@ export default class ManialinkManager {
     }
   }
 
+  public async resendAllManialinks() {
+    for (const manialink of Object.values(this.publicManialinks)) {
+      await this.displayManialink(manialink, false);
+    }
+
+    for (const playerManialinks of Object.values(this.playerManialinks)) {
+      for (const manialink of Object.values(playerManialinks)) {
+        await this.displayManialink(manialink, false);
+      }
+    }
+
+    logger.trace(
+      {
+        publicManialinks: this.publicManialinks,
+        playerManialinks: this.playerManialinks,
+      },
+      `Resent all manialinks to all players`,
+    );
+  }
+
   public getClientManager(): GbxClientManager {
     return this.clientManager;
   }

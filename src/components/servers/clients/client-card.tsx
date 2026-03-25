@@ -1,4 +1,8 @@
-import { stopReconnect, triggerReconnect } from "@/actions/gbx/clients";
+import {
+  resendAllManialinks,
+  stopReconnect,
+  triggerReconnect,
+} from "@/actions/gbx/clients";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -29,7 +33,7 @@ export default function ClientCard({ client }: { client: ServerClient }) {
 
   const handleStopReconnect = async () => {
     try {
-      const { data, error } = await stopReconnect(client.serverId);
+      const { error } = await stopReconnect(client.serverId);
       if (error) {
         throw new Error(error);
       }
@@ -44,7 +48,7 @@ export default function ClientCard({ client }: { client: ServerClient }) {
 
   const handleTriggerReconnect = async () => {
     try {
-      const { data, error } = await triggerReconnect(client.serverId);
+      const { error } = await triggerReconnect(client.serverId);
       if (error) {
         throw new Error(error);
       }
@@ -52,6 +56,21 @@ export default function ClientCard({ client }: { client: ServerClient }) {
       toast.success(`Triggered reconnect to ${client.name}`);
     } catch (err) {
       toast.error(`Failed to trigger reconnect to ${client.name}`, {
+        description: getErrorMessage(err),
+      });
+    }
+  };
+
+  const handleResendAllManialinks = async () => {
+    try {
+      const { error } = await resendAllManialinks(client.serverId);
+      if (error) {
+        throw new Error(error);
+      }
+
+      toast.success(`Resent of all manialinks to ${client.name}`);
+    } catch (err) {
+      toast.error(`Failed to resend of all manialinks to ${client.name}`, {
         description: getErrorMessage(err),
       });
     }
@@ -89,7 +108,7 @@ export default function ClientCard({ client }: { client: ServerClient }) {
         </div>
       </div>
 
-      {!client.isConnected && (
+      {!client.isConnected ? (
         <div className="flex gap-2">
           {client.isReconnecting ? (
             <Button variant="outline" onClick={handleStopReconnect}>
@@ -100,6 +119,12 @@ export default function ClientCard({ client }: { client: ServerClient }) {
               Trigger Reconnect
             </Button>
           )}
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleResendAllManialinks}>
+            Resend All Manialinks
+          </Button>
         </div>
       )}
     </Card>

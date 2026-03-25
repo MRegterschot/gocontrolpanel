@@ -420,6 +420,10 @@ export class GbxClientManager extends EventEmitter {
 
     return repartition;
   }
+
+  public async resendAllManialinks() {
+    this.pluginManager.resendAllManialinks();
+  }
 }
 
 export async function getGbxClient(serverId: string): Promise<GbxClient> {

@@ -231,4 +231,8 @@ export default class PluginManager {
       `Mode changed to ${mode}, reloaded plugins for new gamemode`,
     );
   }
+
+  public async resendAllManialinks() {
+    await this.manialinkManager.resendAllManialinks();
+  }
 }

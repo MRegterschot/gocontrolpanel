@@ -31,3 +31,17 @@ export async function triggerReconnect(
     manager.tryConnectWithRetry();
   });
 }
+
+export async function resendAllManialinks(
+  serverId: string,
+): Promise<ServerResponse<void>> {
+  return doServerActionWithAuth(["servers:clients:manage"], async () => {
+    const manager = await getGbxClientManager(serverId);
+
+    if (!manager) {
+      throw new Error("Client not found");
+    }
+
+    manager.resendAllManialinks();
+  });
+}
