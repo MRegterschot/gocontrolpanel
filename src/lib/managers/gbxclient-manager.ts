@@ -42,6 +42,11 @@ import PluginManager from "./plugin-manager";
 
 type Listener<T = any> = (data: T) => void;
 type CommandListener = (args: string[], login: string) => void;
+type Reconnect = {
+  timeout: NodeJS.Timeout | null;
+  start: number | null;
+  delay: number;
+};
 
 export class GbxClientManager extends EventEmitter {
   client: GbxClient;
@@ -49,7 +54,11 @@ export class GbxClientManager extends EventEmitter {
   private serverId: string;
   info: ServerClientInfo;
   private isConnected = false;
-  private reconnectTimeout: NodeJS.Timeout | null = null;
+  private reconnect: Reconnect = {
+    timeout: null,
+    start: null,
+    delay: 15000,
+  };
   private listenerMap: Map<string, Record<string, (...args: any[]) => void>> =
     new Map();
   private actionListeners = new Map<string, Listener[]>();
@@ -178,21 +187,37 @@ export class GbxClientManager extends EventEmitter {
     this.emitAction(pageAnswer.Answer, pageAnswer);
   }
 
-  stopReconnect() {
+  public stopReconnect() {
+    this.emit("reconnect", this.serverId, "stop", null);
     this.client.removeListener("disconnect", this.onDisconnect.bind(this));
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
-      this.reconnectTimeout = null;
+    if (this.reconnect.timeout) {
+      clearTimeout(this.reconnect.timeout);
+      this.reconnect.timeout = null;
     }
   }
 
-  private scheduleReconnect() {
-    if (this.reconnectTimeout) return; // avoid multiple schedules
+  private scheduleReconnect(delay: number = 15000) {
+    if (this.reconnect.timeout) return; // avoid multiple schedules
 
-    this.reconnectTimeout = setTimeout(() => {
-      this.reconnectTimeout = null;
+    this.reconnect.delay = delay;
+    this.reconnect.start = Date.now();
+    this.emit("reconnect", this.serverId, "try", this.reconnect.start + delay);
+
+    this.reconnect.timeout = setTimeout(() => {
+      this.reconnect.timeout = null;
+      this.reconnect.start = null;
+      this.reconnect.delay = 0;
+
       this.tryConnectWithRetry();
-    }, 15000);
+    }, delay);
+  }
+
+  public getReconnectAt(): number | null {
+    if (!this.reconnect.timeout || this.reconnect.start === null) {
+      return null;
+    }
+
+    return this.reconnect.start + this.reconnect.delay;
   }
 
   private async tryConnectWithRetry() {
@@ -420,8 +445,8 @@ export async function deleteGbxClientManager(serverId: string): Promise<void> {
   if (!manager) return;
 
   manager.emit("disconnect", manager.getServerId());
-  manager.removeAllListeners();
   manager.stopReconnect();
+  manager.removeAllListeners();
 
   delete appGlobals.gbxClients?.[serverId];
 }
