@@ -2,6 +2,7 @@
 import { ServerResponse } from "@/types/responses";
 import { Session } from "next-auth";
 import { withAuth } from "./auth";
+import { logger } from "./logger";
 import { getErrorMessage } from "./utils";
 
 export async function doServerAction<T>(
@@ -13,7 +14,7 @@ export async function doServerAction<T>(
       data: result,
     };
   } catch (error) {
-    console.error("Error during server action", error);
+    logger.error(error, "Error during server action");
 
     return {
       data: undefined as T,
@@ -30,7 +31,7 @@ export async function doServerActionWithAuth<T>(
   try {
     session = await withAuth(roles);
   } catch (error) {
-    console.error("Error during server action with auth:", error);
+    logger.error(error, "Error during server action with auth");
     return {
       data: undefined as T,
       error: getErrorMessage(error),
@@ -43,7 +44,7 @@ export async function doServerActionWithAuth<T>(
       data: result,
     };
   } catch (error) {
-    console.error("Error during server action with auth:", error);
+    logger.error(error, "Error during server action with auth");
 
     return {
       data: undefined as T,

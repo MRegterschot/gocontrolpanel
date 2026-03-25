@@ -6,6 +6,7 @@ import {
   searchTMXMappacks,
   searchTMXMaps,
 } from "@/lib/api/tmx";
+import { logger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
 import { TMXMappackSearch } from "@/types/api/tmx";
 import { ServerResponse } from "@/types/responses";
@@ -102,7 +103,7 @@ export async function downloadMappack(
           );
         } else {
           errors++;
-          console.error(`Failed to download map ${index + 1}:`, result.reason);
+          logger.error(result, `Failed to download map ${index + 1}`);
         }
       });
 
@@ -178,7 +179,7 @@ export async function addMappackToServer(
       addMapResults.forEach((result, index) => {
         if (result.status === "rejected") {
           errors++;
-          console.error(`Failed to add map ${index + 1}:`, result.reason);
+          logger.error(result, `Failed to add map ${index + 1}`);
         }
       });
 

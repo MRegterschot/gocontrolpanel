@@ -1,6 +1,7 @@
 import { TMXMappackSearch, TMXMapSearch } from "@/types/api/tmx";
 import "server-only";
 import config from "../config";
+import { logger } from "../logger";
 import { withRateLimit } from "../ratelimiter";
 
 const TMX_URL = "https://trackmania.exchange";
@@ -105,7 +106,7 @@ export async function downloadTMXMap(
 
 async function doRequest<T>(url: string, key: string): Promise<T> {
   return withRateLimit<T>(key, async () => {
-    console.log(`Requesting TMX API: ${url}`);
+    logger.trace({ url }, `Requesting TMX API`);
 
     const res = await fetch(url, {
       headers: {

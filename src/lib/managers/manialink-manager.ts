@@ -1,5 +1,6 @@
 import { PlayerInfo } from "@/types/player";
 import "server-only";
+import { logger } from "../logger";
 import ActionGroup from "../manialink/components/action-group";
 import Manialink from "../manialink/components/manialink";
 import { GbxClientManager } from "./gbxclient-manager";
@@ -54,6 +55,11 @@ export default class ManialinkManager {
         ]);
       }
     }
+
+    logger.trace(
+      multi,
+      `Re-displaying manialinks to newly connected player ${player.login}`,
+    );
 
     this.clientManager.client.multicall(multi);
   }
@@ -135,7 +141,7 @@ export default class ManialinkManager {
         );
       }
     } catch (e) {
-      console.error("Error hiding manialink:", e);
+      logger.error(e, "Error hiding manialink");
     }
   }
 

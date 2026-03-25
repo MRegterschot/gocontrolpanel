@@ -29,6 +29,7 @@ import EventEmitter from "events";
 import "server-only";
 import { getClient } from "../dbclient";
 import { appGlobals } from "../global";
+import { logger } from "../logger";
 import {
   formatMessage,
   isEliminated,
@@ -109,7 +110,10 @@ export class GbxClientManager extends EventEmitter {
 
   private onDisconnect() {
     if (!this.isConnected) return;
-    console.log(`Disconnected from GBX client for server ${this.serverId}`);
+    logger.info(
+      { serverId: this.serverId },
+      `Disconnected from GBX client for server`,
+    );
     this.isConnected = false;
     this.pluginManager.unloadPlugins();
     this.emit("disconnect", this.serverId);
@@ -263,7 +267,7 @@ export class GbxClientManager extends EventEmitter {
 
     this.isConnected = true;
     this.emit("connect", server.id);
-    console.log(`Connected to GBX client for server ${server.name}`);
+    logger.info({ name: server.name }, `Connected to GBX client`);
 
     await this.client.call("SetApiVersion", "2023-04-24");
     await this.client.call("EnableCallbacks", true);
@@ -607,8 +611,9 @@ async function onPlayerConnect(manager: GbxClientManager, login: string) {
   try {
     await syncPlayer(playerInfo);
   } catch (error) {
-    console.error(
-      `Failed to sync player ${playerInfo.login} on connect: ${error}`,
+    logger.error(
+      { playerInfo, error },
+      `Failed to sync player ${playerInfo.login} on connect`,
     );
   }
   manager.addActivePlayer(playerInfo);
@@ -1237,7 +1242,7 @@ async function setScriptSettings(manager: GbxClientManager) {
         }
         manager.info.liveInfo.pointsRepartitionMap = repartitionMap;
       } catch (error) {
-        console.error(`Failed to parse complex points repartition: ${error}`);
+        logger.error(error, `Failed to parse complex points repartition`);
       }
     }
   }

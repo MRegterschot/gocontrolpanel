@@ -1,6 +1,7 @@
 "use client";
 
 import { saveFileText } from "@/actions/filemanager";
+import { logger } from "@/lib/logger";
 import { generatePath, getErrorMessage, pathToBreadcrumbs } from "@/lib/utils";
 import { routes } from "@/routes";
 import { cpp } from "@codemirror/lang-cpp";
@@ -57,7 +58,7 @@ export default function TextEditor({
         description: "Your changes have been saved.",
       });
     } catch (error) {
-      console.error("Error saving file:", error);
+      logger.error(error, "Error saving file");
       toast.error("Failed to save file", {
         description: getErrorMessage(error),
       });

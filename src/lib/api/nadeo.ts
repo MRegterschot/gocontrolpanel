@@ -21,6 +21,7 @@ import {
 import { ServerError, ServerResponse } from "@/types/responses";
 import "server-only";
 import { doServerAction } from "../actions";
+import { logger } from "../logger";
 import { withRateLimit } from "../ratelimiter";
 import { getKeyAccountNames, getRedisClient } from "../redis";
 
@@ -41,7 +42,7 @@ export async function authenticate(
 
   const auth = Buffer.from(`${login}:${pass}`).toString("base64");
 
-  console.log("Authenticating with Nadeo...");
+  logger.info("Authenticating with Nadeo...");
   const response = await fetch(`${PROD_URL}/v2/authentication/token/basic`, {
     method: "POST",
     headers: {
@@ -58,7 +59,7 @@ export async function authenticate(
     );
   }
 
-  console.log("Authenticated successfully with Nadeo");
+  logger.info("Authenticated successfully with Nadeo");
 
   const redis = await getRedisClient();
 
@@ -78,7 +79,7 @@ export async function authenticateCredentials(): Promise<string> {
     );
   }
 
-  console.log("Authenticating with Trackmania API...");
+  logger.info("Authenticating with Trackmania API...");
   const response = await fetch(`${API_URL}/access_token`, {
     method: "POST",
     headers: {
@@ -97,7 +98,7 @@ export async function authenticateCredentials(): Promise<string> {
     );
   }
 
-  console.log("Authenticated successfully with Trackmania API");
+  logger.info("Authenticated successfully with Trackmania API");
 
   const redis = await getRedisClient();
 
@@ -356,12 +357,12 @@ export async function doRequest<T>(
     headers.set("Authorization", `nadeo_v1 t=${tokens.accessToken}`);
     headers.set("User-Agent", config.NADEO.CONTACT);
 
-    console.log("Requesting Nadeo API:", url);
+    logger.trace({ url }, "Requesting Nadeo API");
     let res = await fetch(url, { ...init, headers });
 
     if (res.status === 401) {
       tokens = await authenticate(audience);
-      console.log("Retrying Nadeo API request with new tokens");
+      logger.trace("Retrying Nadeo API request with new tokens");
       headers.set("Authorization", `nadeo_v1 t=${tokens.accessToken}`);
       res = await fetch(url, { ...init, headers });
     }
@@ -388,12 +389,12 @@ export async function doCredentialsRequest<T>(
     headers.set("Authorization", `Bearer ${token}`);
     headers.set("User-Agent", config.NADEO.CONTACT);
 
-    console.log("Requesting Trackmania API:", url);
+    logger.trace({ url }, "Requesting Trackmania API");
     let res = await fetch(url, { ...init, headers });
 
     if (res.status === 401) {
       token = await authenticateCredentials();
-      console.log("Retrying Trackmania API request with new token");
+      logger.trace("Retrying Trackmania API request with new token");
       headers.set("Authorization", `Bearer ${token}`);
       res = await fetch(url, { ...init, headers });
     }

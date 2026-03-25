@@ -4,6 +4,7 @@ import {
   markNotificationAsRead,
 } from "@/actions/database/notifications";
 import useWebSocket from "@/hooks/use-websocket";
+import { logger } from "@/lib/logger";
 import { Notifications } from "@/lib/prisma/generated";
 import React, {
   createContext,
@@ -58,7 +59,7 @@ export const NotificationProvider = ({
         }
         setNotifications(data);
       } catch (error) {
-        console.error("Failed to fetch notifications:", error);
+        logger.error(error, "Failed to fetch notifications");
       }
     };
     fetchNotifications();
@@ -89,7 +90,7 @@ export const NotificationProvider = ({
       }
       setNotifications((prev) => prev.map((n) => (n.id === id ? data : n)));
     } catch (error) {
-      console.error("Failed to mark notification as read:", error);
+      logger.error(error, "Failed to mark notification as read");
     }
   };
 

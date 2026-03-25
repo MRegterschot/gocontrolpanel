@@ -3,6 +3,7 @@ import { setHttpServer, setWebSocketServer } from "next-ws/server";
 import { Server } from "node:http";
 import { parse } from "node:url";
 import { WebSocketServer } from "ws";
+import { logger } from "./lib/logger";
 
 const httpServer = new Server();
 setHttpServer(httpServer);
@@ -20,6 +21,6 @@ app.prepare().then(() => {
       await handle(req, res, parsedUrl);
     })
     .listen(3000, () => {
-      console.log("▲ Ready on http://localhost:3000");
+      logger.info("Server is running on http://localhost:3000");
     });
 });
