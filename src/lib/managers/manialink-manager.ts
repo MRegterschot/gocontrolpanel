@@ -67,6 +67,10 @@ export default class ManialinkManager {
   private onPlayerDisconnect(login: string) {
     if (!this.playerManialinks[login]) return;
 
+    logger.trace(
+      { login },
+      `Player disconnected, removing player-specific manialinks for ${login}`,
+    );
     delete this.playerManialinks[login];
   }
 
@@ -106,6 +110,11 @@ export default class ManialinkManager {
 
     const xml = manialink.render();
 
+    logger.trace(
+      { manialinkId: manialink.id, login: manialink.login, xml },
+      `Displaying manialink ${manialink.id} to ${manialink.login ? `player ${manialink.login}` : "all players"}`,
+    );
+
     if (manialink.login) {
       this.clientManager.client.send(
         "SendDisplayManialinkPageToLogin",
@@ -123,6 +132,11 @@ export default class ManialinkManager {
     try {
       const xml = `<?xml version="1.0" encoding="UTF-8"?>
             <manialinks><manialink id="${manialink.id}"></manialink></manialinks>`;
+
+      logger.trace(
+        { manialinkId: manialink.id, login: manialink.login, xml },
+        `Hiding manialink ${manialink.id} for ${manialink.login ? `player ${manialink.login}` : "all players"}`,
+      );
 
       if (manialink.login) {
         this.clientManager.client.send(
@@ -146,6 +160,11 @@ export default class ManialinkManager {
   }
 
   public async destroyManialink(manialink: Manialink, hide = true) {
+    logger.trace(
+      { manialinkId: manialink.id, login: manialink.login },
+      `Destroying manialink ${manialink.id} for ${manialink.login ? `player ${manialink.login}` : "all players"}`,
+    );
+
     if (hide) {
       this.hideManialink(manialink);
     }
