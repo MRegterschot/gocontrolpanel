@@ -18,6 +18,7 @@ import { IncomingMessage } from "node:http";
 import slugid from "slugid";
 import { getWebIdentities } from "./api/nadeo";
 import config from "./config";
+import { logger } from "./logger";
 import { GroupRole } from "./prisma/generated";
 import { getList, hasPermissionSync } from "./utils";
 
@@ -124,7 +125,7 @@ export const authOptions: NextAuthOptions = {
                 token.ubiId = webidentities[0].uid;
               }
             } catch (error) {
-              console.error("Failed to fetch web identities", error);
+              logger.error(error, "Failed to fetch web identities");
             }
           }
 

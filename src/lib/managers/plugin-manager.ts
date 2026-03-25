@@ -4,12 +4,13 @@ import LiveRankingPlugin from "@/plugins/live-ranking";
 import LiveRoundPlugin from "@/plugins/live-round";
 import MapInfoPlugin from "@/plugins/map-info";
 import NotifyAdminPlugin from "@/plugins/notify-admin";
+import PlayerInfoPlugin from "@/plugins/player-info";
 import RecordsInfoPlugin from "@/plugins/records-info";
 import TAActiveRunsPlugin from "@/plugins/ta-active-runs";
 import TALeaderboardPlugin from "@/plugins/ta-leaderboard";
+import { logger } from "../logger";
 import { GbxClientManager } from "./gbxclient-manager";
 import ManialinkManager from "./manialink-manager";
-import PlayerInfoPlugin from "@/plugins/player-info";
 
 export default class PluginManager {
   private clientManager: GbxClientManager;
@@ -39,6 +40,11 @@ export default class PluginManager {
     for (const plugin of pluginsToLoad) {
       this.plugins.set(plugin.getPluginId(), plugin);
     }
+
+    logger.info(
+      { pluginCount: this.plugins.size },
+      `Initialized PluginManager with ${this.plugins.size} plugins`,
+    );
   }
 
   public async loadPlugins() {
@@ -74,6 +80,15 @@ export default class PluginManager {
       plugin.setLoaded(true);
     }
     await this.startPlugins();
+
+    logger.info(
+      clientPlugins.map((p) => ({
+        name: p.plugin.name,
+        enabled: p.enabled,
+        config: p.config,
+      })),
+      `Loaded plugins: ${clientPlugins.map((p) => p.plugin.name).join(", ")}`,
+    );
   }
 
   public async unloadPlugins() {
@@ -82,6 +97,8 @@ export default class PluginManager {
       await plugin.onUnload();
       plugin.setLoaded(false);
     }
+
+    logger.info(`Unloaded all plugins`);
   }
 
   public async startPlugins() {
@@ -89,6 +106,8 @@ export default class PluginManager {
       if (!plugin.isLoaded()) continue;
       await plugin.onStart();
     }
+
+    logger.info(`Started all loaded plugins`);
   }
 
   public async loadPluginById(pluginId: string) {
@@ -106,6 +125,8 @@ export default class PluginManager {
       plugin.setLoaded(true);
     }
     await plugin.onStart();
+
+    logger.info({ pluginId }, `Loaded plugin ${pluginId}`);
   }
 
   public async unloadPluginById(pluginId: string) {
@@ -116,6 +137,8 @@ export default class PluginManager {
       await plugin.onUnload();
       plugin.setLoaded(false);
     }
+
+    logger.info({ pluginId }, `Unloaded plugin ${pluginId}`);
   }
 
   public async reloadPlugins(updateConfigs: boolean = true) {
@@ -155,6 +178,18 @@ export default class PluginManager {
         plugin.setDbPluginId(clientPlugin.plugin.id);
       }
     }
+
+    logger.info(
+      clientPlugins.map((p) => ({
+        name: p.plugin.name,
+        enabled: p.enabled,
+        config: p.config,
+      })),
+      `Reloaded plugins with updated configs: ${clientPlugins
+        .filter((p) => p.enabled)
+        .map((p) => p.plugin.name)
+        .join(", ")}`,
+    );
   }
 
   private async onModeChange(mode: string) {
@@ -190,5 +225,14 @@ export default class PluginManager {
         plugin.setLoaded(false);
       }
     }
+
+    logger.info(
+      { mode },
+      `Mode changed to ${mode}, reloaded plugins for new gamemode`,
+    );
+  }
+
+  public async resendAllManialinks() {
+    await this.manialinkManager.resendAllManialinks();
   }
 }

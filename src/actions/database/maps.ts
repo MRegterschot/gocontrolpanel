@@ -2,6 +2,7 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getAccountNames, getMapsInfo } from "@/lib/api/nadeo";
 import { getClient } from "@/lib/dbclient";
+import { logger } from "@/lib/logger";
 import { getGbxClient } from "@/lib/managers/gbxclient-manager";
 import { Maps, Prisma } from "@/lib/prisma/generated";
 import { SMapInfo } from "@/types/gbx/map";
@@ -147,7 +148,7 @@ export async function getMapList(
               );
 
               if (newMaps.some((m) => m.uid === mapInfo.UId)) {
-                console.warn(`Duplicate map UID found: ${mapInfo.UId}`);
+                logger.warn(mapInfo, `Duplicate map UID found: ${mapInfo.UId}`);
                 continue;
               }
 
@@ -172,7 +173,7 @@ export async function getMapList(
                 deletedAt: null,
               });
             } catch (err) {
-              console.warn(`Skipping map "${map.FileName}" due to error:`, err);
+              logger.error(err, `Skipping map "${map.FileName}"`);
               continue;
             }
           }
@@ -298,7 +299,7 @@ export async function getMapsByUids(
           const batch = missingUids.slice(i, i + BATCH_SIZE);
           const { data: apiMapsInfo, error } = await getMapsInfo(batch);
           if (error) {
-            console.warn("Failed to fetch map info from Nadeo API:", error);
+            logger.error("Failed to fetch map info from Nadeo API: " + error);
             continue;
           }
 
@@ -309,7 +310,10 @@ export async function getMapsByUids(
 
           for (const mapInfo of apiMapsInfo) {
             if (newMaps.some((m) => m.uid === mapInfo.mapUid)) {
-              console.warn(`Duplicate map UID found: ${mapInfo.mapUid}`);
+              logger.warn(
+                mapInfo,
+                `Duplicate map UID found: ${mapInfo.mapUid}`,
+              );
               continue;
             }
 

@@ -72,7 +72,6 @@ export default function AddHetznerNetworkForm({
 
   async function onSubmit(values: AddHetznerNetworkSchemaType) {
     try {
-      console.log("Submitting values:", values);
       const { error } = await createHetznerNetwork(projectId, values);
       if (error) {
         throw new Error(error);

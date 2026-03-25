@@ -131,6 +131,10 @@ export const routePermissions = {
       create: ["servers:create"],
       edit: ["servers:edit", "servers:id:admin"],
       delete: ["servers:delete", "servers:id:admin"],
+      clients: {
+        view: ["servers:clients:view", "servers::admin"],
+        manage: ["servers:clients:manage"],
+      },
     },
     roles: {
       view: ["roles:view"],

@@ -2,6 +2,7 @@
 
 import { CreateFileEntrySchemaType } from "@/forms/server/files/create-file-entry-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
+import { logger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
 import { ContentType, File, FileEntry } from "@/types/filemanager";
 import { ServerError, ServerResponse } from "@/types/responses";
@@ -296,7 +297,7 @@ export async function getScripts(
         const allScripts = [...data, ...defaultScripts];
         return [...new Set(allScripts)];
       } catch (error) {
-        console.error("Error getting scripts:", error);
+        logger.error(error, "Error getting scripts");
         return defaultScripts;
       }
     },

@@ -3,6 +3,7 @@ import Redis from "ioredis";
 import "server-only";
 import config from "./config";
 import { appGlobals } from "./global";
+import { logger } from "./logger";
 
 export async function getRedisClient() {
   if (!appGlobals.redis) {
@@ -13,13 +14,13 @@ export async function getRedisClient() {
         reconnectOnError: () => false,
       });
 
-      console.log("Redis client initialized");
+      logger.info("Redis client initialized");
       return appGlobals.redis;
     } catch (error) {
       if (process.env.NODE_ENV === "production") {
-        console.warn("Redis not available during build, continuing...");
+        logger.warn("Redis not available during build, continuing...");
       } else {
-        console.error("Error connecting to Redis:", error);
+        logger.error(error, "Error connecting to Redis");
         throw new Error("Failed to connect to Redis");
       }
     }

@@ -58,18 +58,10 @@ export async function getServersMinimal(): Promise<
         deletedAt: null,
       };
 
-      if (
-        !session.user.admin &&
-        !session.user.permissions.includes("servers:view")
-      ) {
-        const userServers = session.user.servers.map((s) => s.id);
-        session.user.groups.forEach((group) => {
-          group.servers.forEach((server) => {
-            if (!userServers.includes(server.id)) {
-              userServers.push(server.id);
-            }
-          });
-        });
+      if (!session.user.admin) {
+        const userServers = session.user.servers
+          .filter((s) => s.role === "Admin")
+          .map((s) => s.id);
 
         where.id = { in: userServers };
       }
@@ -106,7 +98,9 @@ export async function getServersPaginated(
         !session.user.admin &&
         !session.user.permissions.includes("servers:view")
       ) {
-        const userServerIds = session.user.servers.map((s) => s.id);
+        const userServerIds = session.user.servers
+          .filter((s) => s.role === "Moderator" || s.role === "Admin")
+          .map((s) => s.id);
 
         if (userServerIds.length === 0) {
           return {

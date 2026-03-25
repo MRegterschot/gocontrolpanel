@@ -44,8 +44,7 @@ export default function MapInfo({
       try {
         const { data, error } = await getMapByUid(map);
         if (error) {
-          console.error("Error fetching map info:", error);
-          return;
+          throw new Error(error);
         }
 
         setMapInfo(data);

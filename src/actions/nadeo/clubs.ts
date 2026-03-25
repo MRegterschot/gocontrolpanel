@@ -12,6 +12,7 @@ import {
   getClubRoom,
   getClubs,
 } from "@/lib/api/nadeo";
+import { logger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
 import {
   getKeyClubActivities,
@@ -450,7 +451,7 @@ export async function downloadRoom(
           formData.append("paths[]", `/UserData/Maps/Downloaded/${room.name}`);
         } else {
           errors++;
-          console.error(`Failed to download map ${index + 1}:`, result.reason);
+          logger.error(result, `Failed to download map ${index + 1}`);
         }
       });
 
@@ -526,7 +527,7 @@ export async function addRoomToServer(
       addResults.forEach((result, index) => {
         if (result.status === "rejected") {
           errors++;
-          console.error(`Failed to add map ${index + 1}:`, result.reason);
+          logger.error(result, `Failed to add map ${index + 1}`);
         }
       });
 

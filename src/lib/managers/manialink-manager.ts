@@ -1,5 +1,6 @@
 import { PlayerInfo } from "@/types/player";
 import "server-only";
+import { logger } from "../logger";
 import ActionGroup from "../manialink/components/action-group";
 import Manialink from "../manialink/components/manialink";
 import { GbxClientManager } from "./gbxclient-manager";
@@ -55,12 +56,21 @@ export default class ManialinkManager {
       }
     }
 
+    logger.trace(
+      multi,
+      `Re-displaying manialinks to newly connected player ${player.login}`,
+    );
+
     this.clientManager.client.multicall(multi);
   }
 
   private onPlayerDisconnect(login: string) {
     if (!this.playerManialinks[login]) return;
 
+    logger.trace(
+      { login },
+      `Player disconnected, removing player-specific manialinks for ${login}`,
+    );
     delete this.playerManialinks[login];
   }
 
@@ -100,6 +110,11 @@ export default class ManialinkManager {
 
     const xml = manialink.render();
 
+    logger.trace(
+      { manialinkId: manialink.id, login: manialink.login, xml },
+      `Displaying manialink ${manialink.id} to ${manialink.login ? `player ${manialink.login}` : "all players"}`,
+    );
+
     if (manialink.login) {
       this.clientManager.client.send(
         "SendDisplayManialinkPageToLogin",
@@ -118,6 +133,11 @@ export default class ManialinkManager {
       const xml = `<?xml version="1.0" encoding="UTF-8"?>
             <manialinks><manialink id="${manialink.id}"></manialink></manialinks>`;
 
+      logger.trace(
+        { manialinkId: manialink.id, login: manialink.login, xml },
+        `Hiding manialink ${manialink.id} for ${manialink.login ? `player ${manialink.login}` : "all players"}`,
+      );
+
       if (manialink.login) {
         this.clientManager.client.send(
           "SendDisplayManialinkPageToLogin",
@@ -135,11 +155,16 @@ export default class ManialinkManager {
         );
       }
     } catch (e) {
-      console.error("Error hiding manialink:", e);
+      logger.error(e, "Error hiding manialink");
     }
   }
 
   public async destroyManialink(manialink: Manialink, hide = true) {
+    logger.trace(
+      { manialinkId: manialink.id, login: manialink.login },
+      `Destroying manialink ${manialink.id} for ${manialink.login ? `player ${manialink.login}` : "all players"}`,
+    );
+
     if (hide) {
       this.hideManialink(manialink);
     }
@@ -157,6 +182,26 @@ export default class ManialinkManager {
         }
       }
     }
+  }
+
+  public async resendAllManialinks() {
+    for (const manialink of Object.values(this.publicManialinks)) {
+      await this.displayManialink(manialink, false);
+    }
+
+    for (const playerManialinks of Object.values(this.playerManialinks)) {
+      for (const manialink of Object.values(playerManialinks)) {
+        await this.displayManialink(manialink, false);
+      }
+    }
+
+    logger.trace(
+      {
+        publicManialinks: this.publicManialinks,
+        playerManialinks: this.playerManialinks,
+      },
+      `Resent all manialinks to all players`,
+    );
   }
 
   public getClientManager(): GbxClientManager {
