@@ -8,12 +8,26 @@ export async function stopReconnect(
   serverId: string,
 ): Promise<ServerResponse<void>> {
   return doServerActionWithAuth(["servers:clients:manage"], async () => {
-    const client = await getGbxClientManager(serverId);
+    const manager = await getGbxClientManager(serverId);
 
-    if (!client) {
+    if (!manager) {
       throw new Error("Client not found");
     }
 
-    client.stopReconnect();
+    manager.stopReconnect();
+  });
+}
+
+export async function triggerReconnect(
+  serverId: string,
+): Promise<ServerResponse<void>> {
+  return doServerActionWithAuth(["servers:clients:manage"], async () => {
+    const manager = await getGbxClientManager(serverId);
+
+    if (!manager) {
+      throw new Error("Client not found");
+    }
+
+    manager.tryConnectWithRetry();
   });
 }

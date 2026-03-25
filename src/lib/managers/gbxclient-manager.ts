@@ -220,7 +220,7 @@ export class GbxClientManager extends EventEmitter {
     return this.reconnect.start + this.reconnect.delay;
   }
 
-  private async tryConnectWithRetry() {
+  public async tryConnectWithRetry() {
     try {
       await this.connect();
     } catch {

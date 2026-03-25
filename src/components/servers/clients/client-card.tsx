@@ -1,9 +1,12 @@
+import { stopReconnect, triggerReconnect } from "@/actions/gbx/clients";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { getErrorMessage } from "@/lib/utils";
 import { ServerClient } from "@/types/server";
 import { IconPlugConnected, IconPlugConnectedX } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function ClientCard({ client }: { client: ServerClient }) {
   const [, forceUpdate] = useState(0);
@@ -23,6 +26,36 @@ export default function ClientCard({ client }: { client: ServerClient }) {
   if (client.reconnectingAt !== null) {
     timeRemaining = client.reconnectingAt - Date.now();
   }
+
+  const handleStopReconnect = async () => {
+    try {
+      const { data, error } = await stopReconnect(client.serverId);
+      if (error) {
+        throw new Error(error);
+      }
+
+      toast.success(`Stopped reconnecting to ${client.name}`);
+    } catch (err) {
+      toast.error(`Failed to stop reconnecting to ${client.name}`, {
+        description: getErrorMessage(err),
+      });
+    }
+  };
+
+  const handleTriggerReconnect = async () => {
+    try {
+      const { data, error } = await triggerReconnect(client.serverId);
+      if (error) {
+        throw new Error(error);
+      }
+
+      toast.success(`Triggered reconnect to ${client.name}`);
+    } catch (err) {
+      toast.error(`Failed to trigger reconnect to ${client.name}`, {
+        description: getErrorMessage(err),
+      });
+    }
+  };
 
   return (
     <Card className="p-4 flex flex-col gap-4">
@@ -56,11 +89,19 @@ export default function ClientCard({ client }: { client: ServerClient }) {
         </div>
       </div>
 
-      <div>
-        <Button variant="outline" disabled={!client.isReconnecting}>
-          Stop Reconnecting
-        </Button>
-      </div>
+      {!client.isConnected && (
+        <div className="flex gap-2">
+          {client.isReconnecting ? (
+            <Button variant="outline" onClick={handleStopReconnect}>
+              Stop Reconnecting
+            </Button>
+          ) : (
+            <Button variant="outline" onClick={handleTriggerReconnect}>
+              Trigger Reconnect
+            </Button>
+          )}
+        </div>
+      )}
     </Card>
   );
 }
