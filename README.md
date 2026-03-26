@@ -187,6 +187,7 @@ Make sure to update the environment variables for the services in your `docker-c
   - `DEFAULT_PERMISSIONS`: Comma-separated list of default permissions for new users. You can find a list of available permissions in the [Permissions](#permissions) section.
   - **NADEO Configurations**: Make sure to update `NADEO_CLIENT_ID`, `NADEO_CLIENT_SECRET`, `NADEO_REDIRECT_URI`, `NADEO_SERVER_LOGIN`, `NADEO_SERVER_PASSWORD` and `NADEO_CONTACT` with your valid NADEO API credentials. Nadeo API credentials can be obtained from the [Nadeo API manager](https://api.trackmania.com/manager). And the server login and password can be obtained from the [dedicated server manager](https://www.trackmania.com/player/dedicated-servers).
   - `HETZNER_KEY`: If you are using the Hetzner Cloud API, make sure to set the this environment variable so that your API Tokens will be encrypted and stored securely in the database. This variable can be any random string, e.g., `myhetznerkey`.
+  - `LOG_LEVEL`: Set the log level for the GoControlPanel, this can be `trace`, `debug`, `info`, `warn`, `error` or `fatal`. The default is `info`.
 
 - **Dedicated Server Environment Variables**:
   - `TM_MASTERSERVER_LOGIN`: Login for the dedicated server (same as `NADEO_SERVER_LOGIN` in GoControlPanel).
@@ -238,6 +239,7 @@ gocontrolpanel:
     REDIS_URI: redis://redis:6379
     DATABASE_URL: mysql://gocontrolpanel:VettePanel123@db:3306/gocontrolpanel
     HETZNER_KEY:
+    LOG_LEVEL: info
   depends_on:
     - db
     - redis
@@ -304,6 +306,7 @@ Make sure to update the environment variables for the added services in your `do
   - `DEFAULT_PERMISSIONS`: Comma-separated list of default permissions for new users. You can find a list of available permissions in the [Permissions](#permissions) section.
   - **NADEO Configurations**: Make sure to update `NADEO_CLIENT_ID`, `NADEO_CLIENT_SECRET`, `NADEO_REDIRECT_URI`, `NADEO_SERVER_LOGIN`, `NADEO_SERVER_PASSWORD` and `NADEO_CONTACT` with your valid NADEO API credentials. Nadeo API credentials can be obtained from the [Nadeo API manager](https://api.trackmania.com/manager). And the server login and password can be found in your existing stack configuration under the `dedicated` or `trackmania` service.
   - `HETZNER_KEY`: If you are using the Hetzner Cloud API, make sure to set the this environment variable so that your API Tokens will be encrypted and stored securely in the database. This variable can be any random string, e.g., `myhetznerkey`.
+  - `LOG_LEVEL`: Set the log level for the GoControlPanel, this can be `trace`, `debug`, `info`, `warn`, `error` or `fatal`. The default is `info`.
 
 > **Note:** Make sure you are using the correct service name for the dedicated server. For **PyPlanet**, the service name is usually `dedicated`, and for **EvoSC**, it is `trackmania`.
 
@@ -340,6 +343,8 @@ The **GoControlPanel** supports a permission system that allows you to manage us
 - servers:create
 - servers:edit
 - servers:delete
+- servers:clients:view
+- servers:clients:manage
 - hetzner:view
 - hetzner:create
 - hetzner:edit
