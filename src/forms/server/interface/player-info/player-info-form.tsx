@@ -31,12 +31,12 @@ const DEVICE_OPTIONS = [
 ];
 
 const CAMERA_OPTIONS = [
-  { label: "1", value: "1" },
-  { label: "2", value: "2" },
-  { label: "3", value: "3" },
-  { label: "Alt 1", value: "Alt 1" },
-  { label: "Alt 2", value: "Alt 2" },
-  { label: "Alt 3", value: "Alt 3" },
+  { label: "Cam 1", value: "Cam 1" },
+  { label: "Cam 2", value: "Cam 2" },
+  { label: "Cam 3", value: "Cam 3" },
+  { label: "Alt Cam 1", value: "Alt Cam 1" },
+  { label: "Alt Cam 2", value: "Alt Cam 2" },
+  { label: "Alt Cam 3", value: "Alt Cam 3" },
 ];
 
 export default function PlayerInfoForm({
@@ -171,7 +171,7 @@ export default function PlayerInfoForm({
                   name={`playerInfos.${index}.camera`}
                   className="w-full"
                   rootClassName="flex-1"
-                  placeholder="1, 2, Alt 1, etc."
+                  placeholder="Cam 1, Cam 2, Alt Cam 1, etc."
                   options={CAMERA_OPTIONS}
                   type="select"
                 />
