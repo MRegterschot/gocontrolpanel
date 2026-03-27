@@ -1,11 +1,9 @@
 import { parseTokenFromRequest } from "@/lib/auth";
-import { getClient } from "@/lib/dbclient";
 import {
   GbxClientManager,
   getGbxClientManager,
 } from "@/lib/managers/gbxclient-manager";
 import { Notifications } from "@/lib/prisma/generated";
-import { ServerInfo } from "@/types/server";
 
 export function GET() {
   const headers = new Headers();
@@ -25,8 +23,6 @@ export async function SOCKET(
     return;
   }
 
-  const db = getClient();
-
   const servers = token?.groups?.flatMap((group) => group.servers) || [];
   const adminServers: string[] = token.groups?.flatMap((group) =>
     group.role === "Admin" ? group.servers.map((server) => server.id) : [],
@@ -38,33 +34,22 @@ export async function SOCKET(
     }
   });
 
-  const serverManagers: {
-    manager: GbxClientManager;
-    server: ServerInfo;
-  }[] = [];
+  const serverManagers: GbxClientManager[] = [];
 
   for (const server of servers) {
     const manager = await getGbxClientManager(server.id);
     if (manager) {
-      serverManagers.push({
-        manager,
-        server: {
-          id: server.id,
-          name: server.name,
-          filemanagerUrl: server.filemanagerUrl || undefined,
-          isConnected: manager.getIsConnected(),
-        },
-      });
+      serverManagers.push(manager);
     }
   }
 
   const listenerId = crypto.randomUUID();
 
-  for (const { manager, server } of serverManagers) {
+  for (const manager of serverManagers) {
     manager.addListeners(listenerId, {
       adminCommand: (notifications: Notifications[]) => {
         const notification = notifications.find(
-          (n) => n.serverId === server.id && n.userId === token.id,
+          (n) => n.serverId === manager.getServerId() && n.userId === token.id,
         );
 
         if (!notification) return;
@@ -85,7 +70,7 @@ export async function SOCKET(
   }
 
   const cleanup = () => {
-    for (const { manager } of serverManagers) {
+    for (const manager of serverManagers) {
       manager.removeListeners(listenerId);
     }
   };
