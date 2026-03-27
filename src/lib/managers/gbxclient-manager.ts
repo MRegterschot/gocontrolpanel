@@ -29,6 +29,7 @@ import EventEmitter from "events";
 import "server-only";
 import { getClient } from "../dbclient";
 import { appGlobals } from "../global";
+import { logger } from "../logger";
 import {
   formatMessage,
   isEliminated,
@@ -42,14 +43,24 @@ import PluginManager from "./plugin-manager";
 
 type Listener<T = any> = (data: T) => void;
 type CommandListener = (args: string[], login: string) => void;
+type Reconnect = {
+  timeout: NodeJS.Timeout | null;
+  start: number | null;
+  delay: number;
+};
 
 export class GbxClientManager extends EventEmitter {
   client: GbxClient;
   pluginManager: PluginManager;
   private serverId: string;
   info: ServerClientInfo;
+  serverName: string | null = null;
   private isConnected = false;
-  private reconnectTimeout: NodeJS.Timeout | null = null;
+  private reconnect: Reconnect = {
+    timeout: null,
+    start: null,
+    delay: 15000,
+  };
   private listenerMap: Map<string, Record<string, (...args: any[]) => void>> =
     new Map();
   private actionListeners = new Map<string, Listener[]>();
@@ -100,7 +111,10 @@ export class GbxClientManager extends EventEmitter {
 
   private onDisconnect() {
     if (!this.isConnected) return;
-    console.log(`Disconnected from GBX client for server ${this.serverId}`);
+    logger.info(
+      { serverId: this.serverId },
+      `Disconnected from GBX client for server`,
+    );
     this.isConnected = false;
     this.pluginManager.unloadPlugins();
     this.emit("disconnect", this.serverId);
@@ -178,24 +192,40 @@ export class GbxClientManager extends EventEmitter {
     this.emitAction(pageAnswer.Answer, pageAnswer);
   }
 
-  stopReconnect() {
+  public stopReconnect() {
+    this.emit("reconnect", this.serverId, "stop", null);
     this.client.removeListener("disconnect", this.onDisconnect.bind(this));
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
-      this.reconnectTimeout = null;
+    if (this.reconnect.timeout) {
+      clearTimeout(this.reconnect.timeout);
+      this.reconnect.timeout = null;
     }
   }
 
-  private scheduleReconnect() {
-    if (this.reconnectTimeout) return; // avoid multiple schedules
+  private scheduleReconnect(delay: number = 15000) {
+    if (this.reconnect.timeout) return; // avoid multiple schedules
 
-    this.reconnectTimeout = setTimeout(() => {
-      this.reconnectTimeout = null;
+    this.reconnect.delay = delay;
+    this.reconnect.start = Date.now();
+    this.emit("reconnect", this.serverId, "try", this.reconnect.start + delay);
+
+    this.reconnect.timeout = setTimeout(() => {
+      this.reconnect.timeout = null;
+      this.reconnect.start = null;
+      this.reconnect.delay = 0;
+
       this.tryConnectWithRetry();
-    }, 15000);
+    }, delay);
   }
 
-  private async tryConnectWithRetry() {
+  public getReconnectAt(): number | null {
+    if (!this.reconnect.timeout || this.reconnect.start === null) {
+      return null;
+    }
+
+    return this.reconnect.start + this.reconnect.delay;
+  }
+
+  public async tryConnectWithRetry() {
     try {
       await this.connect();
     } catch {
@@ -215,6 +245,8 @@ export class GbxClientManager extends EventEmitter {
         },
       },
     });
+
+    this.serverName = server?.name ?? null;
 
     if (!server) throw new Error(`Server ${this.serverId} not found`);
 
@@ -238,7 +270,7 @@ export class GbxClientManager extends EventEmitter {
 
     this.isConnected = true;
     this.emit("connect", server.id);
-    console.log(`Connected to GBX client for server ${server.name}`);
+    logger.info({ name: server.name }, `Connected to GBX client`);
 
     await this.client.call("SetApiVersion", "2023-04-24");
     await this.client.call("EnableCallbacks", true);
@@ -391,6 +423,10 @@ export class GbxClientManager extends EventEmitter {
 
     return repartition;
   }
+
+  public async resendAllManialinks() {
+    this.pluginManager.resendAllManialinks();
+  }
 }
 
 export async function getGbxClient(serverId: string): Promise<GbxClient> {
@@ -420,8 +456,8 @@ export async function deleteGbxClientManager(serverId: string): Promise<void> {
   if (!manager) return;
 
   manager.emit("disconnect", manager.getServerId());
-  manager.removeAllListeners();
   manager.stopReconnect();
+  manager.removeAllListeners();
 
   delete appGlobals.gbxClients?.[serverId];
 }
@@ -582,8 +618,9 @@ async function onPlayerConnect(manager: GbxClientManager, login: string) {
   try {
     await syncPlayer(playerInfo);
   } catch (error) {
-    console.error(
-      `Failed to sync player ${playerInfo.login} on connect: ${error}`,
+    logger.error(
+      { playerInfo, error },
+      `Failed to sync player ${playerInfo.login} on connect`,
     );
   }
   manager.addActivePlayer(playerInfo);
@@ -1212,7 +1249,7 @@ async function setScriptSettings(manager: GbxClientManager) {
         }
         manager.info.liveInfo.pointsRepartitionMap = repartitionMap;
       } catch (error) {
-        console.error(`Failed to parse complex points repartition: ${error}`);
+        logger.error(error, `Failed to parse complex points repartition`);
       }
     }
   }

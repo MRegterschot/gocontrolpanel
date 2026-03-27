@@ -23,3 +23,11 @@ export interface ServerClientInfo {
   chat?: ChatConfig;
   plugins: ServerPluginsWithPlugin[];
 }
+
+export interface ServerClient {
+  serverId: string;
+  name: string;
+  isConnected: boolean;
+  isReconnecting: boolean;
+  reconnectingAt: number | null;
+}

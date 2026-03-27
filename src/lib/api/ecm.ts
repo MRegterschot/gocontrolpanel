@@ -5,6 +5,7 @@ import {
 import { isAxiosError } from "axios";
 import "server-only";
 import { axiosECM } from "../axios/ecircuitmania";
+import { logger } from "../logger";
 
 export async function ecmOnDriverFinish(
   apiKey: string,
@@ -12,10 +13,13 @@ export async function ecmOnDriverFinish(
 ): Promise<void> {
   const { matchId, authToken } = getMatchIdAndAuthToken(apiKey);
 
-  console.log("Sending ECM driver finish event", {
-    matchId,
-    body: JSON.stringify(body),
-  });
+  logger.trace(
+    {
+      matchId,
+      body: JSON.stringify(body),
+    },
+    "Sending ECM driver finish event",
+  );
 
   try {
     const res = await axiosECM.post(
@@ -28,23 +32,32 @@ export async function ecmOnDriverFinish(
       },
     );
 
-    console.log("ECM driver finish response", {
-      matchId,
-      status: res.status,
-      data: res.data,
-    });
+    logger.trace(
+      {
+        matchId,
+        status: res.status,
+        data: res.data,
+      },
+      "ECM driver finish response",
+    );
   } catch (error) {
     if (isAxiosError(error)) {
-      console.error("ECM driver finish error", {
-        matchId,
-        status: error.response?.status,
-        data: error.response?.data,
-      });
+      logger.error(
+        {
+          matchId,
+          status: error.response?.status,
+          data: error.response?.data,
+        },
+        "ECM driver finish error",
+      );
     } else {
-      console.error("ECM driver finish unexpected error", {
-        matchId,
-        error,
-      });
+      logger.error(
+        {
+          matchId,
+          error,
+        },
+        "ECM driver finish unexpected error",
+      );
     }
   }
 }
@@ -55,10 +68,13 @@ export async function ecmOnRoundEnd(
 ): Promise<void> {
   const { matchId, authToken } = getMatchIdAndAuthToken(apiKey);
 
-  console.log("Sending ECM round end event", {
-    matchId,
-    body: JSON.stringify(body),
-  });
+  logger.trace(
+    {
+      matchId,
+      body: JSON.stringify(body),
+    },
+    "Sending ECM round end event",
+  );
 
   try {
     const res = await axiosECM.post(
@@ -71,23 +87,32 @@ export async function ecmOnRoundEnd(
       },
     );
 
-    console.log("ECM round end response", {
-      matchId,
-      status: res.status,
-      data: res.data,
-    });
+    logger.trace(
+      {
+        matchId,
+        status: res.status,
+        data: res.data,
+      },
+      "ECM round end response",
+    );
   } catch (error) {
     if (isAxiosError(error)) {
-      console.error("ECM round end error", {
-        matchId,
-        status: error.response?.status,
-        data: error.response?.data,
-      });
+      logger.error(
+        {
+          matchId,
+          status: error.response?.status,
+          data: error.response?.data,
+        },
+        "ECM round end error",
+      );
     } else {
-      console.error("ECM round end unexpected error", {
-        matchId,
-        error,
-      });
+      logger.error(
+        {
+          matchId,
+          error,
+        },
+        "ECM round end unexpected error",
+      );
     }
   }
 }
@@ -98,6 +123,12 @@ function getMatchIdAndAuthToken(apiKey: string): {
 } {
   const [matchId, authToken] = apiKey.split("_");
   if (!matchId || !authToken) {
+    logger.error(
+      {
+        apiKey,
+      },
+      "Invalid ECM API key format",
+    );
     throw new Error("Invalid ECM API key");
   }
   return { matchId, authToken };

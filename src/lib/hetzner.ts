@@ -2,6 +2,7 @@ import crypto from "crypto";
 import "server-only";
 import config from "./config";
 import { getClient } from "./dbclient";
+import { logger } from "./logger";
 import { Prisma } from "./prisma/generated";
 import { getList } from "./utils";
 
@@ -47,7 +48,7 @@ export function decryptHetznerToken(encryptedBase64: string): string {
     ]);
     return decrypted.toString("utf8");
   } catch (error) {
-    console.error("Decryption failed:", error);
+    logger.error(error, "Decryption failed");
     return encryptedBase64; // Return the original string if decryption fails
   }
 }

@@ -23,15 +23,17 @@ export async function getLocalRecord(serverId: string, mapUid: string) {
     },
   });
 
-  const serverIds = groups.flatMap((group) =>
-    group.groupServers.map((gs) => gs.serverId),
-  );
+  const serverIds = groups
+    .flatMap((group) => group.groupServers.map((gs) => gs.serverId))
+    .concat(serverId); // Include the original serverId as well
+
+  const uniqueServerIds = Array.from(new Set(serverIds));
 
   // Find the best record for the given map on the given server, if multiple records with equal time exist, return the earliest one
   const record = await db.records.findFirst({
     where: {
       serverId: {
-        in: serverIds,
+        in: uniqueServerIds,
       },
       mapUid,
       deletedAt: null,

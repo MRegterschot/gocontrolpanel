@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { PaginationResponse, ServerResponse } from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
 import { useEffect, useState } from "react";
@@ -44,7 +45,7 @@ export const usePaginationAPI = <TData, TFetch>(
       setData(fetchedData);
       setTotalCount(fetchedTotalCount);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      logger.error(error, "Error fetching data");
     } finally {
       setLoading(false);
     }

@@ -1,8 +1,8 @@
+import { createNotifications } from "@/actions/database/server-only/notifications";
 import { getPlayerInfo } from "@/actions/gbx/server-only";
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import ManialinkManager from "@/lib/managers/manialink-manager";
 import Widget from "@/lib/manialink/components/widget";
-import { AdminCommand } from "@/types/commands";
 import { PlayerManialinkPageAnswer } from "@/types/gbx/player";
 import Plugin from "..";
 
@@ -60,13 +60,11 @@ export default class NotifyAdminPlugin extends Plugin {
       player = await getPlayerInfo(this.clientManager.client, pageAnswer.Login);
     }
 
-    const adminCommand: AdminCommand = {
-      serverId: this.clientManager.getServerId(),
-      login: player.login,
-      name: player.nickName,
-      message: "",
-      timestamp: new Date(),
-    };
+    const notifications = await createNotifications(
+      this.clientManager.getServerId(),
+      "adminCommand",
+      `${player.nickName} asked for help on server ${this.clientManager.serverName}`,
+    );
 
     this.clientManager.client.call(
       "ChatSendServerMessageToLogin",
@@ -74,7 +72,7 @@ export default class NotifyAdminPlugin extends Plugin {
       pageAnswer.Login,
     );
 
-    this.clientManager.emit("adminCommand", adminCommand);
+    this.clientManager.emit("adminCommand", notifications);
   };
 
   onAdminCommand = async (args: string[], login: string) => {
@@ -86,13 +84,12 @@ export default class NotifyAdminPlugin extends Plugin {
       player = await getPlayerInfo(this.clientManager.client, login);
     }
 
-    const adminCommand: AdminCommand = {
-      serverId: this.clientManager.getServerId(),
-      login: player.login,
-      name: player.nickName,
-      message: args.join(" "),
-      timestamp: new Date(),
-    };
+    const notifications = await createNotifications(
+      this.clientManager.getServerId(),
+      "adminCommand",
+      `${player.nickName} asked for help on server ${this.clientManager.serverName}`,
+      args.join(" ") || undefined,
+    );
 
     this.clientManager.client.call(
       "ChatSendServerMessageToLogin",
@@ -100,6 +97,6 @@ export default class NotifyAdminPlugin extends Plugin {
       login,
     );
 
-    this.clientManager.emit("adminCommand", adminCommand);
+    this.clientManager.emit("adminCommand", notifications);
   };
 }

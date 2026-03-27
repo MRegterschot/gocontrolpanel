@@ -14,8 +14,10 @@
 
 main(){
   declare RecordsInfo RecordsInfos for This;
+  declare Text localRecordText for This;
   declare Integer LastRecordsInfosUpdate for This;
   declare Text recordsInfoJson = """{{{ default data.recordsInfoJson '{}' }}}""";
+  localRecordText = "{{{ default data.localRecordText 'LR' }}}";
 
   RecordsInfos.fromjson(recordsInfoJson);
   LastRecordsInfosUpdate = GameTime;

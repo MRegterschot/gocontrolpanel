@@ -2,6 +2,7 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { downloadFile, getSeasonalCampaigns } from "@/lib/api/nadeo";
+import { logger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
 import {
   getKeyCampaign,
@@ -152,7 +153,7 @@ export async function downloadCampaign(
           );
         } else {
           errors++;
-          console.error(`Failed to download map ${index + 1}:`, result.reason);
+          logger.error(result, `Failed to download map ${index + 1}`);
         }
       });
 
@@ -235,7 +236,7 @@ export async function addCampaignToServer(
       addResults.forEach((result, index) => {
         if (result.status === "rejected") {
           errors++;
-          console.error(`Failed to add map ${index + 1}:`, result.reason);
+          logger.error(result, `Failed to add map ${index + 1}`);
         }
       });
 

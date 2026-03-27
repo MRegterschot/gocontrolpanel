@@ -2,6 +2,7 @@ import MappacksTab from "@/components/tmx/tabs/mappacks-tab";
 import MapsTab from "@/components/tmx/tabs/maps-tab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { hasPermission } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 import { getFileManagerHealth } from "@/lib/managers/file-manager";
 import { routePermissions, routes } from "@/routes";
 import { redirect } from "next/navigation";
@@ -22,7 +23,7 @@ export default async function ServerTMXPage({
   try {
     fmHealth = await getFileManagerHealth(id);
   } catch (err) {
-    console.error("Failed to fetch file manager:", err);
+    logger.error(err, "Failed to fetch file manager");
   }
 
   return (

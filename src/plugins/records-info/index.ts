@@ -6,6 +6,7 @@ import ManialinkManager from "@/lib/managers/manialink-manager";
 import Widget from "@/lib/manialink/components/widget";
 import { SMapInfo } from "@/types/gbx/map";
 import { Waypoint } from "@/types/gbx/waypoint";
+import { RecordsInfoPluginConfig } from "@/types/plugins/records-info";
 import Plugin from "..";
 
 type RecordsInfo = {
@@ -19,9 +20,10 @@ type RecordsInfo = {
   };
 };
 
-export default class RecordsInfoPlugin extends Plugin {
+export default class RecordsInfoPlugin extends Plugin<RecordsInfoPluginConfig | null> {
   static pluginId = "records-info";
   private widget: Widget;
+  private liveFastestTime: number | null = null;
   private recordsInfo: RecordsInfo = {
     worldRecord: {
       time: 0,
@@ -62,10 +64,29 @@ export default class RecordsInfoPlugin extends Plugin {
   }
 
   async onBeginMap() {
+    this.liveFastestTime = null;
     this.updateRecordsInfo();
   }
 
+  async onConfigUpdate() {
+    this.widget.setData({
+      recordsInfoJson: JSON.stringify(this.recordsInfo),
+      localRecordText: this.config?.localRecordText || "LR",
+    });
+    this.widget.update();
+  }
+
   async onPlayerFinish(waypoint: Waypoint) {
+    if (
+      waypoint.racetime === 0 ||
+      (this.liveFastestTime !== null &&
+        waypoint.racetime >= this.liveFastestTime)
+    ) {
+      return;
+    }
+
+    this.liveFastestTime = waypoint.racetime;
+
     const beatLR = this.fasterThanLocalRecord(waypoint.racetime);
     const beatWR = this.fasterThanWorldRecord(waypoint.racetime);
 
@@ -91,6 +112,7 @@ export default class RecordsInfoPlugin extends Plugin {
 
       this.widget.setData({
         recordsInfoJson: JSON.stringify(this.recordsInfo),
+        localRecordText: this.config?.localRecordText || "LR",
       });
       this.widget.update();
     }
@@ -146,6 +168,7 @@ export default class RecordsInfoPlugin extends Plugin {
 
     this.widget.setData({
       recordsInfoJson: JSON.stringify(this.recordsInfo),
+      localRecordText: this.config?.localRecordText || "LR",
     });
     this.widget.update();
   }
