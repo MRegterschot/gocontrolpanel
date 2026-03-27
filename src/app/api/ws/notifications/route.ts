@@ -4,7 +4,7 @@ import {
   GbxClientManager,
   getGbxClientManager,
 } from "@/lib/managers/gbxclient-manager";
-import { AdminCommand } from "@/types/commands";
+import { Notifications } from "@/lib/prisma/generated";
 import { ServerInfo } from "@/types/server";
 
 export function GET() {
@@ -62,19 +62,17 @@ export async function SOCKET(
 
   for (const { manager, server } of serverManagers) {
     manager.addListeners(listenerId, {
-      adminCommand: async (adminCommand: AdminCommand) => {
-        if (adminServers.includes(adminCommand.serverId)) {
-          adminCommand.serverName = server.name;
-          const notification = await db.notifications.create({
-            data: {
-              userId: token.id,
-              type: "adminCommand",
-              message: `${adminCommand.name} asked for help on server ${server.name}`,
-              description: adminCommand.message,
-              serverId: server.id,
-            },
-          });
+      adminCommand: (notifications: Notifications[]) => {
+        const notification = notifications.find(
+          (n) => n.serverId === server.id && n.userId === token.id,
+        );
 
+        if (!notification) return;
+
+        if (
+          notification.serverId !== null &&
+          adminServers.includes(notification.serverId)
+        ) {
           client.send(
             JSON.stringify({
               type: "adminCommand",

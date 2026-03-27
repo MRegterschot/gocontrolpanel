@@ -54,6 +54,7 @@ export class GbxClientManager extends EventEmitter {
   pluginManager: PluginManager;
   private serverId: string;
   info: ServerClientInfo;
+  serverName: string | null = null;
   private isConnected = false;
   private reconnect: Reconnect = {
     timeout: null,
@@ -244,6 +245,8 @@ export class GbxClientManager extends EventEmitter {
         },
       },
     });
+
+    this.serverName = server?.name ?? null;
 
     if (!server) throw new Error(`Server ${this.serverId} not found`);
 
