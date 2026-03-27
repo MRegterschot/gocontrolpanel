@@ -5,6 +5,7 @@ import { updateServerPlugins } from "@/actions/database/server-plugins";
 import FormElement from "@/components/form/form-element";
 import EcircuitmaniaPluginModal from "@/components/modals/interface/plugins/ecircuitmania-plugin-modal";
 import PlayerInfoPluginModal from "@/components/modals/interface/plugins/player-info-plugin-modal";
+import RecordsInfoPluginModal from "@/components/modals/interface/plugins/records-info-plugin-modal";
 import Modal from "@/components/modals/modal";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
@@ -12,6 +13,7 @@ import { Plugins } from "@/lib/prisma/generated";
 import { getErrorMessage } from "@/lib/utils";
 import { ECMPluginConfig } from "@/types/plugins/ecm";
 import { PlayerInfoPluginConfig } from "@/types/plugins/player-info";
+import { RecordsInfoPluginConfig } from "@/types/plugins/records-info";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconDeviceFloppy, IconSettings } from "@tabler/icons-react";
 import { useState } from "react";
@@ -125,7 +127,16 @@ export default function PluginsForm({
                 plugins.find((p) => p.name === "records-info")?.description ||
                 ""
               }
-            />
+            >
+              <Button
+                variant={"outline"}
+                type="button"
+                onClick={() => setConfigModalOpen("records-info")}
+              >
+                <IconSettings />
+                Configure
+              </Button>
+            </FormElement>
 
             <FormElement
               name="live-ranking"
@@ -226,6 +237,24 @@ export default function PluginsForm({
           }}
           onSubmit={(config) => {
             handleConfigUpdate("player-info", config);
+          }}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={configModalOpen === "records-info"}
+        setIsOpen={() => setConfigModalOpen(undefined)}
+      >
+        <RecordsInfoPluginModal
+          serverId={serverId}
+          data={{
+            pluginId: plugins.find((p) => p.name === "records-info")?.id || "",
+            config: serverPlugins.find(
+              (sp) => sp.plugin.name === "records-info",
+            )?.config as RecordsInfoPluginConfig,
+          }}
+          onSubmit={(config) => {
+            handleConfigUpdate("records-info", config);
           }}
         />
       </Modal>

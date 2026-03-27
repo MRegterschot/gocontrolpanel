@@ -69,7 +69,7 @@ Text formatTime(Integer time) {
   return "";
 }
 
-Void updateWidget(RecordsInfo recordsInfo) {
+Void updateWidget(RecordsInfo recordsInfo, Text localRecordText) {
   declare worldRecordFrame <=> (Page.MainFrame.GetFirstChild("world-record") as CMlFrame);
   declare localRecordFrame <=> (Page.MainFrame.GetFirstChild("local-record") as CMlFrame);
 
@@ -86,12 +86,16 @@ Void updateWidget(RecordsInfo recordsInfo) {
 
   (localRecordFrame.Controls[3] as CMlLabel).SetText(lrName);
   (localRecordFrame.Controls[4] as CMlLabel).SetText(formatTime(lrTime));
+
+  // Update Local Record Label
+  (localRecordFrame.Controls[2] as CMlLabel).SetText(localRecordText);
 }
 {{/content}}
 
 {{#content "main"}}
 declare RecordsInfo RecordsInfos for This;
 declare Integer LastRecordsInfosUpdate for This = -1;
+declare Text localRecordText for This;
 declare Integer lastUpdate = -1;
 {{/content}}
 
@@ -99,7 +103,7 @@ declare Integer lastUpdate = -1;
 {{#content "loop"}}
 if (LastRecordsInfosUpdate != lastUpdate) {
   lastUpdate = LastRecordsInfosUpdate;
-  updateWidget(RecordsInfos);
+  updateWidget(RecordsInfos, localRecordText);
 }
 {{/content}}
 {{/extend}}

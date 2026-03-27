@@ -73,6 +73,10 @@ export default function AdminServerClientsPage() {
     return <div>Loading...</div>;
   }
 
+  if (clients.length === 0) {
+    return <div>No clients found.</div>;
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4 gap-4">
       {clients.map((client) => (
