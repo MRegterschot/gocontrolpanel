@@ -1,16 +1,19 @@
 "use client";
 
+import { nextMap } from "@/actions/gbx/game";
 import useWebSocket from "@/hooks/use-websocket";
 import { Maps } from "@/lib/prisma/generated";
-import { cn, hasPermissionSync } from "@/lib/utils";
+import { cn, getErrorMessage, hasPermissionSync } from "@/lib/utils";
 import { routePermissions } from "@/routes";
 import {
   IconArrowForwardUp,
   IconLock,
   IconLockOpen,
+  IconPlayerTrackNext,
 } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "../ui/button";
 import {
   Carousel,
@@ -93,6 +96,25 @@ export default function MapCarousel({
     onMessage: handleMessage,
   });
 
+  const onNextMap = async () => {
+    if (!canMapActions) {
+      toast.error("You do not have permission to perform this action.");
+      return;
+    }
+
+    try {
+      const { error } = await nextMap(serverId);
+      if (error) {
+        throw new Error(error);
+      }
+      toast.success("Skipped to next map");
+    } catch (error) {
+      toast.error("Failed to skip to next map", {
+        description: getErrorMessage(error),
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col gap-2">
       <Carousel
@@ -127,20 +149,33 @@ export default function MapCarousel({
         <CarouselNext />
       </Carousel>
 
-      <div className="flex items-center justify-center gap-2">
-        <Button
-          variant="outline"
-          className="group relative"
-          onClick={() => setFollow(!follow)}
-        >
-          {follow ? <IconLock size={16} /> : <IconLockOpen size={16} />}
-          <span>{follow ? "Following" : "Not Following"}</span>
-        </Button>
+      <div className="flex items-center justify-center gap-6">
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            variant="outline"
+            className="group relative"
+            onClick={() => setFollow(!follow)}
+          >
+            {follow ? <IconLock size={16} /> : <IconLockOpen size={16} />}
+            <span>{follow ? "Following" : "Not Following"}</span>
+          </Button>
 
-        <Button variant="outline" onClick={() => api?.scrollTo(currentIndex)}>
-          <IconArrowForwardUp size={16} />
-          <span>Jump to current</span>
-        </Button>
+          <Button variant="outline" onClick={() => api?.scrollTo(currentIndex)}>
+            <IconArrowForwardUp size={16} />
+            <span>Jump to current</span>
+          </Button>
+        </div>
+
+        {currentIndex === -1 && canMapActions && (
+          <Button
+            variant="outline"
+            onClick={onNextMap}
+            disabled={!canMapActions}
+          >
+            <IconPlayerTrackNext className="mt-[2px]" />
+            <span className="hidden min-[450px]:block">Next</span>
+          </Button>
+        )}
       </div>
     </div>
   );

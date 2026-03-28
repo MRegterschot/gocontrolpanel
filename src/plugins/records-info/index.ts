@@ -65,6 +65,16 @@ export default class RecordsInfoPlugin extends Plugin<RecordsInfoPluginConfig | 
 
   async onBeginMap() {
     this.liveFastestTime = null;
+    this.recordsInfo = {
+      worldRecord: {
+        time: 0,
+        nickName: "-",
+      },
+      localRecord: {
+        time: 0,
+        nickName: "-",
+      },
+    };
     this.updateRecordsInfo();
   }
 
@@ -152,17 +162,23 @@ export default class RecordsInfoPlugin extends Plugin<RecordsInfoPluginConfig | 
       }
 
       const onlineLeaderboard = await getMapLeaderboard(map.UId);
-      if (onlineLeaderboard.tops.length > 0) {
-        if (onlineLeaderboard.tops[0].top.length > 0) {
-          const wr = onlineLeaderboard.tops[0].top[0];
+      if (
+        onlineLeaderboard.tops.length > 0 &&
+        onlineLeaderboard.tops[0].top.length > 0
+      ) {
+        const wr = onlineLeaderboard.tops[0].top[0];
 
-          const accountNames = await getAccountNames([wr.accountId]);
+        const accountNames = await getAccountNames([wr.accountId]);
 
-          this.recordsInfo.worldRecord = {
-            time: wr.score,
-            nickName: accountNames[wr.accountId] || "-",
-          };
-        }
+        this.recordsInfo.worldRecord = {
+          time: wr.score,
+          nickName: accountNames[wr.accountId] || "-",
+        };
+      } else {
+        this.recordsInfo.worldRecord = {
+          time: 0,
+          nickName: "-",
+        };
       }
     }
 
