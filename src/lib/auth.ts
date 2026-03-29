@@ -54,6 +54,10 @@ const NadeoProvider = (): OAuthConfig<Profile> => ({
       );
 
       if (!response.ok) {
+        logger.error(
+          response,
+          `Failed to fetch access token: ${response.status} ${response.statusText}`,
+        );
         throw new Error("Failed to fetch access token");
       }
 
