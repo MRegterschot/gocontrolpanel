@@ -47,7 +47,7 @@ const NadeoProvider = (): OAuthConfig<Profile> => ({
             grant_type: "authorization_code",
             client_id: process.env.NADEO_CLIENT_ID!,
             client_secret: process.env.NADEO_CLIENT_SECRET!,
-            code: params.code || "",
+            code: params.code ?? "",
             redirect_uri: process.env.NADEO_REDIRECT_URI!,
           }),
         },
@@ -55,7 +55,13 @@ const NadeoProvider = (): OAuthConfig<Profile> => ({
 
       if (!response.ok) {
         logger.error(
-          response,
+          {
+            response: {
+              status: response.status,
+              statusText: response.statusText,
+              error: await response.text(),
+            },
+          },
           `Failed to fetch access token: ${response.status} ${response.statusText}`,
         );
         throw new Error("Failed to fetch access token");
