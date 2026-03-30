@@ -239,8 +239,6 @@ export default class LiveRoundPlugin extends Plugin {
   }
 
   async onScores(scores: Scores) {
-    if (this.clientManager.info.liveInfo.isWarmUp) return;
-
     if (
       scores.responseid !== this.getPluginId() &&
       scores.section !== "EndRound"
