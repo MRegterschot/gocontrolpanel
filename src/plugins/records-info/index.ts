@@ -88,6 +88,12 @@ export default class RecordsInfoPlugin extends Plugin<RecordsInfoPluginConfig | 
 
   async onPlayerFinish(waypoint: Waypoint) {
     if (
+      this.clientManager.info.liveInfo.isWarmUp ||
+      this.clientManager.info.liveInfo.isPaused
+    )
+      return;
+
+    if (
       waypoint.racetime === 0 ||
       (this.liveFastestTime !== null &&
         waypoint.racetime >= this.liveFastestTime)
