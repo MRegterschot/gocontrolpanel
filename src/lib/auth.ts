@@ -5,6 +5,7 @@ import {
   upsertUserAuth,
   UsersWithGroupsWithServers,
 } from "@/actions/database/server-only/auth";
+import { UserGroup } from "@/types/auth";
 import { parse } from "cookie";
 import {
   GetServerSidePropsContext,
@@ -159,14 +160,22 @@ export const authOptions: NextAuthOptions = {
       token.admin = dbUser.admin;
       token.ubiId = dbUser.ubiUid || undefined;
       token.permissions = getList<string>(dbUser.permissions);
-      token.groups = dbUser.groupMembers.map((g) => ({
-        id: g.group.id,
-        name: g.group.name,
-        servers: g.group.groupServers.map((s) => s.server),
-        role: g.role,
-        order: g.order,
-        serversOrder: g.serversOrder?.split(",") || [],
-      }));
+
+      token.groups = dbUser.groupMembers
+        .sort(
+          (a, b) =>
+            a.order - b.order || a.group.name.localeCompare(b.group.name),
+        )
+        .map((g, i) =>
+          orderServers({
+            id: g.group.id,
+            name: g.group.name,
+            servers: g.group.groupServers.map((s) => s.server),
+            role: g.role,
+            order: i,
+            serversOrder: g.serversOrder?.split(",") || [],
+          }),
+        );
       token.projects = dbUser.hetznerProjectUsers.map((p) => ({
         id: p.project.id,
         name: p.project.name,
@@ -248,4 +257,28 @@ export async function hasPermission(
   }
 
   return hasPermissionSync(session, permissions, id);
+}
+
+function orderServers(group: UserGroup): UserGroup {
+  // Order servers that are in serversOrder first, then the rest by name
+  const ordered = group.servers.slice().sort((a, b) => {
+    if (!group.serversOrder) {
+      return a.name.localeCompare(b.name);
+    }
+
+    const indexA = group.serversOrder.findIndex((s) => s === a.id);
+    const indexB = group.serversOrder.findIndex((s) => s === b.id);
+
+    if (indexA === -1 && indexB === -1) {
+      return a.name.localeCompare(b.name);
+    }
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+
+    return indexA - indexB;
+  });
+
+  group.serversOrder = ordered.map((s) => s.id);
+
+  return group;
 }

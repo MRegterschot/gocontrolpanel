@@ -1,5 +1,8 @@
 "use client";
-import { updateGroupOrder } from "@/actions/database/groups";
+import {
+  updateGroupOrder,
+  updateGroupServersOrder,
+} from "@/actions/database/groups";
 import IconNadeo from "@/components/icons/nadeo";
 import IconTmx from "@/components/icons/tmx-svg";
 import { Button } from "@/components/ui/button";
@@ -72,15 +75,7 @@ export default function NavGroups() {
   const [groups, setGroups] = useState<UserGroup[]>([]);
 
   useEffect(() => {
-    const sortedGroups =
-      session?.user.groups
-        .sort((a, b) => a.order - b.order)
-        .map((g, i) => ({
-          ...g,
-          order: i,
-        })) || [];
-    setGroups(sortedGroups);
-    updateGroupOrderAction(sortedGroups);
+    setGroups(session?.user.groups || []);
   }, [session?.user.groups]);
 
   const groupsSidebarGroup: ServerNavGroup[] = useMemo(
@@ -264,14 +259,31 @@ export default function NavGroups() {
     [groups, servers, serverId],
   );
 
-  const updateGroupOrderAction = async (updatedGroups: UserGroup[]) => {
+  const saveGroupOrder = async (updatedGroups: UserGroup[]) => {
     try {
-      const { error } = await updateGroupOrder(updatedGroups.map((g) => g.id));
+      console.log(updatedGroups);
+      const { error } = await updateGroupOrder(updatedGroups);
       if (error) {
         throw new Error(error);
       }
     } catch (error) {
       toast.error("Failed to update group order", {
+        description: getErrorMessage(error),
+      });
+    }
+  };
+
+  const saveGroupServersOrder = async (
+    groupId: string,
+    serversOrder: string[],
+  ) => {
+    try {
+      const { error } = await updateGroupServersOrder(groupId, serversOrder);
+      if (error) {
+        throw new Error(error);
+      }
+    } catch (error) {
+      toast.error("Failed to update server order", {
         description: getErrorMessage(error),
       });
     }
@@ -295,7 +307,40 @@ export default function NavGroups() {
     }));
 
     setGroups(normalized);
-    updateGroupOrderAction(normalized);
+    saveGroupOrder(normalized);
+  };
+
+  const moveServer = (
+    groupId: string,
+    serverId: string,
+    direction: "up" | "down",
+  ) => {
+    const groupIndex = groups.findIndex((g) => g.id === groupId);
+    if (groupIndex === -1) return;
+
+    const group = groups[groupIndex];
+    const serversOrder = group.serversOrder || group.servers.map((s) => s.id);
+    const index = serversOrder.findIndex((id) => id === serverId);
+
+    if (index === -1) return;
+
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+
+    if (targetIndex < 0 || targetIndex >= serversOrder.length) return;
+
+    [serversOrder[index], serversOrder[targetIndex]] = [
+      serversOrder[targetIndex],
+      serversOrder[index],
+    ];
+
+    const updatedGroups = [...groups];
+    updatedGroups[groupIndex] = {
+      ...group,
+      serversOrder,
+    };
+
+    setGroups(updatedGroups);
+    saveGroupServersOrder(groupId, serversOrder);
   };
 
   if (loading) {
@@ -382,7 +427,7 @@ export default function NavGroups() {
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton tooltip={server.name} asChild>
-                        <div className="select-none cursor-pointer">
+                        <div className="select-none cursor-pointer group/item">
                           {server.icon && <server.icon />}
                           <span className="overflow-hidden text-ellipsis text-nowrap flex items-center">
                             {server.name}
@@ -398,7 +443,29 @@ export default function NavGroups() {
                               </span>
                             )}
                           </span>
-                          <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                          <div className="hidden group-hover/item:flex ml-auto items-end">
+                            <Button
+                              size="sidebar"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                moveServer(group.id, server.id, "up");
+                              }}
+                            >
+                              <IconChevronUp className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sidebar"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                moveServer(group.id, server.id, "down");
+                              }}
+                            >
+                              <IconChevronDown className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <ChevronRight className="ml-auto group-hover/item:ml-0 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                         </div>
                       </SidebarMenuButton>
                     </CollapsibleTrigger>

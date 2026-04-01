@@ -3,6 +3,7 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { Prisma } from "@/lib/prisma/generated";
+import { UserGroup } from "@/types/auth";
 import { PaginationResponse, ServerResponse } from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
 import { logAudit } from "./server-only/audit-logs";
@@ -13,6 +14,8 @@ const editGroup = Prisma.validator<Prisma.GroupsInclude>()({
     select: {
       userId: true,
       role: true,
+      order: true,
+      serversOrder: true,
     },
   },
   groupServers: {
@@ -170,6 +173,8 @@ export async function updateGroup(
             create: groupMembers?.map((gm) => ({
               role: gm.role,
               userId: gm.userId,
+              order: gm.order,
+              serversOrder: gm.serversOrder,
             })),
           },
         },
@@ -201,7 +206,7 @@ export async function deleteGroup(groupId: string): Promise<ServerResponse> {
 }
 
 export async function updateGroupOrder(
-  groupIdsInOrder: string[],
+  groups: UserGroup[],
 ): Promise<ServerResponse> {
   return doServerActionWithAuth([], async (session) => {
     const db = getClient();
@@ -209,16 +214,16 @@ export async function updateGroupOrder(
     const userId = session.user.id;
 
     await Promise.all(
-      groupIdsInOrder.map((groupId, index) =>
+      groups.map((group) =>
         db.groupMember.update({
           where: {
             userId_groupId: {
               userId,
-              groupId,
+              groupId: group.id,
             },
           },
           data: {
-            order: index,
+            order: group.order,
           },
         }),
       ),
