@@ -113,6 +113,9 @@ model GroupMember {
   groupId String
   role    GroupRole
 
+  order Int @default(0)
+  serversOrder String? @db.Text
+
   user  Users  @relation(fields: [userId], references: [id], onDelete: Cascade)
   group Groups @relation(fields: [groupId], references: [id], onDelete: Cascade)
 

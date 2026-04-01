@@ -164,6 +164,8 @@ export const authOptions: NextAuthOptions = {
         name: g.group.name,
         servers: g.group.groupServers.map((s) => s.server),
         role: g.role,
+        order: g.order,
+        serversOrder: g.serversOrder?.split(",") || [],
       }));
       token.projects = dbUser.hetznerProjectUsers.map((p) => ({
         id: p.project.id,
@@ -186,6 +188,7 @@ export const authOptions: NextAuthOptions = {
             name: g.name,
             role: "Member" as GroupRole,
             servers: g.servers,
+            order: 9999,
           })),
       );
 

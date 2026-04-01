@@ -9,6 +9,8 @@ export interface UserGroup {
   id: string;
   name: string;
   role: GroupRole;
+  order: number;
+  serversOrder?: string[];
   servers: Omit<
     Servers,
     | "user"

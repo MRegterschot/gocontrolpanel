@@ -199,3 +199,65 @@ export async function deleteGroup(groupId: string): Promise<ServerResponse> {
     },
   );
 }
+
+export async function updateGroupOrder(
+  groupIdsInOrder: string[],
+): Promise<ServerResponse> {
+  return doServerActionWithAuth([], async (session) => {
+    const db = getClient();
+
+    const userId = session.user.id;
+
+    await Promise.all(
+      groupIdsInOrder.map((groupId, index) =>
+        db.groupMember.update({
+          where: {
+            userId_groupId: {
+              userId,
+              groupId,
+            },
+          },
+          data: {
+            order: index,
+          },
+        }),
+      ),
+    );
+  });
+}
+
+export async function updateGroupServersOrder(
+  groupId: string,
+  serverIdsInOrder: string[],
+): Promise<ServerResponse> {
+  return doServerActionWithAuth([], async (session) => {
+    const db = getClient();
+
+    const userId = session.user.id;
+
+    const groupMember = await db.groupMember.findUnique({
+      where: {
+        userId_groupId: {
+          userId,
+          groupId,
+        },
+      },
+    });
+
+    if (!groupMember) {
+      throw new Error("User is not a member of the group");
+    }
+
+    await db.groupMember.update({
+      where: {
+        userId_groupId: {
+          userId,
+          groupId,
+        },
+      },
+      data: {
+        serversOrder: serverIdsInOrder.join(","),
+      },
+    });
+  });
+}
