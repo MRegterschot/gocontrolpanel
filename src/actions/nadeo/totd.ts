@@ -61,7 +61,7 @@ export async function getTotdMonth(
         key,
         JSON.stringify(response),
         "EX",
-        mapListResponse.relativeNextRequest,
+        Math.max(1, mapListResponse.relativeNextRequest),
       );
 
       return response;
