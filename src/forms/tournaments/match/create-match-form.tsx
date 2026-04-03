@@ -4,7 +4,7 @@ import Modal from "@/components/modals/modal";
 import CreateMatchTemplateModal from "@/components/modals/tournaments/match/create-match-template";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { reducers, tables } from "@/lib/tourney-manager";
+import { reducers, tables } from "@/lib/server-manager";
 import { getErrorMessage } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus } from "@tabler/icons-react";

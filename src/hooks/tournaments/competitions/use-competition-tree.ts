@@ -3,7 +3,7 @@ import {
   RegisteredPlayer,
   tables,
   TmMatchV1,
-} from "@/lib/tourney-manager";
+} from "@/lib/server-manager";
 import { useMemo } from "react";
 import { Infer } from "spacetimedb";
 import { eq, useTable, where } from "spacetimedb/react";

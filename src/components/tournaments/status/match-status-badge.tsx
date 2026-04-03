@@ -1,4 +1,4 @@
-import { MatchStatus } from "@/lib/tourney-manager";
+import { MatchStatus } from "@/lib/server-manager";
 import {
   Icon,
   IconFlag,

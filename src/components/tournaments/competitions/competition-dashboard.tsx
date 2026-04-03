@@ -1,6 +1,6 @@
 "use client";
 
-import { tables } from "@/lib/tourney-manager";
+import { tables } from "@/lib/server-manager";
 import { eq, useTable, where } from "spacetimedb/react";
 import CompetitionBracket from "./bracket/competition-bracket";
 import CompetitionInfo from "./competition-info";

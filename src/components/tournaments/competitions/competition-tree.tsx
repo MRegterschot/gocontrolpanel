@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { CompetitionNode } from "@/hooks/tournaments/competitions/use-competition-tree";
-import { reducers } from "@/lib/tourney-manager";
+import { reducers } from "@/lib/server-manager";
 import { cn, generatePath, getErrorMessage } from "@/lib/utils";
 import { routes } from "@/routes";
 import { IconCalendar, IconChevronUp } from "@tabler/icons-react";

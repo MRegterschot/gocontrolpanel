@@ -2,7 +2,7 @@
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { CompetitionV1, reducers } from "@/lib/tourney-manager";
+import { CompetitionV1, reducers } from "@/lib/server-manager";
 import { getErrorMessage } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconDeviceFloppy } from "@tabler/icons-react";

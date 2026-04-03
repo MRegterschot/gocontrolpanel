@@ -4,8 +4,8 @@ import {
   ConfigMapsPerMatchSchema,
   ConfigPointsLimitSchema,
   ConfigRoundsPerMapSchema,
-} from "@/types/tm-tourney-manager/config/enums";
-import { ConfigRoundsSchemaType } from "@/types/tm-tourney-manager/config/rounds";
+} from "@/types/tm-server-manager/config/enums";
+import { ConfigRoundsSchemaType } from "@/types/tm-server-manager/config/rounds";
 import { UseFormReturn } from "react-hook-form";
 import { CreateMatchTemplateSchemaType } from "../create-match-template-schema";
 

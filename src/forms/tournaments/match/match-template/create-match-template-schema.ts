@@ -1,4 +1,4 @@
-import { ServerConfigSchema } from "@/types/tm-tourney-manager/config";
+import { ServerConfigSchema } from "@/types/tm-server-manager/config";
 import z from "zod";
 
 export const CreateMatchTemplateSchema = z.object({

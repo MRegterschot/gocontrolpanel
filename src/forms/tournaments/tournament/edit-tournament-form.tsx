@@ -2,7 +2,7 @@
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { reducers, TournamentV1 } from "@/lib/tourney-manager";
+import { reducers, TournamentV1 } from "@/lib/server-manager";
 import { getErrorMessage } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconDeviceFloppy } from "@tabler/icons-react";
@@ -67,7 +67,7 @@ export default function EditTournamentForm({
         return;
       }
     }
-    
+
     if (tournament.name !== values.name) {
       try {
         editTournamentName({

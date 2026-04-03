@@ -13,13 +13,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import { reducers, tables } from "@/lib/tourney-manager";
+import { reducers, tables } from "@/lib/server-manager";
 import { getErrorMessage } from "@/lib/utils";
 import { IconCalendar, IconUser } from "@tabler/icons-react";
 import { MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { eq, useReducer, useTable, where } from "spacetimedb/react";
+import { useReducer, useTable } from "spacetimedb/react";
 import TournamentStatusBadge from "../status/tournament-status-badge";
 
 export default function TournamentInfo({
@@ -27,24 +27,23 @@ export default function TournamentInfo({
 }: {
   tournamentId: number;
 }) {
-  const updateStatus = useReducer(reducers.tournamentUpdateStatus);
+  const updateStatus = useReducer(reducers.projectUpdateStatus);
 
   const [isEditingOpen, setIsEditingOpen] = useState(false);
   const [isUpdateStatusOpen, setIsUpdateStatusOpen] = useState(false);
 
   const [tournamentRows] = useTable(
-    tables.tournament,
-    where(eq("id", tournamentId)),
+    tables.my_projects.where((row) => row.id.eq(tournamentId)),
   );
 
   const tournament = tournamentRows[0];
 
-  const [userRows] = useTable(
+  /* const [userRows] = useTable(
     tables.user,
     where(eq("accountId", tournament?.creatorAccountId)),
-  );
+  ); */
 
-  const creatorUser = userRows[0];
+  // const creatorUser = userRows[0];
 
   if (!tournament) {
     return <span>Tournament not found</span>;
@@ -57,7 +56,7 @@ export default function TournamentInfo({
     }
 
     try {
-      updateStatus({ tournamentId: tournament.id });
+      updateStatus({ projectId: tournament.id });
     } catch (error) {
       toast.error("Failed to update tournament status", {
         description: getErrorMessage(error),
@@ -159,10 +158,10 @@ export default function TournamentInfo({
                 )}
               </div>
             )}
-            {creatorUser && (
+            {(
               <div className="flex gap-2 text-muted-foreground text-sm">
                 <IconUser size={16} />
-                {creatorUser.name}
+                {tournament.creatorName}
               </div>
             )}
           </div>

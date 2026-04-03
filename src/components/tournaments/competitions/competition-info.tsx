@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CompetitionV1, reducers, tables } from "@/lib/tourney-manager";
+import { CompetitionV1, reducers, tables } from "@/lib/server-manager";
 import { getErrorMessage } from "@/lib/utils";
 import { IconCalendar } from "@tabler/icons-react";
 import { MoreHorizontal } from "lucide-react";

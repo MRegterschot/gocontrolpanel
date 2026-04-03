@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { RegistrationSettings } from "@/lib/tourney-manager";
+import { RegistrationSettings } from "@/lib/server-manager";
 import { IconStopwatch, IconUser, IconUsers } from "@tabler/icons-react";
 import { Infer } from "spacetimedb";
 

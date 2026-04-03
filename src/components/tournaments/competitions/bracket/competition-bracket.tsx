@@ -1,7 +1,7 @@
 "use client";
 import { Card } from "@/components/ui/card";
 import { useCompetitionBracket } from "@/hooks/tournaments/competitions/use-competition-bracket";
-import { CompetitionV1 } from "@/lib/tourney-manager";
+import { CompetitionV1 } from "@/lib/server-manager";
 import {
   addEdge,
   applyEdgeChanges,

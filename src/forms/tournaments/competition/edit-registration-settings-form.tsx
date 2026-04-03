@@ -3,7 +3,7 @@ import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
-import { reducers, RegistrationSettings } from "@/lib/tourney-manager";
+import { reducers, RegistrationSettings } from "@/lib/server-manager";
 import { getErrorMessage } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconDeviceFloppy } from "@tabler/icons-react";
@@ -35,19 +35,19 @@ export default function EditRegistrationSettingsForm({
       type: registrationSettings.tag,
       ...(registrationSettings.tag === "Players"
         ? {
-            playerLimit: registrationSettings.value.playerLimit,
-            registrationDeadline:
-              registrationSettings.value.registrationDeadline.toDate(),
-          }
+          playerLimit: registrationSettings.value.playerLimit,
+          registrationDeadline:
+            registrationSettings.value.registrationDeadline.toDate(),
+        }
         : {}),
       ...(registrationSettings.tag === "Team"
         ? {
-            teamLimit: registrationSettings.value.teamLimit,
-            teamSizeMin: registrationSettings.value.teamSizeMin,
-            teamSizeMax: registrationSettings.value.teamSizeMax,
-            registrationDeadline:
-              registrationSettings.value.registrationDeadline.toDate(),
-          }
+          teamLimit: registrationSettings.value.teamLimit,
+          teamSizeMin: registrationSettings.value.teamSizeMin,
+          teamSizeMax: registrationSettings.value.teamSizeMax,
+          registrationDeadline:
+            registrationSettings.value.registrationDeadline.toDate(),
+        }
         : {}),
     },
   });
@@ -57,29 +57,29 @@ export default function EditRegistrationSettingsForm({
       const registrationSettings =
         values.type === "Players"
           ? {
-              tag: "Players" as const,
+            tag: "Players" as const,
+            value: {
+              playerLimit: values.playerLimit ?? undefined,
+              registrationDeadline: Timestamp.fromDate(
+                values.registrationDeadline,
+              ),
+            },
+          }
+          : values.type === "Team"
+            ? {
+              tag: "Team" as const,
               value: {
-                playerLimit: values.playerLimit ?? undefined,
+                teamLimit: values.teamLimit ?? undefined,
+                teamSizeMin: values.teamSizeMin,
+                teamSizeMax: values.teamSizeMax,
                 registrationDeadline: Timestamp.fromDate(
                   values.registrationDeadline,
                 ),
               },
             }
-          : values.type === "Team"
-            ? {
-                tag: "Team" as const,
-                value: {
-                  teamLimit: values.teamLimit ?? undefined,
-                  teamSizeMin: values.teamSizeMin,
-                  teamSizeMax: values.teamSizeMax,
-                  registrationDeadline: Timestamp.fromDate(
-                    values.registrationDeadline,
-                  ),
-                },
-              }
             : {
-                tag: "None" as const,
-              };
+              tag: "None" as const,
+            };
 
       editRegistrationSettings({
         registrationSettings,

@@ -1,5 +1,5 @@
 import { Identity } from "spacetimedb";
-import { DbConnection, ErrorContext } from "../tourney-manager";
+import { DbConnection, ErrorContext } from "../server-manager";
 import { SPACETIME_LOCAL_STORAGE_TOKEN_KEY } from "./connection-builder";
 
 export const onConnect = (

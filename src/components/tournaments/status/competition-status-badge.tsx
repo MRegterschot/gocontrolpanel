@@ -1,4 +1,4 @@
-import { CompetitionStatus } from "@/lib/tourney-manager";
+import { CompetitionStatus } from "@/lib/server-manager";
 import {
   Icon,
   IconCalendarEventFilled,

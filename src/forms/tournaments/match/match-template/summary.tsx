@@ -2,7 +2,7 @@
 
 import BooleanDisplay from "@/components/boolean-display";
 import { Button } from "@/components/ui/button";
-import { reducers } from "@/lib/tourney-manager";
+import { reducers } from "@/lib/server-manager";
 import { getErrorMessage } from "@/lib/utils";
 import { IconArrowNarrowLeft, IconPlus } from "@tabler/icons-react";
 import { UseFormReturn } from "react-hook-form";

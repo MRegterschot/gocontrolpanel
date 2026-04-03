@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { reducers } from "@/lib/tourney-manager";
+import { reducers } from "@/lib/server-manager";
 import { useReducer } from "spacetimedb/react";
 import { MatchNodeType } from "../nodes/match-node";
 

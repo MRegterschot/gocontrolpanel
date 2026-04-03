@@ -1,7 +1,7 @@
 "use client";
 import { Card } from "@/components/ui/card";
 import EditRegistrationSettingsForm from "@/forms/tournaments/competition/edit-registration-settings-form";
-import { RegistrationSettings } from "@/lib/tourney-manager";
+import { RegistrationSettings } from "@/lib/server-manager";
 import { IconX } from "@tabler/icons-react";
 import { Infer } from "spacetimedb";
 import { DefaultModalProps } from "../../default-props";

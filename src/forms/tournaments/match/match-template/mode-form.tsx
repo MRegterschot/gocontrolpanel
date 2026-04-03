@@ -2,7 +2,7 @@
 
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
-import { ModeConfigSchema } from "@/types/tm-tourney-manager/config";
+import { ModeConfigSchema } from "@/types/tm-server-manager/config";
 import { IconArrowNarrowLeft, IconArrowNarrowRight } from "@tabler/icons-react";
 import { UseFormReturn } from "react-hook-form";
 import { CreateMatchTemplateSchemaType } from "./create-match-template-schema";

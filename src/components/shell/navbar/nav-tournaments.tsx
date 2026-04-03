@@ -20,7 +20,7 @@ import Link from "next/link";
 
 import Modal from "@/components/modals/modal";
 import CreateTournamentModal from "@/components/modals/tournaments/tournament/create-tournament";
-import { tables } from "@/lib/tourney-manager";
+import { tables } from "@/lib/server-manager";
 import { ChevronRight } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useSpacetimeDB, useTable } from "spacetimedb/react";
@@ -30,7 +30,7 @@ export default function NavTournaments() {
   const activeId = getCurrentId(pathname);
 
   const spacetime = useSpacetimeDB();
-  const [tournamentRows] = useTable(tables.myTournament);
+  const [tournamentRows] = useTable(tables.my_projects);
   const tournaments = [...tournamentRows];
 
   const upcomingTournaments = tournaments

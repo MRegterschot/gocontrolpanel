@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { reducers } from "@/lib/tourney-manager";
+import { reducers } from "@/lib/server-manager";
 import { useReactFlow } from "@xyflow/react";
 import { ComponentProps } from "react";
 import { toast } from "sonner";

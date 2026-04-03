@@ -1,6 +1,6 @@
 "use client";
 
-import { DbConnection, DbConnectionBuilder } from "../tourney-manager";
+import { DbConnection, DbConnectionBuilder } from "../server-manager";
 import { onConnect, onConnectError, onDisconnect } from "./connection-handlers";
 
 export const SPACETIME_LOCAL_STORAGE_TOKEN_KEY = "spacetimedb_auth_token";
@@ -36,7 +36,7 @@ export const getDbConnectionBuilder =
 
     return DbConnection.builder()
       .withUri(uri)
-      .withModuleName(moduleName)
+      .withDatabaseName(moduleName)
       .withToken(getAuthToken())
       .onConnect(onConnect)
       .onDisconnect(onDisconnect)
