@@ -1,16 +1,15 @@
 import { Badge } from "@/components/ui/badge";
-import { RegistrationSettings } from "@/lib/server-manager";
+import { RegistrationSettings } from "@/lib/server-manager/types";
 import { IconStopwatch, IconUser, IconUsers } from "@tabler/icons-react";
-import { Infer } from "spacetimedb";
 
 interface RegistrationBadgeProps {
-  registrationSettings: Infer<typeof RegistrationSettings>;
+  registrationSettings: RegistrationSettings;
 }
 
 export default function RegistrationBadge({
   registrationSettings,
 }: RegistrationBadgeProps) {
-  if (registrationSettings.tag === "Players") {
+  if (registrationSettings.tag === "Player") {
     return (
       <>
         <Badge variant={"outline"} className="rounded-full">

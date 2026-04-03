@@ -10,9 +10,16 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
+import {
+  ProjectKind,
+} from "./types";
+
 export default {
   name: __t.string(),
   description: __t.string(),
+  get kind() {
+    return ProjectKind;
+  },
   startingAt: __t.timestamp(),
   endingAt: __t.timestamp(),
 };

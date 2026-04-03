@@ -20,7 +20,7 @@ export default function MatchTemplateSummary({
   onBack: () => void;
   callback?: () => void;
 }) {
-  const createMatchTemplate = useReducer(reducers.createMatchTemplate);
+  const createMatchTemplate = useReducer(reducers.matchTemplateCreate);
 
   async function onSubmit(values: CreateMatchTemplateSchemaType) {
     try {

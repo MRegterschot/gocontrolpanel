@@ -30,8 +30,7 @@ export default function NavTournaments() {
   const activeId = getCurrentId(pathname);
 
   const spacetime = useSpacetimeDB();
-  const [tournamentRows] = useTable(tables.my_projects);
-  const tournaments = [...tournamentRows];
+  const [tournaments] = useTable(tables.my_projects);
 
   const upcomingTournaments = tournaments
     .filter((t) => t.endingAt.toDate() >= new Date())

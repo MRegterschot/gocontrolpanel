@@ -2,7 +2,7 @@
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { CompetitionV1, reducers } from "@/lib/server-manager";
+import { reducers } from "@/lib/server-manager";
 import { getErrorMessage } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconDeviceFloppy } from "@tabler/icons-react";
@@ -14,12 +14,13 @@ import {
   EditCompetitionSchema,
   EditCompetitionSchemaType,
 } from "./edit-competition-schema";
+import { CompetitionV1 } from "@/lib/server-manager/types";
 
 export default function EditCompetitionForm({
   competition,
   callback,
 }: {
-  competition: Infer<typeof CompetitionV1>;
+  competition: CompetitionV1;
   callback?: () => void;
 }) {
   const editCompetitionName = useReducer(reducers.competitionEditName);

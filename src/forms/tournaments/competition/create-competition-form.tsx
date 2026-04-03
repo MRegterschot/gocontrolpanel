@@ -21,13 +21,13 @@ export default function CreateCompetitionForm({
   parentId: number;
   callback?: () => void;
 }) {
-  const createCompetition = useReducer(reducers.createCompetition);
+  const createCompetition = useReducer(reducers.competitionCreate);
 
   const form = useForm<CreateCompetitionSchemaType>({
     resolver: zodResolver(CreateCompetitionSchema),
     defaultValues: {
       parentId: parentId,
-      withTemplate: undefined,
+      withTemplate: 0,
     },
   });
 
@@ -35,7 +35,7 @@ export default function CreateCompetitionForm({
     try {
       createCompetition({
         ...values,
-        withTemplate: values.withTemplate ?? undefined,
+        withTemplate: values.withTemplate,
       });
 
       toast.success("Stage successfully created");

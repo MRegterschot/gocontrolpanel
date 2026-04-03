@@ -1,20 +1,14 @@
 import {
-  CompetitionV1,
-  RegisteredPlayer,
   tables,
-  TmMatchV1,
 } from "@/lib/server-manager";
 import { useMemo } from "react";
-import { Infer } from "spacetimedb";
-import { eq, useTable, where } from "spacetimedb/react";
+import { useTable } from "spacetimedb/react";
 
-type CompetitionBase = Infer<typeof CompetitionV1>;
-
-export interface CompetitionNode extends CompetitionBase {
+/* export interface CompetitionNode extends Tm {
   children: CompetitionNode[];
-  matches: Infer<typeof TmMatchV1>[];
+  matches: Infer<typeof MatchV1>[];
   registeredPlayers: Infer<typeof RegisteredPlayer>[];
-}
+} */
 
 export function useCompetitionTree(tournamentId: number) {
   const [competitionRows] = useTable(

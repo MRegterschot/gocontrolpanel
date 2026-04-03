@@ -1,4 +1,3 @@
-import { MatchStatus } from "@/lib/server-manager";
 import {
   Icon,
   IconFlag,
@@ -7,11 +6,11 @@ import {
   IconProgress,
   IconSettings,
 } from "@tabler/icons-react";
-import { Infer } from "spacetimedb";
 import { Badge } from "../../ui/badge";
+import { MatchStatus } from "@/lib/server-manager/types";
 
 interface MatchStatusBadgeProps {
-  status: Infer<typeof MatchStatus>;
+  status: MatchStatus;
 }
 
 export default function MatchStatusBadge({ status }: MatchStatusBadgeProps) {
@@ -25,7 +24,12 @@ export default function MatchStatusBadge({ status }: MatchStatusBadgeProps) {
       bgColor = "#2495D70D";
       textColor = "#2495D780";
       break;
-    case "Upcoming":
+    case "Configured":
+      StatusIcon = IconSettings;
+      bgColor = "#2495D70D";
+      textColor = "#2495D780";
+      break;
+    case "Preparation":
       StatusIcon = IconPlayerTrackNext;
       bgColor = "#33D6610D";
       textColor = "#33D66180";

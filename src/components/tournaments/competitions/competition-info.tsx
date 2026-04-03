@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CompetitionV1, reducers, tables } from "@/lib/server-manager";
+import { reducers, tables } from "@/lib/server-manager";
 import { getErrorMessage } from "@/lib/utils";
 import { IconCalendar } from "@tabler/icons-react";
 import { MoreHorizontal } from "lucide-react";
@@ -23,14 +23,15 @@ import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Infer, Uuid } from "spacetimedb";
-import { eq, useReducer, useTable, where } from "spacetimedb/react";
+import { useReducer, useTable } from "spacetimedb/react";
 import CompetitionStatusBadge from "../status/competition-status-badge";
 import RegistrationBadge from "./registration-badge";
+import { CompetitionV1 } from "@/lib/server-manager/types";
 
 export default function CompetitionInfo({
   competition,
 }: {
-  competition: Infer<typeof CompetitionV1>;
+  competition: CompetitionV1;
 }) {
   const { data: session } = useSession();
 

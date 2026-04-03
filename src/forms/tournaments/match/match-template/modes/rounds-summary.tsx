@@ -1,5 +1,5 @@
 import BooleanDisplay from "@/components/boolean-display";
-import { ConfigRoundsSchemaType } from "@/types/tm-server-manager/config/rounds";
+import { ConfigRoundsSchemaType } from "@/types/tm-tourney-manager/config/rounds";
 
 export default function MatchTemplateRoundsSummary({
   mode,

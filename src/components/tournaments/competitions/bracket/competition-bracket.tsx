@@ -1,7 +1,6 @@
 "use client";
 import { Card } from "@/components/ui/card";
 import { useCompetitionBracket } from "@/hooks/tournaments/competitions/use-competition-bracket";
-import { CompetitionV1 } from "@/lib/server-manager";
 import {
   addEdge,
   applyEdgeChanges,
@@ -24,6 +23,7 @@ import MatchNode, { type MatchNodeType } from "./nodes/match-node";
 import AddMatchButton from "./panel/add-match";
 import SaveLayoutButton from "./panel/save-layout";
 import SelectedMatchPanel from "./panel/selected-match";
+import { CompetitionV1 } from "@/lib/server-manager/types";
 
 const nodeTypes = {
   match: MatchNode,
@@ -34,7 +34,7 @@ const edgeTypes = {
 };
 
 interface CompetitionBracketProps {
-  competition: Infer<typeof CompetitionV1>;
+  competition: CompetitionV1;
 }
 
 export default function CompetitionBracket({

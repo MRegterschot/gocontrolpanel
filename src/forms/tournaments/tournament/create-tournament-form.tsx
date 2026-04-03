@@ -14,13 +14,14 @@ import {
   CreateTournamentSchema,
   CreateTournamentSchemaType,
 } from "./create-tournament-schema";
+import { ProjectKind } from "@/lib/server-manager/types";
 
 export default function CreateTournamentForm({
   callback,
 }: {
   callback?: () => void;
 }) {
-  const createTournament = useReducer(reducers.createTournament);
+  const createTournament = useReducer(reducers.createProject);
 
   const form = useForm<CreateTournamentSchemaType>({
     resolver: zodResolver(CreateTournamentSchema),
@@ -33,6 +34,7 @@ export default function CreateTournamentForm({
         description: values.description || "",
         startingAt: Timestamp.fromDate(values.startDate),
         endingAt: Timestamp.fromDate(values.endDate),
+        kind: ProjectKind.Tournament
       });
 
       toast.success("Tournament successfully created");

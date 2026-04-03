@@ -10,24 +10,20 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 import {
-  ProjectKind,
-  ProjectStatus,
+  MatchStatus,
 } from "./types";
 
 
 export default __t.row({
-  id: __t.u32(),
-  userId: __t.u32().name("user_id"),
-  creatorName: __t.string().name("creator_name"),
   name: __t.string(),
-  startingAt: __t.timestamp().name("starting_at"),
-  endingAt: __t.timestamp().name("ending_at"),
-  description: __t.string(),
+  id: __t.u32().primaryKey(),
+  parentId: __t.u32().name("parent_id"),
+  preConfig: __t.u32().name("pre_config"),
+  config: __t.u32(),
   get status() {
-    return ProjectStatus;
+    return MatchStatus;
   },
-  get kind() {
-    return ProjectKind;
-  },
-  verified: __t.bool(),
+  autoProvisionServer: __t.bool().name("auto_provision_server"),
+  open: __t.bool(),
+  template: __t.bool(),
 });

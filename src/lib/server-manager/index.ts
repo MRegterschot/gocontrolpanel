@@ -97,13 +97,14 @@ import * as PostRoundReplayProcedure from "./post_round_replay_procedure";
 import ComeptitionSchedulesRow from "./comeptition_schedules_table";
 import CompetitionRow from "./competition_table";
 import CompetitionAvailableServerPoolRow from "./competition_available_server_pool_table";
-import CompetitionConnectionRow from "./competition_connection_table";
 import CompetitionConnectionDataRow from "./competition_connection_data_table";
-import CompetitionNodePositionRow from "./competition_node_position_table";
 import MatchRoundRow from "./match_round_table";
 import MatchRoundExtRow from "./match_round_ext_table";
 import MatchStateRow from "./match_state_table";
+import MyConnectionsRow from "./my_connections_table";
 import MyMatchTemplateRow from "./my_match_template_table";
+import MyMatchesRow from "./my_matches_table";
+import MyNodePositionsRow from "./my_node_positions_table";
 import MyProjectsRow from "./my_projects_table";
 import MyUserRow from "./my_user_table";
 import RawServerConfigRow from "./raw_server_config_table";
@@ -143,13 +144,6 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, CompetitionAvailableServerPoolRow),
-  competition_connection: __table({
-    name: 'competition_connection',
-    indexes: [
-    ],
-    constraints: [
-    ],
-  }, CompetitionConnectionRow),
   competition_connection_data: __table({
     name: 'competition_connection_data',
     indexes: [
@@ -157,13 +151,6 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, CompetitionConnectionDataRow),
-  competition_node_position: __table({
-    name: 'competition_node_position',
-    indexes: [
-    ],
-    constraints: [
-    ],
-  }, CompetitionNodePositionRow),
   match_round: __table({
     name: 'match_round',
     indexes: [
@@ -185,6 +172,13 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, MatchStateRow),
+  my_connections: __table({
+    name: 'my_connections',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyConnectionsRow),
   my_match_template: __table({
     name: 'my_match_template',
     indexes: [
@@ -192,6 +186,20 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, MyMatchTemplateRow),
+  my_matches: __table({
+    name: 'my_matches',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyMatchesRow),
+  my_node_positions: __table({
+    name: 'my_node_positions',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyNodePositionsRow),
   my_projects: __table({
     name: 'my_projects',
     indexes: [

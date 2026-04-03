@@ -12,7 +12,7 @@ import {
 
 import {
   NodeHandle,
-  ConnectionType,
+  ConnectionKind,
 } from "./types";
 
 export default {
@@ -22,7 +22,7 @@ export default {
   get target() {
     return NodeHandle;
   },
-  get setting() {
-    return ConnectionType;
+  get kind() {
+    return ConnectionKind;
   },
 };

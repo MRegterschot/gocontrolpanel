@@ -11,21 +11,22 @@ import {
 } from "spacetimedb";
 import {
   NodeHandle,
-  ConnectionType,
+  ConnectionKind,
   ConnectionStatus,
 } from "./types";
 
 
 export default __t.row({
   id: __t.u32(),
+  competitionId: __t.u32().name("competition_id"),
   get origin() {
     return NodeHandle;
   },
   get target() {
     return NodeHandle;
   },
-  get connectionType() {
-    return ConnectionType.name("connection_type");
+  get kind() {
+    return ConnectionKind;
   },
   get status() {
     return ConnectionStatus;

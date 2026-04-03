@@ -14,7 +14,7 @@ export default function SelectedMatchPanel({
   match,
   clearSelection,
 }: SelectedMatchProps) {
-  const deleteMatch = useReducer(reducers.deleteMatch);
+  const deleteMatch = useReducer(reducers.matchDelete);
 
   const onDeleteMatch = () => {
     const matchId = parseInt(match.id, 10);

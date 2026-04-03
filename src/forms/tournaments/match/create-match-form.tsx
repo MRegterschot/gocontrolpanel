@@ -18,24 +18,24 @@ import {
 } from "./create-match-schema";
 
 export default function CreateMatchForm({
-  competitionId,
+  competitionId: parentId,
   callback,
 }: {
   competitionId: number;
   callback?: () => void;
 }) {
-  const createMatch = useReducer(reducers.createMatch);
+  const createMatch = useReducer(reducers.matchCreate);
 
   const [isCreateMatchTemplateModalOpen, setIsCreateMatchTemplateModalOpen] =
     useState(false);
 
-  const [matchTemplateRows] = useTable(tables.myMatchTemplate);
+  const [matchTemplateRows] = useTable(tables.my_match_template);
 
   const form = useForm<CreateMatchSchemaType>({
     resolver: zodResolver(CreateMatchSchema),
     defaultValues: {
-      competitionId: competitionId,
-      withTemplate: undefined,
+      parentId: parentId,
+      withTemplate: 0,
     },
   });
 
@@ -43,7 +43,7 @@ export default function CreateMatchForm({
     try {
       createMatch({
         ...values,
-        withTemplate: values.withTemplate ?? undefined,
+        withTemplate: values.withTemplate,
       });
 
       toast.success("Match successfully created");

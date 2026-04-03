@@ -1,4 +1,3 @@
-import { CompetitionStatus } from "@/lib/server-manager";
 import {
   Icon,
   IconCalendarEventFilled,
@@ -8,9 +7,10 @@ import {
 } from "@tabler/icons-react";
 import { Infer } from "spacetimedb";
 import { Badge } from "../../ui/badge";
+import { CompetitionStatus } from "@/lib/server-manager/types";
 
 interface CompetitiontatusBadgeProps {
-  status: Infer<typeof CompetitionStatus>;
+  status: CompetitionStatus;
 }
 
 export default function CompetitionStatusBadge({
@@ -21,12 +21,12 @@ export default function CompetitionStatusBadge({
   let textColor: string | undefined;
 
   switch (status.tag) {
-    case "Planning":
+    case "Configuring":
       StatusIcon = IconCalendarEventFilled;
       bgColor = "#2495D70D";
       textColor = "#2495D780";
       break;
-    case "Registration":
+    case "Configured":
       StatusIcon = IconLogin2;
       bgColor = "#33D6610D";
       textColor = "#33D66180";

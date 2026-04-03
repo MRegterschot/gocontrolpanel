@@ -59,14 +59,15 @@ export type Common = __Infer<typeof Common>;
 
 export const CompetitionConnection = __t.object("CompetitionConnection", {
   id: __t.u32(),
+  competitionId: __t.u32(),
   get origin() {
     return NodeHandle;
   },
   get target() {
     return NodeHandle;
   },
-  get connectionType() {
-    return ConnectionType;
+  get kind() {
+    return ConnectionKind;
   },
   get status() {
     return ConnectionStatus;
@@ -177,6 +178,14 @@ export const ConnectionDataOption = __t.enum("ConnectionDataOption", {
 });
 export type ConnectionDataOption = __Infer<typeof ConnectionDataOption>;
 
+// The tagged union or sum type for the algebraic type `ConnectionKind`.
+export const ConnectionKind = __t.enum("ConnectionKind", {
+  Wait: __t.unit(),
+  Data: __t.unit(),
+  Action: __t.unit(),
+});
+export type ConnectionKind = __Infer<typeof ConnectionKind>;
+
 // The tagged union or sum type for the algebraic type `ConnectionStatus`.
 export const ConnectionStatus = __t.enum("ConnectionStatus", {
   Configuring: __t.unit(),
@@ -184,14 +193,6 @@ export const ConnectionStatus = __t.enum("ConnectionStatus", {
   Resolved: __t.unit(),
 });
 export type ConnectionStatus = __Infer<typeof ConnectionStatus>;
-
-// The tagged union or sum type for the algebraic type `ConnectionType`.
-export const ConnectionType = __t.enum("ConnectionType", {
-  Wait: __t.unit(),
-  Data: __t.unit(),
-  Action: __t.unit(),
-});
-export type ConnectionType = __Infer<typeof ConnectionType>;
 
 export const Custom = __t.object("Custom", {
   name: __t.string(),
@@ -537,6 +538,21 @@ export const MatchStatus = __t.enum("MatchStatus", {
   Locked: __t.unit(),
 });
 export type MatchStatus = __Infer<typeof MatchStatus>;
+
+export const MatchV1 = __t.object("MatchV1", {
+  name: __t.string(),
+  id: __t.u32(),
+  parentId: __t.u32(),
+  preConfig: __t.u32(),
+  config: __t.u32(),
+  get status() {
+    return MatchStatus;
+  },
+  autoProvisionServer: __t.bool(),
+  open: __t.bool(),
+  template: __t.bool(),
+});
+export type MatchV1 = __Infer<typeof MatchV1>;
 
 // The tagged union or sum type for the algebraic type `MethodCall`.
 export const MethodCall = __t.enum("MethodCall", {
@@ -1135,8 +1151,8 @@ export const TabConnection = __t.object("TabConnection", {
   targetId: __t.u32(),
   originVariant: __t.u8(),
   targetVariant: __t.u8(),
-  get connectionType() {
-    return ConnectionType;
+  get kind() {
+    return ConnectionKind;
   },
   get status() {
     return ConnectionStatus;
@@ -1208,21 +1224,6 @@ export const TimeAttack = __t.object("TimeAttack", {
   timeLimit: __t.i32(),
 });
 export type TimeAttack = __Infer<typeof TimeAttack>;
-
-export const TmMatchV1 = __t.object("TmMatchV1", {
-  name: __t.string(),
-  id: __t.u32(),
-  parentId: __t.u32(),
-  preConfig: __t.u32(),
-  config: __t.u32(),
-  get status() {
-    return MatchStatus;
-  },
-  autoProvisionServer: __t.bool(),
-  open: __t.bool(),
-  template: __t.bool(),
-});
-export type TmMatchV1 = __Infer<typeof TmMatchV1>;
 
 export const TmServerMethodResponse = __t.object("TmServerMethodResponse", {
   id: __t.u32(),

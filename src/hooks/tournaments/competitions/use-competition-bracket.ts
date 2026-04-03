@@ -1,37 +1,31 @@
 import {
-  CompetitionNodePosition,
-  CompetitionV1,
   tables,
-  TmMatchV1,
 } from "@/lib/server-manager";
+import { CompetitionV1, MatchV1 } from "@/lib/server-manager/types";
 import { useMemo } from "react";
-import { Infer } from "spacetimedb";
-import { eq, useTable, where } from "spacetimedb/react";
+import { useTable } from "spacetimedb/react";
 
-type CompetitionBase = Infer<typeof CompetitionV1>;
-type MatchNodeWithPos = Infer<typeof TmMatchV1> & {
+
+/* type MatchNodeWithPos = Infer<typeof TmMatchV1> & {
   position: Infer<typeof CompetitionNodePosition>["position"];
-};
+}; */
 
 export type Bracket = {
-  nodes: MatchNodeWithPos[];
+  nodes: MatchV1[];
   edges: { from: number; to: number; type: "Waiting" | "Data" }[];
 };
 
-export function useCompetitionBracket(competition: CompetitionBase) {
+export function useCompetitionBracket(competition: CompetitionV1) {
   const [matchRows] = useTable(
-    tables.tmMatch,
-    where(eq("competitionId", competition.id)),
+    tables.my_matches.where((row) => row.parentId.eq(competition.id)),
   );
 
   const [connectionRows] = useTable(
-    tables.competitionConnection,
-    where(eq("competitionId", competition.id)),
+    tables.my_connections.where((row) => row.competitionId.eq(competition.id)),
   );
 
   const [nodePositionRows] = useTable(
-    tables.competitionNodePosition,
-    where(eq("competitionId", competition.id)),
+    tables.my_node_positions.where((row) => row.competitionId.eq(competition.id)),
   );
 
   const bracket = useMemo<Bracket>(() => {
@@ -48,13 +42,13 @@ export function useCompetitionBracket(competition: CompetitionBase) {
     const edges = connectionRows
       .filter(
         (conn) =>
-          conn.connectionFrom.tag === "MatchV1" &&
-          conn.connectionTo.tag === "MatchV1",
+          conn.origin.tag === "MatchV1" &&
+          conn.target.tag === "MatchV1",
       )
       .map((conn) => ({
-        from: conn.connectionFrom.value,
-        to: conn.connectionTo.value,
-        type: conn.connectionSettings.tag,
+        from: conn.origin.value,
+        to: conn.target.value,
+        type: conn.kind.tag,
       }));
 
     return { nodes, edges };

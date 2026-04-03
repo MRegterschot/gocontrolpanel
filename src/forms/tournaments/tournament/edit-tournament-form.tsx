@@ -2,7 +2,7 @@
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { reducers, TournamentV1 } from "@/lib/server-manager";
+import { reducers } from "@/lib/server-manager";
 import { getErrorMessage } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconDeviceFloppy } from "@tabler/icons-react";
@@ -14,19 +14,20 @@ import {
   EditTournamentSchema,
   EditTournamentSchemaType,
 } from "./edit-tournament-schema";
+import { ProjectV1 } from "@/lib/server-manager/types";
 
 export default function EditTournamentForm({
   tournament,
   callback,
 }: {
-  tournament: Infer<typeof TournamentV1>;
+  tournament: ProjectV1;
   callback?: () => void;
 }) {
-  const editTournamentName = useReducer(reducers.tournamentEditName);
+  const editTournamentName = useReducer(reducers.projectEditName);
   const editTournamentDescription = useReducer(
-    reducers.tournamentEditDescription,
+    reducers.projectEditDescription,
   );
-  const editTournamentDates = useReducer(reducers.tournamentEditDates);
+  const editTournamentDates = useReducer(reducers.projectEditDates);
 
   const form = useForm<EditTournamentSchemaType>({
     resolver: zodResolver(EditTournamentSchema),
@@ -71,7 +72,7 @@ export default function EditTournamentForm({
     if (tournament.name !== values.name) {
       try {
         editTournamentName({
-          tournamentId: tournament.id,
+          projectId: tournament.id,
           name: values.name,
         });
       } catch (error) {
@@ -84,7 +85,7 @@ export default function EditTournamentForm({
     if (tournament.description !== values.description) {
       try {
         editTournamentDescription({
-          tournamentId: tournament.id,
+          projectId: tournament.id,
           description: values.description || "",
         });
       } catch (error) {
@@ -97,7 +98,7 @@ export default function EditTournamentForm({
     if (startDateModified || endDateModified) {
       try {
         editTournamentDates({
-          tournamentId: tournament.id,
+          projectId: tournament.id,
           startingAt: Timestamp.fromDate(values.startDate),
           endingAt: Timestamp.fromDate(values.endDate),
         });

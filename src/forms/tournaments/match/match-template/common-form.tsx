@@ -2,16 +2,11 @@
 
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
-import { ConfigCommonSchemaType } from "@/types/tm-server-manager/config/common";
-import {
-  ConfigLapsNumberSchema,
-  ConfigRespawnBehaviourSchema,
-  ConfigWarmupDurationSchema,
-  ConfigWarmupTimeoutSchema,
-} from "@/types/tm-server-manager/config/enums";
 import { IconArrowNarrowLeft, IconArrowNarrowRight } from "@tabler/icons-react";
 import { UseFormReturn } from "react-hook-form";
 import { CreateMatchTemplateSchemaType } from "./create-match-template-schema";
+import { ConfigCommonSchemaType } from "@/types/tm-tourney-manager/config/common";
+import { ConfigLapsNumberSchema, ConfigRespawnBehaviourSchema, ConfigWarmupDurationSchema, ConfigWarmupTimeoutSchema } from "@/types/tm-tourney-manager/config/enums";
 
 export const DEFAULT_COMMON_CONFIG: ConfigCommonSchemaType = {
   chatTime: 10,
