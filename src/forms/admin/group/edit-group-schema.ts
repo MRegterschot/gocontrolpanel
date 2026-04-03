@@ -3,6 +3,8 @@ import { z } from "zod";
 const UserWithRoleSchema = z.object({
   userId: z.string().uuid("Please select the found user"),
   role: z.string().min(1, "Role is required"),
+  order: z.number().optional(),
+  serversOrder: z.string().nullable().optional()
 });
 
 export const EditGroupSchema = z.object({

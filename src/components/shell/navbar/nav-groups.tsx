@@ -1,6 +1,11 @@
 "use client";
+import {
+  updateGroupOrder,
+  updateGroupServersOrder,
+} from "@/actions/database/groups";
 import IconNadeo from "@/components/icons/nadeo";
 import IconTmx from "@/components/icons/tmx-svg";
+import { Button } from "@/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
@@ -17,27 +22,33 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { generatePath, hasPermissionSync } from "@/lib/utils";
+import { generatePath, getErrorMessage, hasPermissionSync } from "@/lib/utils";
 import { useNotifications } from "@/providers/notification-provider";
 import { useServers } from "@/providers/servers-provider";
 import { connectionRoutes, routePermissions, routes } from "@/routes";
+import { UserGroup } from "@/types/auth";
 import {
   IconActivity,
   IconAdjustmentsAlt,
+  IconChevronDown,
+  IconChevronUp,
   IconDeviceDesktop,
   IconDeviceGamepad,
   IconFileDescription,
   IconMap,
   IconServer,
+  IconServerOff,
   IconStopwatch,
   IconUsers,
 } from "@tabler/icons-react";
 import { ChevronRight } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 interface ServerNavGroup {
+  id: string;
   name: string;
   servers: {
     id: string;
@@ -61,18 +72,43 @@ export default function NavGroups() {
 
   const { servers, serverId, loading } = useServers();
 
+  const [groups, setGroups] = useState<UserGroup[]>([]);
+
+  useEffect(() => {
+    setGroups(session?.user.groups || []);
+  }, [session?.user.groups]);
+
   const groupsSidebarGroup: ServerNavGroup[] = useMemo(
     () =>
-      session?.user.groups.map((group) => ({
+      groups.map((group) => ({
+        id: group.id,
         name: group.name,
         servers: servers
           .filter((server) => group.servers.some((s) => s.id === server.id))
+          .sort((a, b) => {
+            // If no serversOrder, sort by name
+            if (!group.serversOrder) {
+              return a.name.localeCompare(b.name);
+            }
+
+            // Sort servers based on serversOrder in the group, if not found (-1), sort by name
+            const indexA = group.serversOrder.findIndex((s) => s === a.id);
+            const indexB = group.serversOrder.findIndex((s) => s === b.id);
+
+            if (indexA === -1 && indexB === -1) {
+              return a.name.localeCompare(b.name);
+            }
+            if (indexA === -1) return 1;
+            if (indexB === -1) return -1;
+
+            return indexA - indexB;
+          })
           .map((server) => {
             const serverGroup = {
               id: server.id,
               name: server.name,
               isConnected: server.isConnected,
-              icon: IconServer,
+              icon: server.isConnected ? IconServer : IconServerOff,
               isActive: serverId === server.id,
               items: [
                 {
@@ -220,8 +256,92 @@ export default function NavGroups() {
           })
           .filter((server): server is NonNullable<typeof server> => !!server),
       })) || [],
-    [session, servers, serverId],
+    [groups, servers, serverId],
   );
+
+  const saveGroupOrder = async (updatedGroups: UserGroup[]) => {
+    try {
+      console.log(updatedGroups);
+      const { error } = await updateGroupOrder(updatedGroups);
+      if (error) {
+        throw new Error(error);
+      }
+    } catch (error) {
+      toast.error("Failed to update group order", {
+        description: getErrorMessage(error),
+      });
+    }
+  };
+
+  const saveGroupServersOrder = async (
+    groupId: string,
+    serversOrder: string[],
+  ) => {
+    try {
+      const { error } = await updateGroupServersOrder(groupId, serversOrder);
+      if (error) {
+        throw new Error(error);
+      }
+    } catch (error) {
+      toast.error("Failed to update server order", {
+        description: getErrorMessage(error),
+      });
+    }
+  };
+
+  const moveGroup = (id: string, direction: "up" | "down") => {
+    const sorted = [...groups];
+    const index = sorted.findIndex((g) => g.id === id);
+
+    if (index === -1) return;
+
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+
+    if (targetIndex < 0 || targetIndex >= sorted.length) return;
+
+    [sorted[index], sorted[targetIndex]] = [sorted[targetIndex], sorted[index]];
+
+    const normalized = sorted.map((g, i) => ({
+      ...g,
+      order: i,
+    }));
+
+    setGroups(normalized);
+    saveGroupOrder(normalized);
+  };
+
+  const moveServer = (
+    groupId: string,
+    serverId: string,
+    direction: "up" | "down",
+  ) => {
+    const groupIndex = groups.findIndex((g) => g.id === groupId);
+    if (groupIndex === -1) return;
+
+    const group = groups[groupIndex];
+    const serversOrder = group.serversOrder || group.servers.map((s) => s.id);
+    const index = serversOrder.findIndex((id) => id === serverId);
+
+    if (index === -1) return;
+
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+
+    if (targetIndex < 0 || targetIndex >= serversOrder.length) return;
+
+    [serversOrder[index], serversOrder[targetIndex]] = [
+      serversOrder[targetIndex],
+      serversOrder[index],
+    ];
+
+    const updatedGroups = [...groups];
+    updatedGroups[groupIndex] = {
+      ...group,
+      serversOrder,
+    };
+
+    setGroups(updatedGroups);
+    saveGroupServersOrder(groupId, serversOrder);
+  };
 
   if (loading) {
     return (
@@ -265,7 +385,25 @@ export default function NavGroups() {
       className="group-data-[collapsible=icon]:hidden select-none"
       key={index}
     >
-      {group.name && <SidebarGroupLabel>{group.name}</SidebarGroupLabel>}
+      <SidebarGroupLabel className="flex items-center justify-between">
+        <span>{group.name}</span>
+        <div className="flex items-center gap-1">
+          <Button
+            size="sidebar"
+            variant="ghost"
+            onClick={() => moveGroup(group.id, "up")}
+          >
+            <IconChevronUp className="w-4 h-4" />
+          </Button>
+          <Button
+            size="sidebar"
+            variant="ghost"
+            onClick={() => moveGroup(group.id, "down")}
+          >
+            <IconChevronDown className="w-4 h-4" />
+          </Button>
+        </div>
+      </SidebarGroupLabel>
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
           {group.servers.length === 0 ? (
@@ -289,7 +427,7 @@ export default function NavGroups() {
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton tooltip={server.name} asChild>
-                        <div className="select-none cursor-pointer">
+                        <div className="select-none cursor-pointer group/item">
                           {server.icon && <server.icon />}
                           <span className="overflow-hidden text-ellipsis text-nowrap flex items-center">
                             {server.name}
@@ -305,7 +443,29 @@ export default function NavGroups() {
                               </span>
                             )}
                           </span>
-                          <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                          <div className="hidden group-hover/item:flex ml-auto items-end">
+                            <Button
+                              size="sidebar"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                moveServer(group.id, server.id, "up");
+                              }}
+                            >
+                              <IconChevronUp className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sidebar"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                moveServer(group.id, server.id, "down");
+                              }}
+                            >
+                              <IconChevronDown className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <ChevronRight className="ml-auto group-hover/item:ml-0 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                         </div>
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
