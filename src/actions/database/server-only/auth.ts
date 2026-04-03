@@ -12,6 +12,8 @@ const includeGroupsWithServers = Prisma.validator<Prisma.UsersInclude>()({
     },
     select: {
       role: true,
+      order: true,
+      serversOrder: true,
       group: {
         select: {
           id: true,

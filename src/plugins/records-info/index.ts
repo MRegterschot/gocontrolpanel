@@ -41,6 +41,7 @@ export default class RecordsInfoPlugin extends Plugin<RecordsInfoPluginConfig | 
   ) {
     super(clientManager, manialinkManager);
     this.widget = new Widget(manialinkManager);
+    this.widget.setHideWhileDriving(true);
     this.widget.setTemplate("widgets/records-info/records-info");
     this.widget.setId("records-info-widget");
     this.widget.setPosition({ x: 100, y: 73.5 });
@@ -87,6 +88,12 @@ export default class RecordsInfoPlugin extends Plugin<RecordsInfoPluginConfig | 
   }
 
   async onPlayerFinish(waypoint: Waypoint) {
+    if (
+      this.clientManager.info.liveInfo.isWarmUp ||
+      this.clientManager.info.liveInfo.isPaused
+    )
+      return;
+
     if (
       waypoint.racetime === 0 ||
       (this.liveFastestTime !== null &&

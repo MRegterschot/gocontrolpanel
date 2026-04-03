@@ -85,6 +85,8 @@ export default function AddGroupForm({ callback }: { callback?: () => void }) {
           values.groupMembers?.map((user) => ({
             userId: user.userId,
             role: user.role as GroupRole,
+            order: 0,
+            serversOrder: "",
           })) || [],
       });
       if (error) {
