@@ -11,19 +11,22 @@
   <quad pos="40.5 0" z-index="0" size="14.5 5" bgcolor="BBB"/>
   <label pos="2.4 -2.25" z-index="0" size="5 5" text="0" halign="center" valign="center" textsize="1.25" textcolor="DDD" textfont="GameFontSemiBold"/>
   <quad pos="6.25 -1" z-index="0" size="4.5 3" bgcolor="DDD" image="file://Media/Flags/WOR.dds"/>
-  <label pos="12 -2.25" z-index="0" size="25.5 5" text="-" textcolor="222" textsize="1.2" textfont="GameFontRegular" valign="center"/>
+  <label pos="12 -2.25" z-index="0" size="22 5" text="-" textcolor="222" textsize="1.2" textfont="GameFontRegular" valign="center"/>
   <label pos="39.75 -2.25" z-index="0" size="5 5" text="0" halign="right" textcolor="222" textsize="1" textfont="GameFontSemiBold" valign="center"/>
   <label pos="54 -2.25" z-index="0" size="12.5 5" text="--:--.---" valign="center" halign="right" textsize="1" textcolor="222" textfont="GameFontSemiBold"/>
   
-  <frame pos="47.5 0" size="7 5" id="finish" z-index="-2">
+  <frame pos="47.5 0" size="14 5" id="finish" z-index="-2">
     <quad pos="0 0" size="7 5" bgcolor="222" z-index="-2" />
     <label pos="3.5 -2.25" size="6 5" z-index="-1" text="" halign="center" valign="center" textsize="1.25" textcolor="DDD" />
+
+    <quad pos="7 0" size="7 5" bgcolor="222" z-index="-2" hidden="1" />
+    <label pos="10.5 -2.25" size="6 5" z-index="-1" text="WR" halign="center" valign="center" textsize="1.25" textfont="GameFontSemiBold" textcolor="DDD" hidden="1" />
   </frame>
 
   <quad class="trigger" pos="0 0" z-index="-2" size="57 5" bgcolor="000" opacity="0" scriptevents="1" />
 </framemodel>
 
-<frame id="rounds" pos="0 -5.25" size="62 42">
+<frame id="rounds" pos="0 -5.25" size="69 42">
 <quad size="55 {{ multiply 100 5.25 }}" bgcolor="fff" opacity="0" scriptevents="1"/>
 {{#range 0 100}}
 <frameinstance modelid="round" pos="0 {{ multiply i -5.25 }}" />
@@ -45,6 +48,9 @@
 #Struct Finish {
   Text login;
   Integer points;
+  Boolean isPersonalBest;
+  Boolean isLocalRecord;
+  Boolean isWorldRecord;
 }
 {{/content}}
 
@@ -179,7 +185,7 @@ Void updateRoundRow(Integer index, Round round, Round[] rounds, Text mode, Integ
   roundFrame.Show();
 }
 
-Void updateFinish(Text login, Integer points, Boolean finished) {
+Void updateFinish(Text login, Integer points, Boolean finished, Boolean isPersonalBest, Boolean isLocalRecord, Boolean isWorldRecord) {
   declare roundsFrame <=> (Page.MainFrame.GetFirstChild("rounds") as CMlFrame);
 
   foreach (control in roundsFrame.Controls) {
@@ -207,9 +213,32 @@ Void updateFinish(Text login, Integer points, Boolean finished) {
           
           (frameFinish.Controls[1] as CMlLabel).SetText(pointsText);
         }
+
+        if (isPersonalBest) {
+          (frameFinish.Controls[3] as CMlLabel).SetText("PB");
+        } 
+        
+        if (isLocalRecord) {
+          (frameFinish.Controls[3] as CMlLabel).SetText("LR");
+        }
+        
+        if (isWorldRecord) {
+          (frameFinish.Controls[3] as CMlLabel).SetText("WR");
+        }
+
+        if (isWorldRecord || isLocalRecord || isPersonalBest) {
+          (frameFinish.Controls[2] as CMlQuad).Show();
+          (frameFinish.Controls[3] as CMlLabel).Show();
+        } else {
+          (frameFinish.Controls[2] as CMlQuad).Hide();
+          (frameFinish.Controls[3] as CMlLabel).Hide();
+        }
+        
         AnimMgr.Add(frameFinish, """<frame pos='55 0' />""", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
       } else {
         AnimMgr.Add(frameFinish, """<frame pos='47.5 0' />""", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
+        (frameFinish.Controls[2] as CMlQuad).Hide();
+        (frameFinish.Controls[3] as CMlLabel).Hide();
       }
 
       break;
@@ -219,7 +248,7 @@ Void updateFinish(Text login, Integer points, Boolean finished) {
 
 Void clearFinishes(Round[] rounds) {
   foreach (round in rounds) {
-    updateFinish(round.login, 0, False);
+    updateFinish(round.login, 0, False, False, False, False);
   }
 }
 
@@ -277,36 +306,36 @@ if (LastRoundsUpdate != lastUpdate) {
   
   updateWidget(Rounds, Mode, PointsLimit);
 
-  if (Finishes.count != prevFinishes.count) {
-    if (Finishes.count == 0) {
-      clearFinishes(Rounds);
-    } else {
-      if (Finishes.count > prevFinishes.count) {
-        // Find newly finished players
-        foreach (finish in Finishes) {
-          declare Boolean found = False;
-          foreach (prevFinish in prevFinishes) {
-            if (finish.login == prevFinish.login) {
-              found = True;
-              break;
-            }
-          }
+  if (Finishes.count == 0) {
+    clearFinishes(Rounds);
+  }
 
-          if (!found) {
-            updateFinish(finish.login, finish.points, True);
+  if (Finishes.count != prevFinishes.count) {
+    if (Finishes.count > prevFinishes.count) {
+      // Find newly finished players
+      foreach (finish in Finishes) {
+        declare Boolean found = False;
+        foreach (prevFinish in prevFinishes) {
+          if (finish.login == prevFinish.login) {
+            found = True;
+            break;
           }
         }
-      } else {
-        clearFinishes(Rounds);
-        // Re-apply finished players
-        foreach (finish in Finishes) {
-          updateFinish(finish.login, finish.points, True);
+
+        if (!found) {
+          updateFinish(finish.login, finish.points, True, finish.isPersonalBest, finish.isLocalRecord, finish.isWorldRecord);
         }
       }
+    } else {
+      clearFinishes(Rounds);
+      // Re-apply finished players
+      foreach (finish in Finishes) {
+        updateFinish(finish.login, finish.points, True, finish.isPersonalBest, finish.isLocalRecord, finish.isWorldRecord);
+      }
     }
-
-    prevFinishes = Finishes;
   }
+
+  prevFinishes = Finishes;
 }
 {{/content}}
 
