@@ -9,7 +9,6 @@ type Vector2 = {
 };
 
 export default class Manialink {
-  private firstDisplay: boolean = true;
   protected readonly manialinkManager: ManialinkManager;
 
   private hasUpdate: boolean = true;
@@ -39,18 +38,17 @@ export default class Manialink {
   }
 
   public display() {
-    this.manialinkManager.displayManialink(this, this.firstDisplay);
-    this.firstDisplay = false;
+    this.manialinkManager.displayManialink(this.id, this.render(), this.login);
     this.updateManialink?.display();
   }
 
   public hide() {
-    this.manialinkManager.hideManialink(this);
+    this.manialinkManager.hideManialink(this.id, this.login);
     this.updateManialink?.hide();
   }
 
   public destroy() {
-    this.manialinkManager.destroyManialink(this);
+    this.manialinkManager.destroyManialink(this.id, this.login);
     this.updateManialink?.destroy();
   }
 

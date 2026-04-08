@@ -85,3 +85,7 @@ export const getKeyClubMembersPaginated = (
 export const getKeyClubMembersCount = (clubId: number) =>
   `nadeo:club:${clubId}:members:count`;
 export const getKeyUserInfo = (login: string) => `users:user-info:${login}`;
+
+export const getKeyPublicManialinks = () => `manialinks:public`;
+export const getKeyPlayerManialinks = (login: string) =>
+  `manialinks:player:${login}`;

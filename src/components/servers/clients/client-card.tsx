@@ -1,4 +1,5 @@
 import {
+  disconnectClient,
   resendAllManialinks,
   stopReconnect,
   triggerReconnect,
@@ -76,6 +77,21 @@ export default function ClientCard({ client }: { client: ServerClient }) {
     }
   };
 
+  const handleDisconnectClient = async () => {
+    try {
+      const { error } = await disconnectClient(client.serverId);
+      if (error) {
+        throw new Error(error);
+      }
+
+      toast.success(`Disconnected ${client.name}`);
+    } catch (err) {
+      toast.error(`Failed to disconnect ${client.name}`, {
+        description: getErrorMessage(err),
+      });
+    }
+  };
+
   return (
     <Card className="p-4 flex flex-col gap-4">
       <div className="flex gap-4">
@@ -124,6 +140,9 @@ export default function ClientCard({ client }: { client: ServerClient }) {
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleResendAllManialinks}>
             Resend All Manialinks
+          </Button>
+          <Button variant="destructive" onClick={handleDisconnectClient}>
+            Disconnect Client
           </Button>
         </div>
       )}
