@@ -390,6 +390,9 @@ export default class LiveRoundPlugin extends Plugin {
     this.pointsRepartition =
       this.clientManager.info.liveInfo.pointsRepartition || [];
 
+    this.finishes = [];
+    this.rounds = [];
+
     const playerList: SPlayerInfo[] = await this.clientManager.client.call(
       "GetPlayerList",
       1000,
@@ -399,9 +402,6 @@ export default class LiveRoundPlugin extends Plugin {
     const mainServerInfo = await this.clientManager.client.call(
       "GetMainServerPlayerInfo",
     );
-
-    this.finishes = [];
-    this.rounds = [];
 
     if (playerList && Array.isArray(playerList)) {
       for (let i = 0; i < playerList.length; i++) {
