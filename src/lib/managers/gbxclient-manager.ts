@@ -294,8 +294,10 @@ export class GbxClientManager extends EventEmitter {
     await syncMap(this, server.id);
     await syncLiveInfo(this);
 
+    await this.pluginManager.deleteAllManialinks();
+
     await this.pluginManager.loadPlugins();
-    await this.pluginManager.reloadPlugins(false);
+    await this.pluginManager.updatePlugins(false);
 
     return this.client;
   }

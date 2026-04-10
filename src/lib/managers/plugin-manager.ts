@@ -141,7 +141,7 @@ export default class PluginManager {
     logger.info({ pluginId }, `Unloaded plugin ${pluginId}`);
   }
 
-  public async reloadPlugins(updateConfigs: boolean = true) {
+  public async updatePlugins(updateConfigs: boolean = true) {
     const clientPlugins = this.clientManager.info.plugins;
 
     for (const plugin of this.plugins.values()) {
@@ -192,6 +192,28 @@ export default class PluginManager {
     );
   }
 
+  public async reloadPlugins() {
+    for (const plugin of this.plugins.values()) {
+      if (!plugin.isLoaded()) continue;
+
+      await plugin.onUnload();
+      plugin.setLoaded(false);
+
+      const clientPlugin = this.clientManager.info.plugins.find(
+        (p) => p.plugin.name === plugin.getPluginId(),
+      );
+
+      if (!clientPlugin || !clientPlugin.enabled) continue;
+
+      await plugin.onLoad();
+      plugin.setLoaded(true);
+    }
+
+    await this.startPlugins();
+
+    logger.info(`Reloaded all plugins`);
+  }
+
   private async onModeChange(mode: string) {
     const clientPlugins = this.clientManager.info.plugins;
 
@@ -234,5 +256,9 @@ export default class PluginManager {
 
   public async resendAllManialinks() {
     await this.manialinkManager.resendAllManialinks();
+  }
+
+  public async deleteAllManialinks() {
+    await this.manialinkManager.deleteAllManialinks();
   }
 }
