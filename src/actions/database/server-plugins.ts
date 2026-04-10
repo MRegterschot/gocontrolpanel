@@ -49,7 +49,7 @@ export async function updateServerPlugins(
       const manager = await getGbxClientManager(serverId);
 
       manager.info.plugins = updatedPlugins;
-      manager.pluginManager.reloadPlugins();
+      manager.pluginManager.updatePlugins();
 
       await logAudit(
         session.user.id,
@@ -114,7 +114,7 @@ export async function updateServerPlugin(
       });
 
       manager.info.plugins = updatedPlugins;
-      manager.pluginManager.reloadPlugins();
+      manager.pluginManager.updatePlugins();
 
       await logAudit(
         session.user.id,
@@ -167,6 +167,18 @@ export async function exportServerPluginConfig(
       }
 
       return plugin.config as Record<string, any>;
+    },
+  );
+}
+
+export async function reloadServerPlugins(
+  serverId: string,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
+    async () => {
+      const manager = await getGbxClientManager(serverId);
+      manager.pluginManager.reloadPlugins();
     },
   );
 }

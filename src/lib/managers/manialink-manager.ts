@@ -8,6 +8,7 @@ import {
   getRedisClient,
 } from "../redis";
 import { GbxClientManager } from "./gbxclient-manager";
+import { getRedisClient } from "../redis";
 
 export default class ManialinkManager {
   private readonly listenerId: string;
@@ -241,5 +242,37 @@ export default class ManialinkManager {
 
     const key = getKeyPlayerManialinks(login);
     await redis.hdel(key, manialinkId);
+  }
+
+  public async deleteAllManialinks() {
+    const redis = await getRedisClient();
+
+    // Delete all public manialinks
+    const publicKey = getKeyPublicManialinks();
+    const publicManialinkKeys = await redis.hgetall(publicKey);
+
+    const multi = redis.multi();
+
+    for (const manialinkId of Object.keys(publicManialinkKeys)) {
+      multi.hdel(publicKey, manialinkId);
+    }
+
+    // Delete all player-specific manialinks
+    const stream = redis.scanStream({
+      match: getKeyPlayerManialinks("*"),
+    });
+
+    stream.on("data", (keys: string[]) => {
+      for (const key of keys) {
+        multi.del(key);
+      }
+    });
+
+    await new Promise((resolve, reject) => {
+      stream.on("end", resolve);
+      stream.on("error", reject);
+    });
+
+    await multi.exec();
   }
 }
