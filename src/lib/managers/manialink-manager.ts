@@ -8,7 +8,6 @@ import {
   getRedisClient,
 } from "../redis";
 import { GbxClientManager } from "./gbxclient-manager";
-import { getRedisClient } from "../redis";
 
 export default class ManialinkManager {
   private readonly listenerId: string;
