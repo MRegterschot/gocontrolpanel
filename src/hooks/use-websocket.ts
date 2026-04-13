@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useRef } from "react";
 
@@ -48,7 +49,7 @@ export default function useWebSocket({
 
     return () => {
       if (wsRef.current) {
-        console.log("Cleaning up WebSocket connection");
+        logger.trace("Cleaning up WebSocket connection");
         wsRef.current.close();
       }
     };

@@ -2,6 +2,7 @@
 
 import { ServerSettingsSchemaType } from "@/forms/server/settings/settings-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
+import { logger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
 import { getGbxClient } from "@/lib/managers/gbxclient-manager";
 import { LocalMapInfo } from "@/types/map";
@@ -68,7 +69,7 @@ export async function getServerSettings(
 
         return serverSettings;
       } catch (error) {
-        console.error("Error parsing server settings:", error);
+        logger.error(error, "Error parsing server settings");
         throw new ServerError("Failed to parse server settings");
       }
     },
@@ -107,7 +108,7 @@ export async function saveServerSettings(
           ["AllowMapDownload", serverSettings.allowMapDownload],
         ])
         .catch((error) => {
-          console.error("Error saving server settings:", error);
+          logger.error(error, "Error saving server settings");
           throw new ServerError("Failed to save server settings");
         });
 
@@ -190,7 +191,7 @@ export async function getLocalMaps(
             Path: path.dirname(map),
           } as LocalMapInfo);
         } catch (error) {
-          console.error(`Error getting map info for ${map}:`, error);
+          logger.error(error, `Error getting map info for ${map}`);
         }
       }
 

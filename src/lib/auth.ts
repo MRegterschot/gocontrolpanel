@@ -5,6 +5,7 @@ import {
   upsertUserAuth,
   UsersWithGroupsWithServers,
 } from "@/actions/database/server-only/auth";
+import { UserGroup } from "@/types/auth";
 import { parse } from "cookie";
 import {
   GetServerSidePropsContext,
@@ -18,6 +19,7 @@ import { IncomingMessage } from "node:http";
 import slugid from "slugid";
 import { getWebIdentities } from "./api/nadeo";
 import config from "./config";
+import { logger } from "./logger";
 import { GroupRole } from "./prisma/generated";
 import { getList, hasPermissionSync } from "./utils";
 
@@ -46,13 +48,23 @@ const NadeoProvider = (): OAuthConfig<Profile> => ({
             grant_type: "authorization_code",
             client_id: process.env.NADEO_CLIENT_ID!,
             client_secret: process.env.NADEO_CLIENT_SECRET!,
-            code: params.code || "",
+            code: params.code ?? "",
             redirect_uri: process.env.NADEO_REDIRECT_URI!,
           }),
         },
       );
 
       if (!response.ok) {
+        logger.error(
+          {
+            response: {
+              status: response.status,
+              statusText: response.statusText,
+              error: await response.text(),
+            },
+          },
+          `Failed to fetch access token: ${response.status} ${response.statusText}`,
+        );
         throw new Error("Failed to fetch access token");
       }
 
@@ -124,7 +136,7 @@ export const authOptions: NextAuthOptions = {
                 token.ubiId = webidentities[0].uid;
               }
             } catch (error) {
-              console.error("Failed to fetch web identities", error);
+              logger.error(error, "Failed to fetch web identities");
             }
           }
 
@@ -148,12 +160,22 @@ export const authOptions: NextAuthOptions = {
       token.admin = dbUser.admin;
       token.ubiId = dbUser.ubiUid || undefined;
       token.permissions = getList<string>(dbUser.permissions);
-      token.groups = dbUser.groupMembers.map((g) => ({
-        id: g.group.id,
-        name: g.group.name,
-        servers: g.group.groupServers.map((s) => s.server),
-        role: g.role,
-      }));
+
+      token.groups = dbUser.groupMembers
+        .sort(
+          (a, b) =>
+            a.order - b.order || a.group.name.localeCompare(b.group.name),
+        )
+        .map((g, i) =>
+          orderServers({
+            id: g.group.id,
+            name: g.group.name,
+            servers: g.group.groupServers.map((s) => s.server),
+            role: g.role,
+            order: i,
+            serversOrder: g.serversOrder?.split(",") || [],
+          }),
+        );
       token.projects = dbUser.hetznerProjectUsers.map((p) => ({
         id: p.project.id,
         name: p.project.name,
@@ -175,6 +197,7 @@ export const authOptions: NextAuthOptions = {
             name: g.name,
             role: "Member" as GroupRole,
             servers: g.servers,
+            order: 9999,
           })),
       );
 
@@ -234,4 +257,28 @@ export async function hasPermission(
   }
 
   return hasPermissionSync(session, permissions, id);
+}
+
+function orderServers(group: UserGroup): UserGroup {
+  // Order servers that are in serversOrder first, then the rest by name
+  const ordered = group.servers.slice().sort((a, b) => {
+    if (!group.serversOrder) {
+      return a.name.localeCompare(b.name);
+    }
+
+    const indexA = group.serversOrder.findIndex((s) => s === a.id);
+    const indexB = group.serversOrder.findIndex((s) => s === b.id);
+
+    if (indexA === -1 && indexB === -1) {
+      return a.name.localeCompare(b.name);
+    }
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+
+    return indexA - indexB;
+  });
+
+  group.serversOrder = ordered.map((s) => s.id);
+
+  return group;
 }

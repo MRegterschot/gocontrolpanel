@@ -6,6 +6,7 @@ import ManialinkManager from "@/lib/managers/manialink-manager";
 import Widget from "@/lib/manialink/components/widget";
 import { SMapInfo } from "@/types/gbx/map";
 import { Waypoint } from "@/types/gbx/waypoint";
+import { RecordsInfoPluginConfig } from "@/types/plugins/records-info";
 import Plugin from "..";
 
 type RecordsInfo = {
@@ -19,9 +20,10 @@ type RecordsInfo = {
   };
 };
 
-export default class RecordsInfoPlugin extends Plugin {
+export default class RecordsInfoPlugin extends Plugin<RecordsInfoPluginConfig | null> {
   static pluginId = "records-info";
   private widget: Widget;
+  private liveFastestTime: number | null = null;
   private recordsInfo: RecordsInfo = {
     worldRecord: {
       time: 0,
@@ -39,6 +41,7 @@ export default class RecordsInfoPlugin extends Plugin {
   ) {
     super(clientManager, manialinkManager);
     this.widget = new Widget(manialinkManager);
+    this.widget.setHideWhileDriving(true);
     this.widget.setTemplate("widgets/records-info/records-info");
     this.widget.setId("records-info-widget");
     this.widget.setPosition({ x: 100, y: 73.5 });
@@ -62,10 +65,45 @@ export default class RecordsInfoPlugin extends Plugin {
   }
 
   async onBeginMap() {
+    this.liveFastestTime = null;
+    this.recordsInfo = {
+      worldRecord: {
+        time: 0,
+        nickName: "-",
+      },
+      localRecord: {
+        time: 0,
+        nickName: "-",
+      },
+    };
     this.updateRecordsInfo();
   }
 
+  async onConfigUpdate() {
+    this.widget.setData({
+      recordsInfoJson: JSON.stringify(this.recordsInfo),
+      localRecordText: this.config?.localRecordText || "LR",
+    });
+    this.widget.update();
+  }
+
   async onPlayerFinish(waypoint: Waypoint) {
+    if (
+      this.clientManager.info.liveInfo.isWarmUp ||
+      this.clientManager.info.liveInfo.isPaused
+    )
+      return;
+
+    if (
+      waypoint.racetime === 0 ||
+      (this.liveFastestTime !== null &&
+        waypoint.racetime >= this.liveFastestTime)
+    ) {
+      return;
+    }
+
+    this.liveFastestTime = waypoint.racetime;
+
     const beatLR = this.fasterThanLocalRecord(waypoint.racetime);
     const beatWR = this.fasterThanWorldRecord(waypoint.racetime);
 
@@ -91,6 +129,7 @@ export default class RecordsInfoPlugin extends Plugin {
 
       this.widget.setData({
         recordsInfoJson: JSON.stringify(this.recordsInfo),
+        localRecordText: this.config?.localRecordText || "LR",
       });
       this.widget.update();
     }
@@ -130,22 +169,29 @@ export default class RecordsInfoPlugin extends Plugin {
       }
 
       const onlineLeaderboard = await getMapLeaderboard(map.UId);
-      if (onlineLeaderboard.tops.length > 0) {
-        if (onlineLeaderboard.tops[0].top.length > 0) {
-          const wr = onlineLeaderboard.tops[0].top[0];
+      if (
+        onlineLeaderboard.tops.length > 0 &&
+        onlineLeaderboard.tops[0].top.length > 0
+      ) {
+        const wr = onlineLeaderboard.tops[0].top[0];
 
-          const accountNames = await getAccountNames([wr.accountId]);
+        const accountNames = await getAccountNames([wr.accountId]);
 
-          this.recordsInfo.worldRecord = {
-            time: wr.score,
-            nickName: accountNames[wr.accountId] || "-",
-          };
-        }
+        this.recordsInfo.worldRecord = {
+          time: wr.score,
+          nickName: accountNames[wr.accountId] || "-",
+        };
+      } else {
+        this.recordsInfo.worldRecord = {
+          time: 0,
+          nickName: "-",
+        };
       }
     }
 
     this.widget.setData({
       recordsInfoJson: JSON.stringify(this.recordsInfo),
+      localRecordText: this.config?.localRecordText || "LR",
     });
     this.widget.update();
   }

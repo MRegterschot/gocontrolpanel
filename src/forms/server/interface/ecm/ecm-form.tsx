@@ -10,6 +10,7 @@ import { ECMPluginConfig } from "@/types/plugins/ecm";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   IconDeviceFloppy,
+  IconFileImport,
   IconPlus,
   IconTrash,
   IconX,
@@ -92,6 +93,22 @@ export default function ECMForm({
     }
   }
 
+  const handleConfigImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const importedConfig = ECMPluginSchema.parse(JSON.parse(text));
+      form.reset(importedConfig);
+      toast.success("Config imported successfully");
+    } catch (error) {
+      toast.error("Failed to import config", {
+        description: getErrorMessage(error),
+      });
+    }
+  };
+
   if (loading) {
     return <span className="text-muted-foreground">Loading...</span>;
   }
@@ -119,7 +136,7 @@ export default function ECMForm({
         <div className="flex flex-col gap-2">
           <div>
             <FormLabel className="text-sm">Editors</FormLabel>
-            <FormDescription className="max-w-xs whitespace-normal break-words">
+            <FormDescription className="max-w-xs whitespace-normal wrap-break-word">
               Users who can manage ECM settings in the server widget. No editors
               means everyone can manage.
             </FormDescription>
@@ -166,10 +183,27 @@ export default function ECMForm({
               <IconX />
               Close
             </Button>
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-              <IconDeviceFloppy />
-              Save
-            </Button>
+
+            <div>
+              <Button asChild variant={"outline"} className="mr-2">
+                <label htmlFor="config-import">
+                  <IconFileImport />
+                  Import Config
+                  <input
+                    id="config-import"
+                    type="file"
+                    accept=".json"
+                    className="hidden"
+                    onChange={handleConfigImport}
+                  />
+                </label>
+              </Button>
+
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                <IconDeviceFloppy />
+                Save
+              </Button>
+            </div>
           </div>
         </div>
       </form>

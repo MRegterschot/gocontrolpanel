@@ -5,6 +5,7 @@ import LocalMapsTable from "@/components/maps/local-maps-table";
 import MapOrder from "@/components/maps/map-order";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { hasPermission } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 import { getFileManagerHealth } from "@/lib/managers/file-manager";
 import { routePermissions, routes } from "@/routes";
 import { redirect } from "next/navigation";
@@ -28,7 +29,7 @@ export default async function ServerMapsPage({
   try {
     fmHealth = await getFileManagerHealth(id);
   } catch (err) {
-    console.error("Failed to fetch file manager:", err);
+    logger.error(err, "Failed to fetch file manager");
   }
 
   return (

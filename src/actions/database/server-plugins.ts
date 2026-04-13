@@ -49,7 +49,7 @@ export async function updateServerPlugins(
       const manager = await getGbxClientManager(serverId);
 
       manager.info.plugins = updatedPlugins;
-      manager.pluginManager.reloadPlugins();
+      manager.pluginManager.updatePlugins();
 
       await logAudit(
         session.user.id,
@@ -114,7 +114,7 @@ export async function updateServerPlugin(
       });
 
       manager.info.plugins = updatedPlugins;
-      manager.pluginManager.reloadPlugins();
+      manager.pluginManager.updatePlugins();
 
       await logAudit(
         session.user.id,
@@ -141,6 +141,44 @@ export async function getServerPlugins(
       });
 
       return plugins;
+    },
+  );
+}
+
+export async function exportServerPluginConfig(
+  serverId: string,
+  pluginId: string,
+): Promise<ServerResponse<Record<string, any>>> {
+  return doServerActionWithAuth(
+    [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
+    async () => {
+      const db = getClient();
+      const plugin = await db.serverPlugins.findUnique({
+        where: {
+          serverId_pluginId: {
+            serverId,
+            pluginId,
+          },
+        },
+      });
+
+      if (!plugin) {
+        throw new Error("Plugin not found for server");
+      }
+
+      return plugin.config as Record<string, any>;
+    },
+  );
+}
+
+export async function reloadServerPlugins(
+  serverId: string,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
+    async () => {
+      const manager = await getGbxClientManager(serverId);
+      manager.pluginManager.reloadPlugins();
     },
   );
 }

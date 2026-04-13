@@ -1,10 +1,14 @@
 "use client";
 
 import { ServerPluginsWithPlugin } from "@/actions/database/server-only/gbx";
-import { updateServerPlugins } from "@/actions/database/server-plugins";
+import {
+  reloadServerPlugins,
+  updateServerPlugins,
+} from "@/actions/database/server-plugins";
 import FormElement from "@/components/form/form-element";
 import EcircuitmaniaPluginModal from "@/components/modals/interface/plugins/ecircuitmania-plugin-modal";
 import PlayerInfoPluginModal from "@/components/modals/interface/plugins/player-info-plugin-modal";
+import RecordsInfoPluginModal from "@/components/modals/interface/plugins/records-info-plugin-modal";
 import Modal from "@/components/modals/modal";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
@@ -12,8 +16,9 @@ import { Plugins } from "@/lib/prisma/generated";
 import { getErrorMessage } from "@/lib/utils";
 import { ECMPluginConfig } from "@/types/plugins/ecm";
 import { PlayerInfoPluginConfig } from "@/types/plugins/player-info";
+import { RecordsInfoPluginConfig } from "@/types/plugins/records-info";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IconDeviceFloppy, IconSettings } from "@tabler/icons-react";
+import { IconDeviceFloppy, IconReload, IconSettings } from "@tabler/icons-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -73,6 +78,22 @@ export default function PluginsForm({
     }
   };
 
+  const handleReloadPlugins = async () => {
+    try {
+      const { error } = await reloadServerPlugins(serverId);
+
+      if (error) {
+        throw new Error(error);
+      }
+
+      toast.success("Plugins reloaded successfully");
+    } catch (error) {
+      toast.error("Failed to reload plugins", {
+        description: getErrorMessage(error),
+      });
+    }
+  };
+
   return (
     <>
       <Form {...form}>
@@ -125,7 +146,16 @@ export default function PluginsForm({
                 plugins.find((p) => p.name === "records-info")?.description ||
                 ""
               }
-            />
+            >
+              <Button
+                variant={"outline"}
+                type="button"
+                onClick={() => setConfigModalOpen("records-info")}
+              >
+                <IconSettings />
+                Configure
+              </Button>
+            </FormElement>
 
             <FormElement
               name="live-ranking"
@@ -185,14 +215,26 @@ export default function PluginsForm({
             </FormElement>
           </div>
 
-          <Button
-            type="submit"
-            disabled={form.formState.isSubmitting}
-            className="max-w-24"
-          >
-            <IconDeviceFloppy />
-            Save
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              type="submit"
+              disabled={form.formState.isSubmitting}
+              className="max-w-24"
+            >
+              <IconDeviceFloppy />
+              Save
+            </Button>
+
+            <Button
+              variant={"outline"}
+              type="button"
+              onClick={handleReloadPlugins}
+              disabled={form.formState.isSubmitting}
+            >
+              <IconReload />
+              Reload Plugins
+            </Button>
+          </div>
         </form>
       </Form>
 
@@ -226,6 +268,24 @@ export default function PluginsForm({
           }}
           onSubmit={(config) => {
             handleConfigUpdate("player-info", config);
+          }}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={configModalOpen === "records-info"}
+        setIsOpen={() => setConfigModalOpen(undefined)}
+      >
+        <RecordsInfoPluginModal
+          serverId={serverId}
+          data={{
+            pluginId: plugins.find((p) => p.name === "records-info")?.id || "",
+            config: serverPlugins.find(
+              (sp) => sp.plugin.name === "records-info",
+            )?.config as RecordsInfoPluginConfig,
+          }}
+          onSubmit={(config) => {
+            handleConfigUpdate("records-info", config);
           }}
         />
       </Modal>

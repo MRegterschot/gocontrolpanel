@@ -67,6 +67,8 @@ export default function EditGroupForm({
       groupMembers: group.groupMembers.map((user) => ({
         userId: user.userId,
         role: user.role,
+        order: user.order,
+        serversOrder: user.serversOrder,
       })),
     },
   });
@@ -92,6 +94,8 @@ export default function EditGroupForm({
         groupMembers: values.groupMembers?.map((user) => ({
           userId: user.userId,
           role: user.role as GroupRole,
+          order: user.order || 0,
+          serversOrder: user.serversOrder || "",
         })),
       });
       if (error) {

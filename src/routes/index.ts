@@ -31,6 +31,17 @@ export const routes = {
   login: "/login",
 };
 
+export const connectionRoutes = [
+  routes.servers.settings,
+  routes.servers.game,
+  routes.servers.maps,
+  routes.servers.players,
+  routes.servers.live,
+  routes.servers.files,
+  routes.servers.editor,
+  routes.servers.interface,
+];
+
 export const routePermissions = {
   servers: {
     settings: ["servers:id:admin", "group:servers:id:admin"],
@@ -124,6 +135,10 @@ export const routePermissions = {
       create: ["servers:create"],
       edit: ["servers:edit", "servers:id:admin"],
       delete: ["servers:delete", "servers:id:admin"],
+      clients: {
+        view: ["servers:clients:view", "servers::admin"],
+        manage: ["servers:clients:manage"],
+      },
     },
     roles: {
       view: ["roles:view"],

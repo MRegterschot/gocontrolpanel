@@ -2,6 +2,7 @@
 
 import useWebSocket from "@/hooks/use-websocket";
 import { getCurrentId } from "@/lib/utils";
+import { connectionRoutes } from "@/routes";
 import { ServerInfo } from "@/types/server";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -73,9 +74,19 @@ export const ServersProvider = ({
     setServerId(uuid);
   }, [pathname]);
 
+  const isConnectionRoute = (serverId: string) =>
+    connectionRoutes.some((route) => {
+      const routePattern = route.replace(":id", serverId);
+      return pathname.startsWith(routePattern);
+    });
+
   useEffect(() => {
     for (const server of servers) {
-      if (server.id === serverId && !server.isConnected) {
+      if (
+        server.id === serverId &&
+        !server.isConnected &&
+        isConnectionRoute(server.id)
+      ) {
         toast.error(`Server ${server.name} is offline`);
         router.push("/");
       }

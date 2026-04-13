@@ -53,6 +53,7 @@ services:
       REDIS_URI: redis://redis:6379
       DATABASE_URL: mysql://gocontrolpanel:VettePanel123@db:3306/gocontrolpanel
       HETZNER_KEY: 
+      LOG_LEVEL: info
     depends_on:
       - db
       - redis

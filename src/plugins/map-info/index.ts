@@ -24,6 +24,7 @@ export default class MapInfoPlugin extends Plugin {
   ) {
     super(clientManager, manialinkManager);
     this.widget = new Widget(manialinkManager);
+    this.widget.setHideWhileDriving(true);
     this.widget.setTemplate("widgets/map-info/map-info");
     this.widget.setId("map-info-widget");
     this.widget.setPosition({ x: 100, y: 85 });
