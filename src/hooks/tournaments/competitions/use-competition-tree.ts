@@ -21,6 +21,8 @@ export function useCompetitionTree(tournamentId: number) {
     tables.my_matches.where((r) => r.parentId.eq(tournamentId)),
   );
 
+  console.log("Competitions:", competitions);
+
   // const registeredPlayerRows = tables.temp_registration_player.where(r => r.registrationId.eq(tournamentId));
 
   const tree = useMemo<CompetitionNode | null>(() => {
@@ -54,7 +56,7 @@ export function useCompetitionTree(tournamentId: number) {
       return node;
     }
 
-    const root = competitions.find((c) => c.parentId == null);
+    const root = competitions.find((c) => c.parentId == 0);
     if (!root) return null;
 
     return buildNode(root.id);

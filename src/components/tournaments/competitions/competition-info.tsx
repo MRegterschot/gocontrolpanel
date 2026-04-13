@@ -45,47 +45,47 @@ export default function CompetitionInfo({
   const [isAddMatchOpen, setIsAddMatchOpen] = useState(false);
   const [isAddStageOpen, setIsAddStageOpen] = useState(false);
 
-  const [registeredPlayerRows] = useTable(
-    tables.registeredPlayer,
-    where(eq("competitionId", competition.id)),
-  );
+  // const [registeredPlayerRows] = useTable(
+  //   tables.registeredPlayer,
+  //   where(eq("competitionId", competition.id)),
+  // );
 
-  const isRegistered = registeredPlayerRows.some(
-    (rp) =>
-      rp.accountId.compareTo(
-        Uuid.parse("3467014a-c1cc-4aae-99fe-6beb5eca232a"), //session?.user.id
-      ) === 0,
-  );
+  // const isRegistered = registeredPlayerRows.some(
+  //   (rp) =>
+  //     rp.accountId.compareTo(
+  //       Uuid.parse("3467014a-c1cc-4aae-99fe-6beb5eca232a"), //session?.user.id
+  //     ) === 0,
+  // );
 
-  const handleRegisterToggle = () => {
-    if (!session?.user.id) {
-      toast.error("You must be logged in to register");
-      return;
-    }
+  // const handleRegisterToggle = () => {
+  //   if (!session?.user.id) {
+  //     toast.error("You must be logged in to register");
+  //     return;
+  //   }
 
-    if (competition.registrationSettings.tag === "None") {
-      toast.error("Registration is not open for this competition");
-      return;
-    }
+  //   if (competition.registrationSettings.tag === "None") {
+  //     toast.error("Registration is not open for this competition");
+  //     return;
+  //   }
 
-    try {
-      if (isRegistered) {
-        unregister({
-          competitionId: competition.id,
-        });
-        toast.success("Unregistered successfully");
-      } else {
-        register({
-          competitionId: competition.id,
-        });
-        toast.success("Registered successfully");
-      }
-    } catch (error) {
-      toast.error("Failed to update registration", {
-        description: getErrorMessage(error),
-      });
-    }
-  };
+  //   try {
+  //     if (isRegistered) {
+  //       unregister({
+  //         competitionId: competition.id,
+  //       });
+  //       toast.success("Unregistered successfully");
+  //     } else {
+  //       register({
+  //         competitionId: competition.id,
+  //       });
+  //       toast.success("Registered successfully");
+  //     }
+  //   } catch (error) {
+  //     toast.error("Failed to update registration", {
+  //       description: getErrorMessage(error),
+  //     });
+  //   }
+  // };
 
   return (
     <Card className="p-4 flex flex-col sm:flex-row justify-between gap-4 sm:items-end">
@@ -111,24 +111,24 @@ export default function CompetitionInfo({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  {competition.registrationSettings.tag !== "None" && (
+                  {/* {competition.registrationSettings.tag !== "None" && (
                     <>
                       <DropdownMenuItem onClick={() => setIsRegisterOpen(true)}>
                         {isRegistered ? "Unregister" : "Register"}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                     </>
-                  )}
+                  )} */}
                   <DropdownMenuItem
                     onClick={() => setIsEditCompetitionOpen(true)}
                   >
                     Edit stage
                   </DropdownMenuItem>
-                  <DropdownMenuItem
+                  {/* <DropdownMenuItem
                     onClick={() => setIsEditRegistrationSettingsOpen(true)}
                   >
                     Edit registration settings
-                  </DropdownMenuItem>
+                  </DropdownMenuItem> */}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setIsAddMatchOpen(true)}>
                     Add match
@@ -140,7 +140,7 @@ export default function CompetitionInfo({
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <ConfirmModal
+              {/* <ConfirmModal
                 isOpen={isRegisterOpen}
                 onClose={() => setIsRegisterOpen(false)}
                 variant={isRegistered ? "destructive" : "default"}
@@ -157,7 +157,7 @@ export default function CompetitionInfo({
                 }
                 confirmText={isRegistered ? "Unregister" : "Register"}
                 cancelText="Cancel"
-              />
+              /> */}
 
               <Modal
                 isOpen={isEditCompetitionOpen}
@@ -166,7 +166,7 @@ export default function CompetitionInfo({
                 <EditCompetitionModal data={competition} />
               </Modal>
 
-              <Modal
+              {/* <Modal
                 isOpen={isEditRegistrationSettingsOpen}
                 setIsOpen={setIsEditRegistrationSettingsOpen}
               >
@@ -176,7 +176,7 @@ export default function CompetitionInfo({
                     registrationSettings: competition.registrationSettings,
                   }}
                 />
-              </Modal>
+              </Modal> */}
 
               <Modal isOpen={isAddMatchOpen} setIsOpen={setIsAddMatchOpen}>
                 <CreateMatchModal data={competition.id} />
@@ -189,7 +189,7 @@ export default function CompetitionInfo({
           </div>
 
           <div className="flex flex-col">
-            {(competition.startingAt || competition.endingAt) && (
+            {/* {(competition.startingAt || competition.endingAt) && (
               <div
                 className="flex gap-2 items-center text-muted-foreground text-sm"
                 title={`
@@ -230,7 +230,7 @@ export default function CompetitionInfo({
               <RegistrationBadge
                 registrationSettings={competition.registrationSettings}
               />
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

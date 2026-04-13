@@ -32,18 +32,15 @@ export default function TournamentInfo({
   const [isEditingOpen, setIsEditingOpen] = useState(false);
   const [isUpdateStatusOpen, setIsUpdateStatusOpen] = useState(false);
 
-  const [tournamentRows] = useTable(
+  const [tournaments, isReady] = useTable(
     tables.my_projects.where((row) => row.id.eq(tournamentId)),
   );
 
-  const tournament = tournamentRows[0];
+  const tournament = tournaments[0];
 
-  /* const [userRows] = useTable(
-    tables.user,
-    where(eq("accountId", tournament?.creatorAccountId)),
-  ); */
-
-  // const creatorUser = userRows[0];
+  if (!isReady) {
+    return null;
+  }
 
   if (!tournament) {
     return <span>Tournament not found</span>;
@@ -158,12 +155,12 @@ export default function TournamentInfo({
                 )}
               </div>
             )}
-            {(
+            {
               <div className="flex gap-2 text-muted-foreground text-sm">
                 <IconUser size={16} />
                 {tournament.creatorName}
               </div>
-            )}
+            }
           </div>
         </div>
 
