@@ -1,33 +1,33 @@
-import {
-  tables,
-} from "@/lib/server-manager";
+import { tables } from "@/lib/server-manager";
+import { CompetitionV1, MatchV1 } from "@/lib/server-manager/types";
 import { useMemo } from "react";
+import { Infer } from "spacetimedb";
 import { useTable } from "spacetimedb/react";
 
-/* export interface CompetitionNode extends Tm {
+type CompetitionBase = Infer<typeof CompetitionV1>;
+
+export interface CompetitionNode extends CompetitionBase {
   children: CompetitionNode[];
   matches: Infer<typeof MatchV1>[];
-  registeredPlayers: Infer<typeof RegisteredPlayer>[];
-} */
+  // registeredPlayers: Infer<typeof RegisteredPlayer>[];
+}
 
 export function useCompetitionTree(tournamentId: number) {
-  const [competitionRows] = useTable(
-    tables.competition,
-    where(eq("tournamentId", tournamentId)),
+  const [competitions] = useTable(
+    tables.competition.where((c) => c.id.eq(tournamentId)),
   );
 
-  const [matchRows] = useTable(
-    tables.tmMatch,
-    where(eq("tournamentId", tournamentId)),
+  const [matches] = useTable(
+    tables.my_matches.where((r) => r.parentId.eq(tournamentId)),
   );
 
-  const [registeredPlayerRows] = useTable(tables.registeredPlayer);
+  // const registeredPlayerRows = tables.temp_registration_player.where(r => r.registrationId.eq(tournamentId));
 
   const tree = useMemo<CompetitionNode | null>(() => {
-    if (!competitionRows || competitionRows.length === 0) return null;
+    if (!competitions || competitions.length === 0) return null;
 
     const compMap = new Map<number, CompetitionBase>(
-      competitionRows.map((c) => [c.id, c]),
+      competitions.map((c) => [c.id, c]),
     );
 
     function buildNode(id: number): CompetitionNode | null {
@@ -37,13 +37,13 @@ export function useCompetitionTree(tournamentId: number) {
       const node: CompetitionNode = {
         ...comp,
         children: [],
-        matches: matchRows.filter((m) => m.competitionId === id),
-        registeredPlayers: registeredPlayerRows.filter(
-          (rp) => rp.competitionId === id,
-        ),
+        matches: matches.filter((m) => m.parentId === id),
+        // registeredPlayers: registeredPlayerRows.filter(
+        //   (rp) => rp.competitionId === id,
+        // ),
       };
 
-      const childRows = competitionRows.filter((c) => c.parentId === id);
+      const childRows = competitions.filter((c) => c.parentId === id);
       for (const child of childRows) {
         const childNode = buildNode(child.id);
         if (childNode) node.children.push(childNode);
@@ -54,11 +54,11 @@ export function useCompetitionTree(tournamentId: number) {
       return node;
     }
 
-    const root = competitionRows.find((c) => c.parentId == null);
+    const root = competitions.find((c) => c.parentId == null);
     if (!root) return null;
 
     return buildNode(root.id);
-  }, [competitionRows, matchRows, registeredPlayerRows, tournamentId]);
+  }, [competitions, matches, tournamentId]);
 
   return { tree };
 }

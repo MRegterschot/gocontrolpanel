@@ -1,8 +1,8 @@
 import FormElement from "@/components/form/form-element";
 import { UseFormReturn } from "react-hook-form";
 import { CreateMatchTemplateSchemaType } from "../create-match-template-schema";
-import { ConfigRoundsSchemaType } from "@/types/tm-tourney-manager/config/rounds";
-import { ConfigFinishTimeoutSchema, ConfigMapsPerMatchSchema, ConfigPointsLimitSchema, ConfigRoundsPerMapSchema } from "@/types/tm-tourney-manager/config/enums";
+import { ConfigRoundsSchemaType } from "@/types/tm-server-manager/config/rounds";
+import { ConfigFinishTimeoutSchema, ConfigMapsPerMatchSchema, ConfigPointsLimitSchema, ConfigRoundsPerMapSchema } from "@/types/tm-server-manager/config/enums";
 
 export const DEFAULT_ROUNDS_CONFIG: ConfigRoundsSchemaType = {
   finishTimeout: { tag: "BasedOnMedal" },

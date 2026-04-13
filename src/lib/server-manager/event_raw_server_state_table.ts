@@ -10,16 +10,16 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 import {
-  MethodCall,
+  ServerConfig,
 } from "./types";
 
 
 export default __t.row({
-  id: __t.u32(),
-  serverId: __t.u32().name("server_id"),
-  userId: __t.u32().name("user_id"),
-  timestamp: __t.timestamp(),
-  get call() {
-    return MethodCall;
+  serverId: __t.u32().primaryKey().name("server_id"),
+  get config() {
+    return ServerConfig;
   },
+  open: __t.bool(),
+  recoverySection: __t.bool().name("recovery_section"),
+  seamless: __t.bool(),
 });

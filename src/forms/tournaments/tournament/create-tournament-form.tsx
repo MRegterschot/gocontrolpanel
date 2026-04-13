@@ -38,9 +38,7 @@ export default function CreateTournamentForm({
       });
 
       toast.success("Tournament successfully created");
-      if (callback) {
-        callback();
-      }
+      callback?.();
     } catch (error) {
       toast.error("Failed to create tournament", {
         description: getErrorMessage(error),

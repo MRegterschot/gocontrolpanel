@@ -9,17 +9,11 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
-import {
-  PlayerAction,
-} from "./types";
-
 
 export default __t.row({
-  get roundActions() {
-    return __t.array(PlayerAction).name("round_actions");
-  },
-  userId: __t.u32().name("user_id"),
-  id: __t.u32(),
-  matchId: __t.u32().name("match_id"),
-  round: __t.u16(),
+  name: __t.string(),
+  clubTag: __t.string().name("club_tag"),
+  zone: __t.string(),
+  accountId: __t.uuid().name("account_id"),
+  id: __t.u32().primaryKey(),
 });

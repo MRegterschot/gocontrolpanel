@@ -6,7 +6,7 @@ import { IconArrowNarrowLeft, IconArrowNarrowRight } from "@tabler/icons-react";
 import { UseFormReturn } from "react-hook-form";
 import { CreateMatchTemplateSchemaType } from "./create-match-template-schema";
 import RoundsForm from "./modes/rounds-form";
-import { ModeConfigSchema } from "@/types/tm-tourney-manager/config";
+import { ModeConfigSchema } from "@/types/tm-server-manager/config";
 
 const MODES_OPTIONS = ModeConfigSchema.options.map((o) => ({
   label: o.shape.tag.value,

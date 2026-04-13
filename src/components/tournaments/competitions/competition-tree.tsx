@@ -1,10 +1,8 @@
 "use client";
 
-import ConfirmModal from "@/components/modals/confirm-modal";
 import Modal from "@/components/modals/modal";
 import CreateCompetitionModal from "@/components/modals/tournaments/competition/create-competition";
 import EditCompetitionModal from "@/components/modals/tournaments/competition/edit-competition";
-import EditRegistrationSettingsModal from "@/components/modals/tournaments/competition/edit-registration-settings";
 import CreateMatchModal from "@/components/modals/tournaments/match/create-match";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -17,20 +15,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { CompetitionNode } from "@/hooks/tournaments/competitions/use-competition-tree";
-import { reducers } from "@/lib/server-manager";
-import { cn, generatePath, getErrorMessage } from "@/lib/utils";
+import { cn, generatePath } from "@/lib/utils";
 import { routes } from "@/routes";
-import { IconCalendar, IconChevronUp } from "@tabler/icons-react";
+import { IconChevronUp } from "@tabler/icons-react";
 import { MoreHorizontal } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner";
-import { Uuid } from "spacetimedb";
-import { useReducer } from "spacetimedb/react";
 import CompetitionStatusBadge from "../status/competition-status-badge";
 import MatchStatusBadge from "../status/match-status-badge";
-import RegistrationBadge from "./registration-badge";
 
 interface CompetitionTreeProps {
   tree: CompetitionNode;
@@ -45,59 +37,59 @@ export default function CompetitionTree({
   subsectionIndex = 0,
   isLast = true,
 }: CompetitionTreeProps) {
-  const { data: session } = useSession();
+  // const { data: session } = useSession();
   const router = useRouter();
 
-  const register = useReducer(reducers.registerPlayer);
-  const unregister = useReducer(reducers.unregisterPlayer);
+  // const register = useReducer(reducers.registerPlayer);
+  // const unregister = useReducer(reducers.unregisterPlayer);
 
   // Stage children toggle
   const [isOpen, setIsOpen] = useState(sectionIndex === 0);
 
   // Modals
-  const [isEditRegistrationSettingsOpen, setIsEditRegistrationSettingsOpen] =
-    useState(false);
+  // const [isEditRegistrationSettingsOpen, setIsEditRegistrationSettingsOpen] =
+  //   useState(false);
   const [isAddMatchOpen, setIsAddMatchOpen] = useState(false);
   const [isAddStageOpen, setIsAddStageOpen] = useState(false);
-  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  // const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isEditCompetitionOpen, setIsEditCompetitionOpen] = useState(false);
 
-  const isRegistered = tree.registeredPlayers.some(
-    (rp) =>
-      rp.accountId.compareTo(
-        Uuid.parse("3467014a-c1cc-4aae-99fe-6beb5eca232a"), //session?.user.id
-      ) === 0,
-  );
+  // const isRegistered = tree.registeredPlayers.some(
+  //   (rp) =>
+  //     rp.accountId.compareTo(
+  //       Uuid.parse("3467014a-c1cc-4aae-99fe-6beb5eca232a"), //session?.user.id
+  //     ) === 0,
+  // );
 
-  const handleRegisterToggle = () => {
-    if (!session?.user.id) {
-      toast.error("You must be logged in to register");
-      return;
-    }
+  // const handleRegisterToggle = () => {
+  //   if (!session?.user.id) {
+  //     toast.error("You must be logged in to register");
+  //     return;
+  //   }
 
-    if (tree.registrationSettings.tag === "None") {
-      toast.error("Registration is not open for this competition");
-      return;
-    }
+  //   if (tree.registrationSettings.tag === "None") {
+  //     toast.error("Registration is not open for this competition");
+  //     return;
+  //   }
 
-    try {
-      if (isRegistered) {
-        unregister({
-          competitionId: tree.id,
-        });
-        toast.success("Unregistered successfully");
-      } else {
-        register({
-          competitionId: tree.id,
-        });
-        toast.success("Registered successfully");
-      }
-    } catch (error) {
-      toast.error("Failed to update registration", {
-        description: getErrorMessage(error),
-      });
-    }
-  };
+  //   try {
+  //     if (isRegistered) {
+  //       unregister({
+  //         competitionId: tree.id,
+  //       });
+  //       toast.success("Unregistered successfully");
+  //     } else {
+  //       register({
+  //         competitionId: tree.id,
+  //       });
+  //       toast.success("Registered successfully");
+  //     }
+  //   } catch (error) {
+  //     toast.error("Failed to update registration", {
+  //       description: getErrorMessage(error),
+  //     });
+  //   }
+  // };
 
   return (
     <div>
@@ -115,7 +107,7 @@ export default function CompetitionTree({
             e.stopPropagation();
             router.push(
               generatePath(routes.tournaments.stage, {
-                id: tree.tournamentId.toString(),
+                id: tree.parentId.toString(),
                 stageId: tree.id.toString(),
               }),
             );
@@ -145,7 +137,7 @@ export default function CompetitionTree({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      {tree.registrationSettings.tag !== "None" && (
+                      {/* {tree.registrationSettings.tag !== "None" && (
                         <>
                           <DropdownMenuItem
                             onClick={() => setIsRegisterOpen(true)}
@@ -154,17 +146,17 @@ export default function CompetitionTree({
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                         </>
-                      )}
+                      )} */}
                       <DropdownMenuItem
                         onClick={() => setIsEditCompetitionOpen(true)}
                       >
                         Edit stage
                       </DropdownMenuItem>
-                      <DropdownMenuItem
+                      {/* <DropdownMenuItem
                         onClick={() => setIsEditRegistrationSettingsOpen(true)}
                       >
                         Edit registration settings
-                      </DropdownMenuItem>
+                      </DropdownMenuItem> */}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => setIsAddMatchOpen(true)}>
                         Add match
@@ -176,7 +168,7 @@ export default function CompetitionTree({
                     </DropdownMenuContent>
                   </DropdownMenu>
 
-                  <ConfirmModal
+                  {/* <ConfirmModal
                     isOpen={isRegisterOpen}
                     onClose={() => setIsRegisterOpen(false)}
                     variant={isRegistered ? "destructive" : "default"}
@@ -193,7 +185,7 @@ export default function CompetitionTree({
                     }
                     confirmText={isRegistered ? "Unregister" : "Register"}
                     cancelText="Cancel"
-                  />
+                  /> */}
 
                   <Modal
                     isOpen={isEditCompetitionOpen}
@@ -202,7 +194,7 @@ export default function CompetitionTree({
                     <EditCompetitionModal data={tree} />
                   </Modal>
 
-                  <Modal
+                  {/* <Modal
                     isOpen={isEditRegistrationSettingsOpen}
                     setIsOpen={setIsEditRegistrationSettingsOpen}
                   >
@@ -212,7 +204,7 @@ export default function CompetitionTree({
                         registrationSettings: tree.registrationSettings,
                       }}
                     />
-                  </Modal>
+                  </Modal> */}
 
                   <Modal isOpen={isAddMatchOpen} setIsOpen={setIsAddMatchOpen}>
                     <CreateMatchModal data={tree.id} />
@@ -224,7 +216,7 @@ export default function CompetitionTree({
                 </div>
               </div>
 
-              {(tree.startingAt || tree.endingAt) && (
+              {/* {(tree.startingAt || tree.endingAt) && (
                 <div className="flex gap-2 items-center text-muted-foreground text-sm">
                   <IconCalendar size={16} />
 
@@ -248,13 +240,13 @@ export default function CompetitionTree({
                     </span>
                   )}
                 </div>
-              )}
+              )} */}
 
-              <div className="space-x-2 sm:mt-1">
+              {/* <div className="space-x-2 sm:mt-1">
                 <RegistrationBadge
                   registrationSettings={tree.registrationSettings}
                 />
-              </div>
+              </div> */}
             </div>
           </div>
 

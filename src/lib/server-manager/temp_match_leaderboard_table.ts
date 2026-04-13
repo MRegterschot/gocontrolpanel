@@ -11,11 +11,10 @@ import {
 } from "spacetimedb";
 
 export default __t.row({
-  accountId: __t.uuid().name("account_id"),
   id: __t.u32(),
+  userId: __t.u32().name("user_id"),
   matchId: __t.u32().name("match_id"),
   time: __t.i32(),
-  score: __t.i32(),
+  points: __t.i32(),
   round: __t.u16(),
-  position: __t.u16(),
 });

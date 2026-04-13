@@ -397,6 +397,26 @@ export const Event = __t.enum("Event", {
 });
 export type Event = __Infer<typeof Event>;
 
+export const EventRawServerMethod = __t.object("EventRawServerMethod", {
+  id: __t.u32(),
+  serverId: __t.u32(),
+  get call() {
+    return MethodCall;
+  },
+});
+export type EventRawServerMethod = __Infer<typeof EventRawServerMethod>;
+
+export const EventRawServerState = __t.object("EventRawServerState", {
+  serverId: __t.u32(),
+  get config() {
+    return ServerConfig;
+  },
+  open: __t.bool(),
+  recoverySection: __t.bool(),
+  seamless: __t.bool(),
+});
+export type EventRawServerState = __Infer<typeof EventRawServerState>;
+
 // The tagged union or sum type for the algebraic type `FinishTimeout`.
 export const FinishTimeout = __t.enum("FinishTimeout", {
   BasedOnMedal: __t.unit(),
@@ -489,13 +509,12 @@ export const MatchEvent = __t.object("MatchEvent", {
 export type MatchEvent = __Infer<typeof MatchEvent>;
 
 export const MatchRoundPlayer = __t.object("MatchRoundPlayer", {
-  accountId: __t.uuid(),
   id: __t.u32(),
+  userId: __t.u32(),
   matchId: __t.u32(),
   time: __t.i32(),
-  score: __t.i32(),
+  points: __t.i32(),
   round: __t.u16(),
-  position: __t.u16(),
 });
 export type MatchRoundPlayer = __Infer<typeof MatchRoundPlayer>;
 
@@ -503,6 +522,7 @@ export const MatchRoundPlayerExt = __t.object("MatchRoundPlayerExt", {
   get roundActions() {
     return __t.array(PlayerAction);
   },
+  userId: __t.u32(),
   id: __t.u32(),
   matchId: __t.u32(),
   round: __t.u16(),
@@ -525,6 +545,9 @@ export const MatchState = __t.object("MatchState", {
   warmup: __t.u16(),
   isWarmup: __t.bool(),
   paused: __t.bool(),
+  get status() {
+    return MatchStatus;
+  },
 });
 export type MatchState = __Infer<typeof MatchState>;
 
@@ -536,6 +559,8 @@ export const MatchStatus = __t.enum("MatchStatus", {
   Live: __t.unit(),
   Ended: __t.unit(),
   Locked: __t.unit(),
+  Recovery: __t.unit(),
+  RecoveryPreparation: __t.unit(),
 });
 export type MatchStatus = __Infer<typeof MatchStatus>;
 
@@ -592,6 +617,7 @@ export type MethodError = __Infer<typeof MethodError>;
 
 // The tagged union or sum type for the algebraic type `MethodResponse`.
 export const MethodResponse = __t.enum("MethodResponse", {
+  Pending: __t.unit(),
   Success: __t.unit(),
   get Error() {
     return MethodError;
@@ -825,6 +851,7 @@ export const ProjectV1 = __t.object("ProjectV1", {
   get status() {
     return ProjectStatus;
   },
+  rootCompetition: __t.u32(),
 });
 export type ProjectV1 = __Infer<typeof ProjectV1>;
 
@@ -836,16 +863,20 @@ export const RawServerConfig = __t.object("RawServerConfig", {
 });
 export type RawServerConfig = __Infer<typeof RawServerConfig>;
 
-export const RawServerMethodCall = __t.object("RawServerMethodCall", {
+export const RawServerMethod = __t.object("RawServerMethod", {
+  callTime: __t.timestamp(),
+  responseTime: __t.timestamp(),
   id: __t.u32(),
   serverId: __t.u32(),
   userId: __t.u32(),
-  timestamp: __t.timestamp(),
   get call() {
     return MethodCall;
   },
+  get resposne() {
+    return MethodResponse;
+  },
 });
-export type RawServerMethodCall = __Infer<typeof RawServerMethodCall>;
+export type RawServerMethod = __Infer<typeof RawServerMethod>;
 
 export const RawServerOccupation = __t.object("RawServerOccupation", {
   serverId: __t.u32(),
@@ -865,6 +896,7 @@ export const RawServerV1 = __t.object("RawServerV1", {
   identity: __t.identity(),
   serverLogin: __t.string(),
   serverAccountId: __t.uuid(),
+  lastConnection: __t.timestamp(),
   userId: __t.u32(),
   id: __t.u32(),
   online: __t.bool(),
@@ -1064,14 +1096,6 @@ export const ServerConfig = __t.object("ServerConfig", {
 });
 export type ServerConfig = __Infer<typeof ServerConfig>;
 
-export const ServerMetadata = __t.object("ServerMetadata", {
-  get config() {
-    return ServerConfig;
-  },
-  open: __t.bool(),
-});
-export type ServerMetadata = __Infer<typeof ServerMetadata>;
-
 export const ServerModeInfo = __t.object("ServerModeInfo", {
   updated: __t.bool(),
   name: __t.string(),
@@ -1169,26 +1193,12 @@ export const TabConnectionAction = __t.object("TabConnectionAction", {
 });
 export type TabConnectionAction = __Infer<typeof TabConnectionAction>;
 
-export const TabMatchRoundPlayer = __t.object("TabMatchRoundPlayer", {
-  id: __t.u32(),
-  userId: __t.u32(),
+export const TabMatchAutoRecovery = __t.object("TabMatchAutoRecovery", {
+  scheduledId: __t.u64(),
+  scheduledAt: __t.scheduleAt(),
   matchId: __t.u32(),
-  time: __t.i32(),
-  points: __t.i32(),
-  round: __t.u16(),
 });
-export type TabMatchRoundPlayer = __Infer<typeof TabMatchRoundPlayer>;
-
-export const TabMatchRoundPlayerExt = __t.object("TabMatchRoundPlayerExt", {
-  get roundActions() {
-    return __t.array(PlayerAction);
-  },
-  userId: __t.u32(),
-  matchId: __t.u32(),
-  id: __t.u32(),
-  round: __t.u16(),
-});
-export type TabMatchRoundPlayerExt = __Infer<typeof TabMatchRoundPlayerExt>;
+export type TabMatchAutoRecovery = __Infer<typeof TabMatchAutoRecovery>;
 
 export const TabPlayerDestination = __t.object("TabPlayerDestination", {
   competitionId: __t.u32(),
@@ -1224,14 +1234,6 @@ export const TimeAttack = __t.object("TimeAttack", {
   timeLimit: __t.i32(),
 });
 export type TimeAttack = __Infer<typeof TimeAttack>;
-
-export const TmServerMethodResponse = __t.object("TmServerMethodResponse", {
-  id: __t.u32(),
-  get response() {
-    return MethodResponse;
-  },
-});
-export type TmServerMethodResponse = __Infer<typeof TmServerMethodResponse>;
 
 export const TmServerV1 = __t.object("TmServerV1", {
   name: __t.string(),

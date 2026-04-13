@@ -32,6 +32,8 @@ export default function NavTournaments() {
   const spacetime = useSpacetimeDB();
   const [tournaments] = useTable(tables.my_projects);
 
+  console.log("Tournaments:", tournaments);
+
   const upcomingTournaments = tournaments
     .filter((t) => t.endingAt.toDate() >= new Date())
     // Sort by starting date ascending, closest first
