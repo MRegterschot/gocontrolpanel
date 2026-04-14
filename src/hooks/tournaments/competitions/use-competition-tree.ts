@@ -13,15 +13,11 @@ export interface CompetitionNode extends CompetitionBase {
 }
 
 export function useCompetitionTree(tournamentId: number) {
-  const [competitions] = useTable(
-    tables.competition.where((c) => c.id.eq(tournamentId)),
-  );
-
   const [matches] = useTable(
-    tables.my_matches.where((r) => r.parentId.eq(tournamentId)),
+    tables.my_matches.where((r) => r.id.eq(tournamentId)),
   );
 
-  console.log("Competitions:", competitions);
+  const [competitions] = useTable(tables.project_competition_descendants); // TODO, filter by tournamentId
 
   // const registeredPlayerRows = tables.temp_registration_player.where(r => r.registrationId.eq(tournamentId));
 
@@ -30,7 +26,7 @@ export function useCompetitionTree(tournamentId: number) {
 
     const compMap = new Map<number, CompetitionBase>(
       competitions.map((c) => [c.id, c]),
-    );
+    ); 
 
     function buildNode(id: number): CompetitionNode | null {
       const comp = compMap.get(id);

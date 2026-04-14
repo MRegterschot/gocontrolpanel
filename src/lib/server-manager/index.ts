@@ -109,6 +109,7 @@ import MyMatchesRow from "./my_matches_table";
 import MyNodePositionsRow from "./my_node_positions_table";
 import MyProjectsRow from "./my_projects_table";
 import MyUserRow from "./my_user_table";
+import ProjectCompetitionDescendantsRow from "./project_competition_descendants_table";
 import RawServerCurrentPlayersRow from "./raw_server_current_players_table";
 import RawServerPermittedPlayersRow from "./raw_server_permitted_players_table";
 import RawServerPlayerDestinationRow from "./raw_server_player_destination_table";
@@ -249,6 +250,13 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, MyUserRow),
+  project_competition_descendants: __table({
+    name: 'project_competition_descendants',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, ProjectCompetitionDescendantsRow),
   raw_server_current_players: __table({
     name: 'raw_server_current_players',
     indexes: [
