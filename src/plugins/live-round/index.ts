@@ -4,7 +4,7 @@ import { logger } from "@/lib/logger";
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import ManialinkManager from "@/lib/managers/manialink-manager";
 import Widget from "@/lib/manialink/components/widget";
-import { getSpectatorStatus } from "@/lib/utils";
+import { colorMapping, getSpectatorStatus } from "@/lib/utils";
 import { SMapInfo } from "@/types/gbx/map";
 import { SPlayerInfo } from "@/types/gbx/player";
 import { Scores } from "@/types/gbx/scores";
@@ -21,6 +21,11 @@ type Round = {
   points: number;
   checkpoints: number[];
   time: number;
+  team: {
+    mainColor: string;
+    secondaryColor: string;
+    textColor: string;
+  };
 };
 
 type Finish = {
@@ -39,7 +44,7 @@ type RecordsInfo = {
 
 export default class LiveRoundPlugin extends Plugin {
   static pluginId = "live-round";
-  static gamemodes = ["rounds", "cup", "reversecup"];
+  static gamemodes = ["rounds", "cup", "reversecup", "teams"];
   private widget: Widget;
   private liveFastestTime: number | null = null;
 
@@ -122,6 +127,8 @@ export default class LiveRoundPlugin extends Plugin {
     )
       return;
 
+    const team = this.clientManager.info.liveInfo.teams?.[playerInfo.teamId];
+
     this.rounds.push({
       login: playerInfo.login,
       name: playerInfo.nickName,
@@ -129,6 +136,9 @@ export default class LiveRoundPlugin extends Plugin {
       time: 0,
       checkpoints: [],
       points: 0,
+      team: team
+        ? colorMapping[team.name.toLowerCase()] || colorMapping.default
+        : colorMapping.default,
     });
 
     await this.updateWidget();
@@ -155,6 +165,7 @@ export default class LiveRoundPlugin extends Plugin {
       this.rounds = this.rounds.filter((r) => r.login !== playerInfo.login);
     } else {
       const round = this.rounds.find((r) => r.login === playerInfo.login);
+      const team = this.clientManager.info.liveInfo.teams?.[playerInfo.teamId];
 
       if (!round) {
         this.rounds.push({
@@ -164,6 +175,9 @@ export default class LiveRoundPlugin extends Plugin {
           time: 0,
           checkpoints: [],
           points: 0,
+          team: team
+            ? colorMapping[team.name.toLowerCase()] || colorMapping.default
+            : colorMapping.default,
         });
       } else {
         for (let i = 0; i < this.rounds.length; i++) {
@@ -171,6 +185,9 @@ export default class LiveRoundPlugin extends Plugin {
             this.rounds[i].name = playerInfo.nickName;
             this.rounds[i].time = 0;
             this.rounds[i].checkpoints = [];
+            this.rounds[i].team = team
+              ? colorMapping[team.name.toLowerCase()] || colorMapping.default
+              : colorMapping.default;
             break;
           }
         }
@@ -422,6 +439,8 @@ export default class LiveRoundPlugin extends Plugin {
           continue; // Skip spectators and eliminated players
         }
 
+        const team = this.clientManager.info.liveInfo.teams?.[player.TeamId];
+
         this.rounds.push({
           login: player.Login,
           name: player.NickName,
@@ -429,6 +448,9 @@ export default class LiveRoundPlugin extends Plugin {
           time: 0,
           checkpoints: [],
           points: 0,
+          team: team
+            ? colorMapping[team.name.toLowerCase()] || colorMapping.default
+            : colorMapping.default,
         });
       }
     }

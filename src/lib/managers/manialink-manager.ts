@@ -178,7 +178,7 @@ export default class ManialinkManager {
   private async getPublicManialinks(): Promise<string[]> {
     const redis = await getRedisClient();
 
-    const key = getKeyPublicManialinks();
+    const key = getKeyPublicManialinks(this.clientManager.getServerId());
     const publicManialinkKeys = await redis.hgetall(key);
 
     return Object.values(publicManialinkKeys);
@@ -190,21 +190,21 @@ export default class ManialinkManager {
   ) {
     const redis = await getRedisClient();
 
-    const key = getKeyPublicManialinks();
+    const key = getKeyPublicManialinks(this.clientManager.getServerId());
     await redis.hset(key, manialinkId, manialinkData);
   }
 
   private async deletePublicManialink(manialinkId: string) {
     const redis = await getRedisClient();
 
-    const key = getKeyPublicManialinks();
+    const key = getKeyPublicManialinks(this.clientManager.getServerId());
     await redis.hdel(key, manialinkId);
   }
 
   private async getManialinksForLogin(login: string): Promise<string[]> {
     const redis = await getRedisClient();
 
-    const key = getKeyPlayerManialinks(login);
+    const key = getKeyPlayerManialinks(this.clientManager.getServerId(), login);
     const manialinkKeys = await redis.hgetall(key);
 
     return Object.values(manialinkKeys);
@@ -213,7 +213,7 @@ export default class ManialinkManager {
   private async deleteManialinksForLogin(login: string) {
     const redis = await getRedisClient();
 
-    const key = getKeyPlayerManialinks(login);
+    const key = getKeyPlayerManialinks(this.clientManager.getServerId(), login);
     const manialinkKeys = await redis.hgetall(key);
 
     const multi = redis.multi();
@@ -232,14 +232,14 @@ export default class ManialinkManager {
   ) {
     const redis = await getRedisClient();
 
-    const key = getKeyPlayerManialinks(login);
+    const key = getKeyPlayerManialinks(this.clientManager.getServerId(), login);
     await redis.hset(key, manialinkId, manialinkData);
   }
 
   private async deleteManialinkForLogin(login: string, manialinkId: string) {
     const redis = await getRedisClient();
 
-    const key = getKeyPlayerManialinks(login);
+    const key = getKeyPlayerManialinks(this.clientManager.getServerId(), login);
     await redis.hdel(key, manialinkId);
   }
 
@@ -247,7 +247,7 @@ export default class ManialinkManager {
     const redis = await getRedisClient();
 
     // Delete all public manialinks
-    const publicKey = getKeyPublicManialinks();
+    const publicKey = getKeyPublicManialinks(this.clientManager.getServerId());
     const publicManialinkKeys = await redis.hgetall(publicKey);
 
     const multi = redis.multi();
@@ -258,7 +258,7 @@ export default class ManialinkManager {
 
     // Delete all player-specific manialinks
     const stream = redis.scanStream({
-      match: getKeyPlayerManialinks("*"),
+      match: getKeyPlayerManialinks(this.clientManager.getServerId(), "*"),
     });
 
     stream.on("data", (keys: string[]) => {
