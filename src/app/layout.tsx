@@ -69,7 +69,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}
       >
         <SpacetimeAuthProvider>
-          <SpacetimeDBProvider>
+          
             <SessionWrapper>
               <ThemeProvider
                 attribute="class"
@@ -81,7 +81,6 @@ export default function RootLayout({
                 <Toaster />
               </ThemeProvider>
             </SessionWrapper>
-          </SpacetimeDBProvider>
         </SpacetimeAuthProvider>
       </body>
     </html>

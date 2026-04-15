@@ -13,7 +13,6 @@ export default function SpacetimeDBProvider({
   const [builder, setBuilder] = useState<Awaited<
     ReturnType<typeof getDbConnectionBuilder>
   > | null>(null);
-  const [checkedEnv, setCheckedEnv] = useState(false);
 
   const auth = useAuth();
 
@@ -32,12 +31,10 @@ export default function SpacetimeDBProvider({
       if (!active) return;
 
       if (!b) {
-        setCheckedEnv(true);
         return;
       }
 
       setBuilder(b);
-      setCheckedEnv(true);
     })();
 
     return () => {
@@ -45,9 +42,7 @@ export default function SpacetimeDBProvider({
     };
   }, [auth.user?.id_token]);
 
-  if (!checkedEnv) return null;
-
-  if (!builder) return <>{children}</>;
+  if (!builder) return null;
 
   return <Provider connectionBuilder={builder}>{children}</Provider>;
 }

@@ -30,7 +30,7 @@ export default function NavTournaments() {
   const activeId = getCurrentId(pathname);
 
   const spacetime = useSpacetimeDB();
-  const [tournaments] = useTable(tables.my_projects);
+  const [tournaments, isReady] = useTable(tables.my_projects);
 
   console.log("Tournaments:", tournaments);
 
@@ -45,7 +45,7 @@ export default function NavTournaments() {
     (t) => t.endingAt.toDate() < new Date(),
   );
 
-  if (!spacetime.isActive) {
+  if (!spacetime.isActive || !isReady) {
     return (
       <SidebarGroup className="group-data-[collapsible=icon]:hidden select-none">
         <SidebarGroupContent className="flex flex-col gap-2">
@@ -53,7 +53,11 @@ export default function NavTournaments() {
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <span>Not connected to SpacetimeDB</span>
+                  <span>
+                    {spacetime.isActive
+                      ? "Loading tournaments..."
+                      : "Not connected to SpacetimeDB"}
+                  </span>
                 </div>
               </SidebarMenuButton>
             </SidebarMenuItem>
