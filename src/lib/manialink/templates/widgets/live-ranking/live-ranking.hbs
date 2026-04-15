@@ -26,11 +26,18 @@
 
 
 {{#content "globals"}}
+#Struct Team {
+  Text mainColor;
+  Text secondaryColor;
+  Text textColor;
+}
+
 #Struct Ranking {
   Text login;
   Text name;
   Integer rank;
   Integer points;
+  Team team;
 }
 {{/content}}
 
@@ -68,6 +75,17 @@ Void updateRankingRow(Integer index, Ranking ranking, Text mode, Integer pointsL
 
   (rankingFrame.Controls[5] as CMlLabel).SetText(pointsText);
   rankingFrame.DataAttributeSet("login", ranking.login);
+
+  if (ranking.team.mainColor != "") {
+    (rankingFrame.Controls[1] as CMlQuad).BgColor = CL::Hex3ToRgb(ranking.team.mainColor);
+    (rankingFrame.Controls[4] as CMlLabel).TextColor = CL::Hex3ToRgb(ranking.team.textColor);
+    (rankingFrame.Controls[5] as CMlLabel).TextColor = CL::Hex3ToRgb(ranking.team.textColor);
+  } else {
+    (rankingFrame.Controls[1] as CMlQuad).BgColor = CL::Hex3ToRgb("DDD");
+    (rankingFrame.Controls[4] as CMlLabel).TextColor = CL::Hex3ToRgb("222");
+    (rankingFrame.Controls[5] as CMlLabel).TextColor = CL::Hex3ToRgb("222");
+  }
+
   rankingFrame.Show();
 }
 
