@@ -68,7 +68,7 @@ export default function TournamentInfo({
           <div className="flex justify-between items-start gap-4">
             <div className="flex items-center gap-4">
               <h2
-                className="text-lg font-bold truncate max-w-40 lg:max-w-92 xl:max-w-128"
+                className="text-lg font-bold truncate max-w-40 lg:max-w-92 xl:max-w-lg"
                 title={tournament.name}
               >
                 {tournament.name}

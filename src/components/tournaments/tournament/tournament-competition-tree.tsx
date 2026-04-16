@@ -16,7 +16,11 @@ export default function TournamentCompetitionTree({
 
   return (
     <div className="flex flex-col">
-      <CompetitionTree tree={tree} sectionIndex={0} />
+      <CompetitionTree
+        tournamentId={tournamentId}
+        tree={tree}
+        sectionIndex={0}
+      />
     </div>
   );
 }

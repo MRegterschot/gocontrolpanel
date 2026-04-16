@@ -1,34 +1,31 @@
 "use client";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { reducers } from "@/lib/server-manager";
-import { useReducer } from "spacetimedb/react";
 import { MatchNodeType } from "../nodes/match-node";
+import { Button } from "@/components/ui/button";
 
 interface SelectedMatchProps {
   match: MatchNodeType;
-  clearSelection: () => void;
 }
 
 export default function SelectedMatchPanel({
   match,
-  clearSelection,
 }: SelectedMatchProps) {
-  const deleteMatch = useReducer(reducers.matchDelete);
-
-  const onDeleteMatch = () => {
-    const matchId = parseInt(match.id, 10);
-    deleteMatch({ matchId });
-    clearSelection();
-  };
-
   return (
     <Card className="p-2 gap-2">
       <h3 className="font-semibold">Match Details</h3>
       <p>Match ID: {match.id}</p>
       <p>Match Name: {match.data.label}</p>
-      <Button variant={"destructive"} onClick={onDeleteMatch}>
-        Delete Match
+      <Button variant="outline">
+        Mark Configured
+      </Button>
+      <Button variant="outline">
+        Update Config
+      </Button>
+      <Button variant="outline">
+        Mark Ready
+      </Button>
+      <Button variant="outline">
+        Start
       </Button>
     </Card>
   );

@@ -1,4 +1,6 @@
 "use client";
+import Modal from "@/components/modals/modal";
+import CreateConnectionModal from "@/components/modals/tournaments/competition/create-connection";
 import { Card } from "@/components/ui/card";
 import { useCompetitionBracket } from "@/hooks/tournaments/competitions/use-competition-bracket";
 import { CompetitionV1 } from "@/lib/server-manager/types";
@@ -48,6 +50,11 @@ export default function CompetitionBracket({
 
   const [selectedNode, setSelectedNode] = useState<MatchNodeType | null>(null);
 
+  const [createdEdge, setCreatedEdge] = useState<{
+    from: number;
+    to: number;
+  } | null>(null);
+
   useEffect(() => {
     const rawNodes: MatchNodeType[] = bracket.nodes.map((n) => ({
       id: n.id.toString(),
@@ -84,7 +91,12 @@ export default function CompetitionBracket({
   );
 
   const onConnect: OnConnect = useCallback(
-    (params) =>
+    (params) => {
+      setCreatedEdge({
+        from: parseInt(params.target),
+        to: parseInt(params.source),
+      });
+
       setEdges((edgesSnapshot) =>
         addEdge(
           {
@@ -93,7 +105,8 @@ export default function CompetitionBracket({
           },
           edgesSnapshot,
         ),
-      ),
+      );
+    },
     [setEdges],
   );
 
@@ -106,41 +119,55 @@ export default function CompetitionBracket({
     console.log("edge clicked", edge);
   }, []);
 
+  const onCreateConnectionCallback = useCallback(() => {
+    setCreatedEdge(null);
+  }, []);
+
   return (
-    <Card className="w-full h-[50vh]">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onNodeClick={onNodeClick}
-        onEdgeClick={onEdgeClick}
-        onConnect={onConnect}
-        snapGrid={[10, 10]}
-        snapToGrid={true}
-        minZoom={0.25}
-        fitView
-        colorMode={theme as ColorMode}
-        style={{
-          borderRadius: "calc(var(--radius) + 4px)",
-        }}
+    <>
+      <Card className="w-full h-[50vh]">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onNodeClick={onNodeClick}
+          onEdgeClick={onEdgeClick}
+          onConnect={onConnect}
+          snapGrid={[10, 10]}
+          snapToGrid={true}
+          minZoom={0.25}
+          fitView
+          colorMode={theme as ColorMode}
+          style={{
+            borderRadius: "calc(var(--radius) + 4px)",
+          }}
+        >
+          <Background />
+          <Panel position="top-left">
+            {selectedNode && <SelectedMatchPanel match={selectedNode} />}
+          </Panel>
+          <Panel position="top-right" className="flex flex-col gap-2">
+            <SaveLayoutButton />
+            <AddMatchButton competitionId={competition.id} />
+          </Panel>
+        </ReactFlow>
+      </Card>
+
+      <Modal
+        isOpen={createdEdge !== null}
+        setIsOpen={() => setCreatedEdge(null)}
       >
-        <Background />
-        <Panel position="top-left">
-          {selectedNode && (
-            <SelectedMatchPanel
-              match={selectedNode}
-              clearSelection={() => setSelectedNode(null)}
-            />
-          )}
-        </Panel>
-        <Panel position="top-right" className="flex flex-col gap-2">
-          <SaveLayoutButton />
-          <AddMatchButton competitionId={competition.id} />
-        </Panel>
-      </ReactFlow>
-    </Card>
+        <CreateConnectionModal
+          data={{
+            originId: createdEdge?.from || 0,
+            targetId: createdEdge?.to || 0,
+          }}
+          closeModal={() => setCreatedEdge(null)}
+        />
+      </Modal>
+    </>
   );
 }

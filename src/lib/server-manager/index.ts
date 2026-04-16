@@ -96,6 +96,7 @@ import * as PostRoundReplayProcedure from "./post_round_replay_procedure";
 import ComeptitionSchedulesRow from "./comeptition_schedules_table";
 import CompetitionRow from "./competition_table";
 import CompetitionAvailableServerPoolRow from "./competition_available_server_pool_table";
+import CompetitionConnectionRow from "./competition_connection_table";
 import CompetitionConnectionDataRow from "./competition_connection_data_table";
 import EventRawServerMethodRow from "./event_raw_server_method_table";
 import EventRawServerStateRow from "./event_raw_server_state_table";
@@ -173,6 +174,13 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, CompetitionAvailableServerPoolRow),
+  competition_connection: __table({
+    name: 'competition_connection',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, CompetitionConnectionRow),
   competition_connection_data: __table({
     name: 'competition_connection_data',
     indexes: [

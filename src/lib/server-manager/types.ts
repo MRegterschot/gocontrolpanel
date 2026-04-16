@@ -530,12 +530,21 @@ export const MatchRoundPlayerExt = __t.object("MatchRoundPlayerExt", {
 export type MatchRoundPlayerExt = __Infer<typeof MatchRoundPlayerExt>;
 
 export const MatchRoundReplay = __t.object("MatchRoundReplay", {
+  replay: __t.byteArray(),
   mapId: __t.u32(),
   matchId: __t.u32(),
-  round: __t.u8(),
-  replay: __t.byteArray(),
+  round: __t.u16(),
 });
 export type MatchRoundReplay = __Infer<typeof MatchRoundReplay>;
+
+export const MatchRoundReplayTime = __t.object("MatchRoundReplayTime", {
+  matchId: __t.u32(),
+  endingRoundTimestamp: __t.u32(),
+  mapId: __t.u32(),
+  endingRound: __t.u16(),
+  savingEnabled: __t.bool(),
+});
+export type MatchRoundReplayTime = __Infer<typeof MatchRoundReplayTime>;
 
 export const MatchState = __t.object("MatchState", {
   matchId: __t.u32(),

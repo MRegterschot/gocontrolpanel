@@ -25,6 +25,7 @@ import CompetitionStatusBadge from "../status/competition-status-badge";
 import MatchStatusBadge from "../status/match-status-badge";
 
 interface CompetitionTreeProps {
+  tournamentId: number;
   tree: CompetitionNode;
   sectionIndex: number;
   subsectionIndex?: number;
@@ -32,6 +33,7 @@ interface CompetitionTreeProps {
 }
 
 export default function CompetitionTree({
+  tournamentId,
   tree,
   sectionIndex,
   subsectionIndex = 0,
@@ -107,7 +109,7 @@ export default function CompetitionTree({
             e.stopPropagation();
             router.push(
               generatePath(routes.tournaments.stage, {
-                id: tree.parentId.toString(),
+                id: tournamentId.toString(),
                 stageId: tree.id.toString(),
               }),
             );
@@ -292,6 +294,7 @@ export default function CompetitionTree({
                 tree.children.map((child, i) => (
                   <CompetitionTree
                     key={child.id}
+                    tournamentId={tournamentId}
                     tree={child}
                     sectionIndex={sectionIndex + 1}
                     subsectionIndex={i}
