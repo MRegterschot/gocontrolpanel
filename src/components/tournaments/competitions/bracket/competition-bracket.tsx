@@ -23,8 +23,10 @@ import "./bracket.css";
 import MatchEdge, { MatchEdgeType } from "./edges/match-edge";
 import MatchNode, { type MatchNodeType } from "./nodes/match-node";
 import AddMatchButton from "./panel/add-match";
+import CalculatePositionsButton from "./panel/calculate-positions";
 import SaveLayoutButton from "./panel/save-layout";
 import SelectedMatchPanel from "./panel/selected-match";
+import ToggleWaitingEdgesButton from "./panel/toggle-waiting-edges";
 
 const nodeTypes = {
   match: MatchNode,
@@ -149,8 +151,12 @@ export default function CompetitionBracket({
           <Panel position="top-left">
             {selectedNode && <SelectedMatchPanel match={selectedNode} />}
           </Panel>
+          <Panel position="bottom-left">
+            <ToggleWaitingEdgesButton />
+          </Panel>
           <Panel position="top-right" className="flex flex-col gap-2">
             <SaveLayoutButton />
+            <CalculatePositionsButton />
             <AddMatchButton competitionId={competition.id} />
           </Panel>
         </ReactFlow>
