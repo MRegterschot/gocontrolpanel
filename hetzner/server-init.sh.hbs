@@ -8,9 +8,9 @@ apt install -y docker.io docker-compose-v2 curl unzip dnsutils
 
 # Fetch Docker Compose setup
 cd /root
-curl -sSLf -o gcp.zip https://github.com/MRegterschot/gocontrolpanel/archive/refs/heads/master.zip
+curl -sSLf -o gcp.zip https://github.com/MRegterschot/gocontrolpanel/archive/refs/heads/feat/shared-server.zip
 unzip gcp.zip
-cd gocontrolpanel-master/hetzner
+cd gocontrolpanel-feat-shared-server/hetzner
 
 COMPOSE_FILES="-f docker-compose.yml"
 
