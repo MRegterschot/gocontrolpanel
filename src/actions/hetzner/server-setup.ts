@@ -439,7 +439,7 @@ export async function createSimpleServerSetup(
         server_type: server.serverType,
         image: "ubuntu-22.04",
         location: server.location,
-        ssh_keys: [keys.id],
+        // ssh_keys: [keys.id],
         user_data: userData,
         labels: {
           type: "dedi",

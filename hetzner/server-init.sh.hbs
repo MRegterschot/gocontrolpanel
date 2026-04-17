@@ -25,7 +25,7 @@ export DB_ROOT_PASSWORD='{{{db.root_password}}}'
 
 {{#if db.local}}
 export DB_HOST='{{{db.type}}}'
-COMPOSE_FILES="$COMPOSE_FILES -f ../docker-configs/docker-compose.{{{db.type}}}.yml"
+COMPOSE_FILES="$COMPOSE_FILES -f ./docker-configs/docker-compose.{{{db.type}}}.yml"
 {{/if}}
 
 cd '{{{server_controller.type}}}'
