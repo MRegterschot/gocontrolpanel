@@ -23,11 +23,11 @@ import { PaginationState } from "@tanstack/react-table";
 import { readFileSync } from "fs";
 import path from "path";
 import { packageDirectorySync } from "pkg-dir";
+import { logAudit } from "../database/server-only/audit-logs";
 import {
   createDBHetznerServer,
   deleteDBHetznerServer,
-} from "../database/hetzner-servers";
-import { logAudit } from "../database/server-only/audit-logs";
+} from "../database/server-only/hetzner-servers";
 import { createHetznerSSHKey } from "./ssh-keys";
 import { getApiToken, getHetznerServers, setRateLimit } from "./util";
 

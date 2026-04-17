@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
+import { addSimpleServerSetup } from "@/actions/hetzner/server-setup";
 import { deleteHetznerServer } from "@/actions/hetzner/servers";
 import ConfirmModal from "@/components/modals/confirm-modal";
 import AttachHetznerServerToNetworkModal from "@/components/modals/hetzner/attach-hetzner-server-to-network";
@@ -157,6 +158,31 @@ export const createServersColumns = (
         }
       };
 
+      const handleAddServer = () => {
+        if (!canCreate) {
+          toast.error("You do not have permission to add this server.");
+          return;
+        }
+
+        startTransition(async () => {
+          try {
+            const { error } = await addSimpleServerSetup(
+              data.projectId,
+              server.id,
+            );
+            if (error) {
+              throw new Error(error);
+            }
+            refetch();
+            toast.success("Server successfully added");
+          } catch (error) {
+            toast.error("Error adding server", {
+              description: getErrorMessage(error),
+            });
+          }
+        });
+      };
+
       return (
         <div className="flex justify-end">
           <DropdownMenu>
@@ -175,6 +201,10 @@ export const createServersColumns = (
               </DropdownMenuItem>
               {canCreate && (
                 <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleAddServer}>
+                    Add Server Setup
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setIsAttachOpen(true)}>
                     Attach to Network

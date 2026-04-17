@@ -8,11 +8,15 @@ import {
   getKeyHetznerRecentlyCreatedServers,
   getRedisClient,
 } from "@/lib/redis";
+import { connectToSSHServer, executeSSHCommand } from "@/lib/ssh";
 import { generateRandomString, sleep } from "@/lib/utils";
 import { HetznerServer, HetznerServerCache } from "@/types/api/hetzner/servers";
 import { ServerResponse } from "@/types/responses";
-import { createDBHetznerServer } from "../database/hetzner-servers";
 import { logAudit } from "../database/server-only/audit-logs";
+import {
+  createDBHetznerServer,
+  getDBHetznerServer,
+} from "../database/server-only/hetzner-servers";
 import { createHetznerNetwork } from "./networks";
 import {
   attachHetznerServerToNetwork,
@@ -439,7 +443,7 @@ export async function createSimpleServerSetup(
         server_type: server.serverType,
         image: "ubuntu-22.04",
         location: server.location,
-        // ssh_keys: [keys.id],
+        ssh_keys: [keys.id],
         user_data: userData,
         labels: {
           type: "dedi",
@@ -520,6 +524,65 @@ export async function createSimpleServerSetup(
       }
 
       return res.data.server;
+    },
+  );
+}
+
+export async function addSimpleServerSetup(
+  projectId: string,
+  serverId: number,
+) {
+  return doServerActionWithAuth(
+    ["hetzner:servers:create", `hetzner:${projectId}:admin`],
+    async (session) => {
+      const la = (error?: string) =>
+        logAudit(
+          session.user.id,
+          projectId,
+          "hetzner.server.create.simple.add",
+          {
+            id: serverId,
+          },
+          error,
+        );
+
+      const hetznerServer = await getHetznerServer(projectId, serverId);
+
+      if (!hetznerServer) {
+        la("Server not found");
+        throw new Error("Server not found");
+      }
+
+      const dbHetznerServer = await getDBHetznerServer(serverId);
+
+      if (!dbHetznerServer) {
+        la("DB Server not found");
+        throw new Error("DB Server not found");
+      }
+
+      if (!dbHetznerServer.privateKey) {
+        la("SSH private key not found for the server");
+        throw new Error("SSH private key not found for the server");
+      }
+
+      const sshConn = await connectToSSHServer(
+        hetznerServer.public_net.ipv4?.ip || "",
+        22,
+        "root",
+        Buffer.from(dbHetznerServer.privateKey),
+      );
+
+      // Test command, docker ps
+      const result = await executeSSHCommand(sshConn, "docker ps");
+
+      sshConn.end();
+
+      if (result.stderr) {
+        la(`Error executing command on server: ${result.stderr}`);
+        throw new Error(`Error executing command on server: ${result.stderr}`);
+      }
+
+      console.log(`Command output: ${result.stdout}`);
     },
   );
 }
