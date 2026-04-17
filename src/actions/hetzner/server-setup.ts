@@ -111,7 +111,9 @@ export async function createAdvancedServerSetup(
       let createdDatabase: HetznerServer | undefined = undefined;
       if (server.controller && database?.new && !database.local) {
         if (!database.name || !database.serverType || !database.location) {
-          la("Database name, server type and location is required for new databases.");
+          la(
+            "Database name, server type and location is required for new databases.",
+          );
           throw new Error(
             "Database name, server type and location is required for new databases.",
           );
@@ -205,6 +207,9 @@ export async function createAdvancedServerSetup(
         user_password: server.userPassword || generateRandomString(16),
         filemanager_password:
           server.filemanagerPassword || generateRandomString(16),
+        port: 2350,
+        xmlrpc_port: 5000,
+        fm_port: 3300,
       };
 
       const userData = dediTemplate(dediData);
@@ -221,11 +226,11 @@ export async function createAdvancedServerSetup(
         user_data: userData,
         labels: {
           type: "dedi",
-          "servercontroller.type": serverController?.type,
-          "authorization.superadmin.password": dediData.superadmin_password,
-          "authorization.admin.password": dediData.admin_password,
-          "authorization.user.password": dediData.user_password,
-          "filemanager.password": dediData.filemanager_password,
+          "0.servercontroller.type": serverController?.type,
+          "0.authorization.superadmin.password": dediData.superadmin_password,
+          "0.authorization.admin.password": dediData.admin_password,
+          "0.authorization.user.password": dediData.user_password,
+          "0.filemanager.password": dediData.filemanager_password,
         },
         public_net: {
           enable_ipv4: true,
@@ -268,7 +273,10 @@ export async function createAdvancedServerSetup(
 
       if (server.controller && !database?.local) {
         if (!networkId) {
-          la("Network must be created or selected for controller servers.", serverId);
+          la(
+            "Network must be created or selected for controller servers.",
+            serverId,
+          );
           throw new Error(
             "Network must be created or selected for controller servers.",
           );
@@ -416,6 +424,9 @@ export async function createSimpleServerSetup(
         admin_password: generateRandomString(16),
         user_password: generateRandomString(16),
         filemanager_password: generateRandomString(16),
+        port: 2350,
+        xmlrpc_port: 5000,
+        fm_port: 3300,
       };
 
       const userData = dediTemplate(dediData);
@@ -432,11 +443,11 @@ export async function createSimpleServerSetup(
         user_data: userData,
         labels: {
           type: "dedi",
-          "servercontroller.type": serverController?.type,
-          "authorization.superadmin.password": dediData.superadmin_password,
-          "authorization.admin.password": dediData.admin_password,
-          "authorization.user.password": dediData.user_password,
-          "filemanager.password": dediData.filemanager_password,
+          "0.servercontroller.type": serverController?.type,
+          "0.authorization.superadmin.password": dediData.superadmin_password,
+          "0.authorization.admin.password": dediData.admin_password,
+          "0.authorization.user.password": dediData.user_password,
+          "0.filemanager.password": dediData.filemanager_password,
         },
         public_net: {
           enable_ipv4: true,
