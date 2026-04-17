@@ -2,13 +2,14 @@
 
 import { AdvancedServerSetupSchemaType } from "@/forms/admin/hetzner/setup-steps/advanced/server-setup-schema";
 import { SimpleServerSetupSchemaType } from "@/forms/admin/hetzner/setup-steps/simple/server-setup-schema";
+import { TMServerSchemaType } from "@/forms/admin/hetzner/setup-steps/tm-server/tm-server-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { axiosHetzner } from "@/lib/axios/hetzner";
 import {
   getKeyHetznerRecentlyCreatedServers,
   getRedisClient,
 } from "@/lib/redis";
-import { connectToSSHServer, executeSSHCommand } from "@/lib/ssh";
+import { connectToSSHServer, executeSSHScript } from "@/lib/ssh";
 import { generateRandomString, sleep } from "@/lib/utils";
 import { HetznerServer, HetznerServerCache } from "@/types/api/hetzner/servers";
 import { ServerResponse } from "@/types/responses";
@@ -22,6 +23,7 @@ import {
   attachHetznerServerToNetwork,
   createHetznerDatabase,
   dediTemplate,
+  tmServerTemplate,
 } from "./servers";
 import { createHetznerSSHKey } from "./ssh-keys";
 import { getApiToken, getHetznerServer, setRateLimit } from "./util";
@@ -214,6 +216,7 @@ export async function createAdvancedServerSetup(
         port: 2350,
         xmlrpc_port: 5000,
         fm_port: 3300,
+        stack_name: "stack-0",
       };
 
       const userData = dediTemplate(dediData);
@@ -434,6 +437,7 @@ export async function createSimpleServerSetup(
         port: 2350,
         xmlrpc_port: 5000,
         fm_port: 3300,
+        stack_name: "stack-0",
       };
 
       const userData = dediTemplate(dediData);
@@ -534,9 +538,10 @@ export async function createSimpleServerSetup(
   );
 }
 
-export async function addSimpleServerSetup(
+export async function addSimpleServer(
   projectId: string,
   serverId: number,
+  tmServer: TMServerSchemaType,
 ) {
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
@@ -571,6 +576,36 @@ export async function addSimpleServerSetup(
         throw new Error("SSH private key not found for the server");
       }
 
+      const tmServers: number[] = [];
+      Object.keys(hetznerServer.labels).forEach((key) => {
+        const match = key.match(/^(\d+)\./);
+        if (match) {
+          tmServers.push(parseInt(match[1]));
+        }
+      });
+
+      // Highest id of tmServers + 1, to get the next server number
+      const serverNumber =
+        tmServers.length > 0 ? Math.max(...tmServers) + 1 : 1;
+
+      const dediData = {
+        dedi_login: tmServer.dediLogin,
+        dedi_password: tmServer.dediPassword,
+        room_password: tmServer.roomPassword,
+        superadmin_password: generateRandomString(16),
+        admin_password: generateRandomString(16),
+        user_password: generateRandomString(16),
+        filemanager_password: generateRandomString(16),
+        port: 2350 + serverNumber,
+        xmlrpc_port: 5000 + serverNumber,
+        fm_port: 3300 + serverNumber,
+        stack_name: `stack-${serverNumber}`,
+      };
+
+      const script = tmServerTemplate(dediData);
+
+      console.log(script);
+
       const sshConn = await connectToSSHServer(
         hetznerServer.public_net.ipv4?.ip || "",
         22,
@@ -579,7 +614,7 @@ export async function addSimpleServerSetup(
       );
 
       // Test command, docker ps
-      const result = await executeSSHCommand(sshConn, "docker ps");
+      const result = await executeSSHScript(sshConn, "docker ps");
 
       sshConn.end();
 

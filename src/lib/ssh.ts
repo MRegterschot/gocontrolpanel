@@ -39,35 +39,31 @@ export function connectToSSHServer(
   });
 }
 
-export function executeSSHCommand(
+export function executeSSHScript(
   conn: Client,
-  command: string,
+  script: string,
 ): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
-    conn.exec(command, (err, stream) => {
+    conn.exec("bash -s", (err, stream) => {
       if (err) return reject(err);
 
       let stdout = "";
       let stderr = "";
 
       stream
-        .on("close", (code: number, signal: string) => {
-          if (code === 0) {
-            resolve({ stdout, stderr });
-          } else {
-            reject(
-              new Error(
-                `Command exited with code ${code} and signal ${signal}: ${stderr}`,
-              ),
-            );
-          }
+        .on("close", (code: number) => {
+          if (code === 0) resolve({ stdout, stderr });
+          else reject(new Error(stderr));
         })
         .on("data", (data: Buffer) => {
           stdout += data.toString();
-        })
-        .stderr.on("data", (data: Buffer) => {
-          stderr += data.toString();
         });
+
+      stream.stderr.on("data", (data: Buffer) => {
+        stderr += data.toString();
+      });
+
+      stream.end(script);
     });
   });
 }

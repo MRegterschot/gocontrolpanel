@@ -13,6 +13,7 @@ unzip gcp.zip
 cd gocontrolpanel-feat-shared-server/hetzner
 
 COMPOSE_FILES="-f docker-compose.yml"
+export COMPOSE_PROJECT_NAME='{{{stack_name}}}'
 
 {{#if server_controller}}
 {{#if server_controller.type}}

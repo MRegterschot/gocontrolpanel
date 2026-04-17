@@ -1,9 +1,9 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
-import { addSimpleServerSetup } from "@/actions/hetzner/server-setup";
 import { deleteHetznerServer } from "@/actions/hetzner/servers";
 import ConfirmModal from "@/components/modals/confirm-modal";
+import AddTrackmaniaServerModal from "@/components/modals/hetzner/add-tmserver";
 import AttachHetznerServerToNetworkModal from "@/components/modals/hetzner/attach-hetzner-server-to-network";
 import DetachServerFromNetworkModal from "@/components/modals/hetzner/detach-server-from-network";
 import HetznerDatabaseDetailsModal from "@/components/modals/hetzner/hetzner-database-details";
@@ -134,6 +134,7 @@ export const createServersColumns = (
       const [isMetricsOpen, setIsMetricsOpen] = useState(false);
       const [isAttachOpen, setIsAttachOpen] = useState(false);
       const [isDetachOpen, setIsDetachOpen] = useState(false);
+      const [isAddServerOpen, setIsAddServerOpen] = useState(false);
 
       const canDelete = hasPermissionSync(
         session,
@@ -174,38 +175,12 @@ export const createServersColumns = (
 
       const getDetailsModal = () => {
         switch (server.labels.type) {
-          case "dedi":
-            return <HetznerServerDetailsModal data={server} />;
           case "database":
             return <HetznerDatabaseDetailsModal data={server} />;
+          case "dedi":
           default:
             return <HetznerServerDetailsModal data={server} />;
         }
-      };
-
-      const handleAddServer = () => {
-        if (!canCreate) {
-          toast.error("You do not have permission to add this server.");
-          return;
-        }
-
-        startTransition(async () => {
-          try {
-            const { error } = await addSimpleServerSetup(
-              data.projectId,
-              server.id,
-            );
-            if (error) {
-              throw new Error(error);
-            }
-            refetch();
-            toast.success("Server successfully added");
-          } catch (error) {
-            toast.error("Error adding server", {
-              description: getErrorMessage(error),
-            });
-          }
-        });
       };
 
       return (
@@ -226,10 +201,18 @@ export const createServersColumns = (
               </DropdownMenuItem>
               {canCreate && (
                 <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleAddServer}>
-                    Add Server Setup
-                  </DropdownMenuItem>
+                  {!Object.keys(row.original.labels).some((key) =>
+                    key.startsWith("authorization"),
+                  ) && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => setIsAddServerOpen(true)}
+                      >
+                        Add Server Setup
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setIsAttachOpen(true)}>
                     Attach to Network
@@ -281,7 +264,25 @@ export const createServersColumns = (
 
           {canCreate && (
             <>
-              <Modal isOpen={isAttachOpen} setIsOpen={setIsAttachOpen} closeOnBackdropClick={false}>
+              <Modal
+                isOpen={isAddServerOpen}
+                setIsOpen={setIsAddServerOpen}
+                closeOnBackdropClick={false}
+              >
+                <AddTrackmaniaServerModal
+                  onSubmit={refetch}
+                  data={{
+                    projectId: data.projectId,
+                    serverId: server.id,
+                  }}
+                />
+              </Modal>
+
+              <Modal
+                isOpen={isAttachOpen}
+                setIsOpen={setIsAttachOpen}
+                closeOnBackdropClick={false}
+              >
                 <AttachHetznerServerToNetworkModal
                   onSubmit={refetch}
                   data={{
@@ -291,7 +292,11 @@ export const createServersColumns = (
                 />
               </Modal>
 
-              <Modal isOpen={isDetachOpen} setIsOpen={setIsDetachOpen} closeOnBackdropClick={false}>
+              <Modal
+                isOpen={isDetachOpen}
+                setIsOpen={setIsDetachOpen}
+                closeOnBackdropClick={false}
+              >
                 <DetachServerFromNetworkModal
                   onSubmit={refetch}
                   data={{

@@ -43,6 +43,11 @@ const dbTemplatePath = path.join(root, "hetzner", "database-init.sh.hbs");
 const dbTemplateContent = readFileSync(dbTemplatePath, "utf-8");
 export const dbTemplate = HandlebarsServer.compile(dbTemplateContent);
 
+// Trackmania server template
+const tmServerTemplatePath = path.join(root, "hetzner", "add-server.sh.hbs");
+const tmServerTemplateContent = readFileSync(tmServerTemplatePath, "utf-8");
+export const tmServerTemplate = HandlebarsServer.compile(tmServerTemplateContent);
+
 export async function getHetznerServersPaginated(
   pagination: PaginationState,
   sorting: { field: string; order: "asc" | "desc" },
