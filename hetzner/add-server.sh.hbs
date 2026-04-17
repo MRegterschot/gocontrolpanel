@@ -4,10 +4,10 @@ set -x -e
 
 # Fetch Docker Compose setup
 cd /root
-curl -sSLf -o gcp.zip https://github.com/MRegterschot/gocontrolpanel/archive/refs/heads/feat/shared-server.zip
-rm -rf gocontrolpanel-feat-shared-server
+curl -sSLf -o gcp.zip https://github.com/MRegterschot/gocontrolpanel/archive/refs/heads/dev.zip
+rm -rf gocontrolpanel-dev
 unzip -o gcp.zip
-cd gocontrolpanel-feat-shared-server/hetzner
+cd gocontrolpanel-dev/hetzner
 
 COMPOSE_FILES="-f docker-compose.yml"
 export COMPOSE_PROJECT_NAME='{{{stack_name}}}'
