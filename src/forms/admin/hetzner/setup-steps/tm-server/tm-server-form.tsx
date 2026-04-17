@@ -1,5 +1,5 @@
 "use client";
-import { addSimpleServer } from "@/actions/hetzner/server-setup";
+import { addTrackmaniaServer } from "@/actions/hetzner/server-setup";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
@@ -25,7 +25,7 @@ export default function TMServerForm({
 
   async function onSubmit(values: TMServerSchemaType) {
     try {
-      const { error } = await addSimpleServer(projectId, serverId, values);
+      const { error } = await addTrackmaniaServer(projectId, serverId, values);
       if (error) {
         throw new Error(error);
       }

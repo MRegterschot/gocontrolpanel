@@ -540,7 +540,7 @@ export async function createSimpleServerSetup(
   );
 }
 
-export async function addSimpleServer(
+export async function addTrackmaniaServer(
   projectId: string,
   serverId: number,
   tmServer: TMServerSchemaType,
@@ -653,6 +653,80 @@ export async function addSimpleServer(
 
       logger.info(
         `Added new TM server to Hetzner server ${serverId} with dedi login ${tmServer.dediLogin}`,
+      );
+      logger.debug(`SSH script output: ${result.stdout}`);
+    },
+  );
+}
+
+export async function deleteTrackmaniaServer(
+  projectId: string,
+  serverId: number,
+  tmServerNumber: number,
+) {
+  return doServerActionWithAuth(
+    ["hetzner:servers:delete", `hetzner:${projectId}:admin`],
+    async (session) => {
+      const la = (error?: string) =>
+        logAudit(
+          session.user.id,
+          projectId,
+          "hetzner.server.delete.simple",
+          {
+            id: serverId,
+          },
+          error,
+        );
+
+      const hetznerServer = await getHetznerServer(projectId, serverId);
+
+      if (!hetznerServer) {
+        la("Server not found");
+        throw new Error("Server not found");
+      }
+
+      const dbHetznerServer = await getDBHetznerServer(serverId);
+
+      if (!dbHetznerServer) {
+        la("DB Server not found");
+        throw new Error("DB Server not found");
+      }
+
+      if (!dbHetznerServer.privateKey) {
+        la("SSH private key not found for the server");
+        throw new Error("SSH private key not found for the server");
+      }
+
+      const script = `docker compose -p stack-${tmServerNumber} -f /root/gocontrolpanel-feat-shared-server/hetzner/docker-compose.yml down -v`;
+
+      const sshConn = await connectToSSHServer(
+        hetznerServer.public_net.ipv4?.ip || "",
+        22,
+        "root",
+        Buffer.from(dbHetznerServer.privateKey),
+      );
+
+      const result = await executeSSHScript(sshConn, script);
+
+      sshConn.end();
+
+      if (result.stderr) {
+        la(`Error executing command on server: ${result.stderr.slice(-100)}`);
+        throw new Error(`Error executing command on server: ${result.stderr}`);
+      }
+
+      // Remove labels of the deleted TM server
+      const newLabels = { ...hetznerServer.labels };
+      delete newLabels[`${tmServerNumber}.authorization.admin.password`];
+      delete newLabels[`${tmServerNumber}.authorization.superadmin.password`];
+      delete newLabels[`${tmServerNumber}.authorization.user.password`];
+      delete newLabels[`${tmServerNumber}.filemanager.password`];
+      delete newLabels[`${tmServerNumber}.servercontroller.type`];
+
+      await updateHetznerServer(projectId, serverId, newLabels);
+
+      logger.info(
+        `Deleted TM server ${tmServerNumber} from Hetzner server ${serverId}`,
       );
       logger.debug(`SSH script output: ${result.stdout}`);
     },

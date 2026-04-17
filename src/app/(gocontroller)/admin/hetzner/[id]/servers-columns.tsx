@@ -179,7 +179,11 @@ export const createServersColumns = (
             return <HetznerDatabaseDetailsModal data={server} />;
           case "dedi":
           default:
-            return <HetznerServerDetailsModal data={server} />;
+            return (
+              <HetznerServerDetailsModal
+                data={{ projectId: data.projectId, server }}
+              />
+            );
         }
       };
 
