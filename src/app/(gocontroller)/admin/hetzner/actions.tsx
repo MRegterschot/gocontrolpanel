@@ -7,7 +7,7 @@ import { IconPlus } from "@tabler/icons-react";
 
 export const createActions = (refetch: () => void) => {
   return (
-    <Modal>
+    <Modal closeOnBackdropClick={false}>
       <AddProjectModal onSubmit={refetch} />
       <Button className="w-9 sm:w-auto">
         <IconPlus />

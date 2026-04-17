@@ -1,36 +1,47 @@
+import { Button } from "@/components/ui/button";
 import { HetznerServer } from "@/types/api/hetzner/servers";
 import { IconX } from "@tabler/icons-react";
 import Flag from "react-world-flags";
 import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
+import Modal from "../modal";
+import HetznerTMServersModal from "./hetzner-tmservers";
 
 export default function HetznerServerDetailsModal({
   closeModal,
   data,
-}: DefaultModalProps<HetznerServer>) {
+}: DefaultModalProps<{
+  projectId: string;
+  server: HetznerServer;
+}>) {
   if (!data) return null;
 
   const stopPropagation = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
 
-  const pricing = data.server_type.prices.find(
-    (price) => price.location === data.datacenter.location.name,
+  const pricing = data.server.server_type.prices.find(
+    (price) => price.location === data.server.datacenter.location.name,
   );
 
-  const serverController = data.labels["servercontroller.type"];
+  const serverController = data.server.labels["servercontroller.type"];
 
   const passwords = {
-    superAdmin: data.labels["authorization.superadmin.password"],
-    admin: data.labels["authorization.admin.password"],
-    user: data.labels["authorization.user.password"],
-    filemanager: data.labels["filemanager.password"],
+    superAdmin: data.server.labels["authorization.superadmin.password"],
+    admin: data.server.labels["authorization.admin.password"],
+    user: data.server.labels["authorization.user.password"],
+    filemanager: data.server.labels["filemanager.password"],
   };
+
+  // If there is a label that starts with a number, it is a shared server
+  const isSharedServer = Object.keys(data.server.labels).some((key) =>
+    key.match(/^\d+\./),
+  );
 
   return (
     <Card
       onClick={stopPropagation}
-      className="p-6 gap-6 sm:min-w-[400px] max-sm:w-full max-h-[90vh] overflow-y-auto"
+      className="p-6 gap-6 sm:min-w-100 max-sm:w-full max-h-[90vh] overflow-y-auto"
     >
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Server Details</h1>
@@ -47,20 +58,22 @@ export default function HetznerServerDetailsModal({
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col">
                 <span className="font-semibold">ID</span>
-                <span className="truncate">{data.id}</span>
+                <span className="truncate">{data.server.id}</span>
               </div>
               <div className="flex flex-col">
                 <span className="font-semibold">Name</span>
-                <span className="truncate">{data.name}</span>
+                <span className="truncate">{data.server.name}</span>
               </div>
-              <div className="flex flex-col">
-                <span className="font-semibold">Controller</span>
-                <span className="truncate">{serverController || "-"}</span>
-              </div>
+              {!isSharedServer && (
+                <div className="flex flex-col">
+                  <span className="font-semibold">Controller</span>
+                  <span className="truncate">{serverController || "-"}</span>
+                </div>
+              )}
               <div className="flex flex-col">
                 <span className="font-semibold">Created At</span>
                 <span className="truncate">
-                  {new Date(data.created).toLocaleString()}
+                  {new Date(data.server.created).toLocaleString()}
                 </span>
               </div>
             </div>
@@ -72,13 +85,13 @@ export default function HetznerServerDetailsModal({
               <div className="flex flex-col">
                 <span className="font-semibold">IP Address</span>
                 <span className="truncate">
-                  {data.public_net.ipv4?.ip || "-"}
+                  {data.server.public_net.ipv4?.ip || "-"}
                 </span>
               </div>
               <div className="flex flex-col">
                 <span className="font-semibold">Private IP Address</span>
                 <span className="truncate">
-                  {data.private_net.map((n) => n.ip).join(", ") || "-"}
+                  {data.server.private_net.map((n) => n.ip).join(", ") || "-"}
                 </span>
               </div>
             </div>
@@ -89,51 +102,77 @@ export default function HetznerServerDetailsModal({
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col">
                 <span className="font-semibold">Name</span>
-                <span className="truncate">{data.server_type.name}</span>
+                <span className="truncate">{data.server.server_type.name}</span>
               </div>
               <div className="flex flex-col">
                 <span className="font-semibold">Description</span>
-                <span className="truncate">{data.server_type.description}</span>
+                <span className="truncate">
+                  {data.server.server_type.description}
+                </span>
               </div>
               <div className="flex flex-col">
                 <span className="font-semibold">Cores</span>
-                <span className="truncate">{data.server_type.cores}</span>
+                <span className="truncate">
+                  {data.server.server_type.cores}
+                </span>
               </div>
               <div className="flex flex-col">
                 <span className="font-semibold">Memory</span>
-                <span className="truncate">{data.server_type.memory} GB</span>
+                <span className="truncate">
+                  {data.server.server_type.memory} GB
+                </span>
               </div>
               <div className="flex flex-col">
                 <span className="font-semibold">Disk</span>
-                <span className="truncate">{data.server_type.disk} GB</span>
+                <span className="truncate">
+                  {data.server.server_type.disk} GB
+                </span>
               </div>
               <div className="flex flex-col">
                 <span className="font-semibold">CPU Type</span>
-                <span className="truncate">{data.server_type.cpu_type}</span>
+                <span className="truncate">
+                  {data.server.server_type.cpu_type}
+                </span>
               </div>
             </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <h4 className="text-muted-foreground">Passwords</h4>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="flex flex-col">
-                <span className="font-semibold">SuperAdmin</span>
-                <span className="truncate">{passwords.superAdmin || "-"}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="font-semibold">Admin</span>
-                <span className="truncate">{passwords.admin || "-"}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="font-semibold">User</span>
-                <span className="truncate">{passwords.user || "-"}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="font-semibold">File Manager</span>
-                <span className="truncate">{passwords.filemanager || "-"}</span>
+          {!isSharedServer ? (
+            <div className="flex flex-col gap-2">
+              <h4 className="text-muted-foreground">Passwords</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col">
+                  <span className="font-semibold">SuperAdmin</span>
+                  <span className="truncate">
+                    {passwords.superAdmin || "-"}
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-semibold">Admin</span>
+                  <span className="truncate">{passwords.admin || "-"}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-semibold">User</span>
+                  <span className="truncate">{passwords.user || "-"}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-semibold">File Manager</span>
+                  <span className="truncate">
+                    {passwords.filemanager || "-"}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <h4 className="text-muted-foreground">Trackmania Servers</h4>
+              <Modal>
+                <HetznerTMServersModal data={data} />
+                <Button variant={"outline"} className="w-fit">
+                  View Trackmania Servers
+                </Button>
+              </Modal>
+            </div>
+          )}
         </div>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
@@ -184,16 +223,16 @@ export default function HetznerServerDetailsModal({
               <div className="flex flex-col">
                 <span className="font-semibold">Outgoing</span>
                 <span className="truncate">
-                  {data.outgoing_traffic
-                    ? `${Math.floor(data.outgoing_traffic / 1000 / 1000)} MB`
+                  {data.server.outgoing_traffic
+                    ? `${Math.floor(data.server.outgoing_traffic / 1000 / 1000)} MB`
                     : "-"}
                 </span>
               </div>
               <div className="flex flex-col">
                 <span className="font-semibold">Ingoing</span>
                 <span className="truncate">
-                  {data.ingoing_traffic
-                    ? `${Math.floor(data.ingoing_traffic / 1000 / 1000)} MB`
+                  {data.server.ingoing_traffic
+                    ? `${Math.floor(data.server.ingoing_traffic / 1000 / 1000)} MB`
                     : "-"}
                 </span>
               </div>
@@ -201,20 +240,22 @@ export default function HetznerServerDetailsModal({
           </div>
 
           <div className="flex flex-col gap-2">
-            <h4 className="text-muted-foreground">Datacenter</h4>
+            <h4 className="text-muted-foreground">data.servercenter</h4>
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col">
                 <span className="font-semibold">Name</span>
-                <span>{data.datacenter.name}</span>
+                <span>{data.server.datacenter.name}</span>
               </div>
               <div className="flex flex-col">
                 <span className="font-semibold">Description</span>
-                <span className="truncate">{data.datacenter.description}</span>
+                <span className="truncate">
+                  {data.server.datacenter.description}
+                </span>
               </div>
               <div className="flex flex-col">
                 <span className="font-semibold">Location</span>
                 <span className="truncate">
-                  {data.datacenter.location.name}
+                  {data.server.datacenter.location.name}
                 </span>
               </div>
               <div className="flex flex-col">
@@ -222,8 +263,8 @@ export default function HetznerServerDetailsModal({
                 <span>
                   <Flag
                     className="h-4"
-                    code={data.datacenter.location.country}
-                    fallback={data.datacenter.location.country}
+                    code={data.server.datacenter.location.country}
+                    fallback={data.server.datacenter.location.country}
                   />
                 </span>
               </div>
@@ -232,27 +273,31 @@ export default function HetznerServerDetailsModal({
 
           <div className="flex flex-col gap-2">
             <h4 className="text-muted-foreground">Image</h4>
-            {data.image ? (
+            {data.server.image ? (
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col">
                   <span className="font-semibold">Name</span>
-                  <span className="truncate">{data.image.name}</span>
+                  <span className="truncate">{data.server.image.name}</span>
                 </div>
                 <div className="flex flex-col">
                   <span className="font-semibold">Description</span>
-                  <span className="truncate">{data.image.description}</span>
+                  <span className="truncate">
+                    {data.server.image.description}
+                  </span>
                 </div>
                 <div className="flex flex-col">
                   <span className="font-semibold">Image Size</span>
                   <span className="truncate">
-                    {data.image.image_size
-                      ? `${data.image.image_size} GB`
+                    {data.server.image.image_size
+                      ? `${data.server.image.image_size} GB`
                       : "-"}
                   </span>
                 </div>
                 <div className="flex flex-col">
                   <span className="font-semibold">Disk Size</span>
-                  <span className="truncate">{data.image.disk_size} GB</span>
+                  <span className="truncate">
+                    {data.server.image.disk_size} GB
+                  </span>
                 </div>
               </div>
             ) : (

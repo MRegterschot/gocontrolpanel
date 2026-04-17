@@ -2,11 +2,18 @@
 {{#content "content"}}
 <script>
 <!--
+#Struct Team {
+  Text mainColor;
+  Text secondaryColor;
+  Text textColor;
+}
+
 #Struct Ranking {
   Text login;
   Text name;
   Integer rank;
   Integer points;
+  Team team;
 }
 
 main(){

@@ -1,7 +1,7 @@
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import ManialinkManager from "@/lib/managers/manialink-manager";
 import Widget from "@/lib/manialink/components/widget";
-import { getSpectatorStatus } from "@/lib/utils";
+import { colorMapping, getSpectatorStatus } from "@/lib/utils";
 import { Scores } from "@/types/gbx/scores";
 import { LiveInfo, PlayerRound } from "@/types/live";
 import { PlayerInfo } from "@/types/player";
@@ -12,11 +12,16 @@ type Ranking = {
   name: string;
   rank: number;
   points: number;
+  team: {
+    mainColor: string;
+    secondaryColor: string;
+    textColor: string;
+  };
 };
 
 export default class LiveRankingPlugin extends Plugin {
   static pluginId = "live-ranking";
-  static gamemodes = ["rounds", "cup", "reversecup"];
+  static gamemodes = ["rounds", "cup", "reversecup", "teams"];
   private widget: Widget;
 
   private rankings: Ranking[] = [];
@@ -63,11 +68,16 @@ export default class LiveRankingPlugin extends Plugin {
     )
       return;
 
+    const team = this.clientManager.info.liveInfo.teams?.[playerInfo.teamId];
+
     this.rankings.push({
       login: playerInfo.login,
       name: playerInfo.nickName,
       rank: 0,
       points: 0,
+      team: team
+        ? colorMapping[team.name.toLowerCase()] || colorMapping.default
+        : colorMapping.default,
     });
 
     await this.updateWidget();
@@ -92,6 +102,7 @@ export default class LiveRankingPlugin extends Plugin {
       this.rankings = this.rankings.filter((r) => r.login !== playerInfo.login);
     } else {
       const ranking = this.rankings.find((r) => r.login === playerInfo.login);
+      const team = this.clientManager.info.liveInfo.teams?.[playerInfo.teamId];
 
       if (!ranking) {
         this.rankings.push({
@@ -99,9 +110,15 @@ export default class LiveRankingPlugin extends Plugin {
           name: playerInfo.nickName,
           rank: 0,
           points: 0,
+          team: team
+            ? colorMapping[team.name.toLowerCase()] || colorMapping.default
+            : colorMapping.default,
         });
       } else {
         ranking.name = playerInfo.nickName;
+        ranking.team = team
+          ? colorMapping[team.name.toLowerCase()] || colorMapping.default
+          : colorMapping.default;
       }
     }
 
@@ -158,11 +175,16 @@ export default class LiveRankingPlugin extends Plugin {
         }
       }
 
+      const team = this.clientManager.info.liveInfo.teams?.[player.team];
+
       this.rankings.push({
         rank: 0,
         login: player.login,
         name: player.name,
         points: player.matchpoints,
+        team: team
+          ? colorMapping[team.name.toLowerCase()] || colorMapping.default
+          : colorMapping.default,
       });
     }
 

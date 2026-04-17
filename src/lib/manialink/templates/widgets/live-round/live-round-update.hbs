@@ -2,6 +2,12 @@
 {{#content "content"}}
 <script>
 <!--
+#Struct Team {
+  Text mainColor;
+  Text secondaryColor;
+  Text textColor;
+}
+
 #Struct Round {
   Text login;
   Text name;
@@ -9,6 +15,7 @@
   Integer points;
   Integer[] checkpoints;
   Integer time;
+  Team team;
 }
 
 #Struct Finish {

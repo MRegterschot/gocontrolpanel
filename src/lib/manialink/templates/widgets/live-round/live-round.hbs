@@ -36,6 +36,12 @@
 
 
 {{#content "globals"}}
+#Struct Team {
+  Text mainColor;
+  Text secondaryColor;
+  Text textColor;
+}
+
 #Struct Round {
   Text login;
   Text name;
@@ -43,6 +49,7 @@
   Integer points;
   Integer[] checkpoints;
   Integer time;
+  Team team;
 }
 
 #Struct Finish {
@@ -182,6 +189,21 @@ Void updateRoundRow(Integer index, Round round, Round[] rounds, Text mode, Integ
   (roundFrame.Controls[6] as CMlLabel).SetText(pointsText);
   (roundFrame.Controls[7] as CMlLabel).SetText(getCheckpointDiffText(rounds, round.login));
   roundFrame.DataAttributeSet("login", round.login);
+
+  if (round.team.mainColor != "") {
+    (roundFrame.Controls[1] as CMlQuad).BgColor = CL::Hex3ToRgb(round.team.mainColor);
+    (roundFrame.Controls[2] as CMlQuad).BgColor = CL::Hex3ToRgb(round.team.secondaryColor);
+    (roundFrame.Controls[5] as CMlLabel).TextColor = CL::Hex3ToRgb(round.team.textColor);
+    (roundFrame.Controls[6] as CMlLabel).TextColor = CL::Hex3ToRgb(round.team.textColor);
+    (roundFrame.Controls[7] as CMlLabel).TextColor = CL::Hex3ToRgb(round.team.textColor);
+  } else {
+    (roundFrame.Controls[1] as CMlQuad).BgColor = CL::Hex3ToRgb("DDD");
+    (roundFrame.Controls[2] as CMlQuad).BgColor = CL::Hex3ToRgb("BBB");
+    (roundFrame.Controls[5] as CMlLabel).TextColor = CL::Hex3ToRgb("222");
+    (roundFrame.Controls[6] as CMlLabel).TextColor = CL::Hex3ToRgb("222");
+    (roundFrame.Controls[7] as CMlLabel).TextColor = CL::Hex3ToRgb("222");
+  }
+
   roundFrame.Show();
 }
 

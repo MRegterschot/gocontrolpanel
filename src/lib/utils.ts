@@ -480,3 +480,27 @@ export function rankPlayers(
       position: index + 1,
     }));
 }
+
+export const colorMapping: {
+  [key: string]: {
+    mainColor: string;
+    secondaryColor: string;
+    textColor: string;
+  };
+} = {
+  red: {
+    mainColor: "C11",
+    secondaryColor: "A11",
+    textColor: "DDD",
+  },
+  blue: {
+    mainColor: "11C",
+    secondaryColor: "11A",
+    textColor: "DDD",
+  },
+  default: {
+    mainColor: "DDD",
+    secondaryColor: "BBB",
+    textColor: "222",
+  },
+};

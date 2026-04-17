@@ -169,7 +169,7 @@ export const createColumns = (
           )}
 
           {canEdit && (
-            <Modal isOpen={isEditOpen} setIsOpen={setIsEditOpen}>
+            <Modal isOpen={isEditOpen} setIsOpen={setIsEditOpen} closeOnBackdropClick={false}>
               <EditProjectModal data={project} onSubmit={refetch} />
             </Modal>
           )}
