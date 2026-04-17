@@ -27,10 +27,27 @@ export default function HetznerServerDetailsModal({
     filemanager: data.labels["filemanager.password"],
   };
 
+  // If there is a label that starts with a number, it is a shared server
+  const isSharedServer = Object.keys(data.labels).some((key) =>
+    key.match(/^\d+\./),
+  );
+
+  const sharedServerCount = (() => {
+    const serverCounts: Record<string, number> = {};
+    Object.keys(data.labels).forEach((key) => {
+      const match = key.match(/^(\d+)\./);
+      if (match) {
+        const serverNumber = match[1];
+        serverCounts[serverNumber] = (serverCounts[serverNumber] || 0) + 1;
+      }
+    });
+    return Object.keys(serverCounts).length;
+  })();
+
   return (
     <Card
       onClick={stopPropagation}
-      className="p-6 gap-6 sm:min-w-[400px] max-sm:w-full max-h-[90vh] overflow-y-auto"
+      className="p-6 gap-6 sm:min-w-100 max-sm:w-full max-h-[90vh] overflow-y-auto"
     >
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Server Details</h1>
@@ -53,10 +70,17 @@ export default function HetznerServerDetailsModal({
                 <span className="font-semibold">Name</span>
                 <span className="truncate">{data.name}</span>
               </div>
-              <div className="flex flex-col">
-                <span className="font-semibold">Controller</span>
-                <span className="truncate">{serverController || "-"}</span>
-              </div>
+              {isSharedServer ? (
+                <div className="flex flex-col">
+                  <span className="font-semibold">TM Servers</span>
+                  <span className="truncate">{sharedServerCount || "-"}</span>
+                </div>
+              ) : (
+                <div className="flex flex-col">
+                  <span className="font-semibold">Controller</span>
+                  <span className="truncate">{serverController || "-"}</span>
+                </div>
+              )}
               <div className="flex flex-col">
                 <span className="font-semibold">Created At</span>
                 <span className="truncate">
@@ -113,27 +137,33 @@ export default function HetznerServerDetailsModal({
               </div>
             </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <h4 className="text-muted-foreground">Passwords</h4>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="flex flex-col">
-                <span className="font-semibold">SuperAdmin</span>
-                <span className="truncate">{passwords.superAdmin || "-"}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="font-semibold">Admin</span>
-                <span className="truncate">{passwords.admin || "-"}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="font-semibold">User</span>
-                <span className="truncate">{passwords.user || "-"}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="font-semibold">File Manager</span>
-                <span className="truncate">{passwords.filemanager || "-"}</span>
+          {!isSharedServer && (
+            <div className="flex flex-col gap-2">
+              <h4 className="text-muted-foreground">Passwords</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col">
+                  <span className="font-semibold">SuperAdmin</span>
+                  <span className="truncate">
+                    {passwords.superAdmin || "-"}
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-semibold">Admin</span>
+                  <span className="truncate">{passwords.admin || "-"}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-semibold">User</span>
+                  <span className="truncate">{passwords.user || "-"}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-semibold">File Manager</span>
+                  <span className="truncate">
+                    {passwords.filemanager || "-"}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">

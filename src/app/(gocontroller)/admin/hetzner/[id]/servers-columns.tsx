@@ -61,6 +61,31 @@ export const createServersColumns = (
     },
   },
   {
+    accessorKey: "tm_servers",
+    header: () => <span>TM Servers</span>,
+    cell: ({ row }) => {
+      const labels = row.original.labels || {};
+
+      // If there is a label that starts with authorization, return 1
+      if (Object.keys(labels).some((key) => key.startsWith("authorization"))) {
+        return <span>1</span>;
+      }
+
+      // Count all the labels that start with a number, only count unique numbers
+      const serverCounts: Record<string, number> = {};
+      Object.keys(labels).forEach((key) => {
+        const match = key.match(/^(\d+)\./);
+        if (match) {
+          const serverNumber = match[1];
+          serverCounts[serverNumber] = (serverCounts[serverNumber] || 0) + 1;
+        }
+      });
+      const uniqueServerNumbers = Object.keys(serverCounts).length;
+
+      return <span>{uniqueServerNumbers}</span>;
+    },
+  },
+  {
     accessorKey: "status",
     header: () => <span>Status</span>,
   },
