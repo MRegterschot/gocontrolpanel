@@ -73,7 +73,7 @@ export default function HetznerTMServerPasswordsModal({
       <Accordion type="multiple" className="w-full">
         {Object.keys(servers).map((serverNumber) => (
           <AccordionItem key={serverNumber} value={serverNumber}>
-            <AccordionTrigger>TM Server {serverNumber}</AccordionTrigger>
+            <AccordionTrigger>TM Server {parseInt(serverNumber) + 1}</AccordionTrigger>
             <AccordionContent>
               <div className="flex flex-col gap-2">
                 <h4 className="text-muted-foreground">Passwords</h4>

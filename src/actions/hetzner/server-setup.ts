@@ -5,6 +5,7 @@ import { SimpleServerSetupSchemaType } from "@/forms/admin/hetzner/setup-steps/s
 import { TMServerSchemaType } from "@/forms/admin/hetzner/setup-steps/tm-server/tm-server-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { axiosHetzner } from "@/lib/axios/hetzner";
+import { logger } from "@/lib/logger";
 import {
   getKeyHetznerRecentlyCreatedServers,
   getRedisClient,
@@ -24,6 +25,7 @@ import {
   createHetznerDatabase,
   dediTemplate,
   tmServerTemplate,
+  updateHetznerServer,
 } from "./servers";
 import { createHetznerSSHKey } from "./ssh-keys";
 import { getApiToken, getHetznerServer, setRateLimit } from "./util";
@@ -604,8 +606,6 @@ export async function addSimpleServer(
 
       const script = tmServerTemplate(dediData);
 
-      console.log(script);
-
       const sshConn = await connectToSSHServer(
         hetznerServer.public_net.ipv4?.ip || "",
         22,
@@ -614,16 +614,47 @@ export async function addSimpleServer(
       );
 
       // Test command, docker ps
-      const result = await executeSSHScript(sshConn, "docker ps");
+      const result = await executeSSHScript(sshConn, script);
 
       sshConn.end();
 
       if (result.stderr) {
-        la(`Error executing command on server: ${result.stderr}`);
+        // Log last 100 characters of stderr
+        la(`Error executing command on server: ${result.stderr.slice(-100)}`);
         throw new Error(`Error executing command on server: ${result.stderr}`);
       }
 
-      console.log(`Command output: ${result.stdout}`);
+      // Add new labels to the server for the new TM server
+      await updateHetznerServer(projectId, serverId, {
+        ...hetznerServer.labels,
+        [`${serverNumber}.authorization.admin.password`]:
+          dediData.admin_password,
+        [`${serverNumber}.authorization.superadmin.password`]:
+          dediData.superadmin_password,
+        [`${serverNumber}.authorization.user.password`]: dediData.user_password,
+        [`${serverNumber}.filemanager.password`]: dediData.filemanager_password,
+      });
+
+      const cachedServer: HetznerServerCache = {
+        id: serverId,
+        projectId,
+        name: `${hetznerServer.name} ${serverNumber}`,
+        ip: hetznerServer.public_net.ipv4?.ip,
+        port: dediData.xmlrpc_port,
+        fm_port: dediData.fm_port,
+        password: dediData.superadmin_password,
+        filemanagerPassword: dediData.filemanager_password,
+      };
+
+      const client = await getRedisClient();
+      const key = getKeyHetznerRecentlyCreatedServers(projectId);
+      await client.lpush(key, JSON.stringify(cachedServer));
+      await client.expire(key, 60 * 60 * 2); // Keep for 2 hours
+
+      logger.info(
+        `Added new TM server to Hetzner server ${serverId} with dedi login ${tmServer.dediLogin}`,
+      );
+      logger.debug(`SSH script output: ${result.stdout}`);
     },
   );
 }

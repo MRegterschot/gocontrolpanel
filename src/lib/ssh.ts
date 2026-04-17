@@ -44,7 +44,7 @@ export function executeSSHScript(
   script: string,
 ): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
-    conn.exec("bash -s", (err, stream) => {
+    conn.exec("bash -s 2>&1", (err, stream) => {
       if (err) return reject(err);
 
       let stdout = "";

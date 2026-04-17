@@ -46,7 +46,9 @@ export const dbTemplate = HandlebarsServer.compile(dbTemplateContent);
 // Trackmania server template
 const tmServerTemplatePath = path.join(root, "hetzner", "add-server.sh.hbs");
 const tmServerTemplateContent = readFileSync(tmServerTemplatePath, "utf-8");
-export const tmServerTemplate = HandlebarsServer.compile(tmServerTemplateContent);
+export const tmServerTemplate = HandlebarsServer.compile(
+  tmServerTemplateContent,
+);
 
 export async function getHetznerServersPaginated(
   pagination: PaginationState,
@@ -420,6 +422,36 @@ export async function getHetznerServerMetrics(
       );
 
       return res.data.metrics;
+    },
+  );
+}
+
+export async function updateHetznerServer(
+  projectId: string,
+  serverId: number,
+  labels: Record<string, string>,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    ["hetzner:servers:update", `hetzner:${projectId}:admin`],
+    async (session) => {
+      const token = await getApiToken(projectId);
+
+      const res = await axiosHetzner.put(
+        `/servers/${serverId}`,
+        { labels },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      await logAudit(session.user.id, projectId, "hetzner.server.update", {
+        serverId,
+        labels,
+      });
+
+      await setRateLimit(projectId, res);
     },
   );
 }
