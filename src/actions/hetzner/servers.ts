@@ -23,11 +23,11 @@ import { PaginationState } from "@tanstack/react-table";
 import { readFileSync } from "fs";
 import path from "path";
 import { packageDirectorySync } from "pkg-dir";
+import { logAudit } from "../database/server-only/audit-logs";
 import {
   createDBHetznerServer,
   deleteDBHetznerServer,
-} from "../database/hetzner-servers";
-import { logAudit } from "../database/server-only/audit-logs";
+} from "../database/server-only/hetzner-servers";
 import { createHetznerSSHKey } from "./ssh-keys";
 import { getApiToken, getHetznerServers, setRateLimit } from "./util";
 
@@ -42,6 +42,13 @@ export const dediTemplate = HandlebarsServer.compile(dediTemplateContent);
 const dbTemplatePath = path.join(root, "hetzner", "database-init.sh.hbs");
 const dbTemplateContent = readFileSync(dbTemplatePath, "utf-8");
 export const dbTemplate = HandlebarsServer.compile(dbTemplateContent);
+
+// Trackmania server template
+const tmServerTemplatePath = path.join(root, "hetzner", "add-server.sh.hbs");
+const tmServerTemplateContent = readFileSync(tmServerTemplatePath, "utf-8");
+export const tmServerTemplate = HandlebarsServer.compile(
+  tmServerTemplateContent,
+);
 
 export async function getHetznerServersPaginated(
   pagination: PaginationState,
@@ -415,6 +422,36 @@ export async function getHetznerServerMetrics(
       );
 
       return res.data.metrics;
+    },
+  );
+}
+
+export async function updateHetznerServer(
+  projectId: string,
+  serverId: number,
+  labels: Record<string, string>,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    ["hetzner:servers:update", `hetzner:${projectId}:admin`],
+    async (session) => {
+      const token = await getApiToken(projectId);
+
+      const res = await axiosHetzner.put(
+        `/servers/${serverId}`,
+        { labels },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      await logAudit(session.user.id, projectId, "hetzner.server.update", {
+        serverId,
+        labels,
+      });
+
+      await setRateLimit(projectId, res);
     },
   );
 }

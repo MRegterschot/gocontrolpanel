@@ -1,5 +1,5 @@
 import { getClient } from "@/lib/dbclient";
-import { encryptHetznerToken } from "@/lib/hetzner";
+import { decryptHetznerToken, encryptHetznerToken } from "@/lib/hetzner";
 import { HetznerServers } from "@/lib/prisma/generated";
 import "server-only";
 
@@ -8,9 +8,25 @@ export async function getDBHetznerServer(
 ): Promise<HetznerServers | null> {
   const db = getClient();
 
-  return await db.hetznerServers.findUnique({
+  const result = await db.hetznerServers.findUnique({
     where: { hetznerId },
   });
+
+  if (!result) {
+    return null;
+  }
+
+  return {
+    ...result,
+    privateKey: result.privateKey
+      ? Buffer.from(
+          decryptHetznerToken(
+            Buffer.from(result.privateKey).toString("base64"),
+          ),
+          "utf-8",
+        )
+      : null,
+  };
 }
 
 export async function createDBHetznerServer(hetznerServer: {

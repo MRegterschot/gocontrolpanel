@@ -241,6 +241,7 @@ export default function PluginsForm({
       <Modal
         isOpen={configModalOpen === "ecm"}
         setIsOpen={() => setConfigModalOpen(undefined)}
+        closeOnBackdropClick={false}
       >
         <EcircuitmaniaPluginModal
           serverId={serverId}
@@ -258,6 +259,7 @@ export default function PluginsForm({
       <Modal
         isOpen={configModalOpen === "player-info"}
         setIsOpen={() => setConfigModalOpen(undefined)}
+        closeOnBackdropClick={false}
       >
         <PlayerInfoPluginModal
           serverId={serverId}
@@ -275,6 +277,7 @@ export default function PluginsForm({
       <Modal
         isOpen={configModalOpen === "records-info"}
         setIsOpen={() => setConfigModalOpen(undefined)}
+        closeOnBackdropClick={false}
       >
         <RecordsInfoPluginModal
           serverId={serverId}

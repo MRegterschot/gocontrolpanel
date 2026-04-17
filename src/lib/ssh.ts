@@ -38,3 +38,32 @@ export function connectToSSHServer(
       });
   });
 }
+
+export function executeSSHScript(
+  conn: Client,
+  script: string,
+): Promise<{ stdout: string; stderr: string }> {
+  return new Promise((resolve, reject) => {
+    conn.exec("bash -s 2>&1", (err, stream) => {
+      if (err) return reject(err);
+
+      let stdout = "";
+      let stderr = "";
+
+      stream
+        .on("close", (code: number) => {
+          if (code === 0) resolve({ stdout, stderr });
+          else reject(new Error(stderr));
+        })
+        .on("data", (data: Buffer) => {
+          stdout += data.toString();
+        });
+
+      stream.stderr.on("data", (data: Buffer) => {
+        stderr += data.toString();
+      });
+
+      stream.end(script);
+    });
+  });
+}

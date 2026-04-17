@@ -8,21 +8,21 @@ services:
       TM_SERVER_NAME: Match Server
       TM_SERVER_PASSWORD: ${TM_SERVER_PASSWORD}
       TM_SYSTEM_XMLRPC_ALLOWREMOTE: "true"
-      TM_SYSTEM_FORCE_IP_ADDRESS: "${TM_SYSTEM_FORCE_IP_ADDRESS}:2350"
+      TM_SYSTEM_FORCE_IP_ADDRESS: "${TM_SYSTEM_FORCE_IP_ADDRESS}:${TM_PORT}"
       TM_AUTHORIZATION_SUPERADMIN_PASSWORD: ${TM_AUTHORIZATION_SUPERADMIN_PASSWORD}
       TM_AUTHORIZATION_ADMIN_PASSWORD: ${TM_AUTHORIZATION_ADMIN_PASSWORD}
       TM_AUTHORIZATION_USER_PASSWORD: ${TM_AUTHORIZATION_USER_PASSWORD}
     ports:
-      - 2350:2350/tcp
-      - 2350:2350/udp
-      - 5000:5000/tcp
+      - ${TM_PORT}:2350/tcp
+      - ${TM_PORT}:2350/udp
+      - ${TM_XMLRPC_PORT}:5000/tcp
     volumes:
       - userdata:/server/UserData
   filemanager:
     image: marijnregterschot/trackmania-server-fm:latest
     restart: unless-stopped
     ports:
-      - 3300:3300/tcp
+      - ${FM_PORT}:3300/tcp
     environment:
       FM_PASSWORD: ${FM_PASSWORD}
     volumes:

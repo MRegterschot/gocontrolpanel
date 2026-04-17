@@ -2,22 +2,30 @@
 
 import { AdvancedServerSetupSchemaType } from "@/forms/admin/hetzner/setup-steps/advanced/server-setup-schema";
 import { SimpleServerSetupSchemaType } from "@/forms/admin/hetzner/setup-steps/simple/server-setup-schema";
+import { TMServerSchemaType } from "@/forms/admin/hetzner/setup-steps/tm-server/tm-server-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { axiosHetzner } from "@/lib/axios/hetzner";
+import { logger } from "@/lib/logger";
 import {
   getKeyHetznerRecentlyCreatedServers,
   getRedisClient,
 } from "@/lib/redis";
+import { connectToSSHServer, executeSSHScript } from "@/lib/ssh";
 import { generateRandomString, sleep } from "@/lib/utils";
 import { HetznerServer, HetznerServerCache } from "@/types/api/hetzner/servers";
 import { ServerResponse } from "@/types/responses";
-import { createDBHetznerServer } from "../database/hetzner-servers";
 import { logAudit } from "../database/server-only/audit-logs";
+import {
+  createDBHetznerServer,
+  getDBHetznerServer,
+} from "../database/server-only/hetzner-servers";
 import { createHetznerNetwork } from "./networks";
 import {
   attachHetznerServerToNetwork,
   createHetznerDatabase,
   dediTemplate,
+  tmServerTemplate,
+  updateHetznerServer,
 } from "./servers";
 import { createHetznerSSHKey } from "./ssh-keys";
 import { getApiToken, getHetznerServer, setRateLimit } from "./util";
@@ -111,7 +119,9 @@ export async function createAdvancedServerSetup(
       let createdDatabase: HetznerServer | undefined = undefined;
       if (server.controller && database?.new && !database.local) {
         if (!database.name || !database.serverType || !database.location) {
-          la("Database name, server type and location is required for new databases.");
+          la(
+            "Database name, server type and location is required for new databases.",
+          );
           throw new Error(
             "Database name, server type and location is required for new databases.",
           );
@@ -205,6 +215,10 @@ export async function createAdvancedServerSetup(
         user_password: server.userPassword || generateRandomString(16),
         filemanager_password:
           server.filemanagerPassword || generateRandomString(16),
+        port: 2350,
+        xmlrpc_port: 5000,
+        fm_port: 3300,
+        stack_name: "stack-0",
       };
 
       const userData = dediTemplate(dediData);
@@ -221,11 +235,11 @@ export async function createAdvancedServerSetup(
         user_data: userData,
         labels: {
           type: "dedi",
-          "servercontroller.type": serverController?.type,
-          "authorization.superadmin.password": dediData.superadmin_password,
-          "authorization.admin.password": dediData.admin_password,
-          "authorization.user.password": dediData.user_password,
-          "filemanager.password": dediData.filemanager_password,
+          "0.servercontroller.type": serverController?.type,
+          "0.authorization.superadmin.password": dediData.superadmin_password,
+          "0.authorization.admin.password": dediData.admin_password,
+          "0.authorization.user.password": dediData.user_password,
+          "0.filemanager.password": dediData.filemanager_password,
         },
         public_net: {
           enable_ipv4: true,
@@ -254,7 +268,10 @@ export async function createAdvancedServerSetup(
         projectId,
         name: res.data.server.name,
         ip: res.data.server.public_net.ipv4?.ip,
-        labels: res.data.server.labels,
+        port: dediData.xmlrpc_port,
+        fm_port: dediData.fm_port,
+        password: dediData.superadmin_password,
+        filemanagerPassword: dediData.filemanager_password,
       };
 
       const client = await getRedisClient();
@@ -268,7 +285,10 @@ export async function createAdvancedServerSetup(
 
       if (server.controller && !database?.local) {
         if (!networkId) {
-          la("Network must be created or selected for controller servers.", serverId);
+          la(
+            "Network must be created or selected for controller servers.",
+            serverId,
+          );
           throw new Error(
             "Network must be created or selected for controller servers.",
           );
@@ -416,6 +436,10 @@ export async function createSimpleServerSetup(
         admin_password: generateRandomString(16),
         user_password: generateRandomString(16),
         filemanager_password: generateRandomString(16),
+        port: 2350,
+        xmlrpc_port: 5000,
+        fm_port: 3300,
+        stack_name: "stack-0",
       };
 
       const userData = dediTemplate(dediData);
@@ -432,11 +456,11 @@ export async function createSimpleServerSetup(
         user_data: userData,
         labels: {
           type: "dedi",
-          "servercontroller.type": serverController?.type,
-          "authorization.superadmin.password": dediData.superadmin_password,
-          "authorization.admin.password": dediData.admin_password,
-          "authorization.user.password": dediData.user_password,
-          "filemanager.password": dediData.filemanager_password,
+          "0.servercontroller.type": serverController?.type,
+          "0.authorization.superadmin.password": dediData.superadmin_password,
+          "0.authorization.admin.password": dediData.admin_password,
+          "0.authorization.user.password": dediData.user_password,
+          "0.filemanager.password": dediData.filemanager_password,
         },
         public_net: {
           enable_ipv4: true,
@@ -465,7 +489,10 @@ export async function createSimpleServerSetup(
         projectId,
         name: res.data.server.name,
         ip: res.data.server.public_net.ipv4?.ip,
-        labels: res.data.server.labels,
+        port: dediData.xmlrpc_port,
+        fm_port: dediData.fm_port,
+        password: dediData.superadmin_password,
+        filemanagerPassword: dediData.filemanager_password,
       };
 
       const client = await getRedisClient();
@@ -509,6 +536,199 @@ export async function createSimpleServerSetup(
       }
 
       return res.data.server;
+    },
+  );
+}
+
+export async function addTrackmaniaServer(
+  projectId: string,
+  serverId: number,
+  tmServer: TMServerSchemaType,
+) {
+  return doServerActionWithAuth(
+    ["hetzner:servers:create", `hetzner:${projectId}:admin`],
+    async (session) => {
+      const la = (error?: string) =>
+        logAudit(
+          session.user.id,
+          projectId,
+          "hetzner.server.create.simple.add",
+          {
+            id: serverId,
+          },
+          error,
+        );
+
+      const hetznerServer = await getHetznerServer(projectId, serverId);
+
+      if (!hetznerServer) {
+        la("Server not found");
+        throw new Error("Server not found");
+      }
+
+      const dbHetznerServer = await getDBHetznerServer(serverId);
+
+      if (!dbHetznerServer) {
+        la("DB Server not found");
+        throw new Error("DB Server not found");
+      }
+
+      if (!dbHetznerServer.privateKey) {
+        la("SSH private key not found for the server");
+        throw new Error("SSH private key not found for the server");
+      }
+
+      const tmServers: number[] = [];
+      Object.keys(hetznerServer.labels).forEach((key) => {
+        const match = key.match(/^(\d+)\./);
+        if (match) {
+          tmServers.push(parseInt(match[1]));
+        }
+      });
+
+      // Highest id of tmServers + 1, to get the next server number
+      const serverNumber =
+        tmServers.length > 0 ? Math.max(...tmServers) + 1 : 1;
+
+      const dediData = {
+        dedi_login: tmServer.dediLogin,
+        dedi_password: tmServer.dediPassword,
+        room_password: tmServer.roomPassword,
+        superadmin_password: generateRandomString(16),
+        admin_password: generateRandomString(16),
+        user_password: generateRandomString(16),
+        filemanager_password: generateRandomString(16),
+        port: 2350 + serverNumber,
+        xmlrpc_port: 5000 + serverNumber,
+        fm_port: 3300 + serverNumber,
+        stack_name: `stack-${serverNumber}`,
+      };
+
+      const script = tmServerTemplate(dediData);
+
+      const sshConn = await connectToSSHServer(
+        hetznerServer.public_net.ipv4?.ip || "",
+        22,
+        "root",
+        Buffer.from(dbHetznerServer.privateKey),
+      );
+
+      // Test command, docker ps
+      const result = await executeSSHScript(sshConn, script);
+
+      sshConn.end();
+
+      if (result.stderr) {
+        // Log last 100 characters of stderr
+        la(`Error executing command on server: ${result.stderr.slice(-100)}`);
+        throw new Error(`Error executing command on server: ${result.stderr}`);
+      }
+
+      // Add new labels to the server for the new TM server
+      await updateHetznerServer(projectId, serverId, {
+        ...hetznerServer.labels,
+        [`${serverNumber}.authorization.admin.password`]:
+          dediData.admin_password,
+        [`${serverNumber}.authorization.superadmin.password`]:
+          dediData.superadmin_password,
+        [`${serverNumber}.authorization.user.password`]: dediData.user_password,
+        [`${serverNumber}.filemanager.password`]: dediData.filemanager_password,
+      });
+
+      const cachedServer: HetznerServerCache = {
+        id: serverId,
+        projectId,
+        name: `${hetznerServer.name} ${serverNumber}`,
+        ip: hetznerServer.public_net.ipv4?.ip,
+        port: dediData.xmlrpc_port,
+        fm_port: dediData.fm_port,
+        password: dediData.superadmin_password,
+        filemanagerPassword: dediData.filemanager_password,
+      };
+
+      const client = await getRedisClient();
+      const key = getKeyHetznerRecentlyCreatedServers(projectId);
+      await client.lpush(key, JSON.stringify(cachedServer));
+      await client.expire(key, 60 * 60 * 2); // Keep for 2 hours
+
+      logger.info(
+        `Added new TM server to Hetzner server ${serverId} with dedi login ${tmServer.dediLogin}`,
+      );
+      logger.debug(`SSH script output: ${result.stdout}`);
+    },
+  );
+}
+
+export async function deleteTrackmaniaServer(
+  projectId: string,
+  serverId: number,
+  tmServerNumber: number,
+) {
+  return doServerActionWithAuth(
+    ["hetzner:servers:delete", `hetzner:${projectId}:admin`],
+    async (session) => {
+      const la = (error?: string) =>
+        logAudit(
+          session.user.id,
+          projectId,
+          "hetzner.server.delete.simple",
+          {
+            id: serverId,
+          },
+          error,
+        );
+
+      const hetznerServer = await getHetznerServer(projectId, serverId);
+
+      if (!hetznerServer) {
+        la("Server not found");
+        throw new Error("Server not found");
+      }
+
+      const dbHetznerServer = await getDBHetznerServer(serverId);
+
+      if (!dbHetznerServer) {
+        la("DB Server not found");
+        throw new Error("DB Server not found");
+      }
+
+      if (!dbHetznerServer.privateKey) {
+        la("SSH private key not found for the server");
+        throw new Error("SSH private key not found for the server");
+      }
+
+      const script = `docker compose -p stack-${tmServerNumber} -f /root/gocontrolpanel-dev/hetzner/docker-compose.yml down -v`;
+
+      const sshConn = await connectToSSHServer(
+        hetznerServer.public_net.ipv4?.ip || "",
+        22,
+        "root",
+        Buffer.from(dbHetznerServer.privateKey),
+      );
+
+      const result = await executeSSHScript(sshConn, script);
+
+      sshConn.end();
+
+      if (result.stderr) {
+        la(`Error executing command on server: ${result.stderr.slice(-100)}`);
+        throw new Error(`Error executing command on server: ${result.stderr}`);
+      }
+
+      // Remove labels of the deleted TM server
+      const newLabels = { ...hetznerServer.labels };
+      delete newLabels[`${tmServerNumber}.authorization.admin.password`];
+      delete newLabels[`${tmServerNumber}.authorization.superadmin.password`];
+      delete newLabels[`${tmServerNumber}.authorization.user.password`];
+      delete newLabels[`${tmServerNumber}.filemanager.password`];
+      delete newLabels[`${tmServerNumber}.servercontroller.type`];
+
+      await updateHetznerServer(projectId, serverId, newLabels);
+
+      logger.info(
+        `Deleted TM server ${tmServerNumber} from Hetzner server ${serverId}`,
+      );
+      logger.debug(`SSH script output: ${result.stdout}`);
     },
   );
 }
