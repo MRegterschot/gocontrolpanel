@@ -1,8 +1,11 @@
+import { Button } from "@/components/ui/button";
 import { HetznerServer } from "@/types/api/hetzner/servers";
 import { IconX } from "@tabler/icons-react";
 import Flag from "react-world-flags";
 import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
+import Modal from "../modal";
+import HetznerTMServerPasswordsModal from "./hetzner-tmserver-passwords";
 
 export default function HetznerServerDetailsModal({
   closeModal,
@@ -137,7 +140,7 @@ export default function HetznerServerDetailsModal({
               </div>
             </div>
           </div>
-          {!isSharedServer && (
+          {!isSharedServer ? (
             <div className="flex flex-col gap-2">
               <h4 className="text-muted-foreground">Passwords</h4>
               <div className="grid grid-cols-2 gap-2">
@@ -162,6 +165,16 @@ export default function HetznerServerDetailsModal({
                   </span>
                 </div>
               </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <h4 className="text-muted-foreground">Passwords</h4>
+              <Modal>
+                <HetznerTMServerPasswordsModal data={data} />
+                <Button variant={"outline"} className="w-36">
+                  View Passwords
+                </Button>
+              </Modal>
             </div>
           )}
         </div>
