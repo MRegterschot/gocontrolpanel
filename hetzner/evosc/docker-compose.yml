@@ -29,7 +29,7 @@ services:
       - user-data:/app/UserData
 
   evosc:
-    image: evotm/evosc:latest
+    image: evoesports/evosc:latest
     restart: always
     environment:
       DB_HOST: ${DB_HOST}
