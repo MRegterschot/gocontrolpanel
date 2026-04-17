@@ -21,9 +21,9 @@ export default function HetznerTMServersModal({
   projectId: string;
   server: HetznerServer;
 }>) {
-  if (!data) return null;
-
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
+  
+  if (!data) return null;
 
   const stopPropagation = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -80,7 +80,7 @@ export default function HetznerTMServersModal({
       }
       toast.success(`Deleted TM server ${serverNumber + 1} successfully`);
       closeModal?.();
-    } catch (error) {
+    } catch {
       toast.error(`Failed to delete TM server ${serverNumber + 1}`);
     } finally {
       setIsDeleting(null);
