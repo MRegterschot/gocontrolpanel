@@ -263,7 +263,10 @@ export async function createAdvancedServerSetup(
         projectId,
         name: res.data.server.name,
         ip: res.data.server.public_net.ipv4?.ip,
-        labels: res.data.server.labels,
+        port: dediData.xmlrpc_port,
+        fm_port: dediData.fm_port,
+        password: dediData.superadmin_password,
+        filemanagerPassword: dediData.filemanager_password,
       };
 
       const client = await getRedisClient();
@@ -480,7 +483,10 @@ export async function createSimpleServerSetup(
         projectId,
         name: res.data.server.name,
         ip: res.data.server.public_net.ipv4?.ip,
-        labels: res.data.server.labels,
+        port: dediData.xmlrpc_port,
+        fm_port: dediData.fm_port,
+        password: dediData.superadmin_password,
+        filemanagerPassword: dediData.filemanager_password,
       };
 
       const client = await getRedisClient();

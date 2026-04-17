@@ -155,7 +155,7 @@ export const createColumns = (
           )}
 
           {canEdit && (
-            <Modal isOpen={editIsOpen} setIsOpen={setEditIsOpen}>
+            <Modal isOpen={editIsOpen} setIsOpen={setEditIsOpen} closeOnBackdropClick={false}>
               <EditServerModal data={server} onSubmit={refetch} />
             </Modal>
           )}

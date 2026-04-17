@@ -177,7 +177,7 @@ export const createNetworksColumns = (
 
           {canCreate && (
             <>
-              <Modal isOpen={isAddSubnetOpen} setIsOpen={setIsAddSubnetOpen}>
+              <Modal isOpen={isAddSubnetOpen} setIsOpen={setIsAddSubnetOpen} closeOnBackdropClick={false}>
                 <AddSubnetToNetworkModal
                   onSubmit={refetch}
                   data={{
@@ -190,6 +190,7 @@ export const createNetworksColumns = (
               <Modal
                 isOpen={isRemoveSubnetOpen}
                 setIsOpen={setIsRemoveSubnetOpen}
+                closeOnBackdropClick={false}
               >
                 <RemoveSubnetFromNetworkModal
                   onSubmit={refetch}

@@ -281,7 +281,7 @@ export const createServersColumns = (
 
           {canCreate && (
             <>
-              <Modal isOpen={isAttachOpen} setIsOpen={setIsAttachOpen}>
+              <Modal isOpen={isAttachOpen} setIsOpen={setIsAttachOpen} closeOnBackdropClick={false}>
                 <AttachHetznerServerToNetworkModal
                   onSubmit={refetch}
                   data={{
@@ -291,7 +291,7 @@ export const createServersColumns = (
                 />
               </Modal>
 
-              <Modal isOpen={isDetachOpen} setIsOpen={setIsDetachOpen}>
+              <Modal isOpen={isDetachOpen} setIsOpen={setIsDetachOpen} closeOnBackdropClick={false}>
                 <DetachServerFromNetworkModal
                   onSubmit={refetch}
                   data={{

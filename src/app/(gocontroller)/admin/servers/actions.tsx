@@ -13,7 +13,7 @@ export const createActions = (
   },
 ) => {
   return (
-    <Modal>
+    <Modal closeOnBackdropClick={false}>
       <AddServerModal data={args?.recentlyCreatedServers} onSubmit={refetch} />
       <Button className="w-9 sm:w-auto relative">
         <IconPlus />
