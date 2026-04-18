@@ -1,4 +1,4 @@
-import {
+/* import {
   Icon,
   IconCalendarEventFilled,
   IconFlag,
@@ -58,3 +58,4 @@ export default function CompetitionStatusBadge({
     </Badge>
   );
 }
+ */

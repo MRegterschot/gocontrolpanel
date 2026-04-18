@@ -11,6 +11,6 @@ import {
 } from "spacetimedb";
 
 export default {
-  to: __t.u32(),
   serverId: __t.u32(),
+  rawServerId: __t.u32(),
 };
