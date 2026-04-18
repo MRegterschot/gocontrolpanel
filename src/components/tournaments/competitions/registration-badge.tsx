@@ -19,7 +19,7 @@ export default function RegistrationBadge({
 
         <Badge variant={"outline"} className="rounded-full">
           <IconStopwatch />
-          {registrationSettings.value.registrationDeadline
+          {/* {registrationSettings.value
             .toDate()
             .toLocaleString("en-UK", {
               year: "numeric",
@@ -27,11 +27,13 @@ export default function RegistrationBadge({
               day: "numeric",
               hour: "2-digit",
               minute: "2-digit",
-            })}
+            })} */}
         </Badge>
       </>
     );
-  } else if (registrationSettings.tag === "Team") {
+  } /*
+  TODO readd whenever we have team registration again.
+  else if (registrationSettings.tag === "Team") {
     return (
       <>
         <Badge variant={"outline"} className="rounded-full">
@@ -59,7 +61,7 @@ export default function RegistrationBadge({
         </Badge>
       </>
     );
-  } else {
+  } */ else {
     return null;
   }
 }

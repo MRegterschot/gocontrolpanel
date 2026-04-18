@@ -114,23 +114,10 @@ export const CompetitionServer = __t.object("CompetitionServer", {
 });
 export type CompetitionServer = __Infer<typeof CompetitionServer>;
 
-// The tagged union or sum type for the algebraic type `CompetitionStatus`.
-export const CompetitionStatus = __t.enum("CompetitionStatus", {
-  Configuring: __t.unit(),
-  Configured: __t.unit(),
-  Ongoing: __t.unit(),
-  Completed: __t.unit(),
-  Locked: __t.unit(),
-});
-export type CompetitionStatus = __Infer<typeof CompetitionStatus>;
-
 export const CompetitionV1 = __t.object("CompetitionV1", {
   name: __t.string(),
   id: __t.u32(),
   parentId: __t.u32(),
-  get status() {
-    return CompetitionStatus;
-  },
   template: __t.bool(),
 });
 export type CompetitionV1 = __Infer<typeof CompetitionV1>;
@@ -429,6 +416,14 @@ export const GiveUp = __t.object("GiveUp", {
   time: __t.u32(),
 });
 export type GiveUp = __Infer<typeof GiveUp>;
+
+export const InputV1 = __t.object("InputV1", {
+  name: __t.string(),
+  id: __t.u32(),
+  parentId: __t.u32(),
+  template: __t.bool(),
+});
+export type InputV1 = __Infer<typeof InputV1>;
 
 export const KickArgs = __t.object("KickArgs", {
   ubiId: __t.string(),
@@ -872,6 +867,12 @@ export const RawServerConfig = __t.object("RawServerConfig", {
 });
 export type RawServerConfig = __Infer<typeof RawServerConfig>;
 
+export const RawServerIdentity = __t.object("RawServerIdentity", {
+  identity: __t.identity(),
+  serverId: __t.u32(),
+});
+export type RawServerIdentity = __Infer<typeof RawServerIdentity>;
+
 export const RawServerMethod = __t.object("RawServerMethod", {
   callTime: __t.timestamp(),
   responseTime: __t.timestamp(),
@@ -902,14 +903,12 @@ export const RawServerPlayer = __t.object("RawServerPlayer", {
 export type RawServerPlayer = __Infer<typeof RawServerPlayer>;
 
 export const RawServerV1 = __t.object("RawServerV1", {
-  identity: __t.identity(),
   serverLogin: __t.string(),
   serverAccountId: __t.uuid(),
   lastConnection: __t.timestamp(),
   userId: __t.u32(),
   id: __t.u32(),
   online: __t.bool(),
-  capturable: __t.bool(),
   verified: __t.bool(),
 });
 export type RawServerV1 = __Infer<typeof RawServerV1>;
@@ -951,10 +950,9 @@ export type RegistrationSettingsPlayer = __Infer<typeof RegistrationSettingsPlay
 // The tagged union or sum type for the algebraic type `RegistrationStatus`.
 export const RegistrationStatus = __t.enum("RegistrationStatus", {
   Configuring: __t.unit(),
-  Upcoming: __t.unit(),
+  Configured: __t.unit(),
   Ongoing: __t.unit(),
   Ended: __t.unit(),
-  Locked: __t.unit(),
 });
 export type RegistrationStatus = __Infer<typeof RegistrationStatus>;
 
@@ -1039,6 +1037,7 @@ export type RoundsPerMap = __Infer<typeof RoundsPerMap>;
 
 export const ScheduleExecV1 = __t.object("ScheduleExecV1", {
   scheduledId: __t.u64(),
+  scheduleId: __t.u32(),
   scheduledAt: __t.scheduleAt(),
 });
 export type ScheduleExecV1 = __Infer<typeof ScheduleExecV1>;
@@ -1054,6 +1053,7 @@ export type ScheduleSettings = __Infer<typeof ScheduleSettings>;
 // The tagged union or sum type for the algebraic type `ScheduleStatus`.
 export const ScheduleStatus = __t.enum("ScheduleStatus", {
   Configuring: __t.unit(),
+  Configured: __t.unit(),
   Waiting: __t.unit(),
   Finished: __t.unit(),
   Locked: __t.unit(),
@@ -1120,6 +1120,20 @@ export const ServerStatus = __t.enum("ServerStatus", {
   Ongoing: __t.unit(),
 });
 export type ServerStatus = __Infer<typeof ServerStatus>;
+
+export const ServerV1 = __t.object("ServerV1", {
+  name: __t.string(),
+  id: __t.u32(),
+  parentId: __t.u32(),
+  config: __t.u32(),
+  get status() {
+    return ServerStatus;
+  },
+  open: __t.bool(),
+  template: __t.bool(),
+  autoProvision: __t.bool(),
+});
+export type ServerV1 = __Infer<typeof ServerV1>;
 
 export const StartLine = __t.object("StartLine", {
   accountId: __t.string(),
@@ -1243,18 +1257,6 @@ export const TimeAttack = __t.object("TimeAttack", {
   timeLimit: __t.i32(),
 });
 export type TimeAttack = __Infer<typeof TimeAttack>;
-
-export const TmServerV1 = __t.object("TmServerV1", {
-  name: __t.string(),
-  id: __t.u32(),
-  parentId: __t.u32(),
-  config: __t.u32(),
-  get status() {
-    return ServerStatus;
-  },
-  open: __t.bool(),
-});
-export type TmServerV1 = __Infer<typeof TmServerV1>;
 
 export const UnloadingMapEnd = __t.object("UnloadingMapEnd", {
   time: __t.u32(),

@@ -24,7 +24,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Infer, Uuid } from "spacetimedb";
 import { useReducer, useTable } from "spacetimedb/react";
-import CompetitionStatusBadge from "../status/competition-status-badge";
+//import CompetitionStatusBadge from "../status/competition-status-badge";
 import RegistrationBadge from "./registration-badge";
 import { CompetitionV1 } from "@/lib/server-manager/types";
 
@@ -99,7 +99,7 @@ export default function CompetitionInfo({
               >
                 {competition.name}
               </h2>
-              <CompetitionStatusBadge status={competition.status} />
+              {/* <CompetitionStatusBadge status={competition.status} /> */}
             </div>
 
             <div className="flex gap-2 items-center ml-auto">

@@ -21,7 +21,7 @@ import { IconChevronUp } from "@tabler/icons-react";
 import { MoreHorizontal } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import CompetitionStatusBadge from "../status/competition-status-badge";
+//import CompetitionStatusBadge from "../status/competition-status-badge";
 import MatchStatusBadge from "../status/match-status-badge";
 
 interface CompetitionTreeProps {
@@ -124,7 +124,7 @@ export default function CompetitionTree({
                     {tree.name}
                   </h3>
 
-                  <CompetitionStatusBadge status={tree.status} />
+                  {/* <CompetitionStatusBadge status={tree.status} /> */}
                 </div>
 
                 <div

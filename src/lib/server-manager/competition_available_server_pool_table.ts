@@ -11,13 +11,11 @@ import {
 } from "spacetimedb";
 
 export default __t.row({
-  identity: __t.identity(),
   serverLogin: __t.string().name("server_login"),
   serverAccountId: __t.uuid().name("server_account_id"),
   lastConnection: __t.timestamp().name("last_connection"),
   userId: __t.u32().name("user_id"),
   id: __t.u32(),
   online: __t.bool(),
-  capturable: __t.bool(),
   verified: __t.bool(),
 });

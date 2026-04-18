@@ -9,26 +9,13 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
-import {
-  NodeHandle,
-  ConnectionKind,
-  ConnectionStatus,
-} from "./types";
-
 
 export default __t.row({
-  id: __t.u32(),
-  competitionId: __t.u32().name("competition_id"),
-  get origin() {
-    return NodeHandle;
-  },
-  get target() {
-    return NodeHandle;
-  },
-  get kind() {
-    return ConnectionKind;
-  },
-  get status() {
-    return ConnectionStatus;
-  },
+  serverLogin: __t.string().name("server_login"),
+  serverAccountId: __t.uuid().name("server_account_id"),
+  lastConnection: __t.timestamp().name("last_connection"),
+  userId: __t.u32().name("user_id"),
+  id: __t.u32().primaryKey(),
+  online: __t.bool(),
+  verified: __t.bool(),
 });

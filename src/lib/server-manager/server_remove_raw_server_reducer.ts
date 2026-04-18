@@ -11,6 +11,5 @@ import {
 } from "spacetimedb";
 
 export default {
-  competitionId: __t.u32(),
-  name: __t.string(),
+  serverId: __t.u32(),
 };

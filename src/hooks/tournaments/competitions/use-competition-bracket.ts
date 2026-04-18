@@ -23,7 +23,7 @@ export function useCompetitionBracket(competition: CompetitionV1) {
   );
 
   const [connections] = useTable(
-    tables.competition_connection.where((row) =>
+    tables.unstable_competition_connection.where((row) =>
       row.competitionId.eq(competition.id),
     ),
   );

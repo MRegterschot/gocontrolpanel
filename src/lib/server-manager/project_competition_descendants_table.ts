@@ -9,17 +9,10 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
-import {
-  CompetitionStatus,
-} from "./types";
-
 
 export default __t.row({
   name: __t.string(),
   id: __t.u32(),
   parentId: __t.u32().name("parent_id"),
-  get status() {
-    return CompetitionStatus;
-  },
   template: __t.bool(),
 });
