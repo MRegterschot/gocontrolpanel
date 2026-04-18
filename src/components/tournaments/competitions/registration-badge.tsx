@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { RegistrationSettings } from "@/lib/server-manager/types";
-import { IconStopwatch, IconUser, IconUsers } from "@tabler/icons-react";
+import { IconStopwatch, IconUser } from "@tabler/icons-react";
 
 interface RegistrationBadgeProps {
   registrationSettings: RegistrationSettings;

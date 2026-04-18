@@ -121,9 +121,9 @@ export default function CompetitionBracket({
     console.log("edge clicked", edge);
   }, []);
 
-  const onCreateConnectionCallback = useCallback(() => {
-    setCreatedEdge(null);
-  }, []);
+  // const onCreateConnectionCallback = useCallback(() => {
+  //   setCreatedEdge(null);
+  // }, []);
 
   return (
     <>

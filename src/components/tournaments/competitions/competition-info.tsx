@@ -1,10 +1,8 @@
 "use client";
 
-import ConfirmModal from "@/components/modals/confirm-modal";
 import Modal from "@/components/modals/modal";
 import CreateCompetitionModal from "@/components/modals/tournaments/competition/create-competition";
 import EditCompetitionModal from "@/components/modals/tournaments/competition/edit-competition";
-import EditRegistrationSettingsModal from "@/components/modals/tournaments/competition/edit-registration-settings";
 import CreateMatchModal from "@/components/modals/tournaments/match/create-match";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,17 +13,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { reducers, tables } from "@/lib/server-manager";
-import { getErrorMessage } from "@/lib/utils";
-import { IconCalendar } from "@tabler/icons-react";
 import { MoreHorizontal } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { useState } from "react";
-import { toast } from "sonner";
-import { Infer, Uuid } from "spacetimedb";
-import { useReducer, useTable } from "spacetimedb/react";
 //import CompetitionStatusBadge from "../status/competition-status-badge";
-import RegistrationBadge from "./registration-badge";
 import { CompetitionV1 } from "@/lib/server-manager/types";
 
 export default function CompetitionInfo({
@@ -33,15 +23,13 @@ export default function CompetitionInfo({
 }: {
   competition: CompetitionV1;
 }) {
-  const { data: session } = useSession();
+  // const register = useReducer(reducers.registerPlayer);
+  // const unregister = useReducer(reducers.unregisterPlayer);
 
-  const register = useReducer(reducers.registerPlayer);
-  const unregister = useReducer(reducers.unregisterPlayer);
-
-  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  // const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isEditCompetitionOpen, setIsEditCompetitionOpen] = useState(false);
-  const [isEditRegistrationSettingsOpen, setIsEditRegistrationSettingsOpen] =
-    useState(false);
+  // const [isEditRegistrationSettingsOpen, setIsEditRegistrationSettingsOpen] =
+  //   useState(false);
   const [isAddMatchOpen, setIsAddMatchOpen] = useState(false);
   const [isAddStageOpen, setIsAddStageOpen] = useState(false);
 
@@ -94,7 +82,7 @@ export default function CompetitionInfo({
           <div className="flex justify-between items-start gap-4">
             <div className="flex items-center gap-4">
               <h2
-                className="text-lg font-bold truncate max-w-40 lg:max-w-92 xl:max-w-128"
+                className="text-lg font-bold truncate max-w-40 lg:max-w-92 xl:max-w-lg"
                 title={competition.name}
               >
                 {competition.name}

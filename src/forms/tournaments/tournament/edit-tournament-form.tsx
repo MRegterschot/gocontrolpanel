@@ -3,18 +3,18 @@ import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { reducers } from "@/lib/server-manager";
+import { ProjectV1 } from "@/lib/server-manager/types";
 import { getErrorMessage } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconDeviceFloppy } from "@tabler/icons-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Infer, Timestamp } from "spacetimedb";
+import { Timestamp } from "spacetimedb";
 import { useReducer } from "spacetimedb/react";
 import {
   EditTournamentSchema,
   EditTournamentSchemaType,
 } from "./edit-tournament-schema";
-import { ProjectV1 } from "@/lib/server-manager/types";
 
 export default function EditTournamentForm({
   tournament,
@@ -24,9 +24,7 @@ export default function EditTournamentForm({
   callback?: () => void;
 }) {
   const editTournamentName = useReducer(reducers.projectEditName);
-  const editTournamentDescription = useReducer(
-    reducers.projectEditDescription,
-  );
+  const editTournamentDescription = useReducer(reducers.projectEditDescription);
   const editTournamentDates = useReducer(reducers.projectEditDates);
 
   const form = useForm<EditTournamentSchemaType>({

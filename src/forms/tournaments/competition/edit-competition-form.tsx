@@ -3,18 +3,17 @@ import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { reducers } from "@/lib/server-manager";
+import { CompetitionV1 } from "@/lib/server-manager/types";
 import { getErrorMessage } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconDeviceFloppy } from "@tabler/icons-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Infer } from "spacetimedb";
 import { useReducer } from "spacetimedb/react";
 import {
   EditCompetitionSchema,
   EditCompetitionSchemaType,
 } from "./edit-competition-schema";
-import { CompetitionV1 } from "@/lib/server-manager/types";
 
 export default function EditCompetitionForm({
   competition,
@@ -23,7 +22,7 @@ export default function EditCompetitionForm({
   competition: CompetitionV1;
   callback?: () => void;
 }) {
-  const editCompetitionName = useReducer(reducers.competitionEditName);
+  // const editCompetitionName = useReducer(reducers.competitionEditName);
 
   const form = useForm<EditCompetitionSchemaType>({
     resolver: zodResolver(EditCompetitionSchema),
@@ -35,10 +34,10 @@ export default function EditCompetitionForm({
   async function onSubmit(values: EditCompetitionSchemaType) {
     if (competition.name !== values.name) {
       try {
-        editCompetitionName({
-          name: values.name,
-          competitionId: competition.id,
-        });
+        // editCompetitionName({
+        //   name: values.name,
+        //   competitionId: competition.id,
+        // });
       } catch (error) {
         toast.error("Failed to update stage name", {
           description: getErrorMessage(error),

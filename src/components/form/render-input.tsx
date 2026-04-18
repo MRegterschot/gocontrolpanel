@@ -64,6 +64,9 @@ export default function RenderInput<TControl extends FieldValues>({
   className,
 }: RenderInputProps<TControl & FieldValues>) {
   const [showPassword, setShowPassword] = useState(false);
+  const [raw, setRaw] = useState(
+    Array.isArray(field.value) ? field.value.join(",") : "",
+  );
 
   switch (type) {
     case "text":
@@ -219,10 +222,6 @@ export default function RenderInput<TControl extends FieldValues>({
         />
       );
     case "array-number": {
-      const [raw, setRaw] = useState(
-        Array.isArray(field.value) ? field.value.join(",") : "",
-      );
-
       const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setRaw(value);
