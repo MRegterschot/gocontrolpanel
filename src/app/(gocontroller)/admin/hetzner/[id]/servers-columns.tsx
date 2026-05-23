@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
+import { updateTrackmaniaServer } from "@/actions/hetzner/server-actions";
 import { deleteHetznerServer } from "@/actions/hetzner/servers";
 import ConfirmModal from "@/components/modals/confirm-modal";
 import AddTrackmaniaServerModal from "@/components/modals/hetzner/add-tmserver";
@@ -135,6 +136,7 @@ export const createServersColumns = (
       const [isAttachOpen, setIsAttachOpen] = useState(false);
       const [isDetachOpen, setIsDetachOpen] = useState(false);
       const [isAddServerOpen, setIsAddServerOpen] = useState(false);
+      const [isUpdateServerOpen, setIsUpdateServerOpen] = useState(false);
 
       const canDelete = hasPermissionSync(
         session,
@@ -145,6 +147,12 @@ export const createServersColumns = (
       const canCreate = hasPermissionSync(
         session,
         routePermissions.admin.hetzner.servers.create,
+        data.projectId,
+      );
+
+      const canManage = hasPermissionSync(
+        session,
+        routePermissions.admin.hetzner.servers.manage,
         data.projectId,
       );
 
@@ -173,6 +181,32 @@ export const createServersColumns = (
         });
       };
 
+      const handleUpdateTMServer = () => {
+        if (!canManage) {
+          toast.error("You do not have permission to update this server.");
+          return;
+        }
+
+        startTransition(async () => {
+          try {
+            const { error } = await updateTrackmaniaServer(
+              data.projectId,
+              server.id,
+              -1,
+            );
+            if (error) {
+              throw new Error(error);
+            }
+            refetch();
+            toast.success("Trackmania server successfully updated");
+          } catch (error) {
+            toast.error("Error updating Trackmania server", {
+              description: getErrorMessage(error),
+            });
+          }
+        });
+      };
+
       const getDetailsModal = () => {
         switch (server.labels.type) {
           case "database":
@@ -186,6 +220,11 @@ export const createServersColumns = (
             );
         }
       };
+
+      // If there is a label that starts with a number, it is a shared server
+      const isSharedServer = Object.keys(row.original.labels).some((key) =>
+        key.match(/^\d+\./),
+      );
 
       return (
         <div className="flex justify-end">
@@ -223,6 +262,14 @@ export const createServersColumns = (
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setIsDetachOpen(true)}>
                     Detach from Network
+                  </DropdownMenuItem>
+                </>
+              )}
+              {canManage && !isSharedServer && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setIsUpdateServerOpen(true)}>
+                    Update Trackmania Server
                   </DropdownMenuItem>
                 </>
               )}
@@ -310,6 +357,19 @@ export const createServersColumns = (
                 />
               </Modal>
             </>
+          )}
+
+          {canManage && (
+            <ConfirmModal
+              isOpen={isUpdateServerOpen}
+              onClose={() => setIsUpdateServerOpen(false)}
+              onConfirm={handleUpdateTMServer}
+              title="Update Trackmania server"
+              description={`Are you sure you want to update the Trackmania server?`}
+              confirmText="Update"
+              cancelText="Cancel"
+              variant="default"
+            />
           )}
         </div>
       );

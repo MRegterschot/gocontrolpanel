@@ -1,3 +1,4 @@
+import { updateTrackmaniaServer } from "@/actions/hetzner/server-actions";
 import { deleteTrackmaniaServer } from "@/actions/hetzner/server-setup";
 import {
   Accordion,
@@ -8,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { HetznerServer } from "@/types/api/hetzner/servers";
-import { IconTrash, IconX } from "@tabler/icons-react";
+import { IconDownload, IconTrash, IconX } from "@tabler/icons-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Card } from "../../ui/card";
@@ -22,7 +23,8 @@ export default function HetznerTMServersModal({
   server: HetznerServer;
 }>) {
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
-  
+  const [isUpdating, setIsUpdating] = useState<number | null>(null);
+
   if (!data) return null;
 
   const stopPropagation = (e: React.MouseEvent) => {
@@ -87,6 +89,25 @@ export default function HetznerTMServersModal({
     }
   };
 
+  const onUpdateServer = async (serverNumber: number) => {
+    try {
+      setIsUpdating(serverNumber);
+      const { error } = await updateTrackmaniaServer(
+        data.projectId,
+        data.server.id,
+        serverNumber,
+      );
+      if (error) {
+        throw new Error(error);
+      }
+      toast.success(`Updated TM server ${serverNumber + 1} successfully`);
+    } catch {
+      toast.error(`Failed to update TM server ${serverNumber + 1}`);
+    } finally {
+      setIsUpdating(null);
+    }
+  };
+
   return (
     <Card
       onClick={stopPropagation}
@@ -139,7 +160,7 @@ export default function HetznerTMServersModal({
 
               <Separator />
 
-              <div>
+              <div className="flex gap-2">
                 <Button
                   variant={"destructive"}
                   onClick={() => onDeleteServer(parseInt(serverNumber))}
@@ -149,6 +170,17 @@ export default function HetznerTMServersModal({
                 >
                   <IconTrash />
                   Delete Server
+                </Button>
+
+                <Button
+                  variant={"outline"}
+                  onClick={() => onUpdateServer(parseInt(serverNumber))}
+                  disabled={
+                    isUpdating !== null && isUpdating === parseInt(serverNumber)
+                  }
+                >
+                  <IconDownload />
+                  Update Trackmania Server
                 </Button>
               </div>
             </AccordionContent>
