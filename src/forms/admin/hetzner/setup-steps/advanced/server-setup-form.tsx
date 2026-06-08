@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HetznerLocation } from "@/types/api/hetzner/locations";
 import { HetznerNetwork } from "@/types/api/hetzner/networks";
 import { HetznerServer, HetznerServerType } from "@/types/api/hetzner/servers";
+import { HetznerSSHKey } from "@/types/api/hetzner/ssh-keys";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -26,6 +27,7 @@ export default function AdvancedServerSetupForm({
   databases,
   serverTypes,
   networks,
+  sshKeys,
   callback,
 }: {
   projectId: string;
@@ -33,6 +35,7 @@ export default function AdvancedServerSetupForm({
   databases: HetznerServer[];
   serverTypes: HetznerServerType[];
   networks: HetznerNetwork[];
+  sshKeys: HetznerSSHKey[];
   callback?: () => void;
 }) {
   const [step, setStep] = useState<Steps>("server");
@@ -175,6 +178,7 @@ export default function AdvancedServerSetupForm({
             onNext={nextStep}
             locations={locations}
             serverTypes={serverTypes}
+            sshKeys={sshKeys}
           />
         </TabsContent>
 

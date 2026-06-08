@@ -27,8 +27,12 @@ import {
   tmServerTemplate,
   updateHetznerServer,
 } from "./servers";
-import { createHetznerSSHKey } from "./ssh-keys";
-import { getApiToken, getHetznerServer, setRateLimit } from "./util";
+import {
+  createHetznerSSHKey,
+  getApiToken,
+  getHetznerServer,
+  setRateLimit,
+} from "./util";
 
 export async function createAdvancedServerSetup(
   projectId: string,
@@ -231,7 +235,10 @@ export async function createAdvancedServerSetup(
         server_type: server.serverType,
         image: "ubuntu-22.04",
         location: server.location,
-        ssh_keys: [keys.id],
+        ssh_keys: [
+          keys.id,
+          ...(server.sshKeys || []).map((id) => parseInt(id)),
+        ],
         user_data: userData,
         labels: {
           type: "dedi",
@@ -452,7 +459,10 @@ export async function createSimpleServerSetup(
         server_type: server.serverType,
         image: "ubuntu-22.04",
         location: server.location,
-        ssh_keys: [keys.id],
+        ssh_keys: [
+          keys.id,
+          ...(server.sshKeys || []).map((id) => parseInt(id)),
+        ],
         user_data: userData,
         labels: {
           type: "dedi",
