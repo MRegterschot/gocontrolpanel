@@ -9,6 +9,7 @@ import { getErrorMessage } from "@/lib/utils";
 import { HetznerLocation } from "@/types/api/hetzner/locations";
 import { HetznerNetwork } from "@/types/api/hetzner/networks";
 import { HetznerServer, HetznerServerType } from "@/types/api/hetzner/servers";
+import { HetznerSSHKey } from "@/types/api/hetzner/ssh-keys";
 import { IconX } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -21,6 +22,7 @@ import {
   SelectValue,
 } from "../../ui/select";
 import { DefaultModalProps } from "../default-props";
+import { getSSHKeys } from "@/actions/hetzner/ssh-keys";
 
 type Mode = "simple" | "advanced";
 
@@ -33,6 +35,7 @@ export default function AddServerSetupModal({
   const [networks, setNetworks] = useState<HetznerNetwork[]>([]);
   const [locations, setLocations] = useState<HetznerLocation[]>([]);
   const [serverTypes, setServerTypes] = useState<HetznerServerType[]>([]);
+  const [sshKeys, setSshKeys] = useState<HetznerSSHKey[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,11 +50,13 @@ export default function AddServerSetupModal({
         locationsResult,
         serverTypesResult,
         networksResult,
+        sshKeysResult,
       ] = await Promise.allSettled([
         getAllDatabases(data),
         getHetznerLocations(data),
         getServerTypes(data),
         getAllNetworks(data),
+        getSSHKeys(data),
       ]);
 
       // Handle databases
@@ -112,6 +117,21 @@ export default function AddServerSetupModal({
       } else {
         toast.error("Failed to fetch networks", {
           description: getErrorMessage(networksResult.reason),
+        });
+      }
+
+      // Handle SSH keys
+      if (sshKeysResult.status === "fulfilled") {
+        const { data, error } = sshKeysResult.value;
+        if (!error) {
+          setSshKeys(data);
+        } else {
+          toast.error("Failed to fetch SSH keys", { description: error });
+          setError("Failed to get SSH keys: " + error);
+        }
+      } else {
+        toast.error("Failed to fetch SSH keys", {
+          description: getErrorMessage(sshKeysResult.reason),
         });
       }
 
@@ -185,6 +205,7 @@ export default function AddServerSetupModal({
               locations={locations}
               databases={databases}
               serverTypes={serverTypes}
+              sshKeys={sshKeys}
             />
           )}
 
@@ -196,6 +217,7 @@ export default function AddServerSetupModal({
               databases={databases}
               serverTypes={serverTypes}
               networks={networks}
+              sshKeys={sshKeys}
             />
           )}
         </>
