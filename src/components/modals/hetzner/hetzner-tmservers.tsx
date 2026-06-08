@@ -1,3 +1,7 @@
+import {
+  restartTrackmaniaServer,
+  stopTrackmaniaServer,
+} from "@/actions/hetzner/server-actions";
 import { deleteTrackmaniaServer } from "@/actions/hetzner/server-setup";
 import {
   Accordion,
@@ -8,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { HetznerServer } from "@/types/api/hetzner/servers";
-import { IconTrash, IconX } from "@tabler/icons-react";
+import { IconRefresh, IconTrash, IconX } from "@tabler/icons-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Card } from "../../ui/card";
@@ -22,7 +26,9 @@ export default function HetznerTMServersModal({
   server: HetznerServer;
 }>) {
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
-  
+  const [isRestarting, setIsRestarting] = useState<number | null>(null);
+  const [isStopping, setIsStopping] = useState<number | null>(null);
+
   if (!data) return null;
 
   const stopPropagation = (e: React.MouseEvent) => {
@@ -36,36 +42,46 @@ export default function HetznerTMServersModal({
       admin: string | undefined;
       user: string | undefined;
       filemanager: string | undefined;
+      version: number;
     }
   > = {};
 
   Object.keys(data.server.labels).forEach((key) => {
-    // Every server entry has 4 labels, they are seperated per server by a number, so we can group them by that number
-    const match = key.match(
-      /^(\d+)\.(authorization|filemanager)\.(superadmin|admin|user|password)/,
-    );
-    if (match) {
-      const serverNumber = match[1];
-      const type = match[2];
-      const role = match[3];
+    const parts = key.split(".");
+    const serverNumber = parts[0];
 
-      if (!servers[serverNumber]) {
-        servers[serverNumber] = {
-          superadmin: undefined,
-          admin: undefined,
-          user: undefined,
-          filemanager: undefined,
-        };
-      }
+    if (!serverNumber || isNaN(Number(serverNumber))) {
+      return;
+    }
 
-      if (type === "authorization") {
-        servers[serverNumber][role as "superadmin" | "admin" | "user"] =
-          data.server.labels[key];
-      } else if (type === "filemanager") {
-        servers[serverNumber].filemanager = data.server.labels[key];
+    if (!servers[serverNumber]) {
+      servers[serverNumber] = {
+        superadmin: undefined,
+        admin: undefined,
+        user: undefined,
+        filemanager: undefined,
+        version: 0,
+      };
+    }
+
+    const value = data.server.labels[key];
+
+    if (parts[1] === "version") {
+      servers[serverNumber].version = parseInt(value || "0", 10);
+    } else if (parts[1] === "authorization" && parts[3] === "password") {
+      if (
+        parts[2] === "superadmin" ||
+        parts[2] === "admin" ||
+        parts[2] === "user"
+      ) {
+        servers[serverNumber][parts[2]] = value;
       }
+    } else if (parts[1] === "filemanager" && parts[2] === "password") {
+      servers[serverNumber].filemanager = value;
     }
   });
+
+  console.log(servers);
 
   const onDeleteServer = async (serverNumber: number) => {
     try {
@@ -84,6 +100,44 @@ export default function HetznerTMServersModal({
       toast.error(`Failed to delete TM server ${serverNumber + 1}`);
     } finally {
       setIsDeleting(null);
+    }
+  };
+
+  const onRestartServer = async (serverNumber: number) => {
+    try {
+      setIsRestarting(serverNumber);
+      const { error } = await restartTrackmaniaServer(
+        data.projectId,
+        data.server.id,
+        serverNumber,
+      );
+      if (error) {
+        throw new Error(error);
+      }
+      toast.success(`Restarted server ${serverNumber + 1} successfully`);
+    } catch {
+      toast.error(`Failed to restart server ${serverNumber + 1}`);
+    } finally {
+      setIsRestarting(null);
+    }
+  };
+
+  const onStopServer = async (serverNumber: number) => {
+    try {
+      setIsStopping(serverNumber);
+      const { error } = await stopTrackmaniaServer(
+        data.projectId,
+        data.server.id,
+        serverNumber,
+      );
+      if (error) {
+        throw new Error(error);
+      }
+      toast.success(`Stopped server ${serverNumber + 1} successfully`);
+    } catch {
+      toast.error(`Failed to stop server ${serverNumber + 1}`);
+    } finally {
+      setIsStopping(null);
     }
   };
 
@@ -139,7 +193,7 @@ export default function HetznerTMServersModal({
 
               <Separator />
 
-              <div>
+              <div className="flex gap-2">
                 <Button
                   variant={"destructive"}
                   onClick={() => onDeleteServer(parseInt(serverNumber))}
@@ -148,8 +202,36 @@ export default function HetznerTMServersModal({
                   }
                 >
                   <IconTrash />
-                  Delete Server
+                  Delete
                 </Button>
+
+                {servers[serverNumber].version >= 1 && (
+                  <>
+                    <Button
+                      variant={"outline"}
+                      onClick={() => onRestartServer(parseInt(serverNumber))}
+                      disabled={
+                        isRestarting !== null &&
+                        isRestarting === parseInt(serverNumber)
+                      }
+                    >
+                      <IconRefresh />
+                      Restart
+                    </Button>
+
+                    <Button
+                      variant={"outline"}
+                      onClick={() => onStopServer(parseInt(serverNumber))}
+                      disabled={
+                        isStopping !== null &&
+                        isStopping === parseInt(serverNumber)
+                      }
+                    >
+                      <IconX />
+                      Stop
+                    </Button>
+                  </>
+                )}
               </div>
             </AccordionContent>
           </AccordionItem>

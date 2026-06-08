@@ -19,4 +19,5 @@
 - hetzner:delete
 - hetzner:servers:view
 - hetzner:servers:create
+- hetzner:servers:manage
 - hetzner:servers:delete
