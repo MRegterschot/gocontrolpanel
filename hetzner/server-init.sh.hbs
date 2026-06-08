@@ -24,13 +24,11 @@ if [ -z "$TM_SYSTEM_FORCE_IP_ADDRESS" ]; then
     TM_SYSTEM_FORCE_IP_ADDRESS=$(ip -4 addr show scope global | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -n1)
 fi
 
-# Set environment variables
-cat > "$ENV_FILE" <<EOF
+cat > "$ENV_FILE" <<'EOF'
 COMPOSE_PROJECT_NAME={{{stack_name}}}
 TM_MASTERSERVER_LOGIN={{{dedi_login}}}
 TM_MASTERSERVER_PASSWORD={{{dedi_password}}}
 TM_SERVER_PASSWORD={{{room_password}}}
-TM_SYSTEM_FORCE_IP_ADDRESS=${TM_SYSTEM_FORCE_IP_ADDRESS}
 TM_AUTHORIZATION_SUPERADMIN_PASSWORD={{{superadmin_password}}}
 TM_AUTHORIZATION_ADMIN_PASSWORD={{{admin_password}}}
 TM_AUTHORIZATION_USER_PASSWORD={{{user_password}}}
@@ -40,9 +38,13 @@ TM_XMLRPC_PORT={{{xmlrpc_port}}}
 FM_PORT={{{fm_port}}}
 EOF
 
+cat >> "$ENV_FILE" <<EOF
+TM_SYSTEM_FORCE_IP_ADDRESS=${TM_SYSTEM_FORCE_IP_ADDRESS}
+EOF
+
 {{#if server_controller}}
 {{#if server_controller.type}}
-cat >> "$ENV_FILE" <<EOF
+cat >> "$ENV_FILE" <<'EOF'
 DB_HOST={{{db.host}}}
 DB_PORT={{{db.port}}}
 DB_NAME={{{db.name}}}
@@ -62,13 +64,13 @@ COMPOSE_FILES="$COMPOSE_FILES -f /root/gocontrolpanel-master/hetzner/docker-conf
 {{/if}}
 
 {{#if (eq server_controller.type "maniacontrol")}}
-cat >> "$ENV_FILE" <<EOF
+cat >> "$ENV_FILE" <<'EOF'
 MC_ADMINS={{{server_controller.admins}}}
 EOF
 {{/if}}
 
 {{#if (eq server_controller.type "minicontrol")}}
-cat >> "$ENV_FILE" <<EOF
+cat >> "$ENV_FILE" <<'EOF'
 MINI_ADMINS={{{server_controller.admins}}}
 MINI_EXCLUDED_PLUGINS={{{server_controller.excludedPlugins}}}
 MINI_CONTACT_INFO={{{server_controller.contactInfo}}}
@@ -78,7 +80,7 @@ EOF
 {{/if}}
 
 {{#if (eq server_controller.type "pyplanet")}}
-cat >> "$ENV_FILE" <<EOF
+cat >> "$ENV_FILE" <<'EOF'
 PY_ADMINS={{{server_controller.admins}}}
 EOF
 {{/if}}

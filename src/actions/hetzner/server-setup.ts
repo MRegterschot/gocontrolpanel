@@ -625,7 +625,6 @@ export async function addTrackmaniaServer(
         Buffer.from(dbHetznerServer.privateKey),
       );
 
-      // Test command, docker ps
       const result = await executeSSHScript(sshConn, script);
 
       sshConn.end();

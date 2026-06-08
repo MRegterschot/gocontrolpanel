@@ -39,7 +39,6 @@ export async function createDBHetznerServer(hetznerServer: {
   return await db.hetznerServers.create({
     data: {
       ...hetznerServer,
-      version: 1,
       privateKey: Buffer.from(
         encryptHetznerToken(hetznerServer.privateKey),
         "base64",
