@@ -7,7 +7,7 @@ import { logAudit } from "../database/server-only/audit-logs";
 import { getDBHetznerServer } from "../database/server-only/hetzner-servers";
 import { getHetznerServer } from "./util";
 
-export async function updateTrackmaniaServer(
+export async function restartTrackmaniaServer(
   projectId: string,
   serverId: number,
   tmServerNumber: number,
@@ -19,7 +19,7 @@ export async function updateTrackmaniaServer(
         logAudit(
           session.user.id,
           projectId,
-          "hetzner.server.manage.updateTrackmaniaServer",
+          "hetzner.server.manage.restartTrackmaniaServer",
           {
             id: serverId,
           },
@@ -45,17 +45,7 @@ export async function updateTrackmaniaServer(
         throw new Error("SSH private key not found for the server");
       }
 
-      const imageName = "evoesports/trackmania:latest";
-
-      let script = `docker pull ${imageName}`;
-
-      if (tmServerNumber === -1) {
-        script += ` && for c in $(docker ps -q --filter ancestor=${imageName}); do project=$(docker inspect -f '{{ index .Config.Labels "com.docker.compose.project" }}' $c); workdir=$(docker inspect -f '{{ index .Config.Labels "com.docker.compose.project.working_dir" }}' $c); compose=$(docker inspect -f '{{ index .Config.Labels "com.docker.compose.project.config_files" }}' $c); docker compose -p "$project" -f "$workdir/$compose" up -d; done`;
-      } else {
-        script += ` && TM_PORT=${2350 + tmServerNumber} TM_XMLRPC_PORT=${5000 + tmServerNumber} docker compose -p stack-${tmServerNumber} -f /root/gocontrolpanel-master/hetzner/docker-compose.yml up -d`;
-      }
-
-      // script = "docker ps";
+      const script = `~/gocontrolpanel-master/hetzner/stack-${tmServerNumber}/restart.sh`;
 
       const sshConn = await connectToSSHServer(
         hetznerServer.public_net.ipv4?.ip || "",
@@ -74,7 +64,7 @@ export async function updateTrackmaniaServer(
       }
 
       logger.info(
-        `Trackmania server updated successfully on server ${serverId} (tmServerNumber: ${tmServerNumber}) by user ${session.user.id}`,
+        `Trackmania server restarted successfully on server ${serverId} (tmServerNumber: ${tmServerNumber}) by user ${session.user.id}`,
       );
       logger.debug(`SSH script output: ${result.stdout}`);
     },
