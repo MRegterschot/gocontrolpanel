@@ -1,4 +1,8 @@
-import { restartTrackmaniaServer } from "@/actions/hetzner/server-actions";
+import { getDBHetznerServer } from "@/actions/database/hetzner-servers";
+import {
+  restartTrackmaniaServer,
+  stopTrackmaniaServer,
+} from "@/actions/hetzner/server-actions";
 import { deleteTrackmaniaServer } from "@/actions/hetzner/server-setup";
 import {
   Accordion,
@@ -8,9 +12,10 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { HetznerServers } from "@/lib/prisma/generated";
 import { HetznerServer } from "@/types/api/hetzner/servers";
 import { IconRefresh, IconTrash, IconX } from "@tabler/icons-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
@@ -24,6 +29,32 @@ export default function HetznerTMServersModal({
 }>) {
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
   const [isRestarting, setIsRestarting] = useState<number | null>(null);
+  const [isStopping, setIsStopping] = useState<number | null>(null);
+
+  const [dbHetznerServer, setDBHetznerServer] = useState<HetznerServers | null>(
+    null,
+  );
+  const [loadingDBServer, setLoadingDBServer] = useState(true);
+
+  useEffect(() => {
+    async function fetchDBServer() {
+      if (!data) return;
+
+      try {
+        const { data: res } = await getDBHetznerServer(
+          data.projectId,
+          data.server.id,
+        );
+        setDBHetznerServer(res);
+      } catch (error) {
+        toast.error("Failed to load server details");
+      } finally {
+        setLoadingDBServer(false);
+      }
+    }
+
+    fetchDBServer();
+  }, [data]);
 
   if (!data) return null;
 
@@ -108,6 +139,41 @@ export default function HetznerTMServersModal({
     }
   };
 
+  const onStopServer = async (serverNumber: number) => {
+    try {
+      setIsStopping(serverNumber);
+      const { error } = await stopTrackmaniaServer(
+        data.projectId,
+        data.server.id,
+        serverNumber,
+      );
+      if (error) {
+        throw new Error(error);
+      }
+      toast.success(`Stopped server ${serverNumber + 1} successfully`);
+    } catch {
+      toast.error(`Failed to stop server ${serverNumber + 1}`);
+    } finally {
+      setIsStopping(null);
+    }
+  };
+
+  if (loadingDBServer) {
+    return (
+      <Card className="p-6 gap-6 sm:min-w-100 max-sm:w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-bold">Trackmania Servers</h1>
+          <IconX
+            className="h-6 w-6 cursor-pointer text-muted-foreground"
+            onClick={closeModal}
+          />
+        </div>
+
+        <div>Loading...</div>
+      </Card>
+    );
+  }
+
   return (
     <Card
       onClick={stopPropagation}
@@ -169,20 +235,36 @@ export default function HetznerTMServersModal({
                   }
                 >
                   <IconTrash />
-                  Delete Server
+                  Delete
                 </Button>
 
-                <Button
-                  variant={"outline"}
-                  onClick={() => onRestartServer(parseInt(serverNumber))}
-                  disabled={
-                    isRestarting !== null &&
-                    isRestarting === parseInt(serverNumber)
-                  }
-                >
-                  <IconRefresh />
-                  Restart Trackmania Server
-                </Button>
+                {dbHetznerServer && dbHetznerServer.version >= 1 && (
+                  <>
+                    <Button
+                      variant={"outline"}
+                      onClick={() => onRestartServer(parseInt(serverNumber))}
+                      disabled={
+                        isRestarting !== null &&
+                        isRestarting === parseInt(serverNumber)
+                      }
+                    >
+                      <IconRefresh />
+                      Restart
+                    </Button>
+
+                    <Button
+                      variant={"outline"}
+                      onClick={() => onStopServer(parseInt(serverNumber))}
+                      disabled={
+                        isStopping !== null &&
+                        isStopping === parseInt(serverNumber)
+                      }
+                    >
+                      <IconX />
+                      Stop
+                    </Button>
+                  </>
+                )}
               </div>
             </AccordionContent>
           </AccordionItem>
