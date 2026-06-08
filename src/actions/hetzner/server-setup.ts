@@ -247,6 +247,7 @@ export async function createAdvancedServerSetup(
           "0.authorization.admin.password": dediData.admin_password,
           "0.authorization.user.password": dediData.user_password,
           "0.filemanager.password": dediData.filemanager_password,
+          "0.version": "1",
         },
         public_net: {
           enable_ipv4: true,
@@ -471,6 +472,7 @@ export async function createSimpleServerSetup(
           "0.authorization.admin.password": dediData.admin_password,
           "0.authorization.user.password": dediData.user_password,
           "0.filemanager.password": dediData.filemanager_password,
+          "0.version": "1",
         },
         public_net: {
           enable_ipv4: true,
@@ -643,6 +645,7 @@ export async function addTrackmaniaServer(
           dediData.superadmin_password,
         [`${serverNumber}.authorization.user.password`]: dediData.user_password,
         [`${serverNumber}.filemanager.password`]: dediData.filemanager_password,
+        [`${serverNumber}.version`]: "1",
       });
 
       const cachedServer: HetznerServerCache = {
@@ -732,6 +735,7 @@ export async function deleteTrackmaniaServer(
       delete newLabels[`${tmServerNumber}.authorization.user.password`];
       delete newLabels[`${tmServerNumber}.filemanager.password`];
       delete newLabels[`${tmServerNumber}.servercontroller.type`];
+      delete newLabels[`${tmServerNumber}.version`];
 
       await updateHetznerServer(projectId, serverId, newLabels);
 

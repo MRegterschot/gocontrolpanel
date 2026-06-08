@@ -33,16 +33,18 @@ export async function restartTrackmaniaServer(
         throw new Error("Server not found");
       }
 
+      const labels = hetznerServer.labels || {};
+
+      if (parseInt(labels[`${tmServerNumber}.version`] || "0") < 1) {
+        la("Server version is outdated");
+        throw new Error("Server version is outdated");
+      }
+
       const dbHetznerServer = await getDBHetznerServer(serverId);
 
       if (!dbHetznerServer) {
         la("DB Server not found");
         throw new Error("DB Server not found");
-      }
-
-      if (dbHetznerServer.version < 1) {
-        la("DB Server version is outdated");
-        throw new Error("DB Server version is outdated");
       }
 
       if (!dbHetznerServer.privateKey) {
@@ -102,16 +104,18 @@ export async function stopTrackmaniaServer(
         throw new Error("Server not found");
       }
 
+      const labels = hetznerServer.labels || {};
+
+      if (parseInt(labels[`${tmServerNumber}.version`] || "0") < 1) {
+        la("Server version is outdated");
+        throw new Error("Server version is outdated");
+      }
+
       const dbHetznerServer = await getDBHetznerServer(serverId);
 
       if (!dbHetznerServer) {
         la("DB Server not found");
         throw new Error("DB Server not found");
-      }
-
-      if (dbHetznerServer.version < 1) {
-        la("DB Server version is outdated");
-        throw new Error("DB Server version is outdated");
       }
 
       if (!dbHetznerServer.privateKey) {
