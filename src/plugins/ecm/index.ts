@@ -1,11 +1,12 @@
 import { ecmOnDriverFinish, ecmOnRoundEnd } from "@/lib/api/ecm";
+import { logger } from "@/lib/logger";
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import ManialinkManager from "@/lib/managers/manialink-manager";
 import Widget from "@/lib/manialink/components/widget";
 import { rankPlayers } from "@/lib/utils";
 import { PlayerManialinkPageAnswer } from "@/types/gbx/player";
 import { Scores } from "@/types/gbx/scores";
-import { Waypoint } from "@/types/gbx/waypoint";
+import { Waypoint, WaypointEvent } from "@/types/gbx/waypoint";
 import { ECMPluginConfig } from "@/types/plugins/ecm";
 import Plugin from "..";
 import ECMWindow from "./ecm-window";
@@ -14,6 +15,7 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
   static pluginId = "ecm";
   private widget: Widget;
   private roundOffset: number = 0;
+  private activeDrivers: Set<string> = new Set();
 
   private windows: Map<string, ECMWindow> = new Map();
 
@@ -36,6 +38,8 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
       finish: this.onPlayerFinish.bind(this),
       scores: this.onEndRound.bind(this),
       beginMap: this.onBeginMap.bind(this),
+      startRound: this.onStartRound.bind(this),
+      startLine: this.onStartLine.bind(this),
     });
 
     this.clientManager.onCommand("ecm", this.onECMCommand.bind(this));
@@ -69,6 +73,22 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
     this.windows.forEach((window) => {
       window.updateConfig(this.config);
     });
+  }
+
+  async onStartRound() {
+    this.activeDrivers.clear();
+    logger.debug("New round started, cleared active drivers");
+  }
+
+  async onStartLine(startLine: WaypointEvent) {
+    this.activeDrivers.add(startLine.login);
+    logger.debug(
+      {
+        login: startLine.login,
+        activeDrivers: Array.from(this.activeDrivers),
+      },
+      "Player started a new line, added to active drivers",
+    );
   }
 
   onRoundOffsetUpdate = (value: number) => {
@@ -124,6 +144,13 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
 
     if (this.clientManager.info.liveInfo.type === "reversecup") {
       scoresPlayers = scores.players.filter((p) => p.matchpoints > -2000);
+    }
+
+    // In non-timeattack modes, we filter out players who didn't finish and didn't start the round
+    if (!isTimeAttack) {
+      scoresPlayers = scoresPlayers.filter(
+        (p) => p.prevracetime !== -1 || this.activeDrivers.has(p.login),
+      );
     }
 
     const rankedPlayers = rankPlayers(scoresPlayers, isTimeAttack);
