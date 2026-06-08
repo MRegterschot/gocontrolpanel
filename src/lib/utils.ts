@@ -303,6 +303,7 @@ export const permissions: string[] = [
   "hetzner:delete",
   "hetzner:servers:view",
   "hetzner:servers:create",
+  "hetzner:servers:manage",
   "hetzner:servers:delete",
   "audit-logs:view",
   "audit-logs:delete",
