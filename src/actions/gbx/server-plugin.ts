@@ -2,12 +2,13 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getGbxClient } from "@/lib/managers/gbxclient-manager";
+import { ServerPlugin } from "@/types/gbx/server-plugin";
 import { ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
 
 export async function getServerPlugin(
   serverId: string,
-): Promise<ServerResponse<unknown>> {
+): Promise<ServerResponse<ServerPlugin>> {
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async () => {
@@ -21,9 +22,7 @@ export async function setServerPlugin(
   serverId: string,
   forceReload: boolean,
   name: string,
-  settings: {
-    [key: string]: string | number | boolean;
-  },
+  settings: Record<string, string | number | boolean>,
 ): Promise<ServerResponse> {
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],

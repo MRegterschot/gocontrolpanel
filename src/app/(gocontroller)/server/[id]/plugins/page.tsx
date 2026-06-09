@@ -63,7 +63,7 @@ export default async function ServerPluginsPage({
           <Card className="p-6">
             <ServerPluginsForm
               serverId={id}
-              serverPlugin={serverPlugin}
+              defaultServerPlugin={serverPlugin}
               scripts={scripts}
             />
           </Card>

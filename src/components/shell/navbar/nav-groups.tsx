@@ -249,7 +249,6 @@ export default function NavGroups() {
 
   const saveGroupOrder = async (updatedGroups: UserGroup[]) => {
     try {
-      console.log(updatedGroups);
       const { error } = await updateGroupOrder(updatedGroups);
       if (error) {
         throw new Error(error);
