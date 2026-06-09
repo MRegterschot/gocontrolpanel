@@ -144,17 +144,17 @@ export function getServerGroup(
         needsConnection: connectionRoutes.includes(routes.servers.records),
       },
       {
-        name: "Interface",
-        url: generatePath(routes.servers.interface, {
+        name: "Plugins",
+        url: generatePath(routes.servers.plugins, {
           id: server.id,
         }),
         icon: IconDeviceDesktop,
         auth: hasPermissionSync(
           session,
-          routePermissions.servers.interface,
+          routePermissions.servers.plugins,
           server.id,
         ),
-        needsConnection: connectionRoutes.includes(routes.servers.interface),
+        needsConnection: connectionRoutes.includes(routes.servers.plugins),
       },
       {
         name: "TMX",
@@ -249,7 +249,6 @@ export default function NavGroups() {
 
   const saveGroupOrder = async (updatedGroups: UserGroup[]) => {
     try {
-      console.log(updatedGroups);
       const { error } = await updateGroupOrder(updatedGroups);
       if (error) {
         throw new Error(error);

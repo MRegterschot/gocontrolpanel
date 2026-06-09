@@ -81,8 +81,6 @@ export default function HetznerTMServersModal({
     }
   });
 
-  console.log(servers);
-
   const onDeleteServer = async (serverNumber: number) => {
     try {
       setIsDeleting(serverNumber);

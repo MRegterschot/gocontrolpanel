@@ -45,6 +45,8 @@ cat > "$STACK_DIR/restart.sh" <<EOF
 #!/bin/bash
 set -e
 
+docker pull evoesports/trackmania:latest
+
 docker compose \
   --env-file "$ENV_FILE" \
   $COMPOSE_FILES \
