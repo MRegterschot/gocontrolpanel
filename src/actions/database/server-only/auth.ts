@@ -1,6 +1,7 @@
 import { getClient } from "@/lib/dbclient";
-import { Prisma, Servers, Users } from "@/lib/prisma/generated";
+import { Prisma, Users } from "@/lib/prisma/generated";
 import { getList } from "@/lib/utils";
+import { MinimalServer } from "@/types/auth";
 import "server-only";
 
 const includeGroupsWithServers = Prisma.validator<Prisma.UsersInclude>()({
@@ -79,6 +80,42 @@ export type UsersWithGroupsWithServers = Prisma.UsersGetPayload<{
   include: typeof includeGroupsWithServers;
 }>;
 
+const includeServersAndMembers = Prisma.validator<Prisma.GroupsInclude>()({
+  groupMembers: {
+    where: {
+      user: {
+        authenticated: true,
+      },
+    },
+    select: {
+      userId: true,
+    },
+  },
+  groupServers: {
+    where: {
+      server: {
+        deletedAt: null,
+      },
+    },
+    select: {
+      server: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          host: true,
+          port: true,
+          filemanagerUrl: true,
+        },
+      },
+    },
+  },
+});
+
+export type GroupsWithServersAndMembers = Prisma.GroupsGetPayload<{
+  include: typeof includeServersAndMembers;
+}>;
+
 export async function getUserById(
   userId: string,
 ): Promise<UsersWithGroupsWithServers> {
@@ -134,19 +171,7 @@ export async function getPublicGroupsWithServers(): Promise<
   {
     id: string;
     name: string;
-    servers: Omit<
-      Servers,
-      | "user"
-      | "password"
-      | "manualRouting"
-      | "messageFormat"
-      | "connectMessage"
-      | "disconnectMessage"
-      | "filemanagerPassword"
-      | "createdAt"
-      | "updatedAt"
-      | "deletedAt"
-    >[];
+    servers: MinimalServer[];
   }[]
 > {
   const db = getClient();
@@ -192,4 +217,18 @@ export async function getPublicGroupsWithServers(): Promise<
     name: group.name,
     servers: group.groupServers.map((gs) => gs.server),
   }));
+}
+
+export async function getAllGroupsWithServersAndMembers(): Promise<
+  GroupsWithServersAndMembers[]
+> {
+  const db = getClient();
+  const groups = await db.groups.findMany({
+    where: {
+      deletedAt: null,
+    },
+    include: includeServersAndMembers,
+  });
+
+  return groups;
 }

@@ -3,14 +3,14 @@
 import { exportServerPluginConfig } from "@/actions/database/server-plugins";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import PlayerInfoForm from "@/forms/server/interface/player-info/player-info-form";
+import ECMForm from "@/forms/server/plugins/ecm/ecm-form";
 import { getErrorMessage } from "@/lib/utils";
-import { PlayerInfoPluginConfig } from "@/types/plugins/player-info";
+import { ECMPluginConfig } from "@/types/plugins/ecm";
 import { IconDownload, IconX } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { DefaultModalProps } from "../../default-props";
 
-export default function PlayerInfoPluginModal({
+export default function EcircuitmaniaPluginModal({
   serverId,
   data,
   closeModal,
@@ -18,9 +18,9 @@ export default function PlayerInfoPluginModal({
 }: DefaultModalProps<
   {
     pluginId: string;
-    config: PlayerInfoPluginConfig;
+    config: ECMPluginConfig;
   },
-  PlayerInfoPluginConfig
+  ECMPluginConfig
 >) {
   if (!serverId || !data || !data.pluginId) {
     return null;
@@ -30,7 +30,7 @@ export default function PlayerInfoPluginModal({
     e.stopPropagation();
   };
 
-  const handleSubmit = (config: PlayerInfoPluginConfig) => {
+  const handleSubmit = (config: ECMPluginConfig) => {
     closeModal?.();
     onSubmit?.(config);
   };
@@ -51,7 +51,7 @@ export default function PlayerInfoPluginModal({
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `player-info-plugin-config-${serverId}.json`;
+      a.download = `ecm-plugin-config-${serverId}.json`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
@@ -67,7 +67,8 @@ export default function PlayerInfoPluginModal({
       className="p-6 gap-6 sm:min-w-100 max-sm:w-full max-h-[90vh] overflow-y-auto"
     >
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Player Info Plugin</h1>
+        <h1 className="text-xl font-bold">eCircuitMania Plugin</h1>
+
         <div className="flex gap-2 items-center">
           <Button size={"icon"} variant={"outline"} onClick={handleExport}>
             <IconDownload />
@@ -80,7 +81,7 @@ export default function PlayerInfoPluginModal({
         </div>
       </div>
 
-      <PlayerInfoForm
+      <ECMForm
         serverId={serverId}
         pluginId={data?.pluginId}
         config={data?.config}

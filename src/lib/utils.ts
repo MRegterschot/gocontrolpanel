@@ -303,6 +303,7 @@ export const permissions: string[] = [
   "hetzner:delete",
   "hetzner:servers:view",
   "hetzner:servers:create",
+  "hetzner:servers:manage",
   "hetzner:servers:delete",
   "audit-logs:view",
   "audit-logs:delete",
@@ -424,13 +425,13 @@ export function monthNumberToName(monthNum: number): string {
 
 export function weekDayNumberToName(dayNum: number): string {
   const days = [
-    "Sunday",
     "Monday",
     "Tuesday",
     "Wednesday",
     "Thursday",
     "Friday",
     "Saturday",
+    "Sunday",
   ];
 
   // dayNum should be 0–6

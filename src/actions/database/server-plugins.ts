@@ -54,7 +54,7 @@ export async function updateServerPlugins(
       await logAudit(
         session.user.id,
         serverId,
-        "server.interface.plugins.edit",
+        "server.plugins.plugins.edit",
         plugins,
       );
     },
@@ -119,7 +119,7 @@ export async function updateServerPlugin(
       await logAudit(
         session.user.id,
         serverId,
-        "server.interface.plugins.config.edit",
+        "server.plugins.plugins.config.edit",
         { pluginId, config },
       );
     },

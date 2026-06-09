@@ -27,6 +27,7 @@ import { useNotifications } from "@/providers/notification-provider";
 import { useServers } from "@/providers/servers-provider";
 import { connectionRoutes, routePermissions, routes } from "@/routes";
 import { UserGroup } from "@/types/auth";
+import { ServerInfo } from "@/types/server";
 import {
   IconActivity,
   IconAdjustmentsAlt,
@@ -42,12 +43,13 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import { ChevronRight } from "lucide-react";
+import { Session } from "next-auth";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-interface ServerNavGroup {
+export interface ServerNavGroup {
   id: string;
   name: string;
   servers: {
@@ -64,6 +66,142 @@ interface ServerNavGroup {
       needsConnection?: boolean;
     }[];
   }[];
+}
+
+export function getServerGroup(
+  server: ServerInfo,
+  session: Session | null,
+  serverId: string | null,
+) {
+  const serverGroup = {
+    id: server.id,
+    name: server.name,
+    isConnected: server.isConnected,
+    icon: server.isConnected ? IconServer : IconServerOff,
+    isActive: serverId === server.id,
+    items: [
+      {
+        name: "Settings",
+        url: generatePath(routes.servers.settings, {
+          id: server.id,
+        }),
+        icon: IconAdjustmentsAlt,
+        auth: hasPermissionSync(
+          session,
+          routePermissions.servers.settings,
+          server.id,
+        ),
+        needsConnection: connectionRoutes.includes(routes.servers.settings),
+      },
+      {
+        name: "Game",
+        url: generatePath(routes.servers.game, {
+          id: server.id,
+        }),
+        icon: IconDeviceGamepad,
+        needsConnection: connectionRoutes.includes(routes.servers.game),
+      },
+      {
+        name: "Maps",
+        url: generatePath(routes.servers.maps, {
+          id: server.id,
+        }),
+        icon: IconMap,
+        auth: hasPermissionSync(
+          session,
+          routePermissions.servers.maps,
+          server.id,
+        ),
+        needsConnection: connectionRoutes.includes(routes.servers.maps),
+      },
+      {
+        name: "Players",
+        url: generatePath(routes.servers.players, {
+          id: server.id,
+        }),
+        icon: IconUsers,
+        auth: hasPermissionSync(
+          session,
+          routePermissions.servers.players,
+          server.id,
+        ),
+        needsConnection: connectionRoutes.includes(routes.servers.players),
+      },
+      {
+        name: "Live",
+        url: generatePath(routes.servers.live, {
+          id: server.id,
+        }),
+        icon: IconActivity,
+        needsConnection: connectionRoutes.includes(routes.servers.live),
+      },
+      {
+        name: "Records",
+        url: generatePath(routes.servers.records, {
+          id: server.id,
+        }),
+        icon: IconStopwatch,
+        needsConnection: connectionRoutes.includes(routes.servers.records),
+      },
+      {
+        name: "Plugins",
+        url: generatePath(routes.servers.plugins, {
+          id: server.id,
+        }),
+        icon: IconDeviceDesktop,
+        auth: hasPermissionSync(
+          session,
+          routePermissions.servers.plugins,
+          server.id,
+        ),
+        needsConnection: connectionRoutes.includes(routes.servers.plugins),
+      },
+      {
+        name: "TMX",
+        url: generatePath(routes.servers.tmx, {
+          id: server.id,
+        }),
+        icon: IconTmx,
+        auth: hasPermissionSync(
+          session,
+          routePermissions.servers.tmx,
+          server.id,
+        ),
+        needsConnection: connectionRoutes.includes(routes.servers.tmx),
+      },
+      {
+        name: "Nadeo",
+        url: generatePath(routes.servers.nadeo, {
+          id: server.id,
+        }),
+        icon: IconNadeo,
+        auth: hasPermissionSync(
+          session,
+          routePermissions.servers.nadeo,
+          server.id,
+        ),
+        needsConnection: connectionRoutes.includes(routes.servers.nadeo),
+      },
+    ],
+  };
+
+  if (server.filemanagerUrl) {
+    serverGroup.items.push({
+      name: "Files",
+      url: generatePath(routes.servers.files, {
+        id: server.id,
+      }),
+      icon: IconFileDescription,
+      auth: hasPermissionSync(
+        session,
+        routePermissions.servers.files,
+        server.id,
+      ),
+      needsConnection: connectionRoutes.includes(routes.servers.files),
+    });
+  }
+
+  return serverGroup;
 }
 
 export default function NavGroups() {
@@ -103,157 +241,7 @@ export default function NavGroups() {
 
             return indexA - indexB;
           })
-          .map((server) => {
-            const serverGroup = {
-              id: server.id,
-              name: server.name,
-              isConnected: server.isConnected,
-              icon: server.isConnected ? IconServer : IconServerOff,
-              isActive: serverId === server.id,
-              items: [
-                {
-                  name: "Settings",
-                  url: generatePath(routes.servers.settings, {
-                    id: server.id,
-                  }),
-                  icon: IconAdjustmentsAlt,
-                  auth: hasPermissionSync(
-                    session,
-                    routePermissions.servers.settings,
-                    server.id,
-                  ),
-                  needsConnection: connectionRoutes.includes(
-                    routes.servers.settings,
-                  ),
-                },
-                {
-                  name: "Game",
-                  url: generatePath(routes.servers.game, {
-                    id: server.id,
-                  }),
-                  icon: IconDeviceGamepad,
-                  needsConnection: connectionRoutes.includes(
-                    routes.servers.game,
-                  ),
-                },
-                {
-                  name: "Maps",
-                  url: generatePath(routes.servers.maps, {
-                    id: server.id,
-                  }),
-                  icon: IconMap,
-                  auth: hasPermissionSync(
-                    session,
-                    routePermissions.servers.maps,
-                    server.id,
-                  ),
-                  needsConnection: connectionRoutes.includes(
-                    routes.servers.maps,
-                  ),
-                },
-                {
-                  name: "Players",
-                  url: generatePath(routes.servers.players, {
-                    id: server.id,
-                  }),
-                  icon: IconUsers,
-                  auth: hasPermissionSync(
-                    session,
-                    routePermissions.servers.players,
-                    server.id,
-                  ),
-                  needsConnection: connectionRoutes.includes(
-                    routes.servers.players,
-                  ),
-                },
-                {
-                  name: "Live",
-                  url: generatePath(routes.servers.live, {
-                    id: server.id,
-                  }),
-                  icon: IconActivity,
-                  needsConnection: connectionRoutes.includes(
-                    routes.servers.live,
-                  ),
-                },
-                {
-                  name: "Records",
-                  url: generatePath(routes.servers.records, {
-                    id: server.id,
-                  }),
-                  icon: IconStopwatch,
-                  needsConnection: connectionRoutes.includes(
-                    routes.servers.records,
-                  ),
-                },
-                {
-                  name: "Interface",
-                  url: generatePath(routes.servers.interface, {
-                    id: server.id,
-                  }),
-                  icon: IconDeviceDesktop,
-                  auth: hasPermissionSync(
-                    session,
-                    routePermissions.servers.interface,
-                    server.id,
-                  ),
-                  needsConnection: connectionRoutes.includes(
-                    routes.servers.interface,
-                  ),
-                },
-                {
-                  name: "TMX",
-                  url: generatePath(routes.servers.tmx, {
-                    id: server.id,
-                  }),
-                  icon: IconTmx,
-                  auth: hasPermissionSync(
-                    session,
-                    routePermissions.servers.tmx,
-                    server.id,
-                  ),
-                  needsConnection: connectionRoutes.includes(
-                    routes.servers.tmx,
-                  ),
-                },
-                {
-                  name: "Nadeo",
-                  url: generatePath(routes.servers.nadeo, {
-                    id: server.id,
-                  }),
-                  icon: IconNadeo,
-                  auth: hasPermissionSync(
-                    session,
-                    routePermissions.servers.nadeo,
-                    server.id,
-                  ),
-                  needsConnection: connectionRoutes.includes(
-                    routes.servers.nadeo,
-                  ),
-                },
-              ],
-            };
-
-            if (server.filemanagerUrl) {
-              serverGroup.items.push({
-                name: "Files",
-                url: generatePath(routes.servers.files, {
-                  id: server.id,
-                }),
-                icon: IconFileDescription,
-                auth: hasPermissionSync(
-                  session,
-                  routePermissions.servers.files,
-                  server.id,
-                ),
-                needsConnection: connectionRoutes.includes(
-                  routes.servers.files,
-                ),
-              });
-            }
-
-            return serverGroup;
-          })
+          .map((server) => getServerGroup(server, session, serverId))
           .filter((server): server is NonNullable<typeof server> => !!server),
       })) || [],
     [groups, servers, serverId],
@@ -261,7 +249,6 @@ export default function NavGroups() {
 
   const saveGroupOrder = async (updatedGroups: UserGroup[]) => {
     try {
-      console.log(updatedGroups);
       const { error } = await updateGroupOrder(updatedGroups);
       if (error) {
         throw new Error(error);

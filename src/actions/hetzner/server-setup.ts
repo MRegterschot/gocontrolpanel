@@ -27,8 +27,12 @@ import {
   tmServerTemplate,
   updateHetznerServer,
 } from "./servers";
-import { createHetznerSSHKey } from "./ssh-keys";
-import { getApiToken, getHetznerServer, setRateLimit } from "./util";
+import {
+  createHetznerSSHKey,
+  getApiToken,
+  getHetznerServer,
+  setRateLimit,
+} from "./util";
 
 export async function createAdvancedServerSetup(
   projectId: string,
@@ -231,7 +235,10 @@ export async function createAdvancedServerSetup(
         server_type: server.serverType,
         image: "ubuntu-22.04",
         location: server.location,
-        ssh_keys: [keys.id],
+        ssh_keys: [
+          keys.id,
+          ...(server.sshKeys || []).map((id) => parseInt(id)),
+        ],
         user_data: userData,
         labels: {
           type: "dedi",
@@ -240,6 +247,7 @@ export async function createAdvancedServerSetup(
           "0.authorization.admin.password": dediData.admin_password,
           "0.authorization.user.password": dediData.user_password,
           "0.filemanager.password": dediData.filemanager_password,
+          "0.version": "1",
         },
         public_net: {
           enable_ipv4: true,
@@ -452,7 +460,10 @@ export async function createSimpleServerSetup(
         server_type: server.serverType,
         image: "ubuntu-22.04",
         location: server.location,
-        ssh_keys: [keys.id],
+        ssh_keys: [
+          keys.id,
+          ...(server.sshKeys || []).map((id) => parseInt(id)),
+        ],
         user_data: userData,
         labels: {
           type: "dedi",
@@ -461,6 +472,7 @@ export async function createSimpleServerSetup(
           "0.authorization.admin.password": dediData.admin_password,
           "0.authorization.user.password": dediData.user_password,
           "0.filemanager.password": dediData.filemanager_password,
+          "0.version": "1",
         },
         public_net: {
           enable_ipv4: true,
@@ -613,7 +625,6 @@ export async function addTrackmaniaServer(
         Buffer.from(dbHetznerServer.privateKey),
       );
 
-      // Test command, docker ps
       const result = await executeSSHScript(sshConn, script);
 
       sshConn.end();
@@ -633,6 +644,7 @@ export async function addTrackmaniaServer(
           dediData.superadmin_password,
         [`${serverNumber}.authorization.user.password`]: dediData.user_password,
         [`${serverNumber}.filemanager.password`]: dediData.filemanager_password,
+        [`${serverNumber}.version`]: "1",
       });
 
       const cachedServer: HetznerServerCache = {
@@ -722,6 +734,7 @@ export async function deleteTrackmaniaServer(
       delete newLabels[`${tmServerNumber}.authorization.user.password`];
       delete newLabels[`${tmServerNumber}.filemanager.password`];
       delete newLabels[`${tmServerNumber}.servercontroller.type`];
+      delete newLabels[`${tmServerNumber}.version`];
 
       await updateHetznerServer(projectId, serverId, newLabels);
 
