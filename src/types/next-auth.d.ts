@@ -1,7 +1,7 @@
 import "next-auth";
 import { ISODateString } from "next-auth";
 import "next-auth/jwt";
-import { UserGroup, UserProject, UserServer } from "./auth";
+import { AdminGroup, UserGroup, UserProject, UserServer } from "./auth";
 
 declare module "next-auth" {
   interface User {
@@ -19,6 +19,7 @@ declare module "next-auth" {
       login: string;
       permissions: string[];
       groups: UserGroup[];
+      adminGroups: AdminGroup[];
       projects: UserProject[];
       servers: UserServer[];
     };
@@ -41,6 +42,7 @@ declare module "next-auth/jwt" {
     ubiId?: string;
     permissions: string[];
     groups: UserGroup[];
+    adminGroups: AdminGroup[];
     projects: UserProject[];
     servers: UserServer[];
   }

@@ -1,4 +1,5 @@
 import {
+  getAllGroupsWithServersAndMembers,
   getPublicGroupsWithServers,
   getUserById,
   getUserByLogin,
@@ -102,6 +103,7 @@ export const authOptions: NextAuthOptions = {
         ubiId: token.ubiId || undefined,
         permissions: token.permissions,
         groups: token.groups,
+        adminGroups: token.adminGroups,
         projects: token.projects,
         servers: token.servers,
       };
@@ -154,6 +156,23 @@ export const authOptions: NextAuthOptions = {
 
       if (!dbUser) {
         throw new Error("Failed to fetch user from database");
+      }
+
+      if (dbUser.admin) {
+        const allGroups = await getAllGroupsWithServersAndMembers();
+        const adminGroups = allGroups.filter(
+          (g) => !g.groupMembers.some((gm) => gm.userId === dbUser.id),
+        );
+
+        token.adminGroups = adminGroups
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((g) => ({
+            id: g.id,
+            name: g.name,
+            servers: g.groupServers.map((s) => s.server),
+          }));
+      } else {
+        token.adminGroups = [];
       }
 
       token.id = dbUser.id;
