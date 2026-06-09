@@ -3,20 +3,20 @@ import { getServerPlugins } from "@/actions/database/server-plugins";
 import { getServerChatConfig } from "@/actions/database/servers";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ChatConfigForm from "@/forms/server/interface/chatconfig-form";
-import PluginsForm from "@/forms/server/interface/plugins-form";
+import ChatConfigForm from "@/forms/server/plugins/chatconfig-form";
+import PluginsForm from "@/forms/server/plugins/plugins-form";
 import { hasPermission } from "@/lib/auth";
 import { routePermissions, routes } from "@/routes";
 import { redirect } from "next/navigation";
 
-export default async function ServerInterfacePage({
+export default async function ServerPluginsPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
 
-  const canView = await hasPermission(routePermissions.servers.interface, id);
+  const canView = await hasPermission(routePermissions.servers.plugins, id);
 
   if (!canView) {
     redirect(routes.dashboard);
@@ -30,9 +30,9 @@ export default async function ServerInterfacePage({
   return (
     <div className="flex flex-col gap-6 h-full">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold">Manage Interface</h1>
+        <h1 className="text-2xl font-bold">Manage Plugins</h1>
         <h4 className="text-muted-foreground">
-          Manage the interface settings.
+          Manage the plugins of the server, and configure the chat settings.
         </h4>
       </div>
 
