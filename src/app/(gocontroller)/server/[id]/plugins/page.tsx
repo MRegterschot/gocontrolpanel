@@ -1,10 +1,13 @@
 import { getPlugins } from "@/actions/database/plugins";
 import { getServerPlugins } from "@/actions/database/server-plugins";
 import { getServerChatConfig } from "@/actions/database/servers";
+import { getPluginScripts } from "@/actions/filemanager";
+import { getServerPlugin } from "@/actions/gbx/server-plugin";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChatConfigForm from "@/forms/server/plugins/chatconfig-form";
 import PluginsForm from "@/forms/server/plugins/plugins-form";
+import ServerPluginsForm from "@/forms/server/plugins/server-plugins-form";
 import { hasPermission } from "@/lib/auth";
 import { routePermissions, routes } from "@/routes";
 import { redirect } from "next/navigation";
@@ -27,6 +30,9 @@ export default async function ServerPluginsPage({
   const { data: serverPlugins } = await getServerPlugins(id);
   const { data: plugins } = await getPlugins();
 
+  const { data: serverPlugin } = await getServerPlugin(id);
+  const { data: scripts } = await getPluginScripts(id);
+
   return (
     <div className="flex flex-col gap-6 h-full">
       <div className="flex flex-col gap-1">
@@ -39,6 +45,7 @@ export default async function ServerPluginsPage({
       <Tabs defaultValue="plugins" className="w-full">
         <TabsList className="w-full">
           <TabsTrigger value="plugins">Plugins</TabsTrigger>
+          <TabsTrigger value="server-plugins">Server Plugins</TabsTrigger>
           <TabsTrigger value="chat">Chat</TabsTrigger>
         </TabsList>
 
@@ -51,6 +58,17 @@ export default async function ServerPluginsPage({
             />
           </Card>
         </TabsContent>
+
+        <TabsContent value="server-plugins" className="flex flex-col gap-6">
+          <Card className="p-6">
+            <ServerPluginsForm
+              serverId={id}
+              serverPlugin={serverPlugin}
+              scripts={scripts}
+            />
+          </Card>
+        </TabsContent>
+
         <TabsContent value="chat" className="flex flex-col gap-6">
           <Card className="p-6">
             <ChatConfigForm serverId={id} chatConfig={data} />
