@@ -1271,6 +1271,35 @@ async function setScriptSettings(manager: GbxClientManager) {
       manager.info.liveInfo.pointsRepartition = [10, 6, 4, 3, 2, 1]; // default
     }
   }
+
+  if (type === "teams") {
+    const useCustomPointsRepartition =
+      scriptSettings["S_UseCustomPointsRepartition"];
+
+    if (!useCustomPointsRepartition) {
+      const maxPoints = Number(scriptSettings["S_MaxPointsPerRound"]);
+      const playerList = await manager.client.call("GetCurrentRanking", 1000, 0);
+      
+      if (!isNaN(maxPoints)) {
+        if (playerList.length <= maxPoints) {
+          manager.info.liveInfo.pointsRepartition = Array.from(
+            { length: playerList.length },
+            (_, i) => playerList.length - i,
+          );
+        } else {
+          manager.info.liveInfo.pointsRepartition = Array.from(
+            { length: maxPoints },
+            (_, i) => maxPoints - i,
+          );
+        }
+      } else {
+        manager.info.liveInfo.pointsRepartition = Array.from(
+          { length: playerList.length },
+          (_, i) => playerList.length - i,
+        );
+      }
+    }
+  }
 }
 
 function onPlayerGiveUpScript(

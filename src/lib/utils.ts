@@ -490,18 +490,18 @@ export const colorMapping: {
   };
 } = {
   red: {
-    mainColor: "C11",
-    secondaryColor: "A11",
+    mainColor: "A22",
+    secondaryColor: "922",
     textColor: "DDD",
   },
   blue: {
-    mainColor: "11C",
-    secondaryColor: "11A",
+    mainColor: "22A",
+    secondaryColor: "229",
     textColor: "DDD",
   },
   default: {
-    mainColor: "DDD",
-    secondaryColor: "BBB",
-    textColor: "222",
+    mainColor: "",
+    secondaryColor: "",
+    textColor: "",
   },
 };

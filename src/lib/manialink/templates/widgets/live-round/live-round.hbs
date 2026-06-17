@@ -175,7 +175,7 @@ Void updateRoundRow(Integer index, Round round, Round[] rounds, Text mode, Integ
       pointsText = "$D22F";
     }
   } else if (mode == "rounds" && pointsLimit > 0) {
-    if (round.points >= pointsLimit) {
+    if (round.points >= pointsLimit && round.team.mainColor == "") {
       pointsText = "$2C2W";
     }
   } else if (mode == "reversecup") {
@@ -191,14 +191,18 @@ Void updateRoundRow(Integer index, Round round, Round[] rounds, Text mode, Integ
   roundFrame.DataAttributeSet("login", round.login);
 
   if (round.team.mainColor != "") {
-    (roundFrame.Controls[1] as CMlQuad).BgColor = CL::Hex3ToRgb(round.team.mainColor);
-    (roundFrame.Controls[2] as CMlQuad).BgColor = CL::Hex3ToRgb(round.team.secondaryColor);
+    (roundFrame.Controls[0] as CMlQuad).BgColor = CL::Hex3ToRgb(round.team.mainColor);
+    (roundFrame.Controls[1] as CMlQuad).BgColor = CL::Hex3ToRgb(round.team.secondaryColor);
+    (roundFrame.Controls[2] as CMlQuad).BgColor = CL::Hex3ToRgb(round.team.mainColor);
+    (roundFrame.Controls[4] as CMlQuad).BgColor = CL::Hex3ToRgb(round.team.secondaryColor);
     (roundFrame.Controls[5] as CMlLabel).TextColor = CL::Hex3ToRgb(round.team.textColor);
     (roundFrame.Controls[6] as CMlLabel).TextColor = CL::Hex3ToRgb(round.team.textColor);
     (roundFrame.Controls[7] as CMlLabel).TextColor = CL::Hex3ToRgb(round.team.textColor);
   } else {
+    (roundFrame.Controls[0] as CMlQuad).BgColor = CL::Hex3ToRgb("222");
     (roundFrame.Controls[1] as CMlQuad).BgColor = CL::Hex3ToRgb("DDD");
     (roundFrame.Controls[2] as CMlQuad).BgColor = CL::Hex3ToRgb("BBB");
+    (roundFrame.Controls[4] as CMlQuad).BgColor = CL::Hex3ToRgb("DDD");
     (roundFrame.Controls[5] as CMlLabel).TextColor = CL::Hex3ToRgb("222");
     (roundFrame.Controls[6] as CMlLabel).TextColor = CL::Hex3ToRgb("222");
     (roundFrame.Controls[7] as CMlLabel).TextColor = CL::Hex3ToRgb("222");
