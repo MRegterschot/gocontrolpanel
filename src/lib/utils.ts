@@ -500,8 +500,8 @@ export const colorMapping: {
     textColor: "DDD",
   },
   default: {
-    mainColor: "DDD",
-    secondaryColor: "BBB",
-    textColor: "222",
+    mainColor: "",
+    secondaryColor: "",
+    textColor: "",
   },
 };
