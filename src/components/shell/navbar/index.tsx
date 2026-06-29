@@ -1,8 +1,10 @@
+import { SidebarSeparator } from "@/components/ui/sidebar";
 import { auth, hasPermission } from "@/lib/auth";
 import config from "@/lib/config";
 import { routePermissions } from "@/routes";
 import { Icon } from "@tabler/icons-react";
 import NavAdmin from "./nav-admin";
+import NavAdminGroups from "./nav-admin-groups";
 import NavFooter from "./nav-footer";
 import NavGroups from "./nav-groups";
 import NavTournaments from "./nav-tournaments";
@@ -47,11 +49,15 @@ export default async function Navbar() {
     canViewAuditLogs;
 
   const usingSpacetime = config.SPACETIME.URI && config.SPACETIME.MODULE;
-  
+
   return (
     <>
       {session && <NavGroups />}
       {session && usingSpacetime && <NavTournaments />}
+      {session?.user.admin && session?.user.adminGroups.length > 0 && (
+        <SidebarSeparator />
+      )}
+      {session?.user.admin && <NavAdminGroups />}
       {session && canViewAdmin && (
         <NavAdmin
           canViewUsers={canViewUsers}

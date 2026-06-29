@@ -128,9 +128,10 @@ export interface HetznerServerCache {
   projectId: string;
   name: string;
   ip?: string;
-  labels: {
-    [key: string]: string;
-  };
+  port: number;
+  fm_port: number;
+  password: string;
+  filemanagerPassword: string;
 }
 
 export interface HetznerServerMetrics {

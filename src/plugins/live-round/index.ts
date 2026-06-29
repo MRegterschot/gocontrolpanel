@@ -162,6 +162,9 @@ export default class LiveRoundPlugin extends Plugin {
       playerStatus.spectator ||
       playerStatus.eliminated
     ) {
+      const round = this.rounds.find((r) => r.login === playerInfo.login);
+      if (!round) return;
+      
       this.rounds = this.rounds.filter((r) => r.login !== playerInfo.login);
     } else {
       const round = this.rounds.find((r) => r.login === playerInfo.login);
@@ -321,7 +324,8 @@ export default class LiveRoundPlugin extends Plugin {
         if (this.rounds[j].login === scores.players[i].login) {
           if (
             scores.players[i].matchpoints > this.pointsLimit &&
-            this.pointsLimit > 0
+            this.pointsLimit > 0 &&
+            this.clientManager.info.liveInfo.type !== "teams"
           ) {
             this.rounds = this.rounds.filter(
               (r) => r.login !== scores.players[i].login,

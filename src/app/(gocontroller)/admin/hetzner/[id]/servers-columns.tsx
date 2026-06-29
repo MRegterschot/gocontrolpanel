@@ -3,6 +3,7 @@
 
 import { deleteHetznerServer } from "@/actions/hetzner/servers";
 import ConfirmModal from "@/components/modals/confirm-modal";
+import AddTrackmaniaServerModal from "@/components/modals/hetzner/add-tmserver";
 import AttachHetznerServerToNetworkModal from "@/components/modals/hetzner/attach-hetzner-server-to-network";
 import DetachServerFromNetworkModal from "@/components/modals/hetzner/detach-server-from-network";
 import HetznerDatabaseDetailsModal from "@/components/modals/hetzner/hetzner-database-details";
@@ -60,6 +61,31 @@ export const createServersColumns = (
     },
   },
   {
+    accessorKey: "tm_servers",
+    header: () => <span>TM Servers</span>,
+    cell: ({ row }) => {
+      const labels = row.original.labels || {};
+
+      // If there is a label that starts with authorization, return 1
+      if (Object.keys(labels).some((key) => key.startsWith("authorization"))) {
+        return <span>1</span>;
+      }
+
+      // Count all the labels that start with a number, only count unique numbers
+      const serverCounts: Record<string, number> = {};
+      Object.keys(labels).forEach((key) => {
+        const match = key.match(/^(\d+)\./);
+        if (match) {
+          const serverNumber = match[1];
+          serverCounts[serverNumber] = (serverCounts[serverNumber] || 0) + 1;
+        }
+      });
+      const uniqueServerNumbers = Object.keys(serverCounts).length;
+
+      return <span>{uniqueServerNumbers}</span>;
+    },
+  },
+  {
     accessorKey: "status",
     header: () => <span>Status</span>,
   },
@@ -108,6 +134,7 @@ export const createServersColumns = (
       const [isMetricsOpen, setIsMetricsOpen] = useState(false);
       const [isAttachOpen, setIsAttachOpen] = useState(false);
       const [isDetachOpen, setIsDetachOpen] = useState(false);
+      const [isAddServerOpen, setIsAddServerOpen] = useState(false);
 
       const canDelete = hasPermissionSync(
         session,
@@ -148,12 +175,15 @@ export const createServersColumns = (
 
       const getDetailsModal = () => {
         switch (server.labels.type) {
-          case "dedi":
-            return <HetznerServerDetailsModal data={server} />;
           case "database":
             return <HetznerDatabaseDetailsModal data={server} />;
+          case "dedi":
           default:
-            return <HetznerServerDetailsModal data={server} />;
+            return (
+              <HetznerServerDetailsModal
+                data={{ projectId: data.projectId, server }}
+              />
+            );
         }
       };
 
@@ -175,6 +205,18 @@ export const createServersColumns = (
               </DropdownMenuItem>
               {canCreate && (
                 <>
+                  {!Object.keys(row.original.labels).some((key) =>
+                    key.startsWith("authorization"),
+                  ) && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => setIsAddServerOpen(true)}
+                      >
+                        Add Server Setup
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setIsAttachOpen(true)}>
                     Attach to Network
@@ -226,7 +268,25 @@ export const createServersColumns = (
 
           {canCreate && (
             <>
-              <Modal isOpen={isAttachOpen} setIsOpen={setIsAttachOpen}>
+              <Modal
+                isOpen={isAddServerOpen}
+                setIsOpen={setIsAddServerOpen}
+                closeOnBackdropClick={false}
+              >
+                <AddTrackmaniaServerModal
+                  onSubmit={refetch}
+                  data={{
+                    projectId: data.projectId,
+                    serverId: server.id,
+                  }}
+                />
+              </Modal>
+
+              <Modal
+                isOpen={isAttachOpen}
+                setIsOpen={setIsAttachOpen}
+                closeOnBackdropClick={false}
+              >
                 <AttachHetznerServerToNetworkModal
                   onSubmit={refetch}
                   data={{
@@ -236,7 +296,11 @@ export const createServersColumns = (
                 />
               </Modal>
 
-              <Modal isOpen={isDetachOpen} setIsOpen={setIsDetachOpen}>
+              <Modal
+                isOpen={isDetachOpen}
+                setIsOpen={setIsDetachOpen}
+                closeOnBackdropClick={false}
+              >
                 <DetachServerFromNetworkModal
                   onSubmit={refetch}
                   data={{

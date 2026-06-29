@@ -12,7 +12,7 @@ export const createNetworkActions = (
   },
 ) => {
   return (
-    <Modal>
+    <Modal closeOnBackdropClick={false}>
       <AddHetznerNetworkModal data={args?.id} onSubmit={refetch} />
       <Button className="w-9 sm:w-auto">
         <IconPlus />

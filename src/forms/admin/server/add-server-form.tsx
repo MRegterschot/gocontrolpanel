@@ -42,10 +42,11 @@ export default function AddServerForm({
       ...defaultValues,
       name: server.name,
       host: server.ip || "",
+      port: server.port,
       user: "SuperAdmin",
-      password: server.labels["authorization.superadmin.password"] || "",
-      filemanagerUrl: `http://${server.ip}:3300`,
-      filemanagerPassword: server.labels["filemanager.password"] || "",
+      password: server.password,
+      filemanagerUrl: `http://${server.ip}:${server.fm_port}`,
+      filemanagerPassword: server.filemanagerPassword,
     };
   }
 

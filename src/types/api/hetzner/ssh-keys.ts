@@ -1,6 +1,8 @@
+import { HetznerMetaPagination } from "./meta";
+
 export interface HetznerSSHKey {
   id: number;
-  nme: string;
+  name: string;
   fingerprint: string;
   public_key: string;
   labels: {
@@ -11,4 +13,9 @@ export interface HetznerSSHKey {
 
 export interface HetznerSSHKeyResponse {
   ssh_key: HetznerSSHKey;
+}
+
+export interface HetznerSSHKeysResponse {
+  ssh_keys: HetznerSSHKey[];
+  meta: HetznerMetaPagination;
 }

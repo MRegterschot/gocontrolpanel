@@ -4,6 +4,7 @@ import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { HetznerLocation } from "@/types/api/hetzner/locations";
 import { HetznerServerType } from "@/types/api/hetzner/servers";
+import { HetznerSSHKey } from "@/types/api/hetzner/ssh-keys";
 import { IconArrowNarrowRight } from "@tabler/icons-react";
 import { UseFormReturn } from "react-hook-form";
 import Flag from "react-world-flags";
@@ -14,11 +15,13 @@ export default function ServerForm({
   onNext,
   locations,
   serverTypes,
+  sshKeys,
 }: {
   form: UseFormReturn<AdvancedServerSetupSchemaType>;
   onNext: () => void;
   locations: HetznerLocation[];
   serverTypes: HetznerServerType[];
+  sshKeys: HetznerSSHKey[];
 }) {
   const selectedServerType = serverTypes.find(
     (type) => type.id.toString() === form.watch("server.serverType"),
@@ -146,6 +149,19 @@ export default function ServerForm({
             <span className="truncate">{selectedLocation?.city || "-"}</span>
           </div>
         </div>
+
+        <FormElement
+          name={"server.sshKeys"}
+          label="SSH Keys"
+          description="Select the SSH keys you want to add to the server."
+          placeholder="Select SSH keys"
+          type="multi-select"
+          options={sshKeys.map((key) => ({
+            label: key.name,
+            value: key.id.toString(),
+          }))}
+          rootClassName="w-full max-w-75"
+        />
 
         <FormElement
           name={"server.controller"}

@@ -35,7 +35,7 @@ services:
       MYSQL_PASSWORD: MCWithGCP123
       MASTERADMINS:
     volumes:
-      - user-data:/opt/Trackmania/UserData
+      - user-data:/server/UserData
     depends_on:
       - dedicated
       - db

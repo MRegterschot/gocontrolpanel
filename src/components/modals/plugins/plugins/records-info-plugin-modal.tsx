@@ -1,7 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
-import RecordsInfoForm from "@/forms/server/interface/records-info/records-info-form";
+import RecordsInfoForm from "@/forms/server/plugins/records-info/records-info-form";
 import { RecordsInfoPluginConfig } from "@/types/plugins/records-info";
 import { IconX } from "@tabler/icons-react";
 import { DefaultModalProps } from "../../default-props";

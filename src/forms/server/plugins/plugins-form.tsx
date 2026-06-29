@@ -6,9 +6,9 @@ import {
   updateServerPlugins,
 } from "@/actions/database/server-plugins";
 import FormElement from "@/components/form/form-element";
-import EcircuitmaniaPluginModal from "@/components/modals/interface/plugins/ecircuitmania-plugin-modal";
-import PlayerInfoPluginModal from "@/components/modals/interface/plugins/player-info-plugin-modal";
-import RecordsInfoPluginModal from "@/components/modals/interface/plugins/records-info-plugin-modal";
+import EcircuitmaniaPluginModal from "@/components/modals/plugins/plugins/ecircuitmania-plugin-modal";
+import PlayerInfoPluginModal from "@/components/modals/plugins/plugins/player-info-plugin-modal";
+import RecordsInfoPluginModal from "@/components/modals/plugins/plugins/records-info-plugin-modal";
 import Modal from "@/components/modals/modal";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
@@ -241,6 +241,7 @@ export default function PluginsForm({
       <Modal
         isOpen={configModalOpen === "ecm"}
         setIsOpen={() => setConfigModalOpen(undefined)}
+        closeOnBackdropClick={false}
       >
         <EcircuitmaniaPluginModal
           serverId={serverId}
@@ -258,6 +259,7 @@ export default function PluginsForm({
       <Modal
         isOpen={configModalOpen === "player-info"}
         setIsOpen={() => setConfigModalOpen(undefined)}
+        closeOnBackdropClick={false}
       >
         <PlayerInfoPluginModal
           serverId={serverId}
@@ -275,6 +277,7 @@ export default function PluginsForm({
       <Modal
         isOpen={configModalOpen === "records-info"}
         setIsOpen={() => setConfigModalOpen(undefined)}
+        closeOnBackdropClick={false}
       >
         <RecordsInfoPluginModal
           serverId={serverId}

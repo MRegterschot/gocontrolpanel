@@ -5,25 +5,27 @@ import {
   UserServerRole,
 } from "@/lib/prisma/generated";
 
+export type MinimalServer = Omit<
+  Servers,
+  | "user"
+  | "password"
+  | "manualRouting"
+  | "messageFormat"
+  | "connectMessage"
+  | "disconnectMessage"
+  | "filemanagerPassword"
+  | "createdAt"
+  | "updatedAt"
+  | "deletedAt"
+>;
+
 export interface UserGroup {
   id: string;
   name: string;
   role: GroupRole;
   order: number;
   serversOrder?: string[];
-  servers: Omit<
-    Servers,
-    | "user"
-    | "password"
-    | "manualRouting"
-    | "messageFormat"
-    | "connectMessage"
-    | "disconnectMessage"
-    | "filemanagerPassword"
-    | "createdAt"
-    | "updatedAt"
-    | "deletedAt"
-  >[];
+  servers: MinimalServer[];
 }
 
 export interface UserProject {
@@ -36,4 +38,10 @@ export interface UserServer {
   id: string;
   name: string;
   role: UserServerRole;
+}
+
+export interface AdminGroup {
+  id: string;
+  name: string;
+  servers: MinimalServer[];
 }

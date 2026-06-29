@@ -289,7 +289,7 @@ export async function getScripts(
           throw new ServerError("Failed to get files");
         }
 
-        const data = await res.json();
+        const data: string[] = await res.json();
         if (!data) {
           throw new ServerError("Failed to get files");
         }
@@ -299,6 +299,44 @@ export async function getScripts(
       } catch (error) {
         logger.error(error, "Error getting scripts");
         return defaultScripts;
+      }
+    },
+  );
+}
+
+export async function getPluginScripts(
+  serverId: string,
+): Promise<ServerResponse<string[]>> {
+  return doServerActionWithAuth(
+    [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
+    async () => {
+      try {
+        const fileManager = await getFileManager(serverId);
+        if (!fileManager?.health) {
+          throw new ServerError("Could not connect to file manager");
+        }
+
+        const res = await fetch(`${fileManager.url}/plugin-scripts`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${fileManager.password}`,
+          },
+        });
+
+        if (res.status !== 200) {
+          throw new ServerError("Failed to get files");
+        }
+
+        const data: string[] = await res.json();
+        if (!data) {
+          throw new ServerError("Failed to get files");
+        }
+
+        return [...new Set(data)];
+      } catch (error) {
+        logger.error(error, "Error getting scripts");
+        return [];
       }
     },
   );

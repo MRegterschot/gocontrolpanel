@@ -161,7 +161,7 @@ export const createColumns = (
           )}
 
           {canEdit && (
-            <Modal isOpen={isEditOpen} setIsOpen={setIsEditOpen}>
+            <Modal isOpen={isEditOpen} setIsOpen={setIsEditOpen} closeOnBackdropClick={false}>
               <EditGroupModal onSubmit={refetch} data={group} />
             </Modal>
           )}

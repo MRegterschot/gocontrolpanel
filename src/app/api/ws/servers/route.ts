@@ -3,6 +3,7 @@ import {
   GbxClientManager,
   getGbxClientManager,
 } from "@/lib/managers/gbxclient-manager";
+import { MinimalServer } from "@/types/auth";
 import { ServerInfo } from "@/types/server";
 
 export function GET() {
@@ -24,9 +25,15 @@ export async function SOCKET(
   }
 
   const allServers = token?.groups?.flatMap((group) => group.servers) || [];
-  const servers = [
-    ...new Map(allServers.map((server) => [server.id, server])).values(),
-  ];
+  const adminServers =
+    token?.adminGroups?.flatMap((group) => group.servers) || [];
+
+  // Unique servers from both groups and adminGroups, by server.id
+  const serversMap: Record<string, MinimalServer> = {};
+  for (const server of [...allServers, ...adminServers]) {
+    serversMap[server.id] = server;
+  }
+  const servers = Object.values(serversMap);
 
   const serverManagers: {
     manager: GbxClientManager;

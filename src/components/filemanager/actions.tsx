@@ -95,7 +95,7 @@ export default function Actions({
         </>
       )}
 
-      <Modal>
+      <Modal closeOnBackdropClick={false}>
         <CreateFileEntryModal
           path={removePrefix(path, "/UserData")}
           serverId={serverId}
@@ -111,7 +111,7 @@ export default function Actions({
         </Button>
       </Modal>
 
-      <Modal>
+      <Modal closeOnBackdropClick={false}>
         <CreateFileEntryModal
           path={removePrefix(path, "/UserData")}
           serverId={serverId}

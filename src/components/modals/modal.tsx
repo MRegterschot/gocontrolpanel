@@ -14,12 +14,14 @@ interface ModalProps {
   isOpen?: boolean;
   setIsOpen?: Dispatch<React.SetStateAction<boolean>>;
   onClose?: () => void;
+  closeOnBackdropClick?: boolean;
 }
 
 export default function Modal({
   isOpen: controlledIsOpen,
   setIsOpen: controlledSetIsOpen,
   onClose,
+  closeOnBackdropClick = true,
   children,
 }: ModalProps & PropsWithChildren) {
   const isControlled =
@@ -42,7 +44,7 @@ export default function Modal({
   }
 
   const handleBackdropClick = () => {
-    setIsOpen(false);
+    if (closeOnBackdropClick) setIsOpen(false);
   };
 
   const closeModal = () => {

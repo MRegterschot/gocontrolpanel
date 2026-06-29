@@ -327,7 +327,7 @@ export async function updateServerChatConfig(
       await logAudit(
         session.user.id,
         serverId,
-        "server.interface.chat.edit",
+        "server.plugins.chat.edit",
         chatConfig,
         err ? getErrorMessage(err) : undefined,
       );

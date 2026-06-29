@@ -15,6 +15,7 @@ import {
   SimpleServerSetupSchemaType,
 } from "./server-setup-schema";
 import Summary from "./summary";
+import { HetznerSSHKey } from "@/types/api/hetzner/ssh-keys";
 
 type Steps = "server" | "serverController" | "database" | "summary";
 
@@ -23,12 +24,14 @@ export default function SimpleServerSetupForm({
   locations,
   databases,
   serverTypes,
+  sshKeys,
   callback,
 }: {
   projectId: string;
   locations: HetznerLocation[];
   databases: HetznerServer[];
   serverTypes: HetznerServerType[];
+  sshKeys: HetznerSSHKey[];
   callback?: () => void;
 }) {
   const [step, setStep] = useState<Steps>("server");
@@ -150,6 +153,7 @@ export default function SimpleServerSetupForm({
             onNext={nextStep}
             locations={locations}
             serverTypes={serverTypes}
+            sshKeys={sshKeys}
           />
         </TabsContent>
 

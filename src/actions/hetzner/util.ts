@@ -1,11 +1,13 @@
 import { axiosHetzner } from "@/lib/axios/hetzner";
 import { getHetznerProject } from "@/lib/hetzner";
 import { getKeyHetznerRateLimit, getRedisClient } from "@/lib/redis";
+import { generateSSHKeyPair } from "@/lib/ssh";
 import { getList } from "@/lib/utils";
 import {
   HetznerServer,
   HetznerServersResponse,
 } from "@/types/api/hetzner/servers";
+import { HetznerSSHKeyResponse } from "@/types/api/hetzner/ssh-keys";
 import { AxiosResponse } from "axios";
 import "server-only";
 
@@ -69,4 +71,36 @@ export async function getHetznerServer(
   await setRateLimit(projectId, res);
 
   return res.data.server;
+}
+
+export async function createHetznerSSHKey(
+  projectId: string,
+  name: string,
+): Promise<{
+  id: number;
+  publicKey: string;
+  privateKey: string;
+}> {
+  const token = await getApiToken(projectId);
+
+  const keys = generateSSHKeyPair();
+
+  const res = await axiosHetzner.post<HetznerSSHKeyResponse>(
+    "/ssh_keys",
+    {
+      name,
+      public_key: keys.publicKey,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
+  return {
+    id: res.data.ssh_key.id,
+    publicKey: keys.publicKey,
+    privateKey: keys.privateKey,
+  };
 }

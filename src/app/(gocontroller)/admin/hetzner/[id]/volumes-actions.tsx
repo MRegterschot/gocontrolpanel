@@ -12,7 +12,7 @@ export const createVolumeActions = (
   },
 ) => {
   return (
-    <Modal>
+    <Modal closeOnBackdropClick={false}>
       <AddHetznerVolumeModal data={args?.id} onSubmit={refetch} />
       <Button className="w-9 sm:w-auto">
         <IconPlus />

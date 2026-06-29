@@ -18,7 +18,7 @@ A Dockerized management panel for dedicated Trackmania servers. Works both stand
     - [Player Management](#player-management)
     - [Live Match](#live-match)
     - [Records and Matches](#records-and-matches)
-    - [Interface Editor](#interface-editor)
+    - [Plugin Management](#plugin-management)
     - [Trackmania Exchange](#trackmania-exchange)
     - [Files Management](#files-management)
     - [User Management](#user-management)
@@ -83,9 +83,9 @@ View past matches and records, including player scores and match details.
 ![Matches Page](https://i.imgur.com/ZoAdmhQ.png "Matches Page")
 ![Match Details Page](https://i.imgur.com/aiqEsGw.png "Match Details Page")
 
-#### Interface Editor
+#### Plugin Management
 
-Edit the interface of your server, manager server plugins and chat message formatting.
+Manage the server plugins and chat settings of the server.
 
 ![Plugins Page](https://i.imgur.com/5LAxOpO.png "Plugins Page")
 ![Chat Message Editor Page](https://i.imgur.com/NpvWT3K.png "Chat Message Editor Page")

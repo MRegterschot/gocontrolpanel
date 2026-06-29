@@ -10,7 +10,7 @@ export const routes = {
     live: "/server/:id/live",
     files: "/server/:id/files",
     editor: "/server/:id/files/editor",
-    interface: "/server/:id/interface",
+    plugins: "/server/:id/plugins",
     tmx: "/server/:id/tmx",
     nadeo: "/server/:id/nadeo",
     records: "/server/:id/records",
@@ -39,7 +39,7 @@ export const connectionRoutes = [
   routes.servers.live,
   routes.servers.files,
   routes.servers.editor,
-  routes.servers.interface,
+  routes.servers.plugins,
 ];
 
 export const routePermissions = {
@@ -86,7 +86,7 @@ export const routePermissions = {
       ],
     },
     files: ["servers:id:admin", "group:servers:id:admin"],
-    interface: ["servers:id:admin", "group:servers:id:admin"],
+    plugins: ["servers:id:admin", "group:servers:id:admin"],
     tmx: [
       "servers:id:moderator",
       "servers:id:admin",
@@ -163,6 +163,7 @@ export const routePermissions = {
           "hetzner:id:admin",
         ],
         create: ["hetzner:servers:create", "hetzner:id:admin"],
+        manage: ["hetzner:servers:manage", "hetzner:id:admin"],
         delete: ["hetzner:servers:delete", "hetzner:id:admin"],
       },
     },
@@ -278,13 +279,13 @@ export const breadCrumbs: {
     ],
   },
   {
-    path: routes.servers.interface,
+    path: routes.servers.plugins,
     breadCrumbs: [
       {
         label: "Server",
       },
       {
-        label: "Interface",
+        label: "Plugins",
       },
     ],
   },

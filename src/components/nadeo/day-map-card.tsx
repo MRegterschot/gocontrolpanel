@@ -178,7 +178,7 @@ export default function DayMapCard({
 
       <Badge
         variant={"outline"}
-        className="absolute top-2 left-2 z-10 bg-white dark:bg-black flex gap-2 font-bold"
+        className="absolute top-2 left-2 z-1 bg-white dark:bg-black flex gap-2 font-bold"
       >
         {day.monthDay}, {weekDayNumberToName(day.day)}
       </Badge>
