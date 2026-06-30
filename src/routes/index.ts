@@ -18,6 +18,7 @@ export const routes = {
   tournaments: {
     tournament: "/tournaments/:id",
     stage: "/tournaments/:id/stages/:stageId",
+    registrations: "/tournaments/:id/stages/:stageId/registrations",
   },
   admin: {
     users: "/admin/users",
@@ -330,6 +331,31 @@ export const breadCrumbs: {
       },
       {
         label: "Tournament Info",
+      },
+    ],
+  },
+  {
+    path: routes.tournaments.stage,
+    breadCrumbs: [
+      {
+        label: "Tournaments",
+      },
+      {
+        label: "Stage Info",
+      },
+    ],
+  },
+  {
+    path: routes.tournaments.registrations,
+    breadCrumbs: [
+      {
+        label: "Tournaments",
+      },
+      {
+        label: "Stage Info",
+      },
+      {
+        label: "Registrations",
       },
     ],
   },

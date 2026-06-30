@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/sidebar";
 import { generatePath, getCurrentId } from "@/lib/utils";
 import { routes } from "@/routes";
-import { IconPlus, IconTrophy } from "@tabler/icons-react";
+import { IconLogin, IconPlus, IconTrophy } from "@tabler/icons-react";
 import Link from "next/link";
 
 import Modal from "@/components/modals/modal";
@@ -23,6 +23,7 @@ import CreateTournamentModal from "@/components/modals/tournaments/tournament/cr
 import { useMyProjects } from "@/hooks/tournaments/projects/use-my-projects";
 import { ChevronRight } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useAuth } from "react-oidc-context";
 import { useSpacetimeDB } from "spacetimedb/react";
 
 export default function NavTournaments() {
@@ -30,6 +31,7 @@ export default function NavTournaments() {
   const activeId = getCurrentId(pathname);
 
   const spacetime = useSpacetimeDB();
+  const auth = useAuth();
   const { tournaments, isReady } = useMyProjects();
 
   const upcomingTournaments = tournaments
@@ -42,6 +44,38 @@ export default function NavTournaments() {
   const passedTournaments = tournaments.filter(
     (t) => t.endingAt.toDate() < new Date(),
   );
+
+  if (auth.isLoading) {
+    return (
+      <SidebarGroup className="group-data-[collapsible=icon]:hidden select-none">
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton disabled>Loading...</SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    );
+  }
+
+  if (!auth.isAuthenticated) {
+    return (
+      <SidebarGroup className="group-data-[collapsible=icon]:hidden select-none">
+        <SidebarGroupLabel>Tournaments</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={() => auth.signinRedirect()}>
+                <IconLogin />
+                Log in to view tournaments
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    );
+  }
 
   if (!spacetime.isActive || !isReady) {
     return (

@@ -1,6 +1,6 @@
 import CompetitionDashboard from "@/components/tournaments/competitions/competition-dashboard";
 import { Button } from "@/components/ui/button";
-import { IconArrowLeft } from "@tabler/icons-react";
+import { IconArrowLeft, IconUsers } from "@tabler/icons-react";
 import Link from "next/link";
 
 export default async function TournamentPage({
@@ -19,12 +19,21 @@ export default async function TournamentPage({
         </h4>
       </div>
 
-      <Button variant="outline" asChild className="max-w-44">
-        <Link href={`/tournaments/${id}`}>
-          <IconArrowLeft />
-          Back to tournament
-        </Link>
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" asChild className="max-w-44">
+          <Link href={`/tournaments/${id}`}>
+            <IconArrowLeft />
+            Back to tournament
+          </Link>
+        </Button>
+
+        <Button variant="outline" asChild className="max-w-44">
+          <Link href={`/tournaments/${id}/stages/${stageId}/registrations`}>
+            <IconUsers />
+            Registrations
+          </Link>
+        </Button>
+      </div>
 
       <CompetitionDashboard competitionId={Number(stageId)} />
     </div>

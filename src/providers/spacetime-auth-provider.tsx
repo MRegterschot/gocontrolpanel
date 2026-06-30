@@ -27,10 +27,12 @@ export default function SpacetimeAuthProvider({
     return <>{children}</>;
   }
 
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+
   return (
     <AuthProvider
-      redirect_uri={window.location.origin}
-      post_logout_redirect_uri={window.location.origin}
+      redirect_uri={origin}
+      post_logout_redirect_uri={origin}
       {...oidcConfig}
       onSigninCallback={onSigninCallback}
     >
