@@ -10,23 +10,20 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 import {
-  MatchStatus,
-  TmMode,
+  RegistrationSettings,
+  RegistrationStatus,
 } from "./types";
 
 
 export default __t.row({
-  matchId: __t.u32().name("match_id"),
-  mapId: __t.u32().name("map_id"),
-  restarted: __t.u16(),
-  round: __t.u16(),
-  warmup: __t.u16(),
-  isWarmup: __t.bool().name("is_warmup"),
-  paused: __t.bool(),
+  name: __t.string(),
+  id: __t.u32().primaryKey(),
+  parentId: __t.u32().name("parent_id"),
+  get settings() {
+    return RegistrationSettings;
+  },
   get status() {
-    return MatchStatus;
+    return RegistrationStatus;
   },
-  get mode() {
-    return TmMode;
-  },
+  template: __t.bool(),
 });

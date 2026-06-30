@@ -1,32 +1,30 @@
 import { tables } from "@/lib/server-manager";
-import { CompetitionV1, MatchV1 } from "@/lib/server-manager/types";
+import { MatchV1 } from "@/lib/server-manager/types";
 import { useMemo } from "react";
 import { Infer } from "spacetimedb";
 import { useTable } from "spacetimedb/react";
+import { Competition } from "./use-competition";
 
-type CompetitionBase = Infer<typeof CompetitionV1>;
-
-export interface CompetitionNode extends CompetitionBase {
+export interface CompetitionNode extends Competition {
   children: CompetitionNode[];
   matches: Infer<typeof MatchV1>[];
   // registeredPlayers: Infer<typeof RegisteredPlayer>[];
 }
 
 export function useCompetitionTree(tournamentId: number) {
-  const [matches] = useTable(
-    tables.my_matches.where((r) => r.id.eq(tournamentId)),
-  );
+  const [matches] = useTable(tables.tab_match);
 
   const [competitions] = useTable(tables.project_competition_descendants); // TODO, filter by tournamentId
+  const [registrationRows] = useTable(tables.unstable_registration);
 
   // const registeredPlayerRows = tables.temp_registration_player.where(r => r.registrationId.eq(tournamentId));
 
   const tree = useMemo<CompetitionNode | null>(() => {
     if (!competitions || competitions.length === 0) return null;
 
-    const compMap = new Map<number, CompetitionBase>(
+    const compMap = new Map<number, Competition>(
       competitions.map((c) => [c.id, c]),
-    ); 
+    );
 
     function buildNode(id: number): CompetitionNode | null {
       const comp = compMap.get(id);
@@ -36,6 +34,7 @@ export function useCompetitionTree(tournamentId: number) {
         ...comp,
         children: [],
         matches: matches.filter((m) => m.parentId === id),
+        registration: registrationRows.find((r) => r.parentId === id),
         // registeredPlayers: registeredPlayerRows.filter(
         //   (rp) => rp.competitionId === id,
         // ),
@@ -56,7 +55,7 @@ export function useCompetitionTree(tournamentId: number) {
     if (!root) return null;
 
     return buildNode(root.id);
-  }, [competitions, matches, tournamentId]);
+  }, [competitions, matches, registrationRows, tournamentId]);
 
   return { tree };
 }

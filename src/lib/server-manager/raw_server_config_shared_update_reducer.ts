@@ -10,7 +10,13 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
+import {
+  ServerConfigV2,
+} from "./types";
+
 export default {
-  id: __t.u32(),
   configId: __t.u32(),
+  get config() {
+    return ServerConfigV2;
+  },
 };

@@ -11,13 +11,12 @@ import {
 } from "spacetimedb";
 
 import {
-  NodeHandle,
+  LbSettingsV2,
 } from "./types";
 
 export default {
-  name: __t.string(),
-  parentId: __t.u32(),
-  get target() {
-    return NodeHandle;
+  id: __t.u32(),
+  get settings() {
+    return __t.array(LbSettingsV2);
   },
 };

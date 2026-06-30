@@ -1,7 +1,6 @@
 "use client";
 
-import { tables } from "@/lib/server-manager";
-import { useTable } from "spacetimedb/react";
+import { useCompetition } from "@/hooks/tournaments/competitions/use-competition";
 import CompetitionBracket from "./bracket/competition-bracket";
 import CompetitionInfo from "./competition-info";
 
@@ -10,11 +9,11 @@ export default function CompetitionDashboard({
 }: {
   competitionId: number;
 }) {
-  const [competitionRows] = useTable(
-    tables.competition.where((row) => row.id.eq(competitionId)),
-  );
+  const { competition, isReady } = useCompetition(competitionId);
 
-  const competition = competitionRows[0];
+  if (!isReady) {
+    return <span>Loading...</span>;
+  }
 
   if (!competition) {
     return <span>Competition not found</span>;

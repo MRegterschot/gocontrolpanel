@@ -10,23 +10,16 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 import {
-  MatchStatus,
-  TmMode,
+  PlayerAction,
 } from "./types";
 
 
 export default __t.row({
+  get roundActions() {
+    return __t.array(PlayerAction).name("round_actions");
+  },
+  userId: __t.u32().name("user_id"),
+  id: __t.u32().primaryKey(),
   matchId: __t.u32().name("match_id"),
-  mapId: __t.u32().name("map_id"),
-  restarted: __t.u16(),
   round: __t.u16(),
-  warmup: __t.u16(),
-  isWarmup: __t.bool().name("is_warmup"),
-  paused: __t.bool(),
-  get status() {
-    return MatchStatus;
-  },
-  get mode() {
-    return TmMode;
-  },
 });

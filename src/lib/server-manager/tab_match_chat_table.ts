@@ -11,22 +11,15 @@ import {
 } from "spacetimedb";
 import {
   MatchStatus,
-  TmMode,
 } from "./types";
 
 
 export default __t.row({
+  message: __t.string(),
+  userId: __t.u32().name("user_id"),
   matchId: __t.u32().name("match_id"),
-  mapId: __t.u32().name("map_id"),
-  restarted: __t.u16(),
-  round: __t.u16(),
-  warmup: __t.u16(),
-  isWarmup: __t.bool().name("is_warmup"),
-  paused: __t.bool(),
+  id: __t.u32().primaryKey(),
   get status() {
     return MatchStatus;
-  },
-  get mode() {
-    return TmMode;
   },
 });

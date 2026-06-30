@@ -39,26 +39,50 @@ import CompetitionCreateReducer from "./competition_create_reducer";
 import CompetitionNodePositionUpdateReducer from "./competition_node_position_update_reducer";
 import CompetitionNodePositionsUpdateReducer from "./competition_node_positions_update_reducer";
 import CompetitionTemplateCreateReducer from "./competition_template_create_reducer";
+import ConnectionActionUpdateReducer from "./connection_action_update_reducer";
+import ConnectionConfiguredReducer from "./connection_configured_reducer";
 import ConnectionCreateReducer from "./connection_create_reducer";
+import ConnectionDeleteReducer from "./connection_delete_reducer";
 import CreateProjectReducer from "./create_project_reducer";
+import InputCreateReducer from "./input_create_reducer";
+import InputTemplateCreateReducer from "./input_template_create_reducer";
+import LeaderboardConfiguredReducer from "./leaderboard_configured_reducer";
+import LeaderboardCreateReducer from "./leaderboard_create_reducer";
+import LeaderboardSettingsUpdateReducer from "./leaderboard_settings_update_reducer";
+import LeaderboardTemplateCreateReducer from "./leaderboard_template_create_reducer";
 import LendRawServerReducer from "./lend_raw_server_reducer";
 import MatchAssignServerReducer from "./match_assign_server_reducer";
 import MatchConfiguredReducer from "./match_configured_reducer";
 import MatchCreateReducer from "./match_create_reducer";
+import MatchEndReducer from "./match_end_reducer";
+import MatchManualRecoveryReducer from "./match_manual_recovery_reducer";
+import MatchOpenReducer from "./match_open_reducer";
 import MatchOverrideConfigReducer from "./match_override_config_reducer";
+import MatchOverridePreConfigReducer from "./match_override_pre_config_reducer";
+import MatchRestartReducer from "./match_restart_reducer";
+import MatchRoundPlayerSetPositionManualReducer from "./match_round_player_set_position_manual_reducer";
+import MatchRoundPlayerSetScoreManualReducer from "./match_round_player_set_score_manual_reducer";
+import MatchServerRevokeReducer from "./match_server_revoke_reducer";
 import MatchSetPreparationReducer from "./match_set_preparation_reducer";
+import MatchSharedConfigReducer from "./match_shared_config_reducer";
+import MatchSharedPreConfigReducer from "./match_shared_pre_config_reducer";
 import MatchTemplateCreateReducer from "./match_template_create_reducer";
 import MatchTryStartReducer from "./match_try_start_reducer";
-import MatchUpdatePreConfigReducer from "./match_update_pre_config_reducer";
 import MemberAddReducer from "./member_add_reducer";
 import MemberAssignPermissionReducer from "./member_assign_permission_reducer";
 import MemberRemoveReducer from "./member_remove_reducer";
-import PortalCreateReducer from "./portal_create_reducer";
+import MigrationLeaderboardToV2Reducer from "./migration_leaderboard_to_v_2_reducer";
+import MigrationRawServerConfigToV2Reducer from "./migration_raw_server_config_to_v_2_reducer";
+import NodeDeleteReducer from "./node_delete_reducer";
+import NodeNameEditReducer from "./node_name_edit_reducer";
+import OutputCreateReducer from "./output_create_reducer";
 import PostEventReducer from "./post_event_reducer";
 import ProjectEditDatesReducer from "./project_edit_dates_reducer";
 import ProjectEditDescriptionReducer from "./project_edit_description_reducer";
 import ProjectEditNameReducer from "./project_edit_name_reducer";
 import ProjectUpdateStatusReducer from "./project_update_status_reducer";
+import RawServerConfigSharedNewReducer from "./raw_server_config_shared_new_reducer";
+import RawServerConfigSharedUpdateReducer from "./raw_server_config_shared_update_reducer";
 import RawServerPlayerAddReducer from "./raw_server_player_add_reducer";
 import RawServerVerifyReducer from "./raw_server_verify_reducer";
 import RegisterPlayerReducer from "./register_player_reducer";
@@ -89,39 +113,44 @@ import ServerRemoveRawServerReducer from "./server_remove_raw_server_reducer";
 import ServerTemplateCreateReducer from "./server_template_create_reducer";
 import SetEnvVarReducer from "./set_env_var_reducer";
 import UnregisterPlayerReducer from "./unregister_player_reducer";
+import UnstableManualRegisterOverridePlayersReducer from "./unstable_manual_register_override_players_reducer";
+import UnstableMatchChatMessageReducer from "./unstable_match_chat_message_reducer";
+import UnstableRawServerConfigUpdateMapsReducer from "./unstable_raw_server_config_update_maps_reducer";
 
 // Import all procedure arg schemas
 import * as LoginAsServerProcedure from "./login_as_server_procedure";
+import * as MatchRoundReplayProcedure from "./match_round_replay_procedure";
+import * as NodeLeaderboardInputProcedure from "./node_leaderboard_input_procedure";
+import * as NodeLeaderboardInputFinalizeProcedure from "./node_leaderboard_input_finalize_procedure";
+import * as NodeLeaderboardOutputProcedure from "./node_leaderboard_output_procedure";
+import * as NodeLeaderboardOutputRawProcedure from "./node_leaderboard_output_raw_procedure";
 import * as PostRoundReplayProcedure from "./post_round_replay_procedure";
+import * as TestNodePermittedPlayersInputProcedure from "./test_node_permitted_players_input_procedure";
 
 // Import all table schema definitions
 import CompetitionRow from "./competition_table";
 import CompetitionAvailableServerPoolRow from "./competition_available_server_pool_table";
-import CompetitionConnectionDataRow from "./competition_connection_data_table";
 import EventRawServerMethodRow from "./event_raw_server_method_table";
 import EventRawServerStateRow from "./event_raw_server_state_table";
-import MatchRoundRow from "./match_round_table";
-import MatchRoundExtRow from "./match_round_ext_table";
-import MatchRoundUsersRow from "./match_round_users_table";
 import MatchStateRow from "./match_state_table";
-import MyComeptitionSchedulesRow from "./my_comeptition_schedules_table";
-import MyMatchTemplateRow from "./my_match_template_table";
-import MyMatchesRow from "./my_matches_table";
 import MyNodePositionsRow from "./my_node_positions_table";
 import MyProjectsRow from "./my_projects_table";
-import MyRawServerPoolRow from "./my_raw_server_pool_table";
 import MyUserRow from "./my_user_table";
 import ProjectCompetitionDescendantsRow from "./project_competition_descendants_table";
-import RawServerCurrentPlayersRow from "./raw_server_current_players_table";
 import RawServerPermittedPlayersRow from "./raw_server_permitted_players_table";
 import RawServerPlayerDestinationRow from "./raw_server_player_destination_table";
-import TempMatchLeaderboardRow from "./temp_match_leaderboard_table";
-import TempRegistrationPlayerRow from "./temp_registration_player_table";
+import TabMatchRow from "./tab_match_table";
+import TabMatchChatRow from "./tab_match_chat_table";
+import TabMatchRoundPlayerRow from "./tab_match_round_player_table";
+import TabMatchRoundPlayerExtRow from "./tab_match_round_player_ext_table";
+import TabRawServerRow from "./tab_raw_server_table";
+import TabRawServerOccupationRow from "./tab_raw_server_occupation_table";
+import TabRawServerPlayerRow from "./tab_raw_server_player_table";
+import TabRegisterationPlayerRow from "./tab_registeration_player_table";
+import TabRegistrationRow from "./tab_registration_table";
+import TabUserRow from "./tab_user_table";
 import UnstableCompetitionConnectionRow from "./unstable_competition_connection_table";
-import UnstableCompetitionMembersRow from "./unstable_competition_members_table";
-import UnstableCompetitionRoleRow from "./unstable_competition_role_table";
-import UnstableCompetitionRoleMemberRow from "./unstable_competition_role_member_table";
-import UsersRow from "./users_table";
+import UnstableRegistrationRow from "./unstable_registration_table";
 
 /** Type-only namespace exports for generated type groups. */
 
@@ -154,6 +183,190 @@ const tablesSchema = __schema({
     ],
     event: true,
   }, EventRawServerStateRow),
+  tab_match: __table({
+    name: 'tab_match',
+    indexes: [
+      { accessor: 'config', name: 'tab_match_config_idx_hash', algorithm: 'btree', columns: [
+        'config',
+      ] },
+      { accessor: 'id', name: 'tab_match_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'parent_id', name: 'tab_match_parent_id_idx_hash', algorithm: 'btree', columns: [
+        'parentId',
+      ] },
+      { accessor: 'pre_config', name: 'tab_match_pre_config_idx_hash', algorithm: 'btree', columns: [
+        'preConfig',
+      ] },
+    ],
+    constraints: [
+      { name: 'tab_match_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, TabMatchRow),
+  tab_match_chat: __table({
+    name: 'tab_match_chat',
+    indexes: [
+      { accessor: 'id', name: 'tab_match_chat_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'match_id', name: 'tab_match_chat_match_id_idx_hash', algorithm: 'btree', columns: [
+        'matchId',
+      ] },
+      { accessor: 'user_id', name: 'tab_match_chat_user_id_idx_hash', algorithm: 'btree', columns: [
+        'userId',
+      ] },
+    ],
+    constraints: [
+      { name: 'tab_match_chat_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, TabMatchChatRow),
+  tab_match_round_player: __table({
+    name: 'tab_match_round_player',
+    indexes: [
+      { accessor: 'id', name: 'tab_match_round_player_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'match_id', name: 'tab_match_round_player_match_id_idx_hash', algorithm: 'btree', columns: [
+        'matchId',
+      ] },
+      { accessor: 'match_round_range', name: 'tab_match_round_player_match_id_round_idx_btree', algorithm: 'btree', columns: [
+        'matchId',
+        'round',
+      ] },
+      { accessor: 'match_round', name: 'tab_match_round_player_match_id_round_idx_hash', algorithm: 'btree', columns: [
+        'matchId',
+        'round',
+      ] },
+      { accessor: 'match_round_player', name: 'tab_match_round_player_match_id_round_user_id_idx_hash', algorithm: 'btree', columns: [
+        'matchId',
+        'round',
+        'userId',
+      ] },
+      { accessor: 'user_id', name: 'tab_match_round_player_user_id_idx_hash', algorithm: 'btree', columns: [
+        'userId',
+      ] },
+    ],
+    constraints: [
+      { name: 'tab_match_round_player_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, TabMatchRoundPlayerRow),
+  tab_match_round_player_ext: __table({
+    name: 'tab_match_round_player_ext',
+    indexes: [
+      { accessor: 'id', name: 'tab_match_round_player_ext_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'match_id', name: 'tab_match_round_player_ext_match_id_idx_hash', algorithm: 'btree', columns: [
+        'matchId',
+      ] },
+      { accessor: 'match_round_range', name: 'tab_match_round_player_ext_match_id_round_idx_btree', algorithm: 'btree', columns: [
+        'matchId',
+        'round',
+      ] },
+      { accessor: 'match_round', name: 'tab_match_round_player_ext_match_id_round_idx_hash', algorithm: 'btree', columns: [
+        'matchId',
+        'round',
+      ] },
+      { accessor: 'match_round_player', name: 'tab_match_round_player_ext_match_id_round_user_id_idx_hash', algorithm: 'btree', columns: [
+        'matchId',
+        'round',
+        'userId',
+      ] },
+    ],
+    constraints: [
+      { name: 'tab_match_round_player_ext_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, TabMatchRoundPlayerExtRow),
+  tab_raw_server: __table({
+    name: 'tab_raw_server',
+    indexes: [
+      { accessor: 'id', name: 'tab_raw_server_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'server_login', name: 'tab_raw_server_server_login_idx_btree', algorithm: 'btree', columns: [
+        'serverLogin',
+      ] },
+      { accessor: 'user_id', name: 'tab_raw_server_user_id_idx_hash', algorithm: 'btree', columns: [
+        'userId',
+      ] },
+    ],
+    constraints: [
+      { name: 'tab_raw_server_id_key', constraint: 'unique', columns: ['id'] },
+      { name: 'tab_raw_server_server_login_key', constraint: 'unique', columns: ['serverLogin'] },
+    ],
+  }, TabRawServerRow),
+  tab_raw_server_occupation: __table({
+    name: 'tab_raw_server_occupation',
+    indexes: [
+      { accessor: 'node_handle', name: 'tab_raw_server_occupation_node_variant_node_id_idx_hash', algorithm: 'btree', columns: [
+        'nodeVariant',
+        'nodeId',
+      ] },
+      { accessor: 'server_id', name: 'tab_raw_server_occupation_server_id_idx_btree', algorithm: 'btree', columns: [
+        'serverId',
+      ] },
+    ],
+    constraints: [
+      { name: 'tab_raw_server_occupation_server_id_key', constraint: 'unique', columns: ['serverId'] },
+    ],
+  }, TabRawServerOccupationRow),
+  tab_raw_server_player: __table({
+    name: 'tab_raw_server_player',
+    indexes: [
+      { accessor: 'account_id', name: 'tab_raw_server_player_account_id_idx_btree', algorithm: 'btree', columns: [
+        'accountId',
+      ] },
+      { accessor: 'server_id', name: 'tab_raw_server_player_server_id_idx_hash', algorithm: 'btree', columns: [
+        'serverId',
+      ] },
+    ],
+    constraints: [
+      { name: 'tab_raw_server_player_account_id_key', constraint: 'unique', columns: ['accountId'] },
+    ],
+  }, TabRawServerPlayerRow),
+  tab_registeration_player: __table({
+    name: 'tab_registeration_player',
+    indexes: [
+      { accessor: 'registration_id', name: 'tab_registeration_player_registration_id_idx_hash', algorithm: 'btree', columns: [
+        'registrationId',
+      ] },
+      { accessor: 'user_registered', name: 'tab_registeration_player_user_id_registration_id_idx_hash', algorithm: 'btree', columns: [
+        'userId',
+        'registrationId',
+      ] },
+    ],
+    constraints: [
+    ],
+  }, TabRegisterationPlayerRow),
+  tab_registration: __table({
+    name: 'tab_registration',
+    indexes: [
+      { accessor: 'id', name: 'tab_registration_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'parent_id', name: 'tab_registration_parent_id_idx_hash', algorithm: 'btree', columns: [
+        'parentId',
+      ] },
+    ],
+    constraints: [
+      { name: 'tab_registration_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, TabRegistrationRow),
+  tab_user: __table({
+    name: 'tab_user',
+    indexes: [
+      { accessor: 'account_id', name: 'tab_user_account_id_idx_btree', algorithm: 'btree', columns: [
+        'accountId',
+      ] },
+      { accessor: 'id', name: 'tab_user_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+    ],
+    constraints: [
+      { name: 'tab_user_account_id_key', constraint: 'unique', columns: ['accountId'] },
+      { name: 'tab_user_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, TabUserRow),
   competition: __table({
     name: 'competition',
     indexes: [
@@ -168,34 +381,6 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, CompetitionAvailableServerPoolRow),
-  competition_connection_data: __table({
-    name: 'competition_connection_data',
-    indexes: [
-    ],
-    constraints: [
-    ],
-  }, CompetitionConnectionDataRow),
-  match_round: __table({
-    name: 'match_round',
-    indexes: [
-    ],
-    constraints: [
-    ],
-  }, MatchRoundRow),
-  match_round_ext: __table({
-    name: 'match_round_ext',
-    indexes: [
-    ],
-    constraints: [
-    ],
-  }, MatchRoundExtRow),
-  match_round_users: __table({
-    name: 'match_round_users',
-    indexes: [
-    ],
-    constraints: [
-    ],
-  }, MatchRoundUsersRow),
   match_state: __table({
     name: 'match_state',
     indexes: [
@@ -203,27 +388,6 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, MatchStateRow),
-  my_comeptition_schedules: __table({
-    name: 'my_comeptition_schedules',
-    indexes: [
-    ],
-    constraints: [
-    ],
-  }, MyComeptitionSchedulesRow),
-  my_match_template: __table({
-    name: 'my_match_template',
-    indexes: [
-    ],
-    constraints: [
-    ],
-  }, MyMatchTemplateRow),
-  my_matches: __table({
-    name: 'my_matches',
-    indexes: [
-    ],
-    constraints: [
-    ],
-  }, MyMatchesRow),
   my_node_positions: __table({
     name: 'my_node_positions',
     indexes: [
@@ -238,13 +402,6 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, MyProjectsRow),
-  my_raw_server_pool: __table({
-    name: 'my_raw_server_pool',
-    indexes: [
-    ],
-    constraints: [
-    ],
-  }, MyRawServerPoolRow),
   my_user: __table({
     name: 'my_user',
     indexes: [
@@ -259,13 +416,6 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, ProjectCompetitionDescendantsRow),
-  raw_server_current_players: __table({
-    name: 'raw_server_current_players',
-    indexes: [
-    ],
-    constraints: [
-    ],
-  }, RawServerCurrentPlayersRow),
   raw_server_permitted_players: __table({
     name: 'raw_server_permitted_players',
     indexes: [
@@ -280,20 +430,6 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, RawServerPlayerDestinationRow),
-  temp_match_leaderboard: __table({
-    name: 'temp_match_leaderboard',
-    indexes: [
-    ],
-    constraints: [
-    ],
-  }, TempMatchLeaderboardRow),
-  temp_registration_player: __table({
-    name: 'temp_registration_player',
-    indexes: [
-    ],
-    constraints: [
-    ],
-  }, TempRegistrationPlayerRow),
   unstable_competition_connection: __table({
     name: 'unstable_competition_connection',
     indexes: [
@@ -301,34 +437,13 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, UnstableCompetitionConnectionRow),
-  unstable_competition_members: __table({
-    name: 'unstable_competition_members',
+  unstable_registration: __table({
+    name: 'unstable_registration',
     indexes: [
     ],
     constraints: [
     ],
-  }, UnstableCompetitionMembersRow),
-  unstable_competition_role: __table({
-    name: 'unstable_competition_role',
-    indexes: [
-    ],
-    constraints: [
-    ],
-  }, UnstableCompetitionRoleRow),
-  unstable_competition_role_member: __table({
-    name: 'unstable_competition_role_member',
-    indexes: [
-    ],
-    constraints: [
-    ],
-  }, UnstableCompetitionRoleMemberRow),
-  users: __table({
-    name: 'users',
-    indexes: [
-    ],
-    constraints: [
-    ],
-  }, UsersRow),
+  }, UnstableRegistrationRow),
 });
 
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
@@ -338,26 +453,50 @@ const reducersSchema = __reducers(
   __reducerSchema("competition_node_position_update", CompetitionNodePositionUpdateReducer),
   __reducerSchema("competition_node_positions_update", CompetitionNodePositionsUpdateReducer),
   __reducerSchema("competition_template_create", CompetitionTemplateCreateReducer),
+  __reducerSchema("connection_action_update", ConnectionActionUpdateReducer),
+  __reducerSchema("connection_configured", ConnectionConfiguredReducer),
   __reducerSchema("connection_create", ConnectionCreateReducer),
+  __reducerSchema("connection_delete", ConnectionDeleteReducer),
   __reducerSchema("create_project", CreateProjectReducer),
+  __reducerSchema("input_create", InputCreateReducer),
+  __reducerSchema("input_template_create", InputTemplateCreateReducer),
+  __reducerSchema("leaderboard_configured", LeaderboardConfiguredReducer),
+  __reducerSchema("leaderboard_create", LeaderboardCreateReducer),
+  __reducerSchema("leaderboard_settings_update", LeaderboardSettingsUpdateReducer),
+  __reducerSchema("leaderboard_template_create", LeaderboardTemplateCreateReducer),
   __reducerSchema("lend_raw_server", LendRawServerReducer),
   __reducerSchema("match_assign_server", MatchAssignServerReducer),
   __reducerSchema("match_configured", MatchConfiguredReducer),
   __reducerSchema("match_create", MatchCreateReducer),
+  __reducerSchema("match_end", MatchEndReducer),
+  __reducerSchema("match_manual_recovery", MatchManualRecoveryReducer),
+  __reducerSchema("match_open", MatchOpenReducer),
   __reducerSchema("match_override_config", MatchOverrideConfigReducer),
+  __reducerSchema("match_override_pre_config", MatchOverridePreConfigReducer),
+  __reducerSchema("match_restart", MatchRestartReducer),
+  __reducerSchema("match_round_player_set_position_manual", MatchRoundPlayerSetPositionManualReducer),
+  __reducerSchema("match_round_player_set_score_manual", MatchRoundPlayerSetScoreManualReducer),
+  __reducerSchema("match_server_revoke", MatchServerRevokeReducer),
   __reducerSchema("match_set_preparation", MatchSetPreparationReducer),
+  __reducerSchema("match_shared_config", MatchSharedConfigReducer),
+  __reducerSchema("match_shared_pre_config", MatchSharedPreConfigReducer),
   __reducerSchema("match_template_create", MatchTemplateCreateReducer),
   __reducerSchema("match_try_start", MatchTryStartReducer),
-  __reducerSchema("match_update_pre_config", MatchUpdatePreConfigReducer),
   __reducerSchema("member_add", MemberAddReducer),
   __reducerSchema("member_assign_permission", MemberAssignPermissionReducer),
   __reducerSchema("member_remove", MemberRemoveReducer),
-  __reducerSchema("portal_create", PortalCreateReducer),
+  __reducerSchema("migration_leaderboard_to_v2", MigrationLeaderboardToV2Reducer),
+  __reducerSchema("migration_raw_server_config_to_v2", MigrationRawServerConfigToV2Reducer),
+  __reducerSchema("node_delete", NodeDeleteReducer),
+  __reducerSchema("node_name_edit", NodeNameEditReducer),
+  __reducerSchema("output_create", OutputCreateReducer),
   __reducerSchema("post_event", PostEventReducer),
   __reducerSchema("project_edit_dates", ProjectEditDatesReducer),
   __reducerSchema("project_edit_description", ProjectEditDescriptionReducer),
   __reducerSchema("project_edit_name", ProjectEditNameReducer),
   __reducerSchema("project_update_status", ProjectUpdateStatusReducer),
+  __reducerSchema("raw_server_config_shared_new", RawServerConfigSharedNewReducer),
+  __reducerSchema("raw_server_config_shared_update", RawServerConfigSharedUpdateReducer),
   __reducerSchema("raw_server_player_add", RawServerPlayerAddReducer),
   __reducerSchema("raw_server_verify", RawServerVerifyReducer),
   __reducerSchema("register_player", RegisterPlayerReducer),
@@ -388,12 +527,21 @@ const reducersSchema = __reducers(
   __reducerSchema("server_template_create", ServerTemplateCreateReducer),
   __reducerSchema("set_env_var", SetEnvVarReducer),
   __reducerSchema("unregister_player", UnregisterPlayerReducer),
+  __reducerSchema("unstable_manual_register_override_players", UnstableManualRegisterOverridePlayersReducer),
+  __reducerSchema("unstable_match_chat_message", UnstableMatchChatMessageReducer),
+  __reducerSchema("unstable_raw_server_config_update_maps", UnstableRawServerConfigUpdateMapsReducer),
 );
 
 /** The schema information for all procedures in this module. This is defined the same way as the procedures would have been defined in the server. */
 const proceduresSchema = __procedures(
   __procedureSchema("login_as_server", LoginAsServerProcedure.params, LoginAsServerProcedure.returnType),
+  __procedureSchema("match_round_replay", MatchRoundReplayProcedure.params, MatchRoundReplayProcedure.returnType),
+  __procedureSchema("node_leaderboard_input", NodeLeaderboardInputProcedure.params, NodeLeaderboardInputProcedure.returnType),
+  __procedureSchema("node_leaderboard_input_finalize", NodeLeaderboardInputFinalizeProcedure.params, NodeLeaderboardInputFinalizeProcedure.returnType),
+  __procedureSchema("node_leaderboard_output", NodeLeaderboardOutputProcedure.params, NodeLeaderboardOutputProcedure.returnType),
+  __procedureSchema("node_leaderboard_output_raw", NodeLeaderboardOutputRawProcedure.params, NodeLeaderboardOutputRawProcedure.returnType),
   __procedureSchema("post_round_replay", PostRoundReplayProcedure.params, PostRoundReplayProcedure.returnType),
+  __procedureSchema("test_node_permitted_players_input", TestNodePermittedPlayersInputProcedure.params, TestNodePermittedPlayersInputProcedure.returnType),
 );
 
 /** The remote SpacetimeDB module schema, both runtime and type information. */

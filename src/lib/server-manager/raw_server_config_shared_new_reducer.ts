@@ -9,24 +9,14 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
+
 import {
-  MatchStatus,
-  TmMode,
+  ServerConfigV2,
 } from "./types";
 
-
-export default __t.row({
-  matchId: __t.u32().name("match_id"),
-  mapId: __t.u32().name("map_id"),
-  restarted: __t.u16(),
-  round: __t.u16(),
-  warmup: __t.u16(),
-  isWarmup: __t.bool().name("is_warmup"),
-  paused: __t.bool(),
-  get status() {
-    return MatchStatus;
+export default {
+  competitionId: __t.u32(),
+  get config() {
+    return ServerConfigV2;
   },
-  get mode() {
-    return TmMode;
-  },
-});
+};

@@ -19,7 +19,7 @@ export type Bracket = {
 
 export function useCompetitionBracket(competition: CompetitionV1) {
   const [matches] = useTable(
-    tables.my_matches.where((row) => row.parentId.eq(competition.id)),
+    tables.tab_match.where((row) => row.parentId.eq(competition.id)),
   );
 
   const [connections] = useTable(
