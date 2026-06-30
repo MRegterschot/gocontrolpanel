@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { AuthProvider } from "react-oidc-context";
 import SpacetimeDBProvider from "./spacetime-provider";
 
@@ -21,26 +20,10 @@ export default function SpacetimeAuthProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [checkedEnv, setCheckedEnv] = useState(false);
-  const [isEnvValid, setIsEnvValid] = useState(false);
-
-  useEffect(() => {
-    async function checkEnv() {
-      const res = await fetch("/api/env");
-      const data = await res.json();
-
-      if (data.SPACETIME_URI && data.SPACETIME_MODULE) {
-        setIsEnvValid(true);
-      }
-      setCheckedEnv(true);
-    }
-
-    checkEnv();
-  }, []);
-
-  if (!checkedEnv) return null;
-
-  if (!isEnvValid) {
+  if (
+    !process.env.NEXT_PUBLIC_SPACETIME_URI ||
+    !process.env.NEXT_PUBLIC_SPACETIME_MODULE
+  ) {
     return <>{children}</>;
   }
 

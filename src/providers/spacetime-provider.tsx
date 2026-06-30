@@ -2,7 +2,7 @@
 
 import { getDbConnectionBuilder } from "@/lib/spacetimedb/connection-builder";
 import { useEffect, useState } from "react";
-import { useAuth, useAutoSignin } from "react-oidc-context";
+import { useAuth } from "react-oidc-context";
 import { SpacetimeDBProvider as Provider } from "spacetimedb/react";
 
 export default function SpacetimeDBProvider({
@@ -15,8 +15,6 @@ export default function SpacetimeDBProvider({
   > | null>(null);
 
   const auth = useAuth();
-
-  useAutoSignin();
 
   useEffect(() => {
     let active = true;
