@@ -30,17 +30,7 @@ export interface HetznerServer {
     mac_address?: string;
   }[];
   server_type: HetznerServerType;
-  datacenter: {
-    id: number;
-    name: string;
-    description: string;
-    location: HetznerLocation;
-    server_types: {
-      supported: number[];
-      available: number[];
-      available_for_migration: number[];
-    };
-  };
+  location: HetznerLocation;
   image: HetznerImage | null;
   outgoing_traffic: number | null;
   ingoing_traffic: number | null;

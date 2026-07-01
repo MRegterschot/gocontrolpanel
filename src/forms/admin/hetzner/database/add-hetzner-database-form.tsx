@@ -243,9 +243,6 @@ export default function AddHetznerDatabaseForm({
             </div>
             <div className="flex flex-col">
               <span className="font-semibold">City</span>
-            </div>
-
-            <div className="flex flex-col gap-4">
               <span className="truncate">{selectedLocation?.city || "-"}</span>
             </div>
           </div>
