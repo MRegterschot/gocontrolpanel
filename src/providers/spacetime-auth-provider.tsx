@@ -1,13 +1,16 @@
 "use client";
 
-import { AuthProvider } from "react-oidc-context";
+import { AuthProvider, AuthProviderProps } from "react-oidc-context";
 import SpacetimeDBProvider from "./spacetime-provider";
 
-const oidcConfig = {
+const oidcConfig: AuthProviderProps = {
   authority: "https://auth.spacetimedb.com/oidc",
-  client_id: process.env.NEXT_PUBLIC_SPACETIME_CLIENT_ID,
-  scope: "openid profile email",
+  client_id: process.env.NEXT_PUBLIC_SPACETIME_CLIENT_ID || "",
+  scope: "openid profile email offline_access",
   response_type: "code",
+  redirect_uri: typeof window !== "undefined" ? window.location.origin : "",
+  post_logout_redirect_uri:
+    typeof window !== "undefined" ? window.location.origin : "",
   automaticSilentRenew: true,
 };
 
@@ -27,15 +30,8 @@ export default function SpacetimeAuthProvider({
     return <>{children}</>;
   }
 
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-
   return (
-    <AuthProvider
-      redirect_uri={origin}
-      post_logout_redirect_uri={origin}
-      {...oidcConfig}
-      onSigninCallback={onSigninCallback}
-    >
+    <AuthProvider {...oidcConfig} onSigninCallback={onSigninCallback}>
       <SpacetimeDBProvider>{children}</SpacetimeDBProvider>
     </AuthProvider>
   );

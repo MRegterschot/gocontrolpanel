@@ -20,9 +20,6 @@ export default function SpacetimeDBProvider({
     let active = true;
 
     const token = auth.user?.id_token;
-    if (!token) {
-      return;
-    }
 
     (async () => {
       const b = await getDbConnectionBuilder(token);

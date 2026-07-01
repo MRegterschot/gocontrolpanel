@@ -1,6 +1,5 @@
 import { Toaster } from "@/components/ui/sonner";
 import { SessionWrapper } from "@/providers/session-wrapper";
-import SpacetimeAuthProvider from "@/providers/spacetime-auth-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -68,19 +67,17 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}
         suppressHydrationWarning
       >
-        <SpacetimeAuthProvider>
-          <SessionWrapper>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              {children}
-              <Toaster />
-            </ThemeProvider>
-          </SessionWrapper>
-        </SpacetimeAuthProvider>
+        <SessionWrapper>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+            <Toaster />
+          </ThemeProvider>
+        </SessionWrapper>
       </body>
     </html>
   );

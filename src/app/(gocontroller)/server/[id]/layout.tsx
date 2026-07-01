@@ -12,14 +12,11 @@ export default async function ServerLayout({
   const { id } = await params;
 
   const session = await auth();
-  if (!session) {
-    redirect(routes.login);
-  }
 
   const canView =
-    session.user.admin ||
-    session.user.servers.some((server) => server.id === id) ||
-    session.user.groups.some((group) =>
+    session?.user.admin ||
+    session?.user.servers.some((server) => server.id === id) ||
+    session?.user.groups.some((group) =>
       group.servers.some((server) => server.id === id),
     );
 

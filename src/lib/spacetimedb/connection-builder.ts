@@ -6,7 +6,7 @@ import { onConnect, onConnectError, onDisconnect } from "./connection-handlers";
 export const SPACETIME_LOCAL_STORAGE_TOKEN_KEY = "spacetimedb_auth_token";
 
 export const getDbConnectionBuilder = async (
-  token: string,
+  token?: string,
 ): Promise<DbConnectionBuilder | null> => {
   const isSSR = typeof window === "undefined";
   if (isSSR) {
