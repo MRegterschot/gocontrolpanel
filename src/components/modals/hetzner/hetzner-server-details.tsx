@@ -21,7 +21,7 @@ export default function HetznerServerDetailsModal({
   };
 
   const pricing = data.server.server_type.prices.find(
-    (price) => price.location === data.server.datacenter.location.name,
+    (price) => price.location === data.server.location.name,
   );
 
   const serverController = data.server.labels["servercontroller.type"];
@@ -240,22 +240,16 @@ export default function HetznerServerDetailsModal({
           </div>
 
           <div className="flex flex-col gap-2">
-            <h4 className="text-muted-foreground">data.servercenter</h4>
+            <h4 className="text-muted-foreground">Location</h4>
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col">
                 <span className="font-semibold">Name</span>
-                <span>{data.server.datacenter.name}</span>
+                <span>{data.server.location.name}</span>
               </div>
               <div className="flex flex-col">
                 <span className="font-semibold">Description</span>
                 <span className="truncate">
-                  {data.server.datacenter.description}
-                </span>
-              </div>
-              <div className="flex flex-col">
-                <span className="font-semibold">Location</span>
-                <span className="truncate">
-                  {data.server.datacenter.location.name}
+                  {data.server.location.description}
                 </span>
               </div>
               <div className="flex flex-col">
@@ -263,8 +257,8 @@ export default function HetznerServerDetailsModal({
                 <span>
                   <Flag
                     className="h-4"
-                    code={data.server.datacenter.location.country}
-                    fallback={data.server.datacenter.location.country}
+                    code={data.server.location.country}
+                    fallback={data.server.location.country}
                   />
                 </span>
               </div>
