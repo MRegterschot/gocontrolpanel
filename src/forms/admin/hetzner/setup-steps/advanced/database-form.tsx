@@ -84,7 +84,7 @@ export default function DatabaseForm({
               existing: db.id.toString(),
               name: db.name,
               serverType: db.server_type?.id.toString(),
-              location: db.datacenter.location.name,
+              location: db.location.name,
               databaseType: db.labels["database.type"] || "mysql",
               databaseName: db.labels["authorization.database.name"] || "",
               databaseUser: db.labels["authorization.database.user"],
