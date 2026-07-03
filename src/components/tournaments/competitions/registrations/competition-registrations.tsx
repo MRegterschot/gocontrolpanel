@@ -1,27 +1,29 @@
 "use client";
-
+import { DataTable } from "@/components/table/data-table";
 import { useRegistrationsByCompetitionId } from "@/hooks/tournaments/competitions/registrations/use-registrations";
+import { Competition } from "@/hooks/tournaments/competitions/use-competition";
+import { createActions } from "./actions";
+import { createColumnns } from "./columns";
 
 export default function CompetitionRegistrations({
-  competitionId,
+  competition,
 }: {
-  competitionId: number;
+  competition: Competition;
 }) {
-  const { registrations } = useRegistrationsByCompetitionId(competitionId);
+  const { registrations, registration } = useRegistrationsByCompetitionId(
+    competition.id,
+  );
+
+  const columns = createColumnns(registration?.status);
+  const actions = createActions(registration);
 
   return (
-    <div className="flex flex-col gap-2 sm:gap-4">
-      {registrations.map((registration) => (
-        <div
-          key={registration.userId}
-          className="flex flex-col gap-1 rounded-lg border p-4"
-        >
-          <h3 className="text-lg font-semibold">{registration.name}</h3>
-          <p className="text-sm text-muted-foreground">
-            User ID: {registration.userId}
-          </p>
-        </div>
-      ))}
-    </div>
+    <DataTable
+      columns={columns}
+      actions={actions}
+      data={registrations}
+      filter
+      pagination
+    />
   );
 }

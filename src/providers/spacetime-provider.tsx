@@ -10,31 +10,16 @@ export default function SpacetimeDBProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [builder, setBuilder] = useState<Awaited<
-    ReturnType<typeof getDbConnectionBuilder>
+  const [builder, setBuilder] = useState<ReturnType<
+    typeof getDbConnectionBuilder
   > | null>(null);
 
   const auth = useAuth();
 
   useEffect(() => {
-    let active = true;
-
     const token = auth.user?.id_token;
-
-    (async () => {
-      const b = await getDbConnectionBuilder(token);
-      if (!active) return;
-
-      if (!b) {
-        return;
-      }
-
-      setBuilder(b);
-    })();
-
-    return () => {
-      active = false;
-    };
+    const b = getDbConnectionBuilder(token);
+    setBuilder(b);
   }, [auth.user?.id_token]);
 
   if (!builder) return null;

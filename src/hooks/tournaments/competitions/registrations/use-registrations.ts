@@ -29,5 +29,5 @@ export function useRegistrationsByCompetitionId(competitionId: number) {
       };
     });
 
-  return { registrations };
+  return { registrations, registration };
 }

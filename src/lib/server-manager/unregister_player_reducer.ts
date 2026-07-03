@@ -12,4 +12,5 @@ import {
 
 export default {
   registrationId: __t.u32(),
+  player: __t.u32(),
 };

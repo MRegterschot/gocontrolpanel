@@ -5,9 +5,9 @@ import { onConnect, onConnectError, onDisconnect } from "./connection-handlers";
 
 export const SPACETIME_LOCAL_STORAGE_TOKEN_KEY = "spacetimedb_auth_token";
 
-export const getDbConnectionBuilder = async (
+export const getDbConnectionBuilder = (
   token?: string,
-): Promise<DbConnectionBuilder | null> => {
+): DbConnectionBuilder | null => {
   const isSSR = typeof window === "undefined";
   if (isSSR) {
     throw new Error("Cannot use SpacetimeDB on the server.");
@@ -16,7 +16,7 @@ export const getDbConnectionBuilder = async (
   const uri = process.env.NEXT_PUBLIC_SPACETIME_URI;
   const moduleName = process.env.NEXT_PUBLIC_SPACETIME_MODULE;
 
-  if (!uri || !moduleName) return null;
+  if (!uri || !moduleName || !token) return null;
 
   return DbConnection.builder()
     .withUri(uri)
