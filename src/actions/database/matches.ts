@@ -125,6 +125,12 @@ export async function deleteMatch(
         data: { deletedAt: new Date() },
       });
 
+      // Delete the records associated with the match
+      await db.records.updateMany({
+        where: { matchId },
+        data: { deletedAt: new Date() },
+      });
+
       await logAudit(
         session.user.id,
         serverId,
