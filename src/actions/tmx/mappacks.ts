@@ -73,6 +73,17 @@ export async function downloadMappack(
         100,
       );
 
+      if (mappackSearch.Results.length === 0) {
+        await logAudit(
+          session.user.id,
+          serverId,
+          "server.tmx.mappack.download",
+          { mappackId, mappackName },
+          "Found no downloadable maps in mappack",
+        );
+        throw new Error("Found no downloadable maps in mappack");
+      }
+
       if (mappackSearch.More) {
         await logAudit(
           session.user.id,
