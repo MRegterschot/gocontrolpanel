@@ -48,7 +48,10 @@ export async function downloadMapFromUrl(
 
       const formData = new FormData();
       formData.append("files", file);
-      formData.append("paths[]", `/UserData/Maps/Downloaded/${path}`);
+      formData.append(
+        "paths[]",
+        `/UserData/Maps/Downloaded${path ? `/${path}` : ""}`,
+      );
 
       const { error } = await uploadFiles(serverId, formData);
 
@@ -114,7 +117,7 @@ export async function addMapToServer(
 
       const { error: addMapError } = await addMap(
         serverId,
-        `Downloaded/${path ? path + "/" : ""}${file}`,
+        `Downloaded${path ? `/${path}` : ""}/${file}`,
       );
 
       await logAudit(

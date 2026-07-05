@@ -190,17 +190,34 @@ export async function uploadFiles(
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
+      const uploadAuditData = {
+        files: formData
+          .getAll("files")
+          .map((file) =>
+            file instanceof globalThis.File ? file.name : file.toString(),
+          ),
+        paths: formData.getAll("paths[]").map((path) => path.toString()),
+      };
+
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
         await logAudit(
           session.user.id,
           serverId,
           "server.files.upload",
-          JSON.parse(JSON.stringify(formData)),
+          uploadAuditData,
           "Failed to upload files, file manager is not healthy",
         );
         throw new ServerError("Could not connect to file manager");
       }
+
+      logger.debug(
+        {
+          serverId,
+          uploadAuditData,
+        },
+        "Uploading files to file manager",
+      );
 
       const res = await fetch(fileManager.url + "/upload", {
         method: "POST",
@@ -215,7 +232,7 @@ export async function uploadFiles(
           session.user.id,
           serverId,
           "server.files.upload",
-          JSON.parse(JSON.stringify(formData)),
+          uploadAuditData,
           `Failed to upload files, status code: ${res.status}`,
         );
         throw new ServerError("Failed to upload files");
@@ -227,7 +244,7 @@ export async function uploadFiles(
         session.user.id,
         serverId,
         "server.files.upload",
-        JSON.parse(JSON.stringify(formData)),
+        uploadAuditData,
         !data ? "Failed to upload files" : undefined,
       );
 
