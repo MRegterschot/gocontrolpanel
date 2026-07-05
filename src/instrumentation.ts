@@ -19,6 +19,6 @@ export async function register() {
   syncAllMaps();
   const servers = await getAllServers();
   for (const server of servers) {
-    await getGbxClientManager(server.id);
+    getGbxClientManager(server.id);
   }
 }
