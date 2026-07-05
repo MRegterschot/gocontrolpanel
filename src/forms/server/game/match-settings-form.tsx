@@ -11,7 +11,13 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { MatchSettingsSchema, MatchSettingsSchemaType } from "./game-schema";
 
-export default function MatchSettingsForm({ serverId }: { serverId: string }) {
+export default function MatchSettingsForm({
+  serverId,
+  matchSettings,
+}: {
+  serverId: string;
+  matchSettings: string[];
+}) {
   const matchSettingsForm = useForm<MatchSettingsSchemaType>({
     resolver: zodResolver(MatchSettingsSchema),
     defaultValues: {
@@ -65,8 +71,13 @@ export default function MatchSettingsForm({ serverId }: { serverId: string }) {
           label="Match Settings"
           description="The name of the file to load/save match settings."
           placeholder="matchlist.txt"
-          className="w-full sm:w-1/2 xl:w-2/3 xl:max-w-[calc(100%-192px)]"
+          className="sm:w-1/3 xl:w-2/3 xl:max-w-[calc(100%-192px)]"
           rootClassName="max-w-full"
+          type="filter"
+          options={matchSettings.map((filename) => ({
+            label: filename,
+            value: filename,
+          }))}
           isRequired
         >
           <div className="gap-2 flex">

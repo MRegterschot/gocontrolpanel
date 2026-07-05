@@ -11,6 +11,7 @@ import {
 } from "react-hook-form";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
+import { FilterInput } from "../ui/filter-input";
 import { Input } from "../ui/input";
 import { MultiSelect } from "../ui/multi-select";
 import { SearchInput } from "../ui/search-input";
@@ -194,6 +195,16 @@ export default function RenderInput<TControl extends FieldValues>({
           onValueChange={field.onChange}
           searchResults={options || []}
           loading={isLoading}
+          className={className}
+          placeholder={placeholder}
+        />
+      );
+    case "filter":
+      return (
+        <FilterInput
+          value={field.value}
+          onValueChange={field.onChange}
+          options={options || []}
           className={className}
           placeholder={placeholder}
         />

@@ -359,6 +359,49 @@ export async function getPluginScripts(
   );
 }
 
+export async function getMatchSettings(
+  serverId: string,
+): Promise<ServerResponse<string[]>> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `group:servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async () => {
+      try {
+        const fileManager = await getFileManager(serverId);
+        if (!fileManager?.health) {
+          throw new ServerError("Could not connect to file manager");
+        }
+
+        const res = await fetch(`${fileManager.url}/match-settings`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${fileManager.password}`,
+          },
+        });
+
+        if (res.status !== 200) {
+          throw new ServerError("Failed to get files");
+        }
+
+        const data: string[] = await res.json();
+        if (!data) {
+          throw new ServerError("Failed to get files");
+        }
+
+        return [...new Set(data)];
+      } catch (error) {
+        logger.error(error, "Error getting scripts");
+        return [];
+      }
+    },
+  );
+}
+
 export async function createFileEntry(
   serverId: string,
   request: CreateFileEntrySchemaType,
