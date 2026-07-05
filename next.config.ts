@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const plausibleHost = process.env.NEXT_PUBLIC_PLAUSIBLE_API_HOST;
+
 const nextConfig: NextConfig = {
   output: "standalone",
   images: {
@@ -41,6 +43,21 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "1gb",
     },
+  },
+  async rewrites() {
+    if (!plausibleHost) {
+      return [];
+    }
+    return [
+      {
+        source: "/js/script.js",
+        destination: `https://${plausibleHost}/js/script.file-downloads.hash.outbound-links.pageview-props.revenue.tagged-events.js`,
+      },
+      {
+        source: "/api/event",
+        destination: `https://${plausibleHost}/api/event`,
+      },
+    ];
   },
   webpack: (config) => {
     config.module.rules.push({

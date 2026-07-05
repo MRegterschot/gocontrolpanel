@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/sonner";
+import PlausibleProvider from "@/providers/plausible-provider";
 import { SessionWrapper } from "@/providers/session-wrapper";
 import { ThemeProvider } from "@/providers/theme-provider";
 import type { Metadata } from "next";
@@ -74,6 +75,7 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
+            <PlausibleProvider />
             {children}
             <Toaster />
           </ThemeProvider>
