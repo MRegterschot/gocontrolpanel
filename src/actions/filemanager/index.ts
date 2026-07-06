@@ -303,12 +303,12 @@ export async function getScripts(
         });
 
         if (res.status !== 200) {
-          throw new ServerError("Failed to get files");
+          throw new ServerError("Failed to get scripts");
         }
 
         const data: string[] = await res.json();
         if (!data) {
-          throw new ServerError("Failed to get files");
+          throw new ServerError("Failed to get scripts");
         }
 
         const allScripts = [...data, ...defaultScripts];
@@ -342,12 +342,12 @@ export async function getPluginScripts(
         });
 
         if (res.status !== 200) {
-          throw new ServerError("Failed to get files");
+          throw new ServerError("Failed to get scripts");
         }
 
         const data: string[] = await res.json();
         if (!data) {
-          throw new ServerError("Failed to get files");
+          throw new ServerError("Failed to get scripts");
         }
 
         return [...new Set(data)];
@@ -385,17 +385,17 @@ export async function getMatchSettings(
         });
 
         if (res.status !== 200) {
-          throw new ServerError("Failed to get files");
+          throw new ServerError("Failed to get match settings");
         }
 
         const data: string[] = await res.json();
         if (!data) {
-          throw new ServerError("Failed to get files");
+          throw new ServerError("Failed to get match settings");
         }
 
         return [...new Set(data)];
       } catch (error) {
-        logger.error(error, "Error getting scripts");
+        logger.error(error, "Error getting match settings");
         return [];
       }
     },
