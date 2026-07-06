@@ -1,4 +1,4 @@
-export interface SPlayerInfo {
+export type SPlayerInfo = {
   Login: string;
   NickName: string;
   PlayerId: number;
@@ -6,31 +6,35 @@ export interface SPlayerInfo {
   TeamId: number;
   LadderRanking: number;
   Flags: number;
-}
+};
 
-export interface PlayerChat {
+export type PlayerChat = {
   PlayerUid: number;
   Login: string;
   Text: string;
   IsRegistredCmd: boolean;
   Options: number;
-}
+};
 
-export interface SpectatorStatus {
+export type DetailedPlayerChat = PlayerChat & {
+  Name: string;
+};
+
+export type SpectatorStatus = {
   spectator: boolean;
   temporarySpectator: boolean;
   pureSpectator: boolean;
   autoTarget: boolean;
   currentTargetId: number;
-}
+};
 
-export interface PlayerStatus {
+export type PlayerStatus = {
   spectator: boolean;
   eliminated: boolean;
   lastChance: boolean;
-}
+};
 
-export interface PlayerManialinkPageAnswer {
+export type PlayerManialinkPageAnswer = {
   PlayerUid: number;
   Login: string;
   Answer: string;
@@ -38,4 +42,4 @@ export interface PlayerManialinkPageAnswer {
     Name: string;
     Value: string;
   }[];
-}
+};

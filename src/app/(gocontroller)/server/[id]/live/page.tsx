@@ -1,3 +1,4 @@
+import { getChatHistory, getServerPlayerInfo } from "@/actions/gbx/advanced";
 import LiveDashboard from "@/components/live/live-dashboard";
 
 export default async function LivePage({
@@ -7,5 +8,14 @@ export default async function LivePage({
 }) {
   const { id } = await params;
 
-  return <LiveDashboard serverId={id} />;
+  const { data: serverPlayerInfo } = await getServerPlayerInfo(id);
+  const { data: chatHistory } = await getChatHistory(id);
+
+  return (
+    <LiveDashboard
+      serverId={id}
+      serverPlayerInfo={serverPlayerInfo}
+      chatHistory={chatHistory.reverse()}
+    />
+  );
 }
