@@ -1,5 +1,4 @@
 import NextPlausibleProvider from "next-plausible";
-import NextPlausibleProvider from "next-plausible";
 
 export default function PlausibleProvider({
   children,
@@ -7,16 +6,7 @@ export default function PlausibleProvider({
   children: React.ReactNode;
 }) {
   const apiHost = process.env.PLAUSIBLE_API_HOST;
-export default function PlausibleProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const apiHost = process.env.PLAUSIBLE_API_HOST;
 
-  if (!apiHost) {
-    return <>{children}</>;
-  }
   if (!apiHost) {
     return <>{children}</>;
   }
