@@ -1,5 +1,6 @@
 import { parseTokenFromRequest } from "@/lib/auth";
 import { getGbxClientManager } from "@/lib/managers/gbxclient-manager";
+import { DetailedPlayerChat } from "@/types/gbx/player";
 import { ActiveRound, LiveInfo, PlayerRound } from "@/types/live";
 import { parse } from "node:url";
 
@@ -212,6 +213,15 @@ export async function SOCKET(
     );
   };
 
+  const onPlayerChat = (chat: DetailedPlayerChat) => {
+    client.send(
+      JSON.stringify({
+        type: "playerChat",
+        data: { chat },
+      }),
+    );
+  };
+
   const listenerId = crypto.randomUUID();
 
   manager.addListeners(listenerId, {
@@ -233,6 +243,7 @@ export async function SOCKET(
     updatedSettings: onUpdatedSettings,
     elimination: onElimination,
     playerUpdated: onPlayerUpdated,
+    playerChat: onPlayerChat,
   });
 
   const cleanup = () => {
