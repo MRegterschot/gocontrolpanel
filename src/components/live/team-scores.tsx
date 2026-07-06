@@ -11,7 +11,7 @@ interface TeamScoresProps {
 export default function TeamScores({ liveInfo }: TeamScoresProps) {
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex gap-2 w-full">
+      <div className="flex w-full">
         {liveInfo.teams &&
           Object.values(liveInfo.teams).map((team) => (
             <div
@@ -24,9 +24,7 @@ export default function TeamScores({ liveInfo }: TeamScoresProps) {
                     <span className="text-3xl font-bold">
                       {team.name} - {team.matchPoints}
                     </span>
-                    <span className="text-3xl font-bold">
-                      {team.roundPoints}
-                    </span>
+                    <span className="text-3xl font-bold">{team.mapPoints}</span>
                   </>
                 ) : (
                   <>
@@ -44,6 +42,7 @@ export default function TeamScores({ liveInfo }: TeamScoresProps) {
                 <TableBody>
                   {liveInfo.players &&
                     [...Object.values(liveInfo.players)]
+                      .filter((player) => player.team === team.id)
                       .sort((a, b) => {
                         if (b.matchPoints !== a.matchPoints) {
                           return b.matchPoints - a.matchPoints;
@@ -51,9 +50,16 @@ export default function TeamScores({ liveInfo }: TeamScoresProps) {
                         return a.bestTime - b.bestTime;
                       })
                       .map((player, i) => {
-                        if (player.team !== team.id) {
-                          return null;
-                        }
+                        const rank = liveInfo.players
+                          ? Object.values(liveInfo.players)
+                              .sort((a, b) => {
+                                if (b.matchPoints !== a.matchPoints) {
+                                  return b.matchPoints - a.matchPoints;
+                                }
+                                return a.bestTime - b.bestTime;
+                              })
+                              .findIndex((p) => p.name === player.name) + 1
+                          : i + 1;
 
                         return (
                           <TableRow
@@ -63,12 +69,12 @@ export default function TeamScores({ liveInfo }: TeamScoresProps) {
                               i % 2 === 0 && "bg-muted hover:bg-muted",
                             )}
                           >
-                            <TableCell className="w-[50px]">
+                            <TableCell className="w-12.5">
                               <Badge
                                 variant="outline"
                                 className="text-md font-bold"
                               >
-                                {i + 1}
+                                {rank}
                               </Badge>
                             </TableCell>
                             <TableCell>{player.name}</TableCell>

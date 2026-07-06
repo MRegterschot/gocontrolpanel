@@ -24,6 +24,7 @@ export interface Team {
   id: number;
   name: string;
   roundPoints: number;
+  mapPoints: number;
   matchPoints: number;
 }
 
