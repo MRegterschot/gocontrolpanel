@@ -67,7 +67,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      {plausibleApiHost && (
+      {plausibleApiHost && plausibleDomain && (
         <head>
           <Script
             defer
