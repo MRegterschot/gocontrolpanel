@@ -3,6 +3,7 @@ import { getPlayerList } from "@/actions/gbx/player";
 import useWebSocket from "@/hooks/use-websocket";
 import { getErrorMessage, hasPermissionSync } from "@/lib/utils";
 import { routePermissions } from "@/routes";
+import { DetailedPlayerChat, SPlayerInfo } from "@/types/gbx/player";
 import { LiveInfo } from "@/types/live";
 import { PlayerInfo } from "@/types/player";
 import { useSession } from "next-auth/react";
@@ -10,6 +11,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Card } from "../ui/card";
 import KnockoutScores from "./knockout-scores";
+import LiveChat from "./live-chat";
 import LiveRound from "./live-round";
 import MapInfo from "./mapinfo";
 import MatchSettings from "./match-settings";
@@ -18,7 +20,15 @@ import RoundScores from "./round-scores";
 import TeamScores from "./team-scores";
 import TimeAttackScores from "./time-attack-scores";
 
-export default function LiveDashboard({ serverId }: { serverId: string }) {
+export default function LiveDashboard({
+  serverId,
+  serverPlayerInfo,
+  chatHistory,
+}: {
+  serverId: string;
+  serverPlayerInfo?: SPlayerInfo;
+  chatHistory: string[];
+}) {
   const { data: session } = useSession();
 
   const [playerList, setPlayerList] = useState<PlayerInfo[]>([]);
@@ -27,6 +37,16 @@ export default function LiveDashboard({ serverId }: { serverId: string }) {
     map: string;
     mode: string;
   } | null>(null);
+  const [chatMessages, setChatMessages] = useState<DetailedPlayerChat[]>(
+    chatHistory.map((message) => ({
+      PlayerUid: 0,
+      Login: serverPlayerInfo?.Login || "",
+      Text: message,
+      IsRegistredCmd: false,
+      Options: 0,
+      Name: "",
+    })),
+  );
 
   const canActions = hasPermissionSync(
     session,
@@ -182,6 +202,12 @@ export default function LiveDashboard({ serverId }: { serverId: string }) {
         });
         break;
       }
+      case "playerChat": {
+        setChatMessages((prev) => [data.chat, ...prev]);
+        break;
+      }
+      default:
+        console.warn(`Unknown message type: ${type}`);
     }
   }, []);
 
@@ -218,61 +244,72 @@ export default function LiveDashboard({ serverId }: { serverId: string }) {
   }
 
   return (
-    <div className="grid w-full gap-4 grid-cols-1 min-[1200px]:grid-cols-2 min-[1528px]:grid-cols-[auto_1fr_auto]">
-      <LiveRound
-        activeRound={liveInfo.activeRound}
-        playerList={playerList}
-        isWarmUp={liveInfo.isWarmUp}
-        warmUpRound={liveInfo.warmUpRound}
-        warmUpTotalRounds={liveInfo.warmUpTotalRounds}
-        isPaused={liveInfo.isPaused}
-      />
+    <div className="flex flex-col gap-4">
+      <div className="grid w-full gap-4 grid-cols-1 min-[1200px]:grid-cols-2 min-[1528px]:grid-cols-[auto_1fr_auto]">
+        <LiveRound
+          activeRound={liveInfo.activeRound}
+          playerList={playerList}
+          isWarmUp={liveInfo.isWarmUp}
+          warmUpRound={liveInfo.warmUpRound}
+          warmUpTotalRounds={liveInfo.warmUpTotalRounds}
+          isPaused={liveInfo.isPaused}
+        />
 
-      <div className="flex flex-col gap-4">
-        <Card className="flex flex-col gap-2 p-4 flex-1">
-          {!["timeattack"].includes(liveInfo.type) && (
-            <MatchSettings
-              pointsLimit={liveInfo.pointsLimit}
-              roundsLimit={liveInfo.roundsLimit}
-              mapLimit={liveInfo.mapLimit}
-              nbWinners={liveInfo.nbWinners}
+        <div className="flex flex-col gap-4">
+          <Card className="flex flex-col gap-2 p-4 flex-1">
+            {!["timeattack"].includes(liveInfo.type) && (
+              <MatchSettings
+                pointsLimit={liveInfo.pointsLimit}
+                roundsLimit={liveInfo.roundsLimit}
+                mapLimit={liveInfo.mapLimit}
+                nbWinners={liveInfo.nbWinners}
               serverId={serverId}
               teams={liveInfo.teams}
               type={liveInfo.type}
-            />
-          )}
+              />
+            )}
 
-          {["teams", "tmwt", "tmwc"].includes(liveInfo.type) && (
-            <TeamScores liveInfo={liveInfo} />
-          )}
-          {["rounds", "cup", "reversecup"].includes(liveInfo.type) && (
-            <RoundScores liveInfo={liveInfo} />
-          )}
-          {["timeattack"].includes(liveInfo.type) && (
-            <TimeAttackScores liveInfo={liveInfo} />
-          )}
-          {["knockout"].includes(liveInfo.type) && (
-            <KnockoutScores liveInfo={liveInfo} />
-          )}
-        </Card>
+            {["teams", "tmwt", "tmwc"].includes(liveInfo.type) && (
+              <TeamScores liveInfo={liveInfo} />
+            )}
+            {["rounds", "cup", "reversecup"].includes(liveInfo.type) && (
+              <RoundScores liveInfo={liveInfo} />
+            )}
+            {["timeattack"].includes(liveInfo.type) && (
+              <TimeAttackScores liveInfo={liveInfo} />
+            )}
+            {["knockout"].includes(liveInfo.type) && (
+              <KnockoutScores liveInfo={liveInfo} />
+            )}
+          </Card>
+        </div>
+
+        <div className="flex flex-col min-[1200px]:flex-row min-[1528px]:flex-col gap-4">
+          <MapInfo
+            serverId={serverId}
+            map={mapInfo?.map}
+            mode={mapInfo?.mode}
+            pauseAvailable={liveInfo.pauseAvailable}
+            isPaused={liveInfo.isPaused}
+            isWarmUp={liveInfo.isWarmUp}
+            canActions={canActions}
+          />
+          <Rankings
+            serverId={serverId}
+            players={liveInfo.players}
+            teams={liveInfo.teams}
+            type={liveInfo.type}
+            canActions={canActions}
+          />
+        </div>
       </div>
 
-      <div className="flex flex-col min-[1200px]:flex-row min-[1528px]:flex-col gap-4">
-        <MapInfo
+      <div>
+        <LiveChat
+          chatMessages={chatMessages}
           serverId={serverId}
-          map={mapInfo?.map}
-          mode={mapInfo?.mode}
-          pauseAvailable={liveInfo.pauseAvailable}
-          isPaused={liveInfo.isPaused}
-          isWarmUp={liveInfo.isWarmUp}
-          canActions={canActions}
-        />
-        <Rankings
-          serverId={serverId}
-          players={liveInfo.players}
-          teams={liveInfo.teams}
-          type={liveInfo.type}
-          canActions={canActions}
+          serverPlayerInfo={serverPlayerInfo}
+          canSendMessage={canActions}
         />
       </div>
     </div>

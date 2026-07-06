@@ -13,6 +13,7 @@ import {
 import { EndMap, SMapInfo, StartMap } from "@/types/gbx/map";
 import { PauseStatus } from "@/types/gbx/pause";
 import {
+  DetailedPlayerChat,
   PlayerChat,
   PlayerManialinkPageAnswer,
   PlayerStatus,
@@ -1418,17 +1419,25 @@ async function onPlayerChat(manager: GbxClientManager, chat: PlayerChat) {
     const commandArgs = args.slice(1);
     manager.emitCommand(commandName, commandArgs, chat.Login);
   }
-  if (!manager.info.chat?.manualRouting) return;
-
-  if (!manager.info.chat?.messageFormat) {
-    manager.client.call("ChatForwardToLogin", chat.Text, chat.Login, "");
-    return;
-  }
 
   let player = manager.info.activePlayers.find((p) => p.login === chat.Login);
 
   if (!player) {
     player = await getPlayerInfo(manager.client, chat.Login);
+  }
+
+  const detailedChat: DetailedPlayerChat = {
+    ...chat,
+    Name: player.nickName,
+  };
+
+  manager.emit("playerChat", detailedChat);
+
+  if (!manager.info.chat?.manualRouting) return;
+
+  if (!manager.info.chat?.messageFormat) {
+    manager.client.call("ChatForwardToLogin", chat.Text, chat.Login, "");
+    return;
   }
 
   const message = formatMessage(
