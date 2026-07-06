@@ -189,6 +189,19 @@ export default function LiveDashboard({
         });
         break;
       }
+      case "teamUpdated": {
+        setLiveInfo((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            teams: {
+              ...prev.teams,
+              [data.team.id]: data.team,
+            },
+          };
+        });
+        break;
+      }
       case "playerChat": {
         setChatMessages((prev) => [data.chat, ...prev]);
         break;
@@ -250,6 +263,9 @@ export default function LiveDashboard({
                 roundsLimit={liveInfo.roundsLimit}
                 mapLimit={liveInfo.mapLimit}
                 nbWinners={liveInfo.nbWinners}
+              serverId={serverId}
+              teams={liveInfo.teams}
+              type={liveInfo.type}
               />
             )}
 

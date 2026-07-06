@@ -926,12 +926,9 @@ async function onEndRoundScript(manager: GbxClientManager, scores: Scores) {
         ...manager.info.liveInfo.teams?.[team.id],
         id: team.id,
         name: team.name,
+        mapPoints: team.mappoints,
         matchPoints: team.matchpoints,
-        roundPoints:
-          manager.info.liveInfo.type === "tmwc" ||
-          manager.info.liveInfo.type === "tmwt"
-            ? team.mappoints
-            : team.roundpoints,
+        roundPoints: team.roundpoints,
       };
 
       manager.setTeam(team.id, updatedTeam);
@@ -1037,11 +1034,8 @@ async function onScoresScript(manager: GbxClientManager, scores: Scores) {
         id: team.id,
         name: team.name,
         matchPoints: team.matchpoints,
-        roundPoints:
-          manager.info.liveInfo.type === "tmwc" ||
-          manager.info.liveInfo.type === "tmwt"
-            ? team.mappoints
-            : team.roundpoints,
+        mapPoints: team.mappoints,
+        roundPoints: team.roundpoints,
       };
 
       manager.setTeam(team.id, updatedTeam);
