@@ -83,7 +83,6 @@ export async function sendChatMessage(
 ): Promise<ServerResponse> {
   return doServerActionWithAuth(
     [
-      `servers:${serverId}:member`,
       `servers:${serverId}:moderator`,
       `servers:${serverId}:admin`,
       `group:servers:${serverId}:moderator`,
