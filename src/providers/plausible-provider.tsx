@@ -1,33 +1,25 @@
-import Script from "next/script";
+import NextPlausibleProvider from "next-plausible";
 
-export default function PlausibleProvider() {
-  const plausibleDomain = process.env.PLAUSIBLE_DOMAIN;
-  const plausibleApiHost = process.env.PLAUSIBLE_API_HOST;
+export default function PlausibleProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const apiHost = process.env.PLAUSIBLE_API_HOST;
 
-  if (!plausibleDomain || !plausibleApiHost) return null;
+  if (!apiHost) {
+    return <>{children}</>;
+  }
 
   return (
-    <>
-      <Script
-        defer
-        data-domain={plausibleDomain}
-        src={`https://${plausibleApiHost}/js/script.file-downloads.hash.outbound-links.pageview-props.revenue.tagged-events.js`}
-        strategy="afterInteractive"
-      />
-
-      <Script
-        id="plausible-init"
-        dangerouslySetInnerHTML={{
-          __html: `
-                  window.plausible = window.plausible || function() {
-                    (window.plausible.q = window.plausible.q || []).push(arguments);
-                  };
-                `,
-        }}
-        strategy="afterInteractive"
-      />
-    </>
+    <NextPlausibleProvider
+      src={`https://${apiHost}/js/script.file-downloads.hash.outbound-links.pageview-props.revenue.tagged-events.js`}
+      enabled
+      init={{
+        captureOnLocalhost: true,
+      }}
+    >
+      {children}
+    </NextPlausibleProvider>
   );
 }
-
-export const dynamic = "force-dynamic";
