@@ -67,32 +67,32 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      {plausibleApiHost && plausibleDomain && (
-        <head>
-          <Script
-            defer
-            data-domain={plausibleDomain}
-            src={`https://${plausibleApiHost}/js/script.file-downloads.hash.outbound-links.pageview-props.revenue.tagged-events.js`}
-            strategy="afterInteractive"
-          />
-
-          <Script
-            id="plausible-init"
-            dangerouslySetInnerHTML={{
-              __html: `
-                window.plausible = window.plausible || function() {
-                  (window.plausible.q = window.plausible.q || []).push(arguments);
-                };
-              `,
-            }}
-            strategy="afterInteractive"
-          />
-        </head>
-      )}
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}
         suppressHydrationWarning
       >
+        {plausibleApiHost && plausibleDomain && (
+          <>
+            <Script
+              defer
+              data-domain={plausibleDomain}
+              src={`https://${plausibleApiHost}/js/script.file-downloads.hash.outbound-links.pageview-props.revenue.tagged-events.js`}
+              strategy="afterInteractive"
+            />
+
+            <Script
+              id="plausible-init"
+              dangerouslySetInnerHTML={{
+                __html: `
+                  window.plausible = window.plausible || function() {
+                    (window.plausible.q = window.plausible.q || []).push(arguments);
+                  };
+                `,
+              }}
+              strategy="afterInteractive"
+            />
+          </>
+        )}
         <SessionWrapper>
           <ThemeProvider
             attribute="class"
@@ -108,3 +108,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+export const dynamic = "force-dynamic";
