@@ -1,5 +1,5 @@
 import { getMapList } from "@/actions/database/maps";
-import { getScripts } from "@/actions/filemanager";
+import { getMatchSettings, getScripts } from "@/actions/filemanager";
 import {
   getModeScriptInfo,
   getModeScriptSettings,
@@ -42,17 +42,21 @@ export default async function ServerGamePage({
   let showOpponents = 0;
   let scriptName = "";
   let scripts: string[] = [];
+  let matchSettings: string[] = [];
 
   if (canGameSettings) {
-    const [showOpponentsRes, scriptNameRes, scriptsRes] = await Promise.all([
-      getShowOpponents(id),
-      getScriptName(id),
-      getScripts(id),
-    ]);
+    const [showOpponentsRes, scriptNameRes, scriptsRes, matchSettingsRes] =
+      await Promise.all([
+        getShowOpponents(id),
+        getScriptName(id),
+        getScripts(id),
+        getMatchSettings(id),
+      ]);
 
     showOpponents = showOpponentsRes.data.NextValue || 0;
     scriptName = scriptNameRes.data.NextValue || "";
     scripts = scriptsRes.data || [];
+    matchSettings = matchSettingsRes.data || [];
   }
 
   let modeScriptInfo: ModeScriptInfo = {
@@ -120,7 +124,10 @@ export default async function ServerGamePage({
                   />
                 </div>
                 <div className="flex flex-col gap-4 flex-1">
-                  <MatchSettingsForm serverId={id} />
+                  <MatchSettingsForm
+                    serverId={id}
+                    matchSettings={matchSettings}
+                  />
                   <PlaylistForm serverId={id} />
                 </div>
               </div>

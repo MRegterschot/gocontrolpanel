@@ -5,7 +5,7 @@ import {
   getGbxClient,
   getGbxClientManager,
 } from "@/lib/managers/gbxclient-manager";
-import { PlayerRound } from "@/types/live";
+import { PlayerRound, Team } from "@/types/live";
 import { PlayerInfo } from "@/types/player";
 import { ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
@@ -645,6 +645,135 @@ export async function setPlayerMatchPoints(
         serverId,
         "server.players.matchpoints.set",
         { login, points },
+      );
+    },
+  );
+}
+
+export async function setTeamRoundPoints(
+  serverId: string,
+  teamId: number,
+  points: number,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      const manager = await getGbxClientManager(serverId);
+      await manager.client.callScript(
+        "Trackmania.SetTeamPoints",
+        teamId.toString(),
+        points.toString(),
+        "",
+        "",
+      );
+
+      if (manager.info.liveInfo.teams?.[teamId]) {
+        const team: Team = {
+          ...manager.info.liveInfo.teams?.[teamId],
+          roundPoints: points,
+        };
+
+        manager.setTeam(teamId, team);
+
+        manager.emit("teamUpdated", team);
+      }
+
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.players.team.roundpoints.set",
+        { teamId, points },
+      );
+    },
+  );
+}
+
+export async function setTeamMapPoints(
+  serverId: string,
+  teamId: number,
+  points: number,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      const manager = await getGbxClientManager(serverId);
+      await manager.client.callScript(
+        "Trackmania.SetTeamPoints",
+        teamId.toString(),
+        "",
+        points.toString(),
+        "",
+      );
+
+      if (manager.info.liveInfo.teams?.[teamId]) {
+        const team: Team = {
+          ...manager.info.liveInfo.teams?.[teamId],
+          mapPoints: points,
+        };
+
+        manager.setTeam(teamId, team);
+
+        manager.emit("teamUpdated", team);
+      }
+
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.players.team.mappoints.set",
+        { teamId, points },
+      );
+    },
+  );
+}
+
+export async function setTeamMatchPoints(
+  serverId: string,
+  teamId: number,
+  points: number,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      const manager = await getGbxClientManager(serverId);
+      await manager.client.callScript(
+        "Trackmania.SetTeamPoints",
+        teamId.toString(),
+        "",
+        "",
+        points.toString(),
+      );
+
+      if (manager.info.liveInfo.teams?.[teamId]) {
+        const team: Team = {
+          ...manager.info.liveInfo.teams?.[teamId],
+          matchPoints: points,
+        };
+
+        manager.setTeam(teamId, team);
+
+        manager.emit("teamUpdated", team);
+      }
+
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.players.team.matchpoints.set",
+        { teamId, points },
       );
     },
   );

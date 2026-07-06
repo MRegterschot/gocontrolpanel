@@ -96,6 +96,7 @@ cat > "$STACK_DIR/restart.sh" <<EOF
 set -e
 
 docker pull evoesports/trackmania:latest
+docker pull marijnregterschot/trackmania-server-fm:latest
 
 docker compose \
   --env-file "$ENV_FILE" \

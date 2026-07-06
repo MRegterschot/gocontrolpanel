@@ -93,7 +93,7 @@ export async function downloadTMXMap(
     }
 
     const arrayBuffer = await res.arrayBuffer();
-    return new File([arrayBuffer], `map_${mapId}.Map.Gbx`, {
+    return new File([arrayBuffer], `TMX_${mapId}.Map.Gbx`, {
       type: "application/x-gbx",
     });
   } catch (err) {

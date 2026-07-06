@@ -21,6 +21,7 @@ const mapsRecordsSchema = (serverId?: string) =>
       where: {
         serverId,
         time: { gt: 0 },
+        deletedAt: null,
       },
       distinct: ["login"],
       orderBy: [{ time: "asc" }, { createdAt: "asc" }],
