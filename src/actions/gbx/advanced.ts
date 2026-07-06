@@ -60,10 +60,20 @@ export async function getJoinLink(
 export async function getServerPlayerInfo(
   serverId: string,
 ): Promise<ServerResponse<SPlayerInfo>> {
-  return doServerActionWithAuth([], async () => {
-    const client = await getGbxClient(serverId);
-    return await client.call("GetMainServerPlayerInfo");
-  });
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:member`,
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:member`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async () => {
+      const client = await getGbxClient(serverId);
+      return await client.call("GetMainServerPlayerInfo");
+    },
+  );
 }
 
 export async function sendChatMessage(
@@ -112,8 +122,18 @@ export async function sendChatMessage(
 export async function getChatHistory(
   serverId: string,
 ): Promise<ServerResponse<string[]>> {
-  return doServerActionWithAuth([], async () => {
-    const client = await getGbxClient(serverId);
-    return await client.call("GetChatLines");
-  });
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:member`,
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:member`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async () => {
+      const client = await getGbxClient(serverId);
+      return await client.call("GetChatLines");
+    },
+  );
 }
