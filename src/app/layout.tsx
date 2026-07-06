@@ -17,6 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 const plausibleDomain = process.env.PLAUSIBLE_DOMAIN;
+const plausibleApiHost = process.env.PLAUSIBLE_API_HOST;
 
 export const metadata: Metadata = {
   title: "GoControlPanel",
@@ -66,12 +67,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      {plausibleDomain && (
+      {plausibleApiHost && (
         <head>
           <Script
             defer
             data-domain={plausibleDomain}
-            src={`https://${plausibleDomain}/js/script.file-downloads.hash.outbound-links.pageview-props.revenue.tagged-events.js`}
+            src={`https://${plausibleApiHost}/js/script.file-downloads.hash.outbound-links.pageview-props.revenue.tagged-events.js`}
             strategy="afterInteractive"
           />
 
