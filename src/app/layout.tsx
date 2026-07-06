@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/sonner";
+import PlausibleProvider from "@/providers/plausible-provider";
 import { SessionWrapper } from "@/providers/session-wrapper";
 import { ThemeProvider } from "@/providers/theme-provider";
 import type { Metadata } from "next";
@@ -67,17 +68,19 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}
         suppressHydrationWarning
       >
-        <SessionWrapper>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            {children}
-            <Toaster />
-          </ThemeProvider>
-        </SessionWrapper>
+        <PlausibleProvider apiHost={process.env.PLAUSIBLE_API_HOST}>
+          <SessionWrapper>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              {children}
+              <Toaster />
+            </ThemeProvider>
+          </SessionWrapper>
+        </PlausibleProvider>
       </body>
     </html>
   );
