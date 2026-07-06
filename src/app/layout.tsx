@@ -68,7 +68,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}
         suppressHydrationWarning
       >
-        <PlausibleProvider>
+        <PlausibleProvider apiHost={process.env.PLAUSIBLE_API_HOST}>
           <SessionWrapper>
             <ThemeProvider
               attribute="class"

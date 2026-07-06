@@ -1,21 +1,46 @@
-import NextPlausibleProvider from "next-plausible";
+"use client";
+
+import NextPlausibleProvider, { usePlausible } from "next-plausible";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 
 export default function PlausibleProvider({
+  apiHost,
   children,
 }: {
+  apiHost?: string;
   children: React.ReactNode;
 }) {
-  const domain = process.env.PLAUSIBLE_DOMAIN;
-  const apiHost = process.env.PLAUSIBLE_API_HOST;
+  const pathname = usePathname();
+  const track = usePlausible();
+  const hasTrackedInitialRoute = useRef(false);
 
-  if (!apiHost || !domain) {
+  useEffect(() => {
+    if (!apiHost || typeof window === "undefined") {
+      return;
+    }
+
+    if (!hasTrackedInitialRoute.current) {
+      hasTrackedInitialRoute.current = true;
+      return;
+    }
+
+    const url = `${window.location.origin}${window.location.pathname}${window.location.search}`;
+
+    track("pageview", { u: url });
+  }, [apiHost, pathname, track]);
+
+  if (!apiHost) {
     return <>{children}</>;
   }
 
   return (
     <NextPlausibleProvider
-      data-domain={domain}
       src={`https://${apiHost}/js/script.file-downloads.hash.outbound-links.pageview-props.revenue.tagged-events.js`}
+      enabled={true}
+      init={{
+        captureOnLocalhost: true,
+      }}
     >
       {children}
     </NextPlausibleProvider>
