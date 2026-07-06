@@ -26,7 +26,7 @@ export default async function ServerAdvancedPage({
         <h1 className="text-2xl font-bold">Advanced Actions</h1>
         <h4 className="text-muted-foreground">
           Perform advanced actions, such as managing fake players, and
-          retrieving the server's join link.
+          retrieving the server&apos;s join link.
         </h4>
       </div>
       <Card className="p-6">
