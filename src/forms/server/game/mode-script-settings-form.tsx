@@ -35,10 +35,14 @@ export default function ModeScriptSettingsForm({
       try {
         const parsedValues = Object.fromEntries(
           Object.entries(values).map(([key, value]) => {
-            if (value === true) return [key, true];
-            if (value === false) return [key, false];
-            if (!isNaN(Number(value)) && value !== "")
+            const desc = modeScriptInfo.ParamDescs.find((d) => d.Name === key);
+            if (!desc) return [key, value];
+
+            if (desc.Type === "boolean") {
+              return [key, Boolean(value)];
+            } else if (desc.Type === "int") {
               return [key, Number(value)];
+            }
             return [key, value];
           }),
         );
