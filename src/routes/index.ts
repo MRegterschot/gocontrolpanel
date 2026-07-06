@@ -38,6 +38,7 @@ export const connectionRoutes = [
   routes.servers.files,
   routes.servers.editor,
   routes.servers.plugins,
+  routes.servers.advanced,
 ];
 
 export const routePermissions = {
