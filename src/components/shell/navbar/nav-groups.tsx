@@ -39,6 +39,7 @@ import {
   IconMap,
   IconServer,
   IconServerOff,
+  IconSettings,
   IconStopwatch,
   IconUsers,
 } from "@tabler/icons-react";
@@ -181,6 +182,19 @@ export function getServerGroup(
           server.id,
         ),
         needsConnection: connectionRoutes.includes(routes.servers.nadeo),
+      },
+      {
+        name: "Advanced",
+        url: generatePath(routes.servers.advanced, {
+          id: server.id,
+        }),
+        icon: IconSettings,
+        auth: hasPermissionSync(
+          session,
+          routePermissions.servers.advanced,
+          server.id,
+        ),
+        needsConnection: connectionRoutes.includes(routes.servers.advanced),
       },
     ],
   };
