@@ -14,6 +14,7 @@ export const routes = {
     tmx: "/server/:id/tmx",
     nadeo: "/server/:id/nadeo",
     records: "/server/:id/records",
+    advanced: "/server/:id/advanced",
   },
   admin: {
     users: "/admin/users",
@@ -27,6 +28,7 @@ export const routes = {
   login: "/login",
 };
 
+// Routes that require the trackmania server to be connected.
 export const connectionRoutes = [
   routes.servers.settings,
   routes.servers.game,
@@ -103,6 +105,7 @@ export const routePermissions = {
         "group:servers:id:admin",
       ],
     },
+    advanced: ["servers:id:admin", "group:servers:id:admin"],
   },
   admin: {
     users: {
@@ -315,6 +318,17 @@ export const breadCrumbs: {
       },
       {
         label: "Records",
+      },
+    ],
+  },
+  {
+    path: routes.servers.advanced,
+    breadCrumbs: [
+      {
+        label: "Server",
+      },
+      {
+        label: "Advanced",
       },
     ],
   },
