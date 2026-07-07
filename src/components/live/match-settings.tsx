@@ -23,7 +23,7 @@ export default function MatchSettings({
   return (
     <div className="flex justify-center">
       <div className="flex-1" />
-      <div className="text-lg font-bold flex-5 flex justify-center">
+      <div className="text-lg font-bold flex-7 flex justify-center overflow-auto">
         {[
           pointsLimit && `Points Limit ${pointsLimit}`,
           roundsLimit && `Rounds Limit ${roundsLimit}`,

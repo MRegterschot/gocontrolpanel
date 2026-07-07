@@ -25,7 +25,7 @@ function Copy({
       type="button"
       variant={"ghost"}
       onClick={handleCopy}
-      className={cn("justify-start max-w-fit bg-background", className)}
+      className={cn("justify-start max-w-fit bg-background overflow-auto", className)}
       {...props}
     >
       {text}

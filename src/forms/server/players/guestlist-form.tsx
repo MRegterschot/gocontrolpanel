@@ -89,28 +89,40 @@ export default function GuestlistForm({
   return (
     <Form {...form}>
       <form className="flex flex-col sm:flex-row gap-2 w-full justify-between">
-        <FormElement name="filename" placeholder="guestlist.txt" isRequired />
-
-        <div className="flex gap-2 justify-between w-full">
-          <div className="flex gap-2">
-            <Button type="button" onClick={onLoad}>
-              <IconFileSettings />
-              Load
-            </Button>
-            <Button type="button" onClick={onSave}>
-              <IconDeviceFloppy />
-              Save
+        <FormElement
+          name="filename"
+          rootClassName="w-full max-w-full"
+          className="max-w-92"
+          placeholder="guestlist.txt"
+          isRequired
+        >
+          <div className="flex justify-between w-full gap-2">
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={"outline"}
+                collapse="sm"
+                onClick={onLoad}
+              >
+                <IconFileSettings />
+                Load
+              </Button>
+              <Button type="button" collapse="sm" onClick={onSave}>
+                <IconDeviceFloppy />
+                Save
+              </Button>
+            </div>
+            <Button
+              type="button"
+              collapse="sm"
+              variant="destructive"
+              onClick={() => setConfirmClearGuestlist(true)}
+            >
+              <IconTrash />
+              Clear Guestlist
             </Button>
           </div>
-          <Button
-            type="button"
-            variant="destructive"
-            onClick={() => setConfirmClearGuestlist(true)}
-          >
-            <IconTrash />
-            Clear Guestlist
-          </Button>
-        </div>
+        </FormElement>
       </form>
 
       <ConfirmModal

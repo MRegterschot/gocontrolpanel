@@ -1,38 +1,34 @@
 "use client";
 
+import { getMapList } from "@/actions/database/maps";
 import { addMapList } from "@/actions/gbx/map";
-import { getLocalMaps } from "@/actions/gbx/server";
 import { createColumns as createLocalMapColumns } from "@/app/(gocontroller)/server/[id]/maps/local-maps-columns";
+import { Maps } from "@/lib/prisma/generated";
 import { getErrorMessage } from "@/lib/utils";
 import { LocalMapInfo } from "@/types/map";
 import { IconMapPlus } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { toast } from "sonner";
 import ConfirmModal from "../modals/confirm-modal";
 import { DataTable } from "../table/data-table";
 import { Button } from "../ui/button";
 
-export default function LocalMapsTable({ serverId }: { serverId: string }) {
+export default function LocalMapsTable({
+  serverId,
+  setMapList,
+  localMaps,
+}: {
+  serverId: string;
+  setMapList: Dispatch<SetStateAction<(Maps & { path: string })[]>>;
+  localMaps: LocalMapInfo[];
+}) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [filter, setFilter] = useState<string>("");
 
-  const [data, setData] = useState<LocalMapInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchLocalMaps() {
-      const { data } = await getLocalMaps(serverId);
-      setData(data);
-      setIsLoading(false);
-    }
-
-    fetchLocalMaps();
-  }, [serverId]);
-
-  const columns = createLocalMapColumns(serverId);
+  const columns = createLocalMapColumns(serverId, refreshMapList);
 
   const getFilteredData = () => {
-    return data.filter(
+    return localMaps.filter(
       (map) =>
         map.Path.toLowerCase().includes(filter.toLowerCase()) ||
         map.FileName.toLowerCase().includes(filter.toLowerCase()) ||
@@ -56,6 +52,7 @@ export default function LocalMapsTable({ serverId }: { serverId: string }) {
       }
 
       toast.success(`${res} map(s) successfully added`);
+      refreshMapList();
     } catch (error) {
       toast.error("Error adding all maps", {
         description: getErrorMessage(error),
@@ -63,11 +60,22 @@ export default function LocalMapsTable({ serverId }: { serverId: string }) {
     }
   };
 
+  async function refreshMapList() {
+    try {
+      const { data: newMapList, error } = await getMapList(serverId);
+      if (error) {
+        throw new Error(error);
+      }
+      setMapList(newMapList);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   return (
     <DataTable
-      data={data}
+      data={localMaps}
       columns={columns}
-      isLoading={isLoading}
       filter={true}
       pagination
       actions={

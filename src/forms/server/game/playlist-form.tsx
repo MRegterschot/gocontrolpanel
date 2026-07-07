@@ -70,14 +70,15 @@ export default function PlaylistForm({ serverId }: { serverId: string }) {
             <Button
               type="button"
               variant={"outline"}
+              collapse="sm"
               onClick={onAppendPlaylist}
             >
               <IconPlaylistAdd />
-              <span className="hidden sm:block">Append</span>
+              Append
             </Button>
-            <Button type="button" onClick={onInsertPlaylist}>
+            <Button type="button" collapse="sm" onClick={onInsertPlaylist}>
               <IconLayoutDistributeHorizontal />
-              <span className="hidden sm:block">Insert</span>
+              Insert
             </Button>
           </div>
         </FormElement>

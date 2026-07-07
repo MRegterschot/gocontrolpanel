@@ -84,14 +84,15 @@ export default function MatchSettingsForm({
             <Button
               type="button"
               variant={"outline"}
+              collapse="sm"
               onClick={onLoadMatchSettings}
             >
               <IconFileSettings />
-              <span className="hidden sm:block">Load</span>
+              Load
             </Button>
-            <Button type="button" onClick={onSaveMatchSettings}>
+            <Button type="button" collapse="sm" onClick={onSaveMatchSettings}>
               <IconDeviceFloppy />
-              <span className="hidden sm:block">Save</span>
+              Save
             </Button>
           </div>
         </FormElement>

@@ -27,6 +27,7 @@ export default async function TotdMonths({
           <Link href={`/server/${serverId}/nadeo?offset=${offset + 1}`}>
             <Button
               variant="outline"
+              collapse="sm"
               disabled={
                 !mapList || (mapList.month === 7 && mapList.year === 2020)
               }
@@ -38,9 +39,13 @@ export default async function TotdMonths({
           <Link
             href={`/server/${serverId}/nadeo?offset=${Math.max(0, offset - 1)}`}
           >
-            <Button variant="outline" disabled={offset <= 0 || !mapList}>
-              Next
+            <Button
+              variant="outline"
+              collapse="sm"
+              disabled={offset <= 0 || !mapList}
+            >
               <IconArrowRight />
+              Next
             </Button>
           </Link>
         </div>

@@ -123,6 +123,7 @@ export default function AdvancedActionsForm({
               type="button"
               onClick={() => handleRemoveFakePlayer(form.getValues("login"))}
               variant="destructive"
+              collapse="sm"
             >
               <IconTrash />
               Remove Fake Player

@@ -2,7 +2,12 @@
 import { deleteEntry } from "@/actions/filemanager";
 import { getErrorMessage, removePrefix } from "@/lib/utils";
 import { FileEntry } from "@/types/filemanager";
-import { IconPlus, IconTrash, IconUpload } from "@tabler/icons-react";
+import {
+  IconFilePlus,
+  IconFolderPlus,
+  IconTrash,
+  IconUpload,
+} from "@tabler/icons-react";
 import { Dispatch, SetStateAction, useRef, useState } from "react";
 import { toast } from "sonner";
 import ConfirmModal from "../modals/confirm-modal";
@@ -75,12 +80,16 @@ export default function Actions({
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 justify-end">
       {selectedItems.length > 0 && (
         <>
-          <Button variant="destructive" onClick={() => setIsDeleting(true)}>
-            <IconTrash size={20} />
-            <span className="max-sm:sr-only">Delete</span>
+          <Button
+            variant="destructive"
+            collapse="sm"
+            onClick={() => setIsDeleting(true)}
+          >
+            <IconTrash />
+            Delete
           </Button>
 
           <ConfirmModal
@@ -105,9 +114,9 @@ export default function Actions({
             setFolders((prev) => [...prev, fileEntry]);
           }}
         />
-        <Button variant={"outline"}>
-          <IconPlus />
-          <span>Folder</span>
+        <Button variant={"outline"} collapse="sm">
+          <IconFolderPlus />
+          Create Folder
         </Button>
       </Modal>
 
@@ -121,15 +130,15 @@ export default function Actions({
             setFiles((prev) => [...prev, fileEntry]);
           }}
         />
-        <Button variant={"outline"}>
-          <IconPlus />
-          <span>File</span>
+        <Button variant={"outline"} collapse="sm">
+          <IconFilePlus />
+          Create File
         </Button>
       </Modal>
 
-      <Button onClick={triggerUpload}>
+      <Button onClick={triggerUpload} collapse="sm">
         <IconUpload />
-        <span className="max-sm:sr-only">Upload</span>
+        Upload
       </Button>
 
       <input

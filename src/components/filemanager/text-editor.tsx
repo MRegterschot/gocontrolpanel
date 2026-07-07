@@ -117,7 +117,7 @@ export default function TextEditor({
           crumbs={pathToBreadcrumbs(path).slice(1)}
           serverId={serverId}
         />
-        <div className="flex gap-2">
+        <div className="flex gap-2 justify-end">
           <Button variant={"outline"} onClick={handleCancel}>
             <IconCancel />
             Cancel

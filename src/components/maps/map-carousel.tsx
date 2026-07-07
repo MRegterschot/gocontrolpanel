@@ -169,11 +169,12 @@ export default function MapCarousel({
         {currentIndex === -1 && canMapActions && (
           <Button
             variant="outline"
+            collapse="sm"
             onClick={onNextMap}
             disabled={!canMapActions}
           >
-            <IconPlayerTrackNext className="mt-[2px]" />
-            <span className="hidden min-[450px]:block">Next</span>
+            <IconPlayerTrackNext />
+            Next
           </Button>
         )}
       </div>
