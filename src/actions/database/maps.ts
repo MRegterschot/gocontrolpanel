@@ -235,14 +235,33 @@ export async function getMapRecordsPaginated(
         take: pagination.pageSize,
         orderBy: { [sorting.field]: sorting.order },
         where: {
-          id: { in: serverMaps.map((m) => m.id) },
           deletedAt: null,
           OR: [
-            { name: { contains: filter } },
             {
-              authorNickname: { contains: filter },
+              id: {
+                in: serverMaps.map((m) => m.id),
+              },
+            },
+            {
+              records: {
+                some: {
+                  serverId: fetchArgs.serverId,
+                  time: { gt: 0 },
+                  deletedAt: null,
+                },
+              },
             },
           ],
+          AND: filter
+            ? [
+                {
+                  OR: [
+                    { name: { contains: filter } },
+                    { authorNickname: { contains: filter } },
+                  ],
+                },
+              ]
+            : [],
         },
         include: mapsRecordsSchema(fetchArgs.serverId),
       });
