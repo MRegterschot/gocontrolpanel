@@ -17,7 +17,10 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 import { parseTmTags } from "tmtags";
 
-export const createColumns = (serverId: string): ColumnDef<LocalMapInfo>[] => [
+export const createColumns = (
+  serverId: string,
+  refreshMapList: () => void,
+): ColumnDef<LocalMapInfo>[] => [
   {
     accessorKey: "Path",
     header: ({ column }) => (
@@ -72,6 +75,7 @@ export const createColumns = (serverId: string): ColumnDef<LocalMapInfo>[] => [
               throw new Error(error);
             }
             toast.success("Map successfully added");
+            refreshMapList();
           } catch (error) {
             toast.error("Error adding map", {
               description: getErrorMessage(error),

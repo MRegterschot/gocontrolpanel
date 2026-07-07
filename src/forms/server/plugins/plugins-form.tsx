@@ -122,6 +122,7 @@ export default function PluginsForm({
               <Button
                 variant={"outline"}
                 type="button"
+                collapse="sm"
                 onClick={() => setConfigModalOpen("ecm")}
               >
                 <IconSettings />
@@ -150,6 +151,7 @@ export default function PluginsForm({
               <Button
                 variant={"outline"}
                 type="button"
+                collapse="sm"
                 onClick={() => setConfigModalOpen("records-info")}
               >
                 <IconSettings />
@@ -207,6 +209,7 @@ export default function PluginsForm({
               <Button
                 variant={"outline"}
                 type="button"
+                collapse="sm"
                 onClick={() => setConfigModalOpen("player-info")}
               >
                 <IconSettings />

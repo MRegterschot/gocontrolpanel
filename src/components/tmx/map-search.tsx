@@ -113,7 +113,7 @@ export default function MapSearch({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-between gap-2 flex-col sm:flex-row">
+      <div className="flex justify-between gap-2">
         <div className="flex gap-2 items-end">
           <Input
             type="text"
@@ -132,7 +132,7 @@ export default function MapSearch({
             onChange={(e) => setAuthorQuery(e.target.value)}
             onKeyDown={onKeyDown}
           />
-          <Button onClick={() => onSearch()} disabled={loading}>
+          <Button onClick={() => onSearch()} collapse="sm" disabled={loading}>
             <IconSearch />
             Search
           </Button>
@@ -156,17 +156,12 @@ export default function MapSearch({
 
           <Button
             variant={"outline"}
+            collapse="sm"
             onClick={onRandomMap}
             disabled={isRandomMapLoading}
           >
-            {isRandomMapLoading ? (
-              "Loading..."
-            ) : (
-              <>
-                <IconDice3 />
-                Random Map
-              </>
-            )}
+            <IconDice3 />
+            Random Map
           </Button>
         </div>
       </div>

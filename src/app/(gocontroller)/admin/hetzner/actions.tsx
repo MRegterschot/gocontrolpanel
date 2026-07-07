@@ -9,9 +9,9 @@ export const createActions = (refetch: () => void) => {
   return (
     <Modal closeOnBackdropClick={false}>
       <AddProjectModal onSubmit={refetch} />
-      <Button className="w-9 sm:w-auto">
+      <Button collapse="sm">
         <IconPlus />
-        <span className="hidden sm:inline">Add Project</span>
+        Add Project
       </Button>
     </Modal>
   );

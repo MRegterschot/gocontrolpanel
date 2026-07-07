@@ -62,10 +62,11 @@ export default function ScriptNameForm({
         >
           <Button
             type="submit"
+            collapse="sm"
             disabled={scriptNameForm.formState.isSubmitting}
           >
             <IconScriptPlus />
-            <span className="hidden sm:block">Load Script</span>
+            Load Script
           </Button>
         </FormElement>
       </form>

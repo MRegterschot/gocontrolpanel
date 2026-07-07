@@ -256,7 +256,7 @@ export default function LiveDashboard({
         />
 
         <div className="flex flex-col gap-4">
-          <Card className="flex flex-col gap-2 p-4 flex-1">
+          <Card className="flex flex-col gap-2 p-2 sm:p-4 flex-1">
             {!["timeattack"].includes(liveInfo.type) && (
               <MatchSettings
                 pointsLimit={liveInfo.pointsLimit}

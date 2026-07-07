@@ -15,7 +15,7 @@ export default async function ServerRecordsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold">Records</h1>
           <h4 className="text-muted-foreground">

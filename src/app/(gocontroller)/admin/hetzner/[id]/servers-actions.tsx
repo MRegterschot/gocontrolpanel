@@ -16,16 +16,16 @@ export const createServerActions = (
     <div className="flex gap-2">
       <Modal closeOnBackdropClick={false}>
         <AddHetznerDatabaseModal data={args?.id} onSubmit={refetch} />
-        <Button className="w-9 sm:w-auto" variant={"outline"}>
+        <Button collapse="sm" variant={"outline"}>
           <IconPlus />
-          <span className="hidden sm:inline">Add Database</span>
+          Add Database
         </Button>
       </Modal>
       <Modal closeOnBackdropClick={false}>
         <AddServerSetupModal data={args?.id} onSubmit={refetch} />
-        <Button className="w-9 sm:w-auto">
+        <Button collapse="sm">
           <IconPlus />
-          <span className="hidden sm:inline">Add Server</span>
+          Add Server
         </Button>
       </Modal>
     </div>
