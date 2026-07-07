@@ -158,8 +158,8 @@ export default function NetworkForm({
                 (Required)
               </span>
             </FormLabel>
-            {subnets.map((_, index) => (
-              <div key={index} className="flex flex-col sm:flex-row gap-2">
+            {subnets.map((field, index) => (
+              <div key={field.id} className="flex flex-col sm:flex-row gap-2">
                 <div className="flex gap-2">
                   <FormElement
                     name={`network.subnets.${index}.type`}

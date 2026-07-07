@@ -6,19 +6,25 @@ import {
   updateServerPlugins,
 } from "@/actions/database/server-plugins";
 import FormElement from "@/components/form/form-element";
+import Modal from "@/components/modals/modal";
 import EcircuitmaniaPluginModal from "@/components/modals/plugins/plugins/ecircuitmania-plugin-modal";
+import MatchPluginModal from "@/components/modals/plugins/plugins/match-plugin-modal";
 import PlayerInfoPluginModal from "@/components/modals/plugins/plugins/player-info-plugin-modal";
 import RecordsInfoPluginModal from "@/components/modals/plugins/plugins/records-info-plugin-modal";
-import Modal from "@/components/modals/modal";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Plugins } from "@/lib/prisma/generated";
 import { getErrorMessage } from "@/lib/utils";
 import { ECMPluginConfig } from "@/types/plugins/ecm";
+import { MatchPluginConfig } from "@/types/plugins/match";
 import { PlayerInfoPluginConfig } from "@/types/plugins/player-info";
 import { RecordsInfoPluginConfig } from "@/types/plugins/records-info";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IconDeviceFloppy, IconReload, IconSettings } from "@tabler/icons-react";
+import {
+  IconDeviceFloppy,
+  IconReload,
+  IconSettings,
+} from "@tabler/icons-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -216,6 +222,25 @@ export default function PluginsForm({
                 Configure
               </Button>
             </FormElement>
+
+            <FormElement
+              name="match"
+              label="Match Plugin"
+              type="checkbox"
+              description={
+                plugins.find((p) => p.name === "match")?.description || ""
+              }
+            >
+              <Button
+                variant={"outline"}
+                type="button"
+                collapse="sm"
+                onClick={() => setConfigModalOpen("match")}
+              >
+                <IconSettings />
+                Configure
+              </Button>
+            </FormElement>
           </div>
 
           <div className="flex gap-2">
@@ -292,6 +317,24 @@ export default function PluginsForm({
           }}
           onSubmit={(config) => {
             handleConfigUpdate("records-info", config);
+          }}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={configModalOpen === "match"}
+        setIsOpen={() => setConfigModalOpen(undefined)}
+        closeOnBackdropClick={false}
+      >
+        <MatchPluginModal
+          serverId={serverId}
+          data={{
+            pluginId: plugins.find((p) => p.name === "match")?.id || "",
+            config: serverPlugins.find((sp) => sp.plugin.name === "match")
+              ?.config as MatchPluginConfig,
+          }}
+          onSubmit={(config) => {
+            handleConfigUpdate("match", config);
           }}
         />
       </Modal>

@@ -10,7 +10,7 @@
     "pretty": "prettier --write \"**/*.{ts,tsx,json,css}\"",
     "generate": "prisma generate --schema ./src/lib/prisma/$DB/schema.prisma",
     "migrate": "bun run generate && prisma migrate dev --name init --schema ./src/lib/prisma/$DB/schema.prisma",
-    "migrate:create": "bun run generate && prisma migrate dev --name init --create-only --schema ./src/lib/prisma/$DB/schema.prisma",
+    "migrate:create": "bun run generate && prisma migrate dev --create-only --schema ./src/lib/prisma/$DB/schema.prisma",
     "deploy": "bun run generate && prisma migrate deploy --schema ./src/lib/prisma/$DB/schema.prisma",
     "reset": "prisma migrate reset --schema ./src/lib/prisma/$DB/schema.prisma",
     "prepare": "next-ws patch",

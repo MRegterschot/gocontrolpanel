@@ -1,3 +1,3 @@
-export interface RecordsInfoPluginConfig {
+export type RecordsInfoPluginConfig = {
   localRecordText?: string;
 }
