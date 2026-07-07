@@ -2,6 +2,9 @@ name: Send Release Notes to Discord
 
 on:
   workflow_call:
+
+permissions:
+  contents: read
   
 jobs:
   post-discord-changelog:
