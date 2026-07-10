@@ -3,6 +3,7 @@ import ECMPlugin from "@/plugins/ecm";
 import LiveRankingPlugin from "@/plugins/live-ranking";
 import LiveRoundPlugin from "@/plugins/live-round";
 import MapInfoPlugin from "@/plugins/map-info";
+import MatchPlugin from "@/plugins/match";
 import NotifyAdminPlugin from "@/plugins/notify-admin";
 import PlayerInfoPlugin from "@/plugins/player-info";
 import RecordsInfoPlugin from "@/plugins/records-info";
@@ -35,6 +36,7 @@ export default class PluginManager {
       new NotifyAdminPlugin(this.clientManager, this.manialinkManager),
       new ECMPlugin(this.clientManager, this.manialinkManager),
       new PlayerInfoPlugin(this.clientManager, this.manialinkManager),
+      new MatchPlugin(this.clientManager, this.manialinkManager),
     ];
 
     for (const plugin of pluginsToLoad) {

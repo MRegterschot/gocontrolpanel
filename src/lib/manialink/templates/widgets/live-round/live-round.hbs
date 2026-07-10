@@ -164,7 +164,7 @@ Void updateRoundRow(Integer index, Round round, Round[] rounds, Text mode, Integ
 
   declare roundFrame <=> (roundsFrame.Controls[index + 1] as CMlFrame);
   (roundFrame.Controls[3] as CMlLabel).SetText(TL::ToText(round.rank));
-  (roundFrame.Controls[4] as CMlQuad).ImageUrl = "file://ZoneFlags/Login/" ^ round.login ^ "/country";
+  (roundFrame.Controls[4] as CMlQuad).ChangeImageUrl("file://ZoneFlags/Login/" ^ round.login ^ "/country");
   (roundFrame.Controls[5] as CMlLabel).SetText(round.name);
 
   declare Text pointsText = TL::ToText(round.points);

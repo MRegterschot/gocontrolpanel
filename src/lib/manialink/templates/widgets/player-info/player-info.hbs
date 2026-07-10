@@ -109,7 +109,7 @@ Void updateWidget(PlayerInfo[] playerInfos, Text spectatorTargetLogin, Text spec
     declare otherInfoFrame <=> (playerInfoContainerFrame.GetFirstChild("other-info") as CMlFrame);
 
     // Update Player Info
-    (playerNameFrame.Controls[2] as CMlQuad).ImageUrl = "file://ZoneFlags/Login/" ^ spectatorTargetLogin ^ "/country";
+    (playerNameFrame.Controls[2] as CMlQuad).ChangeImageUrl("file://ZoneFlags/Login/" ^ spectatorTargetLogin ^ "/country");
     (playerNameFrame.Controls[3] as CMlLabel).SetText(spectatorTargetName);
 
     // Update Records Info

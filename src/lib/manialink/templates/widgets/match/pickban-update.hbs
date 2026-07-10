@@ -1,0 +1,25 @@
+{{#extend "manialink"}}
+{{#content "content"}}
+<script>
+<!--
+#Struct MapInfo {
+  Text name;
+  Text author;
+  Text uid;
+  Integer order;
+  Text pickedBy;
+  Text bannedBy;
+}
+
+main(){
+  declare MapInfo[] MapInfos for This;
+  declare Integer LastPickBanUpdate for This;
+  declare Text mapInfosJson = """{{{ default data.mapInfosJson '[]' }}}""";
+
+  MapInfos.fromjson(mapInfosJson);
+  LastPickBanUpdate = GameTime;
+}
+-->
+</script>
+{{/content}}
+{{/extend}}

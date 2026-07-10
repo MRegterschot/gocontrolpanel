@@ -81,7 +81,7 @@ Void updateActiveRunRow(Integer index, ActiveRun activeRun) {
   }
 
   declare activeRunFrame <=> (activeRunsFrame.Controls[index + 1] as CMlFrame);
-  (activeRunFrame.Controls[2] as CMlQuad).ImageUrl = "file://ZoneFlags/Login/" ^ activeRun.login ^ "/country";
+  (activeRunFrame.Controls[2] as CMlQuad).ChangeImageUrl("file://ZoneFlags/Login/" ^ activeRun.login ^ "/country");
   (activeRunFrame.Controls[3] as CMlLabel).SetText(activeRun.name);
   declare Text checkpointText = "0";
   if (activeRun.checkpoint == -69) {

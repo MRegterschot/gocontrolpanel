@@ -115,7 +115,7 @@ Void updateRecordRow(Integer index, Record record) {
 
   declare recordFrame <=> (recordsFrame.Controls[index + 1] as CMlFrame);
   (recordFrame.Controls[2] as CMlLabel).SetText(TL::ToText(record.rank));
-  (recordFrame.Controls[3] as CMlQuad).ImageUrl = "file://ZoneFlags/Login/" ^ record.login ^ "/country";
+  (recordFrame.Controls[3] as CMlQuad).ChangeImageUrl("file://ZoneFlags/Login/" ^ record.login ^ "/country");
   (recordFrame.Controls[4] as CMlLabel).SetText(record.name);
   (recordFrame.Controls[5] as CMlLabel).SetText(formatTime(record.time));
   recordFrame.DataAttributeSet("login", record.login);

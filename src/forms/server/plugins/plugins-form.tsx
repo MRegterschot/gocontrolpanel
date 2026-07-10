@@ -43,6 +43,8 @@ export default function PluginsForm({
     keyof PluginsSchemaType | undefined
   >();
 
+  const [serverPluginsState, setServerPluginsState] = useState(serverPlugins);
+
   const defaultValues: PluginsSchemaType = plugins.reduce((acc, plg) => {
     const sp = serverPlugins.find((sp) => sp.pluginId === plg.id);
 
@@ -78,10 +80,14 @@ export default function PluginsForm({
   }
 
   const handleConfigUpdate = (name: string, config?: any) => {
-    const sp = serverPlugins.find((sp) => sp.plugin.name === name);
-    if (sp) {
-      sp.config = config;
-    }
+    setServerPluginsState((prev) => {
+      return prev.map((sp) => {
+        if (sp.plugin.name === name) {
+          return { ...sp, config };
+        }
+        return sp;
+      });
+    });
   };
 
   const handleReloadPlugins = async () => {
@@ -275,7 +281,7 @@ export default function PluginsForm({
           serverId={serverId}
           data={{
             pluginId: plugins.find((p) => p.name === "ecm")?.id || "",
-            config: serverPlugins.find((sp) => sp.plugin.name === "ecm")
+            config: serverPluginsState.find((sp) => sp.plugin.name === "ecm")
               ?.config as ECMPluginConfig,
           }}
           onSubmit={(config) => {
@@ -293,8 +299,9 @@ export default function PluginsForm({
           serverId={serverId}
           data={{
             pluginId: plugins.find((p) => p.name === "player-info")?.id || "",
-            config: serverPlugins.find((sp) => sp.plugin.name === "player-info")
-              ?.config as PlayerInfoPluginConfig,
+            config: serverPluginsState.find(
+              (sp) => sp.plugin.name === "player-info",
+            )?.config as PlayerInfoPluginConfig,
           }}
           onSubmit={(config) => {
             handleConfigUpdate("player-info", config);
@@ -311,7 +318,7 @@ export default function PluginsForm({
           serverId={serverId}
           data={{
             pluginId: plugins.find((p) => p.name === "records-info")?.id || "",
-            config: serverPlugins.find(
+            config: serverPluginsState.find(
               (sp) => sp.plugin.name === "records-info",
             )?.config as RecordsInfoPluginConfig,
           }}
@@ -330,7 +337,7 @@ export default function PluginsForm({
           serverId={serverId}
           data={{
             pluginId: plugins.find((p) => p.name === "match")?.id || "",
-            config: serverPlugins.find((sp) => sp.plugin.name === "match")
+            config: serverPluginsState.find((sp) => sp.plugin.name === "match")
               ?.config as MatchPluginConfig,
           }}
           onSubmit={(config) => {
