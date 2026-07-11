@@ -6,17 +6,26 @@
   Text name;
   Text author;
   Text uid;
-  Integer order;
+  Integer index;
   Text pickedBy;
   Text bannedBy;
 }
 
+#Struct PickBanAction {
+  Text action;
+  Text login;
+  Text nickName;
+}
+
 main(){
   declare MapInfo[] MapInfos for This;
+  declare PickBanAction CurrentAction for This;
   declare Integer LastPickBanUpdate for This;
   declare Text mapInfosJson = """{{{ default data.mapInfosJson '[]' }}}""";
+  declare Text currentActionJson = """{{{ default data.currentActionJson '{}' }}}""";
 
   MapInfos.fromjson(mapInfosJson);
+  CurrentAction.fromjson(currentActionJson);
   LastPickBanUpdate = GameTime;
 }
 -->

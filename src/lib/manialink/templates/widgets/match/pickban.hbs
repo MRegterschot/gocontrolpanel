@@ -1,9 +1,9 @@
 {{#extend "widget"}}
 {{#content "widget"}}
-<frame pos="0 0">
+<frame id="pickban-action" pos="0 0">
   <quad pos="0 0" z-index="0" size="120 10" bgcolor="222"/>
   <label pos="5 -4.75" z-index="0" size="10 10" text="" halign="center" valign="center" textsize="2.5" textcolor="DDD" textfont="GameFontRegular"/>
-  <label pos="12 -4.75" z-index="0" size="41 5" text="Marijn. is picking a map" valign="center" textcolor="DDD" textsize="1.75" textfont="GameFontSemiBold" />
+  <label pos="12 -4.75" z-index="0" size="100 5" text="Marijn. is picking a map" valign="center" textcolor="DDD" textsize="1.75" textfont="GameFontSemiBold" />
 </frame>
 
 <framemodel id="map-info">
@@ -32,9 +32,15 @@
   Text name;
   Text author;
   Text uid;
-  Integer order;
+  Integer index;
   Text pickedBy;
   Text bannedBy;
+}
+
+#Struct PickBanAction {
+  Text action;
+  Text login;
+  Text nickName;
 }
 {{/content}}
 
@@ -55,13 +61,18 @@ Void updateScroll(MapInfo[] maps) {
 Void updateMapStatus(CMlFrame mapFrame, MapInfo map) {
   if (mapFrame.DataAttributeGet("pickedBy") != map.pickedBy) {
     mapFrame.DataAttributeSet("pickedBy", map.pickedBy);
-    (mapFrame.Controls[2] as CMlLabel).SetText(TL::ToText(map.order));
-    (mapFrame.Controls[5] as CMlLabel).SetText("Picked by " ^ map.pickedBy);
+    (mapFrame.Controls[2] as CMlLabel).SetText(TL::ToText(map.index));
+    if (map.pickedBy == "random") {
+      (mapFrame.Controls[5] as CMlLabel).SetText("Random");
+    } else {
+      (mapFrame.Controls[5] as CMlLabel).SetText("Picked by " ^ map.pickedBy);
+    }
     AnimMgr.Add(mapFrame, "<frame pos='15 " ^ mapFrame.RelativePosition_V3.Y ^ "' />", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
   }
 
   if (mapFrame.DataAttributeGet("bannedBy") != map.bannedBy) {
     mapFrame.DataAttributeSet("bannedBy", map.bannedBy);
+    (mapFrame.Controls[2] as CMlLabel).SetText("");
     (mapFrame.Controls[5] as CMlLabel).SetText("Banned by " ^ map.bannedBy);
     (mapFrame.Controls[1] as CMlQuad).Opacity = 0.7;
   }
@@ -91,7 +102,20 @@ Void updateMapInfoRow(Integer index, MapInfo map, MapInfo[] maps) {
   mapFrame.Show();
 }
 
-Void updateWidget(MapInfo[] mapInfos) {
+Void updateWidget(MapInfo[] mapInfos, PickBanAction currentAction) {
+  declare actionFrame <=> (Page.MainFrame.GetFirstChild("pickban-action") as CMlFrame);
+  declare actionLabel <=> (actionFrame.Controls[2] as CMlLabel);
+  if (currentAction.action == "pick") {
+    actionLabel.SetText(currentAction.nickName ^ " is picking a map");
+  } else if (currentAction.action == "ban") {
+    actionLabel.SetText(currentAction.nickName ^ " is banning a map");
+  } else if (currentAction.action == "random") {
+    actionLabel.SetText("Random map is being picked");
+  } else {
+    actionLabel.SetText("Pick and ban completed");
+  }
+    
+
   declare mapsCount = mapInfos.count;
   declare index = 0;
 
@@ -117,6 +141,7 @@ Void updateWidget(MapInfo[] mapInfos) {
 
 {{#content "main"}}
 declare MapInfo[] MapInfos for This;
+declare PickBanAction CurrentAction for This;
 declare Integer LastPickBanUpdate for This = -1;
 declare Integer lastUpdate = -1;
 declare mapsFrame <=> (widget.GetFirstChild("maps") as CMlFrame);
@@ -128,7 +153,7 @@ mapsFrame.ScrollMin = <0., 0.>;
 {{#content "loop"}}
 if (LastPickBanUpdate != lastUpdate) {
   lastUpdate = LastPickBanUpdate;
-  updateWidget(MapInfos);
+  updateWidget(MapInfos, CurrentAction);
 }
 {{/content}}
 

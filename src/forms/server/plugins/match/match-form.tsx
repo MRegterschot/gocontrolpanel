@@ -1,7 +1,7 @@
 "use client";
 
 import { updateServerPlugin } from "@/actions/database/server-plugins";
-import { getMatchSettings, getScripts } from "@/actions/filemanager";
+import { getScripts } from "@/actions/filemanager";
 import { getLocalMaps } from "@/actions/gbx/server";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
@@ -47,9 +47,6 @@ export default function MatchForm({
   const [loadingScripts, setLoadingScripts] = useState(true);
   const [scripts, setScripts] = useState<string[]>([]);
 
-  const [loadingMatchSettings, setLoadingMatchSettings] = useState(true);
-  const [matchSettings, setMatchSettings] = useState<string[]>([]);
-
   const [loadingLocalMaps, setLoadingLocalMaps] = useState(true);
   const [localMaps, setLocalMaps] = useState<LocalMapInfo[]>([]);
 
@@ -70,22 +67,6 @@ export default function MatchForm({
       }
     }
 
-    async function fetchMatchSettings() {
-      try {
-        const { data, error } = await getMatchSettings(serverId);
-        if (error) {
-          throw new Error(error);
-        }
-        setMatchSettings(data);
-      } catch (error) {
-        toast.error("Failed to load match settings", {
-          description: getErrorMessage(error),
-        });
-      } finally {
-        setLoadingMatchSettings(false);
-      }
-    }
-
     async function fetchLocalMaps() {
       try {
         const { data, error } = await getLocalMaps(serverId);
@@ -103,7 +84,6 @@ export default function MatchForm({
     }
 
     fetchScripts();
-    fetchMatchSettings();
     fetchLocalMaps();
   }, [serverId]);
 
@@ -240,7 +220,7 @@ export default function MatchForm({
     }
   };
 
-  if (loading || loadingScripts || loadingMatchSettings || loadingLocalMaps) {
+  if (loading || loadingScripts || loadingLocalMaps) {
     return <span className="text-muted-foreground">Loading...</span>;
   }
 
@@ -254,6 +234,7 @@ export default function MatchForm({
           <TabsList className="w-full">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="pick-and-ban">Pick and Ban</TabsTrigger>
+            <TabsTrigger value="lobby">Lobby</TabsTrigger>
           </TabsList>
 
           <TabsContent value="general">
@@ -284,18 +265,6 @@ export default function MatchForm({
                   <span className="sr-only">Clear Script</span>
                 </Button>
               </div>
-
-              <FormElement
-                name={"matchSettings"}
-                label="Match Settings"
-                description="The name of the match settings file to load. This file will be loaded when the match starts."
-                placeholder="matchlist.txt"
-                type="filter"
-                options={matchSettings.map((filename) => ({
-                  label: filename,
-                  value: filename,
-                }))}
-              />
 
               {/* Maps */}
               <div className="flex flex-col gap-2">
@@ -512,6 +481,63 @@ export default function MatchForm({
                 >
                   <IconPlus />
                   Add Player
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+          <TabsContent value="lobby">
+            <div className="flex flex-col gap-4">
+              <div className="flex gap-2 items-end">
+                <div className="flex-1">
+                  <FormElement
+                    className="max-w-64 sm:max-w-92 w-full"
+                    name={"lobby.script"}
+                    label="Lobby Script"
+                    description="The script to run for the lobby. This script will be loaded when the lobby starts."
+                    placeholder="MyLobby.Script.txt"
+                    options={scripts.map((script) => ({
+                      label: script,
+                      value: script,
+                    }))}
+                    type="select"
+                  />
+                </div>
+
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size={"icon"}
+                  onClick={() => form.setValue("lobby.script", "")}
+                >
+                  <IconTrash />
+                  <span className="sr-only">Clear Lobby Script</span>
+                </Button>
+              </div>
+
+              <div className="flex gap-2 items-end">
+                <div className="flex-1">
+                  <FormElement
+                    className="max-w-64 sm:max-w-92 w-full"
+                    name={"lobby.map"}
+                    label="Lobby Map"
+                    description="The map to use for the lobby. This map will be loaded when the lobby starts."
+                    placeholder="MyLobby.Map.Gbx"
+                    options={localMaps.map((localMap) => ({
+                      label: localMap.Name,
+                      value: localMap.FileName,
+                    }))}
+                    type="select"
+                  />
+                </div>
+
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size={"icon"}
+                  onClick={() => form.setValue("lobby.map", "")}
+                >
+                  <IconTrash />
+                  <span className="sr-only">Clear Lobby Map</span>
                 </Button>
               </div>
             </div>

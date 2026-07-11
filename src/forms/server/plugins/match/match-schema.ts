@@ -43,7 +43,12 @@ export const MatchPluginSchema = z.object({
     })
     .optional(),
   script: z.string().optional(),
-  matchSettings: z.string().optional(),
+  lobby: z
+    .object({
+      script: z.string().optional(),
+      map: z.string().optional(),
+    })
+    .optional(),
 });
 
 export type MatchPluginPickAndBanOrder = z.infer<typeof PickAndBanOrderSchema>;

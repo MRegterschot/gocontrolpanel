@@ -1,30 +1,47 @@
 import { getPlayerInfo } from "@/actions/gbx/server-only";
 import { pauseMatch, setScriptName } from "@/actions/gbx/server-only/game";
 import {
+  getMapList,
   getMapsInfo,
   jumpToMapIndex,
   restartMap,
   setMapList,
 } from "@/actions/gbx/server-only/maps";
+import { MatchPluginPickAndBanOrder } from "@/forms/server/plugins/match/match-schema";
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import ManialinkManager from "@/lib/managers/manialink-manager";
 import Widget from "@/lib/manialink/components/widget";
+import { sleep, stringToPickAndBan } from "@/lib/utils";
 import { PlayerManialinkPageAnswer } from "@/types/gbx/player";
 import { MatchPluginConfig } from "@/types/plugins/match";
 import Plugin from "..";
 
-export type MatchState =
-  | "not_started"
-  | "pickban"
-  | "in_progress"
-  | "paused"
-  | "ended";
+export type MatchState = "not_started" | "pickban" | "ready" | "in_progress";
+
+type PickBanAction = {
+  action: "pick" | "ban" | "random";
+  login: string;
+  nickName: string;
+};
+
+type PickBanState = {
+  order: MatchPluginPickAndBanOrder;
+  players: {
+    login: string;
+    seed: number;
+  }[];
+  maps: MapInfo[];
+  currentIndex: number;
+  currentAction: PickBanAction | null;
+  pickedMaps: string[];
+};
 
 type MapInfo = {
   name: string;
   author: string;
   uid: string;
-  order: number;
+  filename: string;
+  index: number;
   pickedBy: string;
   bannedBy: string;
 };
@@ -34,7 +51,14 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
   private widget: Widget;
 
   private matchState: MatchState = "not_started";
-  private pickBanMaps: MapInfo[] = [];
+  private pickBanState: PickBanState = {
+    order: [],
+    players: [],
+    maps: [],
+    currentIndex: 0,
+    currentAction: null,
+    pickedMaps: [],
+  };
 
   constructor(
     clientManager: GbxClientManager,
@@ -45,9 +69,6 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
     this.widget.setTemplate("widgets/match/pickban");
     this.widget.setId("match-pickban-widget");
     this.widget.setPosition({ x: -60, y: 67 });
-    this.widget.setData({
-      pickBanAction: "match-pickban-action",
-    });
   }
 
   async onLoad() {
@@ -64,6 +85,7 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
     this.clientManager.onCommand("pause", this.onPauseCommand.bind(this));
     this.clientManager.onCommand("unpause", this.onUnpauseCommand.bind(this));
     this.clientManager.onCommand("pickban", this.onPickbanCommand.bind(this));
+    this.clientManager.onCommand("lobby", this.onLobbyCommand.bind(this));
 
     this.clientManager.onAction(
       "match-pickban-action-{uid}",
@@ -72,6 +94,8 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
   }
 
   async onUnload() {
+    this.widget.destroy();
+
     this.clientManager.removeListeners(this.getPluginId());
 
     this.clientManager.offCommand(
@@ -85,6 +109,7 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
     this.clientManager.offCommand("pause", this.onPauseCommand.bind(this));
     this.clientManager.offCommand("unpause", this.onUnpauseCommand.bind(this));
     this.clientManager.offCommand("pickban", this.onPickbanCommand.bind(this));
+    this.clientManager.offCommand("lobby", this.onLobbyCommand.bind(this));
 
     this.clientManager.offAction(
       "match-pickban-action-{uid}",
@@ -92,27 +117,7 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
     );
   }
 
-  async onStart() {
-    this.widget.display();
-  }
-
-  async onConfigUpdate() {
-    const mapsInfo = await getMapsInfo(
-      this.clientManager.getServerId(),
-      this.config?.maps || [],
-    );
-
-    this.pickBanMaps = mapsInfo.map((map) => ({
-      name: map.Name,
-      author: map.Author,
-      uid: map.UId,
-      order: 0,
-      pickedBy: "",
-      bannedBy: "",
-    }));
-
-    this.updateMatchInfo();
-  }
+  async onStart() {}
 
   onMatchAction = async (
     data: PlayerManialinkPageAnswer,
@@ -121,31 +126,74 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
     const uid = params["uid"];
     if (!uid) return;
 
-    let player = this.clientManager.info.activePlayers.find(
-      (p) => p.login === data.Login,
-    );
-
-    if (!player) {
-      player = await getPlayerInfo(this.clientManager.client, data.Login);
+    if (!this.pickBanState.currentAction) {
+      this.clientManager.client.call(
+        "ChatSendServerMessageToLogin",
+        `No pick and ban action is currently active`,
+        data.Login,
+      );
+      return;
     }
 
-    this.pickBanMaps = this.pickBanMaps.map((map) => {
-      if (map.uid == uid) {
-        map.order = 1;
-        map.pickedBy = player?.nickName || data.Login;
-      }
-      return map;
-    });
+    if (this.pickBanState.currentAction.login !== data.Login) return;
 
-    this.updateMatchInfo();
+    const map = this.pickBanState.maps.find((map) => map.uid === uid);
+    if (!map) {
+      this.clientManager.client.call(
+        "ChatSendServerMessageToLogin",
+        `Selected map not found`,
+        data.Login,
+      );
+      return;
+    }
+
+    if (this.pickBanState.currentAction.action === "pick") {
+      this.pickBanState.pickedMaps.push(map.filename);
+
+      map.pickedBy = this.pickBanState.currentAction.nickName;
+      map.index = this.pickBanState.pickedMaps.length;
+    } else if (this.pickBanState.currentAction.action === "ban") {
+      map.bannedBy = this.pickBanState.currentAction.nickName;
+    }
+
+    this.pickBanState.currentAction = await this.getNextPickBanAction();
+    this.updatePickBan();
+
+    await this.handleNextPickBanAction();
   };
 
   async onMatchStartCommand(_: string[], login: string) {
+    if (
+      !this.checkCommandPermission(
+        login,
+        "You are not authorized to start the match",
+      )
+    )
+      return;
+
+    if (!(this.matchState === "not_started" || this.matchState === "ready")) {
+      if (this.matchState === "pickban") {
+        this.clientManager.client.call(
+          "ChatSendServerMessageToLogin",
+          `Pick and ban phase is still in progress, cannot start the match`,
+          login,
+        );
+      } else {
+        this.clientManager.client.call(
+          "ChatSendServerMessageToLogin",
+          `Match has already started, cannot start the match`,
+          login,
+        );
+      }
+      return;
+    }
+
     if (this.config?.script) {
       try {
-        await setScriptName(
-          this.clientManager.getServerId(),
-          this.config.script,
+        await setScriptName(this.clientManager.client, this.config.script);
+        this.clientManager.client.call(
+          "ChatSendServerMessage",
+          `Loaded match script: ${this.config.script}`,
         );
       } catch (error) {
         console.error("Error loading match script:", error);
@@ -158,9 +206,13 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
       }
     }
 
-    if (this.config?.maps && this.config.maps.length > 0) {
+    if (
+      this.matchState === "not_started" &&
+      this.config?.maps &&
+      this.config.maps.length > 0
+    ) {
       try {
-        await setMapList(this.clientManager.getServerId(), this.config.maps);
+        await setMapList(this.clientManager.client, this.config.maps);
       } catch (error) {
         console.error("Error setting map list:", error);
         this.clientManager.client.call(
@@ -172,17 +224,38 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
       }
     }
 
-    this.clientManager.client.call(
-      "ChatSendServerMessage",
-      "Loaded match configuration, starting match...",
-    );
+    if (this.matchState === "ready") {
+      if (this.pickBanState.pickedMaps.length === 0) {
+        this.clientManager.client.call(
+          "ChatSendServerMessageToLogin",
+          `No maps have been picked, cannot start the match`,
+          login,
+        );
+        return;
+      }
+
+      try {
+        await setMapList(
+          this.clientManager.client,
+          this.pickBanState.pickedMaps,
+        );
+      } catch (error) {
+        console.error("Error setting map list:", error);
+        this.clientManager.client.call(
+          "ChatSendServerMessageToLogin",
+          `Failed to set map list: ${error}`,
+          login,
+        );
+        return;
+      }
+    }
 
     try {
-      await jumpToMapIndex(this.clientManager.getServerId(), 0);
+      await jumpToMapIndex(this.clientManager.client, 0);
       this.matchState = "in_progress";
     } catch {
       try {
-        await restartMap(this.clientManager.getServerId());
+        await restartMap(this.clientManager.client);
         this.matchState = "in_progress";
       } catch (restartError) {
         console.error("Error starting match:", restartError);
@@ -193,13 +266,49 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
         );
       }
     }
+
+    try {
+      const mapList = await getMapList(this.clientManager.client);
+      this.clientManager.client.call(
+        "ChatSendServerMessage",
+        `Maps:\n${mapList.map((map, index) => `${index + 1}. ${map.Name}`).join("\n")}`,
+      );
+    } catch (error) {
+      console.error("Error fetching map list:", error);
+      this.clientManager.client.call(
+        "ChatSendServerMessageToLogin",
+        `Failed to fetch map list: ${error}`,
+        login,
+      );
+    }
   }
 
   async onMatchStopCommand(_: string[], login: string) {
-    this.matchState = "ended";
+    if (
+      !this.checkCommandPermission(
+        login,
+        "You are not authorized to stop the match",
+      )
+    )
+      return;
+
+    this.widget.destroy();
+    this.matchState = "not_started";
+
+    this.clientManager.client.call("ChatSendServerMessage", "Match stopped");
+
+    await this.setLobbyState(login);
   }
 
   async onPauseCommand(_: string[], login: string) {
+    if (
+      !this.checkCommandPermission(
+        login,
+        "You are not authorized to pause the match",
+      )
+    )
+      return;
+
     if (!this.clientManager.info.liveInfo.pauseAvailable) {
       this.clientManager.client.call(
         "ChatSendServerMessageToLogin",
@@ -223,8 +332,7 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
         (p) => p.login === login,
       );
 
-      await pauseMatch(this.clientManager.getServerId(), true);
-      this.matchState = "paused";
+      await pauseMatch(this.clientManager, true);
       this.clientManager.client.call(
         "ChatSendServerMessage",
         `Match paused by ${player?.nickName || login}`,
@@ -240,6 +348,14 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
   }
 
   async onUnpauseCommand(_: string[], login: string) {
+    if (
+      !this.checkCommandPermission(
+        login,
+        "You are not authorized to unpause the match",
+      )
+    )
+      return;
+
     if (!this.clientManager.info.liveInfo.pauseAvailable) {
       this.clientManager.client.call(
         "ChatSendServerMessageToLogin",
@@ -263,8 +379,7 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
         (p) => p.login === login,
       );
 
-      await pauseMatch(this.clientManager.getServerId(), false);
-      this.matchState = "in_progress";
+      await pauseMatch(this.clientManager, false);
       this.clientManager.client.call(
         "ChatSendServerMessage",
         `Match unpaused by ${player?.nickName || login}`,
@@ -279,12 +394,301 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
     }
   }
 
-  async onPickbanCommand(_: string[], login: string) {}
+  async onPickbanCommand(_: string[], login: string) {
+    if (
+      !this.checkCommandPermission(
+        login,
+        "You are not authorized to start the pick and ban phase",
+      )
+    )
+      return;
 
-  private updateMatchInfo() {
+    if (this.matchState !== "not_started") {
+      if (this.matchState === "pickban") {
+        this.clientManager.client.call(
+          "ChatSendServerMessageToLogin",
+          `Pick and ban phase is already in progress`,
+          login,
+        );
+      } else {
+        this.clientManager.client.call(
+          "ChatSendServerMessageToLogin",
+          `Match has already started, cannot start pick and ban phase`,
+          login,
+        );
+      }
+      return;
+    }
+
+    if (!this.config?.pickAndBan) {
+      this.clientManager.client.call(
+        "ChatSendServerMessageToLogin",
+        `Pick and ban configuration is not set`,
+        login,
+      );
+      return;
+    }
+
+    await this.setPickBanState();
+
+    this.matchState = "pickban";
+    this.displayPickBan();
+
+    this.clientManager.client.call(
+      "ChatSendServerMessage",
+      `Pick and ban phase started`,
+    );
+  }
+
+  async onLobbyCommand(_: string[], login: string) {
+    if (
+      !this.checkCommandPermission(
+        login,
+        "You are not authorized to execute this command",
+      )
+    )
+      return;
+
+    if (this.matchState !== "not_started") {
+      this.clientManager.client.call(
+        "ChatSendServerMessageToLogin",
+        `Match has already started, cannot go to lobby`,
+        login,
+      );
+      return;
+    }
+
+    if (
+      !this.config?.lobby ||
+      (!this.config.lobby.map && !this.config.lobby.script)
+    ) {
+      this.clientManager.client.call(
+        "ChatSendServerMessageToLogin",
+        `Lobby configuration is not set`,
+        login,
+      );
+      return;
+    }
+
+    await this.setLobbyState(login);
+  }
+
+  private updatePickBan() {
     this.widget.setData({
-      mapInfosJson: JSON.stringify(this.pickBanMaps),
+      mapInfosJson: JSON.stringify(this.pickBanState.maps),
+      currentActionJson: this.pickBanState.currentAction
+        ? JSON.stringify(this.pickBanState.currentAction)
+        : undefined,
     });
     this.widget.update();
+  }
+
+  private displayPickBan() {
+    this.widget.setData({
+      pickBanAction: "match-pickban-action",
+      mapInfosJson: JSON.stringify(this.pickBanState.maps),
+      currentActionJson: this.pickBanState.currentAction
+        ? JSON.stringify(this.pickBanState.currentAction)
+        : undefined,
+    });
+    this.widget.display();
+  }
+
+  private checkCommandPermission(login: string, message?: string): boolean {
+    if (!this.config?.admins?.includes(login)) {
+      this.clientManager.client.call(
+        "ChatSendServerMessageToLogin",
+        message || `You are not authorized to perform this action`,
+        login,
+      );
+      return false;
+    }
+    return true;
+  }
+
+  private async getCurrentPickBanAction(): Promise<PickBanAction | null> {
+    if (this.pickBanState.order.length < this.pickBanState.currentIndex + 1)
+      return null;
+
+    const currentAction =
+      this.pickBanState.order[this.pickBanState.currentIndex];
+
+    if (currentAction.action === "random") {
+      return {
+        action: "random",
+        login: "",
+        nickName: "",
+      };
+    }
+
+    const player = this.pickBanState.players.find(
+      (p) => p.seed === currentAction.seed,
+    );
+
+    if (!player) {
+      return {
+        action: currentAction.action,
+        login: "",
+        nickName: "",
+      };
+    }
+
+    let playerInfo = this.clientManager.info.activePlayers.find(
+      (p) => p.login === player.login,
+    );
+
+    if (!playerInfo) {
+      try {
+        playerInfo = await getPlayerInfo(
+          this.clientManager.client,
+          player.login,
+        );
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    return {
+      action: currentAction.action,
+      login: player.login,
+      nickName: playerInfo?.nickName || player.login,
+    };
+  }
+
+  private async getNextPickBanAction() {
+    this.pickBanState.currentIndex += 1;
+    return this.getCurrentPickBanAction();
+  }
+
+  private async setPickBanState() {
+    const mapsInfo = await getMapsInfo(
+      this.clientManager.client,
+      this.config?.maps || [],
+    );
+
+    const maps = mapsInfo.map((map) => ({
+      name: map.Name,
+      author: map.Author,
+      uid: map.UId,
+      filename: map.FileName,
+      index: 0,
+      pickedBy: "",
+      bannedBy: "",
+    }));
+
+    const order = stringToPickAndBan(this.config?.pickAndBan?.order);
+    const players = this.config?.pickAndBan?.players || [];
+
+    this.pickBanState = {
+      order,
+      players,
+      maps,
+      currentIndex: 0,
+      currentAction: null,
+      pickedMaps: [],
+    };
+
+    this.pickBanState.currentAction = await this.getCurrentPickBanAction();
+  }
+
+  private isPickBanDone() {
+    // If current index is greater than or equal to the amount of maps, then pick and ban is done
+    if (this.pickBanState.currentIndex >= this.pickBanState.maps.length)
+      return true;
+
+    // If the current action is null, then pick and ban is done
+    if (!this.pickBanState.currentAction) return true;
+
+    return false;
+  }
+
+  private handleRandomPickBan() {
+    const availableMaps = this.pickBanState.maps.filter(
+      (map) => !map.pickedBy && !map.bannedBy,
+    );
+
+    if (availableMaps.length === 0) return;
+
+    const randomIndex = Math.floor(Math.random() * availableMaps.length);
+    const randomMap = availableMaps[randomIndex];
+
+    if (!randomMap) return;
+
+    this.pickBanState.pickedMaps.push(randomMap.filename);
+    randomMap.pickedBy = "random";
+    randomMap.index = this.pickBanState.pickedMaps.length;
+  }
+
+  private async handleNextPickBanAction() {
+    if (this.isPickBanDone()) {
+      await sleep(10000);
+      this.matchState = "ready";
+      this.clientManager.client.call(
+        "ChatSendServerMessage",
+        `Pick and ban phase completed, match is ready to start`,
+      );
+      this.widget.destroy();
+      return;
+    }
+
+    if (this.pickBanState.currentAction?.action === "random") {
+      await sleep(1000); // Wait for 1 second before handling the next action
+      this.handleRandomPickBan();
+      this.pickBanState.currentAction = await this.getNextPickBanAction();
+      this.updatePickBan();
+      this.handleNextPickBanAction();
+    }
+  }
+
+  private async setLobbyState(login: string = "") {
+    if (this.config?.lobby?.script) {
+      try {
+        await setScriptName(
+          this.clientManager.client,
+          this.config.lobby.script,
+        );
+        this.clientManager.client.call(
+          "ChatSendServerMessage",
+          `Loaded lobby script: ${this.config.lobby.script}`,
+        );
+      } catch (error) {
+        console.error("Error loading lobby script:", error);
+        this.clientManager.client.call(
+          "ChatSendServerMessageToLogin",
+          `Failed to load lobby script: ${error}`,
+          login,
+        );
+      }
+    }
+
+    if (this.config?.lobby?.map) {
+      try {
+        await setMapList(this.clientManager.client, [this.config.lobby.map]);
+      } catch (error) {
+        console.error("Error setting lobby map:", error);
+        this.clientManager.client.call(
+          "ChatSendServerMessageToLogin",
+          `Failed to set lobby map: ${error}`,
+          login,
+        );
+      }
+    }
+
+    try {
+      await jumpToMapIndex(this.clientManager.client, 0);
+      this.matchState = "not_started";
+    } catch {
+      try {
+        await restartMap(this.clientManager.client);
+        this.matchState = "not_started";
+      } catch (restartError) {
+        console.error("Error going to lobby:", restartError);
+        this.clientManager.client.call(
+          "ChatSendServerMessageToLogin",
+          `Failed to go to lobby: ${restartError}`,
+          login,
+        );
+      }
+    }
   }
 }

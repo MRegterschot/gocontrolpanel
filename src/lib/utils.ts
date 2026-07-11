@@ -526,7 +526,7 @@ export function pickAndBanToString(
 
 /**
  * Converts a string to a pick and ban configuration.
- * The format is: "b":1,b:2,p:2,p:1,r,r,r"
+ * The format is: "b:1,b:2,p:2,p:1,r,r,r"
  */
 export function stringToPickAndBan(str?: string): MatchPluginPickAndBanOrder {
   if (!str) return [];

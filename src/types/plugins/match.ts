@@ -3,7 +3,10 @@ export type MatchPluginConfig = {
   maps?: string[];
   pickAndBan?: MatchPluginPickAndBan;
   script?: string;
-  matchSettings?: string;
+  lobby?: {
+    script?: string;
+    map?: string;
+  }
 };
 
 export type MatchPluginPickAndBan = {
