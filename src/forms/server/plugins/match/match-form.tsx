@@ -1,11 +1,13 @@
 "use client";
 
 import { updateServerPlugin } from "@/actions/database/server-plugins";
+import { UserMinimal } from "@/actions/database/users";
 import { getScripts } from "@/actions/filemanager";
 import { getLocalMaps } from "@/actions/gbx/server";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form, FormDescription, FormLabel } from "@/components/ui/form";
+import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSearchUsers } from "@/hooks/use-search-users";
 import {
@@ -25,7 +27,7 @@ import {
 } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { useFieldArray, useForm, useWatch } from "react-hook-form";
+import { Control, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { MatchPluginSchema, MatchPluginSchemaType } from "./match-schema";
 
@@ -96,6 +98,7 @@ export default function MatchForm({
     defaultUsers: [
       ...defaultAdmins,
       ...(config?.pickAndBan?.players.map((p) => p.login) || []),
+      ...(config?.pickAndBan?.teams?.flatMap((t) => t.players) || []),
     ],
     field: "login",
   });
@@ -108,8 +111,13 @@ export default function MatchForm({
       maps: config?.maps?.map((filename) => ({ filename })) || [],
       pickAndBan: config?.pickAndBan
         ? {
+            ...config.pickAndBan,
+            type: config.pickAndBan.type || "player",
             order: stringToPickAndBan(config.pickAndBan.order),
-            players: config.pickAndBan.players,
+            teams: config.pickAndBan.teams?.map((team) => ({
+              seed: team.seed,
+              players: team.players.map((login) => ({ login })),
+            })),
           }
         : undefined,
     },
@@ -144,6 +152,11 @@ export default function MatchForm({
     name: "pickAndBan.order",
   });
 
+  const type = useWatch({
+    control,
+    name: "pickAndBan.type",
+  });
+
   const order = useWatch({
     control,
     name: "pickAndBan.order",
@@ -158,6 +171,15 @@ export default function MatchForm({
     name: "pickAndBan.players",
   });
 
+  const {
+    fields: pickAndBanTeamFields,
+    append: appendPickAndBanTeam,
+    remove: removePickAndBanTeam,
+  } = useFieldArray({
+    control,
+    name: "pickAndBan.teams",
+  });
+
   async function handleSubmit(values: MatchPluginSchemaType) {
     try {
       const updatedConfig: MatchPluginConfig = {
@@ -167,8 +189,12 @@ export default function MatchForm({
           values.maps?.filter((e) => e.filename).map((e) => e.filename) || [],
         pickAndBan: values.pickAndBan
           ? {
+              ...values.pickAndBan,
               order: pickAndBanToString(values.pickAndBan.order),
-              players: values.pickAndBan.players,
+              teams: values.pickAndBan.teams?.map((team) => ({
+                seed: team.seed,
+                players: team.players.map((p) => p.login),
+              })),
             }
           : undefined,
       };
@@ -206,6 +232,10 @@ export default function MatchForm({
           ? {
               ...json.pickAndBan,
               order: stringToPickAndBan(json.pickAndBan.order),
+              teams: json.pickAndBan.teams?.map((team) => ({
+                seed: team.seed,
+                players: team.players.map((login) => ({ login })),
+              })),
             }
           : undefined,
       };
@@ -363,7 +393,18 @@ export default function MatchForm({
           </TabsContent>
           <TabsContent value="pick-and-ban">
             <div className="flex flex-col gap-4">
-              {/* Pick and Ban */}
+              <FormElement
+                name={"pickAndBan.type"}
+                label="Pick and Ban Type"
+                description="The type of pick and ban process. Choose between 'player' or 'team' to determine how the picks and bans will be executed."
+                options={[
+                  { label: "Player", value: "player" },
+                  { label: "Team", value: "team" },
+                ]}
+                type="select"
+                isRequired
+              />
+
               <div className="flex flex-col gap-2">
                 <div>
                   <FormLabel className="text-sm">Pick and Ban</FormLabel>
@@ -423,66 +464,129 @@ export default function MatchForm({
                 </Button>
               </div>
 
-              {/* Pick and Ban */}
-              <div className="flex flex-col gap-2">
-                <div>
-                  <FormLabel className="text-sm">Players</FormLabel>
-                  <FormDescription className="max-w-xs whitespace-normal wrap-break-word">
-                    The players who will participate in the pick and ban
-                    process. Each player is assigned a seed, which is used in
-                    the pick and ban order.
-                  </FormDescription>
-                </div>
-                {pickAndBanPlayerFields.map((field, index) => (
-                  <div key={field.id} className="flex gap-2">
-                    <div className="flex-1 flex gap-2">
-                      <FormElement
-                        name={`pickAndBan.players.${index}.seed`}
-                        type="number"
-                        min={1}
-                        className="w-16"
-                      />
-
-                      <FormElement
-                        name={`pickAndBan.players.${index}.login`}
-                        className="w-full"
-                        rootClassName="flex-1"
-                        placeholder="Search user..."
-                        onSearch={search}
-                        options={searchResults.map((u) => ({
-                          label: u.nickName,
-                          value: u.login,
-                        }))}
-                        isLoading={searching}
-                        type="search"
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size={"icon"}
-                      onClick={() => removePickAndBanPlayer(index)}
-                    >
-                      <IconTrash />
-                      <span className="sr-only">Remove Player</span>
-                    </Button>
+              {type === "team" && (
+                <div className="flex flex-col gap-2">
+                  <div>
+                    <FormLabel className="text-sm">Teams</FormLabel>
+                    <FormDescription className="max-w-xs whitespace-normal wrap-break-word">
+                      The teams that will participate in the pick and ban
+                      process. Each team is assigned a seed, which is used in
+                      the pick and ban order. Also add players to the team.
+                    </FormDescription>
                   </div>
-                ))}
+                  {pickAndBanTeamFields.map((field, index) => (
+                    <div key={field.id} className="flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        <div className="flex-1 flex gap-2">
+                          <FormElement
+                            name={`pickAndBan.teams.${index}.seed`}
+                            type="number"
+                            label={`Seed`}
+                            rootClassName="w-full"
+                            min={1}
+                          >
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              onClick={() => removePickAndBanTeam(index)}
+                            >
+                              <IconTrash />
+                              Remove Team
+                            </Button>
+                          </FormElement>
+                        </div>
+                      </div>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() =>
-                    appendPickAndBanPlayer({
-                      login: "",
-                      seed: pickAndBanPlayerFields.length + 1,
-                    })
-                  }
-                >
-                  <IconPlus />
-                  Add Player
-                </Button>
-              </div>
+                      {/* Players in team */}
+                      <TeamFields
+                        control={control}
+                        teamIndex={index}
+                        search={search}
+                        searchResults={searchResults}
+                        searching={searching}
+                      />
+
+                      <Separator />
+                    </div>
+                  ))}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      appendPickAndBanTeam({
+                        seed: pickAndBanTeamFields.length + 1,
+                        players: [],
+                      })
+                    }
+                  >
+                    <IconPlus />
+                    Add Team
+                  </Button>
+                </div>
+              )}
+
+              {type === "player" && (
+                <div className="flex flex-col gap-2">
+                  <div>
+                    <FormLabel className="text-sm">Players</FormLabel>
+                    <FormDescription className="max-w-xs whitespace-normal wrap-break-word">
+                      The players who will participate in the pick and ban
+                      process. Each player is assigned a seed, which is used in
+                      the pick and ban order.
+                    </FormDescription>
+                  </div>
+                  {pickAndBanPlayerFields.map((field, index) => (
+                    <div key={field.id} className="flex gap-2">
+                      <div className="flex-1 flex gap-2">
+                        <FormElement
+                          name={`pickAndBan.players.${index}.seed`}
+                          type="number"
+                          min={1}
+                          className="w-16"
+                        />
+
+                        <FormElement
+                          name={`pickAndBan.players.${index}.login`}
+                          className="w-full"
+                          rootClassName="flex-1"
+                          placeholder="Search user..."
+                          onSearch={search}
+                          options={searchResults.map((u) => ({
+                            label: u.nickName,
+                            value: u.login,
+                          }))}
+                          isLoading={searching}
+                          type="search"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size={"icon"}
+                        onClick={() => removePickAndBanPlayer(index)}
+                      >
+                        <IconTrash />
+                        <span className="sr-only">Remove Player</span>
+                      </Button>
+                    </div>
+                  ))}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      appendPickAndBanPlayer({
+                        login: "",
+                        seed: pickAndBanPlayerFields.length + 1,
+                      })
+                    }
+                  >
+                    <IconPlus />
+                    Add Player
+                  </Button>
+                </div>
+              )}
             </div>
           </TabsContent>
           <TabsContent value="lobby">
@@ -585,5 +689,71 @@ export default function MatchForm({
         </div>
       </form>
     </Form>
+  );
+}
+
+function TeamFields({
+  control,
+  teamIndex,
+  search,
+  searchResults,
+  searching,
+}: {
+  control: Control<MatchPluginSchemaType>;
+  teamIndex: number;
+  search: (query?: string) => Promise<void>;
+  searchResults: UserMinimal[];
+  searching: boolean;
+}) {
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: `pickAndBan.teams.${teamIndex}.players`,
+  });
+
+  return (
+    <div className="flex flex-col gap-2 mt-2">
+      <FormLabel className="text-sm">Players</FormLabel>
+      {fields.map((field, index) => (
+        <div key={field.id} className="flex gap-2">
+          <div className="flex-1 flex gap-2">
+            <FormElement
+              name={`pickAndBan.teams.${teamIndex}.players.${index}.login`}
+              className="w-full"
+              rootClassName="flex-1"
+              placeholder="Search user..."
+              onSearch={search}
+              options={searchResults.map((u) => ({
+                label: u.nickName,
+                value: u.login,
+              }))}
+              isLoading={searching}
+              type="search"
+            />
+          </div>
+          <Button
+            type="button"
+            variant="destructive"
+            size={"icon"}
+            onClick={() => remove(index)}
+          >
+            <IconTrash />
+            <span className="sr-only">Remove Player</span>
+          </Button>
+        </div>
+      ))}
+
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() =>
+          append({
+            login: "",
+          })
+        }
+      >
+        <IconPlus />
+        Add Player
+      </Button>
+    </div>
   );
 }
