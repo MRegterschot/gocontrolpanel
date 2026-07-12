@@ -42,7 +42,6 @@ import {
 } from "../utils";
 import PluginManager from "./plugin-manager";
 
-type Listener<T = any> = (data: T) => void;
 type ActionListener = (
   data: PlayerManialinkPageAnswer,
   params: Record<string, string>,
@@ -753,7 +752,6 @@ function onPlayerInfoChanged(
 
   if (!changedInfo.login) return;
 
-  manager.removeActivePlayer(changedInfo.login);
   manager.addActivePlayer(changedInfo);
   manager.emit("playerInfo", changedInfo);
 

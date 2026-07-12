@@ -1,4 +1,3 @@
-import { getPlayerInfo } from "@/actions/gbx/server-only";
 import { pauseMatch, setScriptName } from "@/actions/gbx/server-only/game";
 import {
   getMapList,
@@ -21,14 +20,20 @@ export type MatchState = "not_started" | "pickban" | "ready" | "in_progress";
 type PickBanAction = {
   action: "pick" | "ban" | "random";
   login: string;
+  players: string[];
   nickName: string;
 };
 
 type PickBanState = {
+  type: "player" | "team";
   order: MatchPluginPickAndBanOrder;
-  players: {
+  players?: {
     login: string;
     seed: number;
+  }[];
+  teams?: {
+    seed: number;
+    players: string[];
   }[];
   maps: MapInfo[];
   currentIndex: number;
@@ -42,6 +47,7 @@ type MapInfo = {
   uid: string;
   filename: string;
   index: number;
+  selectedBy: string[];
   pickedBy: string;
   bannedBy: string;
 };
@@ -52,6 +58,7 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
 
   private matchState: MatchState = "not_started";
   private pickBanState: PickBanState = {
+    type: "player",
     order: [],
     players: [],
     maps: [],
@@ -135,7 +142,17 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
       return;
     }
 
-    if (this.pickBanState.currentAction.login !== data.Login) return;
+    if (
+      this.pickBanState.type === "player" &&
+      this.pickBanState.currentAction.login !== data.Login
+    )
+      return;
+
+    if (
+      this.pickBanState.type === "team" &&
+      !this.pickBanState.currentAction.players.includes(data.Login)
+    )
+      return;
 
     const map = this.pickBanState.maps.find((map) => map.uid === uid);
     if (!map) {
@@ -147,17 +164,57 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
       return;
     }
 
-    if (this.pickBanState.currentAction.action === "pick") {
-      this.pickBanState.pickedMaps.push(map.filename);
+    if (this.pickBanState.type === "player") {
+      if (this.pickBanState.currentAction.action === "pick") {
+        this.pickBanState.pickedMaps.push(map.filename);
 
-      map.pickedBy = this.pickBanState.currentAction.nickName;
-      map.index = this.pickBanState.pickedMaps.length;
-    } else if (this.pickBanState.currentAction.action === "ban") {
-      map.bannedBy = this.pickBanState.currentAction.nickName;
+        map.pickedBy = this.pickBanState.currentAction.nickName;
+        map.index = this.pickBanState.pickedMaps.length;
+      } else if (this.pickBanState.currentAction.action === "ban") {
+        map.bannedBy = this.pickBanState.currentAction.nickName;
+      }
+
+      this.pickBanState.currentAction = this.getNextPickBanAction();
+      this.updatePickBan();
+    } else if (this.pickBanState.type === "team") {
+      // Add the player's login to the selectedBy array for the map
+      if (!map.selectedBy.includes(data.Login)) {
+        map.selectedBy.push(data.Login);
+      }
+
+      // Remove the player's login from any other maps' selectedBy arrays that are not picked or banned
+      this.pickBanState.maps.forEach((m) => {
+        if (m.uid !== map.uid && !m.pickedBy && !m.bannedBy) {
+          m.selectedBy = m.selectedBy.filter((login) => login !== data.Login);
+        }
+      });
+
+      // Check if more than half of the active players on the team have selected the same map
+      const teamPlayers = this.pickBanState.currentAction.players;
+      const selectedCount = map.selectedBy.filter((login) =>
+        teamPlayers.includes(login),
+      ).length;
+      const activeTeamPlayers = this.clientManager.info.activePlayers.filter((p) =>
+        teamPlayers.includes(p.login),
+      ).length;
+
+      if (selectedCount > activeTeamPlayers / 2) {
+        if (this.pickBanState.currentAction.action === "pick") {
+          this.pickBanState.pickedMaps.push(map.filename);
+
+          map.pickedBy = this.pickBanState.currentAction.nickName;
+          map.index = this.pickBanState.pickedMaps.length;
+        } else if (this.pickBanState.currentAction.action === "ban") {
+          map.bannedBy = this.pickBanState.currentAction.nickName;
+        }
+
+        this.pickBanState.currentAction = this.getNextPickBanAction();
+        this.updatePickBan();
+      } else {
+        this.updatePickBan();
+        return; // Wait for more players to select the map before proceeding
+      }
     }
-
-    this.pickBanState.currentAction = await this.getNextPickBanAction();
-    this.updatePickBan();
 
     await this.handleNextPickBanAction();
   };
@@ -506,7 +563,7 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
     return true;
   }
 
-  private async getCurrentPickBanAction(): Promise<PickBanAction | null> {
+  private getCurrentPickBanAction(): PickBanAction | null {
     if (this.pickBanState.order.length < this.pickBanState.currentIndex + 1)
       return null;
 
@@ -517,45 +574,61 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
       return {
         action: "random",
         login: "",
+        players: [],
         nickName: "",
       };
     }
 
-    const player = this.pickBanState.players.find(
-      (p) => p.seed === currentAction.seed,
-    );
+    if (this.pickBanState.type === "player") {
+      const player = this.pickBanState.players?.find(
+        (p) => p.seed === currentAction.seed,
+      );
 
-    if (!player) {
+      if (!player) {
+        return {
+          action: currentAction.action,
+          login: "",
+          players: [],
+          nickName: "",
+        };
+      }
+
+      let playerInfo = this.clientManager.info.activePlayers.find(
+        (p) => p.login === player.login,
+      );
+
+      return {
+        action: currentAction.action,
+        login: player.login,
+        players: [],
+        nickName: playerInfo?.nickName || player.login,
+      };
+    } else if (this.pickBanState.type === "team") {
+      const team = this.pickBanState.teams?.find(
+        (t) => t.seed === currentAction.seed,
+      );
+
+      if (!team) {
+        return {
+          action: currentAction.action,
+          login: "",
+          players: [],
+          nickName: "",
+        };
+      }
+
       return {
         action: currentAction.action,
         login: "",
-        nickName: "",
+        players: team.players,
+        nickName: `Team ${currentAction.seed}`,
       };
     }
 
-    let playerInfo = this.clientManager.info.activePlayers.find(
-      (p) => p.login === player.login,
-    );
-
-    if (!playerInfo) {
-      try {
-        playerInfo = await getPlayerInfo(
-          this.clientManager.client,
-          player.login,
-        );
-      } catch (error) {
-        console.error(error);
-      }
-    }
-
-    return {
-      action: currentAction.action,
-      login: player.login,
-      nickName: playerInfo?.nickName || player.login,
-    };
+    return null;
   }
 
-  private async getNextPickBanAction() {
+  private getNextPickBanAction() {
     this.pickBanState.currentIndex += 1;
     return this.getCurrentPickBanAction();
   }
@@ -572,23 +645,27 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
       uid: map.UId,
       filename: map.FileName,
       index: 0,
+      selectedBy: [],
       pickedBy: "",
       bannedBy: "",
     }));
 
     const order = stringToPickAndBan(this.config?.pickAndBan?.order);
     const players = this.config?.pickAndBan?.players || [];
+    const teams = this.config?.pickAndBan?.teams || [];
 
     this.pickBanState = {
+      type: this.config?.pickAndBan?.type || "player",
       order,
       players,
+      teams,
       maps,
       currentIndex: 0,
       currentAction: null,
       pickedMaps: [],
     };
 
-    this.pickBanState.currentAction = await this.getCurrentPickBanAction();
+    this.pickBanState.currentAction = this.getCurrentPickBanAction();
   }
 
   private isPickBanDone() {
@@ -634,7 +711,7 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
     if (this.pickBanState.currentAction?.action === "random") {
       await sleep(1000); // Wait for 1 second before handling the next action
       this.handleRandomPickBan();
-      this.pickBanState.currentAction = await this.getNextPickBanAction();
+      this.pickBanState.currentAction = this.getNextPickBanAction();
       this.updatePickBan();
       this.handleNextPickBanAction();
     }

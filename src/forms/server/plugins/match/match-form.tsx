@@ -97,7 +97,7 @@ export default function MatchForm({
   const { search, searchResults, searching, loading } = useSearchUsers({
     defaultUsers: [
       ...defaultAdmins,
-      ...(config?.pickAndBan?.players.map((p) => p.login) || []),
+      ...(config?.pickAndBan?.players?.map((p) => p.login) || []),
       ...(config?.pickAndBan?.teams?.flatMap((t) => t.players) || []),
     ],
     field: "login",

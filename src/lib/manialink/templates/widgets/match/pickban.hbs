@@ -33,6 +33,7 @@
   Text author;
   Text uid;
   Integer index;
+  Text[] selectedBy;
   Text pickedBy;
   Text bannedBy;
 }
@@ -40,6 +41,7 @@
 #Struct PickBanAction {
   Text action;
   Text login;
+  Text[] players;
   Text nickName;
 }
 {{/content}}
@@ -75,6 +77,14 @@ Void updateMapStatus(CMlFrame mapFrame, MapInfo map) {
     (mapFrame.Controls[2] as CMlLabel).SetText("");
     (mapFrame.Controls[5] as CMlLabel).SetText("Banned by " ^ map.bannedBy);
     (mapFrame.Controls[1] as CMlQuad).Opacity = 0.7;
+  }
+
+  if (map.bannedBy == "" && map.pickedBy == "") {
+    if (map.selectedBy.count == 0) {
+      (mapFrame.Controls[5] as CMlLabel).SetText("");
+    } else {
+      (mapFrame.Controls[5] as CMlLabel).SetText("" ^ map.selectedBy.count);
+    }
   }
 }
 

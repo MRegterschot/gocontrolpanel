@@ -16,7 +16,7 @@ export type MatchPluginPickAndBan = {
     seed: number;
     players: string[];
   }[];
-  players: {
+  players?: {
     login: string;
     seed: number;
   }[];

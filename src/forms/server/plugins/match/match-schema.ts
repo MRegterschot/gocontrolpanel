@@ -43,12 +43,14 @@ export const MatchPluginSchema = z.object({
           }),
         )
         .optional(),
-      players: z.array(
-        z.object({
-          login: z.string(),
-          seed: z.number(),
-        }),
-      ),
+      players: z
+        .array(
+          z.object({
+            login: z.string(),
+            seed: z.number(),
+          }),
+        )
+        .optional(),
     })
     .optional(),
   script: z.string().optional(),
