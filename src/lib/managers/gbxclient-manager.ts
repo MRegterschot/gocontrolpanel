@@ -42,13 +42,42 @@ import {
 } from "../utils";
 import PluginManager from "./plugin-manager";
 
-type Listener<T = any> = (data: T) => void;
+type ActionListener = (
+  data: PlayerManialinkPageAnswer,
+  params: Record<string, string>,
+) => void;
 type CommandListener = (args: string[], login: string) => void;
 type Reconnect = {
   timeout: NodeJS.Timeout | null;
   start: number | null;
   delay: number;
 };
+
+function matchPattern(
+  pattern: string,
+  event: string,
+): Record<string, string> | null {
+  const keys: string[] = [];
+
+  const regex = new RegExp(
+    "^" +
+      pattern.replace(/\{([^}]+)\}/g, (_, key) => {
+        keys.push(key);
+        return "([^/]+)";
+      }) +
+      "$",
+  );
+
+  const match = event.match(regex);
+  if (!match) return null;
+
+  const params: Record<string, string> = {};
+  keys.forEach((key, i) => {
+    params[key] = match[i + 1];
+  });
+
+  return params;
+}
 
 export class GbxClientManager extends EventEmitter {
   client: GbxClient;
@@ -64,7 +93,7 @@ export class GbxClientManager extends EventEmitter {
   };
   private listenerMap: Map<string, Record<string, (...args: any[]) => void>> =
     new Map();
-  private actionListeners = new Map<string, Listener[]>();
+  private actionListeners = new Map<string, ActionListener[]>();
   private commandListeners = new Map<string, CommandListener[]>();
   currentMatchId: string | null = null;
   roundNumber: number | null = null;
@@ -143,7 +172,7 @@ export class GbxClientManager extends EventEmitter {
     this.listenerMap.delete(listenerId);
   }
 
-  onAction(eventName: string, callback: Listener): void {
+  onAction(eventName: string, callback: ActionListener): void {
     if (!this.actionListeners.has(eventName)) {
       this.actionListeners.set(eventName, []);
     }
@@ -151,13 +180,22 @@ export class GbxClientManager extends EventEmitter {
   }
 
   emitAction(eventName: string, data: PlayerManialinkPageAnswer): void {
-    const handlers = this.actionListeners.get(eventName);
-    if (handlers) {
-      for (const fn of handlers) fn(data);
+    const exactHandlers = this.actionListeners.get(eventName);
+    if (exactHandlers) {
+      for (const fn of exactHandlers) fn(data, {});
+    }
+
+    for (const [pattern, handlers] of this.actionListeners) {
+      if (pattern === eventName) continue;
+
+      const params = matchPattern(pattern, eventName);
+      if (!params) continue;
+
+      handlers.forEach((fn) => fn(data, params));
     }
   }
 
-  offAction(eventName: string, callback: Listener): void {
+  offAction(eventName: string, callback: ActionListener): void {
     const handlers = this.actionListeners.get(eventName);
     if (!handlers) return;
     this.actionListeners.set(
@@ -714,7 +752,6 @@ function onPlayerInfoChanged(
 
   if (!changedInfo.login) return;
 
-  manager.removeActivePlayer(changedInfo.login);
   manager.addActivePlayer(changedInfo);
   manager.emit("playerInfo", changedInfo);
 

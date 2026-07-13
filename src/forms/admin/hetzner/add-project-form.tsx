@@ -131,8 +131,8 @@ export default function AddProjectForm({
         {/* Users with roles */}
         <div className="flex flex-col gap-2">
           <FormLabel className="text-sm">Users</FormLabel>
-          {userFields.map((_, index) => (
-            <div key={index} className="flex gap-2">
+          {userFields.map((field, index) => (
+            <div key={field.id} className="flex gap-2">
               <div className="flex-1">
                 <FormElement
                   name={`hetznerProjectUsers.${index}.userId`}

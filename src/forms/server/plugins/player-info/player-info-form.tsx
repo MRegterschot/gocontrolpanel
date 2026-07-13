@@ -132,8 +132,8 @@ export default function PlayerInfoForm({
               Add players to display their device and camera information.
             </FormDescription>
           </div>
-          {playerInfoFields.map((_, index) => (
-            <div key={index} className="flex flex-col gap-1">
+          {playerInfoFields.map((field, index) => (
+            <div key={field.id} className="flex flex-col gap-1">
               <div className="flex gap-2 flex-1">
                 <FormElement
                   name={`playerInfos.${index}.login`}
@@ -187,32 +187,32 @@ export default function PlayerInfoForm({
             <IconPlus />
             Add Player
           </Button>
+        </div>
 
-          <div className="flex justify-between mt-4">
-            <Button variant={"outline"} onClick={onClose} className="self-end">
-              <IconX />
-              Close
+        <div className="flex justify-between">
+          <Button variant={"outline"} onClick={onClose} className="self-end">
+            <IconX />
+            Close
+          </Button>
+          <div>
+            <Button asChild variant={"outline"} className="mr-2">
+              <label htmlFor="config-import">
+                <IconFileImport />
+                Import Config
+                <input
+                  id="config-import"
+                  type="file"
+                  accept=".json"
+                  className="hidden"
+                  onChange={handleConfigImport}
+                />
+              </label>
             </Button>
-            <div>
-              <Button asChild variant={"outline"} className="mr-2">
-                <label htmlFor="config-import">
-                  <IconFileImport />
-                  Import Config
-                  <input
-                    id="config-import"
-                    type="file"
-                    accept=".json"
-                    className="hidden"
-                    onChange={handleConfigImport}
-                  />
-                </label>
-              </Button>
 
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                <IconDeviceFloppy />
-                Save
-              </Button>
-            </div>
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              <IconDeviceFloppy />
+              Save
+            </Button>
           </div>
         </div>
       </form>

@@ -1,0 +1,178 @@
+{{#extend "widget"}}
+{{#content "widget"}}
+<frame id="pickban-action" pos="0 0">
+  <quad pos="0 0" z-index="0" size="120 10" bgcolor="222"/>
+  <label pos="5 -4.75" z-index="0" size="10 10" text="" halign="center" valign="center" textsize="2.5" textcolor="DDD" textfont="GameFontRegular"/>
+  <label pos="12 -4.75" z-index="0" size="100 5" text="Marijn. is picking a map" valign="center" textcolor="DDD" textsize="1.75" textfont="GameFontSemiBold" />
+</frame>
+
+<framemodel id="map-info">
+  <quad pos="0 0" z-index="0" size="10 10" bgcolor="222"/>
+  <quad pos="10 0" z-index="0" size="90 10" bgcolor="DDD"/>
+  <label pos="5 -4.5" z-index="0" size="10 10" text="" halign="center" valign="center" textsize="3" textcolor="DDD" textfont="GameFontBlack"/>
+  <label pos="12 -5.25" z-index="0" size="41 5" text="-" textcolor="222" textsize="1.75" textfont="GameFontSemiBold" valign="bottom"/>
+  <label pos="11.75 -5.5" z-index="0" size="41 5" text="-" textcolor="222" textprefix="$i" textfont="GameFontRegular" valign="top" textsize="1"/>
+
+  <label pos="95 -4.75" z-index="0" size="41 5" text="" textcolor="222" textsize="1.75" textfont="GameFontSemiBold" valign="center" halign="right" />
+
+  <quad class="trigger" pos="0 0" z-index="-2" size="100 10" bgcolor="000" opacity="0" scriptevents="1" />
+</framemodel>
+
+<frame id="maps" pos="0 -10" size="120 124">
+<quad size="120 {{ add (multiply 100 11.5) 9 }}" bgcolor="222" opacity="0.75" scriptevents="1"/>
+{{#range 0 100}}
+<frameinstance modelid="map-info" pos="5 {{ subtract (multiply i -11.5) 5 }}" />
+{{/range}}
+</frame>
+{{/content}}
+
+
+{{#content "globals"}}
+#Struct MapInfo {
+  Text name;
+  Text author;
+  Text uid;
+  Integer index;
+  Text[] selectedBy;
+  Text pickedBy;
+  Text bannedBy;
+}
+
+#Struct PickBanAction {
+  Text action;
+  Text login;
+  Text[] players;
+  Text nickName;
+}
+{{/content}}
+
+{{#content "script"}}
+Void updateScroll(MapInfo[] maps) {
+  declare mapsFrame <=> (Page.MainFrame.GetFirstChild("maps") as CMlFrame);
+  declare Integer mapCount = maps.count;
+  if (mapCount > mapsFrame.Controls.count) {
+    mapCount = mapsFrame.Controls.count;
+  }
+  declare Real maxY = mapCount * 11.5 - 115;
+  if (maxY < 0) {
+    maxY = 0.;
+  }
+  mapsFrame.ScrollMax = <0., maxY>;
+}
+
+Void updateMapStatus(CMlFrame mapFrame, MapInfo map) {
+  if (mapFrame.DataAttributeGet("pickedBy") != map.pickedBy) {
+    mapFrame.DataAttributeSet("pickedBy", map.pickedBy);
+    (mapFrame.Controls[2] as CMlLabel).SetText(TL::ToText(map.index));
+    if (map.pickedBy == "random") {
+      (mapFrame.Controls[5] as CMlLabel).SetText("Random");
+    } else {
+      (mapFrame.Controls[5] as CMlLabel).SetText("Picked by " ^ map.pickedBy);
+    }
+    AnimMgr.Add(mapFrame, "<frame pos='15 " ^ mapFrame.RelativePosition_V3.Y ^ "' />", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
+  }
+
+  if (mapFrame.DataAttributeGet("bannedBy") != map.bannedBy) {
+    mapFrame.DataAttributeSet("bannedBy", map.bannedBy);
+    (mapFrame.Controls[2] as CMlLabel).SetText("");
+    (mapFrame.Controls[5] as CMlLabel).SetText("Banned by " ^ map.bannedBy);
+    (mapFrame.Controls[1] as CMlQuad).Opacity = 0.7;
+  }
+
+  if (map.bannedBy == "" && map.pickedBy == "") {
+    if (map.selectedBy.count == 0) {
+      (mapFrame.Controls[5] as CMlLabel).SetText("");
+    } else {
+      (mapFrame.Controls[5] as CMlLabel).SetText("" ^ map.selectedBy.count);
+    }
+  }
+}
+
+Void updateMapInfoRow(Integer index, MapInfo map, MapInfo[] maps) {
+  declare mapsFrame <=> (Page.MainFrame.GetFirstChild("maps") as CMlFrame);
+
+  if (index >= mapsFrame.Controls.count) {
+    return;
+  }
+
+  declare mapFrame <=> (mapsFrame.Controls[index + 1] as CMlFrame);
+
+  if (mapFrame.DataAttributeGet("action") != "") {
+    updateMapStatus(mapFrame, map);
+    return;
+  }
+
+  (mapFrame.Controls[3] as CMlLabel).SetText(map.name);
+  (mapFrame.Controls[4] as CMlLabel).SetText(map.author);
+
+  mapFrame.DataAttributeSet("action", "{{ data.pickBanAction }}-" ^ map.uid);
+  
+  updateMapStatus(mapFrame, map);
+
+  mapFrame.Show();
+}
+
+Void updateWidget(MapInfo[] mapInfos, PickBanAction currentAction) {
+  declare actionFrame <=> (Page.MainFrame.GetFirstChild("pickban-action") as CMlFrame);
+  declare actionLabel <=> (actionFrame.Controls[2] as CMlLabel);
+  if (currentAction.action == "pick") {
+    actionLabel.SetText(currentAction.nickName ^ " is picking a map");
+  } else if (currentAction.action == "ban") {
+    actionLabel.SetText(currentAction.nickName ^ " is banning a map");
+  } else if (currentAction.action == "random") {
+    actionLabel.SetText("Random map is being picked");
+  } else {
+    actionLabel.SetText("Pick and ban completed");
+  }
+    
+
+  declare mapsCount = mapInfos.count;
+  declare index = 0;
+
+  foreach (map in mapInfos) {
+    updateMapInfoRow(index, map, mapInfos);
+    index = index + 1;
+  }
+
+  declare mapsFrame <=> (Page.MainFrame.GetFirstChild("maps") as CMlFrame);
+  (mapsFrame.Controls[0] as CMlQuad).Size = <120., (mapsCount * 11.5) + 9>;
+
+  // Hide unused rows
+  while (index < mapsFrame.Controls.count - 1) {
+    declare mapFrame <=> (mapsFrame.Controls[index + 1] as CMlFrame);
+    mapFrame.DataAttributeSet("action", "");
+    mapFrame.Hide();
+    index = index + 1;
+  }
+
+  updateScroll(mapInfos);
+}
+{{/content}}
+
+{{#content "main"}}
+declare MapInfo[] MapInfos for This;
+declare PickBanAction CurrentAction for This;
+declare Integer LastPickBanUpdate for This = -1;
+declare Integer lastUpdate = -1;
+declare mapsFrame <=> (widget.GetFirstChild("maps") as CMlFrame);
+mapsFrame.ScrollActive = True;
+mapsFrame.ScrollMin = <0., 0.>;
+{{/content}}
+
+
+{{#content "loop"}}
+if (LastPickBanUpdate != lastUpdate) {
+  lastUpdate = LastPickBanUpdate;
+  updateWidget(MapInfos, CurrentAction);
+}
+{{/content}}
+
+{{#content "events"}}
+if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::MouseClick) {
+  declare action = event.Control.Parent.DataAttributeGet("action");
+  if (action != "") {
+    TriggerPageAction(action);
+  }
+}
+{{/content}}
+{{/extend}}
