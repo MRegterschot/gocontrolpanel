@@ -26,6 +26,11 @@ export async function restartTrackmaniaServer(
           error,
         );
 
+      if (isNaN(tmServerNumber)) {
+        la("Invalid Trackmania server number");
+        throw new Error("Invalid Trackmania server number");
+      }
+
       const hetznerServer = await getHetznerServer(projectId, serverId);
 
       if (!hetznerServer) {
@@ -94,6 +99,11 @@ export async function stopTrackmaniaServer(
           },
           error,
         );
+
+      if (isNaN(tmServerNumber)) {
+        la("Invalid Trackmania server number");
+        throw new Error("Invalid Trackmania server number");
+      }
 
       const hetznerServer = await getHetznerServer(projectId, serverId);
 
