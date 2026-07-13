@@ -1496,6 +1496,29 @@ async function onPlayerChat(manager: GbxClientManager, chat: PlayerChat) {
     const args = chat.Text.split(" ");
     const commandName = args[0].toLowerCase().slice(1);
     const commandArgs = args.slice(1);
+
+    if (commandName === "help") {
+      if (commandArgs.length === 0) {
+        const helpText =
+          "To get help for a specific plugin, use /help <plugin>. Available plugins: " +
+          manager.pluginManager.getPluginNames().join(", ");
+        manager.client.call(
+          "ChatSendServerMessageToLogin",
+          helpText,
+          chat.Login,
+        );
+      } else {
+        const helpText = manager.pluginManager.getPluginHelpText(
+          commandArgs[0],
+        );
+        manager.client.call(
+          "ChatSendServerMessageToLogin",
+          helpText,
+          chat.Login,
+        );
+      }
+    }
+
     manager.emitCommand(commandName, commandArgs, chat.Login);
   }
 

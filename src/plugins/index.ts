@@ -4,13 +4,17 @@ import ManialinkManager from "@/lib/managers/manialink-manager";
 export default abstract class Plugin<ConfigType = unknown> {
   static pluginId: string;
   static gamemodes: string[] = [];
+  static helpText: string = "No help text provided for this plugin.";
   protected clientManager: GbxClientManager;
   protected manialinkManager: ManialinkManager;
   private loaded: boolean = false;
   protected dbPluginId: string = "";
   protected config: ConfigType | null = null;
 
-  constructor(clientManager: GbxClientManager, manialinkManager: ManialinkManager) {
+  constructor(
+    clientManager: GbxClientManager,
+    manialinkManager: ManialinkManager,
+  ) {
     this.clientManager = clientManager;
     this.manialinkManager = manialinkManager;
   }
@@ -40,6 +44,10 @@ export default abstract class Plugin<ConfigType = unknown> {
 
   isLoaded(): boolean {
     return this.loaded;
+  }
+
+  getHelpText(): string {
+    return (this.constructor as typeof Plugin).helpText;
   }
 
   public setLoaded(loaded: boolean) {

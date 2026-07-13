@@ -8,6 +8,11 @@ import Plugin from "..";
 
 export default class NotifyAdminPlugin extends Plugin {
   static pluginId = "admin";
+    static helpText = 
+`This plugin allows players to notify admins when they need help.
+Commands: 
+/admin <message> - Notifies admins that you need help
+`;
   private widget: Widget;
 
   constructor(

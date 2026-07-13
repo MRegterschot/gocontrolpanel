@@ -12,6 +12,11 @@ import ECMWindow from "./ecm-window";
 
 export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
   static pluginId = "ecm";
+  static helpText = 
+`This plugin sends rounds and finish data to eCircuitMania.
+Commands: 
+/ecm - Opens the eCircuitMania window
+`;
   private widget: Widget;
   private roundOffset: number = 0;
   private activeDrivers: Set<string> = new Set();

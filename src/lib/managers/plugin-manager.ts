@@ -119,6 +119,7 @@ export default class PluginManager {
     };
     this.clientManager.log.info({ meta }, `Unloaded all plugins`);
   }
+
   public async startPlugins() {
     for (const plugin of this.plugins.values()) {
       if (!plugin.isLoaded()) continue;
@@ -317,5 +318,15 @@ export default class PluginManager {
 
   public async deleteAllManialinks() {
     await this.manialinkManager.deleteAllManialinks();
+  }
+
+  public getPluginNames(): string[] {
+    return Array.from(this.plugins.keys());
+  }
+
+  public getPluginHelpText(pluginId: string): string {
+    const plugin = this.plugins.get(pluginId);
+    if (!plugin) return "Plugin not found.";
+    return plugin.getHelpText();
   }
 }
