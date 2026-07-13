@@ -7,6 +7,11 @@ import { logger } from "./logger";
 
 export async function getRedisClient() {
   if (!appGlobals.redis) {
+    const meta = {
+      type: "server",
+      module: "redis",
+      function: "getRedisClient",
+    };
     try {
       appGlobals.redis = new Redis(config.REDISURI, {
         retryStrategy: () => null,
@@ -14,13 +19,16 @@ export async function getRedisClient() {
         reconnectOnError: () => false,
       });
 
-      logger.info("Redis client initialized");
+      logger.info({ meta }, "Redis client initialized");
       return appGlobals.redis;
     } catch (error) {
       if (process.env.NODE_ENV === "production") {
-        logger.warn("Redis not available during build, continuing...");
+        logger.warn(
+          { meta },
+          "Redis not available during build, continuing...",
+        );
       } else {
-        logger.error({ error }, "Error connecting to Redis");
+        logger.error({ meta, error }, "Error connecting to Redis");
         throw new Error("Failed to connect to Redis");
       }
     }

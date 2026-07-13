@@ -54,8 +54,13 @@ export default class ManialinkManager {
       ]);
     }
 
+    const meta = {
+      type: "managers",
+      module: "manialink-manager",
+      function: "onPlayerConnect",
+    };
     this.clientManager.log.trace(
-      { multi },
+      { meta, multi },
       `Re-displaying manialinks to newly connected player ${player.login}`,
     );
 
@@ -63,8 +68,13 @@ export default class ManialinkManager {
   }
 
   private async onPlayerDisconnect(login: string) {
+    const meta = {
+      type: "managers",
+      module: "manialink-manager",
+      function: "onPlayerDisconnect",
+    };
     this.clientManager.log.trace(
-      { login },
+      { meta, login },
       `Player disconnected, removing player-specific manialinks for ${login}`,
     );
 
@@ -84,8 +94,13 @@ export default class ManialinkManager {
       await this.saveManialinkForLogin(login, manialinkId, manialinkData);
     }
 
+    const meta = {
+      type: "managers",
+      module: "manialink-manager",
+      function: "displayManialink",
+    };
     this.clientManager.log.trace(
-      { manialinkId, login, manialinkData },
+      { meta, manialinkId, login, manialinkData },
       `Displaying manialink ${manialinkId} to ${login ? `player ${login}` : "all players"}`,
     );
 
@@ -108,12 +123,18 @@ export default class ManialinkManager {
   }
 
   public async hideManialink(manialinkId: string, login?: string) {
+    const meta = {
+      type: "managers",
+      module: "manialink-manager",
+      function: "hideManialink",
+    };
+
     try {
       const xml = `<?xml version="1.0" encoding="UTF-8"?>
             <manialinks><manialink id="${manialinkId}"></manialink></manialinks>`;
 
       this.clientManager.log.trace(
-        { manialinkId, login, xml },
+        { meta, manialinkId, login, xml },
         `Hiding manialink ${manialinkId} for ${login ? `player ${login}` : "all players"}`,
       );
 
@@ -134,13 +155,18 @@ export default class ManialinkManager {
         );
       }
     } catch (error) {
-      this.clientManager.log.error({ error }, "Error hiding manialink");
+      this.clientManager.log.error({ meta, error }, "Error hiding manialink");
     }
   }
 
   public async destroyManialink(manialinkId: string, login?: string) {
+    const meta = {
+      type: "managers",
+      module: "manialink-manager",
+      function: "destroyManialink",
+    };
     this.clientManager.log.trace(
-      { manialinkId, login },
+      { meta, manialinkId, login },
       `Destroying manialink ${manialinkId} for ${login ? `player ${login}` : "all players"}`,
     );
 
@@ -162,10 +188,13 @@ export default class ManialinkManager {
       multi.push(["SendDisplayManialinkPage", manialink, 0, false]);
     }
 
+    const meta = {
+      type: "managers",
+      module: "manialink-manager",
+      function: "resendAllManialinks",
+    };
     this.clientManager.log.trace(
-      {
-        publicManialinks,
-      },
+      { meta, publicManialinks },
       `Resent all manialinks to all players`,
     );
   }

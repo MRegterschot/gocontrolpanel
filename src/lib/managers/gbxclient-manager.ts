@@ -144,7 +144,12 @@ export class GbxClientManager extends EventEmitter {
 
   private onDisconnect() {
     if (!this.isConnected) return;
-    this.log.info("Disconnected from GBX client for server");
+    const meta = {
+      type: "managers",
+      module: "gbxclient-manager",
+      function: "onDisconnect",
+    };
+    this.log.info({ meta }, "Disconnected from GBX client for server");
     this.isConnected = false;
     this.pluginManager.unloadPlugins();
     this.emit("disconnect", this.serverId);
@@ -268,6 +273,15 @@ export class GbxClientManager extends EventEmitter {
     try {
       await this.connect();
     } catch {
+      const meta = {
+        type: "managers",
+        module: "gbxclient-manager",
+        function: "tryConnectWithRetry",
+      };
+      this.log.warn(
+        { meta, delay: this.reconnect.delay },
+        "Failed to connect to GBX client, retrying...",
+      );
       this.scheduleReconnect();
     }
   }
@@ -309,7 +323,12 @@ export class GbxClientManager extends EventEmitter {
 
     this.isConnected = true;
     this.emit("connect", server.id);
-    this.log.info({ name: server.name }, "Connected to GBX client");
+    const meta = {
+      type: "managers",
+      module: "gbxclient-manager",
+      function: "connect",
+    };
+    this.log.info({ meta, name: server.name }, "Connected to GBX client");
 
     await this.client.call("SetApiVersion", "2023-04-24");
     await this.client.call("EnableCallbacks", true);
@@ -482,7 +501,17 @@ export async function getGbxClientManager(
     const manager = new GbxClientManager(serverId);
     try {
       await manager.connect();
-    } catch {}
+    } catch {
+      const meta = {
+        type: "managers",
+        module: "gbxclient-manager",
+        function: "getGbxClientManager",
+      };
+      manager.log.warn(
+        { meta },
+        "Failed to connect to GBX client, will retry on next attempt",
+      );
+    }
   }
 
   if (!appGlobals.gbxClients?.[serverId]) {
@@ -659,8 +688,13 @@ async function onPlayerConnect(manager: GbxClientManager, login: string) {
   try {
     await syncPlayer(playerInfo);
   } catch (error) {
+    const meta = {
+      type: "managers",
+      module: "gbxclient-manager",
+      function: "onPlayerConnect",
+    };
     manager.log.error(
-      { error, playerInfo },
+      { meta, error, playerInfo },
       "Failed to sync player on connect",
     );
   }
@@ -1283,8 +1317,13 @@ async function setScriptSettings(manager: GbxClientManager) {
         }
         manager.info.liveInfo.pointsRepartitionMap = repartitionMap;
       } catch (error) {
+        const meta = {
+          type: "managers",
+          module: "gbxclient-manager",
+          function: "setScriptSettings",
+        };
         manager.log.error(
-          { error },
+          { meta, error },
           "Failed to parse complex points repartition",
         );
       }

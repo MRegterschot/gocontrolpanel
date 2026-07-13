@@ -12,7 +12,7 @@ import {
   getClubRoom,
   getClubs,
 } from "@/lib/api/nadeo";
-import { getLogger } from "@/lib/logger";
+import { getLogger, logger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
 import {
   getKeyClubActivities,
@@ -205,6 +205,11 @@ export async function getClubCampaignWithMaps(
       "group:servers::admin",
     ],
     async () => {
+      const meta = {
+        type: "nadeo",
+        module: "campaigns",
+        function: "getClubCampaignWithMaps",
+      };
       const redis = await getRedisClient();
       const key = getKeyClubCampaign(clubId, campaignId);
 
@@ -218,6 +223,10 @@ export async function getClubCampaignWithMaps(
       const mapUids = campaign.campaign.playlist.map((m) => m.mapUid);
       const { data: maps, error } = await getMapsByUids(mapUids);
       if (error) {
+        logger.error(
+          { meta, error, campaignId: campaign.id },
+          "Failed to get maps",
+        );
         throw new Error(error);
       }
 
@@ -380,6 +389,11 @@ export async function getClubRoomWithNamesAndMaps(
       "group:servers::admin",
     ],
     async () => {
+      const meta = {
+        type: "nadeo",
+        module: "clubs",
+        function: "getClubRoomWithNamesAndMaps",
+      };
       const clubRoom = await getClubRoom(clubId, roomId);
 
       const accountNames = await getAccountNames([
@@ -389,6 +403,7 @@ export async function getClubRoomWithNamesAndMaps(
 
       const { data: maps, error } = await getMapsByUids(clubRoom.room.maps);
       if (error) {
+        logger.error({ meta, error, clubId, roomId }, "Failed to get maps");
         throw new Error(error);
       }
 
@@ -418,6 +433,11 @@ export async function downloadRoom(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
+      const meta = {
+        type: "nadeo",
+        module: "clubs",
+        function: "downloadRoom",
+      };
       const log = getLogger(serverId);
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
@@ -452,7 +472,7 @@ export async function downloadRoom(
           formData.append("paths[]", `/UserData/Maps/Downloaded/${room.name}`);
         } else {
           errors++;
-          log.error({ error: result, index }, "Failed to download map");
+          log.error({ meta, error: result, index }, "Failed to download map");
         }
       });
 
@@ -477,6 +497,7 @@ export async function downloadRoom(
       );
 
       if (errors > 0) {
+        log.error({ meta, errors }, "Failed to download some maps");
         throw new Error(`Failed to download ${errors} maps`);
       }
 
@@ -501,6 +522,11 @@ export async function addRoomToServer(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
+      const meta = {
+        type: "nadeo",
+        module: "clubs",
+        function: "addRoomToServer",
+      };
       const log = getLogger(serverId);
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
@@ -529,7 +555,7 @@ export async function addRoomToServer(
       addResults.forEach((result, index) => {
         if (result.status === "rejected") {
           errors++;
-          log.error({ error: result, index }, "Failed to add map");
+          log.error({ meta, error: result, index }, "Failed to add map");
         }
       });
 
@@ -542,6 +568,7 @@ export async function addRoomToServer(
       );
 
       if (errors > 0) {
+        log.error({ meta, errors }, "Failed to add some maps");
         throw new Error(`Failed to add ${errors} maps`);
       }
     },

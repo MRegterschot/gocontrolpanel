@@ -76,13 +76,27 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
 
   async onStartRound() {
     this.activeDrivers.clear();
-    this.clientManager.log.trace("New round started, cleared active drivers");
+    const meta = {
+      type: "plugins",
+      module: "ecm-plugin",
+      function: "onStartRound",
+    };
+    this.clientManager.log.trace(
+      { meta },
+      "New round started, cleared active drivers",
+    );
   }
 
   async onStartLine(startLine: WaypointEvent) {
     this.activeDrivers.add(startLine.login);
+    const meta = {
+      type: "plugins",
+      module: "ecm-plugin",
+      function: "onStartLine",
+    };
     this.clientManager.log.trace(
       {
+        meta,
         login: startLine.login,
         activeDrivers: Array.from(this.activeDrivers),
       },

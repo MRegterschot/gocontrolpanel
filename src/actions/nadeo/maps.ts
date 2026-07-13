@@ -2,6 +2,7 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { downloadFile } from "@/lib/api/nadeo";
+import { getLogger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
 import { ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
@@ -22,6 +23,12 @@ export async function downloadMapFromUrl(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
+      const meta = {
+        type: "nadeo",
+        module: "maps",
+        function: "downloadMapFromUrl",
+      };
+      const log = getLogger(serverId);
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
         await logAudit(
@@ -64,6 +71,7 @@ export async function downloadMapFromUrl(
       );
 
       if (error) {
+        log.error({ meta, error, url, fileName, path }, "Failed to upload map");
         throw new Error(error);
       }
 
@@ -86,6 +94,12 @@ export async function addMapToServer(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
+      const meta = {
+        type: "nadeo",
+        module: "maps",
+        function: "addMapToServer",
+      };
+      const log = getLogger(serverId);
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
         await logAudit(
@@ -129,6 +143,10 @@ export async function addMapToServer(
       );
 
       if (addMapError) {
+        log.error(
+          { meta, addMapError, url, fileName, path },
+          "Failed to add map",
+        );
         throw new Error(addMapError);
       }
     },

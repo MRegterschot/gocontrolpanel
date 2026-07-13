@@ -220,6 +220,12 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
   };
 
   async onMatchStartCommand(_: string[], login: string) {
+    const meta = {
+      type: "plugins",
+      module: "match-plugin",
+      function: "onMatchStartCommand",
+    };
+
     if (
       !this.checkCommandPermission(
         login,
@@ -253,7 +259,10 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
           `Loaded match script: ${this.config.script}`,
         );
       } catch (error) {
-        this.clientManager.log.error({ error }, "Error loading match script");
+        this.clientManager.log.error(
+          { meta, error },
+          "Error loading match script",
+        );
         this.clientManager.client.call(
           "ChatSendServerMessageToLogin",
           `Failed to load match script: ${error}`,
@@ -269,9 +278,9 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
       this.config.maps.length > 0
     ) {
       try {
-        await setMapList(this.clientManager.client, this.config.maps);
+        await setMapList(this.clientManager, this.config.maps);
       } catch (error) {
-        this.clientManager.log.error({ error }, "Error setting map list");
+        this.clientManager.log.error({ meta, error }, "Error setting map list");
         this.clientManager.client.call(
           "ChatSendServerMessageToLogin",
           `Failed to set map list: ${error}`,
@@ -292,12 +301,9 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
       }
 
       try {
-        await setMapList(
-          this.clientManager.client,
-          this.pickBanState.pickedMaps,
-        );
+        await setMapList(this.clientManager, this.pickBanState.pickedMaps);
       } catch (error) {
-        this.clientManager.log.error({ error }, "Error setting map list");
+        this.clientManager.log.error({ meta, error }, "Error setting map list");
         this.clientManager.client.call(
           "ChatSendServerMessageToLogin",
           `Failed to set map list: ${error}`,
@@ -308,14 +314,14 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
     }
 
     try {
-      await jumpToMapIndex(this.clientManager.client, 0);
+      await jumpToMapIndex(this.clientManager, 0);
       this.matchState = "in_progress";
     } catch {
       try {
-        await restartMap(this.clientManager.client);
+        await restartMap(this.clientManager);
         this.matchState = "in_progress";
       } catch (error) {
-        this.clientManager.log.error({ error }, "Error starting match");
+        this.clientManager.log.error({ meta, error }, "Error starting match");
         this.clientManager.client.call(
           "ChatSendServerMessageToLogin",
           `Failed to start the match: ${error}`,
@@ -325,13 +331,13 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
     }
 
     try {
-      const mapList = await getMapList(this.clientManager.client);
+      const mapList = await getMapList(this.clientManager);
       this.clientManager.client.call(
         "ChatSendServerMessage",
         `Maps:\n${mapList.map((map, index) => `${index + 1}. ${map.Name}`).join("\n")}`,
       );
     } catch (error) {
-      this.clientManager.log.error({ error }, "Error fetching map list");
+      this.clientManager.log.error({ meta, error }, "Error fetching map list");
       this.clientManager.client.call(
         "ChatSendServerMessageToLogin",
         `Failed to fetch map list: ${error}`,
@@ -358,6 +364,12 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
   }
 
   async onPauseCommand(_: string[], login: string) {
+    const meta = {
+      type: "plugins",
+      module: "match-plugin",
+      function: "onPauseCommand",
+    };
+
     if (
       !this.checkCommandPermission(
         login,
@@ -395,7 +407,7 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
         `Match paused by ${player?.nickName || login}`,
       );
     } catch (error) {
-      this.clientManager.log.error({ error }, "Error pausing match");
+      this.clientManager.log.error({ meta, error }, "Error pausing match");
       this.clientManager.client.call(
         "ChatSendServerMessageToLogin",
         `Failed to pause the match: ${error}`,
@@ -405,6 +417,11 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
   }
 
   async onUnpauseCommand(_: string[], login: string) {
+    const meta = {
+      type: "plugins",
+      module: "match-plugin",
+      function: "onUnpauseCommand",
+    };
     if (
       !this.checkCommandPermission(
         login,
@@ -442,7 +459,7 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
         `Match unpaused by ${player?.nickName || login}`,
       );
     } catch (error) {
-      this.clientManager.log.error({ error }, "Error unpausing match");
+      this.clientManager.log.error({ meta, error }, "Error unpausing match");
       this.clientManager.client.call(
         "ChatSendServerMessageToLogin",
         `Failed to unpause the match: ${error}`,
@@ -635,7 +652,7 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
 
   private async setPickBanState() {
     const mapsInfo = await getMapsInfo(
-      this.clientManager.client,
+      this.clientManager,
       this.config?.maps || [],
     );
 
@@ -718,6 +735,11 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
   }
 
   private async setLobbyState(login: string = "") {
+    const meta = {
+      type: "plugins",
+      module: "match-plugin",
+      function: "setLobbyState",
+    };
     if (this.config?.lobby?.script) {
       try {
         await setScriptName(
@@ -729,7 +751,10 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
           `Loaded lobby script: ${this.config.lobby.script}`,
         );
       } catch (error) {
-        this.clientManager.log.error({ error }, "Error loading lobby script");
+        this.clientManager.log.error(
+          { meta, error },
+          "Error loading lobby script",
+        );
         this.clientManager.client.call(
           "ChatSendServerMessageToLogin",
           `Failed to load lobby script: ${error}`,
@@ -740,9 +765,12 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
 
     if (this.config?.lobby?.map) {
       try {
-        await setMapList(this.clientManager.client, [this.config.lobby.map]);
+        await setMapList(this.clientManager, [this.config.lobby.map]);
       } catch (error) {
-        this.clientManager.log.error({ error }, "Error setting lobby map");
+        this.clientManager.log.error(
+          { meta, error },
+          "Error setting lobby map",
+        );
         this.clientManager.client.call(
           "ChatSendServerMessageToLogin",
           `Failed to set lobby map: ${error}`,
@@ -752,14 +780,14 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
     }
 
     try {
-      await jumpToMapIndex(this.clientManager.client, 0);
+      await jumpToMapIndex(this.clientManager, 0);
       this.matchState = "not_started";
     } catch {
       try {
-        await restartMap(this.clientManager.client);
+        await restartMap(this.clientManager);
         this.matchState = "not_started";
       } catch (error) {
-        this.clientManager.log.error({ error }, "Error going to lobby");
+        this.clientManager.log.error({ meta, error }, "Error going to lobby");
         this.clientManager.client.call(
           "ChatSendServerMessageToLogin",
           `Failed to go to lobby: ${error}`,

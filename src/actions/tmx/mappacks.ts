@@ -56,6 +56,11 @@ export async function downloadMappack(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
+      const meta = {
+        type: "tmx",
+        module: "mappacks",
+        function: "downloadMappack",
+      };
       const log = getLogger(serverId);
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
@@ -115,7 +120,7 @@ export async function downloadMappack(
           );
         } else {
           errors++;
-          log.error({ error: result, index }, "Failed to download map");
+          log.error({ meta, error: result, index }, "Failed to download map");
         }
       });
 
@@ -140,6 +145,7 @@ export async function downloadMappack(
       );
 
       if (errors > 0) {
+        log.error({ meta, errors }, "Failed to download some maps");
         throw new Error(`Failed to download ${errors} maps`);
       }
 
@@ -165,6 +171,11 @@ export async function addMappackToServer(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
+      const meta = {
+        type: "tmx",
+        module: "mappacks",
+        function: "addMappackToServer",
+      };
       const log = getLogger(serverId);
       const { data: fileNames, error } = await downloadMappack(
         serverId,
@@ -192,7 +203,7 @@ export async function addMappackToServer(
       addMapResults.forEach((result, index) => {
         if (result.status === "rejected") {
           errors++;
-          log.error({ error: result, index }, "Failed to add map");
+          log.error({ meta, error: result, index }, "Failed to add map");
         }
       });
 
@@ -205,6 +216,7 @@ export async function addMappackToServer(
       );
 
       if (errors > 0) {
+        log.error({ meta, errors }, "Failed to add some maps");
         throw new Error(`Failed to add ${errors} maps`);
       }
     },

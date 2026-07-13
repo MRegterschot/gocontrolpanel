@@ -18,6 +18,11 @@ export default async function ServerMapsPage({
 }) {
   const { id } = await params;
   const log = getLogger(id);
+  const meta = {
+    type: "page",
+    module: "server-maps",
+    function: "ServerMapsPage",
+  };
 
   const canView = await hasPermission(routePermissions.servers.maps, id);
   if (!canView) {
@@ -31,7 +36,7 @@ export default async function ServerMapsPage({
   try {
     fmHealth = await getFileManagerHealth(id);
   } catch (error) {
-    log.error({ error }, "Failed to fetch file manager");
+    log.error({ meta, error }, "Failed to fetch file manager");
   }
 
   let localMaps: LocalMapInfo[] = [];
@@ -40,7 +45,7 @@ export default async function ServerMapsPage({
       const { data } = await getLocalMaps(id);
       localMaps = data;
     } catch (error) {
-      log.error({ error }, "Failed to fetch local maps");
+      log.error({ meta, error }, "Failed to fetch local maps");
     }
   }
 

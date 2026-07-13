@@ -12,14 +12,16 @@ export async function ecmOnDriverFinish(
   body: ECMDriverFinishArgs,
   serverId: string,
 ): Promise<void> {
+  const meta = {
+    type: "ecm",
+    module: "ecircuitmania",
+    function: "ecmOnDriverFinish",
+  };
   const log = getLogger(serverId);
   const { matchId, authToken } = getMatchIdAndAuthToken(apiKey, serverId);
 
   log.info(
-    {
-      matchId,
-      body: JSON.stringify(body),
-    },
+    { meta, matchId, body: JSON.stringify(body) },
     "Sending ECM driver finish event",
   );
 
@@ -35,17 +37,14 @@ export async function ecmOnDriverFinish(
     );
 
     log.debug(
-      {
-        matchId,
-        status: res.status,
-        data: res.data,
-      },
+      { meta, matchId, status: res.status, data: res.data },
       "ECM driver finish response",
     );
   } catch (error) {
     if (isAxiosError(error)) {
       log.error(
         {
+          meta,
           matchId,
           status: error.response?.status,
           data: error.response?.data,
@@ -53,13 +52,7 @@ export async function ecmOnDriverFinish(
         "ECM driver finish error",
       );
     } else {
-      log.error(
-        {
-          error,
-          matchId,
-        },
-        "ECM driver finish unexpected error",
-      );
+      log.error({ meta, error, matchId }, "ECM driver finish unexpected error");
     }
   }
 }
@@ -69,14 +62,16 @@ export async function ecmOnRoundEnd(
   body: ECMRoundEndArgs,
   serverId: string,
 ): Promise<void> {
+  const meta = {
+    type: "ecm",
+    module: "ecircuitmania",
+    function: "ecmOnRoundEnd",
+  };
   const log = getLogger(serverId);
   const { matchId, authToken } = getMatchIdAndAuthToken(apiKey, serverId);
 
   log.debug(
-    {
-      matchId,
-      body: JSON.stringify(body),
-    },
+    { meta, matchId, body: JSON.stringify(body) },
     "Sending ECM round end event",
   );
 
@@ -92,17 +87,14 @@ export async function ecmOnRoundEnd(
     );
 
     log.debug(
-      {
-        matchId,
-        status: res.status,
-        data: res.data,
-      },
+      { meta, matchId, status: res.status, data: res.data },
       "ECM round end response",
     );
   } catch (error) {
     if (isAxiosError(error)) {
       log.error(
         {
+          meta,
           matchId,
           status: error.response?.status,
           data: error.response?.data,
@@ -110,13 +102,7 @@ export async function ecmOnRoundEnd(
         "ECM round end error",
       );
     } else {
-      log.error(
-        {
-          error,
-          matchId,
-        },
-        "ECM round end unexpected error",
-      );
+      log.error({ meta, error, matchId }, "ECM round end unexpected error");
     }
   }
 }
@@ -128,15 +114,15 @@ function getMatchIdAndAuthToken(
   matchId: string;
   authToken: string;
 } {
+  const meta = {
+    type: "ecm",
+    module: "ecircuitmania",
+    function: "getMatchIdAndAuthToken",
+  };
   const log = getLogger(serverId);
   const [matchId, authToken] = apiKey.split("_");
   if (!matchId || !authToken) {
-    log.error(
-      {
-        apiKey,
-      },
-      "Invalid ECM API key format",
-    );
+    log.error({ meta, apiKey }, "Invalid ECM API key format");
     throw new Error("Invalid ECM API key");
   }
   return { matchId, authToken };

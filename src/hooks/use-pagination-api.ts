@@ -45,7 +45,12 @@ export const usePaginationAPI = <TData, TFetch>(
       setData(fetchedData);
       setTotalCount(fetchedTotalCount);
     } catch (error) {
-      logger.error({ error }, "Error fetching data");
+      const meta = {
+        type: "hook",
+        module: "usePaginationAPI",
+        function: "fetchDataFromAPI",
+      };
+      logger.error({ meta, error }, "Error fetching data");
     } finally {
       setLoading(false);
     }

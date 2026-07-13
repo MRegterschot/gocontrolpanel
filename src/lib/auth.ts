@@ -56,8 +56,14 @@ const NadeoProvider = (): OAuthConfig<Profile> => ({
       );
 
       if (!response.ok) {
+        const meta = {
+          type: "nadeo",
+          module: "auth",
+          function: "NadeoProvider.token.request",
+        };
         logger.error(
           {
+            meta,
             response: {
               status: response.status,
               statusText: response.statusText,
@@ -138,7 +144,12 @@ export const authOptions: NextAuthOptions = {
                 token.ubiId = webidentities[0].uid;
               }
             } catch (error) {
-              logger.error({ error }, "Failed to fetch web identities");
+              const meta = {
+                type: "nadeo",
+                module: "auth",
+                function: "getWebIdentities",
+              };
+              logger.error({ meta, error }, "Failed to fetch web identities");
             }
           }
 

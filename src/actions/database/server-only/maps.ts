@@ -5,6 +5,7 @@ import { checkAndUpdateMapsInfoIfNeeded } from "./gbx";
 
 export async function getMapByUidServer(uid: string): Promise<Maps | null> {
   const db = getClient();
+
   const map = await db.maps.findFirst({
     where: { uid, deletedAt: null },
   });

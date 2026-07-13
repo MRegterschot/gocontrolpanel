@@ -32,15 +32,14 @@ export async function getUsersMinimal(): Promise<
     ],
     async () => {
       const db = getClient();
-      const users = await db.users.findMany({
+
+      return await db.users.findMany({
         select: {
           id: true,
           login: true,
           nickName: true,
         },
       });
-
-      return users;
     },
   );
 }
@@ -62,7 +61,8 @@ export async function getUsersByIds(
     ],
     async () => {
       const db = getClient();
-      const users = await db.users.findMany({
+
+      return await db.users.findMany({
         where: {
           id: { in: ids },
         },
@@ -72,8 +72,6 @@ export async function getUsersByIds(
           nickName: true,
         },
       });
-
-      return users;
     },
   );
 }
@@ -95,7 +93,8 @@ export async function getUsersByLogins(
     ],
     async () => {
       const db = getClient();
-      const users = await db.users.findMany({
+
+      return await db.users.findMany({
         where: {
           login: { in: logins },
         },
@@ -105,8 +104,6 @@ export async function getUsersByLogins(
           nickName: true,
         },
       });
-
-      return users;
     },
   );
 }
@@ -195,6 +192,7 @@ export async function deleteUserById(userId: string): Promise<ServerResponse> {
     }
 
     const db = getClient();
+    
     await db.users.delete({
       where: { id: userId },
     });

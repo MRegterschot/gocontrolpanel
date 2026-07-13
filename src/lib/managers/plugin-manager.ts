@@ -42,8 +42,13 @@ export default class PluginManager {
       this.plugins.set(plugin.getPluginId(), plugin);
     }
 
+    const meta = {
+      type: "managers",
+      module: "plugin-manager",
+      function: "constructor",
+    };
     this.clientManager.log.info(
-      { pluginCount: this.plugins.size },
+      { meta, pluginCount: this.plugins.size },
       `Initialized PluginManager with ${this.plugins.size} plugins`,
     );
   }
@@ -82,8 +87,14 @@ export default class PluginManager {
     }
     await this.startPlugins();
 
+    const meta = {
+      type: "managers",
+      module: "plugin-manager",
+      function: "loadPlugins",
+    };
     this.clientManager.log.info(
       {
+        meta,
         clientPlugins: clientPlugins.map((p) => ({
           name: p.plugin.name,
           enabled: p.enabled,
@@ -101,16 +112,25 @@ export default class PluginManager {
       plugin.setLoaded(false);
     }
 
-    this.clientManager.log.info(`Unloaded all plugins`);
+    const meta = {
+      type: "managers",
+      module: "plugin-manager",
+      function: "unloadPlugins",
+    };
+    this.clientManager.log.info({ meta }, `Unloaded all plugins`);
   }
-
   public async startPlugins() {
     for (const plugin of this.plugins.values()) {
       if (!plugin.isLoaded()) continue;
       await plugin.onStart();
     }
 
-    this.clientManager.log.info(`Started all loaded plugins`);
+    const meta = {
+      type: "managers",
+      module: "plugin-manager",
+      function: "startPlugins",
+    };
+    this.clientManager.log.info({ meta }, `Started all loaded plugins`);
   }
 
   public async loadPluginById(pluginId: string) {
@@ -129,7 +149,15 @@ export default class PluginManager {
     }
     await plugin.onStart();
 
-    this.clientManager.log.info({ pluginId }, `Loaded plugin ${pluginId}`);
+    const meta = {
+      type: "managers",
+      module: "plugin-manager",
+      function: "loadPluginById",
+    };
+    this.clientManager.log.info(
+      { meta, pluginId },
+      `Loaded plugin ${pluginId}`,
+    );
   }
 
   public async unloadPluginById(pluginId: string) {
@@ -141,7 +169,15 @@ export default class PluginManager {
       plugin.setLoaded(false);
     }
 
-    this.clientManager.log.info({ pluginId }, `Unloaded plugin ${pluginId}`);
+    const meta = {
+      type: "managers",
+      module: "plugin-manager",
+      function: "unloadPluginById",
+    };
+    this.clientManager.log.info(
+      { meta, pluginId },
+      `Unloaded plugin ${pluginId}`,
+    );
   }
 
   public async updatePlugins(updateConfigs: boolean = true) {
@@ -182,8 +218,14 @@ export default class PluginManager {
       }
     }
 
+    const meta = {
+      type: "managers",
+      module: "plugin-manager",
+      function: "updatePlugins",
+    };
     this.clientManager.log.info(
       {
+        meta,
         clientPlugins: clientPlugins.map((p) => ({
           name: p.plugin.name,
           enabled: p.enabled,
@@ -216,7 +258,12 @@ export default class PluginManager {
 
     await this.startPlugins();
 
-    this.clientManager.log.info(`Reloaded all plugins`);
+    const meta = {
+      type: "managers",
+      module: "plugin-manager",
+      function: "reloadPlugins",
+    };
+    this.clientManager.log.info({ meta }, `Reloaded all plugins`);
   }
 
   private async onModeChange(mode: string) {
@@ -253,8 +300,13 @@ export default class PluginManager {
       }
     }
 
+    const meta = {
+      type: "managers",
+      module: "plugin-manager",
+      function: "onModeChange",
+    };
     this.clientManager.log.info(
-      { mode },
+      { meta, mode },
       `Mode changed to ${mode}, reloaded plugins for new gamemode`,
     );
   }

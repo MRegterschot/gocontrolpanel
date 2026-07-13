@@ -9,6 +9,11 @@ export async function createNotifications(
   message: string,
   description?: string,
 ): Promise<Notifications[]> {
+  const meta = {
+    type: "database",
+    module: "notifications",
+    function: "createNotifications",
+  };
   const log = getLogger(serverId);
   const db = getClient();
 
@@ -55,7 +60,7 @@ export async function createNotifications(
   );
 
   log.debug(
-    { notifications: notifications.length, type, message },
+    { meta, notifications: notifications.length, type, message },
     "Created notifications",
   );
 

@@ -25,6 +25,11 @@ export default async function ServerNadeoPage({
   const { id } = await params;
   const { offset = "0", campaign, club } = await searchParams;
   const log = getLogger(id);
+  const meta = {
+    type: "page",
+    module: "server-nadeo",
+    function: "ServerNadeoPage",
+  };
 
   const offsetInt = parseInt(offset);
   const campaignInt = campaign ? parseInt(campaign) : undefined;
@@ -39,7 +44,7 @@ export default async function ServerNadeoPage({
   try {
     fmHealth = await getFileManagerHealth(id);
   } catch (error) {
-    log.error({ error }, "Failed to fetch file manager");
+    log.error({ meta, error }, "Failed to fetch file manager");
   }
 
   return (

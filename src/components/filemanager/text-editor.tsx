@@ -59,7 +59,12 @@ export default function TextEditor({
         description: "Your changes have been saved.",
       });
     } catch (error) {
-      log.error({ error }, "Error saving file");
+      const meta = {
+        type: "filemanager",
+        module: "text-editor",
+        function: "handleSave",
+      };
+      log.error({ meta, error }, "Error saving file");
       toast.error("Failed to save file", {
         description: getErrorMessage(error),
       });

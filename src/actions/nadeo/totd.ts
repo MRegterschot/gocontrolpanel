@@ -2,6 +2,7 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getTotdRoyalMaps } from "@/lib/api/nadeo";
+import { getLogger } from "@/lib/logger";
 import { getKeyTotdMonth, getRedisClient } from "@/lib/redis";
 import { MonthMapListWithDayMaps } from "@/types/api/nadeo";
 import { ServerResponse } from "@/types/responses";
@@ -19,6 +20,12 @@ export async function getTotdMonth(
       `group:servers:${serverId}:admin`,
     ],
     async () => {
+      const meta = {
+        type: "nadeo",
+        module: "totd",
+        function: "getTotdMonth",
+      };
+      const log = getLogger(serverId);
       const redis = await getRedisClient();
       const key = getKeyTotdMonth(offset);
 
@@ -39,6 +46,7 @@ export async function getTotdMonth(
         monthList.days.map((m) => m.mapUid).filter(Boolean),
       );
       if (error) {
+        log.error({ meta, error, offset }, "Failed to get maps");
         throw new Error(error);
       }
 

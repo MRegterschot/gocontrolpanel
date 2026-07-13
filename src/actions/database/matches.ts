@@ -2,6 +2,7 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
+import { getLogger } from "@/lib/logger";
 import { Prisma } from "@/lib/prisma/generated";
 import { getList } from "@/lib/utils";
 import { PaginationResponse, ServerResponse } from "@/types/responses";
@@ -175,6 +176,12 @@ export async function exportMatchToCSV(
       `group:servers:${serverId}:admin`,
     ],
     async () => {
+      const meta = {
+        type: "database",
+        module: "matches",
+        function: "exportMatchToCSV",
+      };
+      const log = getLogger(serverId);
       const db = getClient();
 
       const match = await db.matches.findUnique({
@@ -194,6 +201,7 @@ export async function exportMatchToCSV(
       });
 
       if (!match) {
+        log.debug({ meta, serverId, matchId }, "Match not found");
         throw new Error("Match not found");
       }
 

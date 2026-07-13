@@ -2,6 +2,7 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
+import { logger } from "@/lib/logger";
 import { Prisma } from "@/lib/prisma/generated";
 import { PaginationResponse, ServerResponse } from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
@@ -119,6 +120,12 @@ export async function deleteAuditLogById(id: string): Promise<ServerResponse> {
       "hetzner::admin",
     ],
     async (session) => {
+      const meta = {
+        type: "database",
+        module: "audit-logs",
+        function: "deleteAuditLogById",
+      };
+
       const db = getClient();
 
       const where: Prisma.AuditLogsWhereUniqueInput = {
@@ -146,6 +153,10 @@ export async function deleteAuditLogById(id: string): Promise<ServerResponse> {
         ];
 
         if (allIds.length === 0) {
+          logger.debug(
+            { meta, userId: session.user.id, auditLogId: id },
+            "Not authorized to delete this log",
+          );
           throw new Error("Not authorized to delete this log.");
         }
 
@@ -164,6 +175,7 @@ export async function deleteAuditLogById(id: string): Promise<ServerResponse> {
       });
 
       if (!auditLog) {
+        logger.debug({ meta, id }, "Audit log not found");
         throw new Error("Audit log not found.");
       }
 

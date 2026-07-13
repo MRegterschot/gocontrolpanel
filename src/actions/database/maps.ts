@@ -53,6 +53,7 @@ export async function getMapByUid(
     ],
     async () => {
       const db = getClient();
+
       const map = await db.maps.findFirst({
         where: { uid, deletedAt: null },
       });
@@ -83,6 +84,11 @@ export async function getMapList(
       `group:servers:${serverId}:admin`,
     ],
     async () => {
+      const meta = {
+        type: "database",
+        module: "maps",
+        function: "getMapList",
+      };
       const log = getLogger(serverId);
       const client = await getGbxClient(serverId);
       const pageSize = 100;
@@ -108,7 +114,8 @@ export async function getMapList(
       }
 
       if (!allMapList || allMapList.length === 0) {
-        throw new ServerError("Failed to get map list");
+        log.error({ meta }, "Failed to get map list or map list is empty");
+        throw new ServerError("Failed to get map list or map list is empty");
       }
 
       const uids = allMapList.filter((map) => map?.UId).map((map) => map.UId);
@@ -150,7 +157,7 @@ export async function getMapList(
               );
 
               if (newMaps.some((m) => m.uid === mapInfo.UId)) {
-                log.warn(mapInfo, `Duplicate map UID found: ${mapInfo.UId}`);
+                log.warn({ meta, mapInfo }, "Duplicate map UID found");
                 continue;
               }
 
@@ -175,7 +182,7 @@ export async function getMapList(
                 deletedAt: null,
               });
             } catch (error) {
-              log.error({ error, map }, "Failed to get map info");
+              log.error({ meta, error, map }, "Failed to get map info");
               continue;
             }
           }
@@ -224,10 +231,17 @@ export async function getMapRecordsPaginated(
       `group:servers:${fetchArgs.serverId}:admin`,
     ],
     async () => {
+      const meta = {
+        type: "database",
+        module: "maps",
+        function: "getMapRecordsPaginated",
+      };
+      const log = getLogger(fetchArgs.serverId);
       const db = getClient();
 
       const { data: serverMaps, error } = await getMapList(fetchArgs.serverId);
       if (error) {
+        log.error({ meta, error }, "Failed to get map list from server");
         throw new ServerError(error);
       }
 
@@ -299,6 +313,12 @@ export async function getMapsByUids(
       "group:servers::admin",
     ],
     async () => {
+      const meta = {
+        type: "database",
+        module: "maps",
+        function: "getMapsByUids",
+      };
+
       const db = getClient();
 
       const existingMaps = await db.maps.findMany({
@@ -320,7 +340,7 @@ export async function getMapsByUids(
           const batch = missingUids.slice(i, i + BATCH_SIZE);
           const { data: apiMapsInfo, error } = await getMapsInfo(batch);
           if (error) {
-            logger.error({ error }, "Failed to fetch map info from API");
+            logger.error({ meta, error }, "Failed to fetch map info from API");
             continue;
           }
 
@@ -331,10 +351,7 @@ export async function getMapsByUids(
 
           for (const mapInfo of apiMapsInfo) {
             if (newMaps.some((m) => m.uid === mapInfo.mapUid)) {
-              logger.warn(
-                mapInfo,
-                `Duplicate map UID found: ${mapInfo.mapUid}`,
-              );
+              logger.warn({ meta, mapInfo }, "Duplicate map UID found");
               continue;
             }
 

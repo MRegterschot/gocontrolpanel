@@ -2,6 +2,7 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
+import { logger } from "@/lib/logger";
 import { Prisma } from "@/lib/prisma/generated";
 import { UserGroup } from "@/types/auth";
 import { PaginationResponse, ServerResponse } from "@/types/responses";
@@ -236,6 +237,12 @@ export async function updateGroupServersOrder(
   serverIdsInOrder: string[],
 ): Promise<ServerResponse> {
   return doServerActionWithAuth([], async (session) => {
+    const meta = {
+      type: "database",
+      module: "groups",
+      function: "updateGroupServersOrder",
+    };
+
     const db = getClient();
 
     const userId = session.user.id;
@@ -250,6 +257,10 @@ export async function updateGroupServersOrder(
     });
 
     if (!groupMember) {
+      logger.debug(
+        { meta, userId, groupId },
+        "User is not a member of the group",
+      );
       throw new Error("User is not a member of the group");
     }
 

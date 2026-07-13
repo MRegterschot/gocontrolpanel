@@ -77,6 +77,12 @@ export async function downloadTMXMap(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30000); // 30 seconds
 
+  const meta = {
+    type: "tmx",
+    module: "request",
+    function: "downloadTMXMap",
+  };
+
   try {
     const res = await fetch(url, {
       headers: {
@@ -89,6 +95,20 @@ export async function downloadTMXMap(
     clearTimeout(timeout);
 
     if (!res.ok) {
+      logger.error(
+        {
+          meta,
+          mapId,
+          mappackId,
+          response: {
+            status: res.status,
+            statusText: res.statusText,
+            error: await res.text(),
+          },
+        },
+        "Failed to download map",
+      );
+
       throw new Error(`Failed to download map: ${res.statusText}`);
     }
 
@@ -98,6 +118,7 @@ export async function downloadTMXMap(
     });
   } catch (err) {
     if ((err as any).name === "AbortError") {
+      logger.error({ meta, mapId, mappackId }, "Download for map timed out");
       throw new Error(`Download for map ${mapId} timed out`);
     }
     throw err;
@@ -106,7 +127,13 @@ export async function downloadTMXMap(
 
 async function doRequest<T>(url: string, key: string): Promise<T> {
   return withRateLimit<T>(key, async () => {
-    logger.info({ url }, `Requesting TMX API`);
+    const meta = {
+      type: "tmx",
+      module: "request",
+      function: "doRequest",
+    };
+
+    logger.info({ meta, url }, `Requesting TMX API`);
 
     const res = await fetch(url, {
       headers: {
@@ -116,6 +143,18 @@ async function doRequest<T>(url: string, key: string): Promise<T> {
     });
 
     if (!res.ok) {
+      logger.error(
+        {
+          meta,
+          url,
+          response: {
+            status: res.status,
+            statusText: res.statusText,
+            error: await res.text(),
+          },
+        },
+        "Failed to fetch data from TMX API",
+      );
       throw new Error(`Failed to fetch data: ${res.statusText}`);
     }
 

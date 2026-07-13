@@ -109,8 +109,13 @@ export default class LiveRoundPlugin extends Plugin {
         ? personalBest[0].recordScore.time
         : 0;
     } catch (error) {
+      const meta = {
+        type: "plugins",
+        module: "live-round-plugin",
+        function: "onPlayerConnect",
+      };
       this.clientManager.log.error(
-        { error },
+        { meta, error },
         "Error fetching personal best for player connect",
       );
       this.recordsInfo[playerInfo.login] =
@@ -400,8 +405,13 @@ export default class LiveRoundPlugin extends Plugin {
           this.recordsInfo[p] = pb ? pb.recordScore.time : 0;
         });
       } catch (error) {
+        const meta = {
+          type: "plugins",
+          module: "live-round-plugin",
+          function: "updateRecordsInfo",
+        };
         this.clientManager.log.error(
-          { error },
+          { meta, error },
           "Error fetching personal bests",
         );
         players.forEach((p) => {

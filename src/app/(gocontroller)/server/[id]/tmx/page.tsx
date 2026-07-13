@@ -14,6 +14,11 @@ export default async function ServerTMXPage({
 }) {
   const { id } = await params;
   const log = getLogger(id);
+  const meta = {
+    type: "page",
+    module: "server-tmx",
+    function: "ServerTMXPage",
+  };
 
   const canView = await hasPermission(routePermissions.servers.tmx, id);
   if (!canView) {
@@ -24,7 +29,7 @@ export default async function ServerTMXPage({
   try {
     fmHealth = await getFileManagerHealth(id);
   } catch (error) {
-    log.error({ error }, "Failed to fetch file manager");
+    log.error({ meta, error }, "Failed to fetch file manager");
   }
 
   return (

@@ -2,6 +2,7 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
+import { getLogger } from "@/lib/logger";
 import { getGbxClientManager } from "@/lib/managers/gbxclient-manager";
 import { ServerResponse } from "@/types/responses";
 import { logAudit } from "./server-only/audit-logs";
@@ -133,6 +134,7 @@ export async function getServerPlugins(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async () => {
       const db = getClient();
+
       const plugins = await db.serverPlugins.findMany({
         where: { serverId },
         include: {
@@ -152,7 +154,14 @@ export async function exportServerPluginConfig(
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async () => {
+      const meta = {
+        type: "database",
+        module: "server-plugins",
+        function: "exportServerPluginConfig",
+      };
+      const log = getLogger(serverId);
       const db = getClient();
+
       const plugin = await db.serverPlugins.findUnique({
         where: {
           serverId_pluginId: {
@@ -163,6 +172,7 @@ export async function exportServerPluginConfig(
       });
 
       if (!plugin) {
+        log.debug({ meta, pluginId }, "Plugin not found for server");
         throw new Error("Plugin not found for server");
       }
 
