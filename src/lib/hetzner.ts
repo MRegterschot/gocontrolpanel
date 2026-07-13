@@ -48,7 +48,7 @@ export function decryptHetznerToken(encryptedBase64: string): string {
     ]);
     return decrypted.toString("utf8");
   } catch (error) {
-    logger.error(error, "Decryption failed");
+    logger.error({ error }, "Decryption failed");
     return encryptedBase64; // Return the original string if decryption fails
   }
 }

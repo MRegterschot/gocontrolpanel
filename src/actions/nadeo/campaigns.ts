@@ -2,7 +2,7 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { downloadFile, getSeasonalCampaigns } from "@/lib/api/nadeo";
-import { logger } from "@/lib/logger";
+import { getLogger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
 import {
   getKeyCampaign,
@@ -117,6 +117,7 @@ export async function downloadCampaign(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
+      const log = getLogger(serverId);
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
         await logAudit(
@@ -153,7 +154,10 @@ export async function downloadCampaign(
           );
         } else {
           errors++;
-          logger.error(result, `Failed to download map ${index + 1}`);
+          log.error(
+            { result, index: index + 1 },
+            `Failed to download map ${index + 1}`,
+          );
         }
       });
 
@@ -204,6 +208,7 @@ export async function addCampaignToServer(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
+      const log = getLogger(serverId);
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
         await logAudit(
@@ -236,7 +241,10 @@ export async function addCampaignToServer(
       addResults.forEach((result, index) => {
         if (result.status === "rejected") {
           errors++;
-          logger.error(result, `Failed to add map ${index + 1}`);
+          log.error(
+            { result, index: index + 1 },
+            `Failed to add map ${index + 1}`,
+          );
         }
       });
 

@@ -9,7 +9,6 @@ import PlayerInfoPlugin from "@/plugins/player-info";
 import RecordsInfoPlugin from "@/plugins/records-info";
 import TAActiveRunsPlugin from "@/plugins/ta-active-runs";
 import TALeaderboardPlugin from "@/plugins/ta-leaderboard";
-import { logger } from "../logger";
 import { GbxClientManager } from "./gbxclient-manager";
 import ManialinkManager from "./manialink-manager";
 
@@ -43,7 +42,7 @@ export default class PluginManager {
       this.plugins.set(plugin.getPluginId(), plugin);
     }
 
-    logger.info(
+    this.clientManager.log.info(
       { pluginCount: this.plugins.size },
       `Initialized PluginManager with ${this.plugins.size} plugins`,
     );
@@ -83,12 +82,14 @@ export default class PluginManager {
     }
     await this.startPlugins();
 
-    logger.info(
-      clientPlugins.map((p) => ({
-        name: p.plugin.name,
-        enabled: p.enabled,
-        config: p.config,
-      })),
+    this.clientManager.log.info(
+      {
+        clientPlugins: clientPlugins.map((p) => ({
+          name: p.plugin.name,
+          enabled: p.enabled,
+          config: p.config,
+        })),
+      },
       `Loaded plugins: ${clientPlugins.map((p) => p.plugin.name).join(", ")}`,
     );
   }
@@ -100,7 +101,7 @@ export default class PluginManager {
       plugin.setLoaded(false);
     }
 
-    logger.info(`Unloaded all plugins`);
+    this.clientManager.log.info(`Unloaded all plugins`);
   }
 
   public async startPlugins() {
@@ -109,7 +110,7 @@ export default class PluginManager {
       await plugin.onStart();
     }
 
-    logger.info(`Started all loaded plugins`);
+    this.clientManager.log.info(`Started all loaded plugins`);
   }
 
   public async loadPluginById(pluginId: string) {
@@ -128,7 +129,7 @@ export default class PluginManager {
     }
     await plugin.onStart();
 
-    logger.info({ pluginId }, `Loaded plugin ${pluginId}`);
+    this.clientManager.log.info({ pluginId }, `Loaded plugin ${pluginId}`);
   }
 
   public async unloadPluginById(pluginId: string) {
@@ -140,7 +141,7 @@ export default class PluginManager {
       plugin.setLoaded(false);
     }
 
-    logger.info({ pluginId }, `Unloaded plugin ${pluginId}`);
+    this.clientManager.log.info({ pluginId }, `Unloaded plugin ${pluginId}`);
   }
 
   public async updatePlugins(updateConfigs: boolean = true) {
@@ -181,12 +182,14 @@ export default class PluginManager {
       }
     }
 
-    logger.info(
-      clientPlugins.map((p) => ({
-        name: p.plugin.name,
-        enabled: p.enabled,
-        config: p.config,
-      })),
+    this.clientManager.log.info(
+      {
+        clientPlugins: clientPlugins.map((p) => ({
+          name: p.plugin.name,
+          enabled: p.enabled,
+          config: p.config,
+        })),
+      },
       `Reloaded plugins with updated configs: ${clientPlugins
         .filter((p) => p.enabled)
         .map((p) => p.plugin.name)
@@ -213,7 +216,7 @@ export default class PluginManager {
 
     await this.startPlugins();
 
-    logger.info(`Reloaded all plugins`);
+    this.clientManager.log.info(`Reloaded all plugins`);
   }
 
   private async onModeChange(mode: string) {
@@ -250,7 +253,7 @@ export default class PluginManager {
       }
     }
 
-    logger.info(
+    this.clientManager.log.info(
       { mode },
       `Mode changed to ${mode}, reloaded plugins for new gamemode`,
     );

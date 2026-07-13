@@ -2,7 +2,7 @@
 
 import { CreateFileEntrySchemaType } from "@/forms/server/files/create-file-entry-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
-import { logger } from "@/lib/logger";
+import { getLogger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
 import { ContentType, File, FileEntry } from "@/types/filemanager";
 import { ServerError, ServerResponse } from "@/types/responses";
@@ -190,6 +190,7 @@ export async function uploadFiles(
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
+      const log = getLogger(serverId);
       const uploadAuditData = {
         files: formData
           .getAll("files")
@@ -211,9 +212,8 @@ export async function uploadFiles(
         throw new ServerError("Could not connect to file manager");
       }
 
-      logger.debug(
+      log.debug(
         {
-          serverId,
           uploadAuditData,
         },
         "Uploading files to file manager",
@@ -273,6 +273,7 @@ export async function getScripts(
       `group:servers:${serverId}:admin`,
     ],
     async () => {
+      const log = getLogger(serverId);
       const defaultScripts = [
         "Trackmania/TM_TimeAttack_Online.Script.txt",
         "Trackmania/TM_Laps_Online.Script.txt",
@@ -314,7 +315,7 @@ export async function getScripts(
         const allScripts = [...data, ...defaultScripts];
         return [...new Set(allScripts)];
       } catch (error) {
-        logger.error(error, "Error getting scripts");
+        log.error({ error }, "Error getting scripts");
         return defaultScripts;
       }
     },
@@ -327,6 +328,7 @@ export async function getPluginScripts(
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async () => {
+      const log = getLogger(serverId);
       try {
         const fileManager = await getFileManager(serverId);
         if (!fileManager?.health) {
@@ -352,7 +354,7 @@ export async function getPluginScripts(
 
         return [...new Set(data)];
       } catch (error) {
-        logger.error(error, "Error getting scripts");
+        log.error({ error }, "Error getting scripts");
         return [];
       }
     },
@@ -370,6 +372,7 @@ export async function getMatchSettings(
       `group:servers:${serverId}:admin`,
     ],
     async () => {
+      const log = getLogger(serverId);
       try {
         const fileManager = await getFileManager(serverId);
         if (!fileManager?.health) {
@@ -395,7 +398,7 @@ export async function getMatchSettings(
 
         return [...new Set(data)];
       } catch (error) {
-        logger.error(error, "Error getting match settings");
+        log.error({ error }, "Error getting match settings");
         return [];
       }
     },

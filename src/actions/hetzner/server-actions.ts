@@ -1,7 +1,6 @@
 "use server";
 
 import { doServerActionWithAuth } from "@/lib/actions";
-import { logger } from "@/lib/logger";
 import { connectToSSHServer, executeSSHScript } from "@/lib/ssh";
 import { logAudit } from "../database/server-only/audit-logs";
 import { getDBHetznerServer } from "../database/server-only/hetzner-servers";
@@ -22,6 +21,7 @@ export async function restartTrackmaniaServer(
           "hetzner.server.manage.restartTrackmaniaServer",
           {
             id: serverId,
+            tmServerNumber,
           },
           error,
         );
@@ -70,10 +70,7 @@ export async function restartTrackmaniaServer(
         throw new Error(`Error executing command on server: ${result.stderr}`);
       }
 
-      logger.info(
-        `Trackmania server restarted successfully on server ${serverId} (tmServerNumber: ${tmServerNumber}) by user ${session.user.id}`,
-      );
-      logger.debug(`SSH script output: ${result.stdout}`);
+      la();
     },
   );
 }
@@ -93,6 +90,7 @@ export async function stopTrackmaniaServer(
           "hetzner.server.manage.stopTrackmaniaServer",
           {
             id: serverId,
+            tmServerNumber,
           },
           error,
         );
@@ -141,10 +139,7 @@ export async function stopTrackmaniaServer(
         throw new Error(`Error executing command on server: ${result.stderr}`);
       }
 
-      logger.info(
-        `Trackmania server stopped successfully on server ${serverId} (tmServerNumber: ${tmServerNumber}) by user ${session.user.id}`,
-      );
-      logger.debug(`SSH script output: ${result.stdout}`);
+      la();
     },
   );
 }

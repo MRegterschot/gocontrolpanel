@@ -138,7 +138,7 @@ export const authOptions: NextAuthOptions = {
                 token.ubiId = webidentities[0].uid;
               }
             } catch (error) {
-              logger.error(error, "Failed to fetch web identities");
+              logger.error({ error }, "Failed to fetch web identities");
             }
           }
 

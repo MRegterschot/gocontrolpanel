@@ -5,7 +5,6 @@ import { SimpleServerSetupSchemaType } from "@/forms/admin/hetzner/setup-steps/s
 import { TMServerSchemaType } from "@/forms/admin/hetzner/setup-steps/tm-server/tm-server-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { axiosHetzner } from "@/lib/axios/hetzner";
-import { logger } from "@/lib/logger";
 import {
   getKeyHetznerRecentlyCreatedServers,
   getRedisClient,
@@ -560,13 +559,18 @@ export async function addTrackmaniaServer(
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
-      const la = (error?: string) =>
+      const la = (error?: string, result?: string) =>
         logAudit(
           session.user.id,
           projectId,
           "hetzner.server.create.simple.add",
           {
             id: serverId,
+            server: {
+              ...tmServer,
+              dediPassword: "*****",
+            },
+            result,
           },
           error,
         );
@@ -663,10 +667,7 @@ export async function addTrackmaniaServer(
       await client.lpush(key, JSON.stringify(cachedServer));
       await client.expire(key, 60 * 60 * 2); // Keep for 2 hours
 
-      logger.info(
-        `Added new TM server to Hetzner server ${serverId} with dedi login ${tmServer.dediLogin}`,
-      );
-      logger.debug(`SSH script output: ${result.stdout}`);
+      la(undefined, result.stdout);
     },
   );
 }
@@ -679,13 +680,15 @@ export async function deleteTrackmaniaServer(
   return doServerActionWithAuth(
     ["hetzner:servers:delete", `hetzner:${projectId}:admin`],
     async (session) => {
-      const la = (error?: string) =>
+      const la = (error?: string, result?: string) =>
         logAudit(
           session.user.id,
           projectId,
           "hetzner.server.delete.simple",
           {
             id: serverId,
+            tmServerNumber,
+            result,
           },
           error,
         );
@@ -738,10 +741,7 @@ export async function deleteTrackmaniaServer(
 
       await updateHetznerServer(projectId, serverId, newLabels);
 
-      logger.info(
-        `Deleted TM server ${tmServerNumber} from Hetzner server ${serverId}`,
-      );
-      logger.debug(`SSH script output: ${result.stdout}`);
+      la(undefined, result.stdout);
     },
   );
 }

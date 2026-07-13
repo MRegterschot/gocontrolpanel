@@ -106,7 +106,7 @@ export async function downloadTMXMap(
 
 async function doRequest<T>(url: string, key: string): Promise<T> {
   return withRateLimit<T>(key, async () => {
-    logger.trace({ url }, `Requesting TMX API`);
+    logger.info({ url }, `Requesting TMX API`);
 
     const res = await fetch(url, {
       headers: {

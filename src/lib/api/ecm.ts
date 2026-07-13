@@ -5,15 +5,17 @@ import {
 import { isAxiosError } from "axios";
 import "server-only";
 import { axiosECM } from "../axios/ecircuitmania";
-import { logger } from "../logger";
+import { getLogger } from "../logger";
 
 export async function ecmOnDriverFinish(
   apiKey: string,
   body: ECMDriverFinishArgs,
+  serverId: string,
 ): Promise<void> {
-  const { matchId, authToken } = getMatchIdAndAuthToken(apiKey);
+  const log = getLogger(serverId);
+  const { matchId, authToken } = getMatchIdAndAuthToken(apiKey, serverId);
 
-  logger.trace(
+  log.info(
     {
       matchId,
       body: JSON.stringify(body),
@@ -32,7 +34,7 @@ export async function ecmOnDriverFinish(
       },
     );
 
-    logger.trace(
+    log.debug(
       {
         matchId,
         status: res.status,
@@ -42,7 +44,7 @@ export async function ecmOnDriverFinish(
     );
   } catch (error) {
     if (isAxiosError(error)) {
-      logger.error(
+      log.error(
         {
           matchId,
           status: error.response?.status,
@@ -51,7 +53,7 @@ export async function ecmOnDriverFinish(
         "ECM driver finish error",
       );
     } else {
-      logger.error(
+      log.error(
         {
           matchId,
           error,
@@ -65,10 +67,12 @@ export async function ecmOnDriverFinish(
 export async function ecmOnRoundEnd(
   apiKey: string,
   body: ECMRoundEndArgs,
+  serverId: string,
 ): Promise<void> {
-  const { matchId, authToken } = getMatchIdAndAuthToken(apiKey);
+  const log = getLogger(serverId);
+  const { matchId, authToken } = getMatchIdAndAuthToken(apiKey, serverId);
 
-  logger.trace(
+  log.debug(
     {
       matchId,
       body: JSON.stringify(body),
@@ -87,7 +91,7 @@ export async function ecmOnRoundEnd(
       },
     );
 
-    logger.trace(
+    log.debug(
       {
         matchId,
         status: res.status,
@@ -97,7 +101,7 @@ export async function ecmOnRoundEnd(
     );
   } catch (error) {
     if (isAxiosError(error)) {
-      logger.error(
+      log.error(
         {
           matchId,
           status: error.response?.status,
@@ -106,7 +110,7 @@ export async function ecmOnRoundEnd(
         "ECM round end error",
       );
     } else {
-      logger.error(
+      log.error(
         {
           matchId,
           error,
@@ -117,13 +121,17 @@ export async function ecmOnRoundEnd(
   }
 }
 
-function getMatchIdAndAuthToken(apiKey: string): {
+function getMatchIdAndAuthToken(
+  apiKey: string,
+  serverId: string,
+): {
   matchId: string;
   authToken: string;
 } {
+  const log = getLogger(serverId);
   const [matchId, authToken] = apiKey.split("_");
   if (!matchId || !authToken) {
-    logger.error(
+    log.error(
       {
         apiKey,
       },

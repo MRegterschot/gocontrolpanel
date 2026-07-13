@@ -2,7 +2,7 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getAccountNames, getMapsInfo } from "@/lib/api/nadeo";
 import { getClient } from "@/lib/dbclient";
-import { logger } from "@/lib/logger";
+import { getLogger, logger } from "@/lib/logger";
 import { getGbxClient } from "@/lib/managers/gbxclient-manager";
 import { Maps, Prisma } from "@/lib/prisma/generated";
 import { SMapInfo } from "@/types/gbx/map";
@@ -83,6 +83,7 @@ export async function getMapList(
       `group:servers:${serverId}:admin`,
     ],
     async () => {
+      const log = getLogger(serverId);
       const client = await getGbxClient(serverId);
       const pageSize = 100;
       let allMapList: MapInfoMinimal[] = [];
@@ -149,7 +150,7 @@ export async function getMapList(
               );
 
               if (newMaps.some((m) => m.uid === mapInfo.UId)) {
-                logger.warn(mapInfo, `Duplicate map UID found: ${mapInfo.UId}`);
+                log.warn(mapInfo, `Duplicate map UID found: ${mapInfo.UId}`);
                 continue;
               }
 
@@ -174,7 +175,7 @@ export async function getMapList(
                 deletedAt: null,
               });
             } catch (err) {
-              logger.error(err, `Skipping map "${map.FileName}"`);
+              log.error(err, `Failed to get map info for '${map.FileName}'`);
               continue;
             }
           }
@@ -319,7 +320,7 @@ export async function getMapsByUids(
           const batch = missingUids.slice(i, i + BATCH_SIZE);
           const { data: apiMapsInfo, error } = await getMapsInfo(batch);
           if (error) {
-            logger.error("Failed to fetch map info from Nadeo API: " + error);
+            logger.error({ error }, "Failed to fetch map info from API");
             continue;
           }
 

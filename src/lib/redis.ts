@@ -20,7 +20,7 @@ export async function getRedisClient() {
       if (process.env.NODE_ENV === "production") {
         logger.warn("Redis not available during build, continuing...");
       } else {
-        logger.error(error, "Error connecting to Redis");
+        logger.error({ error }, "Error connecting to Redis");
         throw new Error("Failed to connect to Redis");
       }
     }
@@ -86,6 +86,7 @@ export const getKeyClubMembersCount = (clubId: number) =>
   `nadeo:club:${clubId}:members:count`;
 export const getKeyUserInfo = (login: string) => `users:user-info:${login}`;
 
-export const getKeyPublicManialinks = (serverId: string) => `${serverId}:manialinks:public`;
+export const getKeyPublicManialinks = (serverId: string) =>
+  `${serverId}:manialinks:public`;
 export const getKeyPlayerManialinks = (serverId: string, login: string) =>
   `${serverId}:manialinks:player:${login}`;

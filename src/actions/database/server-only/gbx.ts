@@ -1,6 +1,6 @@
 import { getMapsInfo } from "@/lib/api/nadeo";
 import { getClient } from "@/lib/dbclient";
-import { logger } from "@/lib/logger";
+import { getLogger } from "@/lib/logger";
 import { getGbxClient } from "@/lib/managers/gbxclient-manager";
 import { Maps, Matches, Prisma, Servers } from "@/lib/prisma/generated";
 import { getKeyActiveMap, getRedisClient } from "@/lib/redis";
@@ -280,6 +280,7 @@ export async function saveMatchRecord(
   waypoint: Waypoint,
   round: number | null = null,
 ): Promise<void> {
+  const log = getLogger(serverId);
   const redis = await getRedisClient();
   const key = getKeyActiveMap(serverId);
 
@@ -343,12 +344,12 @@ export async function saveMatchRecord(
   try {
     await createRecord();
   } catch (error) {
-    logger.error(error, "Error saving record");
+    log.error({ error }, "Error saving record");
 
     try {
       await syncLogin(serverId, waypoint.login);
     } catch (syncError) {
-      logger.error(syncError, "Error syncing login");
+      log.error({ syncError }, "Error syncing login");
 
       await db.users.create({
         data: { login: waypoint.login, nickName: waypoint.login, path: "" },
@@ -365,6 +366,7 @@ export async function saveRoundRecords(
   scores: Scores,
   round: number | null = null,
 ): Promise<void> {
+  const log = getLogger(serverId);
   const redis = await getRedisClient();
   const key = getKeyActiveMap(serverId);
 
@@ -432,12 +434,12 @@ export async function saveRoundRecords(
     try {
       await createRecord(player);
     } catch (error) {
-      logger.error(error, "Error saving record");
+      log.error({ error }, "Error saving record");
 
       try {
         await syncLogin(serverId, player.login);
       } catch (syncError) {
-        logger.error(syncError, "Error syncing");
+        log.error({ syncError }, "Error syncing");
 
         await db.users.create({
           data: { login: player.login, nickName: player.login, path: "" },

@@ -5,7 +5,7 @@ import ShortsTab from "@/components/nadeo/tabs/shorts-tab";
 import TotdTab from "@/components/nadeo/tabs/totd-tab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { hasPermission } from "@/lib/auth";
-import { logger } from "@/lib/logger";
+import { getLogger } from "@/lib/logger";
 import { getFileManagerHealth } from "@/lib/managers/file-manager";
 import { routePermissions, routes } from "@/routes";
 import { redirect } from "next/navigation";
@@ -24,6 +24,7 @@ export default async function ServerNadeoPage({
 }) {
   const { id } = await params;
   const { offset = "0", campaign, club } = await searchParams;
+  const log = getLogger(id);
 
   const offsetInt = parseInt(offset);
   const campaignInt = campaign ? parseInt(campaign) : undefined;
@@ -38,7 +39,7 @@ export default async function ServerNadeoPage({
   try {
     fmHealth = await getFileManagerHealth(id);
   } catch (err) {
-    logger.error(err, "Failed to fetch file manager");
+    log.error({ err }, "Failed to fetch file manager");
   }
 
   return (

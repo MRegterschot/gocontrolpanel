@@ -1,6 +1,5 @@
 import { PlayerInfo } from "@/types/player";
 import "server-only";
-import { logger } from "../logger";
 import ActionGroup from "../manialink/components/action-group";
 import {
   getKeyPlayerManialinks,
@@ -55,8 +54,8 @@ export default class ManialinkManager {
       ]);
     }
 
-    logger.trace(
-      multi,
+    this.clientManager.log.trace(
+      { multi },
       `Re-displaying manialinks to newly connected player ${player.login}`,
     );
 
@@ -64,7 +63,7 @@ export default class ManialinkManager {
   }
 
   private async onPlayerDisconnect(login: string) {
-    logger.trace(
+    this.clientManager.log.trace(
       { login },
       `Player disconnected, removing player-specific manialinks for ${login}`,
     );
@@ -85,7 +84,7 @@ export default class ManialinkManager {
       await this.saveManialinkForLogin(login, manialinkId, manialinkData);
     }
 
-    logger.trace(
+    this.clientManager.log.trace(
       { manialinkId, login, manialinkData },
       `Displaying manialink ${manialinkId} to ${login ? `player ${login}` : "all players"}`,
     );
@@ -113,7 +112,7 @@ export default class ManialinkManager {
       const xml = `<?xml version="1.0" encoding="UTF-8"?>
             <manialinks><manialink id="${manialinkId}"></manialink></manialinks>`;
 
-      logger.trace(
+      this.clientManager.log.trace(
         { manialinkId, login, xml },
         `Hiding manialink ${manialinkId} for ${login ? `player ${login}` : "all players"}`,
       );
@@ -134,13 +133,13 @@ export default class ManialinkManager {
           false,
         );
       }
-    } catch (e) {
-      logger.error(e, "Error hiding manialink");
+    } catch (error) {
+      this.clientManager.log.error({ error }, "Error hiding manialink");
     }
   }
 
   public async destroyManialink(manialinkId: string, login?: string) {
-    logger.trace(
+    this.clientManager.log.trace(
       { manialinkId, login },
       `Destroying manialink ${manialinkId} for ${login ? `player ${login}` : "all players"}`,
     );
@@ -163,7 +162,7 @@ export default class ManialinkManager {
       multi.push(["SendDisplayManialinkPage", manialink, 0, false]);
     }
 
-    logger.trace(
+    this.clientManager.log.trace(
       {
         publicManialinks,
       },

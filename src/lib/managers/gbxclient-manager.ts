@@ -27,10 +27,11 @@ import { PlayerInfo } from "@/types/player";
 import { ServerClientInfo } from "@/types/server";
 import { GbxClient } from "@evotm/gbxclient";
 import EventEmitter from "events";
+import { Logger } from "pino";
 import "server-only";
 import { getClient } from "../dbclient";
 import { appGlobals } from "../global";
-import { logger } from "../logger";
+import { getLogger } from "../logger";
 import {
   formatMessage,
   isEliminated,
@@ -83,6 +84,7 @@ export class GbxClientManager extends EventEmitter {
   client: GbxClient;
   pluginManager: PluginManager;
   private serverId: string;
+  log: Logger;
   info: ServerClientInfo;
   serverName: string | null = null;
   private isConnected = false;
@@ -102,6 +104,7 @@ export class GbxClientManager extends EventEmitter {
   constructor(serverId: string) {
     super();
     this.serverId = serverId;
+    this.log = getLogger(serverId);
     this.client = new GbxClient({
       showErrors: true,
       throwErrors: true,
@@ -141,10 +144,7 @@ export class GbxClientManager extends EventEmitter {
 
   private onDisconnect() {
     if (!this.isConnected) return;
-    logger.info(
-      { serverId: this.serverId },
-      `Disconnected from GBX client for server`,
-    );
+    this.log.info("Disconnected from GBX client for server");
     this.isConnected = false;
     this.pluginManager.unloadPlugins();
     this.emit("disconnect", this.serverId);
@@ -309,7 +309,7 @@ export class GbxClientManager extends EventEmitter {
 
     this.isConnected = true;
     this.emit("connect", server.id);
-    logger.info({ name: server.name }, `Connected to GBX client`);
+    this.log.info({ name: server.name }, "Connected to GBX client");
 
     await this.client.call("SetApiVersion", "2023-04-24");
     await this.client.call("EnableCallbacks", true);
@@ -659,8 +659,8 @@ async function onPlayerConnect(manager: GbxClientManager, login: string) {
   try {
     await syncPlayer(playerInfo);
   } catch (error) {
-    logger.error(
-      { playerInfo, error },
+    manager.log.error(
+      { error, playerInfo },
       `Failed to sync player ${playerInfo.login} on connect`,
     );
   }
@@ -1283,7 +1283,10 @@ async function setScriptSettings(manager: GbxClientManager) {
         }
         manager.info.liveInfo.pointsRepartitionMap = repartitionMap;
       } catch (error) {
-        logger.error(error, `Failed to parse complex points repartition`);
+        manager.log.error(
+          { error },
+          "Failed to parse complex points repartition",
+        );
       }
     }
   }

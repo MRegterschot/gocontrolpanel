@@ -5,7 +5,7 @@ import Jukebox from "@/components/maps/jukebox";
 import ServerMaps from "@/components/maps/server-maps";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { hasPermission } from "@/lib/auth";
-import { logger } from "@/lib/logger";
+import { getLogger } from "@/lib/logger";
 import { getFileManagerHealth } from "@/lib/managers/file-manager";
 import { routePermissions, routes } from "@/routes";
 import { LocalMapInfo } from "@/types/map";
@@ -17,6 +17,7 @@ export default async function ServerMapsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const log = getLogger(id);
 
   const canView = await hasPermission(routePermissions.servers.maps, id);
   if (!canView) {
@@ -30,7 +31,7 @@ export default async function ServerMapsPage({
   try {
     fmHealth = await getFileManagerHealth(id);
   } catch (err) {
-    logger.error(err, "Failed to fetch file manager");
+    log.error({ err }, "Failed to fetch file manager");
   }
 
   let localMaps: LocalMapInfo[] = [];
@@ -39,7 +40,7 @@ export default async function ServerMapsPage({
       const { data } = await getLocalMaps(id);
       localMaps = data;
     } catch (err) {
-      logger.error(err, "Failed to fetch local maps");
+      log.error({ err }, "Failed to fetch local maps");
     }
   }
 

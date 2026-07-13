@@ -6,7 +6,7 @@ import {
   searchTMXMappacks,
   searchTMXMaps,
 } from "@/lib/api/tmx";
-import { logger } from "@/lib/logger";
+import { getLogger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
 import { TMXMappackSearch } from "@/types/api/tmx";
 import { ServerResponse } from "@/types/responses";
@@ -56,6 +56,7 @@ export async function downloadMappack(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
+      const log = getLogger(serverId);
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
         await logAudit(
@@ -114,7 +115,10 @@ export async function downloadMappack(
           );
         } else {
           errors++;
-          logger.error(result, `Failed to download map ${index + 1}`);
+          log.error(
+            { result, index: index + 1 },
+            `Failed to download map ${index + 1}`,
+          );
         }
       });
 
@@ -164,6 +168,7 @@ export async function addMappackToServer(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
+      const log = getLogger(serverId);
       const { data: fileNames, error } = await downloadMappack(
         serverId,
         mappackId,
@@ -190,7 +195,10 @@ export async function addMappackToServer(
       addMapResults.forEach((result, index) => {
         if (result.status === "rejected") {
           errors++;
-          logger.error(result, `Failed to add map ${index + 1}`);
+          log.error(
+            { result, index: index + 1 },
+            `Failed to add map ${index + 1}`,
+          );
         }
       });
 

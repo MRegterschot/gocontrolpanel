@@ -15,7 +15,7 @@ export function getClient(): PrismaClient {
       if (process.env.NODE_ENV === "production") {
         logger.warn("Prisma not available during build, continuing...");
       } else {
-        logger.error(error, "Error connecting to Prisma");
+        logger.error({ error }, "Error connecting to Prisma");
         throw new Error("Failed to connect to Prisma");
       }
     }

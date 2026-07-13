@@ -2,7 +2,7 @@
 
 import { ServerSettingsSchemaType } from "@/forms/server/settings/settings-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
-import { logger } from "@/lib/logger";
+import { getLogger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
 import { getGbxClient } from "@/lib/managers/gbxclient-manager";
 import { LocalMapInfo } from "@/types/map";
@@ -16,6 +16,7 @@ export async function getServerSettings(
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async () => {
+      const log = getLogger(serverId);
       const client = await getGbxClient(serverId);
       const settings = await client.multicall([
         ["GetServerOptions"],
@@ -69,7 +70,7 @@ export async function getServerSettings(
 
         return serverSettings;
       } catch (error) {
-        logger.error(error, "Error parsing server settings");
+        log.error({ error }, "Error parsing server settings");
         throw new ServerError("Failed to parse server settings");
       }
     },
@@ -83,6 +84,7 @@ export async function saveServerSettings(
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
+      const log = getLogger(serverId);
       const client = await getGbxClient(serverId);
 
       serverSettings.defaultOptions.NextCallVoteTimeOut *= 1000; // Convert to milliseconds
@@ -108,7 +110,7 @@ export async function saveServerSettings(
           ["AllowMapDownload", serverSettings.allowMapDownload],
         ])
         .catch((error) => {
-          logger.error(error, "Error saving server settings");
+          log.error({ error }, "Error saving server settings");
           throw new ServerError("Failed to save server settings");
         });
 
@@ -152,6 +154,7 @@ export async function getLocalMaps(
       `group:servers:${serverId}:admin`,
     ],
     async () => {
+      const log = getLogger(serverId);
       const client = await getGbxClient(serverId);
 
       const fileManager = await getFileManager(serverId);
@@ -191,7 +194,7 @@ export async function getLocalMaps(
             Path: path.dirname(map),
           } as LocalMapInfo);
         } catch (error) {
-          logger.error(error, `Error getting map info for ${map}`);
+          log.error({ error }, `Error getting map info for ${map}`);
         }
       }
 

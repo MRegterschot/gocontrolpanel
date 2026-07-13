@@ -1,6 +1,5 @@
 import { getPlayerRecords } from "@/actions/database/server-only/records";
 import { getMapRecordsByAccounts } from "@/lib/api/nadeo";
-import { logger } from "@/lib/logger";
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import ManialinkManager from "@/lib/managers/manialink-manager";
 import Widget from "@/lib/manialink/components/widget";
@@ -109,7 +108,7 @@ export default class PlayerInfoPlugin extends Plugin<PlayerInfoPluginConfig | nu
         localRecord = record ? record.time : 0;
       }
     } catch (error) {
-      logger.error(error, "Error fetching player records");
+      this.clientManager.log.error({ error }, "Error fetching player records");
     }
 
     let personalBest = 0;
@@ -124,7 +123,7 @@ export default class PlayerInfoPlugin extends Plugin<PlayerInfoPluginConfig | nu
         personalBest = pbRecord ? pbRecord.recordScore.time : 0;
       }
     } catch (error) {
-      logger.error(error, "Error fetching personal best");
+      this.clientManager.log.error({ error }, "Error fetching personal best");
     }
 
     const playerConfig = this.config?.playerInfos?.find(
@@ -163,7 +162,7 @@ export default class PlayerInfoPlugin extends Plugin<PlayerInfoPluginConfig | nu
         players,
       );
     } catch (error) {
-      logger.error(error, "Error fetching player records");
+      this.clientManager.log.error({ error }, "Error fetching player records");
     }
 
     let personalBests: Awaited<ReturnType<typeof getMapRecordsByAccounts>> = [];
@@ -175,7 +174,7 @@ export default class PlayerInfoPlugin extends Plugin<PlayerInfoPluginConfig | nu
           .map((p) => slugid.decode(p)),
       );
     } catch (error) {
-      logger.error(error, "Error fetching personal bests");
+      this.clientManager.log.error({ error }, "Error fetching personal bests");
     }
 
     this.playerInfos = {};
