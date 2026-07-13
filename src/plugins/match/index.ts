@@ -194,8 +194,8 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
       const selectedCount = map.selectedBy.filter((login) =>
         teamPlayers.includes(login),
       ).length;
-      const activeTeamPlayers = this.clientManager.info.activePlayers.filter((p) =>
-        teamPlayers.includes(p.login),
+      const activeTeamPlayers = this.clientManager.info.activePlayers.filter(
+        (p) => teamPlayers.includes(p.login),
       ).length;
 
       if (selectedCount > activeTeamPlayers / 2) {
@@ -593,7 +593,7 @@ export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
         };
       }
 
-      let playerInfo = this.clientManager.info.activePlayers.find(
+      const playerInfo = this.clientManager.info.activePlayers.find(
         (p) => p.login === player.login,
       );
 

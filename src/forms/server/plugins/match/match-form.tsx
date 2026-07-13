@@ -410,7 +410,7 @@ export default function MatchForm({
                   <FormLabel className="text-sm">Pick and Ban</FormLabel>
                   <FormDescription className="max-w-xs whitespace-normal wrap-break-word">
                     The order of picks and bans for the match. Choose between
-                    "pick", "ban", or "random" for each action and set the seed
+                    &quot;pick&quot;, &quot;ban&quot;, or &quot;random&quot; for each action and set the seed
                     of the player who will perform the action. The players are
                     defined below.
                   </FormDescription>
