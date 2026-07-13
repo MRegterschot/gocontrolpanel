@@ -1,6 +1,6 @@
 import { getMapsInfo } from "@/lib/api/nadeo";
 import { getClient } from "@/lib/dbclient";
-import { getLogger } from "@/lib/logger";
+import { getLogger, logger } from "@/lib/logger";
 import { getGbxClient } from "@/lib/managers/gbxclient-manager";
 import { Maps, Matches, Prisma, Servers } from "@/lib/prisma/generated";
 import { getKeyActiveMap, getRedisClient } from "@/lib/redis";
@@ -37,6 +37,7 @@ export async function createMap(
 
   const { data: mapsInfo, error } = await getMapsInfo([map.uid]);
   if (error) {
+    logger.error({ error, map }, "Failed to fetch map info");
     throw new ServerError(
       `Failed to fetch map info for UID ${map.uid}: ${error}`,
     );
@@ -349,7 +350,7 @@ export async function saveMatchRecord(
     try {
       await syncLogin(serverId, waypoint.login);
     } catch (syncError) {
-      log.error({ syncError }, "Error syncing login");
+      log.error({ error: syncError }, "Error syncing login");
 
       await db.users.create({
         data: { login: waypoint.login, nickName: waypoint.login, path: "" },
@@ -439,7 +440,7 @@ export async function saveRoundRecords(
       try {
         await syncLogin(serverId, player.login);
       } catch (syncError) {
-        log.error({ syncError }, "Error syncing");
+        log.error({ error: syncError }, "Error syncing");
 
         await db.users.create({
           data: { login: player.login, nickName: player.login, path: "" },

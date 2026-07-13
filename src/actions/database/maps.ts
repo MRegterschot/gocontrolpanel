@@ -174,8 +174,8 @@ export async function getMapList(
                 updatedAt: now,
                 deletedAt: null,
               });
-            } catch (err) {
-              log.error(err, `Failed to get map info for '${map.FileName}'`);
+            } catch (error) {
+              log.error({ error, map }, "Failed to get map info");
               continue;
             }
           }

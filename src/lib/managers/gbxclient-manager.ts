@@ -661,7 +661,7 @@ async function onPlayerConnect(manager: GbxClientManager, login: string) {
   } catch (error) {
     manager.log.error(
       { error, playerInfo },
-      `Failed to sync player ${playerInfo.login} on connect`,
+      "Failed to sync player on connect",
     );
   }
   manager.addActivePlayer(playerInfo);

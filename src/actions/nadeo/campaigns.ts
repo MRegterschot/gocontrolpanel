@@ -155,8 +155,8 @@ export async function downloadCampaign(
         } else {
           errors++;
           log.error(
-            { result, index: index + 1 },
-            `Failed to download map ${index + 1}`,
+            { error: result, index },
+            "Failed to download map",
           );
         }
       });
@@ -241,10 +241,7 @@ export async function addCampaignToServer(
       addResults.forEach((result, index) => {
         if (result.status === "rejected") {
           errors++;
-          log.error(
-            { result, index: index + 1 },
-            `Failed to add map ${index + 1}`,
-          );
+          log.error({ error: result, index }, "Failed to add map");
         }
       });
 

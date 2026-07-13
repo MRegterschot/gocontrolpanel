@@ -30,6 +30,7 @@ export async function getServerSettings(
       ]);
 
       if (!settings) {
+        log.error("Failed to get server settings");
         throw new ServerError("Failed to get server settings");
       }
 
@@ -194,7 +195,7 @@ export async function getLocalMaps(
             Path: path.dirname(map),
           } as LocalMapInfo);
         } catch (error) {
-          log.error({ error }, `Error getting map info for ${map}`);
+          log.error({ error, map }, "Error getting map info");
         }
       }
 

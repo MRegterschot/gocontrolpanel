@@ -23,8 +23,8 @@ export default async function ServerTMXPage({
   let fmHealth = false;
   try {
     fmHealth = await getFileManagerHealth(id);
-  } catch (err) {
-    log.error({ err }, "Failed to fetch file manager");
+  } catch (error) {
+    log.error({ error }, "Failed to fetch file manager");
   }
 
   return (

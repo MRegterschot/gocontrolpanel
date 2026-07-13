@@ -30,8 +30,8 @@ export default async function ServerMapsPage({
   let fmHealth = false;
   try {
     fmHealth = await getFileManagerHealth(id);
-  } catch (err) {
-    log.error({ err }, "Failed to fetch file manager");
+  } catch (error) {
+    log.error({ error }, "Failed to fetch file manager");
   }
 
   let localMaps: LocalMapInfo[] = [];
@@ -39,8 +39,8 @@ export default async function ServerMapsPage({
     try {
       const { data } = await getLocalMaps(id);
       localMaps = data;
-    } catch (err) {
-      log.error({ err }, "Failed to fetch local maps");
+    } catch (error) {
+      log.error({ error }, "Failed to fetch local maps");
     }
   }
 

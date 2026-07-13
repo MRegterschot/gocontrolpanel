@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { SMapInfo } from "@/types/gbx/map";
 import { MapInfoMinimal } from "@/types/map";
 import { GbxClient } from "@evotm/gbxclient";
@@ -6,10 +7,10 @@ export async function setMapList(client: GbxClient, filenames: string[]) {
   await client.call("RemoveMapList", filenames);
 
   const addedMaps = await client.call("AddMapList", filenames);
-  
+
   if (typeof addedMaps !== "number")
     throw new Error("Failed to add maps to map list");
-  
+
   const allMapList = await getMapList(client);
 
   const removedMaps = await client.call(
@@ -42,7 +43,7 @@ export async function getMapsInfo(
       const mapInfo: SMapInfo = await client.call("GetMapInfo", filename);
       mapsInfo.push(mapInfo);
     } catch (error) {
-      console.error(`Failed to get map info for ${filename}:`, error);
+      logger.error({ error, filename }, "Failed to get map info");
     }
   }
 

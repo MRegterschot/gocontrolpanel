@@ -55,8 +55,8 @@ export async function ecmOnDriverFinish(
     } else {
       log.error(
         {
-          matchId,
           error,
+          matchId,
         },
         "ECM driver finish unexpected error",
       );
@@ -112,8 +112,8 @@ export async function ecmOnRoundEnd(
     } else {
       log.error(
         {
-          matchId,
           error,
+          matchId,
         },
         "ECM round end unexpected error",
       );

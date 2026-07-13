@@ -59,7 +59,7 @@ export const NotificationProvider = ({
         }
         setNotifications(data);
       } catch (error) {
-        logger.error(error, "Failed to fetch notifications");
+        logger.error({ error }, "Failed to fetch notifications");
       }
     };
     fetchNotifications();
@@ -90,7 +90,7 @@ export const NotificationProvider = ({
       }
       setNotifications((prev) => prev.map((n) => (n.id === id ? data : n)));
     } catch (error) {
-      logger.error(error, "Failed to mark notification as read");
+      logger.error({ error }, "Failed to mark notification as read");
     }
   };
 

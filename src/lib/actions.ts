@@ -14,7 +14,7 @@ export async function doServerAction<T>(
       data: result,
     };
   } catch (error) {
-    logger.error({ error }, "Error during server action");
+    logger.error({ error }, "Error executing server action");
 
     return {
       data: undefined as T,
@@ -31,7 +31,7 @@ export async function doServerActionWithAuth<T>(
   try {
     session = await withAuth(roles);
   } catch (error) {
-    logger.error({ error }, "Error during server action with auth");
+    logger.error({ error }, "Error during auth check server action with auth");
     return {
       data: undefined as T,
       error: getErrorMessage(error),
@@ -44,7 +44,7 @@ export async function doServerActionWithAuth<T>(
       data: result,
     };
   } catch (error) {
-    logger.error({ error }, "Error during server action with auth");
+    logger.error({ error }, "Error executing server action with auth");
 
     return {
       data: undefined as T,

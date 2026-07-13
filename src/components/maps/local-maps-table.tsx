@@ -68,7 +68,9 @@ export default function LocalMapsTable({
       }
       setMapList(newMapList);
     } catch (error) {
-      console.error(error);
+      toast.error("Error refreshing map list", {
+        description: getErrorMessage(error),
+      });
     }
   }
 

@@ -16,7 +16,9 @@ function Copy({
       await navigator.clipboard.writeText(text);
       toast.success(copyMessage);
     } catch (err) {
-      console.error("Failed to copy: ", err);
+      toast.error("Failed to copy text", {
+        description: "Your browser may not support this feature.",
+      });
     }
   };
 
@@ -25,7 +27,10 @@ function Copy({
       type="button"
       variant={"ghost"}
       onClick={handleCopy}
-      className={cn("justify-start max-w-fit bg-background overflow-auto", className)}
+      className={cn(
+        "justify-start max-w-fit bg-background overflow-auto",
+        className,
+      )}
       {...props}
     >
       {text}
