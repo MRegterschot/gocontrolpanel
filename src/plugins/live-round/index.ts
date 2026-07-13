@@ -164,7 +164,7 @@ export default class LiveRoundPlugin extends Plugin {
     ) {
       const round = this.rounds.find((r) => r.login === playerInfo.login);
       if (!round) return;
-      
+
       this.rounds = this.rounds.filter((r) => r.login !== playerInfo.login);
     } else {
       const round = this.rounds.find((r) => r.login === playerInfo.login);
@@ -478,7 +478,7 @@ export default class LiveRoundPlugin extends Plugin {
       }
 
       // If still equal, sort by fastest checkpoints recursively
-      for (let i = 0; i < a.checkpoints.length; i++) {
+      for (let i = a.checkpoints.length; i >= 0; i--) {
         if (a.checkpoints[i] !== b.checkpoints[i]) {
           return a.checkpoints[i] - b.checkpoints[i];
         }
