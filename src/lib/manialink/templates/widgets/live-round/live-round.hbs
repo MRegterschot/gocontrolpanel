@@ -100,7 +100,28 @@ Text formatTime(Integer time) {
   return "";
 }
 
-Text getCheckpointDiffText(Round[] rounds, Text login) {
+Integer getCheckpointGap(Round[] rounds, Round playerRound, Round firstPlaceRound) {
+  declare Integer lastCheckpointIndex = playerRound.checkpoints.count - 1;
+  declare Integer playerCheckpointTime = playerRound.checkpoints[lastCheckpointIndex];
+  declare Integer leaderCheckpointTime = firstPlaceRound.checkpoints[lastCheckpointIndex];
+
+  // Same checkpoint as leader or player is rank 2 -> compare to leader
+  if (playerRound.checkpoints.count == firstPlaceRound.checkpoints.count || playerRound.rank == 2) {
+    return ML::Max(playerCheckpointTime - leaderCheckpointTime, 0);
+  }
+
+  declare Round aheadRound = rounds[playerRound.rank - 2];
+
+  // Player ahead has more checkpoints -> inherit their gap
+  if (aheadRound.checkpoints.count > playerRound.checkpoints.count) {
+    return getCheckpointGap(rounds, aheadRound, firstPlaceRound);
+  }
+
+  // Same checkpoint as player ahead -> compare to leader
+  return ML::Max(playerCheckpointTime - leaderCheckpointTime, 0);
+}
+
+Text getTimeDiffText(Round[] rounds, Text login) {
   declare Round playerRound;
   
   foreach (round in rounds) {
@@ -140,19 +161,8 @@ Text getCheckpointDiffText(Round[] rounds, Text login) {
   if (firstPlaceRound.login == "") {
     return "--:--.---";
   }
-  
-  // Get the checkpoint difference to the first place player
-  declare Integer checkpointDiff = firstPlaceRound.checkpoints.count - playerRound.checkpoints.count;
-
-  // If the checkpoint difference is 0, return their time difference
-  if (checkpointDiff == 0) {
-    declare Integer timeDiff = playerRound.time - firstPlaceRound.time;
-    return "+" ^ formatTime(timeDiff);
-  } else {
-    return "+" ^ TL::ToText(checkpointDiff) ^ " CP";
-  }
-
-  return "--:--.---";
+    
+  return "+" ^ formatTime(getCheckpointGap(rounds, playerRound, firstPlaceRound));
 }
 
 Void updateRoundRow(Integer index, Round round, Round[] rounds, Text mode, Integer pointsLimit) {
@@ -187,7 +197,7 @@ Void updateRoundRow(Integer index, Round round, Round[] rounds, Text mode, Integ
   }
 
   (roundFrame.Controls[6] as CMlLabel).SetText(pointsText);
-  (roundFrame.Controls[7] as CMlLabel).SetText(getCheckpointDiffText(rounds, round.login));
+  (roundFrame.Controls[7] as CMlLabel).SetText(getTimeDiffText(rounds, round.login));
   roundFrame.DataAttributeSet("login", round.login);
 
   if (round.team.mainColor != "") {
