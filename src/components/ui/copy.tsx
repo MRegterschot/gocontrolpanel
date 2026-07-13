@@ -15,7 +15,7 @@ function Copy({
     try {
       await navigator.clipboard.writeText(text);
       toast.success(copyMessage);
-    } catch (err) {
+    } catch {
       toast.error("Failed to copy text", {
         description: "Your browser may not support this feature.",
       });
