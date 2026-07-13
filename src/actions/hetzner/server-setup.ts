@@ -210,7 +210,7 @@ export async function createAdvancedServerSetup(
           local: database?.local || false,
         },
         dedi_login: server.dediLogin,
-        dedi_password: server.dediPassword,
+        dedi_password: server.dediPassword.replace(/\$/g, "$$$$"),
         room_password: server.roomPassword,
         superadmin_password:
           server.superAdminPassword || generateRandomString(16),
@@ -437,7 +437,7 @@ export async function createSimpleServerSetup(
           local: database?.local || false,
         },
         dedi_login: server.dediLogin,
-        dedi_password: server.dediPassword,
+        dedi_password: server.dediPassword.replace(/\$/g, "$$$$"),
         room_password: server.roomPassword,
         superadmin_password: generateRandomString(16),
         admin_password: generateRandomString(16),
@@ -607,9 +607,11 @@ export async function addTrackmaniaServer(
         tmServers.length > 0 ? Math.max(...tmServers) + 1 : 1;
 
       const dediData = {
-        dedi_login: tmServer.dediLogin,
-        dedi_password: tmServer.dediPassword,
-        room_password: tmServer.roomPassword,
+        dedi_login: tmServer.dediLogin.replace(/\s+/g, ""),
+        dedi_password: tmServer.dediPassword
+          .replace(/\$/g, "$$$$")
+          .replace(/\s+/g, ""),
+        room_password: tmServer.roomPassword?.replace(/\s+/g, ""),
         superadmin_password: generateRandomString(16),
         admin_password: generateRandomString(16),
         user_password: generateRandomString(16),
@@ -692,6 +694,11 @@ export async function deleteTrackmaniaServer(
           },
           error,
         );
+
+      if (isNaN(tmServerNumber)) {
+        la("Invalid TM server number");
+        throw new Error("Invalid TM server number");
+      }
 
       const hetznerServer = await getHetznerServer(projectId, serverId);
 
