@@ -153,7 +153,7 @@ export async function deleteAuditLogById(id: string): Promise<ServerResponse> {
         ];
 
         if (allIds.length === 0) {
-          logger.debug(
+          logger.warn(
             { meta, userId: session.user.id, auditLogId: id },
             "Not authorized to delete this log",
           );
@@ -175,7 +175,7 @@ export async function deleteAuditLogById(id: string): Promise<ServerResponse> {
       });
 
       if (!auditLog) {
-        logger.debug({ meta, id }, "Audit log not found");
+        logger.warn({ meta, id }, "Audit log not found");
         throw new Error("Audit log not found.");
       }
 

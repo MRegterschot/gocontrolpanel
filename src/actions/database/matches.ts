@@ -201,7 +201,7 @@ export async function exportMatchToCSV(
       });
 
       if (!match) {
-        log.debug({ meta, serverId, matchId }, "Match not found");
+        log.warn({ meta, serverId, matchId }, "Match not found");
         throw new Error("Match not found");
       }
 

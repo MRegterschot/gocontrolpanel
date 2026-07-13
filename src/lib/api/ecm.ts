@@ -70,7 +70,7 @@ export async function ecmOnRoundEnd(
   const log = getLogger(serverId);
   const { matchId, authToken } = getMatchIdAndAuthToken(apiKey, serverId);
 
-  log.debug(
+  log.info(
     { meta, matchId, body: JSON.stringify(body) },
     "Sending ECM round end event",
   );
@@ -122,7 +122,7 @@ function getMatchIdAndAuthToken(
   const log = getLogger(serverId);
   const [matchId, authToken] = apiKey.split("_");
   if (!matchId || !authToken) {
-    log.error({ meta, apiKey }, "Invalid ECM API key format");
+    log.warn({ meta, apiKey }, "Invalid ECM API key format");
     throw new Error("Invalid ECM API key");
   }
   return { matchId, authToken };

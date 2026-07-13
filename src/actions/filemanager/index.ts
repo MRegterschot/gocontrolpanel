@@ -35,7 +35,7 @@ export async function getRoute(
       });
 
       if (res.status !== 200) {
-        log.debug(
+        log.error(
           {
             meta,
             path,
@@ -55,12 +55,12 @@ export async function getRoute(
       try {
         data = await res.json();
       } catch {
-        log.debug({ meta, path }, "Route is a file");
+        log.warn({ meta, path }, "Route is a file");
         throw new ServerError("Route is a file");
       }
 
       if (!data) {
-        log.debug({ meta, path }, "Failed to get files, no data returned");
+        log.error({ meta, path }, "Failed to get files, no data returned");
         throw new ServerError("Failed to get files");
       }
 
@@ -101,7 +101,7 @@ export async function getFile(
       });
 
       if (res.status !== 200) {
-        log.debug(
+        log.error(
           {
             meta,
             path,
@@ -178,7 +178,7 @@ export async function saveFileText(
       );
 
       if (res.status !== 200) {
-        log.debug(
+        log.error(
           {
             meta,
             path,
@@ -273,7 +273,7 @@ export async function uploadFiles(
         throw new ServerError("Could not connect to file manager");
       }
 
-      log.debug(
+      log.info(
         {
           meta,
           uploadAuditData,

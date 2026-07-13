@@ -59,7 +59,7 @@ export async function createNotifications(
     ),
   );
 
-  log.debug(
+  log.info(
     { meta, notifications: notifications.length, type, message },
     "Created notifications",
   );

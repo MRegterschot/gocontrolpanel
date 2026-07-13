@@ -84,7 +84,7 @@ export async function getPlayerInfo(
   const playerInfo = await client.call("GetPlayerInfo", login);
 
   if (!playerInfo) {
-    logger.debug({ meta, login }, "Player not found");
+    logger.error({ meta, login }, "Player not found");
     throw new Error(`Player with login ${login} not found`);
   }
 

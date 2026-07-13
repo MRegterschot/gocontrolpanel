@@ -172,7 +172,7 @@ export async function exportServerPluginConfig(
       });
 
       if (!plugin) {
-        log.debug({ meta, pluginId }, "Plugin not found for server");
+        log.warn({ meta, pluginId }, "Plugin not found for server");
         throw new Error("Plugin not found for server");
       }
 

@@ -297,7 +297,7 @@ export async function getServerChatConfig(
     });
 
     if (!server) {
-      log.debug({ meta, serverId }, "Server not found");
+      log.warn({ meta, serverId }, "Server not found");
       throw new Error("Server not found");
     }
 

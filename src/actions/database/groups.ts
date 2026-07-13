@@ -257,7 +257,7 @@ export async function updateGroupServersOrder(
     });
 
     if (!groupMember) {
-      logger.debug(
+      logger.warn(
         { meta, userId, groupId },
         "User is not a member of the group",
       );
