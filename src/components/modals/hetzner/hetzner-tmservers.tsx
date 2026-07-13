@@ -1,3 +1,5 @@
+"use client";
+
 import {
   restartTrackmaniaServer,
   stopTrackmaniaServer,
@@ -12,11 +14,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { HetznerServer } from "@/types/api/hetzner/servers";
-import { IconRefresh, IconTrash, IconX } from "@tabler/icons-react";
+import { IconLogs, IconRefresh, IconTrash, IconX } from "@tabler/icons-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
+import Modal from "../modal";
+import HetznerLogsModal from "./hetzner-logs";
 
 export default function HetznerTMServersModal({
   closeModal,
@@ -193,6 +197,7 @@ export default function HetznerTMServersModal({
 
               <div className="flex gap-2">
                 <Button
+                  collapse="sm"
                   variant={"destructive"}
                   onClick={() => onDeleteServer(parseInt(serverNumber))}
                   disabled={
@@ -206,6 +211,7 @@ export default function HetznerTMServersModal({
                 {servers[serverNumber].version >= 1 && (
                   <>
                     <Button
+                      collapse="sm"
                       variant={"outline"}
                       onClick={() => onRestartServer(parseInt(serverNumber))}
                       disabled={
@@ -218,6 +224,7 @@ export default function HetznerTMServersModal({
                     </Button>
 
                     <Button
+                      collapse="sm"
                       variant={"outline"}
                       onClick={() => onStopServer(parseInt(serverNumber))}
                       disabled={
@@ -230,6 +237,21 @@ export default function HetznerTMServersModal({
                     </Button>
                   </>
                 )}
+
+                <Modal>
+                  <HetznerLogsModal
+                    data={{
+                      projectId: data.projectId,
+                      server: data.server,
+                      serverNumber: parseInt(serverNumber),
+                    }}
+                  />
+
+                  <Button variant={"outline"} collapse="sm">
+                    <IconLogs />
+                    View Logs
+                  </Button>
+                </Modal>
               </div>
             </AccordionContent>
           </AccordionItem>
