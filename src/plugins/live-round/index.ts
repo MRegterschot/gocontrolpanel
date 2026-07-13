@@ -1,6 +1,5 @@
 import { getLocalRecord } from "@/actions/database/server-only/records";
 import { getMapLeaderboard, getMapRecordsByAccounts } from "@/lib/api/nadeo";
-import { logger } from "@/lib/logger";
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import ManialinkManager from "@/lib/managers/manialink-manager";
 import Widget from "@/lib/manialink/components/widget";
@@ -110,7 +109,15 @@ export default class LiveRoundPlugin extends Plugin {
         ? personalBest[0].recordScore.time
         : 0;
     } catch (error) {
-      logger.error(error, "Error fetching personal best for player connect");
+      const meta = {
+        type: "plugins",
+        module: "live-round-plugin",
+        function: "onPlayerConnect",
+      };
+      this.clientManager.log.error(
+        { meta, error },
+        "Error fetching personal best for player connect",
+      );
       this.recordsInfo[playerInfo.login] =
         this.recordsInfo[playerInfo.login] || 0;
     }
@@ -398,7 +405,15 @@ export default class LiveRoundPlugin extends Plugin {
           this.recordsInfo[p] = pb ? pb.recordScore.time : 0;
         });
       } catch (error) {
-        logger.error(error, "Error fetching personal bests");
+        const meta = {
+          type: "plugins",
+          module: "live-round-plugin",
+          function: "updateRecordsInfo",
+        };
+        this.clientManager.log.error(
+          { meta, error },
+          "Error fetching personal bests",
+        );
         players.forEach((p) => {
           this.recordsInfo[p] = this.recordsInfo[p] || 0;
         });

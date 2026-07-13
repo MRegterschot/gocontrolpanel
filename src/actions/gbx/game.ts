@@ -1,5 +1,6 @@
 "use server";
 import { doServerActionWithAuth } from "@/lib/actions";
+import { getLogger } from "@/lib/logger";
 import {
   getGbxClient,
   getGbxClientManager,
@@ -322,6 +323,12 @@ export async function pauseMatch(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
+      const meta = {
+        type: "gbx",
+        module: "game",
+        function: "pauseMatch",
+      };
+      const log = getLogger(serverId);
       const { error } = await triggerModeScriptEventArray(
         serverId,
         "Maniaplanet.Pause.SetActive",
@@ -337,6 +344,7 @@ export async function pauseMatch(
       );
 
       if (error) {
+        log.error({ meta, error, pause }, "Failed to pause match");
         throw new Error(error);
       }
 

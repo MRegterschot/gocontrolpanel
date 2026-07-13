@@ -27,10 +27,11 @@ import { PlayerInfo } from "@/types/player";
 import { ServerClientInfo } from "@/types/server";
 import { GbxClient } from "@evotm/gbxclient";
 import EventEmitter from "events";
+import { Logger } from "pino";
 import "server-only";
 import { getClient } from "../dbclient";
 import { appGlobals } from "../global";
-import { logger } from "../logger";
+import { getLogger } from "../logger";
 import {
   formatMessage,
   isEliminated,
@@ -83,6 +84,7 @@ export class GbxClientManager extends EventEmitter {
   client: GbxClient;
   pluginManager: PluginManager;
   private serverId: string;
+  log: Logger;
   info: ServerClientInfo;
   serverName: string | null = null;
   private isConnected = false;
@@ -102,6 +104,7 @@ export class GbxClientManager extends EventEmitter {
   constructor(serverId: string) {
     super();
     this.serverId = serverId;
+    this.log = getLogger(serverId);
     this.client = new GbxClient({
       showErrors: true,
       throwErrors: true,
@@ -141,10 +144,12 @@ export class GbxClientManager extends EventEmitter {
 
   private onDisconnect() {
     if (!this.isConnected) return;
-    logger.info(
-      { serverId: this.serverId },
-      `Disconnected from GBX client for server`,
-    );
+    const meta = {
+      type: "managers",
+      module: "gbxclient-manager",
+      function: "onDisconnect",
+    };
+    this.log.info({ meta }, "Disconnected from GBX client for server");
     this.isConnected = false;
     this.pluginManager.unloadPlugins();
     this.emit("disconnect", this.serverId);
@@ -268,6 +273,15 @@ export class GbxClientManager extends EventEmitter {
     try {
       await this.connect();
     } catch {
+      const meta = {
+        type: "managers",
+        module: "gbxclient-manager",
+        function: "tryConnectWithRetry",
+      };
+      this.log.warn(
+        { meta, delay: this.reconnect.delay },
+        "Failed to connect to GBX client, retrying...",
+      );
       this.scheduleReconnect();
     }
   }
@@ -309,7 +323,12 @@ export class GbxClientManager extends EventEmitter {
 
     this.isConnected = true;
     this.emit("connect", server.id);
-    logger.info({ name: server.name }, `Connected to GBX client`);
+    const meta = {
+      type: "managers",
+      module: "gbxclient-manager",
+      function: "connect",
+    };
+    this.log.info({ meta, name: server.name }, "Connected to GBX client");
 
     await this.client.call("SetApiVersion", "2023-04-24");
     await this.client.call("EnableCallbacks", true);
@@ -482,7 +501,17 @@ export async function getGbxClientManager(
     const manager = new GbxClientManager(serverId);
     try {
       await manager.connect();
-    } catch {}
+    } catch {
+      const meta = {
+        type: "managers",
+        module: "gbxclient-manager",
+        function: "getGbxClientManager",
+      };
+      manager.log.warn(
+        { meta },
+        "Failed to connect to GBX client, will retry on next attempt",
+      );
+    }
   }
 
   if (!appGlobals.gbxClients?.[serverId]) {
@@ -659,9 +688,14 @@ async function onPlayerConnect(manager: GbxClientManager, login: string) {
   try {
     await syncPlayer(playerInfo);
   } catch (error) {
-    logger.error(
-      { playerInfo, error },
-      `Failed to sync player ${playerInfo.login} on connect`,
+    const meta = {
+      type: "managers",
+      module: "gbxclient-manager",
+      function: "onPlayerConnect",
+    };
+    manager.log.error(
+      { meta, error, playerInfo },
+      "Failed to sync player on connect",
     );
   }
   manager.addActivePlayer(playerInfo);
@@ -1283,7 +1317,15 @@ async function setScriptSettings(manager: GbxClientManager) {
         }
         manager.info.liveInfo.pointsRepartitionMap = repartitionMap;
       } catch (error) {
-        logger.error(error, `Failed to parse complex points repartition`);
+        const meta = {
+          type: "managers",
+          module: "gbxclient-manager",
+          function: "setScriptSettings",
+        };
+        manager.log.error(
+          { meta, error },
+          "Failed to parse complex points repartition",
+        );
       }
     }
   }

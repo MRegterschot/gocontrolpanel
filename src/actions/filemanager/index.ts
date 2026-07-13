@@ -2,7 +2,7 @@
 
 import { CreateFileEntrySchemaType } from "@/forms/server/files/create-file-entry-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
-import { logger } from "@/lib/logger";
+import { getLogger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
 import { ContentType, File, FileEntry } from "@/types/filemanager";
 import { ServerError, ServerResponse } from "@/types/responses";
@@ -15,6 +15,12 @@ export async function getRoute(
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async () => {
+      const meta = {
+        type: "filemanager",
+        module: "filemanager",
+        function: "getRoute",
+      };
+      const log = getLogger(serverId);
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
         throw new ServerError("Could not connect to file manager");
@@ -29,6 +35,18 @@ export async function getRoute(
       });
 
       if (res.status !== 200) {
+        log.error(
+          {
+            meta,
+            path,
+            response: {
+              status: res.status,
+              statusText: res.statusText,
+              error: await res.text(),
+            },
+          },
+          "Failed to get files",
+        );
         throw new ServerError("Failed to get files");
       }
 
@@ -37,10 +55,12 @@ export async function getRoute(
       try {
         data = await res.json();
       } catch {
+        log.warn({ meta, path }, "Route is a file");
         throw new ServerError("Route is a file");
       }
 
       if (!data) {
+        log.error({ meta, path }, "Failed to get files, no data returned");
         throw new ServerError("Failed to get files");
       }
 
@@ -61,6 +81,12 @@ export async function getFile(
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async () => {
+      const meta = {
+        type: "filemanager",
+        module: "filemanager",
+        function: "getFile",
+      };
+      const log = getLogger(serverId);
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
         throw new ServerError("Could not connect to file manager");
@@ -75,6 +101,18 @@ export async function getFile(
       });
 
       if (res.status !== 200) {
+        log.error(
+          {
+            meta,
+            path,
+            response: {
+              status: res.status,
+              statusText: res.statusText,
+              error: await res.text(),
+            },
+          },
+          "Failed to get file",
+        );
         throw new ServerError("Failed to get files");
       }
 
@@ -104,6 +142,12 @@ export async function saveFileText(
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
+      const meta = {
+        type: "filemanager",
+        module: "filemanager",
+        function: "saveFileText",
+      };
+      const log = getLogger(serverId);
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
         await logAudit(
@@ -134,6 +178,18 @@ export async function saveFileText(
       );
 
       if (res.status !== 200) {
+        log.error(
+          {
+            meta,
+            path,
+            response: {
+              status: res.status,
+              statusText: res.statusText,
+              error: await res.text(),
+            },
+          },
+          "Failed to save file",
+        );
         throw new ServerError("Failed to save file");
       }
     },
@@ -190,6 +246,12 @@ export async function uploadFiles(
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
+      const meta = {
+        type: "filemanager",
+        module: "filemanager",
+        function: "uploadFiles",
+      };
+      const log = getLogger(serverId);
       const uploadAuditData = {
         files: formData
           .getAll("files")
@@ -211,9 +273,9 @@ export async function uploadFiles(
         throw new ServerError("Could not connect to file manager");
       }
 
-      logger.debug(
+      log.info(
         {
-          serverId,
+          meta,
           uploadAuditData,
         },
         "Uploading files to file manager",
@@ -273,6 +335,12 @@ export async function getScripts(
       `group:servers:${serverId}:admin`,
     ],
     async () => {
+      const meta = {
+        type: "filemanager",
+        module: "filemanager",
+        function: "getScripts",
+      };
+      const log = getLogger(serverId);
       const defaultScripts = [
         "Trackmania/TM_TimeAttack_Online.Script.txt",
         "Trackmania/TM_Laps_Online.Script.txt",
@@ -314,7 +382,7 @@ export async function getScripts(
         const allScripts = [...data, ...defaultScripts];
         return [...new Set(allScripts)];
       } catch (error) {
-        logger.error(error, "Error getting scripts");
+        log.error({ meta, error }, "Error getting scripts");
         return defaultScripts;
       }
     },
@@ -327,6 +395,12 @@ export async function getPluginScripts(
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async () => {
+      const meta = {
+        type: "filemanager",
+        module: "filemanager",
+        function: "getPluginScripts",
+      };
+      const log = getLogger(serverId);
       try {
         const fileManager = await getFileManager(serverId);
         if (!fileManager?.health) {
@@ -352,7 +426,7 @@ export async function getPluginScripts(
 
         return [...new Set(data)];
       } catch (error) {
-        logger.error(error, "Error getting scripts");
+        log.error({ meta, error }, "Error getting scripts");
         return [];
       }
     },
@@ -370,6 +444,12 @@ export async function getMatchSettings(
       `group:servers:${serverId}:admin`,
     ],
     async () => {
+      const meta = {
+        type: "filemanager",
+        module: "filemanager",
+        function: "getMatchSettings",
+      };
+      const log = getLogger(serverId);
       try {
         const fileManager = await getFileManager(serverId);
         if (!fileManager?.health) {
@@ -395,7 +475,7 @@ export async function getMatchSettings(
 
         return [...new Set(data)];
       } catch (error) {
-        logger.error(error, "Error getting match settings");
+        log.error({ meta, error }, "Error getting match settings");
         return [];
       }
     },

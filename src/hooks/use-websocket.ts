@@ -49,7 +49,12 @@ export default function useWebSocket({
 
     return () => {
       if (wsRef.current) {
-        logger.trace("Cleaning up WebSocket connection");
+        const meta = {
+          type: "hook",
+          module: "useWebSocket",
+          function: "cleanup",
+        };
+        logger.trace({ meta }, "Cleaning up WebSocket connection");
         wsRef.current.close();
       }
     };

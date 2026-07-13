@@ -2,7 +2,7 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getAccountNames, getMapsInfo } from "@/lib/api/nadeo";
 import { getClient } from "@/lib/dbclient";
-import { logger } from "@/lib/logger";
+import { getLogger, logger } from "@/lib/logger";
 import { getGbxClient } from "@/lib/managers/gbxclient-manager";
 import { Maps, Prisma } from "@/lib/prisma/generated";
 import { SMapInfo } from "@/types/gbx/map";
@@ -53,6 +53,7 @@ export async function getMapByUid(
     ],
     async () => {
       const db = getClient();
+
       const map = await db.maps.findFirst({
         where: { uid, deletedAt: null },
       });
@@ -83,6 +84,12 @@ export async function getMapList(
       `group:servers:${serverId}:admin`,
     ],
     async () => {
+      const meta = {
+        type: "database",
+        module: "maps",
+        function: "getMapList",
+      };
+      const log = getLogger(serverId);
       const client = await getGbxClient(serverId);
       const pageSize = 100;
       let allMapList: MapInfoMinimal[] = [];
@@ -107,7 +114,8 @@ export async function getMapList(
       }
 
       if (!allMapList || allMapList.length === 0) {
-        throw new ServerError("Failed to get map list");
+        log.error({ meta }, "Failed to get map list or map list is empty");
+        throw new ServerError("Failed to get map list or map list is empty");
       }
 
       const uids = allMapList.filter((map) => map?.UId).map((map) => map.UId);
@@ -149,7 +157,7 @@ export async function getMapList(
               );
 
               if (newMaps.some((m) => m.uid === mapInfo.UId)) {
-                logger.warn(mapInfo, `Duplicate map UID found: ${mapInfo.UId}`);
+                log.warn({ meta, mapInfo }, "Duplicate map UID found");
                 continue;
               }
 
@@ -173,8 +181,8 @@ export async function getMapList(
                 updatedAt: now,
                 deletedAt: null,
               });
-            } catch (err) {
-              logger.error(err, `Skipping map "${map.FileName}"`);
+            } catch (error) {
+              log.error({ meta, error, map }, "Failed to get map info");
               continue;
             }
           }
@@ -223,10 +231,17 @@ export async function getMapRecordsPaginated(
       `group:servers:${fetchArgs.serverId}:admin`,
     ],
     async () => {
+      const meta = {
+        type: "database",
+        module: "maps",
+        function: "getMapRecordsPaginated",
+      };
+      const log = getLogger(fetchArgs.serverId);
       const db = getClient();
 
       const { data: serverMaps, error } = await getMapList(fetchArgs.serverId);
       if (error) {
+        log.error({ meta, error }, "Failed to get map list from server");
         throw new ServerError(error);
       }
 
@@ -298,6 +313,12 @@ export async function getMapsByUids(
       "group:servers::admin",
     ],
     async () => {
+      const meta = {
+        type: "database",
+        module: "maps",
+        function: "getMapsByUids",
+      };
+
       const db = getClient();
 
       const existingMaps = await db.maps.findMany({
@@ -319,7 +340,7 @@ export async function getMapsByUids(
           const batch = missingUids.slice(i, i + BATCH_SIZE);
           const { data: apiMapsInfo, error } = await getMapsInfo(batch);
           if (error) {
-            logger.error("Failed to fetch map info from Nadeo API: " + error);
+            logger.error({ meta, error }, "Failed to fetch map info from API");
             continue;
           }
 
@@ -330,10 +351,7 @@ export async function getMapsByUids(
 
           for (const mapInfo of apiMapsInfo) {
             if (newMaps.some((m) => m.uid === mapInfo.mapUid)) {
-              logger.warn(
-                mapInfo,
-                `Duplicate map UID found: ${mapInfo.mapUid}`,
-              );
+              logger.warn({ meta, mapInfo }, "Duplicate map UID found");
               continue;
             }
 

@@ -5,17 +5,25 @@ import { PrismaClient } from "./prisma/generated";
 
 export function getClient(): PrismaClient {
   if (!appGlobals.prisma) {
+    const meta = {
+      type: "server",
+      module: "dbclient",
+      function: "getClient",
+    };
     try {
       appGlobals.prisma = new PrismaClient({
         errorFormat: "minimal",
       });
-      logger.info("Prisma client initialized");
+      logger.info({ meta }, "Prisma client initialized");
       return appGlobals.prisma;
     } catch (error) {
       if (process.env.NODE_ENV === "production") {
-        logger.warn("Prisma not available during build, continuing...");
+        logger.warn(
+          { meta },
+          "Prisma not available during build, continuing...",
+        );
       } else {
-        logger.error(error, "Error connecting to Prisma");
+        logger.error({ meta, error }, "Error connecting to Prisma");
         throw new Error("Failed to connect to Prisma");
       }
     }

@@ -2,6 +2,7 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { downloadTMXMap, searchTMXMaps } from "@/lib/api/tmx";
+import { getLogger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
 import { TMXMapSearch } from "@/types/api/tmx";
 import { ServerResponse } from "@/types/responses";
@@ -51,6 +52,12 @@ export async function downloadMap(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
+      const meta = {
+        type: "tmx",
+        module: "maps",
+        function: "downloadMap",
+      };
+      const log = getLogger(serverId);
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
         await logAudit(
@@ -90,6 +97,7 @@ export async function downloadMap(
       );
 
       if (error) {
+        log.error({ meta, error, mapId }, "Failed to upload map");
         throw new Error(error);
       }
 
@@ -110,6 +118,12 @@ export async function addMapToServer(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
+      const meta = {
+        type: "tmx",
+        module: "maps",
+        function: "addMapToServer",
+      };
+      const log = getLogger(serverId);
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
         await logAudit(
@@ -149,6 +163,7 @@ export async function addMapToServer(
       );
 
       if (addMapError) {
+        log.error({ meta, addMapError, mapId }, "Failed to add map");
         throw new Error(addMapError);
       }
     },

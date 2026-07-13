@@ -1,5 +1,5 @@
 import { getClient } from "@/lib/dbclient";
-import { logger } from "@/lib/logger";
+import { getLogger } from "@/lib/logger";
 import { Notifications } from "@/lib/prisma/generated";
 import "server-only";
 
@@ -9,6 +9,12 @@ export async function createNotifications(
   message: string,
   description?: string,
 ): Promise<Notifications[]> {
+  const meta = {
+    type: "database",
+    module: "notifications",
+    function: "createNotifications",
+  };
+  const log = getLogger(serverId);
   const db = getClient();
 
   const users = await db.users.findMany({
@@ -53,8 +59,9 @@ export async function createNotifications(
     ),
   );
 
-  logger.info(
-    `Created ${notifications.length} notifications for server ${serverId} with type ${type} and message ${message}`,
+  log.info(
+    { meta, notifications: notifications.length, type, message },
+    "Created notifications",
   );
 
   return notifications;

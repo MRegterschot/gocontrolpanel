@@ -2,6 +2,7 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
+import { getLogger } from "@/lib/logger";
 import { updateFileManager } from "@/lib/managers/file-manager";
 import {
   deleteGbxClientManager,
@@ -277,7 +278,14 @@ export async function getServerChatConfig(
   >
 > {
   return doServerActionWithAuth([`servers:${serverId}:admin`], async () => {
+    const meta = {
+      type: "database",
+      module: "servers",
+      function: "getServerChatConfig",
+    };
+    const log = getLogger(serverId);
     const db = getClient();
+
     const server = await db.servers.findUnique({
       where: { id: serverId },
       select: {
@@ -287,9 +295,12 @@ export async function getServerChatConfig(
         disconnectMessage: true,
       },
     });
+
     if (!server) {
+      log.warn({ meta, serverId }, "Server not found");
       throw new Error("Server not found");
     }
+
     return server;
   });
 }
@@ -304,15 +315,22 @@ export async function updateServerChatConfig(
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
+      const meta = {
+        type: "database",
+        module: "servers",
+        function: "updateServerChatConfig",
+      };
+      const log = getLogger(serverId);
       const manager = await getGbxClientManager(serverId);
-      let err;
+      let error;
+
       try {
         await manager.client.call(
           "ChatEnableManualRouting",
           chatConfig.manualRouting,
         );
       } catch (e) {
-        err = e;
+        error = e;
         chatConfig.manualRouting = false;
       }
 
@@ -329,11 +347,12 @@ export async function updateServerChatConfig(
         serverId,
         "server.plugins.chat.edit",
         chatConfig,
-        err ? getErrorMessage(err) : undefined,
+        error ? getErrorMessage(error) : undefined,
       );
 
-      if (err) {
-        throw err;
+      if (error) {
+        log.error({ meta, error }, "Failed to update chat config on server");
+        throw error;
       }
 
       return updatedServer;
