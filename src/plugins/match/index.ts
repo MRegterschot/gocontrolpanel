@@ -54,6 +54,16 @@ type MapInfo = {
 
 export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
   static pluginId = "match";
+  static helpText = 
+`With this plugin you can easily manage matches, including pick and ban phases, pausing, and unpausing.
+Commands: 
+/matchstart - Starts the match
+/matchstop - Stops the match
+/pause - Pauses the match
+/unpause - Unpauses the match
+/pickban - Starts the pick and ban phase
+/lobby - Sets the server to lobby state
+`;
   private widget: Widget;
 
   private matchState: MatchState = "not_started";
