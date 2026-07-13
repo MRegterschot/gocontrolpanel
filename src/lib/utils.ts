@@ -509,7 +509,7 @@ export const colorMapping: {
 
 /**
  * Converts a pick and ban configuration to a string.
- * The format is: "b":1,b:2,p:2,p:1,r,r,r"
+ * The format is: "b:1,b:2,p:2,p:1,r,r,r"
  */
 export function pickAndBanToString(
   pickAndBan: MatchPluginPickAndBanOrder,

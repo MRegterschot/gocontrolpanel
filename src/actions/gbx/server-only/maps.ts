@@ -7,10 +7,10 @@ export async function setMapList(client: GbxClient, filenames: string[]) {
 
   const addedMaps = await client.call("AddMapList", filenames);
   
-  const allMapList = await getMapList(client);
-
   if (typeof addedMaps !== "number")
     throw new Error("Failed to add maps to map list");
+  
+  const allMapList = await getMapList(client);
 
   const removedMaps = await client.call(
     "RemoveMapList",

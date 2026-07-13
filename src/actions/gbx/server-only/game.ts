@@ -28,7 +28,3 @@ export async function pauseMatch(manager: GbxClientManager, pause: boolean) {
 export async function setScriptName(client: GbxClient, script: string) {
   await client.call("SetScriptName", script);
 }
-
-export async function loadMatchSettings(client: GbxClient, matchSettings: string) {
-  await client.call("LoadMatchSettings", matchSettings);
-}
