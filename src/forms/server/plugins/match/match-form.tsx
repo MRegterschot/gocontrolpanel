@@ -112,6 +112,7 @@ export default function MatchForm({
       pickAndBan: config?.pickAndBan
         ? {
             ...config.pickAndBan,
+            choosePosition: config.pickAndBan.choosePosition || false,
             type: config.pickAndBan.type || "player",
             order: stringToPickAndBan(config.pickAndBan.order),
             teams: config.pickAndBan.teams?.map((team) => ({
@@ -405,14 +406,24 @@ export default function MatchForm({
                 isRequired
               />
 
+              {type === "player" && (
+                <FormElement
+                  name={"pickAndBan.choosePosition"}
+                  label="Choose Position"
+                  description="If enabled, the player performing the pick action can choose the position of the map in the order. If disabled, the position will be the default pick order."
+                  type="checkbox"
+                  isRequired
+                />
+              )}
+
               <div className="flex flex-col gap-2">
                 <div>
                   <FormLabel className="text-sm">Pick and Ban</FormLabel>
                   <FormDescription className="max-w-xs whitespace-normal wrap-break-word">
                     The order of picks and bans for the match. Choose between
-                    &quot;pick&quot;, &quot;ban&quot;, or &quot;random&quot; for each action and set the seed
-                    of the player who will perform the action. The players are
-                    defined below.
+                    &quot;pick&quot;, &quot;ban&quot;, or &quot;random&quot; for
+                    each action and set the seed of the player who will perform
+                    the action. The players are defined below.
                   </FormDescription>
                 </div>
                 {pickAndBanOrderFields.map((field, index) => (

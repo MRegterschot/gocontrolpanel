@@ -10,14 +10,16 @@ import { MatchPluginPickAndBanOrder } from "@/forms/server/plugins/match/match-s
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import ManialinkManager from "@/lib/managers/manialink-manager";
 import Widget from "@/lib/manialink/components/widget";
+import Window from "@/lib/manialink/components/window";
 import { sleep, stringToPickAndBan } from "@/lib/utils";
 import { PlayerManialinkPageAnswer } from "@/types/gbx/player";
 import { MatchPluginConfig } from "@/types/plugins/match";
 import Plugin from "..";
+import ChoosePositionWindow from "./choose-position-window";
 
-export type MatchState = "not_started" | "pickban" | "ready" | "in_progress";
+type MatchState = "not_started" | "pickban" | "ready" | "in_progress";
 
-type PickBanAction = {
+export type PickBanAction = {
   action: "pick" | "ban" | "random";
   login: string;
   players: string[];
@@ -27,6 +29,7 @@ type PickBanAction = {
 type PickBanState = {
   type: "player" | "team";
   order: MatchPluginPickAndBanOrder;
+  choosePosition: boolean;
   players?: {
     login: string;
     seed: number;
@@ -38,7 +41,9 @@ type PickBanState = {
   maps: MapInfo[];
   currentIndex: number;
   currentAction: PickBanAction | null;
-  pickedMaps: string[];
+  pickedMaps: Record<number, string>;
+  chosenMap?: string;
+  positionsAvailable: number[];
 };
 
 type MapInfo = {
@@ -54,8 +59,7 @@ type MapInfo = {
 
 export default class MatchPlugin extends Plugin<MatchPluginConfig | null> {
   static pluginId = "match";
-  static helpText = 
-`With this plugin you can easily manage matches, including pick and ban phases, pausing, and unpausing.
+  static helpText = `With this plugin you can easily manage matches, including pick and ban phases, pausing, and unpausing.
 Commands: 
 /matchstart - Starts the match
 /matchstop - Stops the match
@@ -65,16 +69,19 @@ Commands:
 /lobby - Sets the server to lobby state
 `;
   private widget: Widget;
+  private windows: Map<string, Window> = new Map();
 
   private matchState: MatchState = "not_started";
   private pickBanState: PickBanState = {
     type: "player",
     order: [],
+    choosePosition: false,
     players: [],
     maps: [],
     currentIndex: 0,
     currentAction: null,
     pickedMaps: [],
+    positionsAvailable: [],
   };
 
   constructor(
@@ -176,10 +183,17 @@ Commands:
 
     if (this.pickBanState.type === "player") {
       if (this.pickBanState.currentAction.action === "pick") {
-        this.pickBanState.pickedMaps.push(map.filename);
+        if (this.pickBanState.choosePosition) {
+          this.pickBanState.chosenMap = map.uid;
+
+          this.createWindowForPlayer(data.Login);
+          return;
+        }
+
+        this.setPickedMapAtPosition(map.filename);
 
         map.pickedBy = this.pickBanState.currentAction.nickName;
-        map.index = this.pickBanState.pickedMaps.length;
+        map.index = Object.entries(this.pickBanState.pickedMaps).length;
       } else if (this.pickBanState.currentAction.action === "ban") {
         map.bannedBy = this.pickBanState.currentAction.nickName;
       }
@@ -210,10 +224,10 @@ Commands:
 
       if (selectedCount > activeTeamPlayers / 2) {
         if (this.pickBanState.currentAction.action === "pick") {
-          this.pickBanState.pickedMaps.push(map.filename);
+          this.setPickedMapAtPosition(map.filename);
 
           map.pickedBy = this.pickBanState.currentAction.nickName;
-          map.index = this.pickBanState.pickedMaps.length;
+          map.index = Object.entries(this.pickBanState.pickedMaps).length;
         } else if (this.pickBanState.currentAction.action === "ban") {
           map.bannedBy = this.pickBanState.currentAction.nickName;
         }
@@ -301,7 +315,9 @@ Commands:
     }
 
     if (this.matchState === "ready") {
-      if (this.pickBanState.pickedMaps.length === 0) {
+      const pickedMaps = Object.values(this.pickBanState.pickedMaps);
+
+      if (pickedMaps.length === 0) {
         this.clientManager.client.call(
           "ChatSendServerMessageToLogin",
           `No maps have been picked, cannot start the match`,
@@ -311,7 +327,7 @@ Commands:
       }
 
       try {
-        await setMapList(this.clientManager, this.pickBanState.pickedMaps);
+        await setMapList(this.clientManager, pickedMaps);
       } catch (error) {
         this.clientManager.log.error({ meta, error }, "Error setting map list");
         this.clientManager.client.call(
@@ -557,6 +573,33 @@ Commands:
     await this.setLobbyState(login);
   }
 
+  onChoosePositionCallback = async (position: number) => {
+    if (!this.pickBanState.currentAction) return;
+
+    const map = this.pickBanState.maps.find(
+      (map) => map.uid === this.pickBanState.chosenMap,
+    );
+    if (!map) return;
+
+    // Set map to correct index in the pickedMaps array or to the end if the index is greater than the length of the array
+    this.setPickedMapAtPosition(map.filename, position);
+
+    map.pickedBy = this.pickBanState.currentAction?.nickName;
+    map.index = position;
+
+    // Remove the position from the available positions array
+    this.pickBanState.positionsAvailable.splice(
+      this.pickBanState.positionsAvailable.indexOf(position),
+      1,
+    );
+
+    this.windows.get(this.pickBanState.currentAction.login)?.destroy();
+    this.windows.delete(this.pickBanState.currentAction.login);
+
+    this.pickBanState.currentAction = this.getNextPickBanAction();
+    this.updatePickBan();
+  };
+
   private updatePickBan() {
     this.widget.setData({
       mapInfosJson: JSON.stringify(this.pickBanState.maps),
@@ -678,18 +721,26 @@ Commands:
     }));
 
     const order = stringToPickAndBan(this.config?.pickAndBan?.order);
-    const players = this.config?.pickAndBan?.players || [];
-    const teams = this.config?.pickAndBan?.teams || [];
+
+    // Positions available is sum of pick and random actions
+    const positionsAvailable = order.reduce((acc, action) => {
+      if (action.action === "pick" || action.action === "random") {
+        acc.push(acc.length + 1);
+      }
+      return acc;
+    }, [] as number[]);
 
     this.pickBanState = {
       type: this.config?.pickAndBan?.type || "player",
       order,
-      players,
-      teams,
+      choosePosition: this.config?.pickAndBan?.choosePosition || false,
+      players: this.config?.pickAndBan?.players || [],
+      teams: this.config?.pickAndBan?.teams || [],
       maps,
       currentIndex: 0,
       currentAction: null,
       pickedMaps: [],
+      positionsAvailable,
     };
 
     this.pickBanState.currentAction = this.getCurrentPickBanAction();
@@ -706,6 +757,15 @@ Commands:
     return false;
   }
 
+  private setPickedMapAtPosition(filename: string, position?: number) {
+    if (position !== undefined) {
+      this.pickBanState.pickedMaps[position] = filename;
+    } else {
+      const length = Object.keys(this.pickBanState.pickedMaps).length;
+      this.pickBanState.pickedMaps[length] = filename;
+    }
+  }
+
   private handleRandomPickBan() {
     const availableMaps = this.pickBanState.maps.filter(
       (map) => !map.pickedBy && !map.bannedBy,
@@ -718,9 +778,25 @@ Commands:
 
     if (!randomMap) return;
 
-    this.pickBanState.pickedMaps.push(randomMap.filename);
+    let position = Object.entries(this.pickBanState.pickedMaps).length + 1; // Default to the end of the pickedMaps array
+
+    // If choosePosition is enabled, we need to set the index of the random map to the next available position in the positionsAvailable array
+    if (
+      this.pickBanState.type === "player" &&
+      this.pickBanState.choosePosition
+    ) {
+      const nextAvailablePosition =
+        this.pickBanState.positionsAvailable.shift();
+      if (nextAvailablePosition !== undefined) {
+        position = nextAvailablePosition;
+      }
+    }
+
+    // Set map to correct index in the pickedMaps array or to the end if the index is greater than the length of the array
+    this.setPickedMapAtPosition(randomMap.filename, position);
+
     randomMap.pickedBy = "random";
-    randomMap.index = this.pickBanState.pickedMaps.length;
+    randomMap.index = position;
   }
 
   private async handleNextPickBanAction() {
@@ -805,5 +881,34 @@ Commands:
         );
       }
     }
+  }
+
+  private async createWindowForPlayer(login: string) {
+    if (this.windows.has(login)) return;
+
+    if (!this.pickBanState.currentAction) return;
+
+    const choosePositionWindow = new ChoosePositionWindow(
+      this.clientManager,
+      this.manialinkManager,
+      this.pickBanState.currentAction || {
+        action: "pick",
+        login: "",
+        players: [],
+        nickName: "",
+      },
+      this.pickBanState.positionsAvailable,
+      "Choose Position",
+      login,
+    );
+
+    choosePositionWindow.onCloseCallback = () => {
+      this.windows.delete(login);
+    };
+    choosePositionWindow.onChoosePositionCallback =
+      this.onChoosePositionCallback;
+
+    this.windows.set(login, choosePositionWindow);
+    choosePositionWindow.display();
   }
 }

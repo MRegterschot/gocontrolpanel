@@ -188,7 +188,7 @@ templates['window'] = template({"1":function(container,depth0,helpers,partials,d
     + alias3(alias4(((stack1 = (depth0 != null ? lookupProperty(depth0,"size") : depth0)) != null ? lookupProperty(stack1,"x") : stack1), depth0))
     + " "
     + alias3((lookupProperty(helpers,"add")||(depth0 && lookupProperty(depth0,"add"))||alias2).call(alias1,((stack1 = (depth0 != null ? lookupProperty(depth0,"size") : depth0)) != null ? lookupProperty(stack1,"y") : stack1),5,{"name":"add","hash":{},"data":data,"loc":{"start":{"line":3,"column":88},"end":{"line":3,"column":106}}}))
-    + "\" z-index=\"10\">\n  <quad pos=\"0 0\" size=\""
+    + "\" z-index=\"20\">\n  <quad pos=\"0 0\" size=\""
     + alias3(alias4(((stack1 = (depth0 != null ? lookupProperty(depth0,"size") : depth0)) != null ? lookupProperty(stack1,"x") : stack1), depth0))
     + " 5\" bgcolor=\"222\" />\n  <label pos=\"1.5 -2.25\" text=\""
     + alias3(((helper = (helper = lookupProperty(helpers,"title") || (depth0 != null ? lookupProperty(depth0,"title") : depth0)) != null ? helper : alias2),(typeof helper === alias5 ? helper.call(alias1,{"name":"title","hash":{},"data":data,"loc":{"start":{"line":5,"column":31},"end":{"line":5,"column":42}}}) : helper)))
@@ -1075,4 +1075,55 @@ templates['windows/ecm/ecm-window'] = template({"1":function(container,depth0,he
     };
 
   return ((stack1 = (lookupProperty(helpers,"extend")||(depth0 && lookupProperty(depth0,"extend"))||container.hooks.helperMissing).call(depth0 != null ? depth0 : (container.nullContext || {}),"window",{"name":"extend","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":1,"column":0},"end":{"line":171,"column":11}}})) != null ? stack1 : "");
+},"useData":true});
+templates['windows/match/choose-position-window'] = template({"1":function(container,depth0,helpers,partials,data) {
+    var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return ((stack1 = (lookupProperty(helpers,"content")||(depth0 && lookupProperty(depth0,"content"))||container.hooks.helperMissing).call(depth0 != null ? depth0 : (container.nullContext || {}),"window",{"name":"content","hash":{},"fn":container.program(2, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":2,"column":0},"end":{"line":13,"column":12}}})) != null ? stack1 : "");
+},"2":function(container,depth0,helpers,partials,data) {
+    var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=container.hooks.helperMissing, alias3=container.escapeExpression, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return "<frame pos=\"2 -2\" id=\"choose-position-window\" size=\""
+    + alias3((lookupProperty(helpers,"subtract")||(depth0 && lookupProperty(depth0,"subtract"))||alias2).call(alias1,((stack1 = (depth0 != null ? lookupProperty(depth0,"size") : depth0)) != null ? lookupProperty(stack1,"x") : stack1),4,{"name":"subtract","hash":{},"data":data,"loc":{"start":{"line":3,"column":52},"end":{"line":3,"column":75}}}))
+    + " "
+    + alias3((lookupProperty(helpers,"subtract")||(depth0 && lookupProperty(depth0,"subtract"))||alias2).call(alias1,((stack1 = (depth0 != null ? lookupProperty(depth0,"size") : depth0)) != null ? lookupProperty(stack1,"y") : stack1),4,{"name":"subtract","hash":{},"data":data,"loc":{"start":{"line":3,"column":76},"end":{"line":3,"column":99}}}))
+    + "\">\n"
+    + ((stack1 = lookupProperty(helpers,"each").call(alias1,((stack1 = (depth0 != null ? lookupProperty(depth0,"data") : depth0)) != null ? lookupProperty(stack1,"positionsAvailable") : stack1),{"name":"each","hash":{},"fn":container.program(3, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":4,"column":2},"end":{"line":11,"column":11}}})) != null ? stack1 : "")
+    + "</frame>\n";
+},"3":function(container,depth0,helpers,partials,data) {
+    var stack1, alias1=container.escapeExpression, alias2=container.lambda, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return "    <frame pos=\""
+    + alias1((lookupProperty(helpers,"multiply")||(depth0 && lookupProperty(depth0,"multiply"))||container.hooks.helperMissing).call(depth0 != null ? depth0 : (container.nullContext || {}),(data && lookupProperty(data,"index")),12,{"name":"multiply","hash":{},"data":data,"loc":{"start":{"line":5,"column":16},"end":{"line":5,"column":40}}}))
+    + " 0\" size=\"10 10\">\n      <quad pos=\"0 0\" z-index=\"0\" size=\"10 10\" bgcolor=\"222\"/>\n      <label pos=\"5 -4.5\" z-index=\"0\" size=\"10 10\" text=\""
+    + alias1(alias2(depth0, depth0))
+    + "\" halign=\"center\" valign=\"center\" textsize=\"3\" textcolor=\"DDD\" textfont=\"GameFontBlack\"/>\n\n      <quad class=\"trigger\" pos=\"0 0\" z-index=\"-2\" size=\"10 10\" bgcolor=\"000\" opacity=\"0\" scriptevents=\"1\" action=\""
+    + alias1(alias2(((stack1 = ((stack1 = (data && lookupProperty(data,"root"))) && lookupProperty(stack1,"data"))) && lookupProperty(stack1,"choosePositionAction")), depth0))
+    + "-"
+    + alias1(alias2(depth0, depth0))
+    + "\" />\n    </frame>\n";
+},"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
+    var stack1, lookupProperty = container.lookupProperty || function(parent, propertyName) {
+        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
+          return parent[propertyName];
+        }
+        return undefined
+    };
+
+  return ((stack1 = (lookupProperty(helpers,"extend")||(depth0 && lookupProperty(depth0,"extend"))||container.hooks.helperMissing).call(depth0 != null ? depth0 : (container.nullContext || {}),"window",{"name":"extend","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":1,"column":0},"end":{"line":14,"column":11}}})) != null ? stack1 : "");
 },"useData":true});
