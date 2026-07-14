@@ -12,6 +12,7 @@ export type MatchPluginConfig = {
 export type MatchPluginPickAndBan = {
   type: "player" | "team";
   order: string;
+  choosePosition: boolean;
   teams?: {
     seed: number;
     players: string[];

@@ -63,6 +63,7 @@ Void updateScroll(MapInfo[] maps) {
 Void updateMapStatus(CMlFrame mapFrame, MapInfo map) {
   if (mapFrame.DataAttributeGet("pickedBy") != map.pickedBy) {
     mapFrame.DataAttributeSet("pickedBy", map.pickedBy);
+    mapFrame.DataAttributeSet("position", TL::ToText(map.index));
     (mapFrame.Controls[2] as CMlLabel).SetText(TL::ToText(map.index));
     if (map.pickedBy == "random") {
       (mapFrame.Controls[5] as CMlLabel).SetText("Random");
@@ -91,7 +92,7 @@ Void updateMapStatus(CMlFrame mapFrame, MapInfo map) {
 Void updateMapInfoRow(Integer index, MapInfo map, MapInfo[] maps) {
   declare mapsFrame <=> (Page.MainFrame.GetFirstChild("maps") as CMlFrame);
 
-  if (index >= mapsFrame.Controls.count) {
+  if (index >= mapsFrame.Controls.count - 1) {
     return;
   }
 
@@ -112,20 +113,37 @@ Void updateMapInfoRow(Integer index, MapInfo map, MapInfo[] maps) {
   mapFrame.Show();
 }
 
-Void updateWidget(MapInfo[] mapInfos, PickBanAction currentAction) {
-  declare actionFrame <=> (Page.MainFrame.GetFirstChild("pickban-action") as CMlFrame);
-  declare actionLabel <=> (actionFrame.Controls[2] as CMlLabel);
-  if (currentAction.action == "pick") {
-    actionLabel.SetText(currentAction.nickName ^ " is picking a map");
-  } else if (currentAction.action == "ban") {
-    actionLabel.SetText(currentAction.nickName ^ " is banning a map");
-  } else if (currentAction.action == "random") {
-    actionLabel.SetText("Random map is being picked");
-  } else {
-    actionLabel.SetText("Pick and ban completed");
-  }
-    
+Void hideUnpickedMaps() {
+  declare mapsFrame <=> (Page.MainFrame.GetFirstChild("maps") as CMlFrame);
+  declare index = 0;
 
+  while (index < mapsFrame.Controls.count - 1) {
+    declare mapFrame <=> (mapsFrame.Controls[index + 1] as CMlFrame);
+    if (mapFrame.DataAttributeGet("pickedBy") == "") {
+      AnimMgr.Add(mapFrame, "<frame pos='-120 " ^ mapFrame.RelativePosition_V3.Y ^ "' />", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
+    } else {
+      AnimMgr.Add(mapFrame, "<frame pos='10 " ^ mapFrame.RelativePosition_V3.Y ^ "' />", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
+    }
+    index = index + 1;
+  }
+}
+
+Void orderPickedMaps() {
+  declare mapsFrame <=> (Page.MainFrame.GetFirstChild("maps") as CMlFrame);
+  declare index = 0;
+  
+  while (index < mapsFrame.Controls.count - 1) {
+    declare mapFrame <=> (mapsFrame.Controls[index + 1] as CMlFrame);
+    if (mapFrame.DataAttributeGet("pickedBy") != "") {
+      declare Integer position = TL::ToInteger(mapFrame.DataAttributeGet("position"));
+      declare Real newY = 5 + (position - 1) * 11.5;
+      AnimMgr.Add(mapFrame, "<frame pos='10 " ^ -newY ^ "' />", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
+    }
+    index = index + 1;
+  }
+}
+
+Void updateWidget(MapInfo[] mapInfos, PickBanAction currentAction) {
   declare mapsCount = mapInfos.count;
   declare index = 0;
 
@@ -144,8 +162,24 @@ Void updateWidget(MapInfo[] mapInfos, PickBanAction currentAction) {
     mapFrame.Hide();
     index = index + 1;
   }
-
+  
   updateScroll(mapInfos);
+
+  declare actionFrame <=> (Page.MainFrame.GetFirstChild("pickban-action") as CMlFrame);
+  declare actionLabel <=> (actionFrame.Controls[2] as CMlLabel);
+  if (currentAction.action == "pick") {
+    actionLabel.SetText(currentAction.nickName ^ " is picking a map");
+  } else if (currentAction.action == "ban") {
+    actionLabel.SetText(currentAction.nickName ^ " is banning a map");
+  } else if (currentAction.action == "random") {
+    actionLabel.SetText("Random map is being picked");
+  } else {
+    actionLabel.SetText("Pick and ban completed");
+    sleep(5000);
+    hideUnpickedMaps();
+    sleep(400);
+    orderPickedMaps();
+  }
 }
 {{/content}}
 
