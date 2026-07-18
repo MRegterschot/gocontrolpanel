@@ -9,7 +9,8 @@ import {
   gameModesScripts,
   generateScript,
   getDefaultSetting,
-  getGameModeWithScriptSettings,
+  getGameModeByScript,
+  getNormalizedSetting,
   getUpdatedSettingsForGameMode,
 } from "@/lib/scripts";
 import { getErrorMessage } from "@/lib/utils";
@@ -23,7 +24,7 @@ import {
   ScriptGeneratorSchemaType,
 } from "./script-generator-schema";
 
-function getInputType(type: "string" | "int" | "boolean" | "float") {
+function getInputType(type: string) {
   switch (type) {
     case "string":
       return "text";
@@ -57,23 +58,42 @@ export default function ScriptGeneratorForm({
   });
 
   const selectedScriptSettings = useMemo(() => {
-    const gameMode = getGameModeWithScriptSettings(originalScriptName);
+    const gameMode = getGameModeByScript(originalScriptName);
 
     if (!originalScriptName || !gameMode) {
-      return {};
+      return [];
     }
 
     form.setValue(
       "settings",
       Object.fromEntries(
-        Object.entries(gameMode.scriptSettings).map(
-          ([settingName, setting]) => [settingName, setting.value],
-        ),
+        gameMode.ParamDescs.map((setting) => {
+          return [
+            setting.Name,
+            getNormalizedSetting(setting.Default, setting.Type),
+          ];
+        }),
       ),
     );
 
-    return gameMode.scriptSettings;
-  }, [originalScriptName, getGameModeWithScriptSettings]);
+    return gameMode.ParamDescs;
+  }, [originalScriptName, getGameModeByScript, form]);
+
+  const descriptions = useMemo(() => {
+    const gameMode = getGameModeByScript(originalScriptName);
+
+    if (!originalScriptName || !gameMode) {
+      return {};
+    }
+
+    return gameMode.ParamDescs.reduce(
+      (acc, desc) => {
+        if (desc.Desc !== "<hidden>") acc[desc.Name] = desc.Desc;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
+  }, [originalScriptName, getGameModeByScript]);
 
   const onSubmit = async (values: ScriptGeneratorSchemaType) => {
     const updatedSettings = getUpdatedSettingsForGameMode(
@@ -102,14 +122,9 @@ export default function ScriptGeneratorForm({
     }
   };
 
-  const middleIndex = Math.ceil(Object.keys(selectedScriptSettings).length / 2);
-  const leftSettings = Object.entries(selectedScriptSettings).slice(
-    0,
-    middleIndex,
-  );
-  const rightSettings = Object.entries(selectedScriptSettings).slice(
-    middleIndex,
-  );
+  const middleIndex = Math.ceil(selectedScriptSettings.length / 2);
+  const leftSettings = selectedScriptSettings.slice(0, middleIndex);
+  const rightSettings = selectedScriptSettings.slice(middleIndex);
 
   return (
     <Form {...form}>
@@ -156,28 +171,28 @@ export default function ScriptGeneratorForm({
 
             <div className="flex gap-4 flex-col md:flex-row">
               <div className="flex flex-col gap-3 flex-1">
-                {leftSettings.map(([settingName, setting]) => (
+                {leftSettings.map((setting) => (
                   <FormElement
-                    key={settingName}
-                    name={`settings.${settingName}`}
-                    label={settingName}
-                    type={getInputType(setting.type)}
-                    placeholder={settingName
-                      .slice(2)
+                    key={setting.Name}
+                    name={`settings.${setting.Name}`}
+                    label={setting.Name}
+                    type={getInputType(setting.Type)}
+                    description={descriptions[setting.Name]}
+                    placeholder={setting.Name.slice(2)
                       .split(/(?=[A-Z])/)
                       .join(" ")
                       .replace(/^\w/, (c) => c.toUpperCase())
                       .replace(/_/g, "")}
                     className={
-                      setting.type === "int" || setting.type === "float"
+                      setting.Type === "int" || setting.Type === "float"
                         ? "w-26"
                         : "sm:w-2/3 xl:max-w-[calc(100%-192px)] min-w-48"
                     }
                     rootClassName="max-w-full"
                     onClear={() =>
                       form.setValue(
-                        `settings.${settingName}`,
-                        getDefaultSetting(originalScriptName, settingName),
+                        `settings.${setting.Name}`,
+                        getDefaultSetting(originalScriptName, setting.Name),
                       )
                     }
                   />
@@ -185,28 +200,28 @@ export default function ScriptGeneratorForm({
               </div>
 
               <div className="flex flex-col gap-3 flex-1">
-                {rightSettings.map(([settingName, setting]) => (
+                {rightSettings.map((setting) => (
                   <FormElement
-                    key={settingName}
-                    name={`settings.${settingName}`}
-                    label={settingName}
-                    type={getInputType(setting.type)}
-                    placeholder={settingName
-                      .slice(2)
+                    key={setting.Name}
+                    name={`settings.${setting.Name}`}
+                    label={setting.Name}
+                    description={descriptions[setting.Name]}
+                    type={getInputType(setting.Type)}
+                    placeholder={setting.Name.slice(2)
                       .split(/(?=[A-Z])/)
                       .join(" ")
                       .replace(/^\w/, (c) => c.toUpperCase())
                       .replace(/_/g, "")}
                     className={
-                      setting.type === "int" || setting.type === "float"
+                      setting.Type === "int" || setting.Type === "float"
                         ? "w-26"
                         : "sm:w-2/3 xl:max-w-[calc(100%-192px)] min-w-48"
                     }
                     rootClassName="max-w-full"
                     onClear={() =>
                       form.setValue(
-                        `settings.${settingName}`,
-                        getDefaultSetting(originalScriptName, settingName),
+                        `settings.${setting.Name}`,
+                        getDefaultSetting(originalScriptName, setting.Name),
                       )
                     }
                   />

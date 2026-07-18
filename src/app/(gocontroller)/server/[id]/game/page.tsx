@@ -61,7 +61,7 @@ export default async function ServerGamePage({
 
   let modeScriptInfo: ModeScriptInfo = {
     Name: "",
-    CompatibleTypes: "",
+    CompatibleMapTypes: "",
     Description: "",
     Version: "",
     ParamDescs: [],
@@ -77,8 +77,6 @@ export default async function ServerGamePage({
       getModeScriptInfo(id),
       getModeScriptSettings(id),
     ]);
-
-    console.log(modeScriptInfoRes.data, modeScriptSettingsRes.data);
 
     modeScriptInfo = modeScriptInfoRes.data;
     modeScriptSettings = modeScriptSettingsRes.data;

@@ -1,13 +1,13 @@
-export interface ModeScriptInfo {
+export type ModeScriptInfo = {
   Name: string;
-  CompatibleTypes: string;
+  CompatibleMapTypes: string;
   Description: string;
   Version: string;
   ParamDescs: ScriptParamDescs[];
   CommandDescs: ScriptCommandDescs[];
 }
 
-interface ScriptParamDescs {
+export type ScriptParamDescs = {
   Name: string;
   Desc: string;
   Type: string;
