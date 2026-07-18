@@ -78,6 +78,8 @@ export default async function ServerGamePage({
       getModeScriptSettings(id),
     ]);
 
+    console.log(modeScriptInfoRes.data, modeScriptSettingsRes.data);
+
     modeScriptInfo = modeScriptInfoRes.data;
     modeScriptSettings = modeScriptSettingsRes.data;
   }

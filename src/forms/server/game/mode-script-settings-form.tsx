@@ -107,56 +107,50 @@ export default function ModeScriptSettingsForm({
   return (
     <Form {...modeScriptSettingsForm}>
       <form
-        className="flex flex-col gap-4 max-sm:flex-col max-[768px]:flex-row min-[960px]:flex-row"
+        className="flex flex-col gap-4"
         onSubmit={modeScriptSettingsForm.handleSubmit(
           onSubmitModeScriptSettings,
         )}
       >
-        <div className="flex flex-col gap-3 flex-1">
-          {leftElements.map(({ key, ...element }) => (
-            <FormElement
-              key={key}
-              name={key as never}
-              label={element.label}
-              description={element.description}
-              placeholder={element.placeholder}
-              className={element.className}
-              type={element.type}
-              rootClassName="max-w-full"
-            />
-          ))}
-          <Button
-            className="w-20 hidden max-sm:hidden max-[768px]:flex min-[960px]:flex mt-4"
-            type="submit"
-            disabled={modeScriptSettingsForm.formState.isSubmitting}
-          >
-            <IconDeviceFloppy />
-            Save
-          </Button>
-        </div>
+        <div className="flex gap-4 flex-col md:flex-row">
+          <div className="flex flex-col gap-3 flex-1">
+            {leftElements.map(({ key, ...element }) => (
+              <FormElement
+                key={key}
+                name={key as never}
+                label={element.label}
+                description={element.description}
+                placeholder={element.placeholder}
+                className={element.className}
+                type={element.type}
+                rootClassName="max-w-full"
+              />
+            ))}
+          </div>
 
-        <div className="flex flex-col gap-3 flex-1">
-          {rightElements.map(({ key, ...element }) => (
-            <FormElement
-              key={key}
-              name={key as never}
-              label={element.label}
-              description={element.description}
-              placeholder={element.placeholder}
-              className={element.className}
-              type={element.type}
-              rootClassName="max-w-full"
-            />
-          ))}
-          <Button
-            className="w-20 flex max-sm:flex max-[768px]:hidden min-[960px]:hidden mt-4"
-            type="submit"
-            disabled={modeScriptSettingsForm.formState.isSubmitting}
-          >
-            <IconDeviceFloppy />
-            Save
-          </Button>
+          <div className="flex flex-col gap-3 flex-1">
+            {rightElements.map(({ key, ...element }) => (
+              <FormElement
+                key={key}
+                name={key as never}
+                label={element.label}
+                description={element.description}
+                placeholder={element.placeholder}
+                className={element.className}
+                type={element.type}
+                rootClassName="max-w-full"
+              />
+            ))}
+          </div>
         </div>
+        <Button
+          className="max-w-fit mt-4"
+          type="submit"
+          disabled={modeScriptSettingsForm.formState.isSubmitting}
+        >
+          <IconDeviceFloppy />
+          Save
+        </Button>
       </form>
     </Form>
   );

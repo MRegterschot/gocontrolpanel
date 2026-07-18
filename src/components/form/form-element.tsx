@@ -1,5 +1,7 @@
+import { IconX } from "@tabler/icons-react";
 import clsx from "clsx";
 import { Path, useFormContext } from "react-hook-form";
+import { Button } from "../ui/button";
 import {
   FormControl,
   FormDescription,
@@ -27,6 +29,7 @@ interface FormElementProps<TControl> {
   min?: number;
   max?: number;
   onSearch?: (query?: string) => void;
+  onClear?: () => void;
   className?: string;
   rootClassName?: string;
   children?: React.ReactNode;
@@ -49,6 +52,7 @@ export default function FormElement<TControl>({
   min,
   max,
   onSearch,
+  onClear,
   className,
   rootClassName,
   children,
@@ -128,6 +132,18 @@ export default function FormElement<TControl>({
                 autoFocus={autoFocus}
                 className={className}
               />
+
+              {onClear && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={onClear}
+                >
+                  <IconX />
+                </Button>
+              )}
+
               {children}
             </div>
           </FormControl>
