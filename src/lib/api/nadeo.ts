@@ -194,45 +194,56 @@ export async function searchAccountNames(
     );
   });
 }
-
 export async function getAccountNames(
   accountIds: string[],
 ): Promise<AccountNames> {
   const redis = await getRedisClient();
   const key = getKeyAccountNames();
 
-  accountIds = [...new Set(accountIds)]; // Remove duplicates
+  const uniqueIds = [...new Set(accountIds)];
 
-  const cached = await redis.get(key);
-  if (cached) {
-    const allNames: AccountNames = JSON.parse(cached);
-    const foundNames: AccountNames = {};
-    accountIds.forEach((id) => {
-      if (allNames[id]) {
-        foundNames[id] = allNames[id];
-      }
-    });
+  const cached: AccountNames = JSON.parse((await redis.get(key)) ?? "{}");
 
-    if (Object.keys(foundNames).length === accountIds.length) {
-      return foundNames;
+  const result: AccountNames = {};
+  const missingIds: string[] = [];
+
+  for (const id of uniqueIds) {
+    if (cached[id]) {
+      result[id] = cached[id];
+    } else {
+      missingIds.push(id);
     }
   }
 
-  const url = `${API_URL}/display-names`;
-  const params = new URLSearchParams();
-  accountIds.forEach((id) => params.append("accountId[]", id));
+  if (missingIds.length === 0) {
+    return result;
+  }
 
-  const res = await doCredentialsRequest<AccountNames>(
-    `${url}?${params.toString()}`,
+  const url = `${API_URL}/display-names`;
+  const batchSize = 50;
+
+  const batches = Array.from(
+    { length: Math.ceil(missingIds.length / batchSize) },
+    (_, i) => missingIds.slice(i * batchSize, (i + 1) * batchSize),
   );
 
-  const combined: AccountNames = {
-    ...(cached ? JSON.parse(cached) : {}),
-    ...res,
-  };
-  await redis.set(key, JSON.stringify(combined), "EX", 24 * 60 * 60); // Cache for 24 hours
+  const responses = await Promise.all(
+    batches.map((batch) => {
+      const params = new URLSearchParams();
+      batch.forEach((id) => params.append("accountId[]", id));
 
-  return combined;
+      return doCredentialsRequest<AccountNames>(`${url}?${params}`);
+    }),
+  );
+
+  for (const names of responses) {
+    Object.assign(result, names);
+    Object.assign(cached, names);
+  }
+
+  await redis.set(key, JSON.stringify(cached), "EX", 60 * 60 * 24);
+
+  return result;
 }
 
 export async function getTotdRoyalMaps(

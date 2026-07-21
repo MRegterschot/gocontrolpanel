@@ -40,6 +40,7 @@ export const MatchPluginSchema = z.object({
         .array(
           z.object({
             seed: z.number(),
+            name: z.string().optional(),
             players: z.array(z.object({ login: z.string() })),
           }),
         )
