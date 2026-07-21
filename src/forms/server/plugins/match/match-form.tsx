@@ -112,7 +112,6 @@ export default function MatchForm({
       pickAndBan: config?.pickAndBan
         ? {
             ...config.pickAndBan,
-            choosePosition: config.pickAndBan.choosePosition || false,
             type: config.pickAndBan.type || "player",
             order: stringToPickAndBan(config.pickAndBan.order),
             teams: config.pickAndBan.teams?.map((team) => ({
@@ -191,6 +190,7 @@ export default function MatchForm({
         pickAndBan: values.pickAndBan
           ? {
               ...values.pickAndBan,
+              choosePosition: values.pickAndBan.choosePosition ?? false,
               order: pickAndBanToString(values.pickAndBan.order),
               teams: values.pickAndBan.teams?.map((team) => ({
                 seed: team.seed,
