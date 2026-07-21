@@ -36,6 +36,7 @@ type PickBanState = {
   }[];
   teams?: {
     seed: number;
+    name?: string;
     players: string[];
   }[];
   maps: MapInfo[];
@@ -734,7 +735,7 @@ Commands:
         action: currentAction.action,
         login: "",
         players: team.players,
-        nickName: `Team ${currentAction.seed}`,
+        nickName: team.name || `Team ${currentAction.seed}`,
       };
     }
 

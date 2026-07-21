@@ -119,7 +119,7 @@ export default function MatchForm({
             type: config.pickAndBan.type || "player",
             order: stringToPickAndBan(config.pickAndBan.order),
             teams: config.pickAndBan.teams?.map((team) => ({
-              seed: team.seed,
+              ...team,
               players: team.players.map((login) => ({ login })),
             })),
           }
@@ -198,7 +198,7 @@ export default function MatchForm({
               choosePosition: values.pickAndBan.choosePosition ?? false,
               order: pickAndBanToString(values.pickAndBan.order),
               teams: values.pickAndBan.teams?.map((team) => ({
-                seed: team.seed,
+                ...team,
                 players: team.players.map((p) => p.login),
               })),
             }
@@ -519,30 +519,30 @@ export default function MatchForm({
                   <div className="flex flex-col gap-6">
                     {pickAndBanTeamFields.map((field, index) => (
                       <div key={field.id} className="flex flex-col gap-2">
-                        <span className="text-sm font-medium text-muted-foreground">
-                          {field.name ?? `Team ${index + 1}`}
-                        </span>
+                        <FormElement
+                          name={`pickAndBan.teams.${index}.name`}
+                          label={`Team Name`}
+                          rootClassName="w-full"
+                          placeholder="Team Name"
+                        >
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            collapse="sm"
+                            onClick={() => removePickAndBanTeam(index)}
+                          >
+                            <IconTrash />
+                            Remove Team
+                          </Button>
+                        </FormElement>
 
-                        <div className="flex gap-2">
-                          <div className="flex-1 flex gap-2">
-                            <FormElement
-                              name={`pickAndBan.teams.${index}.seed`}
-                              type="number"
-                              label={`Seed`}
-                              rootClassName="w-full"
-                              min={1}
-                            >
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                onClick={() => removePickAndBanTeam(index)}
-                              >
-                                <IconTrash />
-                                Remove Team
-                              </Button>
-                            </FormElement>
-                          </div>
-                        </div>
+                        <FormElement
+                          name={`pickAndBan.teams.${index}.seed`}
+                          type="number"
+                          label={`Seed`}
+                          rootClassName="w-24"
+                          min={1}
+                        />
 
                         {/* Players in team */}
                         <TeamFields
@@ -782,7 +782,7 @@ function TeamFields({
   });
 
   return (
-    <div className="flex flex-col gap-2 mt-2">
+    <div className="flex flex-col gap-2">
       <FormLabel className="text-sm">Players</FormLabel>
       {fields.map((field, index) => (
         <div key={field.id} className="flex gap-2">
