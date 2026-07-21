@@ -11,7 +11,7 @@ import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import ManialinkManager from "@/lib/managers/manialink-manager";
 import Widget from "@/lib/manialink/components/widget";
 import Window from "@/lib/manialink/components/window";
-import { sleep, stringToPickAndBan } from "@/lib/utils";
+import { capitalize, sleep, stringToPickAndBan } from "@/lib/utils";
 import { PlayerManialinkPageAnswer } from "@/types/gbx/player";
 import { MatchPluginConfig } from "@/types/plugins/match";
 import Plugin from "..";
@@ -36,6 +36,7 @@ type PickBanState = {
   }[];
   teams?: {
     seed: number;
+    name?: string;
     players: string[];
   }[];
   maps: MapInfo[];
@@ -44,6 +45,7 @@ type PickBanState = {
   pickedMaps: Record<number, string>;
   chosenMap?: string;
   positionsAvailable: number[];
+  seedsOverride?: number[];
 };
 
 type MapInfo = {
@@ -67,6 +69,7 @@ Commands:
 /unpause - Unpauses the match
 /pickban - Starts the pick and ban phase
 /lobby - Sets the server to lobby state
+/setseeds <seed1> <seed2> ... - Sets the seeds for the pick and ban order
 `;
   private widget: Widget;
   private windows: Map<string, Window> = new Map();
@@ -110,6 +113,7 @@ Commands:
     this.clientManager.onCommand("unpause", this.onUnpauseCommand.bind(this));
     this.clientManager.onCommand("pickban", this.onPickbanCommand.bind(this));
     this.clientManager.onCommand("lobby", this.onLobbyCommand.bind(this));
+    this.clientManager.onCommand("setseeds", this.onSetSeedsCommand.bind(this));
 
     this.clientManager.onAction(
       "match-pickban-action-{uid}",
@@ -134,6 +138,10 @@ Commands:
     this.clientManager.offCommand("unpause", this.onUnpauseCommand.bind(this));
     this.clientManager.offCommand("pickban", this.onPickbanCommand.bind(this));
     this.clientManager.offCommand("lobby", this.onLobbyCommand.bind(this));
+    this.clientManager.offCommand(
+      "setseeds",
+      this.onSetSeedsCommand.bind(this),
+    );
 
     this.clientManager.offAction(
       "match-pickban-action-{uid}",
@@ -180,6 +188,8 @@ Commands:
       );
       return;
     }
+
+    if (map.pickedBy || map.bannedBy) return;
 
     if (this.pickBanState.type === "player") {
       if (this.pickBanState.currentAction.action === "pick") {
@@ -536,7 +546,13 @@ Commands:
 
     this.clientManager.client.call(
       "ChatSendServerMessage",
-      `Pick and ban phase started`,
+      `Pick and ban phase started\n${this.pickBanState.order
+        .map((action) =>
+          action.action !== "random"
+            ? `${action.seed}: ${capitalize(action.action)}`
+            : "Random",
+        )
+        .join("\n")}`,
     );
   }
 
@@ -571,6 +587,34 @@ Commands:
     }
 
     await this.setLobbyState(login);
+  }
+
+  async onSetSeedsCommand(args: string[], login: string) {
+    const parsedSeeds = args.map((arg) => parseInt(arg, 10));
+    if (parsedSeeds.some((seed) => isNaN(seed))) {
+      this.clientManager.client.call(
+        "ChatSendServerMessageToLogin",
+        `Invalid seed(s) provided, please provide valid numbers`,
+        login,
+      );
+      return;
+    }
+
+    this.pickBanState.seedsOverride = parsedSeeds;
+
+    if (parsedSeeds.length === 0) {
+      this.clientManager.client.call(
+        "ChatSendServerMessageToLogin",
+        `Seeds for pick and ban order have been cleared`,
+        login,
+      );
+    } else {
+      this.clientManager.client.call(
+        "ChatSendServerMessageToLogin",
+        `Seeds for pick and ban order have been set to: ${parsedSeeds.join(", ")}`,
+        login,
+      );
+    }
   }
 
   onChoosePositionCallback = async (position: number) => {
@@ -691,7 +735,7 @@ Commands:
         action: currentAction.action,
         login: "",
         players: team.players,
-        nickName: `Team ${currentAction.seed}`,
+        nickName: team.name || `Team ${currentAction.seed}`,
       };
     }
 
@@ -721,6 +765,36 @@ Commands:
     }));
 
     const order = stringToPickAndBan(this.config?.pickAndBan?.order);
+
+    if (
+      this.pickBanState.seedsOverride &&
+      this.pickBanState.seedsOverride.length > 0
+    ) {
+      const seeds = order
+        .filter((action) => action.action !== "random")
+        .map((action) => action.seed);
+
+      const uniqueSeeds = Array.from(new Set(seeds)).sort((a, b) => a - b);
+
+      if (uniqueSeeds.length === 0) return;
+
+      const replacements = new Map<number, number>();
+
+      for (let i = 0; i < this.pickBanState.seedsOverride.length; i++) {
+        if (i < uniqueSeeds.length) {
+          replacements.set(uniqueSeeds[i], this.pickBanState.seedsOverride[i]);
+        }
+      }
+
+      for (const action of order) {
+        if (action.action === "random") continue;
+
+        const replacement = replacements.get(action.seed);
+        if (replacement !== undefined) {
+          action.seed = replacement;
+        }
+      }
+    }
 
     // Positions available is sum of pick and random actions
     const positionsAvailable = order.reduce((acc, action) => {
@@ -797,6 +871,8 @@ Commands:
 
     randomMap.pickedBy = "random";
     randomMap.index = position;
+
+    return position;
   }
 
   private async handleNextPickBanAction() {
@@ -813,7 +889,13 @@ Commands:
 
     if (this.pickBanState.currentAction?.action === "random") {
       await sleep(1000); // Wait for 1 second before handling the next action
-      this.handleRandomPickBan();
+      if (this.handleRandomPickBan() === undefined) {
+        this.clientManager.client.call(
+          "ChatSendServerMessage",
+          "Failed to handle random pick and ban, no available maps left",
+        );
+        return;
+      }
       this.pickBanState.currentAction = this.getNextPickBanAction();
       this.updatePickBan();
       this.handleNextPickBanAction();

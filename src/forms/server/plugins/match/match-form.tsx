@@ -23,10 +23,12 @@ import {
   IconFileImport,
   IconPlus,
   IconTrash,
+  IconUpload,
   IconX,
 } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import Papa from "papaparse";
+import { useEffect, useRef, useState } from "react";
 import { Control, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { MatchPluginSchema, MatchPluginSchemaType } from "./match-schema";
@@ -51,6 +53,8 @@ export default function MatchForm({
 
   const [loadingLocalMaps, setLoadingLocalMaps] = useState(true);
   const [localMaps, setLocalMaps] = useState<LocalMapInfo[]>([]);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function fetchScripts() {
@@ -112,11 +116,10 @@ export default function MatchForm({
       pickAndBan: config?.pickAndBan
         ? {
             ...config.pickAndBan,
-            choosePosition: config.pickAndBan.choosePosition || false,
             type: config.pickAndBan.type || "player",
             order: stringToPickAndBan(config.pickAndBan.order),
             teams: config.pickAndBan.teams?.map((team) => ({
-              seed: team.seed,
+              ...team,
               players: team.players.map((login) => ({ login })),
             })),
           }
@@ -176,6 +179,7 @@ export default function MatchForm({
     fields: pickAndBanTeamFields,
     append: appendPickAndBanTeam,
     remove: removePickAndBanTeam,
+    replace: replacePickAndBanTeams,
   } = useFieldArray({
     control,
     name: "pickAndBan.teams",
@@ -191,9 +195,10 @@ export default function MatchForm({
         pickAndBan: values.pickAndBan
           ? {
               ...values.pickAndBan,
+              choosePosition: values.pickAndBan.choosePosition ?? false,
               order: pickAndBanToString(values.pickAndBan.order),
               teams: values.pickAndBan.teams?.map((team) => ({
-                seed: team.seed,
+                ...team,
                 players: team.players.map((p) => p.login),
               })),
             }
@@ -249,6 +254,31 @@ export default function MatchForm({
         description: getErrorMessage(error),
       });
     }
+  };
+
+  const handleTeamUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    Papa.parse<Record<string, string>>(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: ({ data }) => {
+        const teams = data.map((row, index) => ({
+          seed: index + 1,
+          name: row.Team,
+          players: Array.from({ length: 5 })
+            .map((_, i) => row[`Player Login ${i + 1}`]?.trim())
+            .filter(Boolean)
+            .map((login) => ({ login })),
+        }));
+
+        replacePickAndBanTeams(teams);
+
+        // Allow uploading the same file again
+        event.target.value = "";
+      },
+    });
   };
 
   if (loading || loadingScripts || loadingLocalMaps) {
@@ -485,55 +515,85 @@ export default function MatchForm({
                       the pick and ban order. Also add players to the team.
                     </FormDescription>
                   </div>
-                  {pickAndBanTeamFields.map((field, index) => (
-                    <div key={field.id} className="flex flex-col gap-2">
-                      <div className="flex gap-2">
-                        <div className="flex-1 flex gap-2">
-                          <FormElement
-                            name={`pickAndBan.teams.${index}.seed`}
-                            type="number"
-                            label={`Seed`}
-                            rootClassName="w-full"
-                            min={1}
+
+                  <div className="flex flex-col gap-6">
+                    {pickAndBanTeamFields.map((field, index) => (
+                      <div key={field.id} className="flex flex-col gap-2">
+                        <FormElement
+                          name={`pickAndBan.teams.${index}.name`}
+                          label={`Team Name`}
+                          rootClassName="w-full"
+                          placeholder="Team Name"
+                        >
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            collapse="sm"
+                            onClick={() => removePickAndBanTeam(index)}
                           >
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              onClick={() => removePickAndBanTeam(index)}
-                            >
-                              <IconTrash />
-                              Remove Team
-                            </Button>
-                          </FormElement>
-                        </div>
+                            <IconTrash />
+                            Remove Team
+                          </Button>
+                        </FormElement>
+
+                        <FormElement
+                          name={`pickAndBan.teams.${index}.seed`}
+                          type="number"
+                          label={`Seed`}
+                          rootClassName="w-24"
+                          min={1}
+                        />
+
+                        {/* Players in team */}
+                        <TeamFields
+                          control={control}
+                          teamIndex={index}
+                          search={search}
+                          searchResults={searchResults}
+                          searching={searching}
+                        />
+
+                        <Separator className="mt-4" />
                       </div>
+                    ))}
+                  </div>
 
-                      {/* Players in team */}
-                      <TeamFields
-                        control={control}
-                        teamIndex={index}
-                        search={search}
-                        searchResults={searchResults}
-                        searching={searching}
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() =>
+                        appendPickAndBanTeam({
+                          seed: pickAndBanTeamFields.length + 1,
+                          players: [],
+                        })
+                      }
+                    >
+                      <IconPlus />
+                      Add Team
+                    </Button>
+
+                    <div className="flex flex-1 gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <IconUpload />
+                        Import Teams
+                      </Button>
+
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".csv"
+                        className="hidden"
+                        onChange={handleTeamUpload}
                       />
-
-                      <Separator />
                     </div>
-                  ))}
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() =>
-                      appendPickAndBanTeam({
-                        seed: pickAndBanTeamFields.length + 1,
-                        players: [],
-                      })
-                    }
-                  >
-                    <IconPlus />
-                    Add Team
-                  </Button>
+                  </div>
                 </div>
               )}
 
@@ -722,7 +782,7 @@ function TeamFields({
   });
 
   return (
-    <div className="flex flex-col gap-2 mt-2">
+    <div className="flex flex-col gap-2">
       <FormLabel className="text-sm">Players</FormLabel>
       {fields.map((field, index) => (
         <div key={field.id} className="flex gap-2">

@@ -1,6 +1,6 @@
 "use server";
 import { doServerActionWithAuth } from "@/lib/actions";
-import { searchAccountNames } from "@/lib/api/nadeo";
+import { getAccountNames, searchAccountNames } from "@/lib/api/nadeo";
 import { getClient } from "@/lib/dbclient";
 import { Prisma, Users } from "@/lib/prisma/generated";
 import { getList } from "@/lib/utils";
@@ -93,6 +93,40 @@ export async function getUsersByLogins(
     ],
     async () => {
       const db = getClient();
+
+      const foundUsers = await db.users.findMany({
+        where: {
+          login: { in: logins },
+        },
+        select: {
+          id: true,
+          login: true,
+          nickName: true,
+        },
+      });
+
+      const missingLogins = logins.filter(
+        (login) => !foundUsers.some((user) => user.login === login),
+      );
+
+      if (missingLogins.length > 0) {
+        const accountNames = await getAccountNames(
+          missingLogins.map((login) => slugid.decode(login)),
+        );
+
+        if (accountNames && Object.keys(accountNames).length > 0) {
+          await db.users.createMany({
+            data: Object.entries(accountNames).map(
+              ([accountId, accountName]) => ({
+                login: slugid.encode(accountId),
+                nickName: accountName,
+                path: "",
+              }),
+            ),
+            skipDuplicates: true,
+          });
+        }
+      }
 
       return await db.users.findMany({
         where: {
@@ -192,7 +226,7 @@ export async function deleteUserById(userId: string): Promise<ServerResponse> {
     }
 
     const db = getClient();
-    
+
     await db.users.delete({
       where: { id: userId },
     });
@@ -253,7 +287,7 @@ export async function searchUser(
         }
       }
 
-      const newUser = await db.users.findFirst({
+      return await db.users.findFirst({
         where: {
           OR: [{ login: search }, { nickName: search }],
         },
@@ -263,8 +297,6 @@ export async function searchUser(
           nickName: true,
         },
       });
-
-      return newUser;
     },
   );
 }

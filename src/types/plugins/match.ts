@@ -15,6 +15,7 @@ export type MatchPluginPickAndBan = {
   choosePosition: boolean;
   teams?: {
     seed: number;
+    name?: string;
     players: string[];
   }[];
   players?: {
