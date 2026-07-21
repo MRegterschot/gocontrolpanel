@@ -221,7 +221,7 @@ Void updateRoundRow(Integer index, Round round, Round[] rounds, Text mode, Integ
   roundFrame.Show();
 }
 
-Void updateFinish(Text login, Integer points, Boolean finished, Boolean isPersonalBest, Boolean isLocalRecord, Boolean isWorldRecord) {
+Void updateFinish(Text login, Integer points, Boolean finished, Boolean isPersonalBest, Boolean isLocalRecord, Boolean isWorldRecord, Text localRecordText) {
   declare roundsFrame <=> (Page.MainFrame.GetFirstChild("rounds") as CMlFrame);
 
   foreach (control in roundsFrame.Controls) {
@@ -255,7 +255,7 @@ Void updateFinish(Text login, Integer points, Boolean finished, Boolean isPerson
         } 
         
         if (isLocalRecord) {
-          (frameFinish.Controls[3] as CMlLabel).SetText("LR");
+          (frameFinish.Controls[3] as CMlLabel).SetText(localRecordText);
         }
         
         if (isWorldRecord) {
@@ -282,26 +282,27 @@ Void updateFinish(Text login, Integer points, Boolean finished, Boolean isPerson
   }
 }
 
-Void clearFinishes(Round[] rounds) {
+Void clearFinishes(Round[] rounds, Text localRecordText) {
   foreach (round in rounds) {
-    updateFinish(round.login, 0, False, False, False, False);
+    updateFinish(round.login, 0, False, False, False, False, localRecordText);
   }
 }
 
-Void updateScroll(Round[] rounds) {
+Void updateScroll(Round[] rounds, Integer rowCount) {
   declare roundsFrame <=> (Page.MainFrame.GetFirstChild("rounds") as CMlFrame);
   declare Integer roundCount = rounds.count;
   if (roundCount > roundsFrame.Controls.count) {
     roundCount = roundsFrame.Controls.count;
   }
-  declare Real maxY = roundCount * 5.25 - 42;
+  declare Real maxY = (roundCount - rowCount) * 5.25;
   if (maxY < 0) {
     maxY = 0.;
   }
   roundsFrame.ScrollMax = <0., maxY>;
+  roundsFrame.Size = <69., rowCount * 5.25>;
 }
 
-Void updateWidget(Round[] rounds, Text mode, Integer pointsLimit) {
+Void updateWidget(Round[] rounds, Text mode, Integer pointsLimit, Integer rowCount) {
   declare roundCount = rounds.count;
   declare index = 0;
 
@@ -319,7 +320,7 @@ Void updateWidget(Round[] rounds, Text mode, Integer pointsLimit) {
     index = index + 1;
   }
 
-  updateScroll(rounds);
+  updateScroll(rounds, rowCount);
 }
 {{/content}}
 
@@ -327,6 +328,8 @@ Void updateWidget(Round[] rounds, Text mode, Integer pointsLimit) {
 declare Round[] Rounds for This;
 declare Finish[] Finishes for This = [];
 declare Text Mode for This = "rounds";
+declare Text localRecordText for This;
+declare Integer rowCount for This;
 declare Integer PointsLimit for This = -1;
 declare Integer LastRoundsUpdate for This = -1;
 declare Integer lastUpdate = -1;
@@ -340,10 +343,10 @@ roundsFrame.ScrollMin = <0., 0.>;
 if (LastRoundsUpdate != lastUpdate) {
   lastUpdate = LastRoundsUpdate;
   
-  updateWidget(Rounds, Mode, PointsLimit);
+  updateWidget(Rounds, Mode, PointsLimit, rowCount);
 
   if (Finishes.count == 0) {
-    clearFinishes(Rounds);
+    clearFinishes(Rounds, localRecordText);
   }
 
   if (Finishes.count != prevFinishes.count) {
@@ -359,14 +362,14 @@ if (LastRoundsUpdate != lastUpdate) {
         }
 
         if (!found) {
-          updateFinish(finish.login, finish.points, True, finish.isPersonalBest, finish.isLocalRecord, finish.isWorldRecord);
+          updateFinish(finish.login, finish.points, True, finish.isPersonalBest, finish.isLocalRecord, finish.isWorldRecord, localRecordText);
         }
       }
     } else {
-      clearFinishes(Rounds);
+      clearFinishes(Rounds, localRecordText);
       // Re-apply finished players
       foreach (finish in Finishes) {
-        updateFinish(finish.login, finish.points, True, finish.isPersonalBest, finish.isLocalRecord, finish.isWorldRecord);
+        updateFinish(finish.login, finish.points, True, finish.isPersonalBest, finish.isLocalRecord, finish.isWorldRecord, localRecordText);
       }
     }
   }

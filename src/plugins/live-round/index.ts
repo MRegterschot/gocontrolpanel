@@ -10,6 +10,7 @@ import { Scores } from "@/types/gbx/scores";
 import { Waypoint, WaypointEvent } from "@/types/gbx/waypoint";
 import { LiveInfo, PlayerRound } from "@/types/live";
 import { PlayerInfo } from "@/types/player";
+import { LiveRoundPluginConfig } from "@/types/plugins/live-round";
 import slugid from "slugid";
 import Plugin from "..";
 
@@ -41,7 +42,7 @@ type RecordsInfo = {
   [key: string]: number;
 };
 
-export default class LiveRoundPlugin extends Plugin {
+export default class LiveRoundPlugin extends Plugin<LiveRoundPluginConfig | null> {
   static pluginId = "live-round";
   static gamemodes = ["rounds", "cup", "reversecup", "teams"];
   private widget: Widget;
@@ -518,6 +519,11 @@ export default class LiveRoundPlugin extends Plugin {
 
     // Make sure to update points for finishes based on their position
     for (let i = 0; i < this.finishes.length; i++) {
+      if (this.config?.showPoints === false) {
+        this.finishes[i].points = 0;
+        continue;
+      }
+
       const finish = this.finishes[i];
       const round = this.rounds.find((r) => r.login === finish.login);
       if (!round) continue;
@@ -564,6 +570,8 @@ export default class LiveRoundPlugin extends Plugin {
       finishesJson: JSON.stringify(this.finishes),
       mode: this.clientManager.info.liveInfo.type,
       pointsLimit: this.pointsLimit,
+      localRecordText: this.config?.localRecordText || "LR",
+      rowCount: this.config?.rowCount || 8,
     });
     this.widget.update();
   }
