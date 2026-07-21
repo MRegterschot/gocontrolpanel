@@ -30,10 +30,14 @@ main(){
   declare Round[] Rounds for This;
   declare Finish[] Finishes for This;
   declare Text Mode for This;
+  declare Text localRecordText for This;
+  declare Integer rowCount for This;
   declare Integer PointsLimit for This;
   declare Integer LastRoundsUpdate for This;
   declare Text roundsJson = """{{{ default data.roundsJson '[]' }}}""";
   declare Text finishesJson = """{{{ default data.finishesJson '[]' }}}""";
+  localRecordText = "{{{ default data.localRecordText 'LR' }}}";
+  rowCount = {{ default data.rowCount 8 }};
 
   Rounds.fromjson(roundsJson);
   Finishes.fromjson(finishesJson);

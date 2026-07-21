@@ -8,6 +8,7 @@ import {
 import FormElement from "@/components/form/form-element";
 import Modal from "@/components/modals/modal";
 import EcircuitmaniaPluginModal from "@/components/modals/plugins/plugins/ecircuitmania-plugin-modal";
+import LiveRoundPluginModal from "@/components/modals/plugins/plugins/live-round-plugin-modal";
 import MatchPluginModal from "@/components/modals/plugins/plugins/match-plugin-modal";
 import PlayerInfoPluginModal from "@/components/modals/plugins/plugins/player-info-plugin-modal";
 import RecordsInfoPluginModal from "@/components/modals/plugins/plugins/records-info-plugin-modal";
@@ -188,7 +189,17 @@ export default function PluginsForm({
               description={
                 plugins.find((p) => p.name === "live-round")?.description || ""
               }
-            />
+            >
+              <Button
+                variant={"outline"}
+                type="button"
+                collapse="sm"
+                onClick={() => setConfigModalOpen("live-round")}
+              >
+                <IconSettings />
+                Configure
+              </Button>
+            </FormElement>
 
             <FormElement
               name="ta-leaderboard"
@@ -342,6 +353,25 @@ export default function PluginsForm({
           }}
           onSubmit={(config) => {
             handleConfigUpdate("match", config);
+          }}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={configModalOpen === "live-round"}
+        setIsOpen={() => setConfigModalOpen(undefined)}
+        closeOnBackdropClick={false}
+      >
+        <LiveRoundPluginModal
+          serverId={serverId}
+          data={{
+            pluginId: plugins.find((p) => p.name === "live-round")?.id || "",
+            config: serverPluginsState.find(
+              (sp) => sp.plugin.name === "live-round",
+            )?.config as any,
+          }}
+          onSubmit={(config) => {
+            handleConfigUpdate("live-round", config);
           }}
         />
       </Modal>
