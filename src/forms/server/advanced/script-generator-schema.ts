@@ -6,6 +6,12 @@ export const ScriptGeneratorSchema = z.object({
   settings: z.record(
     z.union([z.string(), z.number(), z.boolean(), z.undefined()]),
   ),
+  customSettings: z.record(
+    z.object({
+      type: z.enum(["string", "int", "float", "boolean"]),
+      value: z.union([z.string(), z.number(), z.boolean()]),
+    }),
+  ),
 });
 
 export type ScriptGeneratorSchemaType = z.infer<typeof ScriptGeneratorSchema>;

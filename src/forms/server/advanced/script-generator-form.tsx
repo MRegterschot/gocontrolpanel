@@ -4,6 +4,14 @@ import { createFileEntry } from "@/actions/filemanager";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
   gameModesScripts,
@@ -15,8 +23,8 @@ import {
 } from "@/lib/scripts";
 import { getErrorMessage } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IconFileTextSpark } from "@tabler/icons-react";
-import { useMemo } from "react";
+import { IconFileTextSpark, IconPlus } from "@tabler/icons-react";
+import { useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import {
@@ -28,6 +36,7 @@ function getInputType(type: string) {
   switch (type) {
     case "string":
       return "text";
+    case "number":
     case "int":
     case "float":
       return "number";
@@ -38,17 +47,37 @@ function getInputType(type: string) {
   }
 }
 
+function getDefaultValue(type: string) {
+  switch (type) {
+    case "string":
+      return "";
+    case "int":
+    case "float":
+      return 0;
+    case "boolean":
+      return false;
+    default:
+      return "";
+  }
+}
+
 export default function ScriptGeneratorForm({
   serverId,
 }: {
   serverId: string;
 }) {
+  const [newCustomSetting, setNewCustomSetting] = useState<string>("");
+  const [newCustomSettingType, setNewCustomSettingType] = useState<
+    "string" | "int" | "float" | "boolean"
+  >("string");
+
   const form = useForm<ScriptGeneratorSchemaType>({
     resolver: zodResolver(ScriptGeneratorSchema),
     defaultValues: {
       scriptName: "",
       originalScriptName: "",
       settings: {},
+      customSettings: {},
     },
   });
 
@@ -109,7 +138,18 @@ export default function ScriptGeneratorForm({
       const { error } = await createFileEntry(serverId, {
         path: `Scripts/Modes/${scriptName}`,
         isDir: false,
-        content: generateScript(values.originalScriptName, updatedSettings),
+        content: generateScript(values.originalScriptName, {
+          ...updatedSettings,
+          ...Object.fromEntries(
+            Object.entries(values.customSettings).map(([key, setting]) => [
+              key,
+              {
+                value: setting.value,
+                type: setting.type,
+              },
+            ]),
+          ),
+        }),
       });
 
       if (error) throw new Error(error);
@@ -166,8 +206,6 @@ export default function ScriptGeneratorForm({
         {originalScriptName && (
           <div className="flex flex-col gap-6">
             <Separator />
-
-            <h2 className="text-xl font-bold">Settings</h2>
 
             <div className="flex gap-4 flex-col md:flex-row">
               <div className="flex flex-col gap-3 flex-1">
@@ -226,6 +264,105 @@ export default function ScriptGeneratorForm({
                     }
                   />
                 ))}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Custom Settings */}
+            <div className="flex flex-col gap-3 xl:max-w-[50%]">
+              {Object.entries(form.getValues("customSettings")).map(
+                ([settingName, settingValue]) => (
+                  <FormElement
+                    key={settingName}
+                    name={`customSettings.${settingName}.value`}
+                    label={settingName}
+                    type={getInputType(settingValue.type)}
+                    placeholder={settingName
+                      .slice(2)
+                      .split(/(?=[A-Z])/)
+                      .join(" ")
+                      .replace(/^\w/, (c) => c.toUpperCase())
+                      .replace(/_/g, "")}
+                    className={
+                      settingValue.type === "int" ||
+                      settingValue.type === "float"
+                        ? "w-26"
+                        : "sm:w-2/3 xl:max-w-[calc(100%-192px)] min-w-48"
+                    }
+                    rootClassName="max-w-full"
+                    onClear={() => {
+                      const settings = form.getValues("customSettings");
+                      const { [settingName]: _, ...rest } = settings;
+
+                      form.unregister(`customSettings.${settingName}`);
+                      form.setValue("customSettings", rest);
+                    }}
+                  />
+                ),
+              )}
+
+              <div className="flex gap-2 items-center">
+                <Input
+                  type="text"
+                  placeholder="S_CustomSetting"
+                  className="max-w-92"
+                  value={newCustomSetting}
+                  onChange={(e) => setNewCustomSetting(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && newCustomSetting.trim()) {
+                      e.preventDefault();
+                      form.setValue(
+                        `customSettings.${newCustomSetting.trim()}`,
+                        {
+                          value: getDefaultValue(newCustomSettingType),
+                          type: newCustomSettingType,
+                        },
+                      );
+                      setNewCustomSetting("");
+                    }
+                  }}
+                />
+
+                <Select
+                  value={newCustomSettingType}
+                  onValueChange={(value) =>
+                    setNewCustomSettingType(
+                      value as "string" | "int" | "float" | "boolean",
+                    )
+                  }
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="string">String</SelectItem>
+                    <SelectItem value="int">Integer</SelectItem>
+                    <SelectItem value="float">Float</SelectItem>
+                    <SelectItem value="boolean">Boolean</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  type="button"
+                  collapse="sm"
+                  variant="outline"
+                  onClick={() => {
+                    if (newCustomSetting.trim()) {
+                      form.setValue(
+                        `customSettings.${newCustomSetting.trim()}`,
+                        {
+                          value: getDefaultValue(newCustomSettingType),
+                          type: newCustomSettingType,
+                        },
+                      );
+                      setNewCustomSetting("");
+                    }
+                  }}
+                >
+                  <IconPlus />
+                  Add Custom Setting
+                </Button>
               </div>
             </div>
           </div>
