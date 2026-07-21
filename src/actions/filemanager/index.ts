@@ -4,6 +4,7 @@ import { CreateFileEntrySchemaType } from "@/forms/server/files/create-file-entr
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getLogger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
+import { gameModesScripts } from "@/lib/scripts";
 import { ContentType, File, FileEntry } from "@/types/filemanager";
 import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
@@ -341,20 +342,6 @@ export async function getScripts(
         function: "getScripts",
       };
       const log = getLogger(serverId);
-      const defaultScripts = [
-        "Trackmania/TM_TimeAttack_Online.Script.txt",
-        "Trackmania/TM_Laps_Online.Script.txt",
-        "Trackmania/TM_Rounds_Online.Script.txt",
-        "Trackmania/TM_Cup_Online.Script.txt",
-        "Trackmania/TM_Teams_Online.Script.txt",
-        "Trackmania/TM_Knockout_Online.Script.txt",
-        "Trackmania/Deprecated/TM_Champion_Online.Script.txt",
-        "Trackmania/TM_RoyalTimeAttack_Online.Script.txt",
-        "Trackmania/TM_StuntMulti_Online.Script.txt",
-        "Trackmania/TM_Platform_Online.Script.txt",
-        "TrackMania/TM_TMWC2023_Online.Script.txt",
-        "TrackMania/TM_TMWTTeams_Online.Script.txt",
-      ];
 
       try {
         const fileManager = await getFileManager(serverId);
@@ -379,11 +366,11 @@ export async function getScripts(
           throw new ServerError("Failed to get scripts");
         }
 
-        const allScripts = [...data, ...defaultScripts];
+        const allScripts = [...data, ...gameModesScripts];
         return [...new Set(allScripts)];
       } catch (error) {
         log.error({ meta, error }, "Error getting scripts");
-        return defaultScripts;
+        return gameModesScripts;
       }
     },
   );
