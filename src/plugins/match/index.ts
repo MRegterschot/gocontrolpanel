@@ -370,7 +370,7 @@ Commands:
       const mapList = await getMapList(this.clientManager);
       this.clientManager.client.call(
         "ChatSendServerMessage",
-        `Maps:\n${mapList.map((map, index) => `${index + 1}. ${map.Name}`).join("\n")}`,
+        `Maps:\n${mapList.map((map, index) => `$z${index + 1}. ${map.Name}`).join("\n")}`,
       );
     } catch (error) {
       this.clientManager.log.error({ meta, error }, "Error fetching map list");
@@ -626,7 +626,7 @@ Commands:
     if (!map) return;
 
     // Set map to correct index in the pickedMaps array or to the end if the index is greater than the length of the array
-    this.setPickedMapAtPosition(map.filename, position);
+    this.setPickedMapAtPosition(map.filename, position - 1);
 
     map.pickedBy = this.pickBanState.currentAction?.nickName;
     map.index = position;
@@ -642,6 +642,8 @@ Commands:
 
     this.pickBanState.currentAction = this.getNextPickBanAction();
     this.updatePickBan();
+
+    await this.handleNextPickBanAction();
   };
 
   private updatePickBan() {
@@ -867,7 +869,7 @@ Commands:
     }
 
     // Set map to correct index in the pickedMaps array or to the end if the index is greater than the length of the array
-    this.setPickedMapAtPosition(randomMap.filename, position);
+    this.setPickedMapAtPosition(randomMap.filename, position -1);
 
     randomMap.pickedBy = "random";
     randomMap.index = position;

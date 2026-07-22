@@ -168,9 +168,9 @@ Void updateWidget(MapInfo[] mapInfos, PickBanAction currentAction) {
   declare actionFrame <=> (Page.MainFrame.GetFirstChild("pickban-action") as CMlFrame);
   declare actionLabel <=> (actionFrame.Controls[2] as CMlLabel);
   if (currentAction.action == "pick") {
-    actionLabel.SetText(currentAction.nickName ^ " is picking a map");
+    actionLabel.SetText(currentAction.nickName ^ "$z is picking a map");
   } else if (currentAction.action == "ban") {
-    actionLabel.SetText(currentAction.nickName ^ " is banning a map");
+    actionLabel.SetText(currentAction.nickName ^ "$z is banning a map");
   } else if (currentAction.action == "random") {
     actionLabel.SetText("Random map is being picked");
   } else {
