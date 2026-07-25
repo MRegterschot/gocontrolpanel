@@ -6,6 +6,8 @@ export const TMServerSchema = z.object({
   roomPassword: z.string().optional(),
   createServer: z.boolean(),
   groupId: z.string(),
+  updateServer: z.boolean(),
+  serverId: z.string(),
 });
 
 export type TMServerSchemaType = z.infer<typeof TMServerSchema>;

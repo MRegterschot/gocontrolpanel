@@ -7,7 +7,7 @@ import { getErrorMessage } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { TMServerSchema, TMServerSchemaType } from "./tm-server-schema";
@@ -31,13 +31,40 @@ export default function TMServerForm({
     }));
   }, [session?.user]);
 
+  const servers = useMemo(() => {
+    if (!session?.user) return [];
+    return session.user.servers.map((server) => ({
+      label: server.name,
+      value: server.id,
+    }));
+  }, [session?.user]);
+
   const form = useForm<TMServerSchemaType>({
     resolver: zodResolver(TMServerSchema),
     defaultValues: {
       createServer: true,
       groupId: "",
+      updateServer: false,
+      serverId: "",
     },
   });
+
+  const { watch } = form;
+
+  const createServer = watch("createServer");
+  const updateServer = watch("updateServer");
+
+  useEffect(() => {
+    if (createServer) {
+      form.setValue("updateServer", false);
+    }
+  }, [createServer, form]);
+
+  useEffect(() => {
+    if (updateServer) {
+      form.setValue("createServer", false);
+    }
+  }, [updateServer, form]);
 
   async function onSubmit(values: TMServerSchemaType) {
     try {
@@ -83,20 +110,41 @@ export default function TMServerForm({
           placeholder="Enter room password"
         />
 
-        <FormElement
-          label="Automatically create server"
-          name="createServer"
-          type="checkbox"
-        />
+        <div className="flex flex-col gap-4">
+          <div className="gap-4 grid sm:grid-cols-2 sm:gap-8">
+            <FormElement
+              label="Automatically create server"
+              name="createServer"
+              type="checkbox"
+            />
 
-        <FormElement
-          label="Group"
-          name="groupId"
-          type="select"
-          options={groups}
-          placeholder="Select a group"
-          className="w-48"
-        />
+            <FormElement
+              label="Add to group"
+              name="groupId"
+              type="select"
+              options={groups}
+              placeholder="Select a group"
+              className="w-48"
+            />
+          </div>
+
+          <div className="gap-4 grid sm:grid-cols-2 sm:gap-8">
+            <FormElement
+              label="Update existing server"
+              name="updateServer"
+              type="checkbox"
+            />
+
+            <FormElement
+              label="Server"
+              name="serverId"
+              type="select"
+              options={servers}
+              placeholder="Select a server"
+              className="w-48"
+            />
+          </div>
+        </div>
 
         <Button
           type="submit"

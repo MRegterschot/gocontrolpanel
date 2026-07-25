@@ -141,6 +141,7 @@ export async function createServer(
     | "messageFormat"
     | "connectMessage"
     | "disconnectMessage"
+    | "enableHelpCommand"
     | "createdAt"
     | "updatedAt"
     | "deletedAt"

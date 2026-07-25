@@ -11,6 +11,8 @@ export const AdvancedServerSetupSchema = z.object({
   network: NetworkSchema.optional(),
   createServer: z.boolean(),
   groupId: z.string(),
+  updateServer: z.boolean(),
+  serverId: z.string(),
 });
 
 export type AdvancedServerSetupSchemaType = z.infer<
