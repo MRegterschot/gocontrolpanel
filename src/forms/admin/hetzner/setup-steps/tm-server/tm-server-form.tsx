@@ -6,6 +6,8 @@ import { Form } from "@/components/ui/form";
 import { getErrorMessage } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus } from "@tabler/icons-react";
+import { useSession } from "next-auth/react";
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { TMServerSchema, TMServerSchemaType } from "./tm-server-schema";
@@ -19,8 +21,22 @@ export default function TMServerForm({
   serverId: number;
   callback?: () => void;
 }) {
+  const { data: session } = useSession();
+
+  const groups = useMemo(() => {
+    if (!session?.user) return [];
+    return session.user.groups.map((group) => ({
+      label: group.name,
+      value: group.id,
+    }));
+  }, [session?.user]);
+
   const form = useForm<TMServerSchemaType>({
     resolver: zodResolver(TMServerSchema),
+    defaultValues: {
+      createServer: true,
+      groupId: "",
+    },
   });
 
   async function onSubmit(values: TMServerSchemaType) {
@@ -65,6 +81,21 @@ export default function TMServerForm({
           name={"roomPassword"}
           label="Room Password"
           placeholder="Enter room password"
+        />
+
+        <FormElement
+          label="Automatically create server"
+          name="createServer"
+          type="checkbox"
+        />
+
+        <FormElement
+          label="Group"
+          name="groupId"
+          type="select"
+          options={groups}
+          placeholder="Select a group"
+          className="w-48"
         />
 
         <Button
