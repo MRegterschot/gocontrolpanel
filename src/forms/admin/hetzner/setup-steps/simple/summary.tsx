@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { getErrorMessage } from "@/lib/utils";
 import { IconArrowNarrowLeft, IconPlus } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { SimpleServerSetupSchemaType } from "./server-setup-schema";
@@ -33,11 +33,34 @@ export default function Summary({
     }));
   }, [session?.user]);
 
+  const servers = useMemo(() => {
+    if (!session?.user) return [];
+    return session.user.servers.map((server) => ({
+      label: server.name,
+      value: server.id,
+    }));
+  }, [session?.user]);
+
   const { watch } = form;
 
   const server = watch("server");
   const controller = watch("serverController");
   const database = watch("database");
+
+  const createServer = watch("createServer");
+  const updateServer = watch("updateServer");
+
+  useEffect(() => {
+    if (createServer) {
+      form.setValue("updateServer", false);
+    }
+  }, [createServer, form]);
+
+  useEffect(() => {
+    if (updateServer) {
+      form.setValue("createServer", false);
+    }
+  }, [updateServer, form]);
 
   async function handleSubmit(values: SimpleServerSetupSchemaType) {
     try {
@@ -58,7 +81,7 @@ export default function Summary({
 
   return (
     <form onSubmit={form.handleSubmit(handleSubmit)}>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-6">
         <div className="gap-4 grid sm:grid-cols-2 sm:gap-8 text-sm">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
@@ -125,21 +148,40 @@ export default function Summary({
           </div>
         </div>
 
-        <div className="gap-4 grid sm:grid-cols-2 sm:gap-8">
-          <FormElement
-            label="Automatically create server"
-            name="createServer"
-            type="checkbox"
-          />
+        <div className="flex flex-col gap-4">
+          <div className="gap-4 grid sm:grid-cols-2 sm:gap-8">
+            <FormElement
+              label="Automatically create server"
+              name="createServer"
+              type="checkbox"
+            />
 
-          <FormElement
-            label="Group"
-            name="groupId"
-            type="select"
-            options={groups}
-            placeholder="Select a group"
-            className="w-48"
-          />
+            <FormElement
+              label="Add to group"
+              name="groupId"
+              type="select"
+              options={groups}
+              placeholder="Select a group"
+              className="w-48"
+            />
+          </div>
+
+          <div className="gap-4 grid sm:grid-cols-2 sm:gap-8">
+            <FormElement
+              label="Update existing server"
+              name="updateServer"
+              type="checkbox"
+            />
+
+            <FormElement
+              label="Server"
+              name="serverId"
+              type="select"
+              options={servers}
+              placeholder="Select a server"
+              className="w-48"
+            />
+          </div>
         </div>
 
         <div className="flex gap-2 justify-between">

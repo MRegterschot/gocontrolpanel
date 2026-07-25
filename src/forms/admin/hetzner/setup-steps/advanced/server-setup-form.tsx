@@ -62,6 +62,8 @@ export default function AdvancedServerSetupForm({
       network: undefined,
       createServer: true,
       groupId: "",
+      updateServer: false,
+      serverId: "",
     },
   });
 
