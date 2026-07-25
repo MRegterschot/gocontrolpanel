@@ -176,6 +176,8 @@ model Servers {
   connectMessage    String?
   disconnectMessage String?
 
+  enableHelpCommand Boolean @default(true)
+
   groupServers  GroupServers[]
   userServers   UserServers[]
   serverPlugins ServerPlugins[]

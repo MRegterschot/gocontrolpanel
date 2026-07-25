@@ -21,6 +21,7 @@ export interface ServerClientInfo {
   activePlayers: PlayerInfo[];
   liveInfo: LiveInfo;
   chat?: ChatConfig;
+  enableHelpCommand?: boolean;
   plugins: ServerPluginsWithPlugin[];
 }
 
