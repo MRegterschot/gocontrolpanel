@@ -14,6 +14,7 @@ export type MinimalServer = Omit<
   | "connectMessage"
   | "disconnectMessage"
   | "filemanagerPassword"
+  | "enableHelpCommand"
   | "createdAt"
   | "updatedAt"
   | "deletedAt"
