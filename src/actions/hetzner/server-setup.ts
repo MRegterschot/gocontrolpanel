@@ -6,12 +6,13 @@ import { TMServerSchemaType } from "@/forms/admin/hetzner/setup-steps/tm-server/
 import { doServerActionWithAuth } from "@/lib/actions";
 import { axiosHetzner } from "@/lib/axios/hetzner";
 import { getClient } from "@/lib/dbclient";
+import { updateFileManager } from "@/lib/managers/file-manager";
 import {
   getKeyHetznerRecentlyCreatedServers,
   getRedisClient,
 } from "@/lib/redis";
 import { connectToSSHServer, executeSSHScript } from "@/lib/ssh";
-import { generateRandomString, sleep } from "@/lib/utils";
+import { generateRandomString, getErrorMessage, sleep } from "@/lib/utils";
 import { HetznerServer, HetznerServerCache } from "@/types/api/hetzner/servers";
 import { ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
@@ -79,6 +80,8 @@ export async function createAdvancedServerSetup(
             network: data.network,
             createServer: data.createServer,
             groupId: data.groupId,
+            updateServer: data.updateServer,
+            serverId: data.serverId,
           },
           error,
         );
@@ -284,48 +287,80 @@ export async function createAdvancedServerSetup(
         filemanagerPassword: dediData.filemanager_password,
       };
 
-      if (data.createServer) {
-        const db = getClient();
-        const newServer = await db.servers.create({
-          data: {
-            name: cachedServer.name,
-            description: "",
-            host: cachedServer.ip || "",
-            port: cachedServer.port,
-            user: "SuperAdmin",
-            password: cachedServer.password,
-            filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
-            filemanagerPassword: cachedServer.filemanagerPassword,
-            userServers: {
-              create: [
-                {
-                  userId: session.user.id,
-                  role: "Admin",
-                },
-              ],
-            },
-          },
-        });
-
-        if (data.groupId) {
-          await db.groups.update({
-            where: { id: data.groupId },
+      try {
+        if (data.createServer) {
+          const db = getClient();
+          const newServer = await db.servers.create({
             data: {
-              groupServers: {
+              name: cachedServer.name,
+              description: "",
+              host: cachedServer.ip || "",
+              port: cachedServer.port,
+              user: "SuperAdmin",
+              password: cachedServer.password,
+              filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
+              filemanagerPassword: cachedServer.filemanagerPassword,
+              userServers: {
                 create: [
                   {
-                    serverId: newServer.id,
+                    userId: session.user.id,
+                    role: "Admin",
                   },
                 ],
               },
             },
           });
+
+          if (data.groupId) {
+            await db.groups.update({
+              where: { id: data.groupId },
+              data: {
+                groupServers: {
+                  create: [
+                    {
+                      serverId: newServer.id,
+                    },
+                  ],
+                },
+              },
+            });
+          }
+        } else if (data.updateServer && data.serverId) {
+          const db = getClient();
+          const existingServer = await db.servers.findUnique({
+            where: { id: data.serverId },
+          });
+
+          if (!existingServer) {
+            throw new Error("Server not found");
+          }
+
+          await db.servers.update({
+            where: { id: data.serverId },
+            data: {
+              name: cachedServer.name,
+              host: cachedServer.ip || "",
+              port: cachedServer.port,
+              user: "SuperAdmin",
+              password: cachedServer.password,
+              filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
+              filemanagerPassword: cachedServer.filemanagerPassword,
+            },
+          });
+
+          updateFileManager(
+            data.serverId,
+            `http://${cachedServer.ip}:${cachedServer.fm_port}`,
+            cachedServer.filemanagerPassword,
+          );
+        } else {
+          const client = await getRedisClient();
+          const key = getKeyHetznerRecentlyCreatedServers(projectId);
+          await client.lpush(key, JSON.stringify(cachedServer));
+          await client.expire(key, 60 * 60 * 2); // Keep for 2 hours
         }
-      } else {
-        const client = await getRedisClient();
-        const key = getKeyHetznerRecentlyCreatedServers(projectId);
-        await client.lpush(key, JSON.stringify(cachedServer));
-        await client.expire(key, 60 * 60 * 2); // Keep for 2 hours
+      } catch (error) {
+        la(getErrorMessage(error), res.data.server.id);
       }
 
       await setRateLimit(projectId, res);
@@ -398,6 +433,8 @@ export async function createSimpleServerSetup(
             },
             createServer: data.createServer,
             groupId: data.groupId,
+            updateServer: data.updateServer,
+            serverId: data.serverId,
           },
           error,
         );
@@ -550,48 +587,80 @@ export async function createSimpleServerSetup(
         filemanagerPassword: dediData.filemanager_password,
       };
 
-      if (data.createServer) {
-        const db = getClient();
-        const newServer = await db.servers.create({
-          data: {
-            name: cachedServer.name,
-            description: "",
-            host: cachedServer.ip || "",
-            port: cachedServer.port,
-            user: "SuperAdmin",
-            password: cachedServer.password,
-            filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
-            filemanagerPassword: cachedServer.filemanagerPassword,
-            userServers: {
-              create: [
-                {
-                  userId: session.user.id,
-                  role: "Admin",
-                },
-              ],
-            },
-          },
-        });
-
-        if (data.groupId) {
-          await db.groups.update({
-            where: { id: data.groupId },
+      try {
+        if (data.createServer) {
+          const db = getClient();
+          const newServer = await db.servers.create({
             data: {
-              groupServers: {
+              name: cachedServer.name,
+              description: "",
+              host: cachedServer.ip || "",
+              port: cachedServer.port,
+              user: "SuperAdmin",
+              password: cachedServer.password,
+              filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
+              filemanagerPassword: cachedServer.filemanagerPassword,
+              userServers: {
                 create: [
                   {
-                    serverId: newServer.id,
+                    userId: session.user.id,
+                    role: "Admin",
                   },
                 ],
               },
             },
           });
+
+          if (data.groupId) {
+            await db.groups.update({
+              where: { id: data.groupId },
+              data: {
+                groupServers: {
+                  create: [
+                    {
+                      serverId: newServer.id,
+                    },
+                  ],
+                },
+              },
+            });
+          }
+        } else if (data.updateServer && data.serverId) {
+          const db = getClient();
+          const existingServer = await db.servers.findUnique({
+            where: { id: data.serverId },
+          });
+
+          if (!existingServer) {
+            throw new Error("Server not found");
+          }
+
+          await db.servers.update({
+            where: { id: data.serverId },
+            data: {
+              name: cachedServer.name,
+              host: cachedServer.ip || "",
+              port: cachedServer.port,
+              user: "SuperAdmin",
+              password: cachedServer.password,
+              filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
+              filemanagerPassword: cachedServer.filemanagerPassword,
+            },
+          });
+
+          updateFileManager(
+            data.serverId,
+            `http://${cachedServer.ip}:${cachedServer.fm_port}`,
+            cachedServer.filemanagerPassword,
+          );
+        } else {
+          const client = await getRedisClient();
+          const key = getKeyHetznerRecentlyCreatedServers(projectId);
+          await client.lpush(key, JSON.stringify(cachedServer));
+          await client.expire(key, 60 * 60 * 2); // Keep for 2 hours
         }
-      } else {
-        const client = await getRedisClient();
-        const key = getKeyHetznerRecentlyCreatedServers(projectId);
-        await client.lpush(key, JSON.stringify(cachedServer));
-        await client.expire(key, 60 * 60 * 2); // Keep for 2 hours
+      } catch (error) {
+        la(getErrorMessage(error), res.data.server.id);
       }
 
       await setRateLimit(projectId, res);
@@ -655,6 +724,8 @@ export async function addTrackmaniaServer(
             },
             createServer: tmServer.createServer,
             groupId: tmServer.groupId,
+            updateServer: tmServer.updateServer,
+            serverId: tmServer.serverId,
             result,
           },
           error,
@@ -749,48 +820,80 @@ export async function addTrackmaniaServer(
         filemanagerPassword: dediData.filemanager_password,
       };
 
-      if (tmServer.createServer) {
-        const db = getClient();
-        const newServer = await db.servers.create({
-          data: {
-            name: cachedServer.name,
-            description: "",
-            host: cachedServer.ip || "",
-            port: cachedServer.port,
-            user: "SuperAdmin",
-            password: cachedServer.password,
-            filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
-            filemanagerPassword: cachedServer.filemanagerPassword,
-            userServers: {
-              create: [
-                {
-                  userId: session.user.id,
-                  role: "Admin",
-                },
-              ],
-            },
-          },
-        });
-
-        if (tmServer.groupId) {
-          await db.groups.update({
-            where: { id: tmServer.groupId },
+      try {
+        if (tmServer.createServer) {
+          const db = getClient();
+          const newServer = await db.servers.create({
             data: {
-              groupServers: {
+              name: cachedServer.name,
+              description: "",
+              host: cachedServer.ip || "",
+              port: cachedServer.port,
+              user: "SuperAdmin",
+              password: cachedServer.password,
+              filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
+              filemanagerPassword: cachedServer.filemanagerPassword,
+              userServers: {
                 create: [
                   {
-                    serverId: newServer.id,
+                    userId: session.user.id,
+                    role: "Admin",
                   },
                 ],
               },
             },
           });
+
+          if (tmServer.groupId) {
+            await db.groups.update({
+              where: { id: tmServer.groupId },
+              data: {
+                groupServers: {
+                  create: [
+                    {
+                      serverId: newServer.id,
+                    },
+                  ],
+                },
+              },
+            });
+          }
+        } else if (tmServer.updateServer && tmServer.serverId) {
+          const db = getClient();
+          const existingServer = await db.servers.findUnique({
+            where: { id: tmServer.serverId },
+          });
+
+          if (!existingServer) {
+            throw new Error("Server not found");
+          }
+
+          await db.servers.update({
+            where: { id: tmServer.serverId },
+            data: {
+              name: cachedServer.name,
+              host: cachedServer.ip || "",
+              port: cachedServer.port,
+              user: "SuperAdmin",
+              password: cachedServer.password,
+              filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
+              filemanagerPassword: cachedServer.filemanagerPassword,
+            },
+          });
+
+          updateFileManager(
+            tmServer.serverId,
+            `http://${cachedServer.ip}:${cachedServer.fm_port}`,
+            cachedServer.filemanagerPassword,
+          );
+        } else {
+          const client = await getRedisClient();
+          const key = getKeyHetznerRecentlyCreatedServers(projectId);
+          await client.lpush(key, JSON.stringify(cachedServer));
+          await client.expire(key, 60 * 60 * 2); // Keep for 2 hours
         }
-      } else {
-        const client = await getRedisClient();
-        const key = getKeyHetznerRecentlyCreatedServers(projectId);
-        await client.lpush(key, JSON.stringify(cachedServer));
-        await client.expire(key, 60 * 60 * 2); // Keep for 2 hours
+      } catch (error) {
+        la(getErrorMessage(error));
       }
 
       la(undefined, result.stdout);

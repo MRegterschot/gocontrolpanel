@@ -4,6 +4,7 @@ import { Form } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HetznerLocation } from "@/types/api/hetzner/locations";
 import { HetznerServer, HetznerServerType } from "@/types/api/hetzner/servers";
+import { HetznerSSHKey } from "@/types/api/hetzner/ssh-keys";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -15,7 +16,6 @@ import {
   SimpleServerSetupSchemaType,
 } from "./server-setup-schema";
 import Summary from "./summary";
-import { HetznerSSHKey } from "@/types/api/hetzner/ssh-keys";
 
 type Steps = "server" | "serverController" | "database" | "summary";
 
@@ -56,7 +56,9 @@ export default function SimpleServerSetupForm({
       serverController: undefined,
       database: undefined,
       createServer: true,
+      updateServer: false,
       groupId: "",
+      serverId: "",
     },
   });
 
