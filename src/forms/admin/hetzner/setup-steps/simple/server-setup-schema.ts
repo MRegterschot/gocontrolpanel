@@ -7,6 +7,8 @@ export const SimpleServerSetupSchema = z.object({
   server: ServerSchema,
   serverController: ServerControllerSchema.optional(),
   database: DatabaseSchema.optional(),
+  createServer: z.boolean(),
+  groupId: z.string(),
 });
 
 export type SimpleServerSetupSchemaType = z.infer<

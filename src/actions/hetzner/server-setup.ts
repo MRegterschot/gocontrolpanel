@@ -5,6 +5,7 @@ import { SimpleServerSetupSchemaType } from "@/forms/admin/hetzner/setup-steps/s
 import { TMServerSchemaType } from "@/forms/admin/hetzner/setup-steps/tm-server/tm-server-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { axiosHetzner } from "@/lib/axios/hetzner";
+import { getClient } from "@/lib/dbclient";
 import {
   getKeyHetznerRecentlyCreatedServers,
   getRedisClient,
@@ -354,6 +355,8 @@ export async function createSimpleServerSetup(
                 ? "*****"
                 : undefined,
             },
+            createServer: data.createServer,
+            groupId: data.groupId,
           },
           error,
         );
@@ -506,10 +509,49 @@ export async function createSimpleServerSetup(
         filemanagerPassword: dediData.filemanager_password,
       };
 
-      const client = await getRedisClient();
-      const key = getKeyHetznerRecentlyCreatedServers(projectId);
-      await client.lpush(key, JSON.stringify(cachedServer));
-      await client.expire(key, 60 * 60 * 2); // Keep for 2 hours
+      if (data.createServer) {
+        const db = getClient();
+        const newServer = await db.servers.create({
+          data: {
+            name: cachedServer.name,
+            description: "",
+            host: cachedServer.ip || "",
+            port: cachedServer.port,
+            user: "SuperAdmin",
+            password: cachedServer.password,
+            filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
+            filemanagerPassword: cachedServer.filemanagerPassword,
+            userServers: {
+              create: [
+                {
+                  userId: session.user.id,
+                  role: "Admin",
+                },
+              ],
+            },
+          },
+        });
+
+        if (data.groupId) {
+          await db.groups.update({
+            where: { id: data.groupId },
+            data: {
+              groupServers: {
+                create: [
+                  {
+                    serverId: newServer.id,
+                  },
+                ],
+              },
+            },
+          });
+        }
+      } else {
+        const client = await getRedisClient();
+        const key = getKeyHetznerRecentlyCreatedServers(projectId);
+        await client.lpush(key, JSON.stringify(cachedServer));
+        await client.expire(key, 60 * 60 * 2); // Keep for 2 hours
+      }
 
       await setRateLimit(projectId, res);
 
