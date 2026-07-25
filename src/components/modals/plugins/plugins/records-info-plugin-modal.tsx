@@ -10,6 +10,7 @@ export default function RecordsInfoPluginModal({
   serverId,
   data,
   closeModal,
+  onSubmit,
 }: DefaultModalProps<
   {
     pluginId: string;
@@ -23,6 +24,11 @@ export default function RecordsInfoPluginModal({
 
   const stopPropagation = (e: React.MouseEvent) => {
     e.stopPropagation();
+  };
+
+  const handleSubmit = (config: RecordsInfoPluginConfig) => {
+    closeModal?.();
+    onSubmit?.(config);
   };
 
   return (
@@ -43,6 +49,8 @@ export default function RecordsInfoPluginModal({
         serverId={serverId}
         pluginId={data?.pluginId}
         config={data?.config}
+        onSubmit={handleSubmit}
+        onClose={closeModal}
       />
     </Card>
   );

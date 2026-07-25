@@ -59,7 +59,7 @@ interface MultiSelectProps
    */
   options: {
     /** The text to display for the option. */
-    label: string;
+    label: React.ReactNode;
     /** The unique value associated with the option. */
     value: string;
     /** Optional icon component to display alongside the option. */
