@@ -60,6 +60,8 @@ export default function AdvancedServerSetupForm({
       serverController: undefined,
       database: undefined,
       network: undefined,
+      createServer: true,
+      groupId: "",
     },
   });
 
