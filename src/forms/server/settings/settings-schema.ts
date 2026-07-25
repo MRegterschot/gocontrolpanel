@@ -42,6 +42,8 @@ export const ServerSettingsSchema = z.object({
   downloadRate: z.coerce.number().int().min(1, "Download Rate is required"),
   uploadRate: z.coerce.number().int().min(1, "Upload Rate is required"),
   profileSkins: z.boolean(),
+
+  enableHelpCommand: z.boolean().optional(),
 });
 
 export type ServerSettingsSchemaType = z.infer<typeof ServerSettingsSchema>;

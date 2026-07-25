@@ -346,6 +346,8 @@ export class GbxClientManager extends EventEmitter {
       disconnectMessage: server.disconnectMessage,
     };
 
+    this.info.enableHelpCommand = server.enableHelpCommand;
+
     this.info.plugins = server.serverPlugins;
 
     await setupListeners(this, server.id);
@@ -1497,7 +1499,7 @@ async function onPlayerChat(manager: GbxClientManager, chat: PlayerChat) {
     const commandName = args[0].toLowerCase().slice(1);
     const commandArgs = args.slice(1);
 
-    if (commandName === "help") {
+    if (commandName === "help" && manager.info.enableHelpCommand) {
       if (commandArgs.length === 0) {
         const helpText =
           "To get help for a specific plugin, use /help <plugin>. Available plugins: " +

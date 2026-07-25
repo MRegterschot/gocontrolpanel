@@ -2,9 +2,13 @@
 
 import { ServerSettingsSchemaType } from "@/forms/server/settings/settings-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
+import { getClient } from "@/lib/dbclient";
 import { getLogger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
-import { getGbxClient } from "@/lib/managers/gbxclient-manager";
+import {
+  getGbxClient,
+  getGbxClientManager,
+} from "@/lib/managers/gbxclient-manager";
 import { LocalMapInfo } from "@/types/map";
 import { ServerError, ServerResponse } from "@/types/responses";
 import path from "path";
@@ -22,7 +26,8 @@ export async function getServerSettings(
         function: "getServerSettings",
       };
       const log = getLogger(serverId);
-      const client = await getGbxClient(serverId);
+      const manager = await getGbxClientManager(serverId);
+      const client = manager.client;
       const settings = await client.multicall([
         ["GetServerOptions"],
         ["GetHideServer"],
@@ -72,6 +77,7 @@ export async function getServerSettings(
           downloadRate: systemInfo.ConnectionDownloadRate,
           uploadRate: systemInfo.ConnectionUploadRate,
           profileSkins: !profileSkinsDisabled,
+          enableHelpCommand: manager.info.enableHelpCommand ?? false,
         };
 
         return serverSettings;
@@ -96,7 +102,18 @@ export async function saveServerSettings(
         function: "saveServerSettings",
       };
       const log = getLogger(serverId);
-      const client = await getGbxClient(serverId);
+      const manager = await getGbxClientManager(serverId);
+      const client = manager.client;
+      const db = getClient();
+
+      if (serverSettings.enableHelpCommand !== undefined) {
+        await db.servers.update({
+          where: { id: serverId },
+          data: { enableHelpCommand: serverSettings.enableHelpCommand },
+        });
+
+        manager.info.enableHelpCommand = serverSettings.enableHelpCommand;
+      }
 
       serverSettings.defaultOptions.NextCallVoteTimeOut *= 1000; // Convert to milliseconds
       if (serverSettings.defaultOptions.CallVoteRatio < 0) {
