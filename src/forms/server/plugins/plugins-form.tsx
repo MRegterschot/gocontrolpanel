@@ -6,19 +6,26 @@ import {
   updateServerPlugins,
 } from "@/actions/database/server-plugins";
 import FormElement from "@/components/form/form-element";
+import Modal from "@/components/modals/modal";
 import EcircuitmaniaPluginModal from "@/components/modals/plugins/plugins/ecircuitmania-plugin-modal";
+import LiveRoundPluginModal from "@/components/modals/plugins/plugins/live-round-plugin-modal";
+import MatchPluginModal from "@/components/modals/plugins/plugins/match-plugin-modal";
 import PlayerInfoPluginModal from "@/components/modals/plugins/plugins/player-info-plugin-modal";
 import RecordsInfoPluginModal from "@/components/modals/plugins/plugins/records-info-plugin-modal";
-import Modal from "@/components/modals/modal";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Plugins } from "@/lib/prisma/generated";
 import { getErrorMessage } from "@/lib/utils";
 import { ECMPluginConfig } from "@/types/plugins/ecm";
+import { MatchPluginConfig } from "@/types/plugins/match";
 import { PlayerInfoPluginConfig } from "@/types/plugins/player-info";
 import { RecordsInfoPluginConfig } from "@/types/plugins/records-info";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IconDeviceFloppy, IconReload, IconSettings } from "@tabler/icons-react";
+import {
+  IconDeviceFloppy,
+  IconReload,
+  IconSettings,
+} from "@tabler/icons-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -36,6 +43,8 @@ export default function PluginsForm({
   const [configModalOpen, setConfigModalOpen] = useState<
     keyof PluginsSchemaType | undefined
   >();
+
+  const [serverPluginsState, setServerPluginsState] = useState(serverPlugins);
 
   const defaultValues: PluginsSchemaType = plugins.reduce((acc, plg) => {
     const sp = serverPlugins.find((sp) => sp.pluginId === plg.id);
@@ -72,10 +81,14 @@ export default function PluginsForm({
   }
 
   const handleConfigUpdate = (name: string, config?: any) => {
-    const sp = serverPlugins.find((sp) => sp.plugin.name === name);
-    if (sp) {
-      sp.config = config;
-    }
+    setServerPluginsState((prev) => {
+      return prev.map((sp) => {
+        if (sp.plugin.name === name) {
+          return { ...sp, config };
+        }
+        return sp;
+      });
+    });
   };
 
   const handleReloadPlugins = async () => {
@@ -122,6 +135,7 @@ export default function PluginsForm({
               <Button
                 variant={"outline"}
                 type="button"
+                collapse="sm"
                 onClick={() => setConfigModalOpen("ecm")}
               >
                 <IconSettings />
@@ -150,6 +164,7 @@ export default function PluginsForm({
               <Button
                 variant={"outline"}
                 type="button"
+                collapse="sm"
                 onClick={() => setConfigModalOpen("records-info")}
               >
                 <IconSettings />
@@ -174,7 +189,17 @@ export default function PluginsForm({
               description={
                 plugins.find((p) => p.name === "live-round")?.description || ""
               }
-            />
+            >
+              <Button
+                variant={"outline"}
+                type="button"
+                collapse="sm"
+                onClick={() => setConfigModalOpen("live-round")}
+              >
+                <IconSettings />
+                Configure
+              </Button>
+            </FormElement>
 
             <FormElement
               name="ta-leaderboard"
@@ -207,7 +232,27 @@ export default function PluginsForm({
               <Button
                 variant={"outline"}
                 type="button"
+                collapse="sm"
                 onClick={() => setConfigModalOpen("player-info")}
+              >
+                <IconSettings />
+                Configure
+              </Button>
+            </FormElement>
+
+            <FormElement
+              name="match"
+              label="Match Plugin"
+              type="checkbox"
+              description={
+                plugins.find((p) => p.name === "match")?.description || ""
+              }
+            >
+              <Button
+                variant={"outline"}
+                type="button"
+                collapse="sm"
+                onClick={() => setConfigModalOpen("match")}
               >
                 <IconSettings />
                 Configure
@@ -247,7 +292,7 @@ export default function PluginsForm({
           serverId={serverId}
           data={{
             pluginId: plugins.find((p) => p.name === "ecm")?.id || "",
-            config: serverPlugins.find((sp) => sp.plugin.name === "ecm")
+            config: serverPluginsState.find((sp) => sp.plugin.name === "ecm")
               ?.config as ECMPluginConfig,
           }}
           onSubmit={(config) => {
@@ -265,8 +310,9 @@ export default function PluginsForm({
           serverId={serverId}
           data={{
             pluginId: plugins.find((p) => p.name === "player-info")?.id || "",
-            config: serverPlugins.find((sp) => sp.plugin.name === "player-info")
-              ?.config as PlayerInfoPluginConfig,
+            config: serverPluginsState.find(
+              (sp) => sp.plugin.name === "player-info",
+            )?.config as PlayerInfoPluginConfig,
           }}
           onSubmit={(config) => {
             handleConfigUpdate("player-info", config);
@@ -283,12 +329,49 @@ export default function PluginsForm({
           serverId={serverId}
           data={{
             pluginId: plugins.find((p) => p.name === "records-info")?.id || "",
-            config: serverPlugins.find(
+            config: serverPluginsState.find(
               (sp) => sp.plugin.name === "records-info",
             )?.config as RecordsInfoPluginConfig,
           }}
           onSubmit={(config) => {
             handleConfigUpdate("records-info", config);
+          }}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={configModalOpen === "match"}
+        setIsOpen={() => setConfigModalOpen(undefined)}
+        closeOnBackdropClick={false}
+      >
+        <MatchPluginModal
+          serverId={serverId}
+          data={{
+            pluginId: plugins.find((p) => p.name === "match")?.id || "",
+            config: serverPluginsState.find((sp) => sp.plugin.name === "match")
+              ?.config as MatchPluginConfig,
+          }}
+          onSubmit={(config) => {
+            handleConfigUpdate("match", config);
+          }}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={configModalOpen === "live-round"}
+        setIsOpen={() => setConfigModalOpen(undefined)}
+        closeOnBackdropClick={false}
+      >
+        <LiveRoundPluginModal
+          serverId={serverId}
+          data={{
+            pluginId: plugins.find((p) => p.name === "live-round")?.id || "",
+            config: serverPluginsState.find(
+              (sp) => sp.plugin.name === "live-round",
+            )?.config as any,
+          }}
+          onSubmit={(config) => {
+            handleConfigUpdate("live-round", config);
           }}
         />
       </Modal>

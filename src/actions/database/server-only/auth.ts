@@ -120,30 +120,28 @@ export async function getUserById(
   userId: string,
 ): Promise<UsersWithGroupsWithServers> {
   const db = getClient();
-  const user = await db.users.findUniqueOrThrow({
+
+  return await db.users.findUniqueOrThrow({
     where: {
       authenticated: true,
       id: userId,
     },
     include: includeGroupsWithServers,
   });
-
-  return user;
 }
 
 export async function getUserByLogin(
   login: string,
 ): Promise<UsersWithGroupsWithServers> {
   const db = getClient();
-  const user = await db.users.findUniqueOrThrow({
+
+  return await db.users.findUniqueOrThrow({
     where: {
       authenticated: true,
       login,
     },
     include: includeGroupsWithServers,
   });
-
-  return user;
 }
 
 export async function upsertUserAuth(
@@ -175,6 +173,7 @@ export async function getPublicGroupsWithServers(): Promise<
   }[]
 > {
   const db = getClient();
+
   const groups = await db.groups.findMany({
     where: {
       deletedAt: null,
@@ -223,12 +222,11 @@ export async function getAllGroupsWithServersAndMembers(): Promise<
   GroupsWithServersAndMembers[]
 > {
   const db = getClient();
-  const groups = await db.groups.findMany({
+
+  return await db.groups.findMany({
     where: {
       deletedAt: null,
     },
     include: includeServersAndMembers,
   });
-
-  return groups;
 }

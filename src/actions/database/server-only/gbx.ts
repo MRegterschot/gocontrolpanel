@@ -1,6 +1,6 @@
 import { getMapsInfo } from "@/lib/api/nadeo";
 import { getClient } from "@/lib/dbclient";
-import { logger } from "@/lib/logger";
+import { getLogger, logger } from "@/lib/logger";
 import { getGbxClient } from "@/lib/managers/gbxclient-manager";
 import { Maps, Matches, Prisma, Servers } from "@/lib/prisma/generated";
 import { getKeyActiveMap, getRedisClient } from "@/lib/redis";
@@ -33,10 +33,17 @@ export async function createMap(
     | "deletedAt"
   >,
 ): Promise<Maps> {
+  const meta = {
+    type: "database",
+    module: "maps",
+    function: "createMap",
+  };
+
   const db = getClient();
 
   const { data: mapsInfo, error } = await getMapsInfo([map.uid]);
   if (error) {
+    logger.error({ meta, error, map }, "Failed to fetch map info");
     throw new ServerError(
       `Failed to fetch map info for UID ${map.uid}: ${error}`,
     );
@@ -44,10 +51,11 @@ export async function createMap(
 
   const info = mapsInfo.find((m) => m.mapUid === map.uid);
   if (!info) {
+    logger.error({ meta, map }, "Map info not found");
     throw new ServerError(`Map info not found for UID ${map.uid}`);
   }
 
-  const newMap = await db.maps.create({
+  return await db.maps.create({
     data: {
       ...map,
       submitter: info.submitter,
@@ -57,7 +65,6 @@ export async function createMap(
       uploadCheck: new Date(),
     },
   });
-  return newMap;
 }
 
 const MAP_INFO_UPDATE_THRESHOLD_HOURS = 72;
@@ -132,6 +139,7 @@ export async function checkAndUpdateMapsInfoIfNeeded(
 
 export async function syncAllMaps(): Promise<Maps[]> {
   const db = getClient();
+
   const maps = await db.maps.findMany({
     where: {
       deletedAt: null,
@@ -143,6 +151,7 @@ export async function syncAllMaps(): Promise<Maps[]> {
 
 export async function getMapByUid(uid: string): Promise<Maps | null> {
   const db = getClient();
+
   const map = await db.maps.findFirst({
     where: { uid, deletedAt: null },
   });
@@ -160,50 +169,55 @@ export async function getServerPlugins(
   serverId: string,
 ): Promise<ServerPluginsWithPlugin[]> {
   const db = getClient();
-  const plugins = await db.serverPlugins.findMany({
+
+  return await db.serverPlugins.findMany({
     where: { serverId },
     include: serversPluginsSchema,
   });
-
-  return plugins;
 }
 
 export async function createMatch(
   serverId: string,
   mode: string,
 ): Promise<Matches> {
+  const meta = {
+    type: "database",
+    module: "matches",
+    function: "createMatch",
+  };
+  const log = getLogger(serverId);
   const redis = await getRedisClient();
   const key = getKeyActiveMap(serverId);
 
   const activeMap = await redis.get(key);
   if (!activeMap) {
+    log.error({ meta }, "No active map found");
     throw new Error(`No active map found for server ${serverId}`);
   }
 
   const mapData: Maps = JSON.parse(activeMap);
   if (!mapData) {
+    log.error({ meta }, "Map data is invalid");
     throw new Error(`Map data is invalid for server ${serverId}`);
   }
 
   const db = getClient();
-  const match = await db.matches.create({
+
+  return await db.matches.create({
     data: {
       mapId: mapData.id,
       mode,
       serverId,
     },
   });
-
-  return match;
 }
 
 export async function getAllServers(): Promise<Servers[]> {
   const db = getClient();
-  const servers = await db.servers.findMany({
+
+  return await db.servers.findMany({
     where: { deletedAt: null },
   });
-
-  return servers;
 }
 
 export async function syncPlayers(players: PlayerInfo[]): Promise<void> {
@@ -280,16 +294,24 @@ export async function saveMatchRecord(
   waypoint: Waypoint,
   round: number | null = null,
 ): Promise<void> {
+  const meta = {
+    type: "database",
+    module: "matches",
+    function: "saveMatchRecord",
+  };
+  const log = getLogger(serverId);
   const redis = await getRedisClient();
   const key = getKeyActiveMap(serverId);
 
   const activeMap = await redis.get(key);
   if (!activeMap) {
+    log.error({ meta }, "No active map found");
     throw new Error(`No active map found for server ${serverId}`);
   }
 
   const mapData: Maps = JSON.parse(activeMap);
   if (!mapData) {
+    log.error({ meta }, "Map data is invalid");
     throw new Error(`Map data is invalid for server ${serverId}`);
   }
 
@@ -343,12 +365,12 @@ export async function saveMatchRecord(
   try {
     await createRecord();
   } catch (error) {
-    logger.error(error, "Error saving record");
+    log.error({ meta, error }, "Error saving record");
 
     try {
       await syncLogin(serverId, waypoint.login);
     } catch (syncError) {
-      logger.error(syncError, "Error syncing login");
+      log.error({ meta, error: syncError }, "Error syncing login");
 
       await db.users.create({
         data: { login: waypoint.login, nickName: waypoint.login, path: "" },
@@ -365,16 +387,24 @@ export async function saveRoundRecords(
   scores: Scores,
   round: number | null = null,
 ): Promise<void> {
+  const meta = {
+    type: "database",
+    module: "matches",
+    function: "saveRoundRecords",
+  };
+  const log = getLogger(serverId);
   const redis = await getRedisClient();
   const key = getKeyActiveMap(serverId);
 
   const activeMap = await redis.get(key);
   if (!activeMap) {
+    log.error({ meta }, "No active map found");
     throw new Error(`No active map found for server ${serverId}`);
   }
 
   const mapData: Maps = JSON.parse(activeMap);
   if (!mapData) {
+    log.error({ meta }, "Map data is invalid");
     throw new Error(`Map data is invalid for server ${serverId}`);
   }
 
@@ -432,12 +462,12 @@ export async function saveRoundRecords(
     try {
       await createRecord(player);
     } catch (error) {
-      logger.error(error, "Error saving record");
+      log.error({ meta, error }, "Error saving record");
 
       try {
         await syncLogin(serverId, player.login);
       } catch (syncError) {
-        logger.error(syncError, "Error syncing");
+        log.error({ meta, error: syncError }, "Error syncing");
 
         await db.users.create({
           data: { login: player.login, nickName: player.login, path: "" },

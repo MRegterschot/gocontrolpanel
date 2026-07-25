@@ -104,7 +104,7 @@ export default function Jukebox({ serverId, jukebox, maps }: JukeboxProps) {
   return (
     <div className="flex flex-col gap-5">
       {jukeboxOrder.length === 0 ? (
-        <p className="text-muted-foreground">No maps in jukebox.</p>
+        <p className="text-sm text-muted-foreground">No maps in jukebox.</p>
       ) : (
         <div className="flex flex-col gap-3">
           <DndListHeaders columns={jukeboxColumns} />
@@ -117,12 +117,12 @@ export default function Jukebox({ serverId, jukebox, maps }: JukeboxProps) {
           <div className="flex gap-2 ml-auto">
             <Button variant={"destructive"} onClick={onClearJukebox}>
               <IconTrash />
-              Clear Jukebox
+              Clear
             </Button>
 
             <Button onClick={saveJukebox}>
               <IconDeviceFloppy />
-              Save Jukebox
+              Save
             </Button>
           </div>
         </div>

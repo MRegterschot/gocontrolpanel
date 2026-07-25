@@ -5,7 +5,7 @@ import { SimpleServerSetupSchemaType } from "@/forms/admin/hetzner/setup-steps/s
 import { TMServerSchemaType } from "@/forms/admin/hetzner/setup-steps/tm-server/tm-server-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { axiosHetzner } from "@/lib/axios/hetzner";
-import { logger } from "@/lib/logger";
+import { getClient } from "@/lib/dbclient";
 import {
   getKeyHetznerRecentlyCreatedServers,
   getRedisClient,
@@ -77,6 +77,8 @@ export async function createAdvancedServerSetup(
                 : undefined,
             },
             network: data.network,
+            createServer: data.createServer,
+            groupId: data.groupId,
           },
           error,
         );
@@ -211,7 +213,7 @@ export async function createAdvancedServerSetup(
           local: database?.local || false,
         },
         dedi_login: server.dediLogin,
-        dedi_password: server.dediPassword,
+        dedi_password: server.dediPassword.replace(/\$/g, "$$$$"),
         room_password: server.roomPassword,
         superadmin_password:
           server.superAdminPassword || generateRandomString(16),
@@ -282,10 +284,49 @@ export async function createAdvancedServerSetup(
         filemanagerPassword: dediData.filemanager_password,
       };
 
-      const client = await getRedisClient();
-      const key = getKeyHetznerRecentlyCreatedServers(projectId);
-      await client.lpush(key, JSON.stringify(cachedServer));
-      await client.expire(key, 60 * 60 * 2); // Keep for 2 hours
+      if (data.createServer) {
+        const db = getClient();
+        const newServer = await db.servers.create({
+          data: {
+            name: cachedServer.name,
+            description: "",
+            host: cachedServer.ip || "",
+            port: cachedServer.port,
+            user: "SuperAdmin",
+            password: cachedServer.password,
+            filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
+            filemanagerPassword: cachedServer.filemanagerPassword,
+            userServers: {
+              create: [
+                {
+                  userId: session.user.id,
+                  role: "Admin",
+                },
+              ],
+            },
+          },
+        });
+
+        if (data.groupId) {
+          await db.groups.update({
+            where: { id: data.groupId },
+            data: {
+              groupServers: {
+                create: [
+                  {
+                    serverId: newServer.id,
+                  },
+                ],
+              },
+            },
+          });
+        }
+      } else {
+        const client = await getRedisClient();
+        const key = getKeyHetznerRecentlyCreatedServers(projectId);
+        await client.lpush(key, JSON.stringify(cachedServer));
+        await client.expire(key, 60 * 60 * 2); // Keep for 2 hours
+      }
 
       await setRateLimit(projectId, res);
 
@@ -355,6 +396,8 @@ export async function createSimpleServerSetup(
                 ? "*****"
                 : undefined,
             },
+            createServer: data.createServer,
+            groupId: data.groupId,
           },
           error,
         );
@@ -438,7 +481,7 @@ export async function createSimpleServerSetup(
           local: database?.local || false,
         },
         dedi_login: server.dediLogin,
-        dedi_password: server.dediPassword,
+        dedi_password: server.dediPassword.replace(/\$/g, "$$$$"),
         room_password: server.roomPassword,
         superadmin_password: generateRandomString(16),
         admin_password: generateRandomString(16),
@@ -507,10 +550,49 @@ export async function createSimpleServerSetup(
         filemanagerPassword: dediData.filemanager_password,
       };
 
-      const client = await getRedisClient();
-      const key = getKeyHetznerRecentlyCreatedServers(projectId);
-      await client.lpush(key, JSON.stringify(cachedServer));
-      await client.expire(key, 60 * 60 * 2); // Keep for 2 hours
+      if (data.createServer) {
+        const db = getClient();
+        const newServer = await db.servers.create({
+          data: {
+            name: cachedServer.name,
+            description: "",
+            host: cachedServer.ip || "",
+            port: cachedServer.port,
+            user: "SuperAdmin",
+            password: cachedServer.password,
+            filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
+            filemanagerPassword: cachedServer.filemanagerPassword,
+            userServers: {
+              create: [
+                {
+                  userId: session.user.id,
+                  role: "Admin",
+                },
+              ],
+            },
+          },
+        });
+
+        if (data.groupId) {
+          await db.groups.update({
+            where: { id: data.groupId },
+            data: {
+              groupServers: {
+                create: [
+                  {
+                    serverId: newServer.id,
+                  },
+                ],
+              },
+            },
+          });
+        }
+      } else {
+        const client = await getRedisClient();
+        const key = getKeyHetznerRecentlyCreatedServers(projectId);
+        await client.lpush(key, JSON.stringify(cachedServer));
+        await client.expire(key, 60 * 60 * 2); // Keep for 2 hours
+      }
 
       await setRateLimit(projectId, res);
 
@@ -560,13 +642,20 @@ export async function addTrackmaniaServer(
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
-      const la = (error?: string) =>
+      const la = (error?: string, result?: string) =>
         logAudit(
           session.user.id,
           projectId,
           "hetzner.server.create.simple.add",
           {
             id: serverId,
+            server: {
+              ...tmServer,
+              dediPassword: "*****",
+            },
+            createServer: tmServer.createServer,
+            groupId: tmServer.groupId,
+            result,
           },
           error,
         );
@@ -603,9 +692,11 @@ export async function addTrackmaniaServer(
         tmServers.length > 0 ? Math.max(...tmServers) + 1 : 1;
 
       const dediData = {
-        dedi_login: tmServer.dediLogin,
-        dedi_password: tmServer.dediPassword,
-        room_password: tmServer.roomPassword,
+        dedi_login: tmServer.dediLogin.replace(/\s+/g, ""),
+        dedi_password: tmServer.dediPassword
+          .replace(/\$/g, "$$$$")
+          .replace(/\s+/g, ""),
+        room_password: tmServer.roomPassword?.replace(/\s+/g, ""),
         superadmin_password: generateRandomString(16),
         admin_password: generateRandomString(16),
         user_password: generateRandomString(16),
@@ -650,7 +741,7 @@ export async function addTrackmaniaServer(
       const cachedServer: HetznerServerCache = {
         id: serverId,
         projectId,
-        name: `${hetznerServer.name} ${serverNumber}`,
+        name: `${hetznerServer.name} ${serverNumber + 1}`,
         ip: hetznerServer.public_net.ipv4?.ip,
         port: dediData.xmlrpc_port,
         fm_port: dediData.fm_port,
@@ -658,15 +749,51 @@ export async function addTrackmaniaServer(
         filemanagerPassword: dediData.filemanager_password,
       };
 
-      const client = await getRedisClient();
-      const key = getKeyHetznerRecentlyCreatedServers(projectId);
-      await client.lpush(key, JSON.stringify(cachedServer));
-      await client.expire(key, 60 * 60 * 2); // Keep for 2 hours
+      if (tmServer.createServer) {
+        const db = getClient();
+        const newServer = await db.servers.create({
+          data: {
+            name: cachedServer.name,
+            description: "",
+            host: cachedServer.ip || "",
+            port: cachedServer.port,
+            user: "SuperAdmin",
+            password: cachedServer.password,
+            filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
+            filemanagerPassword: cachedServer.filemanagerPassword,
+            userServers: {
+              create: [
+                {
+                  userId: session.user.id,
+                  role: "Admin",
+                },
+              ],
+            },
+          },
+        });
 
-      logger.info(
-        `Added new TM server to Hetzner server ${serverId} with dedi login ${tmServer.dediLogin}`,
-      );
-      logger.debug(`SSH script output: ${result.stdout}`);
+        if (tmServer.groupId) {
+          await db.groups.update({
+            where: { id: tmServer.groupId },
+            data: {
+              groupServers: {
+                create: [
+                  {
+                    serverId: newServer.id,
+                  },
+                ],
+              },
+            },
+          });
+        }
+      } else {
+        const client = await getRedisClient();
+        const key = getKeyHetznerRecentlyCreatedServers(projectId);
+        await client.lpush(key, JSON.stringify(cachedServer));
+        await client.expire(key, 60 * 60 * 2); // Keep for 2 hours
+      }
+
+      la(undefined, result.stdout);
     },
   );
 }
@@ -679,16 +806,23 @@ export async function deleteTrackmaniaServer(
   return doServerActionWithAuth(
     ["hetzner:servers:delete", `hetzner:${projectId}:admin`],
     async (session) => {
-      const la = (error?: string) =>
+      const la = (error?: string, result?: string) =>
         logAudit(
           session.user.id,
           projectId,
           "hetzner.server.delete.simple",
           {
             id: serverId,
+            tmServerNumber,
+            result,
           },
           error,
         );
+
+      if (isNaN(tmServerNumber)) {
+        la("Invalid TM server number");
+        throw new Error("Invalid TM server number");
+      }
 
       const hetznerServer = await getHetznerServer(projectId, serverId);
 
@@ -738,10 +872,7 @@ export async function deleteTrackmaniaServer(
 
       await updateHetznerServer(projectId, serverId, newLabels);
 
-      logger.info(
-        `Deleted TM server ${tmServerNumber} from Hetzner server ${serverId}`,
-      );
-      logger.debug(`SSH script output: ${result.stdout}`);
+      la(undefined, result.stdout);
     },
   );
 }

@@ -81,7 +81,7 @@ export default function MappackSearch({
           onKeyDown={onKeyDown}
         />
 
-        <Button onClick={() => onSearch()} disabled={loading}>
+        <Button onClick={() => onSearch()} collapse="sm" disabled={loading}>
           <IconSearch />
           Search
         </Button>

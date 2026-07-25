@@ -1,6 +1,6 @@
 {{#extend "manialink"}}
 {{#content "content"}}
-<frame id="window" pos="-{{ divide size.x 2 }} {{ divide size.y 2}}" size="{{ size.x }} {{ add size.y 5 }}" z-index="10">
+<frame id="window" pos="-{{ divide size.x 2 }} {{ divide size.y 2}}" size="{{ size.x }} {{ add size.y 5 }}" z-index="20">
   <quad pos="0 0" size="{{ size.x }} 5" bgcolor="222" />
   <label pos="1.5 -2.25" text="{{ title }}" size="{{ subtract size.x 9.5 }} 5" valign="center" halign="left" textsize="1" color="DDD" textfont="GameFontSemiBold" />
   <label pos="{{ subtract size.x 1.5 }} -2.25" text="" size="5 5" valign="center" halign="right" textsize="1" color="222" action="close-window-{{id}}" focusareacolor2="fff0" />

@@ -145,34 +145,36 @@ export default function ServerPluginsForm({
           name={"scriptName"}
           label="Script Name"
           description="The name of the script to load."
-          rootClassName="max-w-128"
+          rootClassName="max-w-full"
           options={scripts.map((script) => ({
             label: script,
             value: script,
           }))}
           placeholder="Select a script to load as a server plugin"
-          className="w-full"
+          className="max-w-64 sm:max-w-full"
           type="select"
           isRequired
         >
           <Button
             type="button"
             variant="outline"
+            collapse="sm"
             onClick={onUnload}
             disabled={form.formState.isSubmitting}
           >
             <IconCancel />
-            <span className="hidden sm:block">Unload Server Plugin</span>
+            Unload Server Plugin
           </Button>
         </FormElement>
 
-        <Separator />
-
         {serverPlugin.Name && (
-          <div className="flex flex-col gap-4 max-sm:flex-col max-[768px]:flex-row min-[960px]:flex-row">
-            <div className="flex flex-col gap-3 flex-1">{leftElements}</div>
-            <div className="flex flex-col gap-3 flex-1">{rightElements}</div>
-          </div>
+          <>
+            <Separator />
+            <div className="flex flex-col gap-4 max-sm:flex-col max-[768px]:flex-row min-[960px]:flex-row">
+              <div className="flex flex-col gap-3 flex-1">{leftElements}</div>
+              <div className="flex flex-col gap-3 flex-1">{rightElements}</div>
+            </div>
+          </>
         )}
 
         <Button

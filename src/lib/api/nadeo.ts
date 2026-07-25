@@ -42,7 +42,13 @@ export async function authenticate(
 
   const auth = Buffer.from(`${login}:${pass}`).toString("base64");
 
-  logger.info("Authenticating with Nadeo...");
+  const meta = {
+    type: "nadeo",
+    module: "auth",
+    function: "authenticate",
+  };
+
+  logger.info({ meta }, "Authenticating with Nadeo...");
   const response = await fetch(`${PROD_URL}/v2/authentication/token/basic`, {
     method: "POST",
     headers: {
@@ -54,12 +60,24 @@ export async function authenticate(
   });
 
   if (!response.ok) {
+    logger.error(
+      {
+        meta,
+        response: {
+          status: response.status,
+          statusText: response.statusText,
+          error: await response.text(),
+        },
+        audience,
+      },
+      "Failed to authenticate with Nadeo",
+    );
     throw new ServerError(
       `Failed to authenticate with Nadeo: ${response.status}`,
     );
   }
 
-  logger.info("Authenticated successfully with Nadeo");
+  logger.info({ meta }, "Authenticated successfully with Nadeo");
 
   const redis = await getRedisClient();
 
@@ -79,7 +97,13 @@ export async function authenticateCredentials(): Promise<string> {
     );
   }
 
-  logger.info("Authenticating with Trackmania API...");
+  const meta = {
+    type: "nadeo",
+    module: "auth",
+    function: "authenticateCredentials",
+  };
+
+  logger.info({ meta }, "Authenticating with Trackmania API...");
   const response = await fetch(`${API_URL}/access_token`, {
     method: "POST",
     headers: {
@@ -93,12 +117,25 @@ export async function authenticateCredentials(): Promise<string> {
   });
 
   if (!response.ok) {
+    logger.error(
+      {
+        meta,
+        response: {
+          status: response.status,
+          statusText: response.statusText,
+          error: await response.text(),
+        },
+        clientId,
+      },
+      "Failed to authenticate with Trackmania API",
+    );
+
     throw new ServerError(
       `Failed to authenticate with Trackmania API: ${response.status}`,
     );
   }
 
-  logger.info("Authenticated successfully with Trackmania API");
+  logger.info({ meta }, "Authenticated successfully with Trackmania API");
 
   const redis = await getRedisClient();
 
@@ -157,45 +194,56 @@ export async function searchAccountNames(
     );
   });
 }
-
 export async function getAccountNames(
   accountIds: string[],
 ): Promise<AccountNames> {
   const redis = await getRedisClient();
   const key = getKeyAccountNames();
 
-  accountIds = [...new Set(accountIds)]; // Remove duplicates
+  const uniqueIds = [...new Set(accountIds)];
 
-  const cached = await redis.get(key);
-  if (cached) {
-    const allNames: AccountNames = JSON.parse(cached);
-    const foundNames: AccountNames = {};
-    accountIds.forEach((id) => {
-      if (allNames[id]) {
-        foundNames[id] = allNames[id];
-      }
-    });
+  const cached: AccountNames = JSON.parse((await redis.get(key)) ?? "{}");
 
-    if (Object.keys(foundNames).length === accountIds.length) {
-      return foundNames;
+  const result: AccountNames = {};
+  const missingIds: string[] = [];
+
+  for (const id of uniqueIds) {
+    if (cached[id]) {
+      result[id] = cached[id];
+    } else {
+      missingIds.push(id);
     }
   }
 
-  const url = `${API_URL}/display-names`;
-  const params = new URLSearchParams();
-  accountIds.forEach((id) => params.append("accountId[]", id));
+  if (missingIds.length === 0) {
+    return result;
+  }
 
-  const res = await doCredentialsRequest<AccountNames>(
-    `${url}?${params.toString()}`,
+  const url = `${API_URL}/display-names`;
+  const batchSize = 50;
+
+  const batches = Array.from(
+    { length: Math.ceil(missingIds.length / batchSize) },
+    (_, i) => missingIds.slice(i * batchSize, (i + 1) * batchSize),
   );
 
-  const combined: AccountNames = {
-    ...(cached ? JSON.parse(cached) : {}),
-    ...res,
-  };
-  await redis.set(key, JSON.stringify(combined), "EX", 24 * 60 * 60); // Cache for 24 hours
+  const responses = await Promise.all(
+    batches.map((batch) => {
+      const params = new URLSearchParams();
+      batch.forEach((id) => params.append("accountId[]", id));
 
-  return combined;
+      return doCredentialsRequest<AccountNames>(`${url}?${params}`);
+    }),
+  );
+
+  for (const names of responses) {
+    Object.assign(result, names);
+    Object.assign(cached, names);
+  }
+
+  await redis.set(key, JSON.stringify(cached), "EX", 60 * 60 * 24);
+
+  return result;
 }
 
 export async function getTotdRoyalMaps(
@@ -273,6 +321,11 @@ export async function downloadFile(
 ): Promise<File> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30000); // 30 seconds
+  const meta = {
+    type: "nadeo",
+    module: "download",
+    function: "downloadFile",
+  };
 
   try {
     const res = await fetch(url, {
@@ -286,7 +339,22 @@ export async function downloadFile(
     clearTimeout(timeout);
 
     if (!res.ok) {
-      throw new Error(`Failed to download map: ${res.statusText}`);
+      logger.error(
+        {
+          meta,
+          response: {
+            status: res.status,
+            statusText: res.statusText,
+            error: await res.text(),
+          },
+          url,
+          fileName,
+        },
+        "Failed to download map",
+      );
+      throw new Error(
+        `Failed to download map: ${res.status} ${res.statusText}`,
+      );
     }
 
     const arrayBuffer = await res.arrayBuffer();
@@ -295,6 +363,7 @@ export async function downloadFile(
     });
   } catch (err) {
     if ((err as any).name === "AbortError") {
+      logger.error({ meta, url, fileName }, "Download for map timed out");
       throw new Error(`Download for map ${fileName} timed out`);
     }
     throw err;
@@ -353,21 +422,39 @@ export async function doRequest<T>(
       tokens = await authenticate(audience);
     }
 
+    const meta = {
+      type: "nadeo",
+      module: "request",
+      function: "doRequest",
+    };
+
     const headers = new Headers(init.headers);
     headers.set("Authorization", `nadeo_v1 t=${tokens.accessToken}`);
     headers.set("User-Agent", config.NADEO.CONTACT);
 
-    logger.trace({ url }, "Requesting Nadeo API");
+    logger.info({ meta, url }, "Requesting Nadeo API");
     let res = await fetch(url, { ...init, headers });
 
     if (res.status === 401) {
       tokens = await authenticate(audience);
-      logger.trace("Retrying Nadeo API request with new tokens");
+      logger.debug({ meta }, "Retrying Nadeo API request with new tokens");
       headers.set("Authorization", `nadeo_v1 t=${tokens.accessToken}`);
       res = await fetch(url, { ...init, headers });
     }
 
     if (!res.ok) {
+      logger.error(
+        {
+          meta,
+          response: {
+            status: res.status,
+            statusText: res.statusText,
+            error: await res.text(),
+          },
+          url,
+        },
+        "Failed to request Nadeo API",
+      );
       throw new Error(`Request failed: ${res.status} ${res.statusText}`);
     }
 
@@ -385,21 +472,39 @@ export async function doCredentialsRequest<T>(
       token = await authenticateCredentials();
     }
 
+    const meta = {
+      type: "nadeo",
+      module: "request",
+      function: "doCredentialsRequest",
+    };
+
     const headers = new Headers(init.headers);
     headers.set("Authorization", `Bearer ${token}`);
     headers.set("User-Agent", config.NADEO.CONTACT);
 
-    logger.trace({ url }, "Requesting Trackmania API");
+    logger.info({ meta, url }, "Requesting Trackmania API");
     let res = await fetch(url, { ...init, headers });
 
     if (res.status === 401) {
       token = await authenticateCredentials();
-      logger.trace("Retrying Trackmania API request with new token");
+      logger.debug({ meta }, "Retrying Trackmania API request with new token");
       headers.set("Authorization", `Bearer ${token}`);
       res = await fetch(url, { ...init, headers });
     }
 
     if (!res.ok) {
+      logger.error(
+        {
+          meta,
+          response: {
+            status: res.status,
+            statusText: res.statusText,
+            error: await res.text(),
+          },
+          url,
+        },
+        "Failed to request Trackmania API",
+      );
       throw new Error(`Request failed: ${res.status} ${res.statusText}`);
     }
 

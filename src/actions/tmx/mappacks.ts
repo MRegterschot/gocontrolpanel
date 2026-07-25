@@ -6,7 +6,7 @@ import {
   searchTMXMappacks,
   searchTMXMaps,
 } from "@/lib/api/tmx";
-import { logger } from "@/lib/logger";
+import { getLogger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
 import { TMXMappackSearch } from "@/types/api/tmx";
 import { ServerResponse } from "@/types/responses";
@@ -56,6 +56,12 @@ export async function downloadMappack(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
+      const meta = {
+        type: "tmx",
+        module: "mappacks",
+        function: "downloadMappack",
+      };
+      const log = getLogger(serverId);
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
         await logAudit(
@@ -114,7 +120,7 @@ export async function downloadMappack(
           );
         } else {
           errors++;
-          logger.error(result, `Failed to download map ${index + 1}`);
+          log.error({ meta, error: result, index }, "Failed to download map");
         }
       });
 
@@ -139,6 +145,7 @@ export async function downloadMappack(
       );
 
       if (errors > 0) {
+        log.error({ meta, errors }, "Failed to download some maps");
         throw new Error(`Failed to download ${errors} maps`);
       }
 
@@ -164,6 +171,12 @@ export async function addMappackToServer(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
+      const meta = {
+        type: "tmx",
+        module: "mappacks",
+        function: "addMappackToServer",
+      };
+      const log = getLogger(serverId);
       const { data: fileNames, error } = await downloadMappack(
         serverId,
         mappackId,
@@ -190,7 +203,7 @@ export async function addMappackToServer(
       addMapResults.forEach((result, index) => {
         if (result.status === "rejected") {
           errors++;
-          logger.error(result, `Failed to add map ${index + 1}`);
+          log.error({ meta, error: result, index }, "Failed to add map");
         }
       });
 
@@ -203,6 +216,7 @@ export async function addMappackToServer(
       );
 
       if (errors > 0) {
+        log.error({ meta, errors }, "Failed to add some maps");
         throw new Error(`Failed to add ${errors} maps`);
       }
     },

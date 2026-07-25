@@ -141,8 +141,8 @@ export default function ECMForm({
               means everyone can manage.
             </FormDescription>
           </div>
-          {editorFields.map((_, index) => (
-            <div key={index} className="flex gap-2">
+          {editorFields.map((field, index) => (
+            <div key={field.id} className="flex gap-2">
               <div className="flex-1">
                 <FormElement
                   name={`editors.${index}.login`}
@@ -177,33 +177,33 @@ export default function ECMForm({
             <IconPlus />
             Add User
           </Button>
+        </div>
 
-          <div className="flex justify-between mt-4">
-            <Button variant={"outline"} onClick={onClose} className="self-end">
-              <IconX />
-              Close
+        <div className="flex justify-between">
+          <Button variant={"outline"} onClick={onClose} className="self-end">
+            <IconX />
+            Close
+          </Button>
+
+          <div>
+            <Button asChild variant={"outline"} className="mr-2">
+              <label htmlFor="config-import">
+                <IconFileImport />
+                Import Config
+                <input
+                  id="config-import"
+                  type="file"
+                  accept=".json"
+                  className="hidden"
+                  onChange={handleConfigImport}
+                />
+              </label>
             </Button>
 
-            <div>
-              <Button asChild variant={"outline"} className="mr-2">
-                <label htmlFor="config-import">
-                  <IconFileImport />
-                  Import Config
-                  <input
-                    id="config-import"
-                    type="file"
-                    accept=".json"
-                    className="hidden"
-                    onChange={handleConfigImport}
-                  />
-                </label>
-              </Button>
-
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                <IconDeviceFloppy />
-                Save
-              </Button>
-            </div>
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              <IconDeviceFloppy />
+              Save
+            </Button>
           </div>
         </div>
       </form>

@@ -59,7 +59,9 @@ export default class ECMWindow extends Window {
     );
   }
 
-  private onToggleRecording = async () => {
+  private onToggleRecording = async (data: PlayerManialinkPageAnswer) => {
+    if (data.Login !== this.login || !this.isEditor) return;
+
     const updatedConfig = {
       ...this.config,
       isRecording: this.config?.isRecording ? false : true,
@@ -81,6 +83,8 @@ export default class ECMWindow extends Window {
   };
 
   private onSaveApiKey = async (data: PlayerManialinkPageAnswer) => {
+    if (data.Login !== this.login || !this.isEditor) return;
+
     const apiKeyValue = data.Entries[0]?.Value;
 
     if (apiKeyValue && (apiKeyValue.match(/_/g) || []).length !== 1) return;
@@ -105,11 +109,15 @@ export default class ECMWindow extends Window {
     this.onConfigUpdateCallback?.(updatedConfig);
   };
 
-  private onIncreaseRoundOffset = async () => {
+  private onIncreaseRoundOffset = async (data: PlayerManialinkPageAnswer) => {
+    if (data.Login !== this.login || !this.isEditor) return;
+
     this.onRoundOffsetUpdateCallback?.(1);
   };
 
-  private onDecreaseRoundOffset = async () => {
+  private onDecreaseRoundOffset = async (data: PlayerManialinkPageAnswer) => {
+    if (data.Login !== this.login || !this.isEditor) return;
+
     this.onRoundOffsetUpdateCallback?.(-1);
   };
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { saveFileText } from "@/actions/filemanager";
-import { logger } from "@/lib/logger";
+import { getLogger } from "@/lib/logger";
 import { generatePath, getErrorMessage, pathToBreadcrumbs } from "@/lib/utils";
 import { routes } from "@/routes";
 import { cpp } from "@codemirror/lang-cpp";
@@ -26,6 +26,7 @@ export default function TextEditor({
 }) {
   const { resolvedTheme } = useTheme();
   const router = useRouter();
+  const log = getLogger(serverId);
 
   const [text, setText] = useState<string>(defaultText);
   const isDark = resolvedTheme === "dark";
@@ -58,7 +59,12 @@ export default function TextEditor({
         description: "Your changes have been saved.",
       });
     } catch (error) {
-      logger.error(error, "Error saving file");
+      const meta = {
+        type: "filemanager",
+        module: "text-editor",
+        function: "handleSave",
+      };
+      log.error({ meta, error }, "Error saving file");
       toast.error("Failed to save file", {
         description: getErrorMessage(error),
       });
@@ -117,7 +123,7 @@ export default function TextEditor({
           crumbs={pathToBreadcrumbs(path).slice(1)}
           serverId={serverId}
         />
-        <div className="flex gap-2">
+        <div className="flex gap-2 justify-end">
           <Button variant={"outline"} onClick={handleCancel}>
             <IconCancel />
             Cancel

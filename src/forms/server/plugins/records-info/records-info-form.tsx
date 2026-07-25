@@ -64,7 +64,7 @@ export default function RecordsInfoForm({
           placeholder="Text to display for the local record (default: LR)"
         />
 
-        <div className="flex justify-between mt-4">
+        <div className="flex justify-between">
           <Button variant={"outline"} onClick={onClose} className="self-end">
             <IconX />
             Close

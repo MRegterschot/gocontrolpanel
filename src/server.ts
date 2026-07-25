@@ -21,6 +21,10 @@ app.prepare().then(() => {
       await handle(req, res, parsedUrl);
     })
     .listen(3000, () => {
-      logger.info("Server is running on http://localhost:3000");
+      const meta = {
+        type: "server",
+        module: "startup",
+      };
+      logger.info({ meta }, "Server is running on http://localhost:3000");
     });
 });

@@ -2,7 +2,7 @@ import MappacksTab from "@/components/tmx/tabs/mappacks-tab";
 import MapsTab from "@/components/tmx/tabs/maps-tab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { hasPermission } from "@/lib/auth";
-import { logger } from "@/lib/logger";
+import { getLogger } from "@/lib/logger";
 import { getFileManagerHealth } from "@/lib/managers/file-manager";
 import { routePermissions, routes } from "@/routes";
 import { redirect } from "next/navigation";
@@ -13,6 +13,12 @@ export default async function ServerTMXPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const log = getLogger(id);
+  const meta = {
+    type: "page",
+    module: "server-tmx",
+    function: "ServerTMXPage",
+  };
 
   const canView = await hasPermission(routePermissions.servers.tmx, id);
   if (!canView) {
@@ -22,8 +28,8 @@ export default async function ServerTMXPage({
   let fmHealth = false;
   try {
     fmHealth = await getFileManagerHealth(id);
-  } catch (err) {
-    logger.error(err, "Failed to fetch file manager");
+  } catch (error) {
+    log.error({ meta, error }, "Failed to fetch file manager");
   }
 
   return (

@@ -30,7 +30,7 @@ export async function getLocalRecord(serverId: string, mapUid: string) {
   const uniqueServerIds = Array.from(new Set(serverIds));
 
   // Find the best record for the given map on the given server, if multiple records with equal time exist, return the earliest one
-  const record = await db.records.findFirst({
+  return await db.records.findFirst({
     where: {
       serverId: {
         in: uniqueServerIds,
@@ -50,8 +50,6 @@ export async function getLocalRecord(serverId: string, mapUid: string) {
       },
     },
   });
-
-  return record;
 }
 
 export async function getPlayerRecords(
@@ -84,7 +82,7 @@ export async function getPlayerRecords(
     group.groupServers.map((gs) => gs.serverId),
   );
 
-  const records = await db.records.findMany({
+  return await db.records.findMany({
     where: {
       serverId: {
         in: serverIds,
@@ -110,6 +108,4 @@ export async function getPlayerRecords(
       },
     },
   });
-
-  return records;
 }

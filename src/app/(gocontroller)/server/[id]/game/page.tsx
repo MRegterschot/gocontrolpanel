@@ -61,7 +61,7 @@ export default async function ServerGamePage({
 
   let modeScriptInfo: ModeScriptInfo = {
     Name: "",
-    CompatibleTypes: "",
+    CompatibleMapTypes: "",
     Description: "",
     Version: "",
     ParamDescs: [],

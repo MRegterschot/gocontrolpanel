@@ -9,6 +9,8 @@ export const AdvancedServerSetupSchema = z.object({
   serverController: ServerControllerSchema.optional(),
   database: DatabaseSchema.optional(),
   network: NetworkSchema.optional(),
+  createServer: z.boolean(),
+  groupId: z.string(),
 });
 
 export type AdvancedServerSetupSchemaType = z.infer<

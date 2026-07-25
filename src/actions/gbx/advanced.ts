@@ -50,8 +50,12 @@ export async function getJoinLink(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async () => {
       const client = await getGbxClient(serverId);
-      const serverInfo = await client.call("GetMainServerPlayerInfo");
-      const joinLink = `#join=${serverInfo.Login}@Trackmania`;
+      const [serverInfo, serverOptions] = await client.multicall([
+        ["GetMainServerPlayerInfo"],
+        ["GetServerOptions"],
+      ]);
+
+      const joinLink = `#qjoin=${serverInfo.Login}${serverOptions.Password ? `:${serverOptions.Password}` : ""}@Trackmania`;
       return joinLink;
     },
   );

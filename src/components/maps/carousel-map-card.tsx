@@ -157,7 +157,7 @@ export default function CarouselMapCard({
             "flex items-center space-x-2 justify-between absolute bottom-0 left-0 right-0 bg-white/20 p-2 backdrop-blur-sm dark:bg-black/40 text-white",
             !canMapActions && "rounded-b-lg",
             !map.thumbnailUrl &&
-              "bg-gradient-to-t from-black/60 via-black/40 to-transparent",
+              "bg-linear-to-t from-black/60 via-black/40 to-transparent",
           )}
         >
           <h3
@@ -166,7 +166,7 @@ export default function CarouselMapCard({
           ></h3>
 
           <div className="flex items-center gap-2">
-            <IconUser className="!size-5 flex-shrink-0" />
+            <IconUser className="size-5! shrink-0" />
             <span
               className="text-sm truncate"
               dangerouslySetInnerHTML={{
@@ -183,41 +183,41 @@ export default function CarouselMapCard({
               <Button
                 variant={"outline"}
                 size="sm"
-                className="flex items-center gap-2"
+                collapse="sm"
                 onClick={onPreviousMap}
               >
-                <IconPlayerTrackPrev className="mt-[2px]" />
-                <span className="hidden min-[450px]:block">Previous</span>
+                <IconPlayerTrackPrev />
+                Previous
               </Button>
 
               <Button
                 variant={"outline"}
                 size="sm"
-                className="flex items-center gap-2"
+                collapse="sm"
                 onClick={onRestartMap}
               >
-                <IconRotateClockwise className="mt-[2px] rotate-180" />
-                <span className="hidden min-[450px]:block">Restart</span>
+                <IconRotateClockwise className="rotate-180" />
+                Restart
               </Button>
 
               <Button
                 variant={"outline"}
                 size="sm"
-                className="flex items-center gap-2"
+                collapse="sm"
                 onClick={onNextMap}
               >
-                <IconPlayerTrackNext className="mt-[2px]" />
-                <span className="hidden min-[450px]:block">Next</span>
+                <IconPlayerTrackNext />
+                Next
               </Button>
             </>
           ) : (
             <Button
               variant={"outline"}
               size="sm"
-              className="flex items-center gap-2"
+              collapse="sm"
               onClick={onJumpToMap}
             >
-              <IconBounceRight className="mt-[2px]" />
+              <IconBounceRight />
               Jump to Map
             </Button>
           )}

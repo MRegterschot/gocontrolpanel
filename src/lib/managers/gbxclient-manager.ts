@@ -27,10 +27,11 @@ import { PlayerInfo } from "@/types/player";
 import { ServerClientInfo } from "@/types/server";
 import { GbxClient } from "@evotm/gbxclient";
 import EventEmitter from "events";
+import { Logger } from "pino";
 import "server-only";
 import { getClient } from "../dbclient";
 import { appGlobals } from "../global";
-import { logger } from "../logger";
+import { getLogger } from "../logger";
 import {
   formatMessage,
   isEliminated,
@@ -42,7 +43,10 @@ import {
 } from "../utils";
 import PluginManager from "./plugin-manager";
 
-type Listener<T = any> = (data: T) => void;
+type ActionListener = (
+  data: PlayerManialinkPageAnswer,
+  params: Record<string, string>,
+) => void;
 type CommandListener = (args: string[], login: string) => void;
 type Reconnect = {
   timeout: NodeJS.Timeout | null;
@@ -50,10 +54,37 @@ type Reconnect = {
   delay: number;
 };
 
+function matchPattern(
+  pattern: string,
+  event: string,
+): Record<string, string> | null {
+  const keys: string[] = [];
+
+  const regex = new RegExp(
+    "^" +
+      pattern.replace(/\{([^}]+)\}/g, (_, key) => {
+        keys.push(key);
+        return "([^/]+)";
+      }) +
+      "$",
+  );
+
+  const match = event.match(regex);
+  if (!match) return null;
+
+  const params: Record<string, string> = {};
+  keys.forEach((key, i) => {
+    params[key] = match[i + 1];
+  });
+
+  return params;
+}
+
 export class GbxClientManager extends EventEmitter {
   client: GbxClient;
   pluginManager: PluginManager;
   private serverId: string;
+  log: Logger;
   info: ServerClientInfo;
   serverName: string | null = null;
   private isConnected = false;
@@ -64,7 +95,7 @@ export class GbxClientManager extends EventEmitter {
   };
   private listenerMap: Map<string, Record<string, (...args: any[]) => void>> =
     new Map();
-  private actionListeners = new Map<string, Listener[]>();
+  private actionListeners = new Map<string, ActionListener[]>();
   private commandListeners = new Map<string, CommandListener[]>();
   currentMatchId: string | null = null;
   roundNumber: number | null = null;
@@ -73,6 +104,7 @@ export class GbxClientManager extends EventEmitter {
   constructor(serverId: string) {
     super();
     this.serverId = serverId;
+    this.log = getLogger(serverId);
     this.client = new GbxClient({
       showErrors: true,
       throwErrors: true,
@@ -112,10 +144,12 @@ export class GbxClientManager extends EventEmitter {
 
   private onDisconnect() {
     if (!this.isConnected) return;
-    logger.info(
-      { serverId: this.serverId },
-      `Disconnected from GBX client for server`,
-    );
+    const meta = {
+      type: "managers",
+      module: "gbxclient-manager",
+      function: "onDisconnect",
+    };
+    this.log.info({ meta }, "Disconnected from GBX client for server");
     this.isConnected = false;
     this.pluginManager.unloadPlugins();
     this.emit("disconnect", this.serverId);
@@ -143,7 +177,7 @@ export class GbxClientManager extends EventEmitter {
     this.listenerMap.delete(listenerId);
   }
 
-  onAction(eventName: string, callback: Listener): void {
+  onAction(eventName: string, callback: ActionListener): void {
     if (!this.actionListeners.has(eventName)) {
       this.actionListeners.set(eventName, []);
     }
@@ -151,13 +185,22 @@ export class GbxClientManager extends EventEmitter {
   }
 
   emitAction(eventName: string, data: PlayerManialinkPageAnswer): void {
-    const handlers = this.actionListeners.get(eventName);
-    if (handlers) {
-      for (const fn of handlers) fn(data);
+    const exactHandlers = this.actionListeners.get(eventName);
+    if (exactHandlers) {
+      for (const fn of exactHandlers) fn(data, {});
+    }
+
+    for (const [pattern, handlers] of this.actionListeners) {
+      if (pattern === eventName) continue;
+
+      const params = matchPattern(pattern, eventName);
+      if (!params) continue;
+
+      handlers.forEach((fn) => fn(data, params));
     }
   }
 
-  offAction(eventName: string, callback: Listener): void {
+  offAction(eventName: string, callback: ActionListener): void {
     const handlers = this.actionListeners.get(eventName);
     if (!handlers) return;
     this.actionListeners.set(
@@ -230,6 +273,15 @@ export class GbxClientManager extends EventEmitter {
     try {
       await this.connect();
     } catch {
+      const meta = {
+        type: "managers",
+        module: "gbxclient-manager",
+        function: "tryConnectWithRetry",
+      };
+      this.log.warn(
+        { meta, delay: this.reconnect.delay },
+        "Failed to connect to GBX client, retrying...",
+      );
       this.scheduleReconnect();
     }
   }
@@ -271,7 +323,12 @@ export class GbxClientManager extends EventEmitter {
 
     this.isConnected = true;
     this.emit("connect", server.id);
-    logger.info({ name: server.name }, `Connected to GBX client`);
+    const meta = {
+      type: "managers",
+      module: "gbxclient-manager",
+      function: "connect",
+    };
+    this.log.info({ meta, name: server.name }, "Connected to GBX client");
 
     await this.client.call("SetApiVersion", "2023-04-24");
     await this.client.call("EnableCallbacks", true);
@@ -444,7 +501,17 @@ export async function getGbxClientManager(
     const manager = new GbxClientManager(serverId);
     try {
       await manager.connect();
-    } catch {}
+    } catch {
+      const meta = {
+        type: "managers",
+        module: "gbxclient-manager",
+        function: "getGbxClientManager",
+      };
+      manager.log.warn(
+        { meta },
+        "Failed to connect to GBX client, will retry on next attempt",
+      );
+    }
   }
 
   if (!appGlobals.gbxClients?.[serverId]) {
@@ -621,9 +688,14 @@ async function onPlayerConnect(manager: GbxClientManager, login: string) {
   try {
     await syncPlayer(playerInfo);
   } catch (error) {
-    logger.error(
-      { playerInfo, error },
-      `Failed to sync player ${playerInfo.login} on connect`,
+    const meta = {
+      type: "managers",
+      module: "gbxclient-manager",
+      function: "onPlayerConnect",
+    };
+    manager.log.error(
+      { meta, error, playerInfo },
+      "Failed to sync player on connect",
     );
   }
   manager.addActivePlayer(playerInfo);
@@ -714,7 +786,6 @@ function onPlayerInfoChanged(
 
   if (!changedInfo.login) return;
 
-  manager.removeActivePlayer(changedInfo.login);
   manager.addActivePlayer(changedInfo);
   manager.emit("playerInfo", changedInfo);
 
@@ -1246,7 +1317,15 @@ async function setScriptSettings(manager: GbxClientManager) {
         }
         manager.info.liveInfo.pointsRepartitionMap = repartitionMap;
       } catch (error) {
-        logger.error(error, `Failed to parse complex points repartition`);
+        const meta = {
+          type: "managers",
+          module: "gbxclient-manager",
+          function: "setScriptSettings",
+        };
+        manager.log.error(
+          { meta, error },
+          "Failed to parse complex points repartition",
+        );
       }
     }
   }
@@ -1417,6 +1496,29 @@ async function onPlayerChat(manager: GbxClientManager, chat: PlayerChat) {
     const args = chat.Text.split(" ");
     const commandName = args[0].toLowerCase().slice(1);
     const commandArgs = args.slice(1);
+
+    if (commandName === "help") {
+      if (commandArgs.length === 0) {
+        const helpText =
+          "To get help for a specific plugin, use /help <plugin>. Available plugins: " +
+          manager.pluginManager.getPluginNames().join(", ");
+        manager.client.call(
+          "ChatSendServerMessageToLogin",
+          helpText,
+          chat.Login,
+        );
+      } else {
+        const helpText = manager.pluginManager.getPluginHelpText(
+          commandArgs[0],
+        );
+        manager.client.call(
+          "ChatSendServerMessageToLogin",
+          helpText,
+          chat.Login,
+        );
+      }
+    }
+
     manager.emitCommand(commandName, commandArgs, chat.Login);
   }
 

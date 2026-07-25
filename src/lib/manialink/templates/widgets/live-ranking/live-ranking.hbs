@@ -51,7 +51,7 @@ Void updateRankingRow(Integer index, Ranking ranking, Text mode, Integer pointsL
 
   declare rankingFrame <=> (rankingsFrame.Controls[index + 1] as CMlFrame);
   (rankingFrame.Controls[2] as CMlLabel).SetText(TL::ToText(ranking.rank));
-  (rankingFrame.Controls[3] as CMlQuad).ImageUrl = "file://ZoneFlags/Login/" ^ ranking.login ^ "/country";
+  (rankingFrame.Controls[3] as CMlQuad).ChangeImageUrl("file://ZoneFlags/Login/" ^ ranking.login ^ "/country");
   (rankingFrame.Controls[4] as CMlLabel).SetText(ranking.name);
   
   declare Text pointsText = TL::ToText(ranking.points);

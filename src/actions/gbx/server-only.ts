@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import {
   GbxClientManager,
   getGbxClient,
@@ -17,8 +18,15 @@ import {
 } from "../database/server-only/gbx";
 
 export async function syncPlayerList(manager: GbxClientManager) {
+  const meta = {
+    type: "gbx",
+    module: "game",
+    function: "syncPlayerList",
+  };
   const playerList = await manager.client.call("GetPlayerList", 1000, 0);
+
   if (!playerList || !Array.isArray(playerList)) {
+    manager.log.error({ meta, playerList }, "Failed to retrieve player list");
     throw new Error("Failed to retrieve player list");
   }
 
@@ -59,6 +67,7 @@ export async function syncPlayerList(manager: GbxClientManager) {
 
   manager.info.activePlayers = players;
   manager.emit("playerList", players);
+
   await syncPlayers(players);
 }
 
@@ -66,8 +75,16 @@ export async function getPlayerInfo(
   client: GbxClient,
   login: string,
 ): Promise<PlayerInfo> {
+  const meta = {
+    type: "gbx",
+    module: "player",
+    function: "getPlayerInfo",
+  };
+
   const playerInfo = await client.call("GetPlayerInfo", login);
+
   if (!playerInfo) {
+    logger.error({ meta, login }, "Player not found");
     throw new Error(`Player with login ${login} not found`);
   }
 
@@ -100,9 +117,15 @@ export async function syncMap(
   manager: GbxClientManager,
   serverId: string,
 ): Promise<Maps> {
+  const meta = {
+    type: "gbx",
+    module: "map",
+    function: "syncMap",
+  };
   const mapInfo: SMapInfo = await manager.client.call("GetCurrentMapInfo");
 
   if (!mapInfo) {
+    manager.log.error({ meta }, "Failed to get current map info");
     throw new ServerError("Failed to get current map info");
   }
 
@@ -121,6 +144,7 @@ export async function syncMap(
     });
 
     if (!data) {
+      manager.log.error({ meta, mapInfo }, "Failed to create map");
       throw new ServerError(`Failed to create map`);
     }
 

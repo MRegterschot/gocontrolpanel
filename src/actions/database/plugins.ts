@@ -10,6 +10,7 @@ export async function getPlugins(): Promise<ServerResponse<Plugins[]>> {
     ["servers::admin", "group:servers::admin"],
     async () => {
       const db = getClient();
+      
       return await db.plugins.findMany({
         where: {
           deletedAt: null,

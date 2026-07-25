@@ -15,7 +15,8 @@ export async function getRolesMinimal(): Promise<
 > {
   return doServerActionWithAuth(["users:edit"], async () => {
     const db = getClient();
-    const roles = await db.roles.findMany({
+
+    return await db.roles.findMany({
       where: { deletedAt: null },
       select: {
         id: true,
@@ -23,7 +24,6 @@ export async function getRolesMinimal(): Promise<
         permissions: true,
       },
     });
-    return roles;
   });
 }
 

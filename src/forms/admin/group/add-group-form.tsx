@@ -191,7 +191,7 @@ export default function AddGroupForm({ callback }: { callback?: () => void }) {
                 onClick={() => remove(index)}
               >
                 <IconTrash />
-                <span className="sr-only">Remove Member</span>
+                <span className="sr-only ">Remove Member</span>
               </Button>
             </div>
           ))}

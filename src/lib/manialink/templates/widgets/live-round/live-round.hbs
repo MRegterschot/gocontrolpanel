@@ -100,7 +100,28 @@ Text formatTime(Integer time) {
   return "";
 }
 
-Text getCheckpointDiffText(Round[] rounds, Text login) {
+Integer getCheckpointGap(Round[] rounds, Round playerRound, Round firstPlaceRound) {
+  declare Integer lastCheckpointIndex = playerRound.checkpoints.count - 1;
+  declare Integer playerCheckpointTime = playerRound.checkpoints[lastCheckpointIndex];
+  declare Integer leaderCheckpointTime = firstPlaceRound.checkpoints[lastCheckpointIndex];
+
+  // Same checkpoint as leader or player is rank 2 -> compare to leader
+  if (playerRound.checkpoints.count == firstPlaceRound.checkpoints.count || playerRound.rank == 2) {
+    return ML::Max(playerCheckpointTime - leaderCheckpointTime, 0);
+  }
+
+  declare Round aheadRound = rounds[playerRound.rank - 2];
+
+  // Player ahead has more checkpoints -> inherit their gap
+  if (aheadRound.checkpoints.count > playerRound.checkpoints.count) {
+    return getCheckpointGap(rounds, aheadRound, firstPlaceRound);
+  }
+
+  // Same checkpoint as player ahead -> compare to leader
+  return ML::Max(playerCheckpointTime - leaderCheckpointTime, 0);
+}
+
+Text getTimeDiffText(Round[] rounds, Text login) {
   declare Round playerRound;
   
   foreach (round in rounds) {
@@ -140,19 +161,8 @@ Text getCheckpointDiffText(Round[] rounds, Text login) {
   if (firstPlaceRound.login == "") {
     return "--:--.---";
   }
-  
-  // Get the checkpoint difference to the first place player
-  declare Integer checkpointDiff = firstPlaceRound.checkpoints.count - playerRound.checkpoints.count;
-
-  // If the checkpoint difference is 0, return their time difference
-  if (checkpointDiff == 0) {
-    declare Integer timeDiff = playerRound.time - firstPlaceRound.time;
-    return "+" ^ formatTime(timeDiff);
-  } else {
-    return "+" ^ TL::ToText(checkpointDiff) ^ " CP";
-  }
-
-  return "--:--.---";
+    
+  return "+" ^ formatTime(getCheckpointGap(rounds, playerRound, firstPlaceRound));
 }
 
 Void updateRoundRow(Integer index, Round round, Round[] rounds, Text mode, Integer pointsLimit) {
@@ -164,7 +174,7 @@ Void updateRoundRow(Integer index, Round round, Round[] rounds, Text mode, Integ
 
   declare roundFrame <=> (roundsFrame.Controls[index + 1] as CMlFrame);
   (roundFrame.Controls[3] as CMlLabel).SetText(TL::ToText(round.rank));
-  (roundFrame.Controls[4] as CMlQuad).ImageUrl = "file://ZoneFlags/Login/" ^ round.login ^ "/country";
+  (roundFrame.Controls[4] as CMlQuad).ChangeImageUrl("file://ZoneFlags/Login/" ^ round.login ^ "/country");
   (roundFrame.Controls[5] as CMlLabel).SetText(round.name);
 
   declare Text pointsText = TL::ToText(round.points);
@@ -187,7 +197,7 @@ Void updateRoundRow(Integer index, Round round, Round[] rounds, Text mode, Integ
   }
 
   (roundFrame.Controls[6] as CMlLabel).SetText(pointsText);
-  (roundFrame.Controls[7] as CMlLabel).SetText(getCheckpointDiffText(rounds, round.login));
+  (roundFrame.Controls[7] as CMlLabel).SetText(getTimeDiffText(rounds, round.login));
   roundFrame.DataAttributeSet("login", round.login);
 
   if (round.team.mainColor != "") {
@@ -211,7 +221,7 @@ Void updateRoundRow(Integer index, Round round, Round[] rounds, Text mode, Integ
   roundFrame.Show();
 }
 
-Void updateFinish(Text login, Integer points, Boolean finished, Boolean isPersonalBest, Boolean isLocalRecord, Boolean isWorldRecord) {
+Void updateFinish(Text login, Integer points, Boolean finished, Boolean isPersonalBest, Boolean isLocalRecord, Boolean isWorldRecord, Text localRecordText) {
   declare roundsFrame <=> (Page.MainFrame.GetFirstChild("rounds") as CMlFrame);
 
   foreach (control in roundsFrame.Controls) {
@@ -245,7 +255,7 @@ Void updateFinish(Text login, Integer points, Boolean finished, Boolean isPerson
         } 
         
         if (isLocalRecord) {
-          (frameFinish.Controls[3] as CMlLabel).SetText("LR");
+          (frameFinish.Controls[3] as CMlLabel).SetText(localRecordText);
         }
         
         if (isWorldRecord) {
@@ -272,26 +282,27 @@ Void updateFinish(Text login, Integer points, Boolean finished, Boolean isPerson
   }
 }
 
-Void clearFinishes(Round[] rounds) {
+Void clearFinishes(Round[] rounds, Text localRecordText) {
   foreach (round in rounds) {
-    updateFinish(round.login, 0, False, False, False, False);
+    updateFinish(round.login, 0, False, False, False, False, localRecordText);
   }
 }
 
-Void updateScroll(Round[] rounds) {
+Void updateScroll(Round[] rounds, Integer rowCount) {
   declare roundsFrame <=> (Page.MainFrame.GetFirstChild("rounds") as CMlFrame);
   declare Integer roundCount = rounds.count;
   if (roundCount > roundsFrame.Controls.count) {
     roundCount = roundsFrame.Controls.count;
   }
-  declare Real maxY = roundCount * 5.25 - 42;
+  declare Real maxY = (roundCount - rowCount) * 5.25;
   if (maxY < 0) {
     maxY = 0.;
   }
   roundsFrame.ScrollMax = <0., maxY>;
+  roundsFrame.Size = <69., rowCount * 5.25>;
 }
 
-Void updateWidget(Round[] rounds, Text mode, Integer pointsLimit) {
+Void updateWidget(Round[] rounds, Text mode, Integer pointsLimit, Integer rowCount) {
   declare roundCount = rounds.count;
   declare index = 0;
 
@@ -309,7 +320,7 @@ Void updateWidget(Round[] rounds, Text mode, Integer pointsLimit) {
     index = index + 1;
   }
 
-  updateScroll(rounds);
+  updateScroll(rounds, rowCount);
 }
 {{/content}}
 
@@ -317,6 +328,8 @@ Void updateWidget(Round[] rounds, Text mode, Integer pointsLimit) {
 declare Round[] Rounds for This;
 declare Finish[] Finishes for This = [];
 declare Text Mode for This = "rounds";
+declare Text localRecordText for This;
+declare Integer rowCount for This;
 declare Integer PointsLimit for This = -1;
 declare Integer LastRoundsUpdate for This = -1;
 declare Integer lastUpdate = -1;
@@ -330,10 +343,10 @@ roundsFrame.ScrollMin = <0., 0.>;
 if (LastRoundsUpdate != lastUpdate) {
   lastUpdate = LastRoundsUpdate;
   
-  updateWidget(Rounds, Mode, PointsLimit);
+  updateWidget(Rounds, Mode, PointsLimit, rowCount);
 
   if (Finishes.count == 0) {
-    clearFinishes(Rounds);
+    clearFinishes(Rounds, localRecordText);
   }
 
   if (Finishes.count != prevFinishes.count) {
@@ -349,14 +362,14 @@ if (LastRoundsUpdate != lastUpdate) {
         }
 
         if (!found) {
-          updateFinish(finish.login, finish.points, True, finish.isPersonalBest, finish.isLocalRecord, finish.isWorldRecord);
+          updateFinish(finish.login, finish.points, True, finish.isPersonalBest, finish.isLocalRecord, finish.isWorldRecord, localRecordText);
         }
       }
     } else {
-      clearFinishes(Rounds);
+      clearFinishes(Rounds, localRecordText);
       // Re-apply finished players
       foreach (finish in Finishes) {
-        updateFinish(finish.login, finish.points, True, finish.isPersonalBest, finish.isLocalRecord, finish.isWorldRecord);
+        updateFinish(finish.login, finish.points, True, finish.isPersonalBest, finish.isLocalRecord, finish.isWorldRecord, localRecordText);
       }
     }
   }

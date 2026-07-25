@@ -59,18 +59,20 @@ export default function ShowOpponentsForm({
             <Button
               variant={"outline"}
               type="button"
+              collapse="sm"
               onClick={() => showOpponentsForm.setValue("showOpponents", 0)}
             >
               <IconRotate className="rotate-180" />
-              <span className="hidden sm:block">Reset</span>
+              Reset
             </Button>
             <Button
               variant={"outline"}
               type="button"
+              collapse="sm"
               onClick={() => showOpponentsForm.setValue("showOpponents", 1)}
             >
               <IconEye />
-              <span className="hidden sm:block">Show All</span>
+              Show All
             </Button>
             <Button
               type="submit"

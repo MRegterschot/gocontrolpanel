@@ -103,9 +103,9 @@ export default function OfficialCampaignMaps({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex gap-4 justify-between flex-col sm:flex-row">
+      <div className="flex gap-4 justify-between">
         <div className="flex gap-4 items-center">
-          <Button variant="outline" onClick={() => router.back()}>
+          <Button variant="outline" collapse="sm" onClick={() => router.back()}>
             <IconArrowLeft />
             Back
           </Button>
@@ -119,6 +119,7 @@ export default function OfficialCampaignMaps({
           <div className="flex gap-2">
             <Button
               variant={"outline"}
+              collapse="sm"
               onClick={onDownloadCampaign}
               disabled={isDownloading}
             >
@@ -127,6 +128,7 @@ export default function OfficialCampaignMaps({
             </Button>
             <Button
               variant={"outline"}
+              collapse="sm"
               onClick={onAddCampaignToServer}
               disabled={isDownloading}
             >

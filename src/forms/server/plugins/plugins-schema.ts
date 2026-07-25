@@ -10,6 +10,7 @@ export const PluginsSchema = z.object({
   "ta-leaderboard": z.boolean().optional(),
   "ta-active-runs": z.boolean().optional(),
   "player-info": z.boolean().optional(),
+  match: z.boolean().optional(),
 });
 
 export type PluginsSchemaType = z.infer<typeof PluginsSchema>;

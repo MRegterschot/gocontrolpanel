@@ -2,7 +2,7 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { downloadFile, getSeasonalCampaigns } from "@/lib/api/nadeo";
-import { logger } from "@/lib/logger";
+import { getLogger, logger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
 import {
   getKeyCampaign,
@@ -64,6 +64,12 @@ export async function getCampaignWithMaps(
       "group:servers::admin",
     ],
     async () => {
+      const meta = {
+        type: "nadeo",
+        module: "campaigns",
+        function: "getCampaignWithMaps",
+      };
+
       const redis = await getRedisClient();
       const key = getKeyCampaign(campaign.id);
 
@@ -78,6 +84,10 @@ export async function getCampaignWithMaps(
       const mapUids = campaign.playlist.map((p) => p.mapUid);
       const { data: maps, error } = await getMapsByUids(mapUids);
       if (error) {
+        logger.error(
+          { meta, error, campaignId: campaign.id },
+          "Failed to get maps",
+        );
         throw new Error(error);
       }
 
@@ -117,6 +127,12 @@ export async function downloadCampaign(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
+      const meta = {
+        type: "nadeo",
+        module: "campaigns",
+        function: "downloadCampaign",
+      };
+      const log = getLogger(serverId);
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
         await logAudit(
@@ -153,7 +169,7 @@ export async function downloadCampaign(
           );
         } else {
           errors++;
-          logger.error(result, `Failed to download map ${index + 1}`);
+          log.error({ meta, error: result, index }, "Failed to download map");
         }
       });
 
@@ -178,6 +194,7 @@ export async function downloadCampaign(
       );
 
       if (errors > 0) {
+        log.error({ meta, errors }, "Failed to download some maps");
         throw new Error(`Failed to download ${errors} maps`);
       }
 
@@ -204,6 +221,12 @@ export async function addCampaignToServer(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
+      const meta = {
+        type: "nadeo",
+        module: "campaigns",
+        function: "addCampaignToServer",
+      };
+      const log = getLogger(serverId);
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
         await logAudit(
@@ -236,7 +259,7 @@ export async function addCampaignToServer(
       addResults.forEach((result, index) => {
         if (result.status === "rejected") {
           errors++;
-          logger.error(result, `Failed to add map ${index + 1}`);
+          log.error({ meta, error: result, index }, "Failed to add map");
         }
       });
 
@@ -249,6 +272,7 @@ export async function addCampaignToServer(
       );
 
       if (errors > 0) {
+        log.error({ meta, errors }, "Failed to add some maps");
         throw new Error(`Failed to add ${errors} maps`);
       }
     },

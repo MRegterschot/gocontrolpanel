@@ -1,5 +1,5 @@
 import { Slot } from "@radix-ui/react-slot";
-import { cva, type VariantProps } from "class-variance-authority";
+import { cva, VariantProps } from "class-variance-authority";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -26,7 +26,8 @@ const buttonVariants = cva(
         sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
         icon: "size-9",
-        sidebar: "text-sidebar-foreground ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex aspect-square w-5 items-center justify-center rounded-md p-0 outline-hidden transition-transform focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0"
+        sidebar:
+          "text-sidebar-foreground ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex aspect-square w-5 items-center justify-center rounded-md p-0 outline-hidden transition-transform focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
       },
     },
     defaultVariants: {
@@ -36,24 +37,61 @@ const buttonVariants = cva(
   },
 );
 
+interface ButtonProps
+  extends React.ComponentProps<"button">, VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+  collapse?: "sm" | "md" | "lg" | "xl";
+}
+
 function Button({
   className,
   variant,
   size,
   asChild = false,
+  collapse,
+  children,
   ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean;
-  }) {
+}: ButtonProps) {
   const Comp = asChild ? Slot : "button";
+
+  const collapseClasses = collapse
+    ? {
+        sm: "aspect-square px-2 sm:aspect-auto sm:px-4",
+        md: "aspect-square px-2 md:aspect-auto md:px-4",
+        lg: "aspect-square px-2 lg:aspect-auto lg:px-4",
+        xl: "aspect-square px-2 xl:aspect-auto xl:px-4",
+      }[collapse]
+    : "";
+
+  const textClasses = collapse
+    ? {
+        sm: "hidden sm:inline",
+        md: "hidden md:inline",
+        lg: "hidden lg:inline",
+        xl: "hidden xl:inline",
+      }[collapse]
+    : "";
 
   return (
     <Comp
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(
+        buttonVariants({ variant, size }),
+        collapseClasses,
+        className,
+      )}
       {...props}
-    />
+    >
+      {React.Children.map(children, (child, index) =>
+        index === 0 ? (
+          child
+        ) : collapse ? (
+          <span className={textClasses}>{child}</span>
+        ) : (
+          child
+        ),
+      )}
+    </Comp>
   );
 }
 

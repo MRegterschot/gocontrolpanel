@@ -1,0 +1,36 @@
+{{#extend "manialink"}}
+{{#content "content"}}
+<script>
+<!--
+#Struct MapInfo {
+  Text name;
+  Text author;
+  Text uid;
+  Integer index;
+  Text[] selectedBy;
+  Text pickedBy;
+  Text bannedBy;
+}
+
+#Struct PickBanAction {
+  Text action;
+  Text login;
+  Text[] players;
+  Text nickName;
+}
+
+main(){
+  declare MapInfo[] MapInfos for This;
+  declare PickBanAction CurrentAction for This;
+  declare Integer LastPickBanUpdate for This;
+  declare Text mapInfosJson = """{{{ default data.mapInfosJson '[]' }}}""";
+  declare Text currentActionJson = """{{{ default data.currentActionJson '{}' }}}""";
+
+  MapInfos.fromjson(mapInfosJson);
+  CurrentAction.fromjson(currentActionJson);
+  LastPickBanUpdate = GameTime;
+}
+-->
+</script>
+{{/content}}
+{{/extend}}

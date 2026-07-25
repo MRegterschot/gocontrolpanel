@@ -1,5 +1,4 @@
 import { ecmOnDriverFinish, ecmOnRoundEnd } from "@/lib/api/ecm";
-import { logger } from "@/lib/logger";
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import ManialinkManager from "@/lib/managers/manialink-manager";
 import Widget from "@/lib/manialink/components/widget";
@@ -13,6 +12,11 @@ import ECMWindow from "./ecm-window";
 
 export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
   static pluginId = "ecm";
+  static helpText = 
+`This plugin sends rounds and finish data to eCircuitMania.
+Commands: 
+/ecm - Opens the eCircuitMania window
+`;
   private widget: Widget;
   private roundOffset: number = 0;
   private activeDrivers: Set<string> = new Set();
@@ -77,13 +81,27 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
 
   async onStartRound() {
     this.activeDrivers.clear();
-    logger.debug("New round started, cleared active drivers");
+    const meta = {
+      type: "plugins",
+      module: "ecm-plugin",
+      function: "onStartRound",
+    };
+    this.clientManager.log.trace(
+      { meta },
+      "New round started, cleared active drivers",
+    );
   }
 
   async onStartLine(startLine: WaypointEvent) {
     this.activeDrivers.add(startLine.login);
-    logger.debug(
+    const meta = {
+      type: "plugins",
+      module: "ecm-plugin",
+      function: "onStartLine",
+    };
+    this.clientManager.log.trace(
       {
+        meta,
         login: startLine.login,
         activeDrivers: Array.from(this.activeDrivers),
       },
@@ -116,12 +134,16 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
   async onPlayerFinish(waypoint: Waypoint) {
     if (!this.isActive()) return;
 
-    ecmOnDriverFinish(this.config.apiKey, {
-      finishTime: waypoint.racetime,
-      ubisoftUid: waypoint.accountid,
-      roundNum: (this.clientManager.roundNumber || 1) + this.roundOffset,
-      mapId: this.clientManager.info.activeMap,
-    });
+    ecmOnDriverFinish(
+      this.config.apiKey,
+      {
+        finishTime: waypoint.racetime,
+        ubisoftUid: waypoint.accountid,
+        roundNum: (this.clientManager.roundNumber || 1) + this.roundOffset,
+        mapId: this.clientManager.info.activeMap,
+      },
+      this.clientManager.getServerId(),
+    );
   }
 
   async onEndRound(scores: Scores) {
@@ -161,11 +183,15 @@ export default class ECMPlugin extends Plugin<ECMPluginConfig | null> {
       position: p.position,
     }));
 
-    ecmOnRoundEnd(this.config.apiKey, {
-      players,
-      roundNum: roundNum + this.roundOffset,
-      mapId: this.clientManager.info.activeMap,
-    });
+    ecmOnRoundEnd(
+      this.config.apiKey,
+      {
+        players,
+        roundNum: roundNum + this.roundOffset,
+        mapId: this.clientManager.info.activeMap,
+      },
+      this.clientManager.getServerId(),
+    );
   }
 
   async createWindowForPlayer(login: string) {

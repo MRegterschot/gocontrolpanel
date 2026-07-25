@@ -1,5 +1,6 @@
 "use server";
 import { doServerActionWithAuth } from "@/lib/actions";
+import { getLogger } from "@/lib/logger";
 import { getGbxClient } from "@/lib/managers/gbxclient-manager";
 import { Maps } from "@/lib/prisma/generated";
 import { getKeyJukebox, getRedisClient } from "@/lib/redis";
@@ -155,10 +156,17 @@ export async function getCurrentMapIndex(
       `group:servers:${serverId}:admin`,
     ],
     async () => {
+      const meta = {
+        type: "gbx",
+        module: "game",
+        function: "getCurrentMapIndex",
+      };
+      const log = getLogger(serverId);
       const client = await getGbxClient(serverId);
       const mapIndex = await client.call("GetCurrentMapIndex");
 
       if (typeof mapIndex !== "number") {
+        log.error({ meta, mapIndex }, "Failed to get current map index");
         throw new ServerError("Failed to get current map index");
       }
 
@@ -222,6 +230,12 @@ export async function addMapList(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
+      const meta = {
+        type: "gbx",
+        module: "game",
+        function: "addMapList",
+      };
+      const log = getLogger(serverId);
       const client = await getGbxClient(serverId);
       const res = await client.call("AddMapList", filenames);
 
@@ -243,6 +257,7 @@ export async function addMapList(
       );
 
       if (error) {
+        log.error({ meta, error, filenames }, "Failed to add map list");
         throw new ServerError(error);
       }
 

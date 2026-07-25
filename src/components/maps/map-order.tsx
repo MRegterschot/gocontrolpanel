@@ -1,15 +1,16 @@
 "use client";
+import { getMapList } from "@/actions/database/maps";
 import { addMapList, removeMapList } from "@/actions/gbx/map";
 import { createColumns } from "@/app/(gocontroller)/server/[id]/maps/map-order-columns";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { Maps } from "@/lib/prisma/generated";
 import { getDivergingList, getErrorMessage } from "@/lib/utils";
 import {
   IconDeviceFloppy,
   IconMapMinus,
+  IconRefresh,
   IconRotate,
 } from "@tabler/icons-react";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { DndList } from "../dnd/dnd-list";
 import DndListHeaders from "../dnd/dnd-list-headers";
@@ -18,23 +19,25 @@ import { Button } from "../ui/button";
 
 export default function MapOrder({
   mapList,
+  setMapList,
   serverId,
 }: {
   mapList: (Maps & { path: string })[];
+  setMapList: Dispatch<SetStateAction<(Maps & { path: string })[]>>;
   serverId: string;
 }) {
-  const isMobile = useIsMobile();
-
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
-  const [defaultMapList, setDefaultMapList] =
-    useState<(Maps & { path: string })[]>(mapList);
   const [mapOrder, setMapOrder] =
-    useState<(Maps & { path: string })[]>(defaultMapList);
+    useState<(Maps & { path: string })[]>(mapList);
+
+  useEffect(() => {
+    setMapOrder(mapList);
+  }, [mapList]);
 
   async function saveMapOrder() {
     try {
-      const files = getDivergingList(defaultMapList, mapOrder, "uid")[1].map(
+      const files = getDivergingList(mapList, mapOrder, "uid")[1].map(
         (map) => map.path,
       );
 
@@ -50,7 +53,7 @@ export default function MapOrder({
         throw new Error(addError);
       }
 
-      setDefaultMapList(mapOrder);
+      setMapList(mapOrder);
 
       toast.success("Map order successfully saved");
     } catch (error) {
@@ -61,13 +64,13 @@ export default function MapOrder({
   }
 
   function resetMapOrder() {
-    setMapOrder(defaultMapList);
+    setMapOrder(mapList);
   }
 
   function onRemoveMap(map: Maps) {
     const newMapOrder = mapOrder.filter((m) => m.uid !== map.uid);
     setMapOrder(newMapOrder);
-    setDefaultMapList(newMapOrder);
+    setMapList(newMapOrder);
   }
 
   async function removeAllMaps() {
@@ -82,13 +85,29 @@ export default function MapOrder({
       }
 
       setMapOrder([mapOrder[mapOrder.length - 1]]);
-      setDefaultMapList([mapOrder[mapOrder.length - 1]]);
+      setMapList([mapOrder[mapOrder.length - 1]]);
       toast.success("All maps succesfully removed", {
         description:
           "Did not remove the last map to prevent the server from crashing.",
       });
     } catch (error) {
       toast.error("Error removing maps", {
+        description: getErrorMessage(error),
+      });
+    }
+  }
+
+  async function onRefreshMapList() {
+    try {
+      const { data: newMapList, error } = await getMapList(serverId);
+      if (error) {
+        throw new Error(error);
+      }
+      setMapOrder(newMapList);
+      setMapList(newMapList);
+      toast.success("Map list successfully refreshed");
+    } catch (error) {
+      toast.error("Error refreshing map list", {
         description: getErrorMessage(error),
       });
     }
@@ -108,9 +127,18 @@ export default function MapOrder({
         />
       </div>
       <div className="flex gap-2 ml-auto">
-        <Button variant="destructive" onClick={() => setIsConfirmOpen(true)}>
+        <Button variant="outline" collapse="sm" onClick={onRefreshMapList}>
+          <IconRefresh />
+          Refresh
+        </Button>
+
+        <Button
+          variant="destructive"
+          collapse="sm"
+          onClick={() => setIsConfirmOpen(true)}
+        >
           <IconMapMinus />
-          Remove All {!isMobile ? "Maps" : ""}
+          Remove All
         </Button>
 
         <ConfirmModal
@@ -123,13 +151,13 @@ export default function MapOrder({
           cancelText="Cancel"
         />
 
-        <Button variant="outline" onClick={resetMapOrder}>
+        <Button variant="outline" collapse="sm" onClick={resetMapOrder}>
           <IconRotate className="rotate-180" />
-          Reset {!isMobile ? "Order" : ""}
+          Reset
         </Button>
-        <Button onClick={saveMapOrder}>
+        <Button onClick={saveMapOrder} collapse="sm">
           <IconDeviceFloppy />
-          Save {!isMobile ? "Order" : ""}
+          Save
         </Button>
       </div>
     </div>

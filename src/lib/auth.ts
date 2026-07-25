@@ -56,15 +56,21 @@ const NadeoProvider = (): OAuthConfig<Profile> => ({
       );
 
       if (!response.ok) {
+        const meta = {
+          type: "nadeo",
+          module: "auth",
+          function: "NadeoProvider.token.request",
+        };
         logger.error(
           {
+            meta,
             response: {
               status: response.status,
               statusText: response.statusText,
               error: await response.text(),
             },
           },
-          `Failed to fetch access token: ${response.status} ${response.statusText}`,
+          "Failed to fetch access token",
         );
         throw new Error("Failed to fetch access token");
       }
@@ -138,7 +144,12 @@ export const authOptions: NextAuthOptions = {
                 token.ubiId = webidentities[0].uid;
               }
             } catch (error) {
-              logger.error(error, "Failed to fetch web identities");
+              const meta = {
+                type: "nadeo",
+                module: "auth",
+                function: "getWebIdentities",
+              };
+              logger.error({ meta, error }, "Failed to fetch web identities");
             }
           }
 

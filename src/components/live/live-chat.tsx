@@ -76,9 +76,9 @@ export default function LiveChat({
             }}
           />
 
-          <Button type="button" onClick={handleSendMessage}>
+          <Button type="button" collapse="sm" onClick={handleSendMessage}>
             <IconSend />
-            <span className="hidden sm:block">Send message</span>
+            Send message
           </Button>
         </div>
       )}

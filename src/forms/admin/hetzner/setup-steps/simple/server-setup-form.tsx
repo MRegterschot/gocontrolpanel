@@ -55,6 +55,8 @@ export default function SimpleServerSetupForm({
       },
       serverController: undefined,
       database: undefined,
+      createServer: true,
+      groupId: "",
     },
   });
 

@@ -2,9 +2,12 @@
 
 import { createSimpleServerSetup } from "@/actions/hetzner/server-setup";
 import BooleanDisplay from "@/components/boolean-display";
+import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { getErrorMessage } from "@/lib/utils";
 import { IconArrowNarrowLeft, IconPlus } from "@tabler/icons-react";
+import { useSession } from "next-auth/react";
+import { useMemo } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { SimpleServerSetupSchemaType } from "./server-setup-schema";
@@ -20,6 +23,16 @@ export default function Summary({
   onBack: () => void;
   callback?: () => void;
 }) {
+  const { data: session } = useSession();
+
+  const groups = useMemo(() => {
+    if (!session?.user) return [];
+    return session.user.groups.map((group) => ({
+      label: group.name,
+      value: group.id,
+    }));
+  }, [session?.user]);
+
   const { watch } = form;
 
   const server = watch("server");
@@ -110,6 +123,23 @@ export default function Summary({
               )}
             </div>
           </div>
+        </div>
+
+        <div className="gap-4 grid sm:grid-cols-2 sm:gap-8">
+          <FormElement
+            label="Automatically create server"
+            name="createServer"
+            type="checkbox"
+          />
+
+          <FormElement
+            label="Group"
+            name="groupId"
+            type="select"
+            options={groups}
+            placeholder="Select a group"
+            className="w-48"
+          />
         </div>
 
         <div className="flex gap-2 justify-between">
