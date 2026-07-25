@@ -18,7 +18,12 @@ interface FormElementProps<TControl> {
   description?: string;
   placeholder?: string;
   type?: string;
-  options?: { label: string; value: string; removable?: boolean }[];
+  options?: {
+    label: string;
+    value: string;
+    removable?: boolean;
+    parseTmTags?: boolean;
+  }[];
   defaultValues?: string[];
   isRequired?: boolean;
   isDisabled?: boolean;

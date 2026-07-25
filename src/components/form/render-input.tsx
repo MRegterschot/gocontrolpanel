@@ -9,6 +9,7 @@ import {
   FieldValues,
   Merge,
 } from "react-hook-form";
+import { parseTmTags } from "tmtags";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
 import { FilterInput } from "../ui/filter-input";
@@ -30,7 +31,12 @@ interface RenderInputProps<TControl extends FieldValues> {
   label?: string;
   description?: string;
   placeholder?: string;
-  options?: { label: string; value: string; removable?: boolean }[];
+  options?: {
+    label: string;
+    value: string;
+    removable?: boolean;
+    parseTmTags?: boolean;
+  }[];
   defaultValues?: string[];
   isRequired?: boolean;
   isDisabled?: boolean;
@@ -127,7 +133,13 @@ export default function RenderInput<TControl extends FieldValues>({
                 value={option.value}
                 className="cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap"
               >
-                {option.label}
+                <span
+                  dangerouslySetInnerHTML={{
+                    __html: option.parseTmTags
+                      ? parseTmTags(option.label)
+                      : option.label,
+                  }}
+                />
               </SelectItem>
             ))}
           </SelectContent>
