@@ -9,8 +9,8 @@ export interface PaginationResponse<T> {
 }
 
 export class ServerError extends Error {
-  constructor(message: string) {
+  constructor(message: string, name: string = "ServerError") {
     super(message);
-    this.name = "ServerError";
+    this.name = name;
   }
 }

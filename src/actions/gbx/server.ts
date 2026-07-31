@@ -139,7 +139,7 @@ export async function saveServerSettings(
         ])
         .catch((error) => {
           log.error({ meta, error }, "Error saving server settings");
-          throw new ServerError("Failed to save server settings");
+          throw new ServerError("Failed to save server settings", "SaveServerSettingsError");
         });
 
       let error: string | undefined = undefined;
@@ -165,7 +165,7 @@ export async function saveServerSettings(
       );
 
       if (error) {
-        throw new ServerError(error);
+        throw new ServerError(error, "SaveServerSettingsError");
       }
     },
   );
