@@ -3,11 +3,11 @@ import { Session } from "next-auth";
 
 export function reportException(
   error: unknown,
-  meta: Record<string, string>,
+  meta?: Record<string, string>,
   session?: Session | null,
 ) {
   Sentry.captureException(error, (scope) => {
-    scope.setTags(meta);
+    scope.setTags(meta ?? {});
 
     if (session?.user?.id) {
       scope.setUser({

@@ -4,6 +4,7 @@ import config from "../config";
 import { logger } from "../logger";
 import { withRateLimit } from "../ratelimiter";
 import { ServerError } from "@/types/responses";
+import { reportException } from "../sentry/report";
 
 const TMX_URL = "https://trackmania.exchange";
 
@@ -118,6 +119,7 @@ export async function downloadTMXMap(
       type: "application/x-gbx",
     });
   } catch (err) {
+    reportException(err, meta);
     if ((err as any).name === "AbortError") {
       logger.error({ meta, mapId, mappackId }, "Download for map timed out");
       throw new ServerError(`Download for map ${mapId} timed out`, "TMXDownloadTimeoutError");
@@ -144,6 +146,7 @@ async function doRequest<T>(url: string, key: string): Promise<T> {
     });
 
     if (!res.ok) {
+      reportException(res, meta);
       logger.error(
         {
           meta,
