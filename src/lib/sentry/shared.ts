@@ -6,16 +6,16 @@ export const sharedOptions = {
   environment: process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV,
   release: version,
 
-  tracesSampleRate: envSampleRate(process.env.SENTRY_TRACES_SAMPLE_RATE),
-  profilesSampleRate: envSampleRate(process.env.SENTRY_PROFILES_SAMPLE_RATE),
+  tracesSampleRate: envSampleRate(process.env.SENTRY_TRACES_SAMPLE_RATE, 1),
+  profilesSampleRate: envSampleRate(process.env.SENTRY_PROFILES_SAMPLE_RATE, 1),
 
   sendDefaultPii,
-  attachStacktrace: envBool(process.env.SENTRY_ATTACH_STACKTRACE),
+  attachStacktrace: envBool(process.env.SENTRY_ATTACH_STACKTRACE, true),
 
   beforeSend,
   beforeBreadcrumb,
 
-  enableLogs: envBool(process.env.SENTRY_ENABLE_LOGS),
+  enableLogs: envBool(process.env.SENTRY_ENABLE_LOGS, true),
 
   normalizeDepth: envNumber(process.env.SENTRY_NORMALIZE_DEPTH, 3),
   maxBreadcrumbs: envNumber(process.env.SENTRY_MAX_BREADCRUMBS, 100),

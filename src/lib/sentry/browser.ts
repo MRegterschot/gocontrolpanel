@@ -10,10 +10,10 @@ export const browserOptions = {
   tunnel: process.env.NEXT_PUBLIC_SENTRY_TUNNEL_ROUTE,
 
   replaysSessionSampleRate: envSampleRate(
-    process.env.NEXT_PUBLIC_SENTRY_REPLAYS_SESSION_SAMPLE_RATE,
+    process.env.NEXT_PUBLIC_SENTRY_REPLAYS_SESSION_SAMPLE_RATE, 1,
   ),
 
   replaysOnErrorSampleRate: envSampleRate(
-    process.env.NEXT_PUBLIC_SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE,
+    process.env.NEXT_PUBLIC_SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE, 1,
   ),
 } satisfies BrowserOptions;

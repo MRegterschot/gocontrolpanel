@@ -1,9 +1,9 @@
 export function envBool(value: string | undefined, defaultValue = false) {
-  return value == null ? defaultValue : value === "true";
+  return value === undefined ? defaultValue : value === "true";
 }
 
 export function envNumber(value: string | undefined, defaultValue = 0): number {
-  if (value == null) return defaultValue;
+  if (value === undefined) return defaultValue;
 
   const parsed = Number(value);
 
