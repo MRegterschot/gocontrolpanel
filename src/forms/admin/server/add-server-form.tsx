@@ -13,6 +13,7 @@ import { useSession } from "next-auth/react";
 import { DefaultValues, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AddServerSchema, AddServerSchemaType } from "./add-server-schema";
+import { ServerError } from "@/types/responses";
 
 export default function AddServerForm({
   callback,
@@ -82,7 +83,7 @@ export default function AddServerForm({
         values.host === server?.ip ? server.projectId : undefined,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "CreateServerError");
       }
       toast.success("Server successfully added");
       if (callback) {

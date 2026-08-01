@@ -3,6 +3,7 @@ import { ServerResponse } from "@/types/responses";
 import { Session } from "next-auth";
 import { withAuth } from "./auth";
 import { logger } from "./logger";
+import { reportException } from "./sentry/report";
 import { getErrorMessage } from "./utils";
 
 export async function doServerAction<T>(
@@ -20,6 +21,8 @@ export async function doServerAction<T>(
       function: "doServerAction",
     };
     logger.error({ meta, error }, "Error executing server action");
+
+    reportException(error, meta);
 
     return {
       data: undefined as T,
@@ -45,6 +48,9 @@ export async function doServerActionWithAuth<T>(
       { meta, error },
       "Error during auth check server action with auth",
     );
+
+    reportException(error, meta, session);
+
     return {
       data: undefined as T,
       error: getErrorMessage(error),
@@ -58,6 +64,8 @@ export async function doServerActionWithAuth<T>(
     };
   } catch (error) {
     logger.error({ meta, error }, "Error executing server action with auth");
+
+    reportException(error, meta, session);
 
     return {
       data: undefined as T,

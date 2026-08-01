@@ -1,4 +1,6 @@
 import { ModeScriptInfo } from "@/types/gbx";
+import { ServerError } from "@/types/responses";
+import { reportException } from "./sentry/report";
 
 export const gameModesScripts = [
   "Trackmania/TM_TimeAttack_Online.Script.txt",
@@ -2384,7 +2386,12 @@ export function getUpdatedSettingsForGameMode(
 > {
   const mode = getGameModeByScript(script);
   if (!mode) {
-    throw new Error(`Game mode with script ${script} not found.`);
+    const error = new ServerError(
+      `Game mode with script ${script} not found.`,
+      "GameModeNotFoundError",
+    );
+    reportException(error);
+    throw error;
   }
 
   const newSettings: Record<
@@ -2425,7 +2432,12 @@ export function getDefaultSetting(
 ): number | string | boolean | undefined {
   const mode = getGameModeByScript(script);
   if (!mode) {
-    throw new Error(`Game mode with script ${script} not found.`);
+    const error = new ServerError(
+      `Game mode with script ${script} not found.`,
+      "GameModeNotFoundError",
+    );
+    reportException(error);
+    throw error;
   }
 
   const setting = mode.ParamDescs.find((param) => param.Name === settingName);
@@ -2463,7 +2475,12 @@ export function generateScript(
           scriptContent += `#Setting ${settingName} "${setting.value ?? ""}"\n`;
           break;
         default:
-          throw new Error(`Unsupported setting type: ${setting.type}`);
+          const error = new ServerError(
+            `Unsupported setting type: ${setting.type}`,
+            "UnsupportedSettingTypeError",
+          );
+          reportException(error);
+          throw error;
       }
     }
   }

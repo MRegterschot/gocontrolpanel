@@ -14,7 +14,7 @@ import {
   CampaignWithNamesAndPlaylistMaps,
   ClubCampaignWithNamesAndPlaylistMaps,
 } from "@/types/api/nadeo";
-import { ServerResponse } from "@/types/responses";
+import { ServerError, ServerResponse } from "@/types/responses";
 import { getMapsByUids } from "../database/maps";
 import { logAudit } from "../database/server-only/audit-logs";
 import { uploadFiles } from "../filemanager";
@@ -88,7 +88,7 @@ export async function getCampaignWithMaps(
           { meta, error, campaignId: campaign.id },
           "Failed to get maps",
         );
-        throw new Error(error);
+        throw new ServerError(error, "GetMapsByUidsError");
       }
 
       const response = {
@@ -142,7 +142,7 @@ export async function downloadCampaign(
           JSON.parse(JSON.stringify(campaign)),
           "Failed to download campaign, file manager is not healthy",
         );
-        throw new Error("File manager is not healthy");
+        throw new ServerError("File manager is not healthy", "FileManagerNotHealthy");
       }
 
       const downloadResults = await Promise.allSettled(
@@ -182,7 +182,7 @@ export async function downloadCampaign(
           JSON.parse(JSON.stringify(campaign)),
           error,
         );
-        throw new Error(error);
+        throw new ServerError(error, "UploadFilesError");
       }
 
       await logAudit(
@@ -195,7 +195,7 @@ export async function downloadCampaign(
 
       if (errors > 0) {
         log.error({ meta, errors }, "Failed to download some maps");
-        throw new Error(`Failed to download ${errors} maps`);
+        throw new ServerError(`Failed to download ${errors} maps`, "DownloadMapsError");
       }
 
       return downloadResults
@@ -236,7 +236,7 @@ export async function addCampaignToServer(
           JSON.parse(JSON.stringify(campaign)),
           "Failed to add campaign, file manager is not healthy",
         );
-        throw new Error("File manager is not healthy");
+        throw new ServerError("File manager is not healthy", "FileManagerNotHealthy");
       }
 
       const addResults = await Promise.allSettled(
@@ -273,7 +273,7 @@ export async function addCampaignToServer(
 
       if (errors > 0) {
         log.error({ meta, errors }, "Failed to add some maps");
-        throw new Error(`Failed to add ${errors} maps`);
+        throw new ServerError(`Failed to add ${errors} maps`, "AddMapsToServerError");
       }
     },
   );

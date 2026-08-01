@@ -19,7 +19,6 @@ services:
       REDIS_URI: redis://redis:6379
       HETZNER_KEY: 
       LOG_LEVEL: info
-      PLAUSIBLE_API_HOST: 
     depends_on:
       - db
       - redis

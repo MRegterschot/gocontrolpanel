@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getErrorMessage } from "@/lib/utils";
 import { PlayerInfo } from "@/types/player";
+import { ServerError } from "@/types/responses";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { useState } from "react";
@@ -52,7 +53,7 @@ export const createColumns = (
         try {
           const { error } = await unblacklistPlayer(serverId, player.login);
           if (error) {
-            throw new Error(error);
+            throw new ServerError(error, "UnblacklistPlayerError");
           }
 
           refetch();

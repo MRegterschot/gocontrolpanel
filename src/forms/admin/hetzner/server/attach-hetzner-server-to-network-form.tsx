@@ -16,6 +16,7 @@ import {
   AttachHetznerServerToNetworkSchema,
   AttachHetznerServerToNetworkSchemaType,
 } from "./attach-hetzner-server-to-network-schema";
+import { ServerError } from "@/types/responses";
 
 export default function AttachHetznerServerToNetworkForm({
   projectId,
@@ -75,7 +76,7 @@ export default function AttachHetznerServerToNetworkForm({
         values,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "AttachHetznerServerToNetworkError");
       }
       toast.success("Hetzner server attached to network successfully");
       if (callback) {

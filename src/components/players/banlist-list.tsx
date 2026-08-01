@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import ConfirmModal from "../modals/confirm-modal";
 import { DataTable } from "../table/data-table";
 import { Button } from "../ui/button";
+import { ServerError } from "@/types/responses";
 
 interface BanlistListProps {
   serverId: string;
@@ -28,7 +29,7 @@ export default function BanlistList({ serverId }: BanlistListProps) {
     try {
       const { data, error } = await getBanList(serverId);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "GetBanListError");
       }
 
       setBanlist(data);
@@ -43,7 +44,7 @@ export default function BanlistList({ serverId }: BanlistListProps) {
     try {
       const { error } = await cleanBanList(serverId);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "CleanBanListError");
       }
 
       toast.success("Banlist cleared");

@@ -24,6 +24,7 @@ import { WarmUp, WarmUpStatus } from "@/types/gbx/warmup";
 import { Waypoint, WaypointEvent } from "@/types/gbx/waypoint";
 import { PlayerRound, PlayerWaypoint, Team } from "@/types/live";
 import { PlayerInfo } from "@/types/player";
+import { ServerError } from "@/types/responses";
 import { ServerClientInfo } from "@/types/server";
 import { GbxClient } from "@evotm/gbxclient";
 import EventEmitter from "events";
@@ -52,6 +53,8 @@ type Reconnect = {
   timeout: NodeJS.Timeout | null;
   start: number | null;
   delay: number;
+  retryCount: number;
+  maxRetries: number;
 };
 
 function matchPattern(
@@ -92,6 +95,8 @@ export class GbxClientManager extends EventEmitter {
     timeout: null,
     start: null,
     delay: 15000,
+    retryCount: 0,
+    maxRetries: 10,
   };
   private listenerMap: Map<string, Record<string, (...args: any[]) => void>> =
     new Map();
@@ -106,7 +111,7 @@ export class GbxClientManager extends EventEmitter {
     this.serverId = serverId;
     this.log = getLogger(serverId);
     this.client = new GbxClient({
-      showErrors: true,
+      showErrors: false,
       throwErrors: true,
     });
     this.info = {
@@ -247,7 +252,9 @@ export class GbxClientManager extends EventEmitter {
 
   private scheduleReconnect(delay: number = 15000) {
     if (this.reconnect.timeout) return; // avoid multiple schedules
+    if (this.reconnect.retryCount >= this.reconnect.maxRetries) return;
 
+    this.reconnect.retryCount += 1;
     this.reconnect.delay = delay;
     this.reconnect.start = Date.now();
     this.emit("reconnect", this.serverId, "try", this.reconnect.start + delay);
@@ -272,6 +279,7 @@ export class GbxClientManager extends EventEmitter {
   public async tryConnectWithRetry() {
     try {
       await this.connect();
+      this.reconnect.retryCount = 0; // reset retry count on successful connection
     } catch {
       const meta = {
         type: "managers",
@@ -279,7 +287,12 @@ export class GbxClientManager extends EventEmitter {
         function: "tryConnectWithRetry",
       };
       this.log.warn(
-        { meta, delay: this.reconnect.delay },
+        {
+          meta,
+          delay: this.reconnect.delay,
+          retryCount: this.reconnect.retryCount,
+          maxRetries: this.reconnect.maxRetries,
+        },
         "Failed to connect to GBX client, retrying...",
       );
       this.scheduleReconnect();
@@ -301,7 +314,11 @@ export class GbxClientManager extends EventEmitter {
 
     this.serverName = server?.name ?? null;
 
-    if (!server) throw new Error(`Server ${this.serverId} not found`);
+    if (!server)
+      throw new ServerError(
+        `Server ${this.serverId} not found`,
+        "ServerNotFound",
+      );
 
     try {
       const status = await withTimeout(
@@ -309,16 +326,26 @@ export class GbxClientManager extends EventEmitter {
         3000,
         "Connection to GBX client timed out",
       );
-      if (!status) throw new Error("Failed to connect to GBX client");
-    } catch (error) {
+      if (!status)
+        throw new ServerError(
+          "Failed to connect to GBX client",
+          "GBXConnectionError",
+        );
+    } catch {
       this.scheduleReconnect();
-      throw new Error(`Failed to connect to GBX client: ${error}`);
+      throw new ServerError(
+        `Failed to connect to GBX client`,
+        "GBXConnectionError",
+      );
     }
 
     try {
       await this.client.call("Authenticate", server.user, server.password);
     } catch {
-      throw new Error("Failed to authenticate with GBX client");
+      throw new ServerError(
+        "Failed to authenticate with GBX client",
+        "GBXAuthenticationError",
+      );
     }
 
     this.isConnected = true;
@@ -517,7 +544,10 @@ export async function getGbxClientManager(
   }
 
   if (!appGlobals.gbxClients?.[serverId]) {
-    throw new Error(`GbxClientManager for server ${serverId} not found`);
+    throw new ServerError(
+      `GbxClientManager for server ${serverId} not found`,
+      "GbxClientManagerNotFound",
+    );
   }
 
   return appGlobals.gbxClients[serverId];

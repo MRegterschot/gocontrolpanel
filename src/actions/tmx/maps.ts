@@ -5,7 +5,7 @@ import { downloadTMXMap, searchTMXMaps } from "@/lib/api/tmx";
 import { getLogger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
 import { TMXMapSearch } from "@/types/api/tmx";
-import { ServerResponse } from "@/types/responses";
+import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
 import { uploadFiles } from "../filemanager";
 import { addMap } from "../gbx/map";
@@ -67,7 +67,7 @@ export async function downloadMap(
           mapId,
           "File manager is not healthy",
         );
-        throw new Error("File manager is not healthy");
+        throw new ServerError("File manager is not healthy", "FileManagerNotHealthy");
       }
 
       const file = await downloadTMXMap(mapId);
@@ -79,7 +79,7 @@ export async function downloadMap(
           mapId,
           "Failed to download map",
         );
-        throw new Error("Failed to download map");
+        throw new ServerError("Failed to download map", "DownloadMapError");
       }
 
       const formData = new FormData();
@@ -98,7 +98,7 @@ export async function downloadMap(
 
       if (error) {
         log.error({ meta, error, mapId }, "Failed to upload map");
-        throw new Error(error);
+        throw new ServerError(error, "UploadFilesError");
       }
 
       return file.name;
@@ -133,7 +133,7 @@ export async function addMapToServer(
           mapId,
           "File manager is not healthy",
         );
-        throw new Error("File manager is not healthy");
+        throw new ServerError("File manager is not healthy", "FileManagerNotHealthy");
       }
 
       const { data: fileName, error } = await downloadMap(serverId, mapId);
@@ -146,7 +146,7 @@ export async function addMapToServer(
           mapId,
           error,
         );
-        throw new Error(error);
+        throw new ServerError(error, "DownloadMapError");
       }
 
       const { error: addMapError } = await addMap(
@@ -164,7 +164,7 @@ export async function addMapToServer(
 
       if (addMapError) {
         log.error({ meta, addMapError, mapId }, "Failed to add map");
-        throw new Error(addMapError);
+        throw new ServerError(addMapError, "AddMapError");
       }
     },
   );

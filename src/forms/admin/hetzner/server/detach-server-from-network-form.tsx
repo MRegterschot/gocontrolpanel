@@ -16,6 +16,7 @@ import {
   DetachServerFromNetworkSchema,
   DetachServerFromNetworkSchemaType,
 } from "./detach-server-from-network-schema";
+import { ServerError } from "@/types/responses";
 
 export default function DetachServerFromNetworkForm({
   projectId,
@@ -75,7 +76,7 @@ export default function DetachServerFromNetworkForm({
         parseInt(values.network),
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "DetachHetznerServerFromNetworkError");
       }
       toast.success("Server successfully detached from network");
       if (callback) {

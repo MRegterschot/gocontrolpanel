@@ -15,6 +15,7 @@ import {
   ModeScriptSettingsSchema,
   ModeScriptSettingsSchemaType,
 } from "./game-schema";
+import { ServerError } from "@/types/responses";
 
 export default function ModeScriptSettingsForm({
   serverId,
@@ -49,7 +50,7 @@ export default function ModeScriptSettingsForm({
 
         const { error } = await setModeScriptSettings(serverId, parsedValues);
         if (error) {
-          throw new Error(error);
+          throw new ServerError(error, "SetModeScriptSettingsError");
         }
         toast.success("Mode Script Settings successfully updated");
       } catch (error) {

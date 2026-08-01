@@ -5,6 +5,7 @@ import {
   UserMinimal,
 } from "@/actions/database/users";
 import { getErrorMessage } from "@/lib/utils";
+import { ServerError } from "@/types/responses";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -37,11 +38,11 @@ export function useSearchUsers({
         } else if (field === "login") {
           ({ data, error } = await getUsersByLogins(defaultUsers));
         } else {
-          throw new Error("Invalid field for user search");
+          throw new ServerError("Invalid field for user search", "InvalidFieldForUserSearch");
         }
 
         if (error) {
-          throw new Error(error);
+          throw new ServerError(error, "GetDefaultUsersError");
         }
         setSearchResults(data);
       } catch (error) {
@@ -69,7 +70,7 @@ export function useSearchUsers({
     try {
       const { data, error } = await searchUser(query);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "SearchUserError");
       }
       if (!data) return;
 

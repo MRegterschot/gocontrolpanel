@@ -10,6 +10,7 @@ import { IconDeviceFloppy, IconEye, IconRotate } from "@tabler/icons-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { ShowOpponentsSchema, ShowOpponentsSchemaType } from "./game-schema";
+import { ServerError } from "@/types/responses";
 
 export default function ShowOpponentsForm({
   serverId,
@@ -29,7 +30,7 @@ export default function ShowOpponentsForm({
     try {
       const { error } = await setShowOpponents(serverId, values.showOpponents);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "SetShowOpponentsError");
       }
       toast.success("Show Opponents successfully updated");
     } catch (error) {

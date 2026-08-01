@@ -18,7 +18,11 @@ import {
   HetznerServerMetricsResponse,
   HetznerServersResponse,
 } from "@/types/api/hetzner/servers";
-import { PaginationResponse, ServerResponse } from "@/types/responses";
+import {
+  PaginationResponse,
+  ServerError,
+  ServerResponse,
+} from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
 import { readFileSync } from "fs";
 import path from "path";
@@ -69,7 +73,10 @@ export async function getHetznerServersPaginated(
     async () => {
       const { projectId } = fetchArgs || {};
       if (!projectId) {
-        throw new Error("Project ID is required to fetch Hetzner servers.");
+        throw new ServerError(
+          "Project ID is required to fetch Hetzner servers.",
+          "ProjectIdMissing",
+        );
       }
 
       const token = await getApiToken(projectId);
@@ -167,7 +174,7 @@ export async function getRateLimit(
           getKeyHetznerRateLimit(projectId),
         );
         if (!newRateLimitData) {
-          throw new Error("Rate limit data not found after fetching servers.");
+          throw new ServerError("Rate limit data not found after fetching servers.", "RateLimitDataNotFound");
         }
 
         const { limit, remaining } = JSON.parse(newRateLimitData);

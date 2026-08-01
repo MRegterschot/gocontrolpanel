@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getErrorMessage, hasPermissionSync } from "@/lib/utils";
 import { routePermissions } from "@/routes";
+import { ServerError } from "@/types/responses";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -94,7 +95,7 @@ export const createMatchesColumns = (
           try {
             const { error } = await deleteMatch(match.serverId, match.id);
             if (error) {
-              throw new Error(error);
+              throw new ServerError(error, "DeleteMatchError");
             }
             refetch();
             toast.success("Match successfully deleted");

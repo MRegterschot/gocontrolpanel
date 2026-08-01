@@ -24,6 +24,7 @@ import {
   CarouselPrevious,
 } from "../ui/carousel";
 import CarouselMapCard from "./carousel-map-card";
+import { ServerError } from "@/types/responses";
 
 interface MapCarouselProps {
   serverId: string;
@@ -105,7 +106,7 @@ export default function MapCarousel({
     try {
       const { error } = await nextMap(serverId);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "NextMapError");
       }
       toast.success("Skipped to next map");
     } catch (error) {

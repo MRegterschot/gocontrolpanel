@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { parseTmTags } from "tmtags";
 import { Card } from "../ui/card";
 import LiveActions from "./live-actions";
+import { ServerError } from "@/types/responses";
 
 interface MapInfoProps {
   serverId: string;
@@ -44,7 +45,7 @@ export default function MapInfo({
       try {
         const { data, error } = await getMapByUid(map);
         if (error) {
-          throw new Error(error);
+          throw new ServerError(error, "GetMapByUidError");
         }
 
         setMapInfo(data);

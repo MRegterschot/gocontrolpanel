@@ -12,6 +12,7 @@ import { HetznerServer } from "@/types/api/hetzner/servers";
 import { IconX } from "@tabler/icons-react";
 import { useState } from "react";
 import { DefaultModalProps } from "../default-props";
+import { ServerError } from "@/types/responses";
 
 export default function HetznerLogsModal({
   closeModal,
@@ -47,7 +48,7 @@ export default function HetznerLogsModal({
       );
 
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "GetLogsError");
       }
 
       setLogs(logData || "");

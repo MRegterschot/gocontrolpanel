@@ -10,6 +10,7 @@ import { IconScriptPlus } from "@tabler/icons-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { ScriptNameSchema, ScriptNameSchemaType } from "./game-schema";
+import { ServerError } from "@/types/responses";
 
 export default function ScriptNameForm({
   scriptName,
@@ -31,7 +32,7 @@ export default function ScriptNameForm({
     try {
       const { error } = await setScriptName(serverId, values.scriptName);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "SetScriptNameError");
       }
       toast.success("Script successfully loaded");
     } catch (error) {

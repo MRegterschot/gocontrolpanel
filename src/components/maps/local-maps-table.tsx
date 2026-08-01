@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import ConfirmModal from "../modals/confirm-modal";
 import { DataTable } from "../table/data-table";
 import { Button } from "../ui/button";
+import { ServerError } from "@/types/responses";
 
 export default function LocalMapsTable({
   serverId,
@@ -48,7 +49,7 @@ export default function LocalMapsTable({
 
       const { data: res, error } = await addMapList(serverId, filteredMaps);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "AddMapListError");
       }
 
       toast.success(`${res} map(s) successfully added`);
@@ -64,7 +65,7 @@ export default function LocalMapsTable({
     try {
       const { data: newMapList, error } = await getMapList(serverId);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "GetMapListError");
       }
       setMapList(newMapList);
     } catch (error) {

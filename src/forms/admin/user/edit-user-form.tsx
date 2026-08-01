@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { EditUserSchema, EditUserSchemaType } from "./edit-user-schema";
+import { ServerError } from "@/types/responses";
 
 export default function EditUserForm({
   user,
@@ -30,7 +31,7 @@ export default function EditUserForm({
       try {
         const { data, error } = await getRolesMinimal();
         if (error) {
-          throw new Error(error);
+          throw new ServerError(error, "GetRolesMinimalError");
         }
         setRoles(data);
       } catch (error) {
@@ -61,7 +62,7 @@ export default function EditUserForm({
         permissions: getList<string>(values.permissions),
       });
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "UpdateUserError");
       }
       toast.success("User successfully updated");
       if (callback) {

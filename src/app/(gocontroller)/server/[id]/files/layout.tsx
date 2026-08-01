@@ -1,6 +1,7 @@
 import { hasPermission } from "@/lib/auth";
 import { getFileManager } from "@/lib/managers/file-manager";
 import { routePermissions, routes } from "@/routes";
+import { ServerError } from "@/types/responses";
 import { redirect } from "next/navigation";
 
 export default async function FilesLayout({
@@ -21,7 +22,7 @@ export default async function FilesLayout({
   try {
     const fileManager = await getFileManager(id);
     if (!fileManager?.health) {
-      throw new Error("File Manager is not available");
+      throw new ServerError("File Manager is not available", "FileManagerNotHealthy");
     }
 
     return children;

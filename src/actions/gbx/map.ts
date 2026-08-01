@@ -167,7 +167,7 @@ export async function getCurrentMapIndex(
 
       if (typeof mapIndex !== "number") {
         log.error({ meta, mapIndex }, "Failed to get current map index");
-        throw new ServerError("Failed to get current map index");
+        throw new ServerError("Failed to get current map index", "GetCurrentMapIndexError");
       }
 
       return mapIndex;
@@ -258,7 +258,7 @@ export async function addMapList(
 
       if (error) {
         log.error({ meta, error, filenames }, "Failed to add map list");
-        throw new ServerError(error);
+        throw new ServerError(error, "AddMapListError");
       }
 
       return res;
@@ -290,7 +290,7 @@ export async function removeMap(
           : undefined,
       );
       if (mapList.length < 2) {
-        throw new ServerError("Cannot remove the last map from the server");
+        throw new ServerError("Cannot remove the last map from the server", "RemoveLastMapError");
       }
       await client.call("RemoveMap", filename);
     },
@@ -321,7 +321,7 @@ export async function removeMapList(
       );
 
       if (typeof res !== "number") {
-        throw new ServerError("Failed to remove map list");
+        throw new ServerError("Failed to remove map list", "RemoveMapListError");
       }
     },
   );

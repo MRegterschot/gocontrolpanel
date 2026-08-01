@@ -2,10 +2,12 @@ import {
   ECMDriverFinishArgs,
   ECMRoundEndArgs,
 } from "@/types/api/ecircuitmania";
+import { ServerError } from "@/types/responses";
 import { isAxiosError } from "axios";
 import "server-only";
 import { axiosECM } from "../axios/ecircuitmania";
 import { getLogger } from "../logger";
+import { reportException } from "../sentry/report";
 
 export async function ecmOnDriverFinish(
   apiKey: string,
@@ -41,6 +43,7 @@ export async function ecmOnDriverFinish(
       "ECM driver finish response",
     );
   } catch (error) {
+    reportException(error, meta);
     if (isAxiosError(error)) {
       log.error(
         {
@@ -91,6 +94,7 @@ export async function ecmOnRoundEnd(
       "ECM round end response",
     );
   } catch (error) {
+    reportException(error, meta);
     if (isAxiosError(error)) {
       log.error(
         {
@@ -123,7 +127,13 @@ function getMatchIdAndAuthToken(
   const [matchId, authToken] = apiKey.split("_");
   if (!matchId || !authToken) {
     log.warn({ meta, apiKey }, "Invalid ECM API key format");
-    throw new Error("Invalid ECM API key");
+
+    const error = new ServerError(
+      "Invalid ECM API key",
+      "InvalidECMApiKeyError",
+    );
+    reportException(error, meta);
+    throw error;
   }
   return { matchId, authToken };
 }

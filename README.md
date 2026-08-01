@@ -178,17 +178,33 @@ First, copy the `docker-compose.yml` file from the repository to your desired di
 
 ### 2. Modify the Configuration
 
-Make sure to update the environment variables for the services in your `docker-compose.yml` file:
+Make sure to update or add the environment variables for the services in your `docker-compose.yml` file:
 
 - **GoControlPanel Environment Variables**:
-
   - `NEXTAUTH_URL`, `NEXTAUTH_SECRET`: NextAuth configuration for authentication. `NEXTAUTH_SECRET` can be any random string, e.g., `VettePanel123`.
   - `DEFAULT_ADMINS`: Comma-separated list of default admin logins. Probably your own login, e.g., `v8vgGbx_TuKkBabAyn7nsQ`.
   - `DEFAULT_PERMISSIONS`: Comma-separated list of default permissions for new users. You can find a list of available permissions in the [Permissions](#permissions) section.
-  - **NADEO Configurations**: Make sure to update `NADEO_CLIENT_ID`, `NADEO_CLIENT_SECRET`, `NADEO_REDIRECT_URI`, `NADEO_SERVER_LOGIN`, `NADEO_SERVER_PASSWORD` and `NADEO_CONTACT` with your valid NADEO API credentials. Nadeo API credentials can be obtained from the [Nadeo API manager](https://api.trackmania.com/manager). And the server login and password can be obtained from the [dedicated server manager](https://www.trackmania.com/player/dedicated-servers).
-  - `HETZNER_KEY`: If you are using the Hetzner Cloud API, make sure to set the this environment variable so that your API Tokens will be encrypted and stored securely in the database. This variable can be any random string, e.g., `myhetznerkey`.
-  - `LOG_LEVEL`: Set the log level for the GoControlPanel, this can be `trace`, `debug`, `info`, `warn`, `error` or `fatal`. The default is `info`.
-  - `PLAUSIBLE_API_HOST`: Set the Plausible API host for analytics, e.g., `analytics.mywebsite.com`. This is optional and can be left empty if you don't want to use Plausible analytics.
+  - **NADEO Configuration**: Make sure to update `NADEO_CLIENT_ID`, `NADEO_CLIENT_SECRET`, `NADEO_REDIRECT_URI`, `NADEO_SERVER_LOGIN`, `NADEO_SERVER_PASSWORD` and `NADEO_CONTACT` with your valid NADEO API credentials. Nadeo API credentials can be obtained from the [Nadeo API manager](https://api.trackmania.com/manager). The server login and password can be obtained from the [Dedicated Server Manager](https://www.trackmania.com/player/dedicated-servers).
+  - `HETZNER_KEY`: If you are using the Hetzner Cloud API, set this environment variable so that your API tokens are encrypted before being stored in the database. This can be any random string, e.g., `myhetznerkey`.
+  - `LOG_LEVEL`: Set the log level for GoControlPanel. Supported values are `trace`, `debug`, `info`, `warn`, `error` and `fatal`. The default is `info`.
+  - `PLAUSIBLE_API_HOST`: Set the Plausible API host for analytics, e.g., `analytics.mywebsite.com`. This is optional and can be left empty if you do not want to use Plausible analytics.
+  - **Sentry Configuration (Optional)**: GoControlPanel can send errors, performance traces, session replays and logs to Sentry. No Sentry configuration is required unless you want to enable telemetry.
+    - `NEXT_PUBLIC_SENTRY_ENABLED`: Set to `true` to enable Sentry.
+    - `NEXT_PUBLIC_SENTRY_DSN`: The Sentry DSN. Required when Sentry is enabled.
+    - `SENTRY_SERVER_DSN` (optional): Server-side DSN. Defaults to `NEXT_PUBLIC_SENTRY_DSN`.
+    - `SENTRY_ENVIRONMENT` (optional): Environment reported to Sentry. Defaults to `NODE_ENV` (production).
+    - `SENTRY_TRACES_SAMPLE_RATE` (optional): Performance trace sampling rate (`0`-`1`). Defaults to `1`.
+    - `SENTRY_PROFILES_SAMPLE_RATE` (optional): Profiling sampling rate (`0`-`1`). Defaults to `1`.
+    - `SENTRY_REPLAYS_SESSION_SAMPLE_RATE` (optional): Session Replay sampling rate (`0`-`1`). Defaults to `1`.
+    - `SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE` (optional): Session Replay sampling rate when an error occurs (`0`-`1`). Defaults to `1`.
+    - `SENTRY_SEND_DEFAULT_PII` (optional): Whether to send personally identifiable information. Defaults to `false`.
+    - `SENTRY_ATTACH_STACKTRACE` (optional): Whether to attach stack traces to supported log messages. Defaults to `true`.
+    - `SENTRY_ENABLE_LOGS` (optional): Whether to send application logs to Sentry. Defaults to `true`.
+    - `NEXT_PUBLIC_SENTRY_TUNNEL_ROUTE` (optional): Optional tunnel route for browser events.
+    - `SENTRY_TUNNEL_ROUTE` (optional): Optional tunnel route for server-side events.
+    - `SENTRY_MAX_BREADCRUMBS` (optional): Maximum number of breadcrumbs attached to each event. Defaults to `100`.
+    - `SENTRY_NORMALIZE_DEPTH` (optional): Maximum object serialization depth. Defaults to `3`.
+    - `SENTRY_IGNORE_ERRORS` (optional): Comma-separated list of error messages that should not be reported.
 
 - **Dedicated Server Environment Variables**:
   - `TM_MASTERSERVER_LOGIN`: Login for the dedicated server (same as `NADEO_SERVER_LOGIN` in GoControlPanel).
@@ -241,7 +257,6 @@ gocontrolpanel:
     DATABASE_URL: mysql://gocontrolpanel:VettePanel123@db:3306/gocontrolpanel
     HETZNER_KEY:
     LOG_LEVEL: info
-    PLAUSIBLE_API_HOST:
   depends_on:
     - db
     - redis
@@ -299,17 +314,33 @@ FLUSH PRIVILEGES;
 
 ### 4. Modify the environment variables
 
-Make sure to update the environment variables for the added services in your `docker-compose.yml` file:
+Make sure to update or add the environment variables for the added services in your `docker-compose.yml` file:
 
 - **GoControlPanel Environment Variables**:
-
   - `NEXTAUTH_URL`, `NEXTAUTH_SECRET`: NextAuth configuration for authentication. `NEXTAUTH_SECRET` can be any random string, e.g., `VettePanel123`.
   - `DEFAULT_ADMINS`: Comma-separated list of default admin logins.
   - `DEFAULT_PERMISSIONS`: Comma-separated list of default permissions for new users. You can find a list of available permissions in the [Permissions](#permissions) section.
-  - **NADEO Configurations**: Make sure to update `NADEO_CLIENT_ID`, `NADEO_CLIENT_SECRET`, `NADEO_REDIRECT_URI`, `NADEO_SERVER_LOGIN`, `NADEO_SERVER_PASSWORD` and `NADEO_CONTACT` with your valid NADEO API credentials. Nadeo API credentials can be obtained from the [Nadeo API manager](https://api.trackmania.com/manager). And the server login and password can be found in your existing stack configuration under the `dedicated` or `trackmania` service.
-  - `HETZNER_KEY`: If you are using the Hetzner Cloud API, make sure to set the this environment variable so that your API Tokens will be encrypted and stored securely in the database. This variable can be any random string, e.g., `myhetznerkey`.
-  - `LOG_LEVEL`: Set the log level for the GoControlPanel, this can be `trace`, `debug`, `info`, `warn`, `error` or `fatal`. The default is `info`.
-  - `PLAUSIBLE_API_HOST`: Set the Plausible API host for analytics, e.g., `analytics.mywebsite.com`. This is optional and can be left empty if you don't want to use Plausible analytics.
+  - **NADEO Configuration**: Make sure to update `NADEO_CLIENT_ID`, `NADEO_CLIENT_SECRET`, `NADEO_REDIRECT_URI`, `NADEO_SERVER_LOGIN`, `NADEO_SERVER_PASSWORD` and `NADEO_CONTACT` with your valid NADEO API credentials. Nadeo API credentials can be obtained from the [Nadeo API manager](https://api.trackmania.com/manager). The server login and password can be found in your existing stack configuration under the `dedicated` or `trackmania` service.
+  - `HETZNER_KEY`: If you are using the Hetzner Cloud API, set this environment variable so that your API tokens are encrypted before being stored in the database. This can be any random string, e.g., `myhetznerkey`.
+  - `LOG_LEVEL`: Set the log level for GoControlPanel. Supported values are `trace`, `debug`, `info`, `warn`, `error` and `fatal`. The default is `info`.
+  - `PLAUSIBLE_API_HOST`: Set the Plausible API host for analytics, e.g., `analytics.mywebsite.com`. This is optional and can be left empty if you do not want to use Plausible analytics.
+  - **Sentry Configuration (Optional)**: GoControlPanel can send errors, performance traces, session replays and logs to Sentry. No Sentry configuration is required unless you want to enable telemetry.
+    - `NEXT_PUBLIC_SENTRY_ENABLED`: Set to `true` to enable Sentry.
+    - `NEXT_PUBLIC_SENTRY_DSN`: The Sentry DSN. Required when Sentry is enabled.
+    - `SENTRY_SERVER_DSN` (optional): Server-side DSN. Defaults to `NEXT_PUBLIC_SENTRY_DSN`.
+    - `SENTRY_ENVIRONMENT` (optional): Environment reported to Sentry. Defaults to `NODE_ENV` (production).
+    - `SENTRY_TRACES_SAMPLE_RATE` (optional): Performance trace sampling rate (`0`-`1`). Defaults to `1`.
+    - `SENTRY_PROFILES_SAMPLE_RATE` (optional): Profiling sampling rate (`0`-`1`). Defaults to `1`.
+    - `SENTRY_REPLAYS_SESSION_SAMPLE_RATE` (optional): Session Replay sampling rate (`0`-`1`). Defaults to `1`.
+    - `SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE` (optional): Session Replay sampling rate when an error occurs (`0`-`1`). Defaults to `1`.
+    - `SENTRY_SEND_DEFAULT_PII` (optional): Whether to send personally identifiable information. Defaults to `false`.
+    - `SENTRY_ATTACH_STACKTRACE` (optional): Whether to attach stack traces to supported log messages. Defaults to `true`.
+    - `SENTRY_ENABLE_LOGS` (optional): Whether to send application logs to Sentry. Defaults to `true`.
+    - `NEXT_PUBLIC_SENTRY_TUNNEL_ROUTE` (optional): Optional tunnel route for browser events.
+    - `SENTRY_TUNNEL_ROUTE` (optional): Optional tunnel route for server-side events.
+    - `SENTRY_MAX_BREADCRUMBS` (optional): Maximum number of breadcrumbs attached to each event. Defaults to `100`.
+    - `SENTRY_NORMALIZE_DEPTH` (optional): Maximum object serialization depth. Defaults to `3`.
+    - `SENTRY_IGNORE_ERRORS` (optional): Comma-separated list of error messages that should not be reported.
 
 > **Note:** Make sure you are using the correct service name for the dedicated server. For **PyPlanet**, the service name is usually `dedicated`, and for **EvoSC**, it is `trackmania`.
 

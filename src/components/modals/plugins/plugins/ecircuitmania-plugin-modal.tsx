@@ -9,6 +9,7 @@ import { ECMPluginConfig } from "@/types/plugins/ecm";
 import { IconDownload, IconX } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { DefaultModalProps } from "../../default-props";
+import { ServerError } from "@/types/responses";
 
 export default function EcircuitmaniaPluginModal({
   serverId,
@@ -42,7 +43,7 @@ export default function EcircuitmaniaPluginModal({
         data.pluginId,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "ExportServerPluginConfigError");
       }
 
       const blob = new Blob([JSON.stringify(pluginConfig, null, 2)], {

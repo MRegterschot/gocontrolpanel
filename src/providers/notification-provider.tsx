@@ -6,6 +6,7 @@ import {
 import useWebSocket from "@/hooks/use-websocket";
 import { logger } from "@/lib/logger";
 import { Notifications } from "@/lib/prisma/generated";
+import { ServerError } from "@/types/responses";
 import React, {
   createContext,
   useCallback,
@@ -27,8 +28,9 @@ const NotificationContext = createContext<NotificationContextType | null>(null);
 export const useNotifications = () => {
   const ctx = useContext(NotificationContext);
   if (!ctx) {
-    throw new Error(
+    throw new ServerError(
       "useNotifications must be used within a NotificationProvider",
+      "UseNotificationsError",
     );
   }
   return ctx;
@@ -55,7 +57,7 @@ export const NotificationProvider = ({
       try {
         const { data, error } = await getNotifications();
         if (error) {
-          throw new Error(error);
+          throw new ServerError(error, "FetchNotificationsError");
         }
         setNotifications(data);
       } catch (error) {
@@ -91,7 +93,7 @@ export const NotificationProvider = ({
     try {
       const { data, error } = await markNotificationAsRead(id);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "MarkNotificationAsReadError");
       }
       setNotifications((prev) => prev.map((n) => (n.id === id ? data : n)));
     } catch (error) {

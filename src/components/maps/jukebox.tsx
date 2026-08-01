@@ -18,6 +18,7 @@ import { DndList } from "../dnd/dnd-list";
 import DndListHeaders from "../dnd/dnd-list-headers";
 import { DataTable } from "../table/data-table";
 import { Button } from "../ui/button";
+import { ServerError } from "@/types/responses";
 
 interface JukeboxProps {
   serverId: string;
@@ -49,7 +50,7 @@ export default function Jukebox({ serverId, jukebox, maps }: JukeboxProps) {
     try {
       const { error } = await setJukebox(serverId, jukeboxOrder);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "SetJukeboxError");
       }
       setDefaultJukebox(jukeboxOrder);
 
@@ -70,7 +71,7 @@ export default function Jukebox({ serverId, jukebox, maps }: JukeboxProps) {
     try {
       const { data: newMap, error } = await addMapToJukebox(serverId, map);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "AddMapToJukeboxError");
       }
       setJukeboxOrder((prev) => [...prev, newMap]);
       setDefaultJukebox((prev) => [...prev, newMap]);
@@ -86,7 +87,7 @@ export default function Jukebox({ serverId, jukebox, maps }: JukeboxProps) {
     try {
       const { error } = await clearJukebox(serverId);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "ClearJukeboxError");
       }
       setJukeboxOrder([]);
       setDefaultJukebox([]);

@@ -15,6 +15,7 @@ import {
 
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { ServerError } from "@/types/responses";
 
 const Form = FormProvider;
 
@@ -50,7 +51,7 @@ const useFormField = () => {
   const fieldState = getFieldState(fieldContext.name, formState);
 
   if (!fieldContext) {
-    throw new Error("useFormField should be used within <FormField>");
+    throw new ServerError("useFormField should be used within <FormField>", "UseFormFieldError");
   }
 
   const { id } = itemContext;

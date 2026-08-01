@@ -24,6 +24,7 @@ import { doServerAction } from "../actions";
 import { logger } from "../logger";
 import { withRateLimit } from "../ratelimiter";
 import { getKeyAccountNames, getRedisClient } from "../redis";
+import { reportException } from "../sentry/report";
 
 const getTokenKey = (audience: string) => `nadeo:tokens:${audience}`;
 const CREDENTIALS_TOKEN_KEY = "nadeo:credentials_token";
@@ -72,8 +73,10 @@ export async function authenticate(
       },
       "Failed to authenticate with Nadeo",
     );
+    reportException(response);
     throw new ServerError(
       `Failed to authenticate with Nadeo: ${response.status}`,
+      "NadeoAuthenticationError",
     );
   }
 
@@ -92,9 +95,12 @@ export async function authenticateCredentials(): Promise<string> {
   const clientSecret = config.NADEO.CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
-    throw new ServerError(
+    const error = new ServerError(
       "Nadeo client ID and secret are required for authentication.",
+      "NadeoClientCredentialsError",
     );
+    reportException(error);
+    throw error;
   }
 
   const meta = {
@@ -130,8 +136,10 @@ export async function authenticateCredentials(): Promise<string> {
       "Failed to authenticate with Trackmania API",
     );
 
+    reportException(response, meta);
     throw new ServerError(
       `Failed to authenticate with Trackmania API: ${response.status}`,
+      "TrackmaniaAuthenticationError",
     );
   }
 
@@ -352,8 +360,12 @@ export async function downloadFile(
         },
         "Failed to download map",
       );
-      throw new Error(
+
+      reportException(res, meta);
+
+      throw new ServerError(
         `Failed to download map: ${res.status} ${res.statusText}`,
+        "NadeoDownloadError",
       );
     }
 
@@ -362,9 +374,13 @@ export async function downloadFile(
       type: "application/x-gbx",
     });
   } catch (err) {
+    reportException(err, meta);
     if ((err as any).name === "AbortError") {
       logger.error({ meta, url, fileName }, "Download for map timed out");
-      throw new Error(`Download for map ${fileName} timed out`);
+      throw new ServerError(
+        `Download for map ${fileName} timed out`,
+        "NadeoDownloadTimeoutError",
+      );
     }
     throw err;
   }
@@ -402,7 +418,10 @@ export async function getMapRecordsByAccounts(
 ): Promise<MapRecordsResponse> {
   const { data, error } = await getMapsInfo([mapUid]);
   if (error || data.length === 0) {
-    throw new Error("Failed to get map info for records retrieval");
+    throw new ServerError(
+      "Failed to get map info for records retrieval",
+      "NadeoMapInfoError",
+    );
   }
 
   const mapId = data[0].mapId;
@@ -443,6 +462,7 @@ export async function doRequest<T>(
     }
 
     if (!res.ok) {
+      reportException(res, meta);
       logger.error(
         {
           meta,
@@ -455,7 +475,10 @@ export async function doRequest<T>(
         },
         "Failed to request Nadeo API",
       );
-      throw new Error(`Request failed: ${res.status} ${res.statusText}`);
+      throw new ServerError(
+        `Request failed: ${res.status} ${res.statusText}`,
+        "NadeoRequestError",
+      );
     }
 
     return res.json();
@@ -493,6 +516,7 @@ export async function doCredentialsRequest<T>(
     }
 
     if (!res.ok) {
+      reportException(res, meta);
       logger.error(
         {
           meta,
@@ -505,7 +529,10 @@ export async function doCredentialsRequest<T>(
         },
         "Failed to request Trackmania API",
       );
-      throw new Error(`Request failed: ${res.status} ${res.statusText}`);
+      throw new ServerError(
+        `Request failed: ${res.status} ${res.statusText}`,
+        "TrackmaniaRequestError",
+      );
     }
 
     return res.json();

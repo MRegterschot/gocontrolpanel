@@ -7,7 +7,7 @@ import {
   HetznerVolume,
   HetznerVolumesResponse,
 } from "@/types/api/hetzner/volumes";
-import { PaginationResponse, ServerResponse } from "@/types/responses";
+import { PaginationResponse, ServerError, ServerResponse } from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
 import { logAudit } from "../database/server-only/audit-logs";
 import { getApiToken, setRateLimit } from "./util";
@@ -27,7 +27,7 @@ export async function getHetznerVolumesPaginated(
     async () => {
       const { projectId } = fetchArgs || {};
       if (!projectId) {
-        throw new Error("Project ID is required to fetch Hetzner volumes.");
+        throw new ServerError("Project ID is required to fetch Hetzner volumes.", "ProjectIdMissing");
       }
 
       const token = await getApiToken(projectId);

@@ -9,6 +9,7 @@ import { type PlayerInfo as TPlayerInfo } from "@/types/player";
 import { PlayerInfoPluginConfig } from "@/types/plugins/player-info";
 import slugid from "slugid";
 import Plugin from "..";
+import { reportException } from "@/lib/sentry/report";
 
 type PlayerInfo = {
   login: string;
@@ -114,6 +115,7 @@ export default class PlayerInfoPlugin extends Plugin<PlayerInfoPluginConfig | nu
         localRecord = record ? record.time : 0;
       }
     } catch (error) {
+      reportException(error, meta);
       this.clientManager.log.error(
         { meta, error },
         "Error fetching player records",
@@ -132,6 +134,7 @@ export default class PlayerInfoPlugin extends Plugin<PlayerInfoPluginConfig | nu
         personalBest = pbRecord ? pbRecord.recordScore.time : 0;
       }
     } catch (error) {
+      reportException(error, meta);
       this.clientManager.log.error(
         { meta, error },
         "Error fetching personal best",
@@ -180,6 +183,7 @@ export default class PlayerInfoPlugin extends Plugin<PlayerInfoPluginConfig | nu
         players,
       );
     } catch (error) {
+      reportException(error, meta);
       this.clientManager.log.error(
         { meta, error },
         "Error fetching player records",
@@ -195,6 +199,7 @@ export default class PlayerInfoPlugin extends Plugin<PlayerInfoPluginConfig | nu
           .map((p) => slugid.decode(p)),
       );
     } catch (error) {
+      reportException(error, meta);
       this.clientManager.log.error(
         { meta, error },
         "Error fetching personal bests",

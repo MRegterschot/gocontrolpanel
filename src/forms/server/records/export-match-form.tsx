@@ -16,6 +16,7 @@ import {
   ExportMatchSchema,
   ExportMatchSchemaType,
 } from "./export-match-schema";
+import { ServerError } from "@/types/responses";
 
 const POSSIBLE_VALUES = [
   {
@@ -86,7 +87,7 @@ export default function ExportMatchForm({
         values.values,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "ExportMatchToCSVError");
       }
 
       const blob = new Blob([data], { type: "text/csv" });

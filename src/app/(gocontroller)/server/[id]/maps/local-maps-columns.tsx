@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getErrorMessage } from "@/lib/utils";
 import { LocalMapInfo } from "@/types/map";
+import { ServerError } from "@/types/responses";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { useTransition } from "react";
@@ -72,7 +73,7 @@ export const createColumns = (
           try {
             const { error } = await addMap(serverId, localMap.FileName);
             if (error) {
-              throw new Error(error);
+              throw new ServerError(error, "AddMapError");
             }
             toast.success("Map successfully added");
             refreshMapList();

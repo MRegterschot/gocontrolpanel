@@ -11,6 +11,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
 import PlaylistMapCard from "./playlist-map-card";
+import { ServerError } from "@/types/responses";
 
 export default function OfficialCampaignMaps({
   serverId,
@@ -49,7 +50,7 @@ export default function OfficialCampaignMaps({
 
       const { error } = await downloadCampaign(serverId, campaign);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "DownloadCampaignError");
       }
 
       toast.success("Campaign successfully downloaded", {
@@ -88,7 +89,7 @@ export default function OfficialCampaignMaps({
 
       const { error } = await addCampaignToServer(serverId, campaign);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "AddCampaignToServerError");
       }
 
       toast.success("Campaign successfully added to server");

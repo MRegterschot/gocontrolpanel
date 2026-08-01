@@ -22,6 +22,7 @@ import {
 import { getErrorMessage, hasPermissionSync } from "@/lib/utils";
 import { routePermissions } from "@/routes";
 import { HetznerServer } from "@/types/api/hetzner/servers";
+import { ServerError } from "@/types/responses";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -161,7 +162,7 @@ export const createServersColumns = (
               server.id,
             );
             if (error) {
-              throw new Error(error);
+              throw new ServerError(error, "DeleteServerError");
             }
             refetch();
             toast.success("Server successfully deleted");

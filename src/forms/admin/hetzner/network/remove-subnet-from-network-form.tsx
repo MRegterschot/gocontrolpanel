@@ -14,6 +14,7 @@ import {
   RemoveSubnetFromNetworkSchema,
   RemoveSubnetFromNetworkSchemaType,
 } from "./remove-subnet-from-network-schema";
+import { ServerError } from "@/types/responses";
 
 export default function RemoveSubnetFromNetworkForm({
   projectId,
@@ -36,7 +37,7 @@ export default function RemoveSubnetFromNetworkForm({
         values,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "RemoveSubnetFromNetworkError");
       }
 
       toast.success("Subnet successfully removed from network");

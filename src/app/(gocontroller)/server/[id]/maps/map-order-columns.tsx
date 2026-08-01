@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Maps } from "@/lib/prisma/generated";
 import { getErrorMessage } from "@/lib/utils";
+import { ServerError } from "@/types/responses";
 import { MoreHorizontal } from "lucide-react";
 import { memo, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -36,7 +37,7 @@ const MapActionsCell = memo(function MapActionsCell({
       try {
         const { error } = await removeMap(serverId, data.path);
         if (error) {
-          throw new Error(error);
+          throw new ServerError(error, "RemoveMapError");
         }
         onRemoveMap(data);
         toast.success("Map successfully removed");

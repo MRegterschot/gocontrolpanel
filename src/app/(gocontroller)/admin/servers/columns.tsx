@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getErrorMessage, hasPermissionSync } from "@/lib/utils";
 import { routePermissions } from "@/routes";
+import { ServerError } from "@/types/responses";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -99,7 +100,7 @@ export const createColumns = (
           try {
             const { error } = await deleteServer(server.id);
             if (error) {
-              throw new Error(error);
+              throw new ServerError(error, "DeleteServerError");
             }
             refetch();
             toast.success("Server successfully deleted");

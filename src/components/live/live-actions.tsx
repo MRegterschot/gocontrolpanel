@@ -10,6 +10,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
+import { ServerError } from "@/types/responses";
 
 interface LiveActionsProps {
   serverId: string;
@@ -28,7 +29,7 @@ export default function LiveActions({
     try {
       const { error } = await pauseMatch(serverId, !isPaused);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "PauseMatchError");
       }
 
       toast.success(`Game successfully ${isPaused ? "resumed" : "paused"}`);
@@ -47,7 +48,7 @@ export default function LiveActions({
         [],
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "EndWarmUpRoundError");
       }
 
       toast.success("Warmup round successfully ended");
@@ -66,7 +67,7 @@ export default function LiveActions({
         [],
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "EndWarmUpError");
       }
 
       toast.success("Warmup successfully ended");

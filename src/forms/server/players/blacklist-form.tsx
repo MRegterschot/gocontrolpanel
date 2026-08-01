@@ -20,6 +20,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { blacklistSchema, BlacklistSchemaType } from "./blacklist-schema";
+import { ServerError } from "@/types/responses";
 
 export default function BlacklistForm({
   serverId,
@@ -43,7 +44,7 @@ export default function BlacklistForm({
       const filename = form.getValues("filename");
       const { error } = await loadBlacklist(serverId, filename);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "LoadBlacklistError");
       }
 
       toast.success("Blacklist successfully loaded");
@@ -60,7 +61,7 @@ export default function BlacklistForm({
       const filename = form.getValues("filename");
       const { error } = await saveBlacklist(serverId, filename);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "SaveBlacklistError");
       }
 
       toast.success("Blacklist successfully saved");
@@ -75,7 +76,7 @@ export default function BlacklistForm({
     try {
       const { error } = await cleanBlacklist(serverId);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "CleanBlacklistError");
       }
 
       toast.success("Blacklist cleared");
