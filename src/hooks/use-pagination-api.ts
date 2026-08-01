@@ -1,5 +1,5 @@
 import { logger } from "@/lib/logger";
-import { PaginationResponse, ServerResponse } from "@/types/responses";
+import { PaginationResponse, ServerError, ServerResponse } from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
 import { useEffect, useState } from "react";
 
@@ -39,7 +39,7 @@ export const usePaginationAPI = <TData, TFetch>(
       } = await fetchData(pagination, sorting, filter, fetchArgs);
 
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "FetchDataFromAPIError");
       }
 
       setData(fetchedData);

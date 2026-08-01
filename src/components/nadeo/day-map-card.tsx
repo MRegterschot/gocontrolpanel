@@ -17,6 +17,7 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { Separator } from "../ui/separator";
+import { ServerError } from "@/types/responses";
 
 export default function DayMapCard({
   serverId,
@@ -53,7 +54,7 @@ export default function DayMapCard({
         day.map.fileName,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "DownloadMapFromUrlError");
       }
 
       toast.success("Map successfully downloaded", {
@@ -90,7 +91,7 @@ export default function DayMapCard({
         day.map.fileName,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "AddMapToServerError");
       }
 
       toast.success("Map successfully added to server");

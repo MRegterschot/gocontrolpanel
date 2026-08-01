@@ -15,6 +15,7 @@ import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { ChatConfigSchema, ChatConfigSchemaType } from "./chatconfig-schema";
+import { ServerError } from "@/types/responses";
 
 export default function ChatConfigForm({
   serverId,
@@ -47,7 +48,7 @@ export default function ChatConfigForm({
         disconnectMessage: values.disconnectMessage ?? null,
       });
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "UpdateServerChatConfigError");
       }
       toast.success("Chat configuration successfully saved");
     } catch (error) {

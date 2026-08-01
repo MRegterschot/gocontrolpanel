@@ -9,7 +9,7 @@ import {
 import { getLogger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
 import { TMXMappackSearch } from "@/types/api/tmx";
-import { ServerResponse } from "@/types/responses";
+import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
 import { uploadFiles } from "../filemanager";
 import { addMap } from "../gbx/map";
@@ -71,7 +71,7 @@ export async function downloadMappack(
           { mappackId, mappackName },
           "File manager is not healthy",
         );
-        throw new Error("File manager is not healthy");
+        throw new ServerError("File manager is not healthy", "FileManagerNotHealthy");
       }
 
       const mappackSearch = await searchTMXMaps(
@@ -87,7 +87,7 @@ export async function downloadMappack(
           { mappackId, mappackName },
           "Found no downloadable maps in mappack",
         );
-        throw new Error("Found no downloadable maps in mappack");
+        throw new ServerError("Found no downloadable maps in mappack", "NoDownloadableMapsInMappack");
       }
 
       if (mappackSearch.More) {
@@ -98,7 +98,7 @@ export async function downloadMappack(
           { mappackId, mappackName },
           "Cannot download mappack with more than 100 maps",
         );
-        throw new Error("Cannot download mappack with more than 100 maps");
+        throw new ServerError("Cannot download mappack with more than 100 maps", "MappackTooLarge");
       }
 
       const downloadResults = await Promise.allSettled(
@@ -133,7 +133,7 @@ export async function downloadMappack(
           { mappackId, mappackName },
           error,
         );
-        throw new Error(error);
+        throw new ServerError(error, "UploadFilesError");
       }
 
       await logAudit(
@@ -146,7 +146,7 @@ export async function downloadMappack(
 
       if (errors > 0) {
         log.error({ meta, errors }, "Failed to download some maps");
-        throw new Error(`Failed to download ${errors} maps`);
+        throw new ServerError(`Failed to download ${errors} maps`, "DownloadMapsError");
       }
 
       return downloadResults
@@ -190,7 +190,7 @@ export async function addMappackToServer(
           { mappackId, mappackName },
           error,
         );
-        throw new Error(error);
+        throw new ServerError(error, "DownloadMappackError");
       }
 
       const addMapPromises = fileNames.map((fileName) =>
@@ -217,7 +217,7 @@ export async function addMappackToServer(
 
       if (errors > 0) {
         log.error({ meta, errors }, "Failed to add some maps");
-        throw new Error(`Failed to add ${errors} maps`);
+        throw new ServerError(`Failed to add ${errors} maps`, "AddMapsError");
       }
     },
   );

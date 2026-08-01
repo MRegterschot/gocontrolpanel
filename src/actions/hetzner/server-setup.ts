@@ -14,7 +14,7 @@ import {
 import { connectToSSHServer, executeSSHScript } from "@/lib/ssh";
 import { generateRandomString, getErrorMessage, sleep } from "@/lib/utils";
 import { HetznerServer, HetznerServerCache } from "@/types/api/hetzner/servers";
-import { ServerResponse } from "@/types/responses";
+import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
 import {
   createDBHetznerServer,
@@ -110,7 +110,7 @@ export async function createAdvancedServerSetup(
         const { data, error } = await createHetznerNetwork(projectId, network);
         if (error) {
           la(error);
-          throw new Error(error);
+          throw new ServerError(error, "HetznerNetworkCreationError");
         }
         networkId = data.id;
       } else if (server.controller && network?.existing) {
@@ -119,8 +119,9 @@ export async function createAdvancedServerSetup(
 
       if (!networkId && server.controller && !database?.local) {
         la("Network must be created or selected if the database is not local.");
-        throw new Error(
+        throw new ServerError(
           "Network must be created or selected if the database is not local.",
+          "HetznerNetworkNotSelected",
         );
       }
 
@@ -131,8 +132,9 @@ export async function createAdvancedServerSetup(
           la(
             "Database name, server type and location is required for new databases.",
           );
-          throw new Error(
+          throw new ServerError(
             "Database name, server type and location is required for new databases.",
+            "HetznerDatabaseCreationError",
           );
         }
 
@@ -145,7 +147,7 @@ export async function createAdvancedServerSetup(
         });
         if (error) {
           la(error);
-          throw new Error(error);
+          throw new ServerError(error, "HetznerDatabaseCreationError");
         }
         createdDatabase = data;
         databaseId = data.id;
@@ -155,7 +157,7 @@ export async function createAdvancedServerSetup(
         if (!network?.databaseInNetwork) {
           if (!networkId) {
             la("Network must be selected for existing databases.");
-            throw new Error("Network must be selected for existing databases.");
+            throw new ServerError("Network must be selected for existing databases.", "HetznerNetworkNotSelected");
           }
 
           const { error: dbError } = await attachHetznerServerToNetwork(
@@ -192,7 +194,7 @@ export async function createAdvancedServerSetup(
 
           if (dbError) {
             la(dbError);
-            throw new Error(dbError);
+            throw new ServerError(dbError, "HetznerDatabaseNetworkAttachmentError");
           }
         }
       }
@@ -332,7 +334,7 @@ export async function createAdvancedServerSetup(
           });
 
           if (!existingServer) {
-            throw new Error("Server not found");
+            throw new ServerError("Server not found", "ServerNotFound");
           }
 
           await db.servers.update({
@@ -373,8 +375,9 @@ export async function createAdvancedServerSetup(
             "Network must be created or selected for controller servers.",
             serverId,
           );
-          throw new Error(
+          throw new ServerError(
             "Network must be created or selected for controller servers.",
+            "HetznerNetworkNotSelected",
           );
         }
 
@@ -388,7 +391,7 @@ export async function createAdvancedServerSetup(
 
         if (serverError) {
           la(serverError, serverId);
-          throw new Error(serverError);
+          throw new ServerError(serverError, "HetznerServerNetworkAttachmentError");
         }
       }
 
@@ -472,7 +475,7 @@ export async function createSimpleServerSetup(
         });
         if (error) {
           la(error);
-          throw new Error(error);
+          throw new ServerError(error, "HetznerNetworkCreationError");
         }
         networkId = data.id;
       } else if (server.controller) {
@@ -483,8 +486,9 @@ export async function createSimpleServerSetup(
       if (server.controller && database?.new && !database?.local) {
         if (!database.name || !database.serverType) {
           la("Database name and server type is required for new databases.");
-          throw new Error(
+          throw new ServerError(
             "Database name and server type is required for new databases.",
+            "HetznerDatabaseCreationError",
           );
         }
 
@@ -497,7 +501,7 @@ export async function createSimpleServerSetup(
         });
         if (error) {
           la(error);
-          throw new Error(error);
+          throw new ServerError(error, "HetznerDatabaseCreationError");
         }
         databaseId = data.id;
       } else if (server.controller && database?.existing) {
@@ -632,7 +636,7 @@ export async function createSimpleServerSetup(
           });
 
           if (!existingServer) {
-            throw new Error("Server not found");
+            throw new ServerError("Server not found", "ServerNotFound");
           }
 
           await db.servers.update({
@@ -680,7 +684,7 @@ export async function createSimpleServerSetup(
 
           if (dbError) {
             la(dbError, serverId);
-            throw new Error(dbError);
+            throw new ServerError(dbError, "HetznerDatabaseNetworkAttachmentError");
           }
         }
 
@@ -694,7 +698,7 @@ export async function createSimpleServerSetup(
 
         if (serverError) {
           la(serverError, serverId);
-          throw new Error(serverError);
+          throw new ServerError(serverError, "HetznerServerNetworkAttachmentError");
         }
       }
 
@@ -735,19 +739,19 @@ export async function addTrackmaniaServer(
 
       if (!hetznerServer) {
         la("Server not found");
-        throw new Error("Server not found");
+        throw new ServerError("Server not found", "HetznerServerNotFound");
       }
 
       const dbHetznerServer = await getDBHetznerServer(serverId);
 
       if (!dbHetznerServer) {
         la("DB Server not found");
-        throw new Error("DB Server not found");
+        throw new ServerError("DB Server not found", "DBHetznerServerNotFound");
       }
 
       if (!dbHetznerServer.privateKey) {
         la("SSH private key not found for the server");
-        throw new Error("SSH private key not found for the server");
+        throw new ServerError("SSH private key not found for the server", "SSHPrivateKeyNotFound");
       }
 
       const tmServers: number[] = [];
@@ -794,7 +798,7 @@ export async function addTrackmaniaServer(
       if (result.stderr) {
         // Log last 100 characters of stderr
         la(`Error executing command on server: ${result.stderr.slice(-100)}`);
-        throw new Error(`Error executing command on server: ${result.stderr}`);
+        throw new ServerError(`Error executing command on server: ${result.stderr}`, "SSHCommandExecutionError");
       }
 
       // Add new labels to the server for the new TM server
@@ -865,7 +869,7 @@ export async function addTrackmaniaServer(
           });
 
           if (!existingServer) {
-            throw new Error("Server not found");
+            throw new ServerError("Server not found", "ServerNotFound");
           }
 
           await db.servers.update({
@@ -924,26 +928,26 @@ export async function deleteTrackmaniaServer(
 
       if (isNaN(tmServerNumber)) {
         la("Invalid TM server number");
-        throw new Error("Invalid TM server number");
+        throw new ServerError("Invalid TM server number", "InvalidTMServerNumber");
       }
 
       const hetznerServer = await getHetznerServer(projectId, serverId);
 
       if (!hetznerServer) {
         la("Server not found");
-        throw new Error("Server not found");
+        throw new ServerError("Server not found", "HetznerServerNotFound");
       }
 
       const dbHetznerServer = await getDBHetznerServer(serverId);
 
       if (!dbHetznerServer) {
         la("DB Server not found");
-        throw new Error("DB Server not found");
+        throw new ServerError("DB Server not found", "DBHetznerServerNotFound");
       }
 
       if (!dbHetznerServer.privateKey) {
         la("SSH private key not found for the server");
-        throw new Error("SSH private key not found for the server");
+        throw new ServerError("SSH private key not found for the server", "SSHPrivateKeyNotFound");
       }
 
       const script = `docker compose -p stack-${tmServerNumber} -f /root/gocontrolpanel-master/hetzner/docker-compose.yml down -v`;
@@ -961,7 +965,7 @@ export async function deleteTrackmaniaServer(
 
       if (result.stderr) {
         la(`Error executing command on server: ${result.stderr.slice(-100)}`);
-        throw new Error(`Error executing command on server: ${result.stderr}`);
+        throw new ServerError(`Error executing command on server: ${result.stderr}`, "SSHCommandExecutionError");
       }
 
       // Remove labels of the deleted TM server

@@ -1,6 +1,7 @@
 import { addMapToServer, downloadMap } from "@/actions/tmx/maps";
 import { cn, getErrorMessage } from "@/lib/utils";
 import { TMXMap } from "@/types/api/tmx";
+import { ServerError } from "@/types/responses";
 import {
   IconDownload,
   IconMapPlus,
@@ -49,7 +50,7 @@ export default function TMXMapCard({
 
       const { error } = await downloadMap(serverId, map.MapId);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "DownloadMapError");
       }
 
       toast.success("Map successfully downloaded", {
@@ -77,7 +78,7 @@ export default function TMXMapCard({
 
       const { error } = await addMapToServer(serverId, map.MapId);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "AddMapToServerError");
       }
 
       toast.success("Map successfully added to server");

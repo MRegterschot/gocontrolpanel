@@ -14,6 +14,7 @@ import {
   RecordsInfoPluginSchema,
   RecordsInfoPluginSchemaType,
 } from "./records-info-schema";
+import { ServerError } from "@/types/responses";
 
 export default function RecordsInfoForm({
   serverId,
@@ -39,7 +40,7 @@ export default function RecordsInfoForm({
     try {
       const { error } = await updateServerPlugin(serverId, pluginId, values);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "UpdateServerPluginError");
       }
       toast.success("Config successfully saved");
       if (onSubmit) {

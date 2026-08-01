@@ -27,6 +27,7 @@ import { useNotifications } from "@/providers/notification-provider";
 import { useServers } from "@/providers/servers-provider";
 import { connectionRoutes, routePermissions, routes } from "@/routes";
 import { UserGroup } from "@/types/auth";
+import { ServerError } from "@/types/responses";
 import { ServerInfo } from "@/types/server";
 import {
   IconActivity,
@@ -265,7 +266,7 @@ export default function NavGroups() {
     try {
       const { error } = await updateGroupOrder(updatedGroups);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "UpdateGroupOrderError");
       }
     } catch (error) {
       toast.error("Failed to update group order", {
@@ -281,7 +282,7 @@ export default function NavGroups() {
     try {
       const { error } = await updateGroupServersOrder(groupId, serversOrder);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "UpdateGroupServersOrderError");
       }
     } catch (error) {
       toast.error("Failed to update server order", {

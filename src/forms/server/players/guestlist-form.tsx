@@ -20,6 +20,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { guestlistSchema, GuestlistSchemaType } from "./guestlist-schema";
+import { ServerError } from "@/types/responses";
 
 export default function GuestlistForm({
   serverId,
@@ -42,7 +43,7 @@ export default function GuestlistForm({
       const filename = form.getValues("filename");
       const { error } = await loadGuestlist(serverId, filename);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "LoadGuestlistError");
       }
 
       toast.success("Guestlist successfully loaded");
@@ -59,7 +60,7 @@ export default function GuestlistForm({
       const filename = form.getValues("filename");
       const { error } = await saveGuestlist(serverId, filename);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "SaveGuestlistError");
       }
 
       toast.success("Guestlist successfully saved");
@@ -74,7 +75,7 @@ export default function GuestlistForm({
     try {
       const { error } = await cleanGuestlist(serverId);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "CleanGuestlistError");
       }
 
       toast.success("Guestlist cleared");

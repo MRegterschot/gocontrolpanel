@@ -27,7 +27,7 @@ export async function syncPlayerList(manager: GbxClientManager) {
 
   if (!playerList || !Array.isArray(playerList)) {
     manager.log.error({ meta, playerList }, "Failed to retrieve player list");
-    throw new Error("Failed to retrieve player list");
+    throw new ServerError("Failed to retrieve player list", "GetPlayerListError");
   }
 
   const mainServerInfo = await manager.client.call("GetMainServerPlayerInfo");
@@ -85,7 +85,7 @@ export async function getPlayerInfo(
 
   if (!playerInfo) {
     logger.error({ meta, login }, "Player not found");
-    throw new Error(`Player with login ${login} not found`);
+    throw new ServerError(`Player with login ${login} not found`, "PlayerNotFound");
   }
 
   return {
@@ -126,7 +126,7 @@ export async function syncMap(
 
   if (!mapInfo) {
     manager.log.error({ meta }, "Failed to get current map info");
-    throw new ServerError("Failed to get current map info");
+    throw new ServerError("Failed to get current map info", "GetCurrentMapInfoError");
   }
 
   let map = await getMapByUid(mapInfo.UId);
@@ -145,7 +145,7 @@ export async function syncMap(
 
     if (!data) {
       manager.log.error({ meta, mapInfo }, "Failed to create map");
-      throw new ServerError(`Failed to create map`);
+      throw new ServerError(`Failed to create map`, "CreateMapError");
     }
 
     map = data;

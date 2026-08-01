@@ -14,6 +14,7 @@ import {
   ServerSettingsSchema,
   ServerSettingsSchemaType,
 } from "./settings-schema";
+import { ServerError } from "@/types/responses";
 
 export default function SettingsForm({ serverId }: { serverId: string }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -31,7 +32,7 @@ export default function SettingsForm({ serverId }: { serverId: string }) {
     try {
       const { error } = await saveServerSettings(serverId, values);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "SaveServerSettingsError");
       }
       toast.success("Settings successfully saved");
     } catch (error) {

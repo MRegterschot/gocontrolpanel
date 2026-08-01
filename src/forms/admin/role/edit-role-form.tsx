@@ -10,6 +10,7 @@ import { IconDeviceFloppy } from "@tabler/icons-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { EditRoleSchema, EditRoleSchemaType } from "./edit-role-schema";
+import { ServerError } from "@/types/responses";
 export default function EditRoleForm({
   role,
   callback,
@@ -34,7 +35,7 @@ export default function EditRoleForm({
         permissions: getList<string>(values.permissions),
       });
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "UpdateRoleError");
       }
       toast.success("Role successfully updated");
       if (callback) {

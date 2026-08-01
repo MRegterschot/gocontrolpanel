@@ -5,7 +5,7 @@ import { getClient } from "@/lib/dbclient";
 import { logger } from "@/lib/logger";
 import { Prisma } from "@/lib/prisma/generated";
 import { UserGroup } from "@/types/auth";
-import { PaginationResponse, ServerResponse } from "@/types/responses";
+import { PaginationResponse, ServerError, ServerResponse } from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
 import { logAudit } from "./server-only/audit-logs";
 
@@ -261,7 +261,7 @@ export async function updateGroupServersOrder(
         { meta, userId, groupId },
         "User is not a member of the group",
       );
-      throw new Error("User is not a member of the group");
+      throw new ServerError("User is not a member of the group", "GroupMemberNotFound");
     }
 
     await db.groupMember.update({

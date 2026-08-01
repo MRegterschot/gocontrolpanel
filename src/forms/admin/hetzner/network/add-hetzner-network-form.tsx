@@ -16,6 +16,7 @@ import {
   AddHetznerNetworkSchema,
   AddHetznerNetworkSchemaType,
 } from "./add-hetzner-network-schema";
+import { ServerError } from "@/types/responses";
 
 export default function AddHetznerNetworkForm({
   projectId,
@@ -34,7 +35,7 @@ export default function AddHetznerNetworkForm({
       try {
         const { data, error } = await getHetznerLocations(projectId);
         if (error) {
-          throw new Error(error);
+          throw new ServerError(error, "GetHetznerLocationsError");
         }
         // Remove duplicates based on network_zone
         const uniqueLocations = Array.from(
@@ -74,7 +75,7 @@ export default function AddHetznerNetworkForm({
     try {
       const { error } = await createHetznerNetwork(projectId, values);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "CreateHetznerNetworkError");
       }
 
       toast.success("Hetzner network successfully created");

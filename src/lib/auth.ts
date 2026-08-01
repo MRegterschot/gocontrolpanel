@@ -23,6 +23,7 @@ import config from "./config";
 import { logger } from "./logger";
 import { GroupRole } from "./prisma/generated";
 import { getList, hasPermissionSync } from "./utils";
+import { ServerError } from "@/types/responses";
 
 const NadeoProvider = (): OAuthConfig<Profile> => ({
   id: "nadeo",
@@ -72,7 +73,7 @@ const NadeoProvider = (): OAuthConfig<Profile> => ({
           },
           "Failed to fetch access token",
         );
-        throw new Error("Failed to fetch access token");
+        throw new ServerError("Failed to fetch access token", "NadeoProviderTokenRequestError");
       }
 
       const data = await response.json();
@@ -97,7 +98,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async session({ session, token }) {
       if (!token) {
-        throw new Error("Token is missing");
+        throw new ServerError("Token is missing", "SessionCallbackTokenMissing");
       }
 
       session.user = {
@@ -138,7 +139,7 @@ export const authOptions: NextAuthOptions = {
                 token.accountId,
               ]);
               if (error) {
-                throw new Error(error);
+                throw new ServerError(error, "GetWebIdentitiesError");
               }
               if (webidentities && webidentities.length > 0) {
                 token.ubiId = webidentities[0].uid;
@@ -166,7 +167,7 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (!dbUser) {
-        throw new Error("Failed to fetch user from database");
+        throw new ServerError("Failed to fetch user from database", "FetchUserFromDatabaseError");
       }
 
       if (dbUser.admin) {
@@ -256,12 +257,12 @@ export async function withAuth(
 ): Promise<Session> {
   const perm = await hasPermission(permissions, id);
   if (!perm) {
-    throw new Error("Unauthorized");
+    throw new ServerError("Unauthorized", "Unauthorized");
   }
 
   const session = await auth();
   if (!session) {
-    throw new Error("Unauthorized");
+    throw new ServerError("Unauthorized", "Unauthorized");
   }
 
   return session;

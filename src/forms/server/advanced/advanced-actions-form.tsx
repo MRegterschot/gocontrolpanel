@@ -17,6 +17,7 @@ import {
   AdvancedActionsSchema,
   AdvancedActionsSchemaType,
 } from "./advanced-actions-schema";
+import { ServerError } from "@/types/responses";
 
 export default function AdvancedActionsForm({
   serverId,
@@ -33,7 +34,7 @@ export default function AdvancedActionsForm({
     try {
       const { data, error } = await connectFakePlayer(serverId);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "ConnectFakePlayerError");
       }
 
       toast.success(`Added fake player ${data}`);
@@ -55,7 +56,7 @@ export default function AdvancedActionsForm({
     try {
       const { error } = await disconnectFakePlayer(serverId, fakePlayerLogin);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "DisconnectFakePlayerError");
       }
 
       if (fakePlayerLogin === "*") {

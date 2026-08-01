@@ -31,6 +31,7 @@ import {
   ScriptGeneratorSchema,
   ScriptGeneratorSchemaType,
 } from "./script-generator-schema";
+import { ServerError } from "@/types/responses";
 
 function getInputType(type: string) {
   switch (type) {
@@ -152,7 +153,7 @@ export default function ScriptGeneratorForm({
         }),
       });
 
-      if (error) throw new Error(error);
+      if (error) throw new ServerError(error, "CreateFileEntryError");
 
       toast.success("Script generated successfully");
     } catch (error) {

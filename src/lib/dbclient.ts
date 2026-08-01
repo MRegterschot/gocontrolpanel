@@ -2,6 +2,7 @@ import "server-only";
 import { appGlobals } from "./global";
 import { logger } from "./logger";
 import { PrismaClient } from "./prisma/generated";
+import { ServerError } from "@/types/responses";
 
 export function getClient(): PrismaClient {
   if (!appGlobals.prisma) {
@@ -24,13 +25,13 @@ export function getClient(): PrismaClient {
         );
       } else {
         logger.error({ meta, error }, "Error connecting to Prisma");
-        throw new Error("Failed to connect to Prisma");
+        throw new ServerError("Failed to connect to Prisma", "PrismaConnectionError");
       }
     }
   }
 
   if (!appGlobals.prisma) {
-    throw new Error("Prisma client is not initialized");
+    throw new ServerError("Prisma client is not initialized", "PrismaClientNotInitialized");
   }
 
   return appGlobals.prisma;

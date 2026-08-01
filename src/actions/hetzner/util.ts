@@ -8,6 +8,7 @@ import {
   HetznerServersResponse,
 } from "@/types/api/hetzner/servers";
 import { HetznerSSHKeyResponse } from "@/types/api/hetzner/ssh-keys";
+import { ServerError } from "@/types/responses";
 import { AxiosResponse } from "axios";
 import "server-only";
 
@@ -16,7 +17,7 @@ export async function getApiToken(projectId: string): Promise<string> {
   const apiTokens = getList<string>(project?.apiTokens);
 
   if (apiTokens.length === 0) {
-    throw new Error("No API tokens found for the Hetzner project.");
+    throw new ServerError("No API tokens found for the Hetzner project.", "HetznerApiTokenNotFound");
   }
 
   return apiTokens[0];

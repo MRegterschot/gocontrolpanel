@@ -17,6 +17,7 @@ import {
   AddSubnetToNetworkSchema,
   AddSubnetToNetworkSchemaType,
 } from "./add-subnet-to-network-schema";
+import { ServerError } from "@/types/responses";
 
 export default function AddSubnetToNetworkForm({
   projectId,
@@ -37,7 +38,7 @@ export default function AddSubnetToNetworkForm({
       try {
         const { data, error } = await getHetznerLocations(projectId);
         if (error) {
-          throw new Error(error);
+          throw new ServerError(error, "GetHetznerLocationsError");
         }
         // Remove duplicates based on network_zone
         const uniqueLocations = Array.from(
@@ -77,7 +78,7 @@ export default function AddSubnetToNetworkForm({
     try {
       const { error } = await addSubnetToNetwork(projectId, network.id, values);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "AddSubnetToNetworkError");
       }
 
       toast.success("Subnet successfully added to network");

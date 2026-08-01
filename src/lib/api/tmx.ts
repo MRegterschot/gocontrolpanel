@@ -3,6 +3,7 @@ import "server-only";
 import config from "../config";
 import { logger } from "../logger";
 import { withRateLimit } from "../ratelimiter";
+import { ServerError } from "@/types/responses";
 
 const TMX_URL = "https://trackmania.exchange";
 
@@ -109,7 +110,7 @@ export async function downloadTMXMap(
         "Failed to download map",
       );
 
-      throw new Error(`Failed to download map: ${res.statusText}`);
+      throw new ServerError(`Failed to download map: ${res.statusText}`, "TMXDownloadError");
     }
 
     const arrayBuffer = await res.arrayBuffer();
@@ -119,7 +120,7 @@ export async function downloadTMXMap(
   } catch (err) {
     if ((err as any).name === "AbortError") {
       logger.error({ meta, mapId, mappackId }, "Download for map timed out");
-      throw new Error(`Download for map ${mapId} timed out`);
+      throw new ServerError(`Download for map ${mapId} timed out`, "TMXDownloadTimeoutError");
     }
     throw err;
   }
@@ -155,7 +156,7 @@ async function doRequest<T>(url: string, key: string): Promise<T> {
         },
         "Failed to fetch data from TMX API",
       );
-      throw new Error(`Failed to fetch data: ${res.statusText}`);
+      throw new ServerError(`Failed to fetch data: ${res.statusText}`, "TMXRequestError");
     }
 
     return res.json();

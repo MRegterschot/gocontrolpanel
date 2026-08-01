@@ -18,6 +18,7 @@ import {
 import { Users } from "@/lib/prisma/generated";
 import { getErrorMessage, getList, hasPermissionSync } from "@/lib/utils";
 import { routePermissions } from "@/routes";
+import { ServerError } from "@/types/responses";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
@@ -120,7 +121,7 @@ export const createColumns = (refetch: () => void): ColumnDef<Users>[] => [
           try {
             const { error } = await deleteUserById(user.id);
             if (error) {
-              throw new Error(error);
+              throw new ServerError(error, "DeleteUserError");
             }
             refetch();
             toast.success("User successfully deleted");

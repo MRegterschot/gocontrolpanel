@@ -16,6 +16,7 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { Separator } from "../ui/separator";
+import { ServerError } from "@/types/responses";
 
 export default function TMXMappackCard({
   serverId,
@@ -48,7 +49,7 @@ export default function TMXMappackCard({
         mappack.Name,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "DownloadMappackError");
       }
 
       toast.success("Mappack successfully downloaded", {
@@ -81,7 +82,7 @@ export default function TMXMappackCard({
         mappack.Name,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "AddMappackToServerError");
       }
 
       toast.success("Mappack successfully added to server");

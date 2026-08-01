@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getErrorMessage } from "@/lib/utils";
 import { PlayerInfo } from "@/types/player";
+import { ServerError } from "@/types/responses";
 import { IconCamera, IconSteeringWheelFilled } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
@@ -94,7 +95,7 @@ export const createColumns = (id: string): ColumnDef<PlayerInfo>[] => [
             "Banned by admin",
           );
           if (error) {
-            throw new Error(error);
+            throw new ServerError(error, "BanPlayerError");
           }
 
           toast.success("Player successfully banned", {
@@ -111,7 +112,7 @@ export const createColumns = (id: string): ColumnDef<PlayerInfo>[] => [
         try {
           const { error } = await blacklistPlayer(id, player.login);
           if (error) {
-            throw new Error(error);
+            throw new ServerError(error, "BlacklistPlayerError");
           }
 
           toast.success("Player successfully blacklisted", {
@@ -128,7 +129,7 @@ export const createColumns = (id: string): ColumnDef<PlayerInfo>[] => [
         try {
           const { error } = await addGuest(id, player.login);
           if (error) {
-            throw new Error(error);
+            throw new ServerError(error, "AddGuestError");
           }
 
           toast.success("Player successfully added as guest", {
@@ -145,7 +146,7 @@ export const createColumns = (id: string): ColumnDef<PlayerInfo>[] => [
         try {
           const { error } = await removeGuest(id, player.login);
           if (error) {
-            throw new Error(error);
+            throw new ServerError(error, "RemoveGuestError");
           }
 
           toast.success("Player successfully removed from guest list", {
@@ -166,7 +167,7 @@ export const createColumns = (id: string): ColumnDef<PlayerInfo>[] => [
             "Kicked by admin",
           );
           if (error) {
-            throw new Error(error);
+            throw new ServerError(error, "KickPlayerError");
           }
 
           toast.success("Player successfully kicked", {
@@ -183,7 +184,7 @@ export const createColumns = (id: string): ColumnDef<PlayerInfo>[] => [
         try {
           const { error } = await forceSpectator(id, player.login, 3);
           if (error) {
-            throw new Error(error);
+            throw new ServerError(error, "ForceSpectatorError");
           }
 
           toast.success("Player successfully forced to spectator", {

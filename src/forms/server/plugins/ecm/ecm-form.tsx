@@ -19,6 +19,7 @@ import { useSession } from "next-auth/react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { ECMPluginSchema, ECMPluginSchemaType } from "./ecm-schema";
+import { ServerError } from "@/types/responses";
 
 export default function ECMForm({
   serverId,
@@ -80,7 +81,7 @@ export default function ECMForm({
         updatedConfig,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "UpdateServerPluginError");
       }
       toast.success("Config successfully saved");
       if (onSubmit) {

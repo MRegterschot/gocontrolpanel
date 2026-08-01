@@ -9,6 +9,7 @@ import { PlayerInfoPluginConfig } from "@/types/plugins/player-info";
 import { IconDownload, IconX } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { DefaultModalProps } from "../../default-props";
+import { ServerError } from "@/types/responses";
 
 export default function PlayerInfoPluginModal({
   serverId,
@@ -42,7 +43,7 @@ export default function PlayerInfoPluginModal({
         data.pluginId,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "ExportServerPluginConfigError");
       }
 
       const blob = new Blob([JSON.stringify(pluginConfig, null, 2)], {

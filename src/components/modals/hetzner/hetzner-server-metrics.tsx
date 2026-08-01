@@ -24,6 +24,7 @@ import {
 } from "../../ui/select";
 import { ToggleGroup, ToggleGroupItem } from "../../ui/toggle-group";
 import { DefaultModalProps } from "../default-props";
+import { ServerError } from "@/types/responses";
 
 type MetricsData = {
   timestamp: number;
@@ -129,7 +130,7 @@ export default function HetznerServerMetricsModal({
         start,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "GetHetznerServerMetricsError");
       }
       formatMetrics(metrics);
     } catch (error) {

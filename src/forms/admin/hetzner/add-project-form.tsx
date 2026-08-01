@@ -12,6 +12,7 @@ import { useSession } from "next-auth/react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AddProjectSchema, AddProjectSchemaType } from "./add-project-schema";
+import { ServerError } from "@/types/responses";
 
 export default function AddProjectForm({
   callback,
@@ -55,7 +56,7 @@ export default function AddProjectForm({
           })) || [],
       });
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "CreateHetznerProjectError");
       }
       toast.success("Project successfully created");
       if (callback) {

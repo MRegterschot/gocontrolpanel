@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { EditGroupSchema, EditGroupSchemaType } from "./edit-group-schema";
+import { ServerError } from "@/types/responses";
 
 export default function EditGroupForm({
   group,
@@ -43,7 +44,7 @@ export default function EditGroupForm({
       try {
         const { data, error } = await getServersMinimal();
         if (error) {
-          throw new Error(error);
+          throw new ServerError(error, "GetServersMinimalError");
         }
         setServers(data);
       } catch (error) {
@@ -99,7 +100,7 @@ export default function EditGroupForm({
         })),
       });
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "UpdateGroupError");
       }
       toast.success("Group successfully updated");
       if (callback) {

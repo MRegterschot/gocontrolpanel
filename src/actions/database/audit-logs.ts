@@ -4,7 +4,7 @@ import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { logger } from "@/lib/logger";
 import { Prisma } from "@/lib/prisma/generated";
-import { PaginationResponse, ServerResponse } from "@/types/responses";
+import { PaginationResponse, ServerError, ServerResponse } from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
 
 const auditLogsUsersSchema = Prisma.validator<Prisma.AuditLogsInclude>()({
@@ -157,7 +157,7 @@ export async function deleteAuditLogById(id: string): Promise<ServerResponse> {
             { meta, userId: session.user.id, auditLogId: id },
             "Not authorized to delete this log",
           );
-          throw new Error("Not authorized to delete this log.");
+          throw new ServerError("Not authorized to delete this log.", "AuditLogNotAuthorized");
         }
 
         where.OR = [
@@ -176,7 +176,7 @@ export async function deleteAuditLogById(id: string): Promise<ServerResponse> {
 
       if (!auditLog) {
         logger.warn({ meta, id }, "Audit log not found");
-        throw new Error("Audit log not found.");
+        throw new ServerError("Audit log not found.", "AuditLogNotFound");
       }
 
       await db.auditLogs.update({

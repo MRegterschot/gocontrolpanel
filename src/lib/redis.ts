@@ -4,6 +4,7 @@ import "server-only";
 import config from "./config";
 import { appGlobals } from "./global";
 import { logger } from "./logger";
+import { ServerError } from "@/types/responses";
 
 export async function getRedisClient() {
   if (!appGlobals.redis) {
@@ -29,13 +30,13 @@ export async function getRedisClient() {
         );
       } else {
         logger.error({ meta, error }, "Error connecting to Redis");
-        throw new Error("Failed to connect to Redis");
+        throw new ServerError("Failed to connect to Redis", "RedisConnectionError");
       }
     }
   }
 
   if (!appGlobals.redis) {
-    throw new Error("Redis client is not initialized");
+    throw new ServerError("Redis client is not initialized", "RedisClientNotInitialized");
   }
 
   return appGlobals.redis;

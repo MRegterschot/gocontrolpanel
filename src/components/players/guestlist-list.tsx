@@ -8,6 +8,7 @@ import { PlayerInfo } from "@/types/player";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DataTable } from "../table/data-table";
+import { ServerError } from "@/types/responses";
 
 interface GuestlistListProps {
   serverId: string;
@@ -20,7 +21,7 @@ export default function GuestlistList({ serverId }: GuestlistListProps) {
     try {
       const { data, error } = await getGuestlist(serverId);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "GetGuestlistError");
       }
 
       setGuestlist(data);

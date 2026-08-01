@@ -11,6 +11,7 @@ import { useEffect, useMemo } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { AdvancedServerSetupSchemaType } from "./server-setup-schema";
+import { ServerError } from "@/types/responses";
 
 export default function Summary({
   form,
@@ -67,7 +68,7 @@ export default function Summary({
     try {
       const { error } = await createAdvancedServerSetup(projectId, values);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "CreateAdvancedServerSetupError");
       }
       toast.success("Server setup successfully created");
       if (callback) {

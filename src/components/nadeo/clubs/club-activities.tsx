@@ -3,6 +3,7 @@
 import { getClubActivitiesList } from "@/actions/nadeo/clubs";
 import { getErrorMessage } from "@/lib/utils";
 import { ClubActivity } from "@/types/api/nadeo";
+import { ServerError } from "@/types/responses";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "../../ui/button";
@@ -35,7 +36,7 @@ export default function ClubActivities({
         activities?.length ?? 0,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "GetClubActivitiesListError");
       }
 
       const newActivities = [...(activities || []), ...data.activityList];

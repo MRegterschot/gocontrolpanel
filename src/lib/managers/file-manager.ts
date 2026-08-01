@@ -2,6 +2,7 @@ import { FileManager } from "@/types/filemanager";
 import "server-only";
 import { getClient } from "../dbclient";
 import { appGlobals } from "../global";
+import { ServerError } from "@/types/responses";
 
 export async function getFileManager(serverId: string): Promise<FileManager> {
   if (!appGlobals.fileManagers?.[serverId]) {
@@ -11,7 +12,7 @@ export async function getFileManager(serverId: string): Promise<FileManager> {
     });
 
     if (!server) {
-      throw new Error(`Server with id ${serverId} not found`);
+      throw new ServerError(`Server with id ${serverId} not found`, "ServerNotFound");
     }
 
     if (!server.filemanagerUrl) {
@@ -42,7 +43,7 @@ export async function getFileManager(serverId: string): Promise<FileManager> {
   }
 
   if (!appGlobals.fileManagers[serverId]) {
-    throw new Error(`FileManager with id ${serverId} not found`);
+    throw new ServerError(`FileManager with id ${serverId} not found`, "FileManagerNotFound");
   }
 
   const fileManager = appGlobals.fileManagers[serverId];

@@ -10,6 +10,7 @@ import { parseTmTags } from "tmtags";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { Input } from "../ui/input";
+import { ServerError } from "@/types/responses";
 
 export default function LiveChat({
   serverId,
@@ -35,7 +36,7 @@ export default function LiveChat({
     try {
       const { error } = await sendChatMessage(serverId, inputValue);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "SendChatMessageError");
       }
 
       setInputValue("");

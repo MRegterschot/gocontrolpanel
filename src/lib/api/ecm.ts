@@ -6,6 +6,7 @@ import { isAxiosError } from "axios";
 import "server-only";
 import { axiosECM } from "../axios/ecircuitmania";
 import { getLogger } from "../logger";
+import { ServerError } from "@/types/responses";
 
 export async function ecmOnDriverFinish(
   apiKey: string,
@@ -123,7 +124,7 @@ function getMatchIdAndAuthToken(
   const [matchId, authToken] = apiKey.split("_");
   if (!matchId || !authToken) {
     log.warn({ meta, apiKey }, "Invalid ECM API key format");
-    throw new Error("Invalid ECM API key");
+    throw new ServerError("Invalid ECM API key", "InvalidECMApiKeyError");
   }
   return { matchId, authToken };
 }

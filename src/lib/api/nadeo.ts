@@ -74,6 +74,7 @@ export async function authenticate(
     );
     throw new ServerError(
       `Failed to authenticate with Nadeo: ${response.status}`,
+      "NadeoAuthenticationError",
     );
   }
 
@@ -94,6 +95,7 @@ export async function authenticateCredentials(): Promise<string> {
   if (!clientId || !clientSecret) {
     throw new ServerError(
       "Nadeo client ID and secret are required for authentication.",
+      "NadeoClientCredentialsError",
     );
   }
 
@@ -132,6 +134,7 @@ export async function authenticateCredentials(): Promise<string> {
 
     throw new ServerError(
       `Failed to authenticate with Trackmania API: ${response.status}`,
+      "TrackmaniaAuthenticationError",
     );
   }
 
@@ -352,8 +355,9 @@ export async function downloadFile(
         },
         "Failed to download map",
       );
-      throw new Error(
+      throw new ServerError(
         `Failed to download map: ${res.status} ${res.statusText}`,
+        "NadeoDownloadError",
       );
     }
 
@@ -364,7 +368,7 @@ export async function downloadFile(
   } catch (err) {
     if ((err as any).name === "AbortError") {
       logger.error({ meta, url, fileName }, "Download for map timed out");
-      throw new Error(`Download for map ${fileName} timed out`);
+      throw new ServerError(`Download for map ${fileName} timed out`, "NadeoDownloadTimeoutError");
     }
     throw err;
   }
@@ -402,7 +406,7 @@ export async function getMapRecordsByAccounts(
 ): Promise<MapRecordsResponse> {
   const { data, error } = await getMapsInfo([mapUid]);
   if (error || data.length === 0) {
-    throw new Error("Failed to get map info for records retrieval");
+    throw new ServerError("Failed to get map info for records retrieval", "NadeoMapInfoError");
   }
 
   const mapId = data[0].mapId;
@@ -455,7 +459,7 @@ export async function doRequest<T>(
         },
         "Failed to request Nadeo API",
       );
-      throw new Error(`Request failed: ${res.status} ${res.statusText}`);
+      throw new ServerError(`Request failed: ${res.status} ${res.statusText}`, "NadeoRequestError");
     }
 
     return res.json();
@@ -505,7 +509,7 @@ export async function doCredentialsRequest<T>(
         },
         "Failed to request Trackmania API",
       );
-      throw new Error(`Request failed: ${res.status} ${res.statusText}`);
+      throw new ServerError(`Request failed: ${res.status} ${res.statusText}`, "TrackmaniaRequestError");
     }
 
     return res.json();

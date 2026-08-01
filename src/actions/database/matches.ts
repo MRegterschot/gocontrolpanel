@@ -5,7 +5,7 @@ import { getClient } from "@/lib/dbclient";
 import { getLogger } from "@/lib/logger";
 import { Prisma } from "@/lib/prisma/generated";
 import { getList } from "@/lib/utils";
-import { PaginationResponse, ServerResponse } from "@/types/responses";
+import { PaginationResponse, ServerError, ServerResponse } from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
 import slugid from "slugid";
 import { logAudit } from "./server-only/audit-logs";
@@ -54,7 +54,7 @@ export async function getMatchesPaginated(
   },
 ): Promise<ServerResponse<PaginationResponse<MatchesWithMapAndRecords>>> {
   if (!fetchArgs?.serverId) {
-    throw new Error("Server ID is required to fetch matches.");
+    throw new ServerError("Server ID is required to fetch matches.", "ServerIdMissing");
   }
 
   return doServerActionWithAuth(
@@ -202,7 +202,7 @@ export async function exportMatchToCSV(
 
       if (!match) {
         log.warn({ meta, serverId, matchId }, "Match not found");
-        throw new Error("Match not found");
+        throw new ServerError("Match not found", "MatchNotFound");
       }
 
       const csvRows = [];

@@ -46,13 +46,14 @@ export async function createMap(
     logger.error({ meta, error, map }, "Failed to fetch map info");
     throw new ServerError(
       `Failed to fetch map info for UID ${map.uid}: ${error}`,
+      "MapInfoFetchError",
     );
   }
 
   const info = mapsInfo.find((m) => m.mapUid === map.uid);
   if (!info) {
     logger.error({ meta, map }, "Map info not found");
-    throw new ServerError(`Map info not found for UID ${map.uid}`);
+    throw new ServerError(`Map info not found for UID ${map.uid}`, "MapInfoNotFound");
   }
 
   return await db.maps.create({
@@ -192,13 +193,13 @@ export async function createMatch(
   const activeMap = await redis.get(key);
   if (!activeMap) {
     log.error({ meta }, "No active map found");
-    throw new Error(`No active map found for server ${serverId}`);
+    throw new ServerError(`No active map found for server ${serverId}`, "ActiveMapNotFound");
   }
 
   const mapData: Maps = JSON.parse(activeMap);
   if (!mapData) {
     log.error({ meta }, "Map data is invalid");
-    throw new Error(`Map data is invalid for server ${serverId}`);
+    throw new ServerError(`Map data is invalid for server ${serverId}`, "InvalidMapData");
   }
 
   const db = getClient();
@@ -306,13 +307,13 @@ export async function saveMatchRecord(
   const activeMap = await redis.get(key);
   if (!activeMap) {
     log.error({ meta }, "No active map found");
-    throw new Error(`No active map found for server ${serverId}`);
+    throw new ServerError(`No active map found for server ${serverId}`, "ActiveMapNotFound");
   }
 
   const mapData: Maps = JSON.parse(activeMap);
   if (!mapData) {
     log.error({ meta }, "Map data is invalid");
-    throw new Error(`Map data is invalid for server ${serverId}`);
+    throw new ServerError(`Map data is invalid for server ${serverId}`, "InvalidMapData");
   }
 
   const db = getClient();
@@ -399,13 +400,13 @@ export async function saveRoundRecords(
   const activeMap = await redis.get(key);
   if (!activeMap) {
     log.error({ meta }, "No active map found");
-    throw new Error(`No active map found for server ${serverId}`);
+    throw new ServerError(`No active map found for server ${serverId}`, "ActiveMapNotFound");
   }
 
   const mapData: Maps = JSON.parse(activeMap);
   if (!mapData) {
     log.error({ meta }, "Map data is invalid");
-    throw new Error(`Map data is invalid for server ${serverId}`);
+    throw new ServerError(`Map data is invalid for server ${serverId}`, "InvalidMapData");
   }
 
   const db = getClient();

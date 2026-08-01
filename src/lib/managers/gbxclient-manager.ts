@@ -42,6 +42,7 @@ import {
   withTimeout,
 } from "../utils";
 import PluginManager from "./plugin-manager";
+import { ServerError } from "@/types/responses";
 
 type ActionListener = (
   data: PlayerManialinkPageAnswer,
@@ -301,7 +302,7 @@ export class GbxClientManager extends EventEmitter {
 
     this.serverName = server?.name ?? null;
 
-    if (!server) throw new Error(`Server ${this.serverId} not found`);
+    if (!server) throw new ServerError(`Server ${this.serverId} not found`, "ServerNotFound");
 
     try {
       const status = await withTimeout(
@@ -309,16 +310,16 @@ export class GbxClientManager extends EventEmitter {
         3000,
         "Connection to GBX client timed out",
       );
-      if (!status) throw new Error("Failed to connect to GBX client");
+      if (!status) throw new ServerError("Failed to connect to GBX client", "GBXConnectionError");
     } catch (error) {
       this.scheduleReconnect();
-      throw new Error(`Failed to connect to GBX client: ${error}`);
+      throw new ServerError(`Failed to connect to GBX client: ${error}`, "GBXConnectionError");
     }
 
     try {
       await this.client.call("Authenticate", server.user, server.password);
     } catch {
-      throw new Error("Failed to authenticate with GBX client");
+      throw new ServerError("Failed to authenticate with GBX client", "GBXAuthenticationError");
     }
 
     this.isConnected = true;
@@ -517,7 +518,7 @@ export async function getGbxClientManager(
   }
 
   if (!appGlobals.gbxClients?.[serverId]) {
-    throw new Error(`GbxClientManager for server ${serverId} not found`);
+    throw new ServerError(`GbxClientManager for server ${serverId} not found`, "GbxClientManagerNotFound");
   }
 
   return appGlobals.gbxClients[serverId];

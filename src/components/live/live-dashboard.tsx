@@ -19,6 +19,7 @@ import Rankings from "./rankings";
 import RoundScores from "./round-scores";
 import TeamScores from "./team-scores";
 import TimeAttackScores from "./time-attack-scores";
+import { ServerError } from "@/types/responses";
 
 export default function LiveDashboard({
   serverId,
@@ -225,7 +226,7 @@ export default function LiveDashboard({
       try {
         const { data, error } = await getPlayerList(serverId);
         if (error) {
-          throw new Error(error);
+          throw new ServerError(error, "GetPlayerListError");
         }
 
         setPlayerList(data);

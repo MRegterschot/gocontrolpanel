@@ -13,6 +13,7 @@ import {
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { PlaylistSchema, PlaylistSchemaType } from "./game-schema";
+import { ServerError } from "@/types/responses";
 
 export default function PlaylistForm({ serverId }: { serverId: string }) {
   const playlistForm = useForm<PlaylistSchemaType>({
@@ -28,7 +29,7 @@ export default function PlaylistForm({ serverId }: { serverId: string }) {
       const filename = playlistForm.getValues("filename");
       const { error } = await appendPlaylist(serverId, filename);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "AppendPlaylistError");
       }
       toast.success("Playlist successfully appended");
     } catch (error) {
@@ -44,7 +45,7 @@ export default function PlaylistForm({ serverId }: { serverId: string }) {
       const filename = playlistForm.getValues("filename");
       const { error } = await insertPlaylist(serverId, filename);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "InsertPlaylistError");
       }
       toast.success("Playlist successfully inserted");
     } catch (error) {

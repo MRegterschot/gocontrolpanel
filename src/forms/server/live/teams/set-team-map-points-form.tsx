@@ -15,6 +15,7 @@ import {
   SetTeamPointsSchema,
   SetTeamPointsSchemaType,
 } from "./set-team-points-schema";
+import { ServerError } from "@/types/responses";
 
 export default function SetTeamMapPointsForm({
   serverId,
@@ -44,7 +45,7 @@ export default function SetTeamMapPointsForm({
         values.points,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "SetTeamMapPointsError");
       }
 
       if (type === "teams") {
@@ -54,7 +55,7 @@ export default function SetTeamMapPointsForm({
           values.points,
         );
         if (error2) {
-          throw new Error(error2);
+          throw new ServerError(error2, "SetTeamMatchPointsError");
         }
       }
 

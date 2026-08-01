@@ -21,6 +21,7 @@ import {
   PlayerInfoPluginSchema,
   PlayerInfoPluginSchemaType,
 } from "./player-info-schema";
+import { ServerError } from "@/types/responses";
 
 const DEVICE_OPTIONS = [
   { label: "Keyboard", value: "Keyboard" },
@@ -86,7 +87,7 @@ export default function PlayerInfoForm({
         updatedConfig,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "UpdateServerPluginError");
       }
       toast.success("Config successfully saved");
       if (onSubmit) {

@@ -35,6 +35,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Control, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { MatchPluginSchema, MatchPluginSchemaType } from "./match-schema";
+import { ServerError } from "@/types/responses";
 
 export default function MatchForm({
   serverId,
@@ -66,7 +67,7 @@ export default function MatchForm({
       try {
         const { data, error } = await getScripts(serverId);
         if (error) {
-          throw new Error(error);
+          throw new ServerError(error, "GetScriptsError");
         }
         setScripts(data);
       } catch (error) {
@@ -82,7 +83,7 @@ export default function MatchForm({
       try {
         const { data, error } = await getLocalMaps(serverId);
         if (error) {
-          throw new Error(error);
+          throw new ServerError(error, "GetLocalMapsError");
         }
         setLocalMaps(data);
       } catch (error) {
@@ -234,7 +235,7 @@ export default function MatchForm({
         updatedConfig,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "UpdateServerPluginError");
       }
       toast.success("Config successfully saved");
       onSubmit?.(updatedConfig);

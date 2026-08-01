@@ -222,7 +222,7 @@ export async function deleteUserById(userId: string): Promise<ServerResponse> {
         undefined,
         "Cannot delete your own account",
       );
-      throw new ServerError("Cannot delete your own account");
+      throw new ServerError("Cannot delete your own account", "CannotDeleteOwnAccount");
     }
 
     const db = getClient();

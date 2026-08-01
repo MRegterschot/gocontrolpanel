@@ -30,6 +30,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { PluginsSchema, PluginsSchemaType } from "./plugins-schema";
+import { ServerError } from "@/types/responses";
 
 export default function PluginsForm({
   serverId,
@@ -70,7 +71,7 @@ export default function PluginsForm({
         })),
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "UpdateServerPluginsError");
       }
       toast.success("Plugins successfully saved");
     } catch (error) {
@@ -96,7 +97,7 @@ export default function PluginsForm({
       const { error } = await reloadServerPlugins(serverId);
 
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "ReloadServerPluginsError");
       }
 
       toast.success("Plugins reloaded successfully");

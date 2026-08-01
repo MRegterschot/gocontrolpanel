@@ -19,6 +19,7 @@ import {
 import { getErrorMessage, hasPermissionSync } from "@/lib/utils";
 import { routePermissions } from "@/routes";
 import { HetznerNetwork } from "@/types/api/hetzner/networks";
+import { ServerError } from "@/types/responses";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -109,7 +110,7 @@ export const createNetworksColumns = (
               network.id,
             );
             if (error) {
-              throw new Error(error);
+              throw new ServerError(error, "DeleteNetworkError");
             }
             refetch();
             toast.success("Network successfully deleted");

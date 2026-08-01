@@ -19,6 +19,7 @@ import {
   AddHetznerDatabaseSchema,
   AddHetznerDatabaseSchemaType,
 } from "./add-hetzner-database-schema";
+import { ServerError } from "@/types/responses";
 
 export default function AddHetznerDatabaseForm({
   projectId,
@@ -38,7 +39,7 @@ export default function AddHetznerDatabaseForm({
       try {
         const { data, error } = await getHetznerLocations(projectId);
         if (error) {
-          throw new Error(error);
+          throw new ServerError(error, "GetHetznerLocationsError");
         }
         setLocations(data);
         form.setValue(
@@ -57,7 +58,7 @@ export default function AddHetznerDatabaseForm({
       try {
         const { data, error } = await getServerTypes(projectId);
         if (error) {
-          throw new Error(error);
+          throw new ServerError(error, "GetServerTypesError");
         }
         setServerTypes(data);
         form.setValue(
@@ -91,7 +92,7 @@ export default function AddHetznerDatabaseForm({
     try {
       const { error } = await createHetznerDatabase(projectId, values);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "CreateHetznerDatabaseError");
       }
 
       toast.success("Hetzner database successfully created");

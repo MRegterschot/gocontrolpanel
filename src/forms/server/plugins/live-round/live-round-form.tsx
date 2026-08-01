@@ -14,6 +14,7 @@ import {
   LiveRoundPluginSchema,
   LiveRoundPluginSchemaType,
 } from "./live-round-schema";
+import { ServerError } from "@/types/responses";
 
 export default function LiveRoundForm({
   serverId,
@@ -41,7 +42,7 @@ export default function LiveRoundForm({
     try {
       const { error } = await updateServerPlugin(serverId, pluginId, values);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "UpdateServerPluginError");
       }
       toast.success("Config successfully saved");
       if (onSubmit) {

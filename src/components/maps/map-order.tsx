@@ -4,6 +4,7 @@ import { addMapList, removeMapList } from "@/actions/gbx/map";
 import { createColumns } from "@/app/(gocontroller)/server/[id]/maps/map-order-columns";
 import { Maps } from "@/lib/prisma/generated";
 import { getDivergingList, getErrorMessage } from "@/lib/utils";
+import { ServerError } from "@/types/responses";
 import {
   IconDeviceFloppy,
   IconMapMinus,
@@ -45,12 +46,12 @@ export default function MapOrder({
 
       const { error: removeError } = await removeMapList(serverId, files);
       if (removeError) {
-        throw new Error(removeError);
+        throw new ServerError(removeError, "RemoveMapListError");
       }
 
       const { error: addError } = await addMapList(serverId, files);
       if (addError) {
-        throw new Error(addError);
+        throw new ServerError(addError, "AddMapListError");
       }
 
       setMapList(mapOrder);
@@ -81,7 +82,7 @@ export default function MapOrder({
 
       const { error } = await removeMapList(serverId, filesToRemove);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "RemoveAllMapsError");
       }
 
       setMapOrder([mapOrder[mapOrder.length - 1]]);
@@ -101,7 +102,7 @@ export default function MapOrder({
     try {
       const { data: newMapList, error } = await getMapList(serverId);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "RefreshMapListError");
       }
       setMapOrder(newMapList);
       setMapList(newMapList);

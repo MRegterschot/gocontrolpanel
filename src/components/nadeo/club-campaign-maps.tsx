@@ -14,6 +14,7 @@ import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { Separator } from "../ui/separator";
 import PlaylistMapCard from "./playlist-map-card";
+import { ServerError } from "@/types/responses";
 
 export default function ClubCampaignMaps({
   serverId,
@@ -50,7 +51,7 @@ export default function ClubCampaignMaps({
 
       const { error } = await downloadCampaign(serverId, clubCampaign.campaign);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "DownloadCampaignError");
       }
 
       toast.success("Campaign successfully downloaded", {
@@ -92,7 +93,7 @@ export default function ClubCampaignMaps({
         clubCampaign.campaign,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "AddCampaignToServerError");
       }
 
       toast.success("Campaign successfully added to server");
