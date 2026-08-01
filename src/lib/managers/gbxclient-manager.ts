@@ -287,7 +287,12 @@ export class GbxClientManager extends EventEmitter {
         function: "tryConnectWithRetry",
       };
       this.log.warn(
-        { meta, delay: this.reconnect.delay, retryCount: this.reconnect.retryCount, maxRetries: this.reconnect.maxRetries },
+        {
+          meta,
+          delay: this.reconnect.delay,
+          retryCount: this.reconnect.retryCount,
+          maxRetries: this.reconnect.maxRetries,
+        },
         "Failed to connect to GBX client, retrying...",
       );
       this.scheduleReconnect();
@@ -321,11 +326,12 @@ export class GbxClientManager extends EventEmitter {
         3000,
         "Connection to GBX client timed out",
       );
-      if (!status) throw new ServerError(
-        "Failed to connect to GBX client",
-        "GBXConnectionError",
-      );
-    } catch (error) {
+      if (!status)
+        throw new ServerError(
+          "Failed to connect to GBX client",
+          "GBXConnectionError",
+        );
+    } catch {
       this.scheduleReconnect();
       throw new ServerError(
         `Failed to connect to GBX client`,
