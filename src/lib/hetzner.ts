@@ -5,6 +5,7 @@ import { getClient } from "./dbclient";
 import { logger } from "./logger";
 import { Prisma } from "./prisma/generated";
 import { getList } from "./utils";
+import { reportException } from "./sentry/report";
 
 const hetznerProjectUsersSchema =
   Prisma.validator<Prisma.HetznerProjectsInclude>()({
@@ -54,6 +55,7 @@ export function decryptHetznerToken(encryptedBase64: string): string {
       function: "decryptHetznerToken",
     };
     logger.error({ meta, error }, "Decryption failed");
+    reportException(error, meta);
     return encryptedBase64; // Return the original string if decryption fails
   }
 }

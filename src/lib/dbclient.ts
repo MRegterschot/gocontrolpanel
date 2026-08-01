@@ -1,8 +1,9 @@
+import { ServerError } from "@/types/responses";
 import "server-only";
 import { appGlobals } from "./global";
 import { logger } from "./logger";
 import { PrismaClient } from "./prisma/generated";
-import { ServerError } from "@/types/responses";
+import { reportException } from "./sentry/report";
 
 export function getClient(): PrismaClient {
   if (!appGlobals.prisma) {
@@ -25,13 +26,22 @@ export function getClient(): PrismaClient {
         );
       } else {
         logger.error({ meta, error }, "Error connecting to Prisma");
-        throw new ServerError("Failed to connect to Prisma", "PrismaConnectionError");
+        reportException(error, meta);
+        throw new ServerError(
+          "Failed to connect to Prisma",
+          "PrismaConnectionError",
+        );
       }
     }
   }
 
   if (!appGlobals.prisma) {
-    throw new ServerError("Prisma client is not initialized", "PrismaClientNotInitialized");
+    const error = new ServerError(
+      "Prisma client not initialized",
+      "PrismaClientNotInitialized",
+    );
+    reportException(error);
+    throw error;
   }
 
   return appGlobals.prisma;

@@ -7,6 +7,7 @@ import {
   UsersWithGroupsWithServers,
 } from "@/actions/database/server-only/auth";
 import { UserGroup } from "@/types/auth";
+import { ServerError } from "@/types/responses";
 import { parse } from "cookie";
 import {
   GetServerSidePropsContext,
@@ -22,8 +23,8 @@ import { getWebIdentities } from "./api/nadeo";
 import config from "./config";
 import { logger } from "./logger";
 import { GroupRole } from "./prisma/generated";
+import { reportException } from "./sentry/report";
 import { getList, hasPermissionSync } from "./utils";
-import { ServerError } from "@/types/responses";
 
 const NadeoProvider = (): OAuthConfig<Profile> => ({
   id: "nadeo",
@@ -62,6 +63,7 @@ const NadeoProvider = (): OAuthConfig<Profile> => ({
           module: "auth",
           function: "NadeoProvider.token.request",
         };
+        reportException(response, meta);
         logger.error(
           {
             meta,
@@ -73,7 +75,10 @@ const NadeoProvider = (): OAuthConfig<Profile> => ({
           },
           "Failed to fetch access token",
         );
-        throw new ServerError("Failed to fetch access token", "NadeoProviderTokenRequestError");
+        throw new ServerError(
+          "Failed to fetch access token",
+          "NadeoProviderTokenRequestError",
+        );
       }
 
       const data = await response.json();
@@ -98,7 +103,12 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async session({ session, token }) {
       if (!token) {
-        throw new ServerError("Token is missing", "SessionCallbackTokenMissing");
+        const error = new ServerError(
+          "Token is missing",
+          "SessionCallbackTokenMissing",
+        );
+        reportException(error);
+        throw error;
       }
 
       session.user = {
@@ -167,7 +177,12 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (!dbUser) {
-        throw new ServerError("Failed to fetch user from database", "FetchUserFromDatabaseError");
+        const error = new ServerError(
+          "Failed to fetch user from database",
+          "FetchUserFromDatabaseError",
+        );
+        reportException(error);
+        throw error;
       }
 
       if (dbUser.admin) {
@@ -257,12 +272,16 @@ export async function withAuth(
 ): Promise<Session> {
   const perm = await hasPermission(permissions, id);
   if (!perm) {
-    throw new ServerError("Unauthorized", "Unauthorized");
+    const error = new ServerError("Unauthorized", "Unauthorized");
+    reportException(error);
+    throw error;
   }
 
   const session = await auth();
   if (!session) {
-    throw new ServerError("Unauthorized", "Unauthorized");
+    const error = new ServerError("Unauthorized", "Unauthorized");
+    reportException(error);
+    throw error;
   }
 
   return session;
