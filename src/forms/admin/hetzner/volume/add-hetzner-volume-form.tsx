@@ -17,6 +17,7 @@ import {
   AddHetznerVolumeSchema,
   AddHetznerVolumeSchemaType,
 } from "./add-hetzner-volume-schema";
+import { ServerError } from "@/types/responses";
 
 export default function AddHetznerVolumeForm({
   projectId,
@@ -35,7 +36,7 @@ export default function AddHetznerVolumeForm({
       try {
         const { data, error } = await getHetznerLocations(projectId);
         if (error) {
-          throw new Error(error);
+          throw new ServerError(error, "GetHetznerLocationsError");
         }
         setLocations(data);
         form.setValue(
@@ -68,7 +69,7 @@ export default function AddHetznerVolumeForm({
     try {
       const { error } = await createHetznerVolume(projectId, values);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "CreateHetznerVolumeError");
       }
 
       toast.success("Hetzner volume successfully created");

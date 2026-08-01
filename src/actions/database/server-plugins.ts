@@ -4,7 +4,7 @@ import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { getLogger } from "@/lib/logger";
 import { getGbxClientManager } from "@/lib/managers/gbxclient-manager";
-import { ServerResponse } from "@/types/responses";
+import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "./server-only/audit-logs";
 import { ServerPluginsWithPlugin } from "./server-only/gbx";
 
@@ -173,7 +173,7 @@ export async function exportServerPluginConfig(
 
       if (!plugin) {
         log.warn({ meta, pluginId }, "Plugin not found for server");
-        throw new Error("Plugin not found for server");
+        throw new ServerError("Plugin not found for server", "PluginNotFound");
       }
 
       return plugin.config as Record<string, any>;

@@ -14,6 +14,7 @@ import ConfirmModal from "../modals/confirm-modal";
 import CreateFileEntryModal from "../modals/files/create-file-entry";
 import Modal from "../modals/modal";
 import { Button } from "../ui/button";
+import { ServerError } from "@/types/responses";
 
 interface ActionsProps {
   selectedItems: FileEntry[];
@@ -56,7 +57,7 @@ export default function Actions({
       const { error } = await deleteEntry(serverId, pathsToDelete);
 
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "DeleteEntryError");
       }
 
       setFolders((prev) =>

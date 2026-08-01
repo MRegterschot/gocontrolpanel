@@ -15,7 +15,7 @@ import {
 } from "@/lib/redis";
 import { getErrorMessage } from "@/lib/utils";
 import { HetznerServerCache } from "@/types/api/hetzner/servers";
-import { PaginationResponse, ServerResponse } from "@/types/responses";
+import { PaginationResponse, ServerError, ServerResponse } from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
 import { logAudit } from "./server-only/audit-logs";
 
@@ -299,7 +299,7 @@ export async function getServerChatConfig(
 
     if (!server) {
       log.warn({ meta, serverId }, "Server not found");
-      throw new Error("Server not found");
+      throw new ServerError("Server not found", "ServerNotFound");
     }
 
     return server;

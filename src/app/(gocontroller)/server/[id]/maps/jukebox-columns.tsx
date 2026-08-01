@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getErrorMessage } from "@/lib/utils";
 import { JukeboxMap } from "@/types/map";
+import { ServerError } from "@/types/responses";
 import { MoreHorizontal } from "lucide-react";
 import { memo, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -36,7 +37,7 @@ const MapActionsCell = memo(function MapActionsCell({
       try {
         const { error } = await removeMapFromJukebox(serverId, data.id);
         if (error) {
-          throw new Error(error);
+          throw new ServerError(error, "RemoveMapFromJukeboxError");
         }
         onRemoveMap(data);
         toast.success("Map successfully removed");

@@ -3,6 +3,7 @@
 import { exportRecords } from "@/actions/database/records";
 import { Button } from "@/components/ui/button";
 import { getErrorMessage } from "@/lib/utils";
+import { ServerError } from "@/types/responses";
 import { IconDownload } from "@tabler/icons-react";
 import { toast } from "sonner";
 
@@ -15,7 +16,7 @@ export default function ServerRecordsActions({
     try {
       const { data, error } = await exportRecords(serverId);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "ExportRecordsError");
       }
 
       const blob = new Blob([JSON.stringify(data, null, 2)], {

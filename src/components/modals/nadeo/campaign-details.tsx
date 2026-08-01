@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { parseTmTags } from "tmtags";
 import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
+import { ServerError } from "@/types/responses";
 
 export default function CampaignDetailsModal({
   closeModal,
@@ -68,7 +69,7 @@ export default function CampaignDetailsModal({
         clubCampaign.campaign,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "DownloadCampaignError");
       }
 
       toast.success("Campaign successfully downloaded", {
@@ -110,7 +111,7 @@ export default function CampaignDetailsModal({
         clubCampaign.campaign,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "AddCampaignToServerError");
       }
 
       toast.success("Campaign successfully added to server");
@@ -135,7 +136,7 @@ export default function CampaignDetailsModal({
           data.activity.campaignId,
         );
       if (getClubCampaignError) {
-        throw new Error(getClubCampaignError);
+        throw new ServerError(getClubCampaignError, "GetClubCampaignError");
       }
 
       setClubCampaign(clubCampaignRes);

@@ -17,6 +17,7 @@ import {
   EditProjectSchema,
   EditProjectSchemaType,
 } from "./edit-project-schema";
+import { ServerError } from "@/types/responses";
 
 export default function EditProjectForm({
   project,
@@ -52,7 +53,7 @@ export default function EditProjectForm({
         })),
       });
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "UpdateHetznerProjectError");
       }
       toast.success("Project successfully updated");
       if (callback) {

@@ -21,6 +21,7 @@ import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
 import Modal from "../modal";
 import HetznerLogsModal from "./hetzner-logs";
+import { ServerError } from "@/types/responses";
 
 export default function HetznerTMServersModal({
   closeModal,
@@ -94,7 +95,7 @@ export default function HetznerTMServersModal({
         serverNumber,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "DeleteTrackmaniaServerError");
       }
       toast.success(`Deleted TM server ${serverNumber + 1} successfully`);
       closeModal?.();
@@ -114,7 +115,7 @@ export default function HetznerTMServersModal({
         serverNumber,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "RestartTrackmaniaServerError");
       }
       toast.success(`Restarted server ${serverNumber + 1} successfully`);
     } catch {
@@ -133,7 +134,7 @@ export default function HetznerTMServersModal({
         serverNumber,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "StopTrackmaniaServerError");
       }
       toast.success(`Stopped server ${serverNumber + 1} successfully`);
     } catch {

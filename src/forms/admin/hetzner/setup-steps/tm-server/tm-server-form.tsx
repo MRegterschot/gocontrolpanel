@@ -11,6 +11,7 @@ import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { TMServerSchema, TMServerSchemaType } from "./tm-server-schema";
+import { ServerError } from "@/types/responses";
 
 export default function TMServerForm({
   projectId,
@@ -70,7 +71,7 @@ export default function TMServerForm({
     try {
       const { error } = await addTrackmaniaServer(projectId, serverId, values);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "AddTrackmaniaServerError");
       }
       toast.success("Server successfully added");
       if (callback) {

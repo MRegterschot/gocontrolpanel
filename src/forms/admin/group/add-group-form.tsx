@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AddGroupSchema, AddGroupSchemaType } from "./add-group-schema";
+import { ServerError } from "@/types/responses";
 
 export default function AddGroupForm({ callback }: { callback?: () => void }) {
   const { data: session } = useSession();
@@ -37,7 +38,7 @@ export default function AddGroupForm({ callback }: { callback?: () => void }) {
       try {
         const { data, error } = await getServersMinimal();
         if (error) {
-          throw new Error(error);
+          throw new ServerError(error, "GetServersMinimalError");
         }
         setServers(data);
       } catch (error) {
@@ -90,7 +91,7 @@ export default function AddGroupForm({ callback }: { callback?: () => void }) {
           })) || [],
       });
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "CreateGroupError");
       }
       toast.success("Group successfully created");
       if (callback) {

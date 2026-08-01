@@ -13,6 +13,7 @@ import {
   SetPlayerPointsSchema,
   SetPlayerPointsSchemaType,
 } from "./set-player-points-schema";
+import { ServerError } from "@/types/responses";
 
 export default function SetPlayerMatchPointsForm({
   serverId,
@@ -42,7 +43,7 @@ export default function SetPlayerMatchPointsForm({
         values.points,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "SetPlayerMatchPointsError");
       }
 
       toast.success("Points successfully updated");

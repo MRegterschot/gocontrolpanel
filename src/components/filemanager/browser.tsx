@@ -9,6 +9,7 @@ import Actions from "./actions";
 import FilesBreadcrumbs from "./breadcrumbs";
 import FileCard from "./file-card";
 import FolderCard from "./folder-card";
+import { ServerError } from "@/types/responses";
 
 interface BrowserProps {
   data: FileEntry[];
@@ -49,7 +50,7 @@ export default function Browser({ data, serverId, path }: BrowserProps) {
       try {
         const { data, error } = await uploadFiles(serverId, formData);
         if (error) {
-          throw new Error(error);
+          throw new ServerError(error, "UploadFilesError");
         }
 
         setFolders((prev) => [

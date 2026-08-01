@@ -10,6 +10,7 @@ import { IconDeviceFloppy, IconFileSettings } from "@tabler/icons-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { MatchSettingsSchema, MatchSettingsSchemaType } from "./game-schema";
+import { ServerError } from "@/types/responses";
 
 export default function MatchSettingsForm({
   serverId,
@@ -34,7 +35,7 @@ export default function MatchSettingsForm({
         "MatchSettings/" + filename,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "LoadMatchSettingsError");
       }
       toast.success("Match settings successfully loaded");
     } catch (error) {
@@ -53,7 +54,7 @@ export default function MatchSettingsForm({
         "MatchSettings/" + filename,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "SaveMatchSettingsError");
       }
       toast.success("Match settings saved successfully");
     } catch (error) {

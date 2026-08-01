@@ -14,6 +14,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
 import FilesBreadcrumbs from "./breadcrumbs";
+import { ServerError } from "@/types/responses";
 
 export default function TextEditor({
   path,
@@ -52,7 +53,7 @@ export default function TextEditor({
       const { error } = await saveFileText(serverId, path, text);
 
       if (error) {
-        throw new Error("Failed to save file");
+        throw new ServerError("Failed to save file", "SaveFileTextError");
       }
 
       toast.success("File successfully saved", {

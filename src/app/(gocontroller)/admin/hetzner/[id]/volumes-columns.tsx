@@ -17,6 +17,7 @@ import {
 import { getErrorMessage, hasPermissionSync } from "@/lib/utils";
 import { routePermissions } from "@/routes";
 import { HetznerVolume } from "@/types/api/hetzner/volumes";
+import { ServerError } from "@/types/responses";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -94,7 +95,7 @@ export const createVolumesColumns = (
               volume.id,
             );
             if (error) {
-              throw new Error(error);
+              throw new ServerError(error, "DeleteVolumeError");
             }
             refetch();
             toast.success("Volume successfully deleted");

@@ -5,7 +5,7 @@ import { getTotdRoyalMaps } from "@/lib/api/nadeo";
 import { getLogger } from "@/lib/logger";
 import { getKeyTotdMonth, getRedisClient } from "@/lib/redis";
 import { MonthMapListWithDayMaps } from "@/types/api/nadeo";
-import { ServerResponse } from "@/types/responses";
+import { ServerError, ServerResponse } from "@/types/responses";
 import { getMapsByUids } from "../database/maps";
 
 export async function getTotdMonth(
@@ -47,7 +47,7 @@ export async function getTotdMonth(
       );
       if (error) {
         log.error({ meta, error, offset }, "Failed to get maps");
-        throw new Error(error);
+        throw new ServerError(error, "GetMapsByUidsError");
       }
 
       const response: MonthMapListWithDayMaps = {

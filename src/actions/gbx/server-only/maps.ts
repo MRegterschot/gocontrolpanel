@@ -1,6 +1,7 @@
 import { GbxClientManager } from "@/lib/managers/gbxclient-manager";
 import { SMapInfo } from "@/types/gbx/map";
 import { MapInfoMinimal } from "@/types/map";
+import { ServerError } from "@/types/responses";
 
 export async function setMapList(
   manager: GbxClientManager,
@@ -20,7 +21,7 @@ export async function setMapList(
       { meta, filenames, addedMaps },
       "Failed to add maps to map list",
     );
-    throw new Error("Failed to add maps to map list");
+    throw new ServerError("Failed to add maps to map list", "AddMapListError");
   }
 
   const allMapList = await getMapList(manager);
@@ -37,7 +38,7 @@ export async function setMapList(
       { meta, filenames, removedMaps },
       "Failed to remove maps from map list",
     );
-    throw new Error("Failed to remove maps from map list");
+    throw new ServerError("Failed to remove maps from map list", "RemoveMapListError");
   }
 }
 
@@ -103,7 +104,7 @@ export async function getMapList(
 
   if (!allMapList || allMapList.length === 0) {
     manager.log.error({ meta }, "Failed to retrieve map list from server");
-    throw new Error("Failed to retrieve map list from server");
+    throw new ServerError("Failed to retrieve map list from server", "GetMapListError");
   }
 
   return allMapList;

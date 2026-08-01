@@ -3,6 +3,7 @@ import { MatchPluginPickAndBanOrder } from "@/forms/server/plugins/match/match-s
 import { routes } from "@/routes";
 import { SpectatorStatus } from "@/types/gbx/player";
 import { Player } from "@/types/gbx/scores";
+import { ServerError } from "@/types/responses";
 import { clsx, type ClassValue } from "clsx";
 import { Session } from "next-auth";
 import { JWT } from "next-auth/jwt";
@@ -536,6 +537,6 @@ export function stringToPickAndBan(str?: string): MatchPluginPickAndBanOrder {
     if (action === "p") return { action: "pick", seed: parseInt(seed) };
     if (action === "b") return { action: "ban", seed: parseInt(seed) };
     if (action === "r") return { action: "random" };
-    throw new Error(`Invalid pick and ban item: ${item}`);
+    throw new ServerError(`Invalid pick and ban item: ${item}`, "InvalidPickAndBanItemError");
   });
 }

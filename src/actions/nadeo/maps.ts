@@ -4,7 +4,7 @@ import { doServerActionWithAuth } from "@/lib/actions";
 import { downloadFile } from "@/lib/api/nadeo";
 import { getLogger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
-import { ServerResponse } from "@/types/responses";
+import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
 import { uploadFiles } from "../filemanager";
 import { addMap } from "../gbx/map";
@@ -38,7 +38,7 @@ export async function downloadMapFromUrl(
           { url, fileName, path },
           "File manager is not healthy",
         );
-        throw new Error("File manager is not healthy");
+        throw new ServerError("File manager is not healthy", "FileManagerNotHealthy");
       }
 
       const file = await downloadFile(url, fileName);
@@ -50,7 +50,7 @@ export async function downloadMapFromUrl(
           { url, fileName, path },
           "Failed to download map",
         );
-        throw new Error("Failed to download map");
+        throw new ServerError("Failed to download map", "DownloadMapError");
       }
 
       const formData = new FormData();
@@ -72,7 +72,7 @@ export async function downloadMapFromUrl(
 
       if (error) {
         log.error({ meta, error, url, fileName, path }, "Failed to upload map");
-        throw new Error(error);
+        throw new ServerError(error, "UploadFilesError");
       }
 
       return file.name;
@@ -109,7 +109,7 @@ export async function addMapToServer(
           { url, fileName, path },
           "File manager is not healthy",
         );
-        throw new Error("File manager is not healthy");
+        throw new ServerError("File manager is not healthy", "FileManagerNotHealthy");
       }
 
       const { data: file, error } = await downloadMapFromUrl(
@@ -126,7 +126,7 @@ export async function addMapToServer(
           { url, fileName },
           error,
         );
-        throw new Error(error);
+        throw new ServerError(error, "DownloadMapFromUrlError");
       }
 
       const { error: addMapError } = await addMap(
@@ -147,7 +147,7 @@ export async function addMapToServer(
           { meta, addMapError, url, fileName, path },
           "Failed to add map",
         );
-        throw new Error(addMapError);
+        throw new ServerError(addMapError, "AddMapError");
       }
     },
   );

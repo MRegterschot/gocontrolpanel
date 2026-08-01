@@ -14,6 +14,7 @@ import {
   CreateFileEntrySchema,
   CreateFileEntrySchemaType,
 } from "./create-file-entry-schema";
+import { ServerError } from "@/types/responses";
 
 export default function CreateFileEntryForm({
   serverId,
@@ -40,7 +41,7 @@ export default function CreateFileEntryForm({
       values.path = path + "/" + values.path;
       const { data, error } = await createFileEntry(serverId, values);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "CreateFileEntryError");
       }
 
       toast.success("File entry successfully created");

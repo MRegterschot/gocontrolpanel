@@ -115,7 +115,7 @@ export async function getMapList(
 
       if (!allMapList || allMapList.length === 0) {
         log.error({ meta }, "Failed to get map list or map list is empty");
-        throw new ServerError("Failed to get map list or map list is empty");
+        throw new ServerError("Failed to get map list or map list is empty", "MapListEmpty");
       }
 
       const uids = allMapList.filter((map) => map?.UId).map((map) => map.UId);
@@ -218,7 +218,7 @@ export async function getMapRecordsPaginated(
   },
 ): Promise<ServerResponse<PaginationResponse<MapsWithRecords>>> {
   if (!fetchArgs?.serverId) {
-    throw new ServerError("Server ID is required to fetch maps records.");
+    throw new ServerError("Server ID is required to fetch maps records.", "ServerIdMissing");
   }
 
   return doServerActionWithAuth(
@@ -242,7 +242,7 @@ export async function getMapRecordsPaginated(
       const { data: serverMaps, error } = await getMapList(fetchArgs.serverId);
       if (error) {
         log.error({ meta, error }, "Failed to get map list from server");
-        throw new ServerError(error);
+        throw new ServerError(error, "MapListFetchError");
       }
 
       const maps = await db.maps.findMany({

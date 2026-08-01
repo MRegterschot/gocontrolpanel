@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getErrorMessage } from "@/lib/utils";
+import { ServerError } from "@/types/responses";
 import { ServerClient } from "@/types/server";
 import { IconPlugConnected, IconPlugConnectedX } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
@@ -36,7 +37,7 @@ export default function ClientCard({ client }: { client: ServerClient }) {
     try {
       const { error } = await stopReconnect(client.serverId);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "StopReconnectError");
       }
 
       toast.success(`Stopped reconnecting to ${client.name}`);
@@ -51,7 +52,7 @@ export default function ClientCard({ client }: { client: ServerClient }) {
     try {
       const { error } = await triggerReconnect(client.serverId);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "TriggerReconnectError");
       }
 
       toast.success(`Triggered reconnect to ${client.name}`);
@@ -66,7 +67,7 @@ export default function ClientCard({ client }: { client: ServerClient }) {
     try {
       const { error } = await resendAllManialinks(client.serverId);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "ResendAllManialinksError");
       }
 
       toast.success(`Resent of all manialinks to ${client.name}`);
@@ -81,7 +82,7 @@ export default function ClientCard({ client }: { client: ServerClient }) {
     try {
       const { error } = await disconnectClient(client.serverId);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "DisconnectClientError");
       }
 
       toast.success(`Disconnected ${client.name}`);

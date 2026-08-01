@@ -11,6 +11,7 @@ import TMXRandomMapModal from "../modals/tmx/random-map-modal";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import TMXMapCard from "./tmx-map-card";
+import { ServerError } from "@/types/responses";
 
 export default function MapSearch({
   serverId,
@@ -55,7 +56,7 @@ export default function MapSearch({
 
       const { data, error } = await searchMaps(serverId, params);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "SearchMapsError");
       }
 
       setError(null);
@@ -87,11 +88,11 @@ export default function MapSearch({
       );
 
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "SearchRandomMapError");
       }
 
       if (data.Results.length === 0) {
-        throw new Error("No maps found");
+        throw new ServerError("No maps found", "SearchRandomMapNoResultsError");
       }
 
       setRandomMap(data.Results[0]);

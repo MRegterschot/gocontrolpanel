@@ -17,6 +17,7 @@ import {
 import { Roles } from "@/lib/prisma/generated";
 import { getErrorMessage, hasPermissionSync } from "@/lib/utils";
 import { routePermissions } from "@/routes";
+import { ServerError } from "@/types/responses";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -98,7 +99,7 @@ export const createColumns = (refetch: () => void): ColumnDef<Roles>[] => [
           try {
             const { error } = await deleteRole(role.id);
             if (error) {
-              throw new Error(error);
+              throw new ServerError(error, "DeleteRoleError");
             }
             refetch();
             toast.success("Role successfully deleted");

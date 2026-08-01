@@ -11,6 +11,7 @@ import { IconDeviceFloppy, IconPlus, IconTrash } from "@tabler/icons-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { EditServerSchema, EditServerSchemaType } from "./edit-server-schema";
+import { ServerError } from "@/types/responses";
 
 export default function EditServerForm({
   server,
@@ -61,7 +62,7 @@ export default function EditServerForm({
         })),
       });
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "UpdateServerError");
       }
       toast.success("Server successfully updated");
       if (callback) {

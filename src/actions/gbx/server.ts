@@ -41,7 +41,7 @@ export async function getServerSettings(
 
       if (!settings) {
         log.error({ meta }, "Failed to get server settings");
-        throw new ServerError("Failed to get server settings");
+        throw new ServerError("Failed to get server settings", "GetServerSettingsError");
       }
 
       try {
@@ -83,7 +83,7 @@ export async function getServerSettings(
         return serverSettings;
       } catch (error) {
         log.error({ meta, error }, "Error parsing server settings");
-        throw new ServerError("Failed to parse server settings");
+        throw new ServerError("Failed to parse server settings", "ParseServerSettingsError");
       }
     },
   );
@@ -139,7 +139,7 @@ export async function saveServerSettings(
         ])
         .catch((error) => {
           log.error({ meta, error }, "Error saving server settings");
-          throw new ServerError("Failed to save server settings");
+          throw new ServerError("Failed to save server settings", "SaveServerSettingsError");
         });
 
       let error: string | undefined = undefined;
@@ -165,7 +165,7 @@ export async function saveServerSettings(
       );
 
       if (error) {
-        throw new ServerError(error);
+        throw new ServerError(error, "SaveServerSettingsError");
       }
     },
   );
@@ -192,7 +192,7 @@ export async function getLocalMaps(
 
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
-        throw new ServerError("Could not connect to file manager");
+        throw new ServerError("Could not connect to file manager", "FileManagerNotHealthy");
       }
 
       const res = await fetch(`${fileManager.url}/maps`, {
@@ -215,7 +215,7 @@ export async function getLocalMaps(
           },
           "Failed to get maps from file manager",
         );
-        throw new ServerError("Failed to get maps");
+        throw new ServerError("Failed to get maps", "GetLocalMapsError");
       }
 
       const maps = await res.json();
@@ -224,7 +224,7 @@ export async function getLocalMaps(
           { meta },
           "Failed to get maps from file manager: No maps returned",
         );
-        throw new ServerError("Failed to get maps");
+        throw new ServerError("Failed to get maps", "GetLocalMapsError");
       }
 
       const mapInfoList: LocalMapInfo[] = [];
@@ -234,7 +234,7 @@ export async function getLocalMaps(
           const mapInfo = await client.call("GetMapInfo", map);
 
           if (!mapInfo) {
-            throw new ServerError("Failed to get map info");
+            throw new ServerError("Failed to get map info", "GetMapInfoError");
           }
 
           mapInfoList.push({

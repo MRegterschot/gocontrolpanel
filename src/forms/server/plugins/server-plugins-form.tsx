@@ -7,6 +7,7 @@ import { Form } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { getErrorMessage } from "@/lib/utils";
 import { ServerPlugin } from "@/types/gbx/server-plugin";
+import { ServerError } from "@/types/responses";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconCancel, IconDeviceFloppy } from "@tabler/icons-react";
 import { useMemo, useState } from "react";
@@ -33,7 +34,7 @@ export default function ServerPluginsForm({
     try {
       const { data, error } = await getServerPlugin(serverId);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "GetServerPluginError");
       }
       setServerPluginState(data);
     } catch (error) {
@@ -74,7 +75,7 @@ export default function ServerPluginsForm({
         parsedSettings,
       );
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "SetServerPluginError");
       }
       toast.success("Server plugin updated successfully");
       await refreshServerPlugin();
@@ -89,7 +90,7 @@ export default function ServerPluginsForm({
     try {
       const { error } = await setServerPlugin(serverId, true, "", {});
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "UnloadServerPluginError");
       }
       form.reset({
         scriptName: "",

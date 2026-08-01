@@ -16,6 +16,7 @@ import { PlayerManialinkPageAnswer } from "@/types/gbx/player";
 import { MatchPluginConfig } from "@/types/plugins/match";
 import Plugin from "..";
 import ChoosePositionWindow from "./choose-position-window";
+import { reportException } from "@/lib/sentry/report";
 
 type MatchState = "not_started" | "pickban" | "ready" | "in_progress";
 
@@ -293,6 +294,7 @@ Commands:
           `Loaded match script: ${this.config.script}`,
         );
       } catch (error) {
+        reportException(error, meta);
         this.clientManager.log.error(
           { meta, error },
           "Error loading match script",
@@ -314,6 +316,7 @@ Commands:
       try {
         await setMapList(this.clientManager, this.config.maps);
       } catch (error) {
+        reportException(error, meta);
         this.clientManager.log.error({ meta, error }, "Error setting map list");
         this.clientManager.client.call(
           "ChatSendServerMessageToLogin",
@@ -339,6 +342,7 @@ Commands:
       try {
         await setMapList(this.clientManager, pickedMaps);
       } catch (error) {
+        reportException(error, meta);
         this.clientManager.log.error({ meta, error }, "Error setting map list");
         this.clientManager.client.call(
           "ChatSendServerMessageToLogin",
@@ -357,6 +361,7 @@ Commands:
         await restartMap(this.clientManager);
         this.matchState = "in_progress";
       } catch (error) {
+        reportException(error, meta);
         this.clientManager.log.error({ meta, error }, "Error starting match");
         this.clientManager.client.call(
           "ChatSendServerMessageToLogin",
@@ -373,6 +378,7 @@ Commands:
         `Maps:\n${mapList.map((map, index) => `$z${index + 1}. ${map.Name}`).join("\n")}`,
       );
     } catch (error) {
+      reportException(error, meta);
       this.clientManager.log.error({ meta, error }, "Error fetching map list");
       this.clientManager.client.call(
         "ChatSendServerMessageToLogin",
@@ -443,6 +449,7 @@ Commands:
         `Match paused by ${player?.nickName || login}`,
       );
     } catch (error) {
+      reportException(error, meta);
       this.clientManager.log.error({ meta, error }, "Error pausing match");
       this.clientManager.client.call(
         "ChatSendServerMessageToLogin",
@@ -495,6 +502,7 @@ Commands:
         `Match unpaused by ${player?.nickName || login}`,
       );
     } catch (error) {
+      reportException(error, meta);
       this.clientManager.log.error({ meta, error }, "Error unpausing match");
       this.clientManager.client.call(
         "ChatSendServerMessageToLogin",
@@ -921,6 +929,7 @@ Commands:
           `Loaded lobby script: ${this.config.lobby.script}`,
         );
       } catch (error) {
+        reportException(error, meta);
         this.clientManager.log.error(
           { meta, error },
           "Error loading lobby script",
@@ -937,6 +946,7 @@ Commands:
       try {
         await setMapList(this.clientManager, [this.config.lobby.map]);
       } catch (error) {
+        reportException(error, meta);
         this.clientManager.log.error(
           { meta, error },
           "Error setting lobby map",
@@ -957,6 +967,7 @@ Commands:
         await restartMap(this.clientManager);
         this.matchState = "not_started";
       } catch (error) {
+        reportException(error, meta);
         this.clientManager.log.error({ meta, error }, "Error going to lobby");
         this.clientManager.client.call(
           "ChatSendServerMessageToLogin",

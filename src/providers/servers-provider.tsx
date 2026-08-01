@@ -3,6 +3,7 @@
 import useWebSocket from "@/hooks/use-websocket";
 import { getCurrentId } from "@/lib/utils";
 import { connectionRoutes } from "@/routes";
+import { ServerError } from "@/types/responses";
 import { ServerInfo } from "@/types/server";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -25,7 +26,7 @@ const ServersContext = createContext<ServersContextType | null>(null);
 export const useServers = () => {
   const ctx = useContext(ServersContext);
   if (!ctx) {
-    throw new Error("useServers must be used within a ServersProvider");
+    throw new ServerError("useServers must be used within a ServersProvider", "UseServersError");
   }
   return ctx;
 };

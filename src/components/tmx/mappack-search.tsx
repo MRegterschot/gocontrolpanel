@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import TMXMappackCard from "./tmx-mappack-card";
+import { ServerError } from "@/types/responses";
 
 export default function MappackSearch({
   serverId,
@@ -45,7 +46,7 @@ export default function MappackSearch({
 
       const { data, error } = await searchMappacks(serverId, params);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "SearchMappacksError");
       }
 
       setError(null);

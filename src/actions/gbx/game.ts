@@ -6,7 +6,7 @@ import {
   getGbxClientManager,
 } from "@/lib/managers/gbxclient-manager";
 import { ModeScriptInfo } from "@/types/gbx";
-import { ServerResponse } from "@/types/responses";
+import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
 
 export async function restartMap(serverId: string): Promise<ServerResponse> {
@@ -345,7 +345,7 @@ export async function pauseMatch(
 
       if (error) {
         log.error({ meta, error, pause }, "Failed to pause match");
-        throw new Error(error);
+        throw new ServerError(error, "PauseMatchError");
       }
 
       if (pause) {

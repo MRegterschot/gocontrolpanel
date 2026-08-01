@@ -9,6 +9,7 @@ import { IconPlus } from "@tabler/icons-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AddRoleSchema, AddRoleSchemaType } from "./add-role-schema";
+import { ServerError } from "@/types/responses";
 
 export default function AddRoleForm({ callback }: { callback?: () => void }) {
   const form = useForm<AddRoleSchemaType>({
@@ -23,7 +24,7 @@ export default function AddRoleForm({ callback }: { callback?: () => void }) {
         permissions: getList<string>(values.permissions),
       });
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "CreateRoleError");
       }
       toast.success("Role successfully added");
       if (callback) {

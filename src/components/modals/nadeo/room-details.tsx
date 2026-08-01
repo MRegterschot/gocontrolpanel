@@ -22,6 +22,7 @@ import { parseTmTags } from "tmtags";
 import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
 import ActivityMapCard from "./activity-map-card";
+import { ServerError } from "@/types/responses";
 
 export default function RoomDetailsModal({
   closeModal,
@@ -64,7 +65,7 @@ export default function RoomDetailsModal({
 
       const { error } = await downloadRoom(data.serverId, clubRoom.room);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "DownloadRoomError");
       }
 
       toast.success("Room successfully downloaded", {
@@ -103,7 +104,7 @@ export default function RoomDetailsModal({
 
       const { error } = await addRoomToServer(data.serverId, clubRoom.room);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "AddRoomToServerError");
       }
 
       toast.success("Room successfully added to server");
@@ -128,7 +129,7 @@ export default function RoomDetailsModal({
           data.activity.id,
         );
       if (getClubRoomError) {
-        throw new Error(getClubRoomError);
+        throw new ServerError(getClubRoomError, "GetClubRoomError");
       }
 
       setClubRoom(clubRoomRes);

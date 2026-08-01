@@ -2,7 +2,7 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { connectToSSHServer, executeSSHScript } from "@/lib/ssh";
-import { ServerResponse } from "@/types/responses";
+import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
 import { getDBHetznerServer } from "../database/server-only/hetzner-servers";
 import { getHetznerServer } from "./util";
@@ -29,33 +29,33 @@ export async function restartTrackmaniaServer(
 
       if (isNaN(tmServerNumber)) {
         la("Invalid Trackmania server number");
-        throw new Error("Invalid Trackmania server number");
+        throw new ServerError("Invalid Trackmania server number", "InvalidTMServerNumber");
       }
 
       const hetznerServer = await getHetznerServer(projectId, serverId);
 
       if (!hetznerServer) {
         la("Server not found");
-        throw new Error("Server not found");
+        throw new ServerError("Server not found", "HetznerServerNotFound");
       }
 
       const labels = hetznerServer.labels || {};
 
       if (parseInt(labels[`${tmServerNumber}.version`] || "0") < 1) {
         la("Server version is outdated");
-        throw new Error("Server version is outdated");
+        throw new ServerError("Server version is outdated", "OutdatedServerVersion");
       }
 
       const dbHetznerServer = await getDBHetznerServer(serverId);
 
       if (!dbHetznerServer) {
         la("DB Server not found");
-        throw new Error("DB Server not found");
+        throw new ServerError("DB Server not found", "DBHetznerServerNotFound");
       }
 
       if (!dbHetznerServer.privateKey) {
         la("SSH private key not found for the server");
-        throw new Error("SSH private key not found for the server");
+        throw new ServerError("SSH private key not found for the server", "SSHPrivateKeyNotFound");
       }
 
       const script = `~/gocontrolpanel-master/hetzner/stack-${tmServerNumber}/restart.sh`;
@@ -73,7 +73,7 @@ export async function restartTrackmaniaServer(
 
       if (result.stderr) {
         la(`Error executing command on server: ${result.stderr.slice(-100)}`);
-        throw new Error(`Error executing command on server: ${result.stderr}`);
+        throw new ServerError(`Error executing command on server: ${result.stderr}`, "SSHCommandExecutionError");
       }
 
       la();
@@ -103,33 +103,33 @@ export async function stopTrackmaniaServer(
 
       if (isNaN(tmServerNumber)) {
         la("Invalid Trackmania server number");
-        throw new Error("Invalid Trackmania server number");
+        throw new ServerError("Invalid Trackmania server number", "InvalidTMServerNumber");
       }
 
       const hetznerServer = await getHetznerServer(projectId, serverId);
 
       if (!hetznerServer) {
         la("Server not found");
-        throw new Error("Server not found");
+        throw new ServerError("Server not found", "HetznerServerNotFound");
       }
 
       const labels = hetznerServer.labels || {};
 
       if (parseInt(labels[`${tmServerNumber}.version`] || "0") < 1) {
         la("Server version is outdated");
-        throw new Error("Server version is outdated");
+        throw new ServerError("Server version is outdated", "OutdatedServerVersion");
       }
 
       const dbHetznerServer = await getDBHetznerServer(serverId);
 
       if (!dbHetznerServer) {
         la("DB Server not found");
-        throw new Error("DB Server not found");
+        throw new ServerError("DB Server not found", "DBHetznerServerNotFound");
       }
 
       if (!dbHetznerServer.privateKey) {
         la("SSH private key not found for the server");
-        throw new Error("SSH private key not found for the server");
+        throw new ServerError("SSH private key not found for the server", "SSHPrivateKeyNotFound");
       }
 
       const script = `~/gocontrolpanel-master/hetzner/stack-${tmServerNumber}/down.sh`;
@@ -147,7 +147,7 @@ export async function stopTrackmaniaServer(
 
       if (result.stderr) {
         la(`Error executing command on server: ${result.stderr.slice(-100)}`);
-        throw new Error(`Error executing command on server: ${result.stderr}`);
+        throw new ServerError(`Error executing command on server: ${result.stderr}`, "SSHCommandExecutionError");
       }
 
       la();
@@ -178,26 +178,26 @@ export async function getLogs(
 
       if (isNaN(tmServerNumber)) {
         la("Invalid Trackmania server number");
-        throw new Error("Invalid Trackmania server number");
+        throw new ServerError("Invalid Trackmania server number", "InvalidTMServerNumber");
       }
 
       const dbHetznerServer = await getDBHetznerServer(serverId);
 
       if (!dbHetznerServer) {
         la("DB Server not found");
-        throw new Error("DB Server not found");
+        throw new ServerError("DB Server not found", "DBHetznerServerNotFound");
       }
 
       if (!dbHetznerServer.privateKey) {
         la("SSH private key not found for the server");
-        throw new Error("SSH private key not found for the server");
+        throw new ServerError("SSH private key not found for the server", "SSHPrivateKeyNotFound");
       }
 
       const hetznerServer = await getHetznerServer(projectId, serverId);
 
       if (!hetznerServer) {
         la("Server not found");
-        throw new Error("Server not found");
+        throw new ServerError("Server not found", "HetznerServerNotFound");
       }
 
       const labels = hetznerServer.labels || {};
@@ -206,7 +206,7 @@ export async function getLogs(
 
       if (command === "servercontroller" && !serverControllerType) {
         la("Server controller not configured for this server");
-        throw new Error("Server controller not configured for this server");
+        throw new ServerError("Server controller not configured for this server", "ServerControllerNotConfigured");
       }
 
       const commands = {
@@ -228,7 +228,7 @@ export async function getLogs(
 
       if (result.stderr) {
         la(`Error executing command on server: ${result.stderr.slice(-100)}`);
-        throw new Error(`Error executing command on server: ${result.stderr}`);
+        throw new ServerError(`Error executing command on server: ${result.stderr}`, "SSHCommandExecutionError");
       }
 
       la();

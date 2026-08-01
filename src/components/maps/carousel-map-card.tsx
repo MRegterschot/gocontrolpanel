@@ -16,6 +16,7 @@ import { parseTmTags, stripTmTags } from "tmtags";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
+import { ServerError } from "@/types/responses";
 
 interface CarouselMapCardProps {
   map: Maps;
@@ -50,7 +51,7 @@ export default function CarouselMapCard({
       const previousIndex = index - 1 < 0 ? total - 1 : index - 1;
       const { error } = await jumpToMap(serverId, previousIndex);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "JumpToMapError");
       }
       toast.success("Gone back to previous map");
     } catch (error) {
@@ -69,7 +70,7 @@ export default function CarouselMapCard({
     try {
       const { error } = await restartMap(serverId);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "RestartMapError");
       }
       toast.success("Restarted map", {
         description: `Restarted ${stripTmTags(map.name)} by ${map.authorNickname}`,
@@ -90,7 +91,7 @@ export default function CarouselMapCard({
     try {
       const { error } = await nextMap(serverId);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "NextMapError");
       }
       toast.success("Skipped to next map");
     } catch (error) {
@@ -109,7 +110,7 @@ export default function CarouselMapCard({
     try {
       const { error } = await jumpToMap(serverId, index);
       if (error) {
-        throw new Error(error);
+        throw new ServerError(error, "JumpToMapError");
       }
       toast.success("Jumped to map", {
         description: `Jumped to ${stripTmTags(map.name)} by ${map.authorNickname}`,

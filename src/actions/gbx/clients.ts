@@ -2,7 +2,7 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getGbxClientManager } from "@/lib/managers/gbxclient-manager";
-import { ServerResponse } from "@/types/responses";
+import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
 
 export async function stopReconnect(
@@ -12,7 +12,7 @@ export async function stopReconnect(
     const manager = await getGbxClientManager(serverId);
 
     if (!manager) {
-      throw new Error("Client not found");
+      throw new ServerError("Client not found", "ClientNotFound");
     }
 
     manager.stopReconnect();
@@ -28,7 +28,7 @@ export async function triggerReconnect(
     const manager = await getGbxClientManager(serverId);
 
     if (!manager) {
-      throw new Error("Client not found");
+      throw new ServerError("Client not found", "ClientNotFound");
     }
 
     manager.tryConnectWithRetry();
@@ -48,7 +48,7 @@ export async function resendAllManialinks(
     const manager = await getGbxClientManager(serverId);
 
     if (!manager) {
-      throw new Error("Client not found");
+      throw new ServerError("Client not found", "ClientNotFound");
     }
 
     manager.resendAllManialinks();
@@ -68,7 +68,7 @@ export async function disconnectClient(
     const manager = await getGbxClientManager(serverId);
 
     if (!manager) {
-      throw new Error("Client not found");
+      throw new ServerError("Client not found", "ClientNotFound");
     }
 
     manager.emit("disconnect");
