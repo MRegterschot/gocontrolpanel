@@ -6,10 +6,10 @@ import { Card } from "@/components/ui/card";
 import MatchForm from "@/forms/server/plugins/match/match-form";
 import { getErrorMessage } from "@/lib/utils";
 import { MatchPluginConfig } from "@/types/plugins/match";
+import { ServerError } from "@/types/responses";
 import { IconDownload, IconX } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { DefaultModalProps } from "../../default-props";
-import { ServerError } from "@/types/responses";
 
 export default function MatchPluginModal({
   serverId,

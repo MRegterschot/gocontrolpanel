@@ -46,7 +46,7 @@ Commands:
       startLine: this.onStartLine.bind(this),
     });
 
-    this.clientManager.onCommand("ecm", this.onECMCommand.bind(this));
+    this.clientManager.onCommand("ecm", this.onECMCommand);
     this.clientManager.onAction(this.getPluginId(), this.onECMAction);
   }
 
@@ -58,7 +58,7 @@ Commands:
 
     this.clientManager.removeListeners(this.getPluginId());
 
-    this.clientManager.offCommand("ecm", this.onECMCommand.bind(this));
+    this.clientManager.offCommand("ecm", this.onECMCommand);
     this.clientManager.offAction(this.getPluginId(), this.onECMAction);
 
     this.manialinkManager.actionGroup.removeAction(this.getPluginId());
@@ -127,9 +127,9 @@ Commands:
     await this.createWindowForPlayer(data.Login);
   };
 
-  async onECMCommand(_: string[], login: string) {
+  onECMCommand = async (_: string[], login: string) => {
     await this.createWindowForPlayer(login);
-  }
+  };
 
   async onPlayerFinish(waypoint: Waypoint) {
     if (!this.isActive()) return;

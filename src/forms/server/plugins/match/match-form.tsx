@@ -19,6 +19,7 @@ import {
 } from "@/lib/utils";
 import { LocalMapInfo } from "@/types/map";
 import { MatchPluginConfig } from "@/types/plugins/match";
+import { ServerError } from "@/types/responses";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   IconDeviceFloppy,
@@ -35,7 +36,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Control, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { MatchPluginSchema, MatchPluginSchemaType } from "./match-schema";
-import { ServerError } from "@/types/responses";
 
 export default function MatchForm({
   serverId,
@@ -210,6 +210,13 @@ export default function MatchForm({
   });
 
   async function handleSubmit(values: MatchPluginSchemaType) {
+    if ((values.pickAndBan?.order?.length ?? 0) > (values.maps?.length ?? 0)) {
+      toast.error(
+        "The number of pick and ban steps cannot exceed the number of maps.",
+      );
+      return;
+    }
+
     try {
       const updatedConfig: MatchPluginConfig = {
         ...values,
@@ -534,6 +541,9 @@ export default function MatchForm({
                     variant="outline"
                     onClick={() =>
                       appendPickAndBanOrder({ action: "pick", seed: 1 })
+                    }
+                    disabled={
+                      mapFields.length < pickAndBanOrderFields.length + 1
                     }
                   >
                     <IconPlus />

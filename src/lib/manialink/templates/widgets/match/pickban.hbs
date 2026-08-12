@@ -19,7 +19,7 @@
 </framemodel>
 
 <frame id="maps" pos="0 -10" size="120 124">
-<quad size="120 {{ add (multiply 100 11.5) 9 }}" bgcolor="222" opacity="0.75" scriptevents="1"/>
+<quad pos="0 {{ subtract (subtract 1159 (multiply (jsonLength data.mapInfosJson) 11.5)) 9 }}" size="120 1159" bgcolor="222" opacity="0.75" scriptevents="1"/>
 {{#range 0 100}}
 <frameinstance modelid="map-info" pos="5 {{ subtract (multiply i -11.5) 5 }}" />
 {{/range}}
@@ -47,13 +47,15 @@
 {{/content}}
 
 {{#content "script"}}
-Void updateScroll(MapInfo[] maps) {
+Void updateScroll(Integer maps) {
   declare mapsFrame <=> (Page.MainFrame.GetFirstChild("maps") as CMlFrame);
-  declare Integer mapCount = maps.count;
+  declare Integer mapCount = maps;
   if (mapCount > mapsFrame.Controls.count) {
     mapCount = mapsFrame.Controls.count;
   }
   declare Real maxY = mapCount * 11.5 - 115;
+  declare CMlQuad mapsBackground <=> (mapsFrame.Controls[0] as CMlQuad);
+  AnimMgr.Add(mapsBackground, "<quad pos='0 " ^ 1159 + mapCount * -11.5 - 9 ^ "' />", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
   if (maxY < 0) {
     maxY = 0.;
   }
@@ -143,6 +145,16 @@ Void orderPickedMaps() {
   }
 }
 
+Integer getPickedMapsCount(MapInfo[] mapInfos) {
+  declare Integer count = 0;
+  foreach (map in mapInfos) {
+    if (map.pickedBy != "") {
+      count = count + 1;
+    }
+  }
+  return count;
+}
+
 Void updateWidget(MapInfo[] mapInfos, PickBanAction currentAction) {
   declare mapsCount = mapInfos.count;
   declare index = 0;
@@ -153,7 +165,6 @@ Void updateWidget(MapInfo[] mapInfos, PickBanAction currentAction) {
   }
 
   declare mapsFrame <=> (Page.MainFrame.GetFirstChild("maps") as CMlFrame);
-  (mapsFrame.Controls[0] as CMlQuad).Size = <120., (mapsCount * 11.5) + 9>;
 
   // Hide unused rows
   while (index < mapsFrame.Controls.count - 1) {
@@ -163,7 +174,7 @@ Void updateWidget(MapInfo[] mapInfos, PickBanAction currentAction) {
     index = index + 1;
   }
   
-  updateScroll(mapInfos);
+  updateScroll(mapInfos.count);
 
   declare actionFrame <=> (Page.MainFrame.GetFirstChild("pickban-action") as CMlFrame);
   declare actionLabel <=> (actionFrame.Controls[2] as CMlLabel);
@@ -177,7 +188,9 @@ Void updateWidget(MapInfo[] mapInfos, PickBanAction currentAction) {
     actionLabel.SetText("Pick and ban completed");
     sleep(5000);
     hideUnpickedMaps();
+    mapsFrame.ScrollMax = <0., 0.>;
     sleep(400);
+    updateScroll(getPickedMapsCount(mapInfos));
     orderPickedMaps();
   }
 }
@@ -191,6 +204,7 @@ declare Integer lastUpdate = -1;
 declare mapsFrame <=> (widget.GetFirstChild("maps") as CMlFrame);
 mapsFrame.ScrollActive = True;
 mapsFrame.ScrollMin = <0., 0.>;
+mapsFrame.ScrollGrid = <0., 11.5>;
 {{/content}}
 
 

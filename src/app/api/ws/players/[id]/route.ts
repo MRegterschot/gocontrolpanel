@@ -1,9 +1,14 @@
 import { parseTokenFromRequest } from "@/lib/auth";
+import { getLogger } from "@/lib/logger";
 import { getGbxClientManager } from "@/lib/managers/gbxclient-manager";
 import { hasPermissionsJWTSync } from "@/lib/utils";
 import { routePermissions } from "@/routes";
 import { PlayerInfo } from "@/types/player";
-import { parse } from "node:url";
+
+const meta = {
+  type: "ws",
+  module: "players",
+};
 
 export function GET() {
   const headers = new Headers();
@@ -12,20 +17,22 @@ export function GET() {
   return new Response("Upgrade Required", { status: 426, headers });
 }
 
-export async function SOCKET(
+export async function UPGRADE(
   client: import("ws").WebSocket,
-  req: import("node:http").IncomingMessage,
+  _server: import("ws").WebSocketServer,
+  request: import("next/server").NextRequest,
+  context: import("next-ws/server").RouteContext<"/api/ws/players/[id]">,
 ) {
-  const { pathname } = parse(req.url || "", true);
-  const parts = pathname?.split("/") || [];
-  const id = parts[parts.length - 1];
+  const { id } = context.params;
 
   if (!id) {
     client.close();
     return;
   }
 
-  const token = await parseTokenFromRequest(req);
+  const logger = getLogger(id);
+
+  const token = await parseTokenFromRequest(request);
   if (!token) {
     client.close();
     return;
@@ -84,6 +91,8 @@ export async function SOCKET(
 
   const listenerId = crypto.randomUUID();
 
+  logger.debug({ meta, listenerId }, "Adding WebSocket listeners for players");
+
   manager.addListeners(listenerId, {
     playerConnect: onPlayerConnect,
     playerDisconnect: onPlayerDisconnect,
@@ -91,12 +100,11 @@ export async function SOCKET(
     playerList: onPlayerList,
   });
 
-  const cleanup = () => {
+  client.once("close", () => {
+    logger.debug(
+      { meta, listenerId },
+      "Cleaning up WebSocket listeners for players",
+    );
     manager.removeListeners(listenerId);
-  };
-
-  return () => {
-    cleanup();
-    client.close();
-  };
+  });
 }
