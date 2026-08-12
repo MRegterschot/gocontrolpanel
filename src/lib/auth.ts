@@ -17,6 +17,7 @@ import {
 import { getServerSession, NextAuthOptions, Profile, Session } from "next-auth";
 import { getToken } from "next-auth/jwt";
 import { OAuthConfig } from "next-auth/providers/oauth";
+import { NextRequest } from "next/server";
 import { IncomingMessage } from "node:http";
 import slugid from "slugid";
 import { getWebIdentities } from "./api/nadeo";
@@ -287,7 +288,16 @@ export async function withAuth(
   return session;
 }
 
-export async function parseTokenFromRequest(req: IncomingMessage) {
+export async function parseTokenFromRequest(
+  req: IncomingMessage | NextRequest,
+) {
+  if (!(req instanceof IncomingMessage)) {
+    return getToken({
+      req,
+      secret: process.env.NEXTAUTH_SECRET!,
+    });
+  }
+
   const cookies = parse(req.headers.cookie || "");
   (req as any).cookies = cookies;
 

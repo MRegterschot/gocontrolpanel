@@ -1,9 +1,15 @@
 import { parseTokenFromRequest } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 import {
   GbxClientManager,
   getGbxClientManager,
 } from "@/lib/managers/gbxclient-manager";
 import { Notifications } from "@/lib/prisma/generated";
+
+const meta = {
+  type: "ws",
+  module: "notifications",
+};
 
 export function GET() {
   const headers = new Headers();
@@ -12,11 +18,13 @@ export function GET() {
   return new Response("Upgrade Required", { status: 426, headers });
 }
 
-export async function SOCKET(
+export async function UPGRADE(
   client: import("ws").WebSocket,
-  req: import("node:http").IncomingMessage,
+  _server: import("ws").WebSocketServer,
+  request: import("next/server").NextRequest,
+  _context: import("next-ws/server").RouteContext<"/api/ws/notifications">,
 ) {
-  const token = await parseTokenFromRequest(req);
+  const token = await parseTokenFromRequest(request);
 
   if (!token) {
     client.close();
@@ -45,6 +53,11 @@ export async function SOCKET(
 
   const listenerId = crypto.randomUUID();
 
+  logger.debug(
+    { meta, listenerId },
+    "Adding WebSocket listeners for notifications",
+  );
+
   for (const manager of serverManagers) {
     manager.addListeners(listenerId, {
       adminCommand: (notifications: Notifications[]) => {
@@ -69,14 +82,13 @@ export async function SOCKET(
     });
   }
 
-  const cleanup = () => {
+  client.once("close", () => {
+    logger.debug(
+      { meta, listenerId },
+      "Cleaning up WebSocket listeners for notifications",
+    );
     for (const manager of serverManagers) {
       manager.removeListeners(listenerId);
     }
-  };
-
-  return () => {
-    cleanup();
-    client.close();
-  };
+  });
 }

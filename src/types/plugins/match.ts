@@ -10,7 +10,7 @@ export type MatchPluginConfig = {
 };
 
 export type MatchPluginPickAndBan = {
-  type: "player" | "team";
+  type?: "player" | "team";
   order: string;
   choosePosition: boolean;
   teams?: {
