@@ -102,19 +102,13 @@ Commands:
   async onLoad() {
     this.clientManager.addListeners(this.getPluginId(), {});
 
-    this.clientManager.onCommand(
-      "matchstart",
-      this.onMatchStartCommand.bind(this),
-    );
-    this.clientManager.onCommand(
-      "matchstop",
-      this.onMatchStopCommand.bind(this),
-    );
-    this.clientManager.onCommand("pause", this.onPauseCommand.bind(this));
-    this.clientManager.onCommand("unpause", this.onUnpauseCommand.bind(this));
-    this.clientManager.onCommand("pickban", this.onPickbanCommand.bind(this));
-    this.clientManager.onCommand("lobby", this.onLobbyCommand.bind(this));
-    this.clientManager.onCommand("setseeds", this.onSetSeedsCommand.bind(this));
+    this.clientManager.onCommand("matchstart", this.onMatchStartCommand);
+    this.clientManager.onCommand("matchstop", this.onMatchStopCommand);
+    this.clientManager.onCommand("pause", this.onPauseCommand);
+    this.clientManager.onCommand("unpause", this.onUnpauseCommand);
+    this.clientManager.onCommand("pickban", this.onPickbanCommand);
+    this.clientManager.onCommand("lobby", this.onLobbyCommand);
+    this.clientManager.onCommand("setseeds", this.onSetSeedsCommand);
 
     this.clientManager.onAction(
       "match-pickban-action-{uid}",
@@ -127,22 +121,13 @@ Commands:
 
     this.clientManager.removeListeners(this.getPluginId());
 
-    this.clientManager.offCommand(
-      "matchstart",
-      this.onMatchStartCommand.bind(this),
-    );
-    this.clientManager.offCommand(
-      "matchstop",
-      this.onMatchStopCommand.bind(this),
-    );
-    this.clientManager.offCommand("pause", this.onPauseCommand.bind(this));
-    this.clientManager.offCommand("unpause", this.onUnpauseCommand.bind(this));
-    this.clientManager.offCommand("pickban", this.onPickbanCommand.bind(this));
-    this.clientManager.offCommand("lobby", this.onLobbyCommand.bind(this));
-    this.clientManager.offCommand(
-      "setseeds",
-      this.onSetSeedsCommand.bind(this),
-    );
+    this.clientManager.offCommand("matchstart", this.onMatchStartCommand);
+    this.clientManager.offCommand("matchstop", this.onMatchStopCommand);
+    this.clientManager.offCommand("pause", this.onPauseCommand);
+    this.clientManager.offCommand("unpause", this.onUnpauseCommand);
+    this.clientManager.offCommand("pickban", this.onPickbanCommand);
+    this.clientManager.offCommand("lobby", this.onLobbyCommand);
+    this.clientManager.offCommand("setseeds", this.onSetSeedsCommand);
 
     this.clientManager.offAction(
       "match-pickban-action-{uid}",
@@ -254,7 +239,7 @@ Commands:
     await this.handleNextPickBanAction();
   };
 
-  async onMatchStartCommand(_: string[], login: string) {
+  onMatchStartCommand = async (_: string[], login: string) => {
     const meta = {
       type: "plugins",
       module: "match-plugin",
@@ -386,9 +371,9 @@ Commands:
         login,
       );
     }
-  }
+  };
 
-  async onMatchStopCommand(_: string[], login: string) {
+  onMatchStopCommand = async (_: string[], login: string) => {
     if (
       !this.checkCommandPermission(
         login,
@@ -403,9 +388,9 @@ Commands:
     this.clientManager.client.call("ChatSendServerMessage", "Match stopped");
 
     await this.setLobbyState(login);
-  }
+  };
 
-  async onPauseCommand(_: string[], login: string) {
+  onPauseCommand = async (_: string[], login: string) => {
     const meta = {
       type: "plugins",
       module: "match-plugin",
@@ -457,9 +442,9 @@ Commands:
         login,
       );
     }
-  }
+  };
 
-  async onUnpauseCommand(_: string[], login: string) {
+  onUnpauseCommand = async (_: string[], login: string) => {
     const meta = {
       type: "plugins",
       module: "match-plugin",
@@ -510,9 +495,9 @@ Commands:
         login,
       );
     }
-  }
+  };
 
-  async onPickbanCommand(_: string[], login: string) {
+  onPickbanCommand = async (_: string[], login: string) => {
     if (
       !this.checkCommandPermission(
         login,
@@ -562,9 +547,9 @@ Commands:
         )
         .join("\n")}`,
     );
-  }
+  };
 
-  async onLobbyCommand(_: string[], login: string) {
+  onLobbyCommand = async (_: string[], login: string) => {
     if (
       !this.checkCommandPermission(
         login,
@@ -595,9 +580,9 @@ Commands:
     }
 
     await this.setLobbyState(login);
-  }
+  };
 
-  async onSetSeedsCommand(args: string[], login: string) {
+  onSetSeedsCommand = async (args: string[], login: string) => {
     const parsedSeeds = args.map((arg) => parseInt(arg, 10));
     if (parsedSeeds.some((seed) => isNaN(seed))) {
       this.clientManager.client.call(
@@ -623,7 +608,7 @@ Commands:
         login,
       );
     }
-  }
+  };
 
   onChoosePositionCallback = async (position: number) => {
     if (!this.pickBanState.currentAction) return;
