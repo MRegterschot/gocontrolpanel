@@ -216,7 +216,7 @@ export async function getWebIdentities(
   accountIds: string[],
 ): Promise<ServerResponse<WebIdentity[]>> {
   return doServerAction(async () => {
-    const url = `${PROD_URL}/webidentities/?accountIdList=${accountIds.join(",")}`;
+    const url = `${PROD_URL}/webidentities/by-account/?accountIdList=${accountIds.join(",")}`;
     return await doRequest<WebIdentity[]>(url);
   });
 }
