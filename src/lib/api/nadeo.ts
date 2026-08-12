@@ -33,9 +33,26 @@ const PROD_URL = "https://prod.trackmania.core.nadeo.online";
 const API_URL = "https://api.trackmania.com/api";
 const LIVE_URL = "https://live-services.trackmania.nadeo.live";
 
+const authenticateInFlight = new Map<string, Promise<NadeoTokens>>();
+
 // This function is used to authenticate with the Nadeo API and store the tokens in Redis.
 export async function authenticate(
   audience: string = "NadeoServices",
+): Promise<NadeoTokens> {
+  const inFlight = authenticateInFlight.get(audience);
+  if (inFlight) {
+    return inFlight;
+  }
+
+  const promise = authenticateUncached(audience).finally(() => {
+    authenticateInFlight.delete(audience);
+  });
+  authenticateInFlight.set(audience, promise);
+  return promise;
+}
+
+async function authenticateUncached(
+  audience: string,
 ): Promise<NadeoTokens> {
   const login = config.NADEO.SERVER_LOGIN;
   const pass = config.NADEO.SERVER_PASSWORD;
@@ -89,8 +106,23 @@ export async function authenticate(
   return tokens;
 }
 
+let authenticateCredentialsInFlight: Promise<string> | null = null;
+
 // This function is used to authenticate with the Trackmania API and store the credentials token in Redis.
 export async function authenticateCredentials(): Promise<string> {
+  if (authenticateCredentialsInFlight) {
+    return authenticateCredentialsInFlight;
+  }
+
+  authenticateCredentialsInFlight = authenticateCredentialsUncached().finally(
+    () => {
+      authenticateCredentialsInFlight = null;
+    },
+  );
+  return authenticateCredentialsInFlight;
+}
+
+async function authenticateCredentialsUncached(): Promise<string> {
   const clientId = config.NADEO.CLIENT_ID;
   const clientSecret = config.NADEO.CLIENT_SECRET;
 

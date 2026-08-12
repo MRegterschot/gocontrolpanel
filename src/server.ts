@@ -1,3 +1,4 @@
+import "next/dist/server/node-environment-baseline";
 import next from "next";
 import { setHttpServer, setWebSocketServer } from "next-ws/server";
 import { Server } from "node:http";
@@ -11,7 +12,7 @@ const webSocketServer = new WebSocketServer({ noServer: true });
 setWebSocketServer(webSocketServer);
 
 const dev = process.env.NODE_ENV !== "production";
-const app = next({ dev, customServer: true, turbo: true });
+const app = next({ dev, customServer: true });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
