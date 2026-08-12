@@ -523,7 +523,7 @@ Commands:
       return;
     }
 
-    if (!this.config?.pickAndBan) {
+    if (!this.config?.pickAndBan?.type) {
       this.clientManager.client.call(
         "ChatSendServerMessageToLogin",
         `Pick and ban configuration is not set`,
