@@ -15,6 +15,14 @@ Handlebars.registerHelper("length", function (array: any[]) {
   return array.length;
 });
 
+Handlebars.registerHelper("jsonLength", function (json: string) {
+  try {
+    return JSON.parse(json || "[]").length;
+  } catch {
+    return 0;
+  }
+});
+
 Handlebars.registerHelper("bool", function (value) {
   return value ? "True" : "False";
 });
