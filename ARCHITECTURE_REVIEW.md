@@ -426,6 +426,7 @@ Nothing is pushed.
 | 1 | `docs/architecture-review` | — | ✅ merged |
 | 2 | `chore/prune-dead-dependencies` | 1 | ✅ merged |
 | 3 | `chore/ci-quality-gates` | 1 | ✅ merged |
+| 4 | `fix/permission-resolution-purity` | 1 | ✅ merged |
 
 ## 1 · `docs/architecture-review`
 
@@ -501,3 +502,28 @@ dependency tree than production). Also bumped `actions/checkout` v3→v4 and
 `next.config.js` — neither of which exists in this repo, so the cache never hit.
 
 **Current gate status: lint 0 errors / 77 warnings · typecheck clean · 25 tests passing.**
+
+## 4 · `fix/permission-resolution-purity` — §5.1
+
+`hasPermissionsJWTSync` took `const userPermissions = jwt.permissions` — *the same
+array reference*, not a copy — and then pushed every derived group, project and
+server permission into it. Each call therefore mutated the caller's session object
+and grew the array, and the whole derivation was redone from scratch on every one
+of the ~185 permission checks.
+
+Replaced with a pure `resolvePermissions(jwt): Set<string>` that builds a fresh
+set and never touches its input; `hasPermissionsJWTSync` now resolves once and
+does set lookups instead of `Array.includes` scans.
+
+13 regression tests in `src/lib/__tests__/permissions.test.ts` cover the purity
+guarantee (the token is unchanged after repeated calls), each derivation rule,
+the `:id` substitution, the admin bypass, and the empty-requirements case.
+
+> **History note for whoever picks this up:** the code change itself is not in
+> this branch. A `git add -A` on branch 2 swept `src/lib/utils.ts` and
+> `tsconfig.typecheck.json` into commit `b708e4ba` ("chore: prune dead
+> dependencies…") alongside the dependency work. The intended history rewrite was
+> blocked by the sandbox, and nothing had been pushed, so rather than force the
+> issue this branch carries the tests and this note. **`b708e4ba` contains three
+> things: the dependency pruning, the permission purity fix, and
+> `tsconfig.typecheck.json`.** Later branches stage files explicitly.
