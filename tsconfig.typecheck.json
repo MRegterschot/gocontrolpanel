@@ -4,5 +4,10 @@
     "incremental": false
   },
   "include": ["next-env.d.ts", "src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["node_modules", ".next", "src/lib/prisma/generated", "src/lib/manialink/compiled_templates.js"]
+  "exclude": [
+    "node_modules",
+    ".next",
+    "src/lib/prisma/generated",
+    "src/lib/manialink/compiled_templates.js"
+  ]
 }

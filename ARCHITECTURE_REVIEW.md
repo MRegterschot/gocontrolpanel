@@ -425,6 +425,7 @@ Nothing is pushed.
 |---|---|---|---|
 | 1 | `docs/architecture-review` | — | ✅ merged |
 | 2 | `chore/prune-dead-dependencies` | 1 | ✅ merged |
+| 3 | `chore/ci-quality-gates` | 1 | ✅ merged |
 
 ## 1 · `docs/architecture-review`
 
@@ -462,3 +463,41 @@ pattern that phase 5 replaces wholesale, so the family is set to `warn` for now
 with a comment pointing at that phase. **Lint is at 0 errors / 77 warnings.**
 
 *Net: 14 packages removed.*
+
+## 3 · `chore/ci-quality-gates` — §10
+
+Gives the project a test harness and makes CI gate on more than "it compiles".
+
+**Vitest.** `vitest.config.ts` with `vite-tsconfig-paths` so tests resolve the `@/`
+alias, `environment: "node"`, picking up `src/**/*.{test,spec}.{ts,tsx}`. Scripts:
+`bun run test` and `bun run test:watch`. Nothing in this suite touches a database,
+Redis or a game server — integration suites get their own project when they land.
+
+**First 25 tests** in `src/lib/__tests__/utils.test.ts`, covering the pure helpers
+named in §10: `formatTime`, `getErrorMessage`, `getList`, `formatBytes`,
+`getCurrentId`, `isValidHetznerServerName`, and the string helpers.
+
+> **They found a bug on the first run.** `getErrorMessage` tested
+> `error instanceof Error` and *then* separately tested for an object with a
+> `message` property. Every `Error` satisfies both, so the second branch always
+> won and the first was dead code — meaning every error message in the
+> application was being silently capitalised (`"boom"` → `"Boom"`). The second
+> branch is now an `else if`. Fixed here rather than deferred to §3.3, since the
+> test that caught it lives on this branch.
+
+**`bun run typecheck`** via a new `tsconfig.typecheck.json` that checks `src/**`
+only. A plain `tsc --noEmit` on the root config fails on 13 errors in `.next/types`:
+stale route types for deleted pages, plus Next 16 rejecting the `UPGRADE` export
+that `next-ws` requires on every WebSocket route. Neither is a source defect, and
+neither is fixable without the §1.5 next-ws work, so the gate checks source and
+`next build` continues to cover the rest. **`src/**` typechecks clean.**
+
+**CI (`.github/workflows/nextjs-build-check.yml`, renamed to `CI`)** now runs a
+`quality` job — `lint`, `typecheck`, `test` — alongside the existing `[mysql,
+postgres]` build matrix. Installs use `--frozen-lockfile` (previously the
+Dockerfile used it but CI did not, so CI could silently pass against a different
+dependency tree than production). Also bumped `actions/checkout` v3→v4 and
+`setup-bun` v1→v2, and fixed the build cache key, which hashed `bun.lockb` and
+`next.config.js` — neither of which exists in this repo, so the cache never hit.
+
+**Current gate status: lint 0 errors / 77 warnings · typecheck clean · 25 tests passing.**

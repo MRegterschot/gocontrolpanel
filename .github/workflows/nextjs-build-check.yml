@@ -1,10 +1,53 @@
-name: NextJS Build Check
+name: CI
 
 on:
   pull_request:
 
 jobs:
+  quality:
+    name: Lint, typecheck and test
+    runs-on: ubuntu-latest
+
+    # The generated Prisma client is required for typechecking. The two schemas
+    # produce the same TypeScript surface for everything the type checker sees,
+    # so one flavour is enough here; the build job below covers both.
+    env:
+      DB: mysql
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: bun run generate
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Test
+        run: bun run test
+
   build:
+    name: Build (${{ matrix.db }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -17,21 +60,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - name: Cache Bun dependencies
         uses: actions/cache@v4
         with:
           path: ~/.bun/install/cache
-          key: bun-${{ runner.os }}-${{ hashFiles('bun.lockb') }}
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
           restore-keys: |
             bun-${{ runner.os }}-
 
-      - name: Install Bun
-        uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: latest
-
       - name: Install dependencies
-        run: bun install
+        run: bun install --frozen-lockfile
 
       - name: Generate Prisma Client for ${{ matrix.db }}
         run: bun run generate
@@ -40,7 +83,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .next/cache
-          key: nextjs-${{ matrix.db }}-${{ runner.os }}-${{ hashFiles('**/*.[jt]s', '**/*.json', 'next.config.js') }}
+          key: nextjs-${{ matrix.db }}-${{ runner.os }}-${{ hashFiles('**/*.[jt]s', '**/*.json', 'next.config.ts') }}
           restore-keys: |
             nextjs-${{ matrix.db }}-${{ runner.os }}-
 

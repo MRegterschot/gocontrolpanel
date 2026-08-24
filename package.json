@@ -7,6 +7,9 @@
     "build": "bun run build:templates && next build --webpack",
     "start": "cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public && cp -r hetzner .next/standalone/hetzner/ && node .next/standalone/server.js | pino-pretty",
     "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.typecheck.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "pretty": "prettier --write \"**/*.{ts,tsx,json,css}\"",
     "generate": "prisma generate --schema ./src/lib/prisma/$DB/schema.prisma",
     "migrate": "bun run generate && prisma migrate dev --name init --schema ./src/lib/prisma/$DB/schema.prisma",
@@ -106,6 +109,8 @@
     "prisma": "^6.8.2",
     "tailwindcss": "^4",
     "tsx": "^4.20.3",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^3"
   }
 }

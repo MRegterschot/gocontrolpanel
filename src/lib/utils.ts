@@ -35,8 +35,10 @@ export function getErrorMessage(error: unknown): string {
     message = error.message;
   }
 
-  // Handle HetznerApiError structure
-  if (typeof error === "object" && error !== null && "message" in error) {
+  // Handle HetznerApiError structure. This has to be an `else if`: an Error also
+  // carries a `message`, so an unguarded second branch would capture every Error
+  // handled above and capitalise its message.
+  else if (typeof error === "object" && error !== null && "message" in error) {
     const errMsg = (error as any).message;
     if (typeof errMsg === "string") {
       message = capitalize(errMsg);
