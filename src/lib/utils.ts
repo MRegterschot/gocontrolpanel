@@ -321,6 +321,43 @@ export function hasPermissionSync(
   return hasPermissionsJWTSync(session.user, permissions, id);
 }
 
+/**
+ * Expands a JWT into the full set of permission strings it grants: the
+ * explicitly granted ones plus the ones derived from group, project and server
+ * role membership.
+ *
+ * Pure by construction — it never touches the JWT it is handed. An earlier
+ * version pushed the derived entries straight into `jwt.permissions`, which
+ * mutated the caller's session object and made the array grow on every check.
+ */
+export function resolvePermissions(jwt: JWT): Set<string> {
+  const resolved = new Set<string>(getList<string>(jwt.permissions));
+
+  for (const group of jwt.groups ?? []) {
+    const role = group.role.toLowerCase();
+    resolved.add(`groups::${role}`);
+    resolved.add(`groups:${group.id}:${role}`);
+    for (const server of group.servers ?? []) {
+      resolved.add(`group:servers::${role}`);
+      resolved.add(`group:servers:${server.id}:${role}`);
+    }
+  }
+
+  for (const project of jwt.projects ?? []) {
+    const role = project.role.toLowerCase();
+    resolved.add(`hetzner::${role}`);
+    resolved.add(`hetzner:${project.id}:${role}`);
+  }
+
+  for (const server of jwt.servers ?? []) {
+    const role = server.role.toLowerCase();
+    resolved.add(`servers::${role}`);
+    resolved.add(`servers:${server.id}:${role}`);
+  }
+
+  return resolved;
+}
+
 export function hasPermissionsJWTSync(
   jwt: JWT,
   permissions?: string[],
@@ -329,35 +366,11 @@ export function hasPermissionsJWTSync(
   if (jwt.admin) return true;
   if (!permissions || permissions.length === 0) return true;
 
-  const userPermissions = jwt.permissions;
+  const resolved = resolvePermissions(jwt);
 
-  jwt.groups.forEach((group) => {
-    const role = group.role.toLowerCase();
-    userPermissions.push(`groups::${role}`);
-    userPermissions.push(`groups:${group.id}:${role}`);
-    group.servers.forEach((server) => {
-      userPermissions.push(`group:servers::${role}`);
-      userPermissions.push(`group:servers:${server.id}:${role}`);
-    });
-  });
-
-  jwt.projects.forEach((project) => {
-    const role = project.role.toLowerCase();
-    userPermissions.push(`hetzner::${role}`);
-    userPermissions.push(`hetzner:${project.id}:${role}`);
-  });
-
-  jwt.servers.forEach((server) => {
-    const role = server.role.toLowerCase();
-    userPermissions.push(`servers::${role}`);
-    userPermissions.push(`servers:${server.id}:${role}`);
-  });
-
-  permissions = permissions.map((permission) =>
-    permission.replace(":id", `:${id}`),
+  return permissions.some((permission) =>
+    resolved.has(permission.replace(":id", `:${id}`)),
   );
-
-  return permissions.some((permission) => userPermissions.includes(permission));
 }
 
 export function getCurrencySymbol(currency: string): string {

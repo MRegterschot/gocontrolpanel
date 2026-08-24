@@ -424,7 +424,41 @@ Nothing is pushed.
 | # | Branch | Phase | Status |
 |---|---|---|---|
 | 1 | `docs/architecture-review` | — | ✅ merged |
+| 2 | `chore/prune-dead-dependencies` | 1 | ✅ merged |
 
 ## 1 · `docs/architecture-review`
 
 This document. Baseline review of the codebase as of `77bd9195`.
+
+## 2 · `chore/prune-dead-dependencies` — §11.1, §11.2
+
+Removes packages with zero imports and the shim packages that shadow Node built-ins.
+
+**Removed from `dependencies`** (verified 0 imports repo-wide first):
+`fs`, `path` (npm placeholders shadowing the Node built-ins), `jsonwebtoken`,
+`is-localhost-ip`, `range_check`, `react-rnd`, and the stub/dead type packages
+`@types/axios`, `@types/jsonwebtoken`, `@types/pkg-dir`, `@types/range_check`,
+`@types/twig`.
+
+**Moved to `devDependencies`:** `@types/react-world-flags`, `@types/ws`.
+
+**Dropped the `radix-ui` meta package.** It pulls in every Radix primitive but had a
+single import site (`src/components/ui/accordion.tsx`), which now uses
+`@radix-ui/react-accordion` directly, matching the other 18 primitives.
+
+**Bumped `eslint-config-next` 15.2.4 → ^16** to match Next 16. That config is a
+native flat config in v16, so `eslint.config.mjs` was rewritten without the
+`@eslint/eslintrc` `FlatCompat` shim (which crashed outright against v16), and
+`@eslint/eslintrc` was removed. `next lint` is gone in Next 16, so the `lint`
+script is now `eslint .`.
+
+Two rules were tightened while the config was being rewritten:
+- `react-hooks/rules-of-hooks`: `warn` → `error` (0 existing violations — free).
+- `@typescript-eslint/no-explicit-any`: `off` → `warn` (31 warnings, to ratchet down).
+
+`eslint-plugin-react-hooks@7` ships the React Compiler rule family, which flagged
+32 new errors. 15 of them are `set-state-in-effect` on the fetch-in-`useEffect`
+pattern that phase 5 replaces wholesale, so the family is set to `warn` for now
+with a comment pointing at that phase. **Lint is at 0 errors / 77 warnings.**
+
+*Net: 14 packages removed.*
