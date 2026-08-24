@@ -25,13 +25,23 @@ export default async function ServerPluginsPage({
     redirect(routes.dashboard);
   }
 
-  const { data } = await getServerChatConfig(id);
+  const { data: chatConfig } = await getServerChatConfig(id);
 
-  const { data: serverPlugins } = await getServerPlugins(id);
-  const { data: plugins } = await getPlugins();
+  const { data: serverPlugins = [] } = await getServerPlugins(id);
+  const { data: plugins = [] } = await getPlugins();
 
   const { data: serverPlugin } = await getServerPlugin(id);
-  const { data: scripts } = await getPluginScripts(id);
+  const { data: scripts = [] } = await getPluginScripts(id);
+
+  // Both of these are dereferenced unconditionally by the forms below, so there
+  // is nothing to render without them.
+  if (!chatConfig || !serverPlugin) {
+    return (
+      <div className="flex items-center justify-center w-full h-full">
+        <h1 className="text-2xl font-bold">Failed to load plugin settings.</h1>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 h-full">
@@ -71,7 +81,7 @@ export default async function ServerPluginsPage({
 
         <TabsContent value="chat" className="flex flex-col gap-6">
           <Card className="p-6">
-            <ChatConfigForm serverId={id} chatConfig={data} />
+            <ChatConfigForm serverId={id} chatConfig={chatConfig} />
           </Card>
         </TabsContent>
       </Tabs>

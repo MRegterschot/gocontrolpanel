@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { getErrorMessage } from "@/lib/utils";
 import { HetznerNetwork } from "@/types/api/hetzner/networks";
+import { ServerError } from "@/types/responses";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconDeviceFloppy } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
@@ -16,7 +17,6 @@ import {
   AttachHetznerServerToNetworkSchema,
   AttachHetznerServerToNetworkSchemaType,
 } from "./attach-hetzner-server-to-network-schema";
-import { ServerError } from "@/types/responses";
 
 export default function AttachHetznerServerToNetworkForm({
   projectId,
@@ -42,8 +42,8 @@ export default function AttachHetznerServerToNetworkForm({
 
       // Handle networks
       if (networksResult.status === "fulfilled") {
-        const { data, error } = networksResult.value;
-        if (!error) {
+        const { ok, data, error } = networksResult.value;
+        if (ok) {
           const filteredData = data.filter(
             (network) => !network.servers.includes(serverId),
           );

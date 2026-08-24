@@ -2,6 +2,7 @@ import { getHetznerServerMetrics } from "@/actions/hetzner/servers";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { capitalize, formatBytes, getErrorMessage } from "@/lib/utils";
 import { HetznerServerMetrics } from "@/types/api/hetzner/servers";
+import { ServerError } from "@/types/responses";
 import { IconX } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
@@ -24,7 +25,6 @@ import {
 } from "../../ui/select";
 import { ToggleGroup, ToggleGroupItem } from "../../ui/toggle-group";
 import { DefaultModalProps } from "../default-props";
-import { ServerError } from "@/types/responses";
 
 type MetricsData = {
   timestamp: number;
@@ -124,12 +124,12 @@ export default function HetznerServerMetricsModal({
     start.setDate(start.getDate() - timeRange);
 
     try {
-      const { data: metrics, error } = await getHetznerServerMetrics(
-        data.projectId,
-        data.serverId,
-        start,
-      );
-      if (error) {
+      const {
+        ok,
+        data: metrics,
+        error,
+      } = await getHetznerServerMetrics(data.projectId, data.serverId, start);
+      if (!ok) {
         throw new ServerError(error, "GetHetznerServerMetricsError");
       }
       formatMetrics(metrics);

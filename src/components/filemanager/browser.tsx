@@ -2,6 +2,7 @@
 import { uploadFiles } from "@/actions/filemanager";
 import { getErrorMessage, pathToBreadcrumbs } from "@/lib/utils";
 import { FileEntry } from "@/types/filemanager";
+import { ServerError } from "@/types/responses";
 import { IconUpload } from "@tabler/icons-react";
 import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -9,7 +10,6 @@ import Actions from "./actions";
 import FilesBreadcrumbs from "./breadcrumbs";
 import FileCard from "./file-card";
 import FolderCard from "./folder-card";
-import { ServerError } from "@/types/responses";
 
 interface BrowserProps {
   data: FileEntry[];
@@ -48,8 +48,8 @@ export default function Browser({ data, serverId, path }: BrowserProps) {
       }
 
       try {
-        const { data, error } = await uploadFiles(serverId, formData);
-        if (error) {
+        const { ok, data, error } = await uploadFiles(serverId, formData);
+        if (!ok) {
           throw new ServerError(error, "UploadFilesError");
         }
 

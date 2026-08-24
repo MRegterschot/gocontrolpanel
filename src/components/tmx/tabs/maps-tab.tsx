@@ -8,9 +8,9 @@ export default async function MapsTab({
   serverId: string;
   fmHealth: boolean;
 }) {
-  const { data, error } = await searchMaps(serverId, {});
+  const { ok, data, error } = await searchMaps(serverId, {});
 
-  if (error) {
+  if (!ok) {
     return <span>{error}</span>;
   }
 

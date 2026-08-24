@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Users } from "@/lib/prisma/generated";
 import { getErrorMessage, getList, permissions } from "@/lib/utils";
+import { ServerError } from "@/types/responses";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconClipboardPlus, IconDeviceFloppy } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { EditUserSchema, EditUserSchemaType } from "./edit-user-schema";
-import { ServerError } from "@/types/responses";
 
 export default function EditUserForm({
   user,
@@ -29,8 +29,8 @@ export default function EditUserForm({
   useEffect(() => {
     async function fetchRoles() {
       try {
-        const { data, error } = await getRolesMinimal();
-        if (error) {
+        const { ok, data, error } = await getRolesMinimal();
+        if (!ok) {
           throw new ServerError(error, "GetRolesMinimalError");
         }
         setRoles(data);

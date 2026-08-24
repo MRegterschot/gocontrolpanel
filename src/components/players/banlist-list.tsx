@@ -4,13 +4,13 @@ import { cleanBanList, getBanList } from "@/actions/gbx/player";
 import { createColumns } from "@/app/(gocontroller)/server/[id]/players/banlist-columns";
 import { getErrorMessage } from "@/lib/utils";
 import { PlayerInfo } from "@/types/player";
+import { ServerError } from "@/types/responses";
 import { IconTrash } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import ConfirmModal from "../modals/confirm-modal";
 import { DataTable } from "../table/data-table";
 import { Button } from "../ui/button";
-import { ServerError } from "@/types/responses";
 
 interface BanlistListProps {
   serverId: string;
@@ -27,8 +27,8 @@ export default function BanlistList({ serverId }: BanlistListProps) {
 
   const refetch = async () => {
     try {
-      const { data, error } = await getBanList(serverId);
-      if (error) {
+      const { ok, data, error } = await getBanList(serverId);
+      if (!ok) {
         throw new ServerError(error, "GetBanListError");
       }
 

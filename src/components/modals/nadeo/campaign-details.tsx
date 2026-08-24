@@ -12,6 +12,7 @@ import {
   ClubActivity,
   ClubCampaignWithNamesAndPlaylistMaps,
 } from "@/types/api/nadeo";
+import { ServerError } from "@/types/responses";
 import {
   IconDownload,
   IconMapPlus,
@@ -24,7 +25,6 @@ import { toast } from "sonner";
 import { parseTmTags } from "tmtags";
 import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
-import { ServerError } from "@/types/responses";
 
 export default function CampaignDetailsModal({
   closeModal,
@@ -130,12 +130,15 @@ export default function CampaignDetailsModal({
     try {
       setLoading(true);
 
-      const { data: clubCampaignRes, error: getClubCampaignError } =
-        await getClubCampaignWithMaps(
-          data.activity.clubId,
-          data.activity.campaignId,
-        );
-      if (getClubCampaignError) {
+      const {
+        ok: getClubCampaignOk,
+        data: clubCampaignRes,
+        error: getClubCampaignError,
+      } = await getClubCampaignWithMaps(
+        data.activity.clubId,
+        data.activity.campaignId,
+      );
+      if (!getClubCampaignOk) {
         throw new ServerError(getClubCampaignError, "GetClubCampaignError");
       }
 

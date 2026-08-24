@@ -1,5 +1,9 @@
 import { logger } from "@/lib/logger";
-import { PaginationResponse, ServerError, ServerResponse } from "@/types/responses";
+import {
+  PaginationResponse,
+  ServerError,
+  ServerResponse,
+} from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
 import { useEffect, useState } from "react";
 
@@ -33,17 +37,18 @@ export const usePaginationAPI = <TData, TFetch>(
   const fetchDataFromAPI = async () => {
     setLoading(true);
     try {
-      const {
-        data: { data: fetchedData, totalCount: fetchedTotalCount },
-        error,
-      } = await fetchData(pagination, sorting, filter, fetchArgs);
+      // The response has to be narrowed before the payload is unpacked. This
+      // used to destructure `data: { data, totalCount }` up front, which threw a
+      // TypeError on the failure path -- where there is no `data` at all --
+      // instead of the ServerError below.
+      const response = await fetchData(pagination, sorting, filter, fetchArgs);
 
-      if (error) {
-        throw new ServerError(error, "FetchDataFromAPIError");
+      if (!response.ok) {
+        throw new ServerError(response.error, "FetchDataFromAPIError");
       }
 
-      setData(fetchedData);
-      setTotalCount(fetchedTotalCount);
+      setData(response.data.data);
+      setTotalCount(response.data.totalCount);
     } catch (error) {
       const meta = {
         type: "hook",

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { getErrorMessage } from "@/lib/utils";
 import { FileEntry } from "@/types/filemanager";
+import { ServerError } from "@/types/responses";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus } from "@tabler/icons-react";
 import { useForm } from "react-hook-form";
@@ -14,7 +15,6 @@ import {
   CreateFileEntrySchema,
   CreateFileEntrySchemaType,
 } from "./create-file-entry-schema";
-import { ServerError } from "@/types/responses";
 
 export default function CreateFileEntryForm({
   serverId,
@@ -39,8 +39,8 @@ export default function CreateFileEntryForm({
   async function onSubmit(values: CreateFileEntrySchemaType) {
     try {
       values.path = path + "/" + values.path;
-      const { data, error } = await createFileEntry(serverId, values);
-      if (error) {
+      const { ok, data, error } = await createFileEntry(serverId, values);
+      if (!ok) {
         throw new ServerError(error, "CreateFileEntryError");
       }
 

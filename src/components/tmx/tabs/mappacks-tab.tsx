@@ -8,9 +8,9 @@ export default async function MappacksTab({
   serverId: string;
   fmHealth: boolean;
 }) {
-  const { data, error } = await searchMappacks(serverId, {});
+  const { ok, data, error } = await searchMappacks(serverId, {});
 
-  if (error) {
+  if (!ok) {
     return <span>{error}</span>;
   }
 

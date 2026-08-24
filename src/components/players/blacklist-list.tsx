@@ -5,10 +5,10 @@ import { createColumns } from "@/app/(gocontroller)/server/[id]/players/blacklis
 import BlacklistForm from "@/forms/server/players/blacklist-form";
 import { getErrorMessage } from "@/lib/utils";
 import { PlayerInfo } from "@/types/player";
+import { ServerError } from "@/types/responses";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DataTable } from "../table/data-table";
-import { ServerError } from "@/types/responses";
 
 interface BlacklistListProps {
   serverId: string;
@@ -19,8 +19,8 @@ export default function BlacklistList({ serverId }: BlacklistListProps) {
 
   const refetch = async () => {
     try {
-      const { data, error } = await getBlacklist(serverId);
-      if (error) {
+      const { ok, data, error } = await getBlacklist(serverId);
+      if (!ok) {
         throw new ServerError(error, "GetBlacklistError");
       }
 

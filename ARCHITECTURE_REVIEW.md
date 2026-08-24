@@ -395,7 +395,7 @@ Both deploy workflows SSH into a host and run `sudo /usr/local/bin/deploy-gocont
 |---|---|---|
 | **1 — Safety net** | Vitest + tests for permissions/utils/GBX helpers · lint + typecheck in CI · fix `hasPermissionsJWTSync` mutation (§5.1) · fix `ServerResponse` union (§3.2) · drop dead deps (§11.1) | Small, isolated, makes everything below safe |
 | **2 — Boundary hardening** | Zod validation in Server Actions (§3.1) · shared schemas · error sanitization (§3.3) · centralize permission constants (§5.4) · `middleware.ts` (§1.2) | Closes the real security gaps; no architectural churn |
-| **3 — Data layer** | Commit to Postgres (or codegen the schemas) · normalize `Json` columns · delete `getList` · repository layer (§2.1) | Unblocks trustworthy types everywhere |
+| **3 — Data layer** | Codegen both schemas from one source · normalize `Json` columns · delete `getList` · repository layer (§2.1) | Unblocks trustworthy types everywhere |
 | **4 — Runtime split** | GBX worker + Redis pub/sub (§4.1) · BullMQ for provisioning (§6) · stateless web tier · SSE or extracted WS server (§1.5) | The scalability and reliability ceiling |
 | **5 — Frontend** | TanStack Query + revalidation (§1.1) · unify add/edit forms (§7.1) · split `utils.ts` (§7.2) · schema-driven plugin config forms (§8) | Large line-count reduction, low risk once tests exist |
 
@@ -427,6 +427,7 @@ Nothing is pushed.
 | 2 | `chore/prune-dead-dependencies` | 1 | ✅ merged |
 | 3 | `chore/ci-quality-gates` | 1 | ✅ merged |
 | 4 | `fix/permission-resolution-purity` | 1 | ✅ merged |
+| 5 | `fix/server-response-discriminated-union` | 1 | ✅ merged |
 
 ## 1 · `docs/architecture-review`
 
@@ -527,3 +528,77 @@ the `:id` substitution, the admin bypass, and the empty-requirements case.
 > issue this branch carries the tests and this note. **`b708e4ba` contains three
 > things: the dependency pruning, the permission purity fix, and
 > `tsconfig.typecheck.json`.** Later branches stage files explicitly.
+
+## 5 · `fix/server-response-discriminated-union` — §3.2
+
+`ServerResponse<T>` declared `data: T` as always present, while the failure path
+returned `data: undefined as T`. The compiler therefore waved through every call
+site that read `data` before checking `error`.
+
+**The discriminant is `ok`, not `error`.** This was measured, not assumed:
+TypeScript only narrows on a property with a *unit* type, and `error: string` is
+not one. A quick experiment confirmed that with `{ data: T; error?: undefined } |
+{ data?: undefined; error: string }`, neither
+
+```ts
+const { data, error } = await f(); if (error) return; data.length;  // ✗ still error
+const res = await f();            if (res.error) return; res.data;  // ✗ still error
+```
+
+narrows, whereas a boolean literal `ok` narrows even through destructuring. Since
+essentially every call site destructures and guards on `error`, `ok` is the only
+shape that works. Final type:
+
+```ts
+export type ServerResponse<T = void> =
+  | { ok: true; data: T; error?: undefined }
+  | { ok: false; data?: undefined; error: string };
+```
+
+**Applying it surfaced 121 type errors** — every one a site reading `data` without
+having proven it exists. Fixed in three groups:
+
+1. **47 sites** already guarded correctly and only needed the discriminant: a
+   scripted pass added `ok` to the destructuring pattern and turned `if (error)`
+   into `if (!ok)` (`if (!error)` into `if (ok)` for the positive form). The
+   116 `{ error }`-only mutation call sites were untouched — they never read
+   `data`, so the type change does not affect them.
+2. **Sites that never guarded at all** — the real latent bugs. Server components
+   that passed a possibly-`undefined` payload into a required prop now either
+   carry a destructuring default (`= []`, `= ""`) where an empty state is the
+   sensible outcome, or render an explicit failure state where the payload is
+   dereferenced unconditionally (`plugins/page.tsx`).
+3. **Two hand-written narrowing hazards:**
+   - `use-pagination-api.ts` — **the crash predicted in §3.2 was real.** It
+     destructured `data: { data, totalCount }` *before* testing `error`, so any
+     failing paginated fetch threw a `TypeError` on the failure path instead of
+     the intended `ServerError`. Every paginated table in the app went through
+     this. Now narrows first, then unpacks.
+   - `use-search-users.ts` used `let data, error` with assignment-destructuring
+     in branches, which is implicitly `any` and cannot narrow; rewritten to hold
+     the response object.
+
+The scripted pass needed one correction: its guard rewrite was file-global, so in
+files that also had `{ error }`-only sites it flipped guards that had no `ok` in
+scope. TypeScript caught all 28 (`Cannot find name 'ok'`) and they were restored.
+
+**Verified:** `bun run typecheck` clean · `bun run lint` 0 errors · 38 tests pass ·
+`bun run build` succeeds. 56 files changed. Note that `prettier --write` on the
+touched files also normalised some pre-existing over-long lines, which widens the
+diff beyond the semantic change.
+
+### Phase 1 is complete
+
+| §  | Item | Status |
+|----|------|--------|
+| 10 | Vitest + tests for permissions/utils | ✅ 38 tests |
+| 10 | lint + typecheck + `--frozen-lockfile` in CI | ✅ |
+| 5.1 | `hasPermissionsJWTSync` mutation | ✅ |
+| 3.2 | `ServerResponse` discriminated union | ✅ |
+| 11.1 | dead dependencies | ✅ 14 removed |
+
+Bonus fix found by the new tests: `getErrorMessage` branch shadowing (§3.3 partial).
+
+**Next up — phase 2 (boundary hardening):** zod validation inside server actions
+(§3.1), shared form/action schemas, error sanitisation (§3.3), centralised
+permission constants (§5.4), `middleware.ts` (§1.2).

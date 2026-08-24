@@ -11,6 +11,7 @@ import { createColumns as createMapColumns } from "@/app/(gocontroller)/server/[
 import { Maps } from "@/lib/prisma/generated";
 import { getErrorMessage } from "@/lib/utils";
 import { JukeboxMap } from "@/types/map";
+import { ServerError } from "@/types/responses";
 import { IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -18,7 +19,6 @@ import { DndList } from "../dnd/dnd-list";
 import DndListHeaders from "../dnd/dnd-list-headers";
 import { DataTable } from "../table/data-table";
 import { Button } from "../ui/button";
-import { ServerError } from "@/types/responses";
 
 interface JukeboxProps {
   serverId: string;
@@ -35,7 +35,7 @@ export default function Jukebox({ serverId, jukebox, maps }: JukeboxProps) {
 
   useEffect(() => {
     const intervalIndex = setInterval(async () => {
-      const { data: jukebox } = await getJukebox(serverId);
+      const { data: jukebox = [] } = await getJukebox(serverId);
 
       if (jukebox[0]?.id !== jukeboxOrder[0]?.id) {
         setJukeboxOrder(jukebox);
@@ -69,8 +69,8 @@ export default function Jukebox({ serverId, jukebox, maps }: JukeboxProps) {
 
   async function onAddMap(map: Maps) {
     try {
-      const { data: newMap, error } = await addMapToJukebox(serverId, map);
-      if (error) {
+      const { ok, data: newMap, error } = await addMapToJukebox(serverId, map);
+      if (!ok) {
         throw new ServerError(error, "AddMapToJukeboxError");
       }
       setJukeboxOrder((prev) => [...prev, newMap]);

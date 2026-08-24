@@ -8,6 +8,7 @@ import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { getErrorMessage } from "@/lib/utils";
+import { ServerError } from "@/types/responses";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { useForm } from "react-hook-form";
@@ -16,7 +17,6 @@ import {
   ExportMatchSchema,
   ExportMatchSchemaType,
 } from "./export-match-schema";
-import { ServerError } from "@/types/responses";
 
 const POSSIBLE_VALUES = [
   {
@@ -80,13 +80,13 @@ export default function ExportMatchForm({
 
   async function onSubmit(values: ExportMatchSchemaType) {
     try {
-      const { data, error } = await exportMatchToCSV(
+      const { ok, data, error } = await exportMatchToCSV(
         match.serverId,
         match.id,
         values.headers,
         values.values,
       );
-      if (error) {
+      if (!ok) {
         throw new ServerError(error, "ExportMatchToCSVError");
       }
 
@@ -123,10 +123,7 @@ export default function ExportMatchForm({
 
         {headerFields.map((_, index) => (
           <div key={index} className="flex gap-2 w-full justify-between">
-            <FormElement
-              name={`headers.${index}`}
-              rootClassName="w-full"
-            />
+            <FormElement name={`headers.${index}`} rootClassName="w-full" />
             <FormElement
               name={`values.${index}`}
               type="select"

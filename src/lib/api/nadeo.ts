@@ -51,9 +51,7 @@ export async function authenticate(
   return promise;
 }
 
-async function authenticateUncached(
-  audience: string,
-): Promise<NadeoTokens> {
+async function authenticateUncached(audience: string): Promise<NadeoTokens> {
   const login = config.NADEO.SERVER_LOGIN;
   const pass = config.NADEO.SERVER_PASSWORD;
   const contact = config.NADEO.CONTACT;
@@ -448,8 +446,8 @@ export async function getMapRecordsByAccounts(
   mapUid: string,
   accountIds: string[],
 ): Promise<MapRecordsResponse> {
-  const { data, error } = await getMapsInfo([mapUid]);
-  if (error || data.length === 0) {
+  const { ok, data } = await getMapsInfo([mapUid]);
+  if (!ok || data.length === 0) {
     throw new ServerError(
       "Failed to get map info for records retrieval",
       "NadeoMapInfoError",

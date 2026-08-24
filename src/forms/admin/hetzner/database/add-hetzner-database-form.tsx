@@ -9,6 +9,7 @@ import { Form } from "@/components/ui/form";
 import { getErrorMessage } from "@/lib/utils";
 import { HetznerLocation } from "@/types/api/hetzner/locations";
 import { HetznerServerType } from "@/types/api/hetzner/servers";
+import { ServerError } from "@/types/responses";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
@@ -19,7 +20,6 @@ import {
   AddHetznerDatabaseSchema,
   AddHetznerDatabaseSchemaType,
 } from "./add-hetzner-database-schema";
-import { ServerError } from "@/types/responses";
 
 export default function AddHetznerDatabaseForm({
   projectId,
@@ -37,8 +37,8 @@ export default function AddHetznerDatabaseForm({
   useEffect(() => {
     async function fetch() {
       try {
-        const { data, error } = await getHetznerLocations(projectId);
-        if (error) {
+        const { ok, data, error } = await getHetznerLocations(projectId);
+        if (!ok) {
           throw new ServerError(error, "GetHetznerLocationsError");
         }
         setLocations(data);
@@ -56,8 +56,8 @@ export default function AddHetznerDatabaseForm({
       }
 
       try {
-        const { data, error } = await getServerTypes(projectId);
-        if (error) {
+        const { ok, data, error } = await getServerTypes(projectId);
+        if (!ok) {
           throw new ServerError(error, "GetServerTypesError");
         }
         setServerTypes(data);

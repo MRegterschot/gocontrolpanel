@@ -3,13 +3,13 @@
 import { searchMappacks } from "@/actions/tmx/mappacks";
 import { getErrorMessage } from "@/lib/utils";
 import { TMXMappack } from "@/types/api/tmx";
+import { ServerError } from "@/types/responses";
 import { IconSearch } from "@tabler/icons-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import TMXMappackCard from "./tmx-mappack-card";
-import { ServerError } from "@/types/responses";
 
 export default function MappackSearch({
   serverId,
@@ -44,8 +44,8 @@ export default function MappackSearch({
           searchResults[searchResults.length - 1]?.MappackId.toString();
       }
 
-      const { data, error } = await searchMappacks(serverId, params);
-      if (error) {
+      const { ok, data, error } = await searchMappacks(serverId, params);
+      if (!ok) {
         throw new ServerError(error, "SearchMappacksError");
       }
 

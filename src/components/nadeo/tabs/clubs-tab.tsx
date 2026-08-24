@@ -23,15 +23,18 @@ export default async function ClubsTab({
   clubId?: number;
 }) {
   if (clubId) {
-    const { data: club, error } = await getClub(clubId);
-    const { data: clubMembersCount, error: clubMembersError } =
-      await getClubMembersCount(clubId);
+    const { ok, data: club, error } = await getClub(clubId);
+    const {
+      ok: clubMembersOk,
+      data: clubMembersCount,
+      error: clubMembersError,
+    } = await getClubMembersCount(clubId);
 
-    if (error) {
+    if (!ok) {
       return <span>{error}</span>;
     }
 
-    if (clubMembersError) {
+    if (!clubMembersOk) {
       return <span>{clubMembersError}</span>;
     }
 

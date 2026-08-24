@@ -44,8 +44,8 @@ export default async function ProjectPage({
 
   const { data: rateLimit } = await getRateLimit(id);
   const { data: pricing } = await getHetznerPricing(id);
-  const { data: serverTypes } = await getServerTypes(id);
-  const { data: locations } = await getHetznerLocations(id);
+  const { data: serverTypes = [] } = await getServerTypes(id);
+  const { data: locations = [] } = await getHetznerLocations(id);
 
   return (
     <div className="flex flex-col gap-6">
@@ -129,7 +129,7 @@ export default async function ProjectPage({
         <TabsContent value="pricing" className="flex flex-col gap-4">
           <ServerTypesPricing
             serverTypes={serverTypes}
-            currency={pricing.currency}
+            currency={pricing?.currency ?? ""}
             locations={locations}
           />
         </TabsContent>

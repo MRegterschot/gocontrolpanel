@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { getErrorMessage } from "@/lib/utils";
 import { HetznerLocation } from "@/types/api/hetzner/locations";
+import { ServerError } from "@/types/responses";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
@@ -17,7 +18,6 @@ import {
   AddHetznerVolumeSchema,
   AddHetznerVolumeSchemaType,
 } from "./add-hetzner-volume-schema";
-import { ServerError } from "@/types/responses";
 
 export default function AddHetznerVolumeForm({
   projectId,
@@ -34,8 +34,8 @@ export default function AddHetznerVolumeForm({
   useEffect(() => {
     async function fetch() {
       try {
-        const { data, error } = await getHetznerLocations(projectId);
-        if (error) {
+        const { ok, data, error } = await getHetznerLocations(projectId);
+        if (!ok) {
           throw new ServerError(error, "GetHetznerLocationsError");
         }
         setLocations(data);

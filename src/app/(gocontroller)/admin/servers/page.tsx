@@ -20,7 +20,7 @@ export default async function AdminServersPage() {
     routePermissions.admin.servers.clients.view,
   );
 
-  const { data: recentlyCreatedServers } =
+  const { data: recentlyCreatedServers = [] } =
     await getRecentlyCreatedHetznerServers();
 
   return (

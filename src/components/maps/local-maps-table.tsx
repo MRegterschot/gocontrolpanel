@@ -6,13 +6,13 @@ import { createColumns as createLocalMapColumns } from "@/app/(gocontroller)/ser
 import { Maps } from "@/lib/prisma/generated";
 import { getErrorMessage } from "@/lib/utils";
 import { LocalMapInfo } from "@/types/map";
+import { ServerError } from "@/types/responses";
 import { IconMapPlus } from "@tabler/icons-react";
 import { Dispatch, SetStateAction, useState } from "react";
 import { toast } from "sonner";
 import ConfirmModal from "../modals/confirm-modal";
 import { DataTable } from "../table/data-table";
 import { Button } from "../ui/button";
-import { ServerError } from "@/types/responses";
 
 export default function LocalMapsTable({
   serverId,
@@ -47,8 +47,8 @@ export default function LocalMapsTable({
         return;
       }
 
-      const { data: res, error } = await addMapList(serverId, filteredMaps);
-      if (error) {
+      const { ok, data: res, error } = await addMapList(serverId, filteredMaps);
+      if (!ok) {
         throw new ServerError(error, "AddMapListError");
       }
 
@@ -63,8 +63,8 @@ export default function LocalMapsTable({
 
   async function refreshMapList() {
     try {
-      const { data: newMapList, error } = await getMapList(serverId);
-      if (error) {
+      const { ok, data: newMapList, error } = await getMapList(serverId);
+      if (!ok) {
         throw new ServerError(error, "GetMapListError");
       }
       setMapList(newMapList);

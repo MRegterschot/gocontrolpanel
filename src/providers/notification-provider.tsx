@@ -55,8 +55,8 @@ export const NotificationProvider = ({
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const { data, error } = await getNotifications();
-        if (error) {
+        const { ok, data, error } = await getNotifications();
+        if (!ok) {
           throw new ServerError(error, "FetchNotificationsError");
         }
         setNotifications(data);
@@ -91,8 +91,8 @@ export const NotificationProvider = ({
     );
 
     try {
-      const { data, error } = await markNotificationAsRead(id);
-      if (error) {
+      const { ok, data, error } = await markNotificationAsRead(id);
+      if (!ok) {
         throw new ServerError(error, "MarkNotificationAsReadError");
       }
       setNotifications((prev) => prev.map((n) => (n.id === id ? data : n)));

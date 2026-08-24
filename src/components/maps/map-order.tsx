@@ -100,8 +100,8 @@ export default function MapOrder({
 
   async function onRefreshMapList() {
     try {
-      const { data: newMapList, error } = await getMapList(serverId);
-      if (error) {
+      const { ok, data: newMapList, error } = await getMapList(serverId);
+      if (!ok) {
         throw new ServerError(error, "RefreshMapListError");
       }
       setMapOrder(newMapList);

@@ -31,20 +31,22 @@ export function useSearchUsers({
       }
 
       try {
-        let data, error;
-
-        if (field === "id") {
-          ({ data, error } = await getUsersByIds(defaultUsers));
-        } else if (field === "login") {
-          ({ data, error } = await getUsersByLogins(defaultUsers));
-        } else {
-          throw new ServerError("Invalid field for user search", "InvalidFieldForUserSearch");
+        if (field !== "id" && field !== "login") {
+          throw new ServerError(
+            "Invalid field for user search",
+            "InvalidFieldForUserSearch",
+          );
         }
 
-        if (error) {
-          throw new ServerError(error, "GetDefaultUsersError");
+        const response =
+          field === "id"
+            ? await getUsersByIds(defaultUsers)
+            : await getUsersByLogins(defaultUsers);
+
+        if (!response.ok) {
+          throw new ServerError(response.error, "GetDefaultUsersError");
         }
-        setSearchResults(data);
+        setSearchResults(response.data);
       } catch (error) {
         setError("Failed to fetch users: " + getErrorMessage(error));
         toast.error("Failed to fetch users", {
@@ -68,8 +70,8 @@ export function useSearchUsers({
     setError(null);
 
     try {
-      const { data, error } = await searchUser(query);
-      if (error) {
+      const { ok, data, error } = await searchUser(query);
+      if (!ok) {
         throw new ServerError(error, "SearchUserError");
       }
       if (!data) return;

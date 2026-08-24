@@ -3,6 +3,7 @@ import { getHetznerLocations } from "@/actions/hetzner/locations";
 import { getAllNetworks } from "@/actions/hetzner/networks";
 import { getServerTypes } from "@/actions/hetzner/server-types";
 import { getAllDatabases } from "@/actions/hetzner/servers";
+import { getSSHKeys } from "@/actions/hetzner/ssh-keys";
 import AdvancedServerSetupForm from "@/forms/admin/hetzner/setup-steps/advanced/server-setup-form";
 import SimpleServerSetupForm from "@/forms/admin/hetzner/setup-steps/simple/server-setup-form";
 import { getErrorMessage } from "@/lib/utils";
@@ -22,7 +23,6 @@ import {
   SelectValue,
 } from "../../ui/select";
 import { DefaultModalProps } from "../default-props";
-import { getSSHKeys } from "@/actions/hetzner/ssh-keys";
 
 type Mode = "simple" | "advanced";
 
@@ -61,8 +61,8 @@ export default function AddServerSetupModal({
 
       // Handle databases
       if (databasesResult.status === "fulfilled") {
-        const { data, error } = databasesResult.value;
-        if (!error) {
+        const { ok, data, error } = databasesResult.value;
+        if (ok) {
           setDatabases(data);
         } else {
           toast.error("Failed to fetch existing databases", {
@@ -77,8 +77,8 @@ export default function AddServerSetupModal({
 
       // Handle locations
       if (locationsResult.status === "fulfilled") {
-        const { data, error } = locationsResult.value;
-        if (!error) {
+        const { ok, data, error } = locationsResult.value;
+        if (ok) {
           setLocations(data);
         } else {
           toast.error("Failed to fetch locations", { description: error });
@@ -92,8 +92,8 @@ export default function AddServerSetupModal({
 
       // Handle server types
       if (serverTypesResult.status === "fulfilled") {
-        const { data, error } = serverTypesResult.value;
-        if (!error) {
+        const { ok, data, error } = serverTypesResult.value;
+        if (ok) {
           setServerTypes(data);
         } else {
           toast.error("Failed to fetch server types", { description: error });
@@ -107,8 +107,8 @@ export default function AddServerSetupModal({
 
       // Handle networks
       if (networksResult.status === "fulfilled") {
-        const { data, error } = networksResult.value;
-        if (!error) {
+        const { ok, data, error } = networksResult.value;
+        if (ok) {
           setNetworks(data);
         } else {
           toast.error("Failed to fetch networks", { description: error });
@@ -122,8 +122,8 @@ export default function AddServerSetupModal({
 
       // Handle SSH keys
       if (sshKeysResult.status === "fulfilled") {
-        const { data, error } = sshKeysResult.value;
-        if (!error) {
+        const { ok, data, error } = sshKeysResult.value;
+        if (ok) {
           setSshKeys(data);
         } else {
           toast.error("Failed to fetch SSH keys", { description: error });

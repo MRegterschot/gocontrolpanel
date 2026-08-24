@@ -12,6 +12,7 @@ export async function doServerAction<T>(
   try {
     const result = await action();
     return {
+      ok: true,
       data: result,
     };
   } catch (error) {
@@ -25,7 +26,7 @@ export async function doServerAction<T>(
     reportException(error, meta);
 
     return {
-      data: undefined as T,
+      ok: false,
       error: getErrorMessage(error),
     };
   }
@@ -52,7 +53,7 @@ export async function doServerActionWithAuth<T>(
     reportException(error, meta, session);
 
     return {
-      data: undefined as T,
+      ok: false,
       error: getErrorMessage(error),
     };
   }
@@ -60,6 +61,7 @@ export async function doServerActionWithAuth<T>(
   try {
     const result = await action(session);
     return {
+      ok: true,
       data: result,
     };
   } catch (error) {
@@ -68,7 +70,7 @@ export async function doServerActionWithAuth<T>(
     reportException(error, meta, session);
 
     return {
-      data: undefined as T,
+      ok: false,
       error: getErrorMessage(error),
     };
   }

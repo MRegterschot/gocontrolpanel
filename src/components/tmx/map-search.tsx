@@ -3,6 +3,7 @@
 import { searchMaps } from "@/actions/tmx/maps";
 import { getErrorMessage } from "@/lib/utils";
 import { TMXMap } from "@/types/api/tmx";
+import { ServerError } from "@/types/responses";
 import { IconDice3, IconSearch } from "@tabler/icons-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -11,7 +12,6 @@ import TMXRandomMapModal from "../modals/tmx/random-map-modal";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import TMXMapCard from "./tmx-map-card";
-import { ServerError } from "@/types/responses";
 
 export default function MapSearch({
   serverId,
@@ -54,8 +54,8 @@ export default function MapSearch({
           searchResults[searchResults.length - 1]?.MapId.toString();
       }
 
-      const { data, error } = await searchMaps(serverId, params);
-      if (error) {
+      const { ok, data, error } = await searchMaps(serverId, params);
+      if (!ok) {
         throw new ServerError(error, "SearchMapsError");
       }
 
@@ -78,7 +78,7 @@ export default function MapSearch({
     setIsRandomMapLoading(true);
 
     try {
-      const { data, error } = await searchMaps(
+      const { ok, data, error } = await searchMaps(
         serverId,
         {
           random: "1",
@@ -87,7 +87,7 @@ export default function MapSearch({
         1,
       );
 
-      if (error) {
+      if (!ok) {
         throw new ServerError(error, "SearchRandomMapError");
       }
 

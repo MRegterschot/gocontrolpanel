@@ -6,6 +6,7 @@ import { routePermissions } from "@/routes";
 import { DetailedPlayerChat, SPlayerInfo } from "@/types/gbx/player";
 import { LiveInfo } from "@/types/live";
 import { PlayerInfo } from "@/types/player";
+import { ServerError } from "@/types/responses";
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -19,7 +20,6 @@ import Rankings from "./rankings";
 import RoundScores from "./round-scores";
 import TeamScores from "./team-scores";
 import TimeAttackScores from "./time-attack-scores";
-import { ServerError } from "@/types/responses";
 
 export default function LiveDashboard({
   serverId,
@@ -224,8 +224,8 @@ export default function LiveDashboard({
 
     const fetchData = async () => {
       try {
-        const { data, error } = await getPlayerList(serverId);
-        if (error) {
+        const { ok, data, error } = await getPlayerList(serverId);
+        if (!ok) {
           throw new ServerError(error, "GetPlayerListError");
         }
 
@@ -264,9 +264,9 @@ export default function LiveDashboard({
                 roundsLimit={liveInfo.roundsLimit}
                 mapLimit={liveInfo.mapLimit}
                 nbWinners={liveInfo.nbWinners}
-              serverId={serverId}
-              teams={liveInfo.teams}
-              type={liveInfo.type}
+                serverId={serverId}
+                teams={liveInfo.teams}
+                type={liveInfo.type}
               />
             )}
 

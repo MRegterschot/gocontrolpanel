@@ -42,10 +42,14 @@ export async function getTotdMonth(
         return null;
       }
 
-      const { data: maps, error } = await getMapsByUids(
+      const {
+        ok,
+        data: maps,
+        error,
+      } = await getMapsByUids(
         monthList.days.map((m) => m.mapUid).filter(Boolean),
       );
-      if (error) {
+      if (!ok) {
         log.error({ meta, error, offset }, "Failed to get maps");
         throw new ServerError(error, "GetMapsByUidsError");
       }

@@ -36,7 +36,7 @@ export default async function ServerGamePage({
     id,
   );
 
-  const { data: mapList } = await getMapList(id);
+  const { data: mapList = [] } = await getMapList(id);
   const { data: currentIndex } = await getCurrentMapIndex(id);
 
   let showOpponents = 0;
@@ -53,8 +53,8 @@ export default async function ServerGamePage({
         getMatchSettings(id),
       ]);
 
-    showOpponents = showOpponentsRes.data.NextValue || 0;
-    scriptName = scriptNameRes.data.NextValue || "";
+    showOpponents = showOpponentsRes.data?.NextValue || 0;
+    scriptName = scriptNameRes.data?.NextValue || "";
     scripts = scriptsRes.data || [];
     matchSettings = matchSettingsRes.data || [];
   }
@@ -78,8 +78,9 @@ export default async function ServerGamePage({
       getModeScriptSettings(id),
     ]);
 
-    modeScriptInfo = modeScriptInfoRes.data;
-    modeScriptSettings = modeScriptSettingsRes.data;
+    // Keep the empty defaults declared above when a call fails.
+    modeScriptInfo = modeScriptInfoRes.data ?? modeScriptInfo;
+    modeScriptSettings = modeScriptSettingsRes.data ?? modeScriptSettings;
   }
 
   return (

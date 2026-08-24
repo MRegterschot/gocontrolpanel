@@ -5,10 +5,10 @@ import { createColumns } from "@/app/(gocontroller)/server/[id]/players/guestlis
 import GuestlistForm from "@/forms/server/players/guestlist-form";
 import { getErrorMessage } from "@/lib/utils";
 import { PlayerInfo } from "@/types/player";
+import { ServerError } from "@/types/responses";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DataTable } from "../table/data-table";
-import { ServerError } from "@/types/responses";
 
 interface GuestlistListProps {
   serverId: string;
@@ -19,8 +19,8 @@ export default function GuestlistList({ serverId }: GuestlistListProps) {
 
   const refetch = async () => {
     try {
-      const { data, error } = await getGuestlist(serverId);
-      if (error) {
+      const { ok, data, error } = await getGuestlist(serverId);
+      if (!ok) {
         throw new ServerError(error, "GetGuestlistError");
       }
 

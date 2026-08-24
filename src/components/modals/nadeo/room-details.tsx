@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getErrorMessage } from "@/lib/utils";
 import { ClubActivity, ClubRoomWithNamesAndMaps } from "@/types/api/nadeo";
+import { ServerError } from "@/types/responses";
 import {
   IconCheck,
   IconDownload,
@@ -22,7 +23,6 @@ import { parseTmTags } from "tmtags";
 import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
 import ActivityMapCard from "./activity-map-card";
-import { ServerError } from "@/types/responses";
 
 export default function RoomDetailsModal({
   closeModal,
@@ -123,12 +123,15 @@ export default function RoomDetailsModal({
     try {
       setLoading(true);
 
-      const { data: clubRoomRes, error: getClubRoomError } =
-        await getClubRoomWithNamesAndMaps(
-          data.activity.clubId,
-          data.activity.id,
-        );
-      if (getClubRoomError) {
+      const {
+        ok: getClubRoomOk,
+        data: clubRoomRes,
+        error: getClubRoomError,
+      } = await getClubRoomWithNamesAndMaps(
+        data.activity.clubId,
+        data.activity.id,
+      );
+      if (!getClubRoomOk) {
         throw new ServerError(getClubRoomError, "GetClubRoomError");
       }
 

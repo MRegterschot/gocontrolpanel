@@ -35,7 +35,11 @@ import {
   ClubWithAccountNames,
   RoomWithMaps,
 } from "@/types/api/nadeo";
-import { PaginationResponse, ServerError, ServerResponse } from "@/types/responses";
+import {
+  PaginationResponse,
+  ServerError,
+  ServerResponse,
+} from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
 import { getMapsByUids } from "../database/maps";
 import { logAudit } from "../database/server-only/audit-logs";
@@ -221,8 +225,8 @@ export async function getClubCampaignWithMaps(
       const campaign = await getClubCampaign(clubId, campaignId);
 
       const mapUids = campaign.campaign.playlist.map((m) => m.mapUid);
-      const { data: maps, error } = await getMapsByUids(mapUids);
-      if (error) {
+      const { ok, data: maps, error } = await getMapsByUids(mapUids);
+      if (!ok) {
         logger.error(
           { meta, error, campaignId: campaign.id },
           "Failed to get maps",
@@ -401,8 +405,8 @@ export async function getClubRoomWithNamesAndMaps(
         clubRoom.latestEditorAccountId,
       ]);
 
-      const { data: maps, error } = await getMapsByUids(clubRoom.room.maps);
-      if (error) {
+      const { ok, data: maps, error } = await getMapsByUids(clubRoom.room.maps);
+      if (!ok) {
         logger.error({ meta, error, clubId, roomId }, "Failed to get maps");
         throw new ServerError(error, "GetMapsByUidsError");
       }
@@ -448,7 +452,10 @@ export async function downloadRoom(
           JSON.parse(JSON.stringify(room)),
           "File manager is not healthy",
         );
-        throw new ServerError("File manager is not healthy", "FileManagerNotHealthy");
+        throw new ServerError(
+          "File manager is not healthy",
+          "FileManagerNotHealthy",
+        );
       }
 
       const downloadResults = await Promise.allSettled(
@@ -498,7 +505,10 @@ export async function downloadRoom(
 
       if (errors > 0) {
         log.error({ meta, errors }, "Failed to download some maps");
-        throw new ServerError(`Failed to download ${errors} maps`, "DownloadMapsError");
+        throw new ServerError(
+          `Failed to download ${errors} maps`,
+          "DownloadMapsError",
+        );
       }
 
       return downloadResults
@@ -537,14 +547,20 @@ export async function addRoomToServer(
           JSON.parse(JSON.stringify(room)),
           "File manager is not healthy",
         );
-        throw new ServerError("File manager is not healthy", "FileManagerNotHealthy");
+        throw new ServerError(
+          "File manager is not healthy",
+          "FileManagerNotHealthy",
+        );
       }
 
       const addResults = await Promise.allSettled(
         room.mapObjects.map((map) => {
           if (!map?.fileUrl) {
             return Promise.reject(
-              new ServerError(`Map ${map.uid} does not have a valid download URL`, "MapFileUrlMissing"),
+              new ServerError(
+                `Map ${map.uid} does not have a valid download URL`,
+                "MapFileUrlMissing",
+              ),
             );
           }
           return addMapToServer(serverId, map.fileUrl, map.fileName);
@@ -569,7 +585,10 @@ export async function addRoomToServer(
 
       if (errors > 0) {
         log.error({ meta, errors }, "Failed to add some maps");
-        throw new ServerError(`Failed to add ${errors} maps`, "AddMapsToServerError");
+        throw new ServerError(
+          `Failed to add ${errors} maps`,
+          "AddMapsToServerError",
+        );
       }
     },
   );

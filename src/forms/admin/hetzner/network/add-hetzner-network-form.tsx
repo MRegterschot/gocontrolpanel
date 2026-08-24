@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormLabel, FormMessage } from "@/components/ui/form";
 import { getErrorMessage } from "@/lib/utils";
 import { HetznerLocation } from "@/types/api/hetzner/locations";
+import { ServerError } from "@/types/responses";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
@@ -16,7 +17,6 @@ import {
   AddHetznerNetworkSchema,
   AddHetznerNetworkSchemaType,
 } from "./add-hetzner-network-schema";
-import { ServerError } from "@/types/responses";
 
 export default function AddHetznerNetworkForm({
   projectId,
@@ -33,8 +33,8 @@ export default function AddHetznerNetworkForm({
   useEffect(() => {
     async function fetch() {
       try {
-        const { data, error } = await getHetznerLocations(projectId);
-        if (error) {
+        const { ok, data, error } = await getHetznerLocations(projectId);
+        if (!ok) {
           throw new ServerError(error, "GetHetznerLocationsError");
         }
         // Remove duplicates based on network_zone

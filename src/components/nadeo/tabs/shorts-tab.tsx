@@ -12,7 +12,7 @@ export default async function ShortsTab({
   fmHealth: boolean;
   campaign?: number;
 }) {
-  const { data: weeklyShortsList } = await getAllWeeklyShorts();
+  const { data: weeklyShortsList = [] } = await getAllWeeklyShorts();
 
   if (campaign && weeklyShortsList) {
     const sc = weeklyShortsList.find((c) => c.id === campaign);

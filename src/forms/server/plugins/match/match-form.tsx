@@ -65,8 +65,8 @@ export default function MatchForm({
   useEffect(() => {
     async function fetchScripts() {
       try {
-        const { data, error } = await getScripts(serverId);
-        if (error) {
+        const { ok, data, error } = await getScripts(serverId);
+        if (!ok) {
           throw new ServerError(error, "GetScriptsError");
         }
         setScripts(data);
@@ -81,8 +81,8 @@ export default function MatchForm({
 
     async function fetchLocalMaps() {
       try {
-        const { data, error } = await getLocalMaps(serverId);
-        if (error) {
+        const { ok, data, error } = await getLocalMaps(serverId);
+        if (!ok) {
           throw new ServerError(error, "GetLocalMapsError");
         }
         setLocalMaps(data);

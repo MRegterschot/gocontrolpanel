@@ -29,8 +29,8 @@ export default async function ServerMapsPage({
     redirect(routes.dashboard);
   }
 
-  const { data: maps } = await getMapList(id);
-  const { data: jukebox } = await getJukebox(id);
+  const { data: maps = [] } = await getMapList(id);
+  const { data: jukebox = [] } = await getJukebox(id);
 
   let fmHealth = false;
   try {
@@ -43,7 +43,7 @@ export default async function ServerMapsPage({
   if (fmHealth) {
     try {
       const { data } = await getLocalMaps(id);
-      localMaps = data;
+      localMaps = data ?? [];
     } catch (error) {
       log.error({ meta, error }, "Failed to fetch local maps");
     }

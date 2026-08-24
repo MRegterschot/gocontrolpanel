@@ -14,7 +14,7 @@ export default async function SeasonalTab({
   fmHealth: boolean;
   campaign?: number;
 }) {
-  const { data: seasonalCampaignList } = await getAllSeasonalCampaigns();
+  const { data: seasonalCampaignList = [] } = await getAllSeasonalCampaigns();
 
   if (campaign && seasonalCampaignList) {
     const sc = seasonalCampaignList.find((c) => c.id === campaign);

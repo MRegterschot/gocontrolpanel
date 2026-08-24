@@ -3,6 +3,7 @@
 import { getMapByUid } from "@/actions/database/maps";
 import { Maps } from "@/lib/prisma/generated";
 import { cn, formatTime, getErrorMessage } from "@/lib/utils";
+import { ServerError } from "@/types/responses";
 import {
   IconPhoto,
   IconScript,
@@ -15,7 +16,6 @@ import { toast } from "sonner";
 import { parseTmTags } from "tmtags";
 import { Card } from "../ui/card";
 import LiveActions from "./live-actions";
-import { ServerError } from "@/types/responses";
 
 interface MapInfoProps {
   serverId: string;
@@ -43,8 +43,8 @@ export default function MapInfo({
 
     const fetchData = async () => {
       try {
-        const { data, error } = await getMapByUid(map);
-        if (error) {
+        const { ok, data, error } = await getMapByUid(map);
+        if (!ok) {
           throw new ServerError(error, "GetMapByUidError");
         }
 

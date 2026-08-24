@@ -71,7 +71,10 @@ export async function downloadMappack(
           { mappackId, mappackName },
           "File manager is not healthy",
         );
-        throw new ServerError("File manager is not healthy", "FileManagerNotHealthy");
+        throw new ServerError(
+          "File manager is not healthy",
+          "FileManagerNotHealthy",
+        );
       }
 
       const mappackSearch = await searchTMXMaps(
@@ -87,7 +90,10 @@ export async function downloadMappack(
           { mappackId, mappackName },
           "Found no downloadable maps in mappack",
         );
-        throw new ServerError("Found no downloadable maps in mappack", "NoDownloadableMapsInMappack");
+        throw new ServerError(
+          "Found no downloadable maps in mappack",
+          "NoDownloadableMapsInMappack",
+        );
       }
 
       if (mappackSearch.More) {
@@ -98,7 +104,10 @@ export async function downloadMappack(
           { mappackId, mappackName },
           "Cannot download mappack with more than 100 maps",
         );
-        throw new ServerError("Cannot download mappack with more than 100 maps", "MappackTooLarge");
+        throw new ServerError(
+          "Cannot download mappack with more than 100 maps",
+          "MappackTooLarge",
+        );
       }
 
       const downloadResults = await Promise.allSettled(
@@ -146,7 +155,10 @@ export async function downloadMappack(
 
       if (errors > 0) {
         log.error({ meta, errors }, "Failed to download some maps");
-        throw new ServerError(`Failed to download ${errors} maps`, "DownloadMapsError");
+        throw new ServerError(
+          `Failed to download ${errors} maps`,
+          "DownloadMapsError",
+        );
       }
 
       return downloadResults
@@ -177,12 +189,12 @@ export async function addMappackToServer(
         function: "addMappackToServer",
       };
       const log = getLogger(serverId);
-      const { data: fileNames, error } = await downloadMappack(
-        serverId,
-        mappackId,
-        mappackName,
-      );
-      if (error) {
+      const {
+        ok,
+        data: fileNames,
+        error,
+      } = await downloadMappack(serverId, mappackId, mappackName);
+      if (!ok) {
         await logAudit(
           session.user.id,
           serverId,

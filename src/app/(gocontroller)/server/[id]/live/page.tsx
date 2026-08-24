@@ -9,7 +9,7 @@ export default async function LivePage({
   const { id } = await params;
 
   const { data: serverPlayerInfo } = await getServerPlayerInfo(id);
-  const { data: chatHistory } = await getChatHistory(id);
+  const { data: chatHistory = [] } = await getChatHistory(id);
 
   return (
     <LiveDashboard

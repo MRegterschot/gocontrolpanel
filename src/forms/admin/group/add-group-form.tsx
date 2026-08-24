@@ -7,6 +7,7 @@ import { Form, FormLabel } from "@/components/ui/form";
 import { useSearchUsers } from "@/hooks/use-search-users";
 import { GroupRole } from "@/lib/prisma/generated";
 import { getErrorMessage } from "@/lib/utils";
+import { ServerError } from "@/types/responses";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
@@ -14,7 +15,6 @@ import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AddGroupSchema, AddGroupSchemaType } from "./add-group-schema";
-import { ServerError } from "@/types/responses";
 
 export default function AddGroupForm({ callback }: { callback?: () => void }) {
   const { data: session } = useSession();
@@ -36,8 +36,8 @@ export default function AddGroupForm({ callback }: { callback?: () => void }) {
   useEffect(() => {
     async function fetch() {
       try {
-        const { data, error } = await getServersMinimal();
-        if (error) {
+        const { ok, data, error } = await getServersMinimal();
+        if (!ok) {
           throw new ServerError(error, "GetServersMinimalError");
         }
         setServers(data);

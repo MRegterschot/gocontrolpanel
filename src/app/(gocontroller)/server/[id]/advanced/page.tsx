@@ -20,7 +20,7 @@ export default async function ServerAdvancedPage({
     redirect(routes.dashboard);
   }
 
-  const { data: joinLink } = await getJoinLink(id);
+  const { data: joinLink = "" } = await getJoinLink(id);
 
   return (
     <div className="flex flex-col gap-6">

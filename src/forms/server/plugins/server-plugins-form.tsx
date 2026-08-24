@@ -32,8 +32,8 @@ export default function ServerPluginsForm({
 
   const refreshServerPlugin = async () => {
     try {
-      const { data, error } = await getServerPlugin(serverId);
-      if (error) {
+      const { ok, data, error } = await getServerPlugin(serverId);
+      if (!ok) {
         throw new ServerError(error, "GetServerPluginError");
       }
       setServerPluginState(data);

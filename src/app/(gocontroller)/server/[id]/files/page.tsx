@@ -11,9 +11,9 @@ export default async function ServerFilesPage({
   const { id } = await params;
   const { path } = await searchParams;
 
-  const { data, error } = await getRoute(id, path || "/UserData");
+  const { ok, data } = await getRoute(id, path || "/UserData");
 
-  if (error) {
+  if (!ok) {
     return (
       <div className="flex items-center justify-center w-full h-full">
         <h1 className="text-2xl font-bold">Failed to get files.</h1>

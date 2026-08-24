@@ -14,9 +14,9 @@ export default async function EditorPage({
   const { id } = await params;
   const { path } = await searchParams;
 
-  const { data, error } = await getFile(id, path || "/UserData");
+  const { ok, data } = await getFile(id, path || "/UserData");
 
-  if (error) {
+  if (!ok) {
     return (
       <div className="flex items-center justify-center w-full h-full">
         <h1 className="text-2xl font-bold">Failed to get file.</h1>

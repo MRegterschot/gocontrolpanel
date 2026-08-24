@@ -5,6 +5,7 @@ import FormElementSkeleton from "@/components/skeletons/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { getErrorMessage } from "@/lib/utils";
+import { ServerError } from "@/types/responses";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconDeviceFloppy } from "@tabler/icons-react";
 import { useState } from "react";
@@ -14,7 +15,6 @@ import {
   ServerSettingsSchema,
   ServerSettingsSchemaType,
 } from "./settings-schema";
-import { ServerError } from "@/types/responses";
 
 export default function SettingsForm({ serverId }: { serverId: string }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -22,9 +22,12 @@ export default function SettingsForm({ serverId }: { serverId: string }) {
   const form = useForm<ServerSettingsSchemaType>({
     resolver: zodResolver(ServerSettingsSchema),
     defaultValues: async () => {
-      const { data: settings } = await getServerSettings(serverId);
+      const response = await getServerSettings(serverId);
       setIsLoading(false);
-      return settings;
+      if (!response.ok) {
+        throw new ServerError(response.error, "GetServerSettingsError");
+      }
+      return response.data;
     },
   });
 

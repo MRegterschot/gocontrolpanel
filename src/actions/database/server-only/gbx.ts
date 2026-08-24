@@ -41,8 +41,8 @@ export async function createMap(
 
   const db = getClient();
 
-  const { data: mapsInfo, error } = await getMapsInfo([map.uid]);
-  if (error) {
+  const { ok, data: mapsInfo, error } = await getMapsInfo([map.uid]);
+  if (!ok) {
     logger.error({ meta, error, map }, "Failed to fetch map info");
     throw new ServerError(
       `Failed to fetch map info for UID ${map.uid}: ${error}`,
@@ -53,7 +53,10 @@ export async function createMap(
   const info = mapsInfo.find((m) => m.mapUid === map.uid);
   if (!info) {
     logger.error({ meta, map }, "Map info not found");
-    throw new ServerError(`Map info not found for UID ${map.uid}`, "MapInfoNotFound");
+    throw new ServerError(
+      `Map info not found for UID ${map.uid}`,
+      "MapInfoNotFound",
+    );
   }
 
   return await db.maps.create({
@@ -94,7 +97,7 @@ export async function checkAndUpdateMapsInfoIfNeeded(
   for (let i = 0; i < mapsNeedingUpdate.length; i += BATCH_SIZE) {
     const batch = mapsNeedingUpdate.slice(i, i + BATCH_SIZE);
     const uids = batch.map((m) => m.uid);
-    const { data: apiMapsInfo } = await getMapsInfo(uids);
+    const { data: apiMapsInfo = [] } = await getMapsInfo(uids);
 
     for (const map of batch) {
       const apiInfo = apiMapsInfo.find((m) => m.mapUid === map.uid);
@@ -193,13 +196,19 @@ export async function createMatch(
   const activeMap = await redis.get(key);
   if (!activeMap) {
     log.error({ meta }, "No active map found");
-    throw new ServerError(`No active map found for server ${serverId}`, "ActiveMapNotFound");
+    throw new ServerError(
+      `No active map found for server ${serverId}`,
+      "ActiveMapNotFound",
+    );
   }
 
   const mapData: Maps = JSON.parse(activeMap);
   if (!mapData) {
     log.error({ meta }, "Map data is invalid");
-    throw new ServerError(`Map data is invalid for server ${serverId}`, "InvalidMapData");
+    throw new ServerError(
+      `Map data is invalid for server ${serverId}`,
+      "InvalidMapData",
+    );
   }
 
   const db = getClient();
@@ -307,13 +316,19 @@ export async function saveMatchRecord(
   const activeMap = await redis.get(key);
   if (!activeMap) {
     log.error({ meta }, "No active map found");
-    throw new ServerError(`No active map found for server ${serverId}`, "ActiveMapNotFound");
+    throw new ServerError(
+      `No active map found for server ${serverId}`,
+      "ActiveMapNotFound",
+    );
   }
 
   const mapData: Maps = JSON.parse(activeMap);
   if (!mapData) {
     log.error({ meta }, "Map data is invalid");
-    throw new ServerError(`Map data is invalid for server ${serverId}`, "InvalidMapData");
+    throw new ServerError(
+      `Map data is invalid for server ${serverId}`,
+      "InvalidMapData",
+    );
   }
 
   const db = getClient();
@@ -400,13 +415,19 @@ export async function saveRoundRecords(
   const activeMap = await redis.get(key);
   if (!activeMap) {
     log.error({ meta }, "No active map found");
-    throw new ServerError(`No active map found for server ${serverId}`, "ActiveMapNotFound");
+    throw new ServerError(
+      `No active map found for server ${serverId}`,
+      "ActiveMapNotFound",
+    );
   }
 
   const mapData: Maps = JSON.parse(activeMap);
   if (!mapData) {
     log.error({ meta }, "Map data is invalid");
-    throw new ServerError(`Map data is invalid for server ${serverId}`, "InvalidMapData");
+    throw new ServerError(
+      `Map data is invalid for server ${serverId}`,
+      "InvalidMapData",
+    );
   }
 
   const db = getClient();

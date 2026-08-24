@@ -31,11 +31,11 @@ export default function ClubActivities({
     try {
       setLoading(true);
 
-      const { data, error } = await getClubActivitiesList(
+      const { ok, data, error } = await getClubActivitiesList(
         clubId,
         activities?.length ?? 0,
       );
-      if (error) {
+      if (!ok) {
         throw new ServerError(error, "GetClubActivitiesListError");
       }
 
