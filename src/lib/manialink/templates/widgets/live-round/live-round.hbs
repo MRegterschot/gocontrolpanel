@@ -100,37 +100,66 @@ Text formatTime(Integer time) {
   return "";
 }
 
-Integer getCheckpointGap(Round[] rounds, Round playerRound, Round firstPlaceRound) {
-  declare Integer lastCheckpointIndex = playerRound.checkpoints.count - 1;
-  declare Integer playerCheckpointTime = playerRound.checkpoints[lastCheckpointIndex];
-  declare Integer leaderCheckpointTime = firstPlaceRound.checkpoints[lastCheckpointIndex];
+// Computes the checkpoint gap to the leader for every round, in rounds order.
+// Mirrors the Delta/MinDelta approach used to rank live players by checkpoint:
+// each player's gap is compared against the leader at their last reached checkpoint
+// (falling back to the leader's next checkpoint if the leader is already past it),
+// then clamped to never be smaller than the running gap of players ahead of them.
+Integer[] getCheckpointGaps(Round[] rounds) {
+  declare Integer[] gaps = Integer[];
 
-  // Same checkpoint as leader or player is rank 2 -> compare to leader
-  if (playerRound.checkpoints.count == firstPlaceRound.checkpoints.count || playerRound.rank == 2) {
-    return ML::Max(playerCheckpointTime - leaderCheckpointTime, 0);
+  if (rounds.count == 0) {
+    return gaps;
   }
 
-  declare Round aheadRound = rounds[playerRound.rank - 2];
+  declare Round firstPlaceRound = rounds[0];
 
-  // Player ahead has more checkpoints -> inherit their gap
-  if (aheadRound.checkpoints.count > playerRound.checkpoints.count) {
-    return getCheckpointGap(rounds, aheadRound, firstPlaceRound);
-  }
-
-  // Same checkpoint as player ahead -> compare to leader
-  return ML::Max(playerCheckpointTime - leaderCheckpointTime, 0);
-}
-
-Text getTimeDiffText(Round[] rounds, Text login) {
-  declare Round playerRound;
-  
+  // The furthest checkpoint time reached by anyone currently racing
+  declare Integer GlobalLastCPTime = -1;
   foreach (round in rounds) {
-    if (round.login == login) {
-      playerRound = round;
-      break;
+    if (round.checkpoints.count == 0) continue;
+
+    declare Integer lastTime = round.checkpoints[round.checkpoints.count - 1];
+    if (lastTime > GlobalLastCPTime) {
+      GlobalLastCPTime = lastTime;
     }
   }
 
+  declare Integer MinDelta = 0;
+  declare Integer Index = 0;
+  foreach (round in rounds) {
+    declare Integer Delta = 0;
+
+    if (Index != 0 && round.checkpoints.count > 0) {
+      declare Integer lastCheckpointIndex = round.checkpoints.count - 1;
+      declare Integer playerCheckpointTime = round.checkpoints[lastCheckpointIndex];
+
+      if (firstPlaceRound.checkpoints.count > lastCheckpointIndex + 1) {
+        // Leader already reached the next checkpoint -> also compare against that
+        Delta = ML::Max(
+          playerCheckpointTime - firstPlaceRound.checkpoints[lastCheckpointIndex],
+          GlobalLastCPTime - firstPlaceRound.checkpoints[lastCheckpointIndex + 1]
+        );
+      } else if (firstPlaceRound.checkpoints.count > lastCheckpointIndex) {
+        Delta = playerCheckpointTime - firstPlaceRound.checkpoints[lastCheckpointIndex];
+      }
+    }
+
+    // The gap can never shrink compared to players ahead in the ranking
+    if (Delta > MinDelta) {
+      MinDelta = Delta;
+    } else {
+      Delta = MinDelta;
+    }
+
+    gaps.add(Delta);
+    Index += 1;
+  }
+
+  return gaps;
+}
+
+Text getTimeDiffText(Round playerRound, Integer checkpointGap) {
   if (playerRound.login == "") {
     return "--:--.---";
   }
@@ -150,22 +179,10 @@ Text getTimeDiffText(Round[] rounds, Text login) {
     return formatTime(playerRound.time);
   }
 
-  declare Round firstPlaceRound;
-  foreach (round in rounds) {
-    if (round.rank == 1) {
-      firstPlaceRound = round;
-      break;
-    }
-  }
-  
-  if (firstPlaceRound.login == "") {
-    return "--:--.---";
-  }
-    
-  return "+" ^ formatTime(getCheckpointGap(rounds, playerRound, firstPlaceRound));
+  return "+" ^ formatTime(checkpointGap);
 }
 
-Void updateRoundRow(Integer index, Round round, Round[] rounds, Text mode, Integer pointsLimit) {
+Void updateRoundRow(Integer index, Round round, Integer checkpointGap, Text mode, Integer pointsLimit) {
   declare roundsFrame <=> (Page.MainFrame.GetFirstChild("rounds") as CMlFrame);
 
   if (index >= roundsFrame.Controls.count) {
@@ -197,7 +214,7 @@ Void updateRoundRow(Integer index, Round round, Round[] rounds, Text mode, Integ
   }
 
   (roundFrame.Controls[6] as CMlLabel).SetText(pointsText);
-  (roundFrame.Controls[7] as CMlLabel).SetText(getTimeDiffText(rounds, round.login));
+  (roundFrame.Controls[7] as CMlLabel).SetText(getTimeDiffText(round, checkpointGap));
   roundFrame.DataAttributeSet("login", round.login);
 
   if (round.team.mainColor != "") {
@@ -306,8 +323,10 @@ Void updateWidget(Round[] rounds, Text mode, Integer pointsLimit, Integer rowCou
   declare roundCount = rounds.count;
   declare index = 0;
 
+  declare Integer[] checkpointGaps = getCheckpointGaps(rounds);
+
   foreach (round in rounds) {
-    updateRoundRow(index, round, rounds, mode, pointsLimit);
+    updateRoundRow(index, round, checkpointGaps[index], mode, pointsLimit);
     index = index + 1;
   }
 
