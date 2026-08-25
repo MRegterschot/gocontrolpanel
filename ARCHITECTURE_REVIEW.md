@@ -440,6 +440,7 @@ each based on the previous, and each is pushed for its own PR.
 | 7 | `fix/error-sanitisation` | 2 | ✅ pushed |
 | 8 | `feat/validate-action-input` | 2 | ✅ pushed |
 | 9 | `feat/auth-proxy` | 2 | ✅ pushed |
+| 10 | `feat/read-api-routes` | 5 | ✅ pushed |
 
 ## 1 · `docs/architecture-review`
 
@@ -814,3 +815,64 @@ the remaining ~213 actions.
 **Next up — phase 3 (data layer):** codegen both Prisma schemas from one source,
 normalise the `Json`/array columns, delete `getList`, and introduce the repository
 layer (§2, §2.1). Both MySQL and Postgres stay.
+
+## 10 · `feat/read-api-routes` — §1.1
+
+Paginated reads were fetched by calling the server action directly from the
+browser. Server Actions are always POST and React serialises them, so two tables
+on one page could not load in parallel, no Next caching applied, and the whole
+thing hung off a hand-rolled `useEffect` + `setState` loop with no dedup, retry or
+cancellation.
+
+**13 GET route handlers** now front those reads:
+
+```
+/api/servers                        /api/hetzner/projects
+/api/users                          /api/hetzner/[projectId]/servers
+/api/roles                          /api/hetzner/[projectId]/volumes
+/api/groups                         /api/hetzner/[projectId]/networks
+/api/audit-logs                     /api/servers/[serverId]/matches
+/api/nadeo/clubs                    /api/servers/[serverId]/records
+/api/nadeo/club-campaigns
+```
+
+All 13 paginated actions share one signature, so each route is three lines over a
+generic `paginatedRoute` helper (`src/lib/api/paginated-route.ts`). It parses and
+**validates** `page` / `pageSize` / `sortField` / `sortOrder` / `filter` with zod —
+`pageSize` is capped at 200, so a caller can no longer ask for the entire table —
+then delegates to the existing action.
+
+**Authorization is unchanged.** The routes call the same actions, which still run
+`doServerActionWithAuth`. This is a transport change, not a security change.
+
+Two supporting changes fell out of it:
+
+- `ServerResponse`'s failure variant gained a **`code`**, populated from
+  `toClientError` (branch 7). Routes map it to a status: `Unauthorized` → 403,
+  `ValidationError` → 400, otherwise 500. Previously only a message came back, so
+  no sensible status could be chosen.
+- Responses carry `Cache-Control: private, no-store`. These payloads are
+  permission-dependent, and a shared cache holding one user's rows and serving
+  them to another would be a data leak.
+
+**Client side: TanStack Query.** `usePaginationAPI` is deleted and replaced by
+`usePaginatedQuery`, with a `QueryProvider` in the root layout. `PaginationTable`
+now takes an `endpoint` string instead of a `fetchData` function, so the client
+bundle no longer imports action modules to read data, and entity ids travel in the
+URL path rather than a `fetchArgs` prop. `placeholderData: keepPreviousData` keeps
+the current page visible during paging instead of flashing an empty table.
+
+6 tests cover the helper, including that nonsense parameters are rejected *before*
+the action runs, that error codes map to the right statuses, and that the
+`private, no-store` header is present.
+
+> One judgement call worth flagging: the helper reads `new URL(request.url)`
+> rather than `request.nextUrl`. Both work in production, but the standard
+> property means the handler can be tested without constructing a `NextRequest`.
+
+**Not done here:** mutations stay as Server Actions, which is what they are for.
+Server-side caching with `revalidateTag` is still absent — TanStack Query gives
+client-side caching, but the RSC-level caching in §1.1 remains open.
+
+**Verified:** typecheck clean · lint 0 errors · 64 tests · `bun run build` succeeds,
+with all 13 routes registered.

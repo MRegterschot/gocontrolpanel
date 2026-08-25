@@ -1,4 +1,3 @@
-import { getAuditLogsPaginated } from "@/actions/database/audit-logs";
 import { PaginationTable } from "@/components/table/pagination-table";
 import { hasPermission } from "@/lib/auth";
 import { routePermissions, routes } from "@/routes";
@@ -17,14 +16,15 @@ export default async function AdminAuditLogsPage() {
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold">Audit Logs</h1>
           <h4 className="text-muted-foreground">
-            Here you can view the audit logs of user actions within the application.
+            Here you can view the audit logs of user actions within the
+            application.
           </h4>
         </div>
       </div>
 
       <PaginationTable
         createColumns={createColumns}
-        fetchData={getAuditLogsPaginated}
+        endpoint={"/api/audit-logs"}
         filter
       />
     </div>

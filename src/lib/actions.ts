@@ -32,9 +32,12 @@ function handleActionError<T>(
     reportException(error, meta, session);
   }
 
+  const client = toClientError(error);
+
   return {
     ok: false,
-    error: toClientError(error).message,
+    error: client.message,
+    code: client.code,
   };
 }
 

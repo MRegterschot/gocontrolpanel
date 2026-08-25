@@ -1,4 +1,3 @@
-import { getHetznerProjectsPaginated } from "@/actions/database/hetzner-projects";
 import { PaginationTable } from "@/components/table/pagination-table";
 import { hasPermission } from "@/lib/auth";
 import { routePermissions, routes } from "@/routes";
@@ -26,7 +25,7 @@ export default async function AdminHetznerPage() {
       </div>
 
       <PaginationTable
-        fetchData={getHetznerProjectsPaginated}
+        endpoint={"/api/hetzner/projects"}
         createColumns={createColumns}
         actions={createActions}
         actionsAllowed={canCreate}

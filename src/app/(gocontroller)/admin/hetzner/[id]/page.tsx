@@ -1,12 +1,7 @@
 import { getHetznerLocations } from "@/actions/hetzner/locations";
-import { getHetznerNetworksPaginated } from "@/actions/hetzner/networks";
 import { getHetznerPricing } from "@/actions/hetzner/pricing";
 import { getServerTypes } from "@/actions/hetzner/server-types";
-import {
-  getHetznerServersPaginated,
-  getRateLimit,
-} from "@/actions/hetzner/servers";
-import { getHetznerVolumesPaginated } from "@/actions/hetzner/volumes";
+import { getRateLimit } from "@/actions/hetzner/servers";
 import ServerTypesPricing from "@/components/hetzner/pricing/server-types";
 import { PaginationTable } from "@/components/table/pagination-table";
 import { Progress } from "@/components/ui/progress";
@@ -88,8 +83,7 @@ export default async function ProjectPage({
           <PaginationTable
             createColumns={createServersColumns}
             args={{ projectId: id }}
-            fetchData={getHetznerServersPaginated}
-            fetchArgs={{ projectId: id }}
+            endpoint={`/api/hetzner/${id}/servers`}
             actions={createServerActions}
             actionsArgs={{ id }}
             actionsAllowed={canCreate}
@@ -102,8 +96,7 @@ export default async function ProjectPage({
           <PaginationTable
             createColumns={createNetworksColumns}
             args={{ projectId: id }}
-            fetchData={getHetznerNetworksPaginated}
-            fetchArgs={{ projectId: id }}
+            endpoint={`/api/hetzner/${id}/networks`}
             actions={createNetworkActions}
             actionsArgs={{ id }}
             actionsAllowed={canCreate}
@@ -116,8 +109,7 @@ export default async function ProjectPage({
           <PaginationTable
             createColumns={createVolumesColumns}
             args={{ projectId: id }}
-            fetchData={getHetznerVolumesPaginated}
-            fetchArgs={{ projectId: id }}
+            endpoint={`/api/hetzner/${id}/volumes`}
             actions={createVolumeActions}
             actionsArgs={{ id }}
             actionsAllowed={canCreate}

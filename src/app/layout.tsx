@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import PlausibleProvider from "@/providers/plausible-provider";
+import QueryProvider from "@/providers/query-provider";
 import { SessionWrapper } from "@/providers/session-wrapper";
 import { ThemeProvider } from "@/providers/theme-provider";
 import type { Metadata } from "next";
@@ -70,15 +71,17 @@ export default function RootLayout({
       >
         <PlausibleProvider apiHost={process.env.PLAUSIBLE_API_HOST}>
           <SessionWrapper>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              {children}
-              <Toaster />
-            </ThemeProvider>
+            <QueryProvider>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                disableTransitionOnChange
+              >
+                {children}
+                <Toaster />
+              </ThemeProvider>
+            </QueryProvider>
           </SessionWrapper>
         </PlausibleProvider>
       </body>

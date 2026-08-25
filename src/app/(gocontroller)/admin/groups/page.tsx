@@ -1,4 +1,3 @@
-import { getGroupsPaginated } from "@/actions/database/groups";
 import { PaginationTable } from "@/components/table/pagination-table";
 import { hasPermission } from "@/lib/auth";
 import { routePermissions, routes } from "@/routes";
@@ -27,7 +26,7 @@ export default async function AdminGroupsPage() {
 
       <PaginationTable
         createColumns={createColumns}
-        fetchData={getGroupsPaginated}
+        endpoint={"/api/groups"}
         actions={createActions}
         actionsAllowed={canCreate}
         filter

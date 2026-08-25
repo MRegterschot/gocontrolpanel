@@ -15,8 +15,8 @@
  *     data.forEach(...);          // narrowed to T
  */
 export type ServerResponse<T = void> =
-  | { ok: true; data: T; error?: undefined }
-  | { ok: false; data?: undefined; error: string };
+  | { ok: true; data: T; error?: undefined; code?: undefined }
+  | { ok: false; data?: undefined; error: string; code: string };
 
 export interface PaginationResponse<T> {
   data: T[];

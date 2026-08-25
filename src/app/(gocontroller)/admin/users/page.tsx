@@ -1,4 +1,3 @@
-import { getUsersPaginated } from "@/actions/database/users";
 import { PaginationTable } from "@/components/table/pagination-table";
 import { hasPermission } from "@/lib/auth";
 import { routePermissions, routes } from "@/routes";
@@ -24,7 +23,7 @@ export default async function AdminUsersPage() {
 
       <PaginationTable
         createColumns={createColumns}
-        fetchData={getUsersPaginated}
+        endpoint={"/api/users"}
         filter
       />
     </div>

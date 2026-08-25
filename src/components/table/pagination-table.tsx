@@ -19,49 +19,42 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { usePaginationAPI } from "@/hooks/use-pagination-api";
+import { usePaginatedQuery } from "@/hooks/use-paginated-query";
 import { useSorting } from "@/hooks/use-sorting";
-import { PaginationResponse, ServerResponse } from "@/types/responses";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 import { Input } from "../ui/input";
 
-interface PaginationTableProps<TData, TValue, TArgs, TFetch, TActionArgs> {
+interface PaginationTableProps<TData, TValue, TArgs, TActionArgs> {
   createColumns: (
     refetch: () => void,
     data: TArgs,
   ) => ColumnDef<TData, TValue>[];
-  fetchData: (
-    pagination: PaginationState,
-    sorting: {
-      field: string;
-      order: "asc" | "desc";
-    },
-    filter: string,
-    fetchArgs?: TFetch,
-  ) => Promise<ServerResponse<PaginationResponse<TData>>>;
+  /** Paginated API route to read from, e.g. `/api/servers`. */
+  endpoint: string;
   args?: TArgs;
   pageSize?: number;
   filter?: boolean;
   sortingField?: string;
-  fetchArgs?: TFetch;
+  /** Extra query parameters appended to the request. */
+  params?: Record<string, string | undefined>;
   actions?: (refetch: () => void, args?: TActionArgs) => React.ReactNode;
   actionsAllowed?: boolean;
   actionsArgs?: TActionArgs;
 }
 
-export function PaginationTable<TData, TValue, TArgs, TFetch, TActionArgs>({
+export function PaginationTable<TData, TValue, TArgs, TActionArgs>({
   createColumns,
-  fetchData,
+  endpoint,
   args = {} as TArgs,
   pageSize = 10,
   filter = false,
   sortingField = "createdAt",
-  fetchArgs = {} as TFetch,
+  params,
   actions,
   actionsAllowed = true,
   actionsArgs,
-}: PaginationTableProps<TData, TValue, TArgs, TFetch, TActionArgs>) {
+}: PaginationTableProps<TData, TValue, TArgs, TActionArgs>) {
   const [pagination, setPagination] = useState<PaginationState>({
     pageSize,
     pageIndex: 0,
@@ -71,10 +64,13 @@ export function PaginationTable<TData, TValue, TArgs, TFetch, TActionArgs>({
   const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
 
-  const { data, totalCount, loading, refetch } = usePaginationAPI<
-    TData,
-    TFetch
-  >(fetchData, pagination, { field, order }, globalFilter, fetchArgs);
+  const { data, totalCount, loading, refetch } = usePaginatedQuery<TData>(
+    endpoint,
+    pagination,
+    { field, order },
+    globalFilter,
+    params,
+  );
 
   useEffect(() => {
     setPagination((prev) => ({
@@ -91,7 +87,7 @@ export function PaginationTable<TData, TValue, TArgs, TFetch, TActionArgs>({
     return () => clearTimeout(timeout);
   }, [searchInput]);
 
-  const columns = createColumns(refetch, args);
+  const columns = createColumns(() => void refetch(), args);
 
   const table = useReactTable({
     data,

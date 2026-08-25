@@ -1,4 +1,3 @@
-import { getRolesPaginated } from "@/actions/database/roles";
 import { PaginationTable } from "@/components/table/pagination-table";
 import { hasPermission } from "@/lib/auth";
 import { routePermissions, routes } from "@/routes";
@@ -27,7 +26,7 @@ export default async function AdminRolesPage() {
 
       <PaginationTable
         createColumns={createColumns}
-        fetchData={getRolesPaginated}
+        endpoint={"/api/roles"}
         actions={createActions}
         actionsAllowed={canCreate}
         filter

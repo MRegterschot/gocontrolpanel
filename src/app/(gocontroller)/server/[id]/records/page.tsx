@@ -1,5 +1,3 @@
-import { getMapRecordsPaginated } from "@/actions/database/maps";
-import { getMatchesPaginated } from "@/actions/database/matches";
 import { PaginationTable } from "@/components/table/pagination-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ServerRecordsActions from "./actions";
@@ -35,8 +33,7 @@ export default async function ServerRecordsPage({
           <PaginationTable
             createColumns={createMatchesColumns}
             args={id}
-            fetchData={getMatchesPaginated}
-            fetchArgs={{ serverId: id }}
+            endpoint={`/api/servers/${id}/matches`}
             filter
           />
         </TabsContent>
@@ -44,8 +41,7 @@ export default async function ServerRecordsPage({
         <TabsContent value="maps" className="flex flex-col gap-2">
           <PaginationTable
             createColumns={createMapsColumns}
-            fetchData={getMapRecordsPaginated}
-            fetchArgs={{ serverId: id }}
+            endpoint={`/api/servers/${id}/records`}
             filter
           />
         </TabsContent>
