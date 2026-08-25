@@ -155,7 +155,98 @@ Integer getPickedMapsCount(MapInfo[] mapInfos) {
   return count;
 }
 
-Void updateWidget(MapInfo[] mapInfos, PickBanAction currentAction) {
+// Highlights (or unhighlights) the row at index. Deliberately does not call
+// Control.Focus() - claiming engine focus is what causes Escape's first press
+// to get consumed by our navigation scope instead of opening the pause menu.
+// We track the selected row ourselves, so we don't need engine focus for it.
+Void setRowHighlighted(Integer index, Boolean highlighted) {
+  declare mapsFrame <=> (Page.MainFrame.GetFirstChild("maps") as CMlFrame);
+  if (index < 0 || index >= mapsFrame.Controls.count - 1) {
+    return;
+  }
+
+  declare mapFrame <=> (mapsFrame.Controls[index + 1] as CMlFrame);
+
+  if (highlighted) {
+    (mapFrame.Controls[1] as CMlQuad).BgColor = CL::Hex3ToRgb("999");
+  } else {
+    (mapFrame.Controls[1] as CMlQuad).BgColor = CL::Hex3ToRgb("DDD");
+  }
+}
+
+Void scrollToRow(Integer index) {
+  declare mapsFrame <=> (Page.MainFrame.GetFirstChild("maps") as CMlFrame);
+  declare Real rowTop = index * 11.5;
+  declare Real rowBottom = rowTop + 11.5;
+  declare Real viewTop = mapsFrame.ScrollOffset.Y;
+  // Matches the 10-row (115 = 10 * 11.5) window updateScroll's ScrollMax is
+  // computed against, not the frame's own (taller) declared Size.Y - using
+  // Size.Y here made rows near the bottom look "already visible" before the
+  // real scroll bound would let them actually reach the bottom of the list.
+  declare Real viewportHeight = 115.;
+  declare Real viewBottom = viewTop + viewportHeight;
+
+  if (rowTop < viewTop) {
+    mapsFrame.ScrollOffset = <0., rowTop>;
+  } else if (rowBottom > viewBottom) {
+    mapsFrame.ScrollOffset = <0., rowBottom - viewportHeight>;
+  }
+}
+
+// Clamps targetIndex to the map list bounds, without touching any visuals.
+Integer clampMapIndex(MapInfo[] mapInfos, Integer targetIndex) {
+  if (mapInfos.count == 0) {
+    return -1;
+  }
+
+  declare Integer newIndex = targetIndex;
+  if (newIndex < 0) {
+    newIndex = 0;
+  } else if (newIndex >= mapInfos.count) {
+    newIndex = mapInfos.count - 1;
+  }
+
+  return newIndex;
+}
+
+// Moves the highlight/focus/scroll from previousIndex to newIndex.
+Void applySelection(Integer previousIndex, Integer newIndex) {
+  if (previousIndex != newIndex) {
+    setRowHighlighted(previousIndex, False);
+  }
+  setRowHighlighted(newIndex, True);
+  scrollToRow(newIndex);
+}
+
+// Moves the selection by delta, or - on the first interaction, when nothing is
+// visibly selected yet - just reveals the current position without moving it.
+// Returns the new selected index.
+Integer navigateSelection(MapInfo[] mapInfos, Integer currentIndex, Boolean selectionVisible, Integer delta) {
+  declare Integer targetIndex = currentIndex;
+  if (selectionVisible) {
+    targetIndex = currentIndex + delta;
+  }
+
+  declare Integer newIndex = clampMapIndex(mapInfos, targetIndex);
+  applySelection(currentIndex, newIndex);
+  return newIndex;
+}
+
+// Triggers the pick/ban action of the currently selected row, same as clicking it.
+Void triggerSelectedMap(MapInfo[] mapInfos, Integer selectedIndex) {
+  if (mapInfos.count == 0 || selectedIndex < 0) {
+    return;
+  }
+
+  declare mapsFrame <=> (Page.MainFrame.GetFirstChild("maps") as CMlFrame);
+  declare mapFrame <=> (mapsFrame.Controls[selectedIndex + 1] as CMlFrame);
+  declare Text action = mapFrame.DataAttributeGet("action");
+  if (action != "") {
+    TriggerPageAction(action);
+  }
+}
+
+Integer updateWidget(MapInfo[] mapInfos, PickBanAction currentAction, Integer selectedIndex, Boolean selectionVisible) {
   declare mapsCount = mapInfos.count;
   declare index = 0;
 
@@ -175,6 +266,10 @@ Void updateWidget(MapInfo[] mapInfos, PickBanAction currentAction) {
   }
   
   updateScroll(mapInfos.count);
+  declare Integer newSelectedIndex = clampMapIndex(mapInfos, selectedIndex);
+  if (selectionVisible) {
+    applySelection(selectedIndex, newSelectedIndex);
+  }
 
   declare actionFrame <=> (Page.MainFrame.GetFirstChild("pickban-action") as CMlFrame);
   declare actionLabel <=> (actionFrame.Controls[2] as CMlLabel);
@@ -193,6 +288,8 @@ Void updateWidget(MapInfo[] mapInfos, PickBanAction currentAction) {
     updateScroll(getPickedMapsCount(mapInfos));
     orderPickedMaps();
   }
+
+  return newSelectedIndex;
 }
 {{/content}}
 
@@ -201,6 +298,8 @@ declare MapInfo[] MapInfos for This;
 declare PickBanAction CurrentAction for This;
 declare Integer LastPickBanUpdate for This = -1;
 declare Integer lastUpdate = -1;
+declare Integer SelectedMapIndex = -1;
+declare Boolean SelectionVisible = False;
 declare mapsFrame <=> (widget.GetFirstChild("maps") as CMlFrame);
 mapsFrame.ScrollActive = True;
 mapsFrame.ScrollMin = <0., 0.>;
@@ -211,7 +310,29 @@ mapsFrame.ScrollGrid = <0., 11.5>;
 {{#content "loop"}}
 if (LastPickBanUpdate != lastUpdate) {
   lastUpdate = LastPickBanUpdate;
-  updateWidget(MapInfos, CurrentAction);
+  SelectedMapIndex = updateWidget(MapInfos, CurrentAction, SelectedMapIndex, SelectionVisible);
+}
+
+// Up/Down: read from Input.PendingEvents rather than polling KeyUp/KeyDown -
+// the keyboard is itself a "Pad" (EPadType::Keyboard) in this input system, so
+// arrow presses show up here too, and polling both doubled every move. This is
+// a separate, lower-level raw input queue (not the manialink page's own
+// CMlScript.PendingEvents), so reading it doesn't need EnableMenuNavigation and
+// doesn't touch scroll-wheel/Escape at all. Covers both keyboard and gamepad.
+foreach (padEvent in Input.PendingEvents) {
+  if (padEvent.Type != CInputEvent::EType::PadButtonPress || padEvent.IsAutoRepeat) continue;
+
+  if (padEvent.Button == CInputEvent::EButton::Up || padEvent.Button == CInputEvent::EButton::LeftStick_Up) {
+    SelectedMapIndex = navigateSelection(MapInfos, SelectedMapIndex, SelectionVisible, -1);
+    SelectionVisible = True;
+  } else if (padEvent.Button == CInputEvent::EButton::Down || padEvent.Button == CInputEvent::EButton::LeftStick_Down) {
+    SelectedMapIndex = navigateSelection(MapInfos, SelectedMapIndex, SelectionVisible, 1);
+    SelectionVisible = True;
+  } else if (padEvent.Button == CInputEvent::EButton::A) {
+    if (SelectionVisible) {
+      triggerSelectedMap(MapInfos, SelectedMapIndex);
+    }
+  }
 }
 {{/content}}
 
