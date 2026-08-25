@@ -1,4 +1,5 @@
 import { parseTokenFromRequest } from "@/lib/auth";
+import { bindServerEvents } from "@/lib/events/bind";
 import { logger } from "@/lib/logger";
 import {
   GbxClientManager,
@@ -58,8 +59,10 @@ export async function UPGRADE(
     "Adding WebSocket listeners for notifications",
   );
 
+  const unbinds: (() => void)[] = [];
+
   for (const manager of serverManagers) {
-    manager.addListeners(listenerId, {
+    const unbind = await bindServerEvents(manager, listenerId, {
       adminCommand: (notifications: Notifications[]) => {
         const notification = notifications.find(
           (n) => n.serverId === manager.getServerId() && n.userId === token.id,
@@ -80,6 +83,8 @@ export async function UPGRADE(
         }
       },
     });
+
+    unbinds.push(unbind);
   }
 
   client.once("close", () => {
@@ -87,8 +92,8 @@ export async function UPGRADE(
       { meta, listenerId },
       "Cleaning up WebSocket listeners for notifications",
     );
-    for (const manager of serverManagers) {
-      manager.removeListeners(listenerId);
+    for (const unbind of unbinds) {
+      unbind();
     }
   });
 }

@@ -8,6 +8,12 @@ import { PrismaClient } from "./prisma/generated";
 type GlobalState = {
   prisma?: PrismaClient;
   redis?: Redis;
+  /**
+   * Separate connection for pub/sub. ioredis puts a connection into subscriber
+   * mode, after which it cannot run ordinary commands, so this cannot share the
+   * client above.
+   */
+  redisSubscriber?: Redis;
   gbxClients?: Record<string, GbxClientManager>;
   fileManagers?: Record<string, FileManager>;
 };

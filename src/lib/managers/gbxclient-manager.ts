@@ -31,6 +31,7 @@ import EventEmitter from "events";
 import { Logger } from "pino";
 import "server-only";
 import { getClient } from "../dbclient";
+import { publishServerEvent } from "../events/server-events";
 import { appGlobals } from "../global";
 import { getLogger } from "../logger";
 import {
@@ -43,6 +44,28 @@ import {
   withTimeout,
 } from "../utils";
 import PluginManager from "./plugin-manager";
+
+/**
+ * Events that must not be relayed to other instances.
+ *
+ * `connect` / `disconnect` / `reconnect` describe *this process's* XML-RPC
+ * connection. While every instance opens its own connection, relaying them would
+ * let one instance's blip mark the server as down for clients attached to a
+ * healthy one. Once the GBX connection is owned by a single worker (the next
+ * step of section 4.1 in ARCHITECTURE_REVIEW.md) connection state becomes
+ * global and these should be relayed instead.
+ *
+ * `newListener` / `removeListener` are EventEmitter's own bookkeeping, and
+ * `error` carries an Error, which does not survive JSON.
+ */
+const LOCAL_ONLY_EVENTS = new Set([
+  "connect",
+  "disconnect",
+  "reconnect",
+  "error",
+  "newListener",
+  "removeListener",
+]);
 
 type ActionListener = (
   data: PlayerManialinkPageAnswer,
@@ -159,6 +182,28 @@ export class GbxClientManager extends EventEmitter {
     this.pluginManager.unloadPlugins();
     this.emit("disconnect", this.serverId);
     this.scheduleReconnect(); // retry on disconnect
+  }
+
+  /**
+   * Emits locally, then relays to the other instances over Redis.
+   *
+   * Overriding `emit` rather than touching the ~38 call sites means every event
+   * this manager already raises fans out, and any event added later does too
+   * without being remembered about.
+   *
+   * Local listeners are unaffected: they still fire synchronously off the
+   * EventEmitter, so a Redis outage degrades this to exactly the previous
+   * single-instance behaviour.
+   */
+  emit(event: string | symbol, ...args: any[]): boolean {
+    const handled = super.emit(event, ...args);
+
+    if (typeof event === "string" && !LOCAL_ONLY_EVENTS.has(event)) {
+      // Fire-and-forget: publishing must never block or fail the GBX event loop.
+      void publishServerEvent(this.serverId, event, args);
+    }
+
+    return handled;
   }
 
   addListeners(

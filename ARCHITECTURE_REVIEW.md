@@ -441,6 +441,7 @@ each based on the previous, and each is pushed for its own PR.
 | 8 | `feat/validate-action-input` | 2 | ✅ pushed |
 | 9 | `feat/auth-proxy` | 2 | ✅ pushed |
 | 10 | `feat/read-api-routes` | 5 | ✅ pushed |
+| 11 | `feat/redis-event-bus` | 4 | ✅ pushed |
 
 ## 1 · `docs/architecture-review`
 
@@ -876,3 +877,63 @@ client-side caching, but the RSC-level caching in §1.1 remains open.
 
 **Verified:** typecheck clean · lint 0 errors · 64 tests · `bun run build` succeeds,
 with all 13 routes registered.
+
+## 11 · `feat/redis-event-bus` — §4.1 (first half)
+
+`GbxClientManager` holds the live match state in process memory and the WebSocket
+routes attach listeners straight to it, so a second replica would open a second
+XML-RPC connection per game server and serve divergent state. Redis was a
+dependency already but `publish` / `subscribe` appeared nowhere.
+
+`src/lib/events/server-events.ts` relays events between instances over the channel
+`server-events:<serverId>`.
+
+**The design is additive, and that is the important part.** Local listeners still
+fire synchronously off the EventEmitter exactly as before; Redis carries events
+only *between* instances. So:
+
+- If Redis is down, behaviour is precisely what it was — publish failures are
+  logged at `debug` and swallowed, and the subscriber's `retryStrategy` reconnects
+  in the background. A live feed must not depend on a cache being up.
+- A handler never double-fires: envelopes carry the publishing instance's id and
+  the subscriber drops its own.
+
+**One hook, not 38 call sites.** `GbxClientManager.emit` is overridden to publish
+after emitting locally, so every event it already raises fans out, and any event
+added later does too without anyone having to remember. Publishing is
+fire-and-forget so it can never block or fail the GBX event loop.
+
+`bindServerEvents(manager, listenerId, handlers)` gives a WebSocket route both
+paths and one teardown function. Applied to the `live`, `map`, `players` and
+`notifications` routes.
+
+> **`connect` / `disconnect` / `reconnect` are deliberately *not* relayed.** They
+> describe this process's own XML-RPC connection. While each instance opens its
+> own, relaying them would let one instance's blip mark a server as down for
+> clients attached to a healthy one — a regression, not an improvement. They
+> become global (and should be relayed) once the connection has a single owner.
+> The `servers` and `clients` routes, which listen only to these, are unchanged.
+
+Pub/sub needs its own connection — ioredis puts a subscribed connection into a
+mode where ordinary commands are rejected — so `getRedisSubscriber()` is separate
+from `getRedisClient()`, with a reconnecting retry strategy rather than the
+fail-fast one used for cache reads.
+
+8 tests with a stubbed ioredis cover the envelope shape, self-filtering,
+one-subscription-per-channel refcounting, unsubscribe on the last detach,
+malformed payloads, and that one throwing handler does not stop the others.
+
+### What this does *not* finish
+
+§4.1 needs three things; this is one of them.
+
+1. ✅ Events fan out across instances.
+2. ❌ **The GBX connection is still per-instance.** A single owning worker is the
+   part that actually makes the web tier stateless, and it is the bigger change.
+3. ❌ **Live state is still lost on restart.** No Redis snapshot of
+   `currentMatchId`, `roundNumber` or the active round yet.
+
+Until 2 lands, running multiple replicas is still wrong — this branch is the
+groundwork that makes it possible, not permission to scale out.
+
+**Verified:** typecheck clean · lint 0 errors · 72 tests · `bun run build` succeeds.

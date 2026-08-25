@@ -1,4 +1,5 @@
 import { parseTokenFromRequest } from "@/lib/auth";
+import { bindServerEvents } from "@/lib/events/bind";
 import { getLogger } from "@/lib/logger";
 import { getGbxClientManager } from "@/lib/managers/gbxclient-manager";
 
@@ -75,7 +76,7 @@ export async function UPGRADE(
 
   logger.debug({ meta, listenerId }, "Adding WebSocket listeners for map");
 
-  manager.addListeners(listenerId, {
+  const unbind = await bindServerEvents(manager, listenerId, {
     endMap: onEndMap,
     startMap: onStartMap,
   });
@@ -85,6 +86,6 @@ export async function UPGRADE(
       { meta, listenerId },
       "Cleaning up WebSocket listeners for map",
     );
-    manager.removeListeners(listenerId);
+    unbind();
   });
 }

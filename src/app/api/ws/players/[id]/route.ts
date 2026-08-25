@@ -1,4 +1,5 @@
 import { parseTokenFromRequest } from "@/lib/auth";
+import { bindServerEvents } from "@/lib/events/bind";
 import { getLogger } from "@/lib/logger";
 import { getGbxClientManager } from "@/lib/managers/gbxclient-manager";
 import { hasPermissionsJWTSync } from "@/lib/permissions";
@@ -93,7 +94,7 @@ export async function UPGRADE(
 
   logger.debug({ meta, listenerId }, "Adding WebSocket listeners for players");
 
-  manager.addListeners(listenerId, {
+  const unbind = await bindServerEvents(manager, listenerId, {
     playerConnect: onPlayerConnect,
     playerDisconnect: onPlayerDisconnect,
     playerInfo: onPlayerInfo,
@@ -105,6 +106,6 @@ export async function UPGRADE(
       { meta, listenerId },
       "Cleaning up WebSocket listeners for players",
     );
-    manager.removeListeners(listenerId);
+    unbind();
   });
 }

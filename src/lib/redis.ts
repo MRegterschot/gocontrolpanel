@@ -1,10 +1,10 @@
+import { ServerError } from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
 import Redis from "ioredis";
 import "server-only";
 import config from "./config";
 import { appGlobals } from "./global";
 import { logger } from "./logger";
-import { ServerError } from "@/types/responses";
 import { reportException } from "./sentry/report";
 
 export async function getRedisClient() {
@@ -32,7 +32,10 @@ export async function getRedisClient() {
       } else {
         logger.error({ meta, error }, "Error connecting to Redis");
         reportException(error, meta);
-        throw new ServerError("Failed to connect to Redis", "RedisConnectionError");
+        throw new ServerError(
+          "Failed to connect to Redis",
+          "RedisConnectionError",
+        );
       }
     }
   }
@@ -47,6 +50,39 @@ export async function getRedisClient() {
   }
 
   return appGlobals.redis;
+}
+
+/**
+ * Dedicated connection for pub/sub. A subscribed ioredis connection rejects
+ * ordinary commands, so this must stay separate from `getRedisClient`.
+ */
+export async function getRedisSubscriber() {
+  if (!appGlobals.redisSubscriber) {
+    const meta = {
+      type: "server",
+      module: "redis",
+      function: "getRedisSubscriber",
+    };
+
+    const subscriber = new Redis(config.REDISURI, {
+      retryStrategy: (times) => Math.min(times * 500, 10_000),
+      maxRetriesPerRequest: null,
+    });
+
+    subscriber.on("error", (error) => {
+      // Never throw from here: a dropped subscriber degrades fan-out to
+      // single-instance delivery, it does not break the live feed.
+      logger.warn({ meta, error }, "Redis subscriber error");
+    });
+
+    const { attachSubscriberDispatch } = await import("./events/server-events");
+    attachSubscriberDispatch(subscriber);
+
+    appGlobals.redisSubscriber = subscriber;
+    logger.info({ meta }, "Redis subscriber initialized");
+  }
+
+  return appGlobals.redisSubscriber;
 }
 
 export const getKeyActiveMap = (serverId: string) => `active-map:${serverId}`;

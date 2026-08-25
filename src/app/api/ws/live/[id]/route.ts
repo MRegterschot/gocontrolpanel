@@ -1,4 +1,5 @@
 import { parseTokenFromRequest } from "@/lib/auth";
+import { bindServerEvents } from "@/lib/events/bind";
 import { getLogger } from "@/lib/logger";
 import { getGbxClientManager } from "@/lib/managers/gbxclient-manager";
 import { DetailedPlayerChat } from "@/types/gbx/player";
@@ -242,7 +243,7 @@ export async function UPGRADE(
 
   logger.debug({ meta, listenerId }, "Adding WebSocket listeners for live");
 
-  manager.addListeners(listenerId, {
+  const unbind = await bindServerEvents(manager, listenerId, {
     "live-finish": onFinish,
     personalBest: onPersonalBest,
     "live-checkpoint": onCheckpoint,
@@ -270,6 +271,6 @@ export async function UPGRADE(
       { meta, listenerId },
       "Cleaning up WebSocket listeners for live",
     );
-    manager.removeListeners(listenerId);
+    unbind();
   });
 }
