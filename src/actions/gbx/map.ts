@@ -1,12 +1,38 @@
 "use server";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getLogger } from "@/lib/logger";
-import { getGbxClient } from "@/lib/managers/gbxclient-manager";
+import {
+  GbxClientManager,
+  getGbxClient,
+  getGbxClientManager,
+  sendChatMessage,
+} from "@/lib/managers/gbxclient-manager";
 import { Maps } from "@/lib/prisma/generated";
 import { getKeyJukebox, getRedisClient } from "@/lib/redis";
+import { formatTemplate } from "@/lib/utils";
 import { JukeboxMap } from "@/types/map";
 import { ServerError, ServerResponse } from "@/types/responses";
+import { stripTmTags } from "tmtags";
 import { logAudit } from "../database/server-only/audit-logs";
+import { getMapsInfo } from "./server-only/maps";
+
+async function announceMapListChange(
+  manager: GbxClientManager,
+  action: "added" | "removed" | "reordered",
+  filenames: string[],
+) {
+  if (!manager.info.chat?.mapListChangeMessage) return;
+
+  const mapsInfo = await getMapsInfo(manager, filenames);
+  const maps = mapsInfo.map((map) => stripTmTags(map.Name)).join(", ");
+
+  const message = formatTemplate(manager.info.chat.mapListChangeMessage, {
+    action,
+    count: filenames.length,
+    maps,
+  });
+  sendChatMessage(manager, message);
+}
 
 export async function getJukebox(
   serverId: string,
@@ -167,7 +193,10 @@ export async function getCurrentMapIndex(
 
       if (typeof mapIndex !== "number") {
         log.error({ meta, mapIndex }, "Failed to get current map index");
-        throw new ServerError("Failed to get current map index", "GetCurrentMapIndexError");
+        throw new ServerError(
+          "Failed to get current map index",
+          "GetCurrentMapIndexError",
+        );
       }
 
       return mapIndex;
@@ -206,8 +235,11 @@ export async function addMap(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
-      await client.call("AddMap", filename);
+      const manager = await getGbxClientManager(serverId);
+      await manager.client.call("AddMap", filename);
+
+      await announceMapListChange(manager, "added", [filename]);
+
       await logAudit(
         session.user.id,
         serverId,
@@ -236,13 +268,17 @@ export async function addMapList(
         function: "addMapList",
       };
       const log = getLogger(serverId);
-      const client = await getGbxClient(serverId);
-      const res = await client.call("AddMapList", filenames);
+      const manager = await getGbxClientManager(serverId);
+      const res = await manager.client.call("AddMapList", filenames);
 
       let error: string | undefined = undefined;
 
       if (typeof res !== "number") {
         error = "Failed to add map list";
+      }
+
+      if (!error && res > 0) {
+        await announceMapListChange(manager, "added", filenames);
       }
 
       await logAudit(
@@ -278,8 +314,8 @@ export async function removeMap(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
-      const mapList = await client.call("GetMapList", 2, 0);
+      const manager = await getGbxClientManager(serverId);
+      const mapList = await manager.client.call("GetMapList", 2, 0);
       await logAudit(
         session.user.id,
         serverId,
@@ -290,9 +326,14 @@ export async function removeMap(
           : undefined,
       );
       if (mapList.length < 2) {
-        throw new ServerError("Cannot remove the last map from the server", "RemoveLastMapError");
+        throw new ServerError(
+          "Cannot remove the last map from the server",
+          "RemoveLastMapError",
+        );
       }
-      await client.call("RemoveMap", filename);
+      await manager.client.call("RemoveMap", filename);
+
+      await announceMapListChange(manager, "removed", [filename]);
     },
   );
 }
@@ -309,8 +350,8 @@ export async function removeMapList(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
-      const res = await client.call("RemoveMapList", filenames);
+      const manager = await getGbxClientManager(serverId);
+      const res = await manager.client.call("RemoveMapList", filenames);
 
       await logAudit(
         session.user.id,
@@ -321,7 +362,62 @@ export async function removeMapList(
       );
 
       if (typeof res !== "number") {
-        throw new ServerError("Failed to remove map list", "RemoveMapListError");
+        throw new ServerError(
+          "Failed to remove map list",
+          "RemoveMapListError",
+        );
+      }
+
+      if (res > 0) {
+        await announceMapListChange(manager, "removed", filenames);
+      }
+    },
+  );
+}
+
+export async function reorderMapList(
+  serverId: string,
+  filenames: string[],
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      const meta = {
+        type: "gbx",
+        module: "game",
+        function: "reorderMapList",
+      };
+      const log = getLogger(serverId);
+      const manager = await getGbxClientManager(serverId);
+
+      const removeRes = await manager.client.call("RemoveMapList", filenames);
+      const addRes = await manager.client.call("AddMapList", filenames);
+
+      const error =
+        typeof removeRes !== "number" || typeof addRes !== "number"
+          ? "Failed to reorder map list"
+          : undefined;
+
+      if (!error) {
+        await announceMapListChange(manager, "reordered", filenames);
+      }
+
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.maps.maplist.reorder",
+        filenames,
+        error,
+      );
+
+      if (error) {
+        log.error({ meta, error, filenames }, "Failed to reorder map list");
+        throw new ServerError(error, "ReorderMapListError");
       }
     },
   );

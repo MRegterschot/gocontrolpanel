@@ -14,6 +14,10 @@ export interface ChatConfig {
   messageFormat: string | null;
   connectMessage: string | null;
   disconnectMessage: string | null;
+  scriptNameChangeMessage: string | null;
+  matchSettingsLoadedMessage: string | null;
+  scriptSettingsSavedMessage: string | null;
+  mapListChangeMessage: string | null;
 }
 
 export interface ServerClientInfo {
