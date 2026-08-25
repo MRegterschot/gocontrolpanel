@@ -4,6 +4,7 @@ import { getLogger } from "@/lib/logger";
 import {
   getGbxClient,
   getGbxClientManager,
+  sendChatMessage,
 } from "@/lib/managers/gbxclient-manager";
 import { formatTemplate } from "@/lib/utils";
 import { ModeScriptInfo } from "@/types/gbx";
@@ -106,7 +107,7 @@ export async function setScriptName(
           manager.info.chat.scriptNameChangeMessage,
           { script },
         );
-        manager.client.call("ChatSendServerMessage", message);
+        sendChatMessage(manager, message);
       }
 
       await logAudit(
@@ -159,7 +160,7 @@ export async function loadMatchSettings(
           manager.info.chat.matchSettingsLoadedMessage,
           { filename },
         );
-        manager.client.call("ChatSendServerMessage", message);
+        sendChatMessage(manager, message);
       }
 
       await logAudit(
@@ -299,8 +300,8 @@ export async function setModeScriptSettings(
       manager.client.call("Echo", "", "UpdatedSettings");
 
       if (manager.info.chat?.scriptSettingsSavedMessage) {
-        manager.client.call(
-          "ChatSendServerMessage",
+        sendChatMessage(
+          manager,
           manager.info.chat.scriptSettingsSavedMessage.trim(),
         );
       }

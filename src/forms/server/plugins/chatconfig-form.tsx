@@ -253,9 +253,9 @@ export default function ChatConfigForm({
             <FormElement
               name={"mapListChangeMessage"}
               label="Map List Changed"
-              description="Message sent when the map list is changed. Available variables: {action}, {count}."
+              description="Message sent when the map list is changed. Available variables: {action} (added, removed or reordered), {count}, {maps}."
               type="text"
-              placeholder="Map list updated ({count} map(s) {action})"
+              placeholder="Map list updated ({count} map(s) {action}: {maps})"
               rootClassName="max-w-full"
               className="max-w-full"
             />
@@ -266,6 +266,7 @@ export default function ChatConfigForm({
                 {formatTemplate(mapListChangeMessageValue, {
                   action: "added",
                   count: 3,
+                  maps: "A01-Race, A02-Race, A03-Race",
                 })}
               </span>
             )}

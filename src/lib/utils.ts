@@ -292,6 +292,40 @@ export function formatTemplate(
   return msg.trim();
 }
 
+// The dedicated server rejects ChatSendServerMessage calls with a
+// "Text too long" fault once the message exceeds this length.
+export const CHAT_MESSAGE_MAX_LENGTH = 1000;
+
+export function splitChatMessage(
+  message: string,
+  maxLength: number = CHAT_MESSAGE_MAX_LENGTH,
+): string[] {
+  const trimmed = message.trim();
+
+  if (trimmed.length <= maxLength) {
+    return trimmed.length > 0 ? [trimmed] : [];
+  }
+
+  const chunks: string[] = [];
+  let remaining = trimmed;
+
+  while (remaining.length > maxLength) {
+    let splitAt = remaining.lastIndexOf(" ", maxLength);
+    if (splitAt <= 0) {
+      splitAt = maxLength;
+    }
+
+    chunks.push(remaining.slice(0, splitAt).trim());
+    remaining = remaining.slice(splitAt).trim();
+  }
+
+  if (remaining.length > 0) {
+    chunks.push(remaining);
+  }
+
+  return chunks;
+}
+
 export const permissions: string[] = [
   "users:view",
   "users:edit",

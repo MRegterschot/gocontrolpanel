@@ -40,6 +40,7 @@ import {
   isLastChance,
   isWinner,
   sleep,
+  splitChatMessage,
   withTimeout,
 } from "../utils";
 import PluginManager from "./plugin-manager";
@@ -527,6 +528,13 @@ export async function getGbxClient(serverId: string): Promise<GbxClient> {
   return manager.client;
 }
 
+export function sendChatMessage(manager: GbxClientManager, message: string) {
+  const chunks = splitChatMessage(message);
+  for (const chunk of chunks) {
+    manager.client.call("ChatSendServerMessage", chunk);
+  }
+}
+
 export async function getGbxClientManager(
   serverId: string,
 ): Promise<GbxClientManager> {
@@ -776,7 +784,7 @@ async function onPlayerConnect(manager: GbxClientManager, login: string) {
     "",
   );
 
-  manager.client.call("ChatSendServerMessage", message);
+  sendChatMessage(manager, message);
 }
 
 async function onPlayerDisconnect(manager: GbxClientManager, login: string) {
@@ -793,7 +801,7 @@ async function onPlayerDisconnect(manager: GbxClientManager, login: string) {
       "",
     );
 
-    manager.client.call("ChatSendServerMessage", message);
+    sendChatMessage(manager, message);
   }
 
   manager.removeActivePlayer(login);
@@ -1585,5 +1593,5 @@ async function onPlayerChat(manager: GbxClientManager, chat: PlayerChat) {
     chat.Text,
   );
 
-  manager.client.call("ChatSendServerMessage", message);
+  sendChatMessage(manager, message);
 }
