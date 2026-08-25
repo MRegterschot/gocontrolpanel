@@ -6,6 +6,7 @@ import { Maps } from "@/lib/prisma/generated";
 import { getDivergingList, getErrorMessage } from "@/lib/utils";
 import { ServerError } from "@/types/responses";
 import {
+  IconArrowsShuffle,
   IconDeviceFloppy,
   IconMapMinus,
   IconRefresh,
@@ -66,6 +67,15 @@ export default function MapOrder({
 
   function resetMapOrder() {
     setMapOrder(mapList);
+  }
+
+  function randomizeMapOrder() {
+    const shuffled = [...mapOrder];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    setMapOrder(shuffled);
   }
 
   function onRemoveMap(map: Maps) {
@@ -131,6 +141,11 @@ export default function MapOrder({
         <Button variant="outline" collapse="sm" onClick={onRefreshMapList}>
           <IconRefresh />
           Refresh
+        </Button>
+
+        <Button variant="outline" collapse="sm" onClick={randomizeMapOrder}>
+          <IconArrowsShuffle />
+          Randomize
         </Button>
 
         <Button
