@@ -1,7 +1,7 @@
 import { parseTokenFromRequest } from "@/lib/auth";
 import { getLogger } from "@/lib/logger";
 import { getGbxClientManager } from "@/lib/managers/gbxclient-manager";
-import { hasPermissionsJWTSync } from "@/lib/utils";
+import { hasPermissionsJWTSync } from "@/lib/permissions";
 import { routePermissions } from "@/routes";
 import { PlayerInfo } from "@/types/player";
 

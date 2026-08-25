@@ -1,7 +1,8 @@
 "use client";
 import { getPlayerList } from "@/actions/gbx/player";
 import useWebSocket from "@/hooks/use-websocket";
-import { getErrorMessage, hasPermissionSync } from "@/lib/utils";
+import { hasPermissionSync } from "@/lib/permissions";
+import { getErrorMessage } from "@/lib/utils";
 import { routePermissions } from "@/routes";
 import { DetailedPlayerChat, SPlayerInfo } from "@/types/gbx/player";
 import { LiveInfo } from "@/types/live";

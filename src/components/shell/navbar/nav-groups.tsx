@@ -22,7 +22,8 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { generatePath, getErrorMessage, hasPermissionSync } from "@/lib/utils";
+import { hasPermissionSync } from "@/lib/permissions";
+import { generatePath, getErrorMessage } from "@/lib/utils";
 import { useNotifications } from "@/providers/notification-provider";
 import { useServers } from "@/providers/servers-provider";
 import { connectionRoutes, routePermissions, routes } from "@/routes";

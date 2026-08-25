@@ -14,7 +14,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getErrorMessage, hasPermissionSync } from "@/lib/utils";
+import { hasPermissionSync } from "@/lib/permissions";
+import { getErrorMessage } from "@/lib/utils";
 import { routePermissions } from "@/routes";
 import { ServerError } from "@/types/responses";
 import { ColumnDef } from "@tanstack/react-table";
@@ -156,7 +157,11 @@ export const createColumns = (
           )}
 
           {canEdit && (
-            <Modal isOpen={editIsOpen} setIsOpen={setEditIsOpen} closeOnBackdropClick={false}>
+            <Modal
+              isOpen={editIsOpen}
+              setIsOpen={setEditIsOpen}
+              closeOnBackdropClick={false}
+            >
               <EditServerModal data={server} onSubmit={refetch} />
             </Modal>
           )}

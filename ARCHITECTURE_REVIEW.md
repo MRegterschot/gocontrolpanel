@@ -439,6 +439,7 @@ each based on the previous, and each is pushed for its own PR.
 | 6 | `refactor/permission-constants` | 2 | ✅ pushed |
 | 7 | `fix/error-sanitisation` | 2 | ✅ pushed |
 | 8 | `feat/validate-action-input` | 2 | ✅ pushed |
+| 9 | `feat/auth-proxy` | 2 | ✅ pushed |
 
 ## 1 · `docs/architecture-review`
 
@@ -749,3 +750,67 @@ properties are stripped (a caller cannot smuggle extra fields into a database
 write) and that the resulting error is client-safe but not Sentry-worthy.
 
 **Verified:** typecheck clean · lint 0 errors · 52 tests · `bun run build` succeeds.
+
+## 9 · `feat/auth-proxy` — §1.2, §7.2 (partial)
+
+There was no route-level gate at all: every page re-implemented
+`hasPermission(...)` then `redirect(...)`, so an unauthenticated request still ran
+layout code, a session lookup and often a query before being turned away.
+
+**`src/proxy.ts`** — note the filename. §1.2 said `middleware.ts`; that convention
+is **deprecated in Next 16**, which warns at build time and points at
+`proxy.ts`. The build now reports `ƒ Proxy (Middleware)`.
+
+It does two things: redirect to `/login` (preserving a `callbackUrl`) when there
+is no token, and apply route-level permissions from `src/lib/route-guard.ts`.
+
+**It is defence in depth, not a replacement.** Every page keeps its own
+`hasPermission` check. Two reasons: the finer per-feature permissions
+(`game.mapActions`, `game.scriptSettings`) describe UI elements rather than whole
+pages and cannot be collapsed into a route rule without denying people pages they
+can legitimately use; and any route not listed still needs its own check. Each
+guard mirrors *exactly* what its page already enforces, so a mismatch can only
+cause an unnecessary redirect, never a lockout.
+
+Only the admin area is gated. The matcher excludes `api` (server actions and route
+handlers authenticate themselves; NextAuth's own endpoints must stay reachable
+while signed out; and a redirect would break a WebSocket upgrade handshake rather
+than deny it cleanly), `_next`, static assets, and `/login` itself.
+
+**Also moved `hasPermissionSync`, `hasPermissionsJWTSync` and `resolvePermissions`
+out of `lib/utils.ts` into `lib/permissions.ts`** (17 importers repointed). They
+belong with the permission constants, and it keeps the proxy's import graph small
+— `utils.ts` pulls in clsx, tailwind-merge, route tables and form schema types,
+none of which should ride along into the edge runtime. `resolvePermissions` no
+longer calls `getList`, using a local array guard instead, so `permissions.ts` has
+no dependency on the utils grab-bag. This is a first slice of §7.2.
+
+6 tests in `src/lib/__tests__/route-guard.test.ts`, including the ordering trap:
+`/admin/hetzner/` must not swallow `/admin/hetzner`, since the project page uses
+an id-scoped permission and the index does not.
+
+> **Not verified at runtime.** Typecheck, lint, 58 tests and the production build
+> all pass, and the matcher is written to avoid redirect loops (`/login` and
+> `/api` are excluded, and the dashboard has no guard). But I could not exercise a
+> real sign-in against a running instance from here, so **the login round-trip and
+> the `callbackUrl` hand-off should be smoke-tested on staging before this
+> merges.** It is the one change so far whose failure mode is user-visible
+> lockout.
+
+**Verified:** typecheck clean · lint 0 errors · 58 tests · `bun run build` succeeds.
+
+### Phase 2 is complete
+
+| §  | Item | Branch |
+|----|------|--------|
+| 5.4 | centralised permission constants | 6 |
+| 3.3 / 9 | error sanitisation + Sentry noise | 7 |
+| 3.1 | zod validation in actions (form payloads) | 8 |
+| 1.2 | route-level auth gate | 9 |
+
+Carried forward: relocating schemas to `src/schemas/`, and the id-guard pass over
+the remaining ~213 actions.
+
+**Next up — phase 3 (data layer):** codegen both Prisma schemas from one source,
+normalise the `Json`/array columns, delete `getList`, and introduce the repository
+layer (§2, §2.1). Both MySQL and Postgres stay.

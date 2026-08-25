@@ -17,7 +17,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getErrorMessage, hasPermissionSync } from "@/lib/utils";
+import { hasPermissionSync } from "@/lib/permissions";
+import { getErrorMessage } from "@/lib/utils";
 import { routePermissions } from "@/routes";
 import { ServerError } from "@/types/responses";
 import { ColumnDef } from "@tanstack/react-table";

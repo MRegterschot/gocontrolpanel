@@ -23,10 +23,10 @@ import slugid from "slugid";
 import { getWebIdentities } from "./api/nadeo";
 import config from "./config";
 import { logger } from "./logger";
-import { PermissionCheck } from "./permissions";
+import { hasPermissionSync, PermissionCheck } from "./permissions";
 import { GroupRole } from "./prisma/generated";
 import { reportException } from "./sentry/report";
-import { getList, hasPermissionSync } from "./utils";
+import { getList } from "./utils";
 
 const NadeoProvider = (): OAuthConfig<Profile> => ({
   id: "nadeo",

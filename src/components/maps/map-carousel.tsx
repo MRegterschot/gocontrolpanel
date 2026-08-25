@@ -2,9 +2,11 @@
 
 import { nextMap } from "@/actions/gbx/game";
 import useWebSocket from "@/hooks/use-websocket";
+import { hasPermissionSync } from "@/lib/permissions";
 import { Maps } from "@/lib/prisma/generated";
-import { cn, getErrorMessage, hasPermissionSync } from "@/lib/utils";
+import { cn, getErrorMessage } from "@/lib/utils";
 import { routePermissions } from "@/routes";
+import { ServerError } from "@/types/responses";
 import {
   IconArrowForwardUp,
   IconLock,
@@ -24,7 +26,6 @@ import {
   CarouselPrevious,
 } from "../ui/carousel";
 import CarouselMapCard from "./carousel-map-card";
-import { ServerError } from "@/types/responses";
 
 interface MapCarouselProps {
   serverId: string;

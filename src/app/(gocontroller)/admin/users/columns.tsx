@@ -15,8 +15,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { hasPermissionSync } from "@/lib/permissions";
 import { Users } from "@/lib/prisma/generated";
-import { getErrorMessage, getList, hasPermissionSync } from "@/lib/utils";
+import { getErrorMessage, getList } from "@/lib/utils";
 import { routePermissions } from "@/routes";
 import { ServerError } from "@/types/responses";
 import { IconCheck, IconX } from "@tabler/icons-react";
@@ -66,7 +67,7 @@ export const createColumns = (refetch: () => void): ColumnDef<Users>[] => [
       <DataTableColumnHeader column={column} title={"Permissions"} />
     ),
     cell: ({ row }) => {
-      const permissions = getList<string>(row.original.permissions)
+      const permissions = getList<string>(row.original.permissions);
       return (
         <span className="truncate">
           {permissions.map((perm: string, index: number) => (
@@ -177,7 +178,11 @@ export const createColumns = (refetch: () => void): ColumnDef<Users>[] => [
           )}
 
           {canEdit && (
-            <Modal isOpen={isEditOpen} setIsOpen={setIsEditOpen} closeOnBackdropClick={false}>
+            <Modal
+              isOpen={isEditOpen}
+              setIsOpen={setIsEditOpen}
+              closeOnBackdropClick={false}
+            >
               <EditUserModal data={user} onSubmit={refetch} />
             </Modal>
           )}

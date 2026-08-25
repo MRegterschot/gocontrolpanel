@@ -1,13 +1,10 @@
 import { TBreadcrumb } from "@/components/shell/breadcrumbs";
 import { MatchPluginPickAndBanOrder } from "@/forms/server/plugins/match/match-schema";
-import { PermissionCheck } from "@/lib/permissions";
 import { routes } from "@/routes";
 import { SpectatorStatus } from "@/types/gbx/player";
 import { Player } from "@/types/gbx/scores";
 import { ServerError } from "@/types/responses";
 import { clsx, type ClassValue } from "clsx";
-import { Session } from "next-auth";
-import { JWT } from "next-auth/jwt";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -291,68 +288,6 @@ export function formatMessage(
     .replaceAll("{nickName}", nickName)
     .replaceAll("{message}", message);
   return msg.trim();
-}
-
-export function hasPermissionSync(
-  session: Session | null,
-  permissions?: readonly PermissionCheck[],
-  id = "",
-): boolean {
-  if (!session) return false;
-
-  return hasPermissionsJWTSync(session.user, permissions, id);
-}
-
-/**
- * Expands a JWT into the full set of permission strings it grants: the
- * explicitly granted ones plus the ones derived from group, project and server
- * role membership.
- *
- * Pure by construction — it never touches the JWT it is handed. An earlier
- * version pushed the derived entries straight into `jwt.permissions`, which
- * mutated the caller's session object and made the array grow on every check.
- */
-export function resolvePermissions(jwt: JWT): Set<string> {
-  const resolved = new Set<string>(getList<string>(jwt.permissions));
-
-  for (const group of jwt.groups ?? []) {
-    const role = group.role.toLowerCase();
-    resolved.add(`groups::${role}`);
-    resolved.add(`groups:${group.id}:${role}`);
-    for (const server of group.servers ?? []) {
-      resolved.add(`group:servers::${role}`);
-      resolved.add(`group:servers:${server.id}:${role}`);
-    }
-  }
-
-  for (const project of jwt.projects ?? []) {
-    const role = project.role.toLowerCase();
-    resolved.add(`hetzner::${role}`);
-    resolved.add(`hetzner:${project.id}:${role}`);
-  }
-
-  for (const server of jwt.servers ?? []) {
-    const role = server.role.toLowerCase();
-    resolved.add(`servers::${role}`);
-    resolved.add(`servers:${server.id}:${role}`);
-  }
-
-  return resolved;
-}
-
-export function hasPermissionsJWTSync(
-  jwt: JWT,
-  permissions?: readonly PermissionCheck[],
-  id = "",
-): boolean {
-  if (jwt.admin) return true;
-  if (!permissions || permissions.length === 0) return true;
-
-  const resolved = resolvePermissions(jwt);
-
-  return permissions.some((permission) =>
-    resolved.has(permission.replace(":id", `:${id}`)),
-  );
 }
 
 export function getCurrencySymbol(currency: string): string {

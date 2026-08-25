@@ -17,7 +17,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getErrorMessage, hasPermissionSync } from "@/lib/utils";
+import { hasPermissionSync } from "@/lib/permissions";
+import { getErrorMessage } from "@/lib/utils";
 import { routePermissions } from "@/routes";
 import { ServerError } from "@/types/responses";
 import { IconCheck, IconX } from "@tabler/icons-react";
@@ -162,7 +163,11 @@ export const createColumns = (
           )}
 
           {canEdit && (
-            <Modal isOpen={isEditOpen} setIsOpen={setIsEditOpen} closeOnBackdropClick={false}>
+            <Modal
+              isOpen={isEditOpen}
+              setIsOpen={setIsEditOpen}
+              closeOnBackdropClick={false}
+            >
               <EditGroupModal onSubmit={refetch} data={group} />
             </Modal>
           )}

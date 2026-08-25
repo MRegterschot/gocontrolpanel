@@ -3,8 +3,9 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { decryptHetznerToken, encryptHetznerToken } from "@/lib/hetzner";
+import { hasPermissionSync } from "@/lib/permissions";
 import { Prisma } from "@/lib/prisma/generated";
-import { getList, hasPermissionSync } from "@/lib/utils";
+import { getList } from "@/lib/utils";
 import { PaginationResponse, ServerResponse } from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
 import { logAudit } from "./server-only/audit-logs";

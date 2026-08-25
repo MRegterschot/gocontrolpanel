@@ -19,7 +19,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getErrorMessage, hasPermissionSync } from "@/lib/utils";
+import { hasPermissionSync } from "@/lib/permissions";
+import { getErrorMessage } from "@/lib/utils";
 import { routePermissions } from "@/routes";
 import { HetznerServer } from "@/types/api/hetzner/servers";
 import { ServerError } from "@/types/responses";

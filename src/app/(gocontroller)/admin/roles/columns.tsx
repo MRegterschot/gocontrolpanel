@@ -14,8 +14,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { hasPermissionSync } from "@/lib/permissions";
 import { Roles } from "@/lib/prisma/generated";
-import { getErrorMessage, hasPermissionSync } from "@/lib/utils";
+import { getErrorMessage } from "@/lib/utils";
 import { routePermissions } from "@/routes";
 import { ServerError } from "@/types/responses";
 import { ColumnDef } from "@tanstack/react-table";
@@ -155,7 +156,11 @@ export const createColumns = (refetch: () => void): ColumnDef<Roles>[] => [
           )}
 
           {canEdit && (
-            <Modal isOpen={isEditOpen} setIsOpen={setIsEditOpen} closeOnBackdropClick={false}>
+            <Modal
+              isOpen={isEditOpen}
+              setIsOpen={setIsEditOpen}
+              closeOnBackdropClick={false}
+            >
               <EditRoleModal onSubmit={refetch} data={role} />
             </Modal>
           )}

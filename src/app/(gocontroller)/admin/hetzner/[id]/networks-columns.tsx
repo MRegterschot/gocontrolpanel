@@ -16,7 +16,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getErrorMessage, hasPermissionSync } from "@/lib/utils";
+import { hasPermissionSync } from "@/lib/permissions";
+import { getErrorMessage } from "@/lib/utils";
 import { routePermissions } from "@/routes";
 import { HetznerNetwork } from "@/types/api/hetzner/networks";
 import { ServerError } from "@/types/responses";
@@ -178,7 +179,11 @@ export const createNetworksColumns = (
 
           {canCreate && (
             <>
-              <Modal isOpen={isAddSubnetOpen} setIsOpen={setIsAddSubnetOpen} closeOnBackdropClick={false}>
+              <Modal
+                isOpen={isAddSubnetOpen}
+                setIsOpen={setIsAddSubnetOpen}
+                closeOnBackdropClick={false}
+              >
                 <AddSubnetToNetworkModal
                   onSubmit={refetch}
                   data={{

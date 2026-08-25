@@ -4,7 +4,7 @@ import {
   hasPermissionSync,
   hasPermissionsJWTSync,
   resolvePermissions,
-} from "../utils";
+} from "../permissions";
 
 /**
  * Builds a JWT with only the fields the permission engine reads, so these tests
