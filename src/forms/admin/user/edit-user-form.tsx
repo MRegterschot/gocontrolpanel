@@ -4,8 +4,9 @@ import { updateUser } from "@/actions/database/users";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
+import { PERMISSIONS } from "@/lib/permissions";
 import { Users } from "@/lib/prisma/generated";
-import { getErrorMessage, getList, permissions } from "@/lib/utils";
+import { getErrorMessage, getList } from "@/lib/utils";
 import { ServerError } from "@/types/responses";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconClipboardPlus, IconDeviceFloppy } from "@tabler/icons-react";
@@ -106,7 +107,7 @@ export default function EditUserForm({
           className="w-full min-w-64"
           type="multi-select"
           max={2}
-          options={permissions.map((perm) => ({
+          options={PERMISSIONS.map((perm) => ({
             label: perm,
             value: perm,
           }))}

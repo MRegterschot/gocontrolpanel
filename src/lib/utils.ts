@@ -1,5 +1,6 @@
 import { TBreadcrumb } from "@/components/shell/breadcrumbs";
 import { MatchPluginPickAndBanOrder } from "@/forms/server/plugins/match/match-schema";
+import { PermissionCheck } from "@/lib/permissions";
 import { routes } from "@/routes";
 import { SpectatorStatus } from "@/types/gbx/player";
 import { Player } from "@/types/gbx/scores";
@@ -283,39 +284,9 @@ export function formatMessage(
   return msg.trim();
 }
 
-export const permissions: string[] = [
-  "users:view",
-  "users:edit",
-  "users:delete",
-  "groups:view",
-  "groups:create",
-  "groups:edit",
-  "groups:delete",
-  "roles:view",
-  "roles:create",
-  "roles:edit",
-  "roles:delete",
-  "servers:view",
-  "servers:create",
-  "servers:edit",
-  "servers:delete",
-  "servers:clients:view",
-  "servers:clients:manage",
-  "hetzner:view",
-  "hetzner:create",
-  "hetzner:edit",
-  "hetzner:delete",
-  "hetzner:servers:view",
-  "hetzner:servers:create",
-  "hetzner:servers:manage",
-  "hetzner:servers:delete",
-  "audit-logs:view",
-  "audit-logs:delete",
-] as const;
-
 export function hasPermissionSync(
   session: Session | null,
-  permissions?: string[],
+  permissions?: readonly PermissionCheck[],
   id = "",
 ): boolean {
   if (!session) return false;
@@ -362,7 +333,7 @@ export function resolvePermissions(jwt: JWT): Set<string> {
 
 export function hasPermissionsJWTSync(
   jwt: JWT,
-  permissions?: string[],
+  permissions?: readonly PermissionCheck[],
   id = "",
 ): boolean {
   if (jwt.admin) return true;
@@ -552,6 +523,9 @@ export function stringToPickAndBan(str?: string): MatchPluginPickAndBanOrder {
     if (action === "p") return { action: "pick", seed: parseInt(seed) };
     if (action === "b") return { action: "ban", seed: parseInt(seed) };
     if (action === "r") return { action: "random" };
-    throw new ServerError(`Invalid pick and ban item: ${item}`, "InvalidPickAndBanItemError");
+    throw new ServerError(
+      `Invalid pick and ban item: ${item}`,
+      "InvalidPickAndBanItemError",
+    );
   });
 }

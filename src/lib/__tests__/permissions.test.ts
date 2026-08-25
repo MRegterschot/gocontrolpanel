@@ -107,8 +107,11 @@ describe("resolvePermissions", () => {
 
 describe("hasPermissionsJWTSync", () => {
   it("grants everything to an admin", () => {
+    expect(hasPermissionsJWTSync(jwt({ admin: true }), ["users:delete"])).toBe(
+      true,
+    );
     expect(
-      hasPermissionsJWTSync(jwt({ admin: true }), ["anything:at:all"]),
+      hasPermissionsJWTSync(jwt({ admin: true }), ["hetzner:servers:manage"]),
     ).toBe(true);
   });
 

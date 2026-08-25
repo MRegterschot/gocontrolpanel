@@ -46,6 +46,11 @@ jobs:
       - name: Test
         run: bun run test
 
+      - name: ROLES.md is up to date with the permission constants
+        run: |
+          bun run generate:roles
+          git diff --exit-code ROLES.md
+
   build:
     name: Build (${{ matrix.db }})
     runs-on: ubuntu-latest

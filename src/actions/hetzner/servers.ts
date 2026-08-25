@@ -174,7 +174,10 @@ export async function getRateLimit(
           getKeyHetznerRateLimit(projectId),
         );
         if (!newRateLimitData) {
-          throw new ServerError("Rate limit data not found after fetching servers.", "RateLimitDataNotFound");
+          throw new ServerError(
+            "Rate limit data not found after fetching servers.",
+            "RateLimitDataNotFound",
+          );
         }
 
         const { limit, remaining } = JSON.parse(newRateLimitData);
@@ -443,7 +446,7 @@ export async function updateHetznerServer(
   labels: Record<string, string>,
 ): Promise<ServerResponse> {
   return doServerActionWithAuth(
-    ["hetzner:servers:update", `hetzner:${projectId}:admin`],
+    ["hetzner:servers:manage", `hetzner:${projectId}:admin`],
     async (session) => {
       const token = await getApiToken(projectId);
 

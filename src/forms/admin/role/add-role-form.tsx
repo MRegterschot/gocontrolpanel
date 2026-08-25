@@ -3,13 +3,14 @@ import { createRole } from "@/actions/database/roles";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { getErrorMessage, getList, permissions } from "@/lib/utils";
+import { PERMISSIONS } from "@/lib/permissions";
+import { getErrorMessage, getList } from "@/lib/utils";
+import { ServerError } from "@/types/responses";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus } from "@tabler/icons-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AddRoleSchema, AddRoleSchemaType } from "./add-role-schema";
-import { ServerError } from "@/types/responses";
 
 export default function AddRoleForm({ callback }: { callback?: () => void }) {
   const form = useForm<AddRoleSchemaType>({
@@ -66,7 +67,7 @@ export default function AddRoleForm({ callback }: { callback?: () => void }) {
           description="Select permissions for this role"
           placeholder="Select permissions"
           type="multi-select"
-          options={permissions.map((perm) => ({
+          options={PERMISSIONS.map((perm) => ({
             label: perm,
             value: perm,
           }))}

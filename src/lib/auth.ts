@@ -23,6 +23,7 @@ import slugid from "slugid";
 import { getWebIdentities } from "./api/nadeo";
 import config from "./config";
 import { logger } from "./logger";
+import { PermissionCheck } from "./permissions";
 import { GroupRole } from "./prisma/generated";
 import { reportException } from "./sentry/report";
 import { getList, hasPermissionSync } from "./utils";
@@ -268,7 +269,7 @@ export function auth(
 }
 
 export async function withAuth(
-  permissions?: string[],
+  permissions?: readonly PermissionCheck[],
   id = "",
 ): Promise<Session> {
   const perm = await hasPermission(permissions, id);
@@ -308,7 +309,7 @@ export async function parseTokenFromRequest(
 }
 
 export async function hasPermission(
-  permissions?: string[],
+  permissions?: readonly PermissionCheck[],
   id = "",
 ): Promise<boolean> {
   const session = await auth();

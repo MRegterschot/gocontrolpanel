@@ -417,9 +417,17 @@ Worth stating plainly, because the list above is long:
 
 # Progress log
 
-Work is being applied in the phase order of §12, **one feature branch per change**,
-each merged back into `dev` with `--no-ff` so the branch stays visible in history.
-Nothing is pushed.
+Work is applied in the phase order of §12, **one feature branch per change**.
+`dev` is protected, so nothing is merged into it: the branches form a linear stack,
+each based on the previous, and each is pushed for its own PR.
+
+    dev (origin/dev)
+     └─ docs/architecture-review
+         └─ chore/prune-dead-dependencies
+             └─ chore/ci-quality-gates
+                 └─ fix/permission-resolution-purity
+                     └─ fix/server-response-discriminated-union
+                         └─ refactor/permission-constants
 
 | # | Branch | Phase | Status |
 |---|---|---|---|
@@ -427,7 +435,8 @@ Nothing is pushed.
 | 2 | `chore/prune-dead-dependencies` | 1 | ✅ merged |
 | 3 | `chore/ci-quality-gates` | 1 | ✅ merged |
 | 4 | `fix/permission-resolution-purity` | 1 | ✅ merged |
-| 5 | `fix/server-response-discriminated-union` | 1 | ✅ merged |
+| 5 | `fix/server-response-discriminated-union` | 1 | ✅ pushed |
+| 6 | `refactor/permission-constants` | 2 | ✅ pushed |
 
 ## 1 · `docs/architecture-review`
 
@@ -602,3 +611,45 @@ Bonus fix found by the new tests: `getErrorMessage` branch shadowing (§3.3 part
 **Next up — phase 2 (boundary hardening):** zod validation inside server actions
 (§3.1), shared form/action schemas, error sanitisation (§3.3), centralised
 permission constants (§5.4), `middleware.ts` (§1.2).
+
+## 6 · `refactor/permission-constants` — §5.4
+
+Permission strings lived in four places that could drift: a `permissions` array in
+`lib/utils.ts`, the `routePermissions` tree in `routes/index.ts`, a hand-written
+list in `ROLES.md`, and bare literals at every check site. Nothing type-checked a
+typo, and a mistyped permission fails *closed* and silently — it simply never
+matches, so the feature looks broken rather than misconfigured.
+
+New `src/lib/permissions.ts` is now the single source of truth. It separates the
+two kinds of permission, which had never been distinguished:
+
+- **Grantable** — `PERMISSIONS` (27 of them), what the role editor offers.
+- **Role-derived** — synthesised at check time from group/project/server
+  membership (`servers::admin`, `hetzner:<id>:admin`). Never stored, so they must
+  never appear in the grantable list.
+
+`PermissionCheck = Permission | RolePermission` is now the parameter type of
+`doServerActionWithAuth`, `withAuth`, `hasPermission` and `hasPermissionsJWTSync`.
+`RolePermission` is a template-literal type, so the interpolated forms still type.
+`routePermissions` carries `as const satisfies PermissionTree`, which validates
+all ~180 leaves in a single annotation.
+
+> ### This found a live authorization bug
+>
+> `updateHetznerServer` required `["hetzner:servers:update", …]`. **There is no
+> such grantable permission** — its siblings are `view` / `create` / `manage` /
+> `delete`. The check could therefore never be satisfied by a grant, so the action
+> was reachable only by global admins and project admins; a user granted
+> `hetzner:servers:manage` was silently denied. Corrected to
+> `hetzner:servers:manage`.
+>
+> **This slightly widens access** — holders of `hetzner:servers:manage` can now
+> update server labels, which is what the permission's name promises and what its
+> siblings already allow. Flagging it explicitly in case that is not wanted.
+
+`ROLES.md` had drifted too: it was missing `audit-logs:view`, `audit-logs:delete`,
+`servers:clients:view` and `servers:clients:manage`. It is now **generated** by
+`scripts/generate-roles-doc.mjs` (`bun run generate:roles`), and CI regenerates it
+and fails on any diff, so the doc cannot fall behind the constant again.
+
+**Verified:** typecheck clean · lint 0 errors · 38 tests · `bun run build` succeeds.

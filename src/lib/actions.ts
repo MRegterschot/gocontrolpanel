@@ -1,4 +1,5 @@
 "use server";
+import { PermissionCheck } from "@/lib/permissions";
 import { ServerResponse } from "@/types/responses";
 import { Session } from "next-auth";
 import { withAuth } from "./auth";
@@ -33,7 +34,7 @@ export async function doServerAction<T>(
 }
 
 export async function doServerActionWithAuth<T>(
-  roles: string[],
+  roles: readonly PermissionCheck[],
   action: (session: Session) => Promise<T>,
 ): Promise<ServerResponse<T>> {
   let session: Session | null = null;

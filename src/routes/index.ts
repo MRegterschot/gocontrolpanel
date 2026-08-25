@@ -1,4 +1,14 @@
 import { TBreadcrumb } from "@/components/shell/breadcrumbs";
+import { PermissionCheck } from "@/lib/permissions";
+
+/**
+ * Shape of `routePermissions`. The `satisfies` on it validates every leaf against
+ * `PermissionCheck`, so a typo in a permission string is a compile error here
+ * rather than a silent permanent denial at runtime.
+ */
+type PermissionTree = {
+  [key: string]: readonly PermissionCheck[] | PermissionTree;
+};
 
 export const routes = {
   dashboard: "/",
@@ -184,7 +194,7 @@ export const routePermissions = {
       ],
     },
   },
-};
+} as const satisfies PermissionTree;
 
 export const breadCrumbs: {
   path: string;

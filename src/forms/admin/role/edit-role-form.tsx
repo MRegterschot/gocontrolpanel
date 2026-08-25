@@ -3,14 +3,15 @@ import { updateRole } from "@/actions/database/roles";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
+import { PERMISSIONS } from "@/lib/permissions";
 import { Roles } from "@/lib/prisma/generated";
-import { getErrorMessage, getList, permissions } from "@/lib/utils";
+import { getErrorMessage, getList } from "@/lib/utils";
+import { ServerError } from "@/types/responses";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconDeviceFloppy } from "@tabler/icons-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { EditRoleSchema, EditRoleSchemaType } from "./edit-role-schema";
-import { ServerError } from "@/types/responses";
 export default function EditRoleForm({
   role,
   callback,
@@ -77,7 +78,7 @@ export default function EditRoleForm({
           description="Select permissions for this role"
           placeholder="Select permissions"
           type="multi-select"
-          options={permissions.map((perm) => ({
+          options={PERMISSIONS.map((perm) => ({
             label: perm,
             value: perm,
           }))}

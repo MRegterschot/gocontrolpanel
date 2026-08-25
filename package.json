@@ -17,7 +17,8 @@
     "deploy": "bun run generate && prisma migrate deploy --schema ./src/lib/prisma/$DB/schema.prisma",
     "reset": "prisma migrate reset --schema ./src/lib/prisma/$DB/schema.prisma",
     "prepare": "next-ws patch",
-    "build:templates": "handlebars src/lib/manialink/templates/ -f src/lib/manialink/compiled_templates.js -e hbs --commonjs handlebars/runtime"
+    "build:templates": "handlebars src/lib/manialink/templates/ -f src/lib/manialink/compiled_templates.js -e hbs --commonjs handlebars/runtime",
+    "generate:roles": "node scripts/generate-roles-doc.mjs"
   },
   "overrides": {
     "@radix-ui/react-focus-scope": "1.1.7"
