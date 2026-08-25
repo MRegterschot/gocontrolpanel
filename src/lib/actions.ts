@@ -3,9 +3,40 @@ import { PermissionCheck } from "@/lib/permissions";
 import { ServerResponse } from "@/types/responses";
 import { Session } from "next-auth";
 import { withAuth } from "./auth";
+import { isExpectedError, toClientError } from "./errors";
 import { logger } from "./logger";
 import { reportException } from "./sentry/report";
-import { getErrorMessage } from "./utils";
+
+type ActionMeta = Record<string, string>;
+
+/**
+ * Single place where a thrown error becomes a response.
+ *
+ * The client gets a sanitised message (see `./errors`); the logger and Sentry get
+ * the original. Routine failures such as an unauthorized request are logged at
+ * `warn` and skip Sentry entirely -- they are not incidents, and reporting every
+ * one of them buries the real failures.
+ */
+function handleActionError<T>(
+  error: unknown,
+  meta: ActionMeta,
+  message: string,
+  session?: Session | null,
+): ServerResponse<T> {
+  const expected = isExpectedError(error);
+
+  if (expected) {
+    logger.warn({ meta, error }, message);
+  } else {
+    logger.error({ meta, error }, message);
+    reportException(error, meta, session);
+  }
+
+  return {
+    ok: false,
+    error: toClientError(error).message,
+  };
+}
 
 export async function doServerAction<T>(
   action: () => Promise<T>,
@@ -17,19 +48,15 @@ export async function doServerAction<T>(
       data: result,
     };
   } catch (error) {
-    const meta = {
-      type: "server",
-      module: "actions",
-      function: "doServerAction",
-    };
-    logger.error({ meta, error }, "Error executing server action");
-
-    reportException(error, meta);
-
-    return {
-      ok: false,
-      error: getErrorMessage(error),
-    };
+    return handleActionError<T>(
+      error,
+      {
+        type: "server",
+        module: "actions",
+        function: "doServerAction",
+      },
+      "Error executing server action",
+    );
   }
 }
 
@@ -38,25 +65,21 @@ export async function doServerActionWithAuth<T>(
   action: (session: Session) => Promise<T>,
 ): Promise<ServerResponse<T>> {
   let session: Session | null = null;
-  const meta = {
+  const meta: ActionMeta = {
     type: "server",
     module: "actions",
     function: "doServerActionWithAuth",
   };
+
   try {
     session = await withAuth(roles);
   } catch (error) {
-    logger.error(
-      { meta, error },
+    return handleActionError<T>(
+      error,
+      meta,
       "Error during auth check server action with auth",
+      session,
     );
-
-    reportException(error, meta, session);
-
-    return {
-      ok: false,
-      error: getErrorMessage(error),
-    };
   }
 
   try {
@@ -66,13 +89,11 @@ export async function doServerActionWithAuth<T>(
       data: result,
     };
   } catch (error) {
-    logger.error({ meta, error }, "Error executing server action with auth");
-
-    reportException(error, meta, session);
-
-    return {
-      ok: false,
-      error: getErrorMessage(error),
-    };
+    return handleActionError<T>(
+      error,
+      meta,
+      "Error executing server action with auth",
+      session,
+    );
   }
 }

@@ -437,6 +437,7 @@ each based on the previous, and each is pushed for its own PR.
 | 4 | `fix/permission-resolution-purity` | 1 | ✅ merged |
 | 5 | `fix/server-response-discriminated-union` | 1 | ✅ pushed |
 | 6 | `refactor/permission-constants` | 2 | ✅ pushed |
+| 7 | `fix/error-sanitisation` | 2 | ✅ pushed |
 
 ## 1 · `docs/architecture-review`
 
@@ -653,3 +654,45 @@ all ~180 leaves in a single annotation.
 and fails on any diff, so the doc cannot fall behind the constant again.
 
 **Verified:** typecheck clean · lint 0 errors · 38 tests · `bun run build` succeeds.
+
+## 7 · `fix/error-sanitisation` — §3.3, §9
+
+`doServerAction*` returned `getErrorMessage(error)`, which is `error.message` for
+any `Error`. A Prisma failure, an ssh2 failure or a fetch failure was forwarded
+verbatim to the browser, quoting queries, columns and hostnames.
+
+One fact made a clean fix possible: **there are no bare `throw new Error(...)`
+sites in `src`** — all 336 deliberate throws are `ServerError`. Authorship is
+therefore a reliable signal for whether a message is safe to show. New
+`src/lib/errors.ts` classifies in this order:
+
+1. `ServerError` — ours, written for this situation → exposed (XML-RPC faults
+   still unwrapped).
+2. **Any other `Error`** — Prisma, ssh2, undici, `TypeError` → generic
+   `"Something went wrong"` / `InternalError`; the original still reaches pino
+   and Sentry.
+3. Plain object with string `code` + `message` — the Hetzner axios interceptor's
+   rejection shape, i.e. third-party *validation* feedback → exposed.
+4. Anything else → generic.
+
+> **Step 2 has to precede step 3, and a test is what proved it.** My first version
+> checked the Hetzner shape before the general `Error` case. But a Prisma error
+> *also* carries string `code` and `message` properties (`"P2022"`), so it matched
+> the Hetzner branch and its message — which quotes the failing query — would have
+> been sent to the client. Exactly the leak the module exists to stop. Hetzner
+> rejections are plain object literals and never `Error` instances, which is the
+> discriminator now used.
+
+**Sentry noise (§9).** `isExpectedError` marks routine failures — currently
+`Unauthorized` and `ValidationError`. Those are logged at `warn` and skip Sentry;
+everything else reports as before. `withAuth` no longer calls `reportException`
+itself for unauthorized requests, which previously made every failed permission
+check a Sentry event.
+
+`getErrorMessage` stays, now documented as diagnostics-only. Its remaining
+server-side callers are audit-log entries, which *should* keep full detail.
+
+15 tests in `src/lib/__tests__/errors.test.ts` pin the classification down,
+including the Prisma-shaped case above.
+
+**Verified:** typecheck clean · lint 0 errors · 47 tests · `bun run build` succeeds.

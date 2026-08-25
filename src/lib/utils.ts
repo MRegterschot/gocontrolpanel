@@ -28,6 +28,15 @@ export function formatTime(time?: number): string {
   return `${minutes}:${seconds.toFixed(3).padStart(6, "0")}`;
 }
 
+/**
+ * Best-effort human-readable text for an error.
+ *
+ * For diagnostics only -- client-side toasts and audit-log entries, where full
+ * detail is wanted. **Do not use it to build a server-action response:** it
+ * returns the raw message of any Error, including Prisma and ssh2 errors that
+ * quote queries and hosts. `toClientError` in `./errors` is the sanitising
+ * counterpart used at the action boundary.
+ */
 export function getErrorMessage(error: unknown): string {
   let message = "Something went wrong";
 

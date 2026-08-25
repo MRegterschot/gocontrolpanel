@@ -272,18 +272,16 @@ export async function withAuth(
   permissions?: readonly PermissionCheck[],
   id = "",
 ): Promise<Session> {
+  // Not reported to Sentry here: an unauthorized request is routine, not an
+  // incident. doServerActionWithAuth logs it at warn via isExpectedError.
   const perm = await hasPermission(permissions, id);
   if (!perm) {
-    const error = new ServerError("Unauthorized", "Unauthorized");
-    reportException(error);
-    throw error;
+    throw new ServerError("Unauthorized", "Unauthorized");
   }
 
   const session = await auth();
   if (!session) {
-    const error = new ServerError("Unauthorized", "Unauthorized");
-    reportException(error);
-    throw error;
+    throw new ServerError("Unauthorized", "Unauthorized");
   }
 
   return session;
