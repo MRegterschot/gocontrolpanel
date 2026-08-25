@@ -1,6 +1,9 @@
 "use server";
 
-import { ServerSettingsSchemaType } from "@/forms/server/settings/settings-schema";
+import {
+  ServerSettingsSchema,
+  ServerSettingsSchemaType,
+} from "@/forms/server/settings/settings-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { getLogger } from "@/lib/logger";
@@ -9,6 +12,7 @@ import {
   getGbxClient,
   getGbxClientManager,
 } from "@/lib/managers/gbxclient-manager";
+import { validate } from "@/lib/validation";
 import { LocalMapInfo } from "@/types/map";
 import { ServerError, ServerResponse } from "@/types/responses";
 import path from "path";
@@ -41,7 +45,10 @@ export async function getServerSettings(
 
       if (!settings) {
         log.error({ meta }, "Failed to get server settings");
-        throw new ServerError("Failed to get server settings", "GetServerSettingsError");
+        throw new ServerError(
+          "Failed to get server settings",
+          "GetServerSettingsError",
+        );
       }
 
       try {
@@ -83,7 +90,10 @@ export async function getServerSettings(
         return serverSettings;
       } catch (error) {
         log.error({ meta, error }, "Error parsing server settings");
-        throw new ServerError("Failed to parse server settings", "ParseServerSettingsError");
+        throw new ServerError(
+          "Failed to parse server settings",
+          "ParseServerSettingsError",
+        );
       }
     },
   );
@@ -91,11 +101,16 @@ export async function getServerSettings(
 
 export async function saveServerSettings(
   serverId: string,
-  serverSettings: ServerSettingsSchemaType,
+  serverSettingsInput: unknown,
 ): Promise<ServerResponse> {
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
+      const serverSettings = validate(
+        ServerSettingsSchema,
+        serverSettingsInput,
+      );
+
       const meta = {
         type: "gbx",
         module: "server",
@@ -139,7 +154,10 @@ export async function saveServerSettings(
         ])
         .catch((error) => {
           log.error({ meta, error }, "Error saving server settings");
-          throw new ServerError("Failed to save server settings", "SaveServerSettingsError");
+          throw new ServerError(
+            "Failed to save server settings",
+            "SaveServerSettingsError",
+          );
         });
 
       let error: string | undefined = undefined;
@@ -192,7 +210,10 @@ export async function getLocalMaps(
 
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
-        throw new ServerError("Could not connect to file manager", "FileManagerNotHealthy");
+        throw new ServerError(
+          "Could not connect to file manager",
+          "FileManagerNotHealthy",
+        );
       }
 
       const res = await fetch(`${fileManager.url}/maps`, {

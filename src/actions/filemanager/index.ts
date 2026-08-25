@@ -1,10 +1,11 @@
 "use server";
 
-import { CreateFileEntrySchemaType } from "@/forms/server/files/create-file-entry-schema";
+import { CreateFileEntrySchema } from "@/forms/server/files/create-file-entry-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getLogger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
 import { gameModesScripts } from "@/lib/scripts";
+import { validate } from "@/lib/validation";
 import { ContentType, File, FileEntry } from "@/types/filemanager";
 import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
@@ -24,7 +25,10 @@ export async function getRoute(
       const log = getLogger(serverId);
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
-        throw new ServerError("Could not connect to file manager", "FileManagerNotHealthy");
+        throw new ServerError(
+          "Could not connect to file manager",
+          "FileManagerNotHealthy",
+        );
       }
 
       const res = await fetch(fileManager.url + path, {
@@ -90,7 +94,10 @@ export async function getFile(
       const log = getLogger(serverId);
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
-        throw new ServerError("Could not connect to file manager", "FileManagerNotHealthy");
+        throw new ServerError(
+          "Could not connect to file manager",
+          "FileManagerNotHealthy",
+        );
       }
 
       const res = await fetch(fileManager.url + path, {
@@ -158,7 +165,10 @@ export async function saveFileText(
           { path, text },
           "File manager is not healthy",
         );
-        throw new ServerError("Could not connect to file manager", "FileManagerNotHealthy");
+        throw new ServerError(
+          "Could not connect to file manager",
+          "FileManagerNotHealthy",
+        );
       }
 
       const res = await fetch(fileManager.url + path, {
@@ -213,7 +223,10 @@ export async function deleteEntry(
           paths,
           "File manager is not healthy",
         );
-        throw new ServerError("Could not connect to file manager", "FileManagerNotHealthy");
+        throw new ServerError(
+          "Could not connect to file manager",
+          "FileManagerNotHealthy",
+        );
       }
 
       const res = await fetch(fileManager.url + "/delete", {
@@ -271,7 +284,10 @@ export async function uploadFiles(
           uploadAuditData,
           "Failed to upload files, file manager is not healthy",
         );
-        throw new ServerError("Could not connect to file manager", "FileManagerNotHealthy");
+        throw new ServerError(
+          "Could not connect to file manager",
+          "FileManagerNotHealthy",
+        );
       }
 
       log.info(
@@ -346,7 +362,10 @@ export async function getScripts(
       try {
         const fileManager = await getFileManager(serverId);
         if (!fileManager?.health) {
-          throw new ServerError("Could not connect to file manager", "FileManagerNotHealthy");
+          throw new ServerError(
+            "Could not connect to file manager",
+            "FileManagerNotHealthy",
+          );
         }
 
         const res = await fetch(`${fileManager.url}/scripts`, {
@@ -391,7 +410,10 @@ export async function getPluginScripts(
       try {
         const fileManager = await getFileManager(serverId);
         if (!fileManager?.health) {
-          throw new ServerError("Could not connect to file manager", "FileManagerNotHealthy");
+          throw new ServerError(
+            "Could not connect to file manager",
+            "FileManagerNotHealthy",
+          );
         }
 
         const res = await fetch(`${fileManager.url}/plugin-scripts`, {
@@ -440,7 +462,10 @@ export async function getMatchSettings(
       try {
         const fileManager = await getFileManager(serverId);
         if (!fileManager?.health) {
-          throw new ServerError("Could not connect to file manager", "FileManagerNotHealthy");
+          throw new ServerError(
+            "Could not connect to file manager",
+            "FileManagerNotHealthy",
+          );
         }
 
         const res = await fetch(`${fileManager.url}/match-settings`, {
@@ -452,12 +477,18 @@ export async function getMatchSettings(
         });
 
         if (res.status !== 200) {
-          throw new ServerError("Failed to get match settings", "FileFetchError");
+          throw new ServerError(
+            "Failed to get match settings",
+            "FileFetchError",
+          );
         }
 
         const data: string[] = await res.json();
         if (!data) {
-          throw new ServerError("Failed to get match settings", "FileFetchError");
+          throw new ServerError(
+            "Failed to get match settings",
+            "FileFetchError",
+          );
         }
 
         return [...new Set(data)];
@@ -471,11 +502,13 @@ export async function getMatchSettings(
 
 export async function createFileEntry(
   serverId: string,
-  request: CreateFileEntrySchemaType,
+  requestInput: unknown,
 ): Promise<ServerResponse<FileEntry>> {
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
+      const request = validate(CreateFileEntrySchema, requestInput);
+
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
         await logAudit(
@@ -485,7 +518,10 @@ export async function createFileEntry(
           request,
           "File manager is not healthy",
         );
-        throw new ServerError("Could not connect to file manager", "FileManagerNotHealthy");
+        throw new ServerError(
+          "Could not connect to file manager",
+          "FileManagerNotHealthy",
+        );
       }
 
       const res = await fetch(fileManager.url + "/create", {

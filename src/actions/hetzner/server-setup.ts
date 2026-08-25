@@ -1,8 +1,8 @@
 "use server";
 
-import { AdvancedServerSetupSchemaType } from "@/forms/admin/hetzner/setup-steps/advanced/server-setup-schema";
-import { SimpleServerSetupSchemaType } from "@/forms/admin/hetzner/setup-steps/simple/server-setup-schema";
-import { TMServerSchemaType } from "@/forms/admin/hetzner/setup-steps/tm-server/tm-server-schema";
+import { AdvancedServerSetupSchema } from "@/forms/admin/hetzner/setup-steps/advanced/server-setup-schema";
+import { SimpleServerSetupSchema } from "@/forms/admin/hetzner/setup-steps/simple/server-setup-schema";
+import { TMServerSchema } from "@/forms/admin/hetzner/setup-steps/tm-server/tm-server-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { axiosHetzner } from "@/lib/axios/hetzner";
 import { getClient } from "@/lib/dbclient";
@@ -13,6 +13,7 @@ import {
 } from "@/lib/redis";
 import { connectToSSHServer, executeSSHScript } from "@/lib/ssh";
 import { generateRandomString, getErrorMessage, sleep } from "@/lib/utils";
+import { validate } from "@/lib/validation";
 import { HetznerServer, HetznerServerCache } from "@/types/api/hetzner/servers";
 import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
@@ -37,11 +38,13 @@ import {
 
 export async function createAdvancedServerSetup(
   projectId: string,
-  data: AdvancedServerSetupSchemaType,
+  dataInput: unknown,
 ): Promise<ServerResponse<HetznerServer>> {
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
+      const data = validate(AdvancedServerSetupSchema, dataInput);
+
       const la = (error?: string, id?: number) =>
         logAudit(
           session.user.id,
@@ -414,11 +417,13 @@ export async function createAdvancedServerSetup(
 
 export async function createSimpleServerSetup(
   projectId: string,
-  data: SimpleServerSetupSchemaType,
+  dataInput: unknown,
 ): Promise<ServerResponse<HetznerServer>> {
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
+      const data = validate(SimpleServerSetupSchema, dataInput);
+
       const la = (error?: string, id?: number) =>
         logAudit(
           session.user.id,
@@ -728,11 +733,13 @@ export async function createSimpleServerSetup(
 export async function addTrackmaniaServer(
   projectId: string,
   serverId: number,
-  tmServer: TMServerSchemaType,
+  tmServerInput: unknown,
 ) {
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
+      const tmServer = validate(TMServerSchema, tmServerInput);
+
       const la = (error?: string, result?: string) =>
         logAudit(
           session.user.id,

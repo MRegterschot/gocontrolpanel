@@ -1,15 +1,20 @@
 "use server";
 
-import { AddHetznerNetworkSchemaType } from "@/forms/admin/hetzner/network/add-hetzner-network-schema";
-import { AddSubnetToNetworkSchemaType } from "@/forms/admin/hetzner/network/add-subnet-to-network-schema";
-import { RemoveSubnetFromNetworkSchemaType } from "@/forms/admin/hetzner/network/remove-subnet-from-network-schema";
+import { AddHetznerNetworkSchema } from "@/forms/admin/hetzner/network/add-hetzner-network-schema";
+import { AddSubnetToNetworkSchema } from "@/forms/admin/hetzner/network/add-subnet-to-network-schema";
+import { RemoveSubnetFromNetworkSchema } from "@/forms/admin/hetzner/network/remove-subnet-from-network-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { axiosHetzner } from "@/lib/axios/hetzner";
+import { validate } from "@/lib/validation";
 import {
   HetznerNetwork,
   HetznerNetworksResponse,
 } from "@/types/api/hetzner/networks";
-import { PaginationResponse, ServerError, ServerResponse } from "@/types/responses";
+import {
+  PaginationResponse,
+  ServerError,
+  ServerResponse,
+} from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
 import { logAudit } from "../database/server-only/audit-logs";
 import { getApiToken, setRateLimit } from "./util";
@@ -29,7 +34,10 @@ export async function getHetznerNetworksPaginated(
     async () => {
       const { projectId } = fetchArgs || {};
       if (!projectId) {
-        throw new ServerError("Project ID is required to fetch Hetzner networks.", "ProjectIdMissing");
+        throw new ServerError(
+          "Project ID is required to fetch Hetzner networks.",
+          "ProjectIdMissing",
+        );
       }
 
       const token = await getApiToken(projectId);
@@ -90,11 +98,13 @@ export async function deleteHetznerNetwork(
 
 export async function createHetznerNetwork(
   projectId: string,
-  data: AddHetznerNetworkSchemaType,
+  dataInput: unknown,
 ): Promise<ServerResponse<HetznerNetwork>> {
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
+      const data = validate(AddHetznerNetworkSchema, dataInput);
+
       const token = await getApiToken(projectId);
 
       const body = {
@@ -170,11 +180,13 @@ export async function getAllNetworks(
 export async function addSubnetToNetwork(
   projectId: string,
   networkId: number,
-  data: AddSubnetToNetworkSchemaType,
+  dataInput: unknown,
 ): Promise<ServerResponse> {
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
+      const data = validate(AddSubnetToNetworkSchema, dataInput);
+
       const token = await getApiToken(projectId);
 
       const body = {
@@ -206,11 +218,13 @@ export async function addSubnetToNetwork(
 export async function removeSubnetFromNetwork(
   projectId: string,
   networkId: number,
-  data: RemoveSubnetFromNetworkSchemaType,
+  dataInput: unknown,
 ): Promise<ServerResponse> {
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
+      const data = validate(RemoveSubnetFromNetworkSchema, dataInput);
+
       const token = await getApiToken(projectId);
 
       const res = await axiosHetzner.post(

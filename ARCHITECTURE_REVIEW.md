@@ -438,6 +438,7 @@ each based on the previous, and each is pushed for its own PR.
 | 5 | `fix/server-response-discriminated-union` | 1 | ✅ pushed |
 | 6 | `refactor/permission-constants` | 2 | ✅ pushed |
 | 7 | `fix/error-sanitisation` | 2 | ✅ pushed |
+| 8 | `feat/validate-action-input` | 2 | ✅ pushed |
 
 ## 1 · `docs/architecture-review`
 
@@ -696,3 +697,55 @@ server-side callers are audit-log entries, which *should* keep full detail.
 including the Prisma-shaped case above.
 
 **Verified:** typecheck clean · lint 0 errors · 47 tests · `bun run build` succeeds.
+
+## 8 · `feat/validate-action-input` — §3.1 (first slice)
+
+`zod` was imported in 46 files and **none of them were server actions**. Every
+schema ran only in the browser, so an attacker calling an action directly bypassed
+validation entirely.
+
+`src/lib/validation.ts` adds `validate(schema, input)`, which `safeParse`s and
+throws a `ServerError` coded `ValidationError` on failure. That code is already in
+the expected set from branch 7, so a bad payload produces safe field feedback for
+the caller, a `warn` log, and no Sentry event.
+
+**Applied to the 11 actions that accept a form payload** — deliberately the first
+slice, because these are where unvalidated input does real damage: they provision
+Hetzner servers, create databases, volumes and networks, run SSH setup scripts,
+write files, and save server settings.
+
+| File | Actions |
+|---|---|
+| `actions/hetzner/server-setup.ts` | `createAdvancedServerSetup`, `createSimpleServerSetup`, `addTrackmaniaServer` |
+| `actions/hetzner/servers.ts` | `createHetznerDatabase`, `attachHetznerServerToNetwork` |
+| `actions/hetzner/networks.ts` | `createHetznerNetwork`, `addSubnetToNetwork`, `removeSubnetFromNetwork` |
+| `actions/hetzner/volumes.ts` | `createHetznerVolume` |
+| `actions/gbx/server.ts` | `saveServerSettings` |
+| `actions/filemanager/index.ts` | `createFileEntry` |
+
+The payload parameter is now typed `unknown` rather than the schema type, so the
+compiler cannot be satisfied by an unchecked cast — the only way to get a typed
+value is to run it through `validate`. Validation happens as the first statement
+*inside* the `doServerActionWithAuth` callback, so failures flow through the
+normal error path. `prettier-plugin-organize-imports` stripped the now-unused
+`…SchemaType` imports automatically.
+
+Schemas are imported from `src/forms/**` in place. Relocating them to a shared
+`src/schemas/` (as §3.1 suggests) is a pure move with no behaviour change and is
+left for a follow-up; the current location already works for both sides.
+
+### Explicitly not done yet
+
+**Scalar parameters are still unvalidated** — `projectId: string`,
+`serverId: number` and friends across all 224 actions. Most are self-protecting,
+since an id that does not exist simply fails its permission check or its query.
+The exception worth a follow-up branch is ids interpolated into outbound URLs
+(`getHetznerServer(token, serverId)`), where a non-numeric value is a path
+-injection vector that TypeScript cannot prevent at runtime. The remaining ~213
+actions therefore still need an id-guard pass.
+
+5 tests in `src/lib/__tests__/validation.test.ts`, including that unknown
+properties are stripped (a caller cannot smuggle extra fields into a database
+write) and that the resulting error is client-safe but not Sentry-worthy.
+
+**Verified:** typecheck clean · lint 0 errors · 52 tests · `bun run build` succeeds.

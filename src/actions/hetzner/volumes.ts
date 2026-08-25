@@ -1,13 +1,18 @@
 "use server";
 
-import { AddHetznerVolumeSchemaType } from "@/forms/admin/hetzner/volume/add-hetzner-volume-schema";
+import { AddHetznerVolumeSchema } from "@/forms/admin/hetzner/volume/add-hetzner-volume-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { axiosHetzner } from "@/lib/axios/hetzner";
+import { validate } from "@/lib/validation";
 import {
   HetznerVolume,
   HetznerVolumesResponse,
 } from "@/types/api/hetzner/volumes";
-import { PaginationResponse, ServerError, ServerResponse } from "@/types/responses";
+import {
+  PaginationResponse,
+  ServerError,
+  ServerResponse,
+} from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
 import { logAudit } from "../database/server-only/audit-logs";
 import { getApiToken, setRateLimit } from "./util";
@@ -27,7 +32,10 @@ export async function getHetznerVolumesPaginated(
     async () => {
       const { projectId } = fetchArgs || {};
       if (!projectId) {
-        throw new ServerError("Project ID is required to fetch Hetzner volumes.", "ProjectIdMissing");
+        throw new ServerError(
+          "Project ID is required to fetch Hetzner volumes.",
+          "ProjectIdMissing",
+        );
       }
 
       const token = await getApiToken(projectId);
@@ -88,11 +96,13 @@ export async function deleteHetznerVolume(
 
 export async function createHetznerVolume(
   projectId: string,
-  data: AddHetznerVolumeSchemaType,
+  dataInput: unknown,
 ): Promise<ServerResponse<HetznerVolume>> {
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
+      const data = validate(AddHetznerVolumeSchema, dataInput);
+
       const token = await getApiToken(projectId);
 
       const body = {

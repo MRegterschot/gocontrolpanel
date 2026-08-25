@@ -1,7 +1,7 @@
 "use server";
 
-import { AddHetznerDatabaseSchemaType } from "@/forms/admin/hetzner/database/add-hetzner-database-schema";
-import { AttachHetznerServerToNetworkSchemaType } from "@/forms/admin/hetzner/server/attach-hetzner-server-to-network-schema";
+import { AddHetznerDatabaseSchema } from "@/forms/admin/hetzner/database/add-hetzner-database-schema";
+import { AttachHetznerServerToNetworkSchema } from "@/forms/admin/hetzner/server/attach-hetzner-server-to-network-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { axiosHetzner } from "@/lib/axios/hetzner";
 import { HandlebarsServer } from "@/lib/handlebars";
@@ -11,6 +11,7 @@ import {
   getRedisClient,
 } from "@/lib/redis";
 import { generateRandomString } from "@/lib/utils";
+import { validate } from "@/lib/validation";
 import {
   HetznerServer,
   HetznerServerCache,
@@ -230,11 +231,13 @@ export async function getRecentlyCreatedHetznerServers(): Promise<
 
 export async function createHetznerDatabase(
   projectId: string,
-  data: AddHetznerDatabaseSchemaType,
+  dataInput: unknown,
 ): Promise<ServerResponse<HetznerServer>> {
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
+      const data = validate(AddHetznerDatabaseSchema, dataInput);
+
       const token = await getApiToken(projectId);
 
       const dbData = {
@@ -307,11 +310,13 @@ export async function createHetznerDatabase(
 export async function attachHetznerServerToNetwork(
   projectId: string,
   serverId: number,
-  data: AttachHetznerServerToNetworkSchemaType,
+  dataInput: unknown,
 ): Promise<ServerResponse> {
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
+      const data = validate(AttachHetznerServerToNetworkSchema, dataInput);
+
       const token = await getApiToken(projectId);
 
       const body = {
