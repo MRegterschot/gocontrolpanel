@@ -141,6 +141,10 @@ export async function createServer(
     | "messageFormat"
     | "connectMessage"
     | "disconnectMessage"
+    | "scriptNameChangeMessage"
+    | "matchSettingsLoadedMessage"
+    | "scriptSettingsSavedMessage"
+    | "mapListChangeMessage"
     | "enableHelpCommand"
     | "createdAt"
     | "updatedAt"
@@ -201,6 +205,10 @@ export async function updateServer(
       | "messageFormat"
       | "connectMessage"
       | "disconnectMessage"
+      | "scriptNameChangeMessage"
+      | "matchSettingsLoadedMessage"
+      | "scriptSettingsSavedMessage"
+      | "mapListChangeMessage"
       | "createdAt"
       | "updatedAt"
     >
@@ -274,7 +282,14 @@ export async function getServerChatConfig(
   ServerResponse<
     Pick<
       Servers,
-      "manualRouting" | "messageFormat" | "connectMessage" | "disconnectMessage"
+      | "manualRouting"
+      | "messageFormat"
+      | "connectMessage"
+      | "disconnectMessage"
+      | "scriptNameChangeMessage"
+      | "matchSettingsLoadedMessage"
+      | "scriptSettingsSavedMessage"
+      | "mapListChangeMessage"
     >
   >
 > {
@@ -294,6 +309,10 @@ export async function getServerChatConfig(
         messageFormat: true,
         connectMessage: true,
         disconnectMessage: true,
+        scriptNameChangeMessage: true,
+        matchSettingsLoadedMessage: true,
+        scriptSettingsSavedMessage: true,
+        mapListChangeMessage: true,
       },
     });
 
@@ -310,7 +329,14 @@ export async function updateServerChatConfig(
   serverId: string,
   chatConfig: Pick<
     Servers,
-    "manualRouting" | "messageFormat" | "connectMessage" | "disconnectMessage"
+    | "manualRouting"
+    | "messageFormat"
+    | "connectMessage"
+    | "disconnectMessage"
+    | "scriptNameChangeMessage"
+    | "matchSettingsLoadedMessage"
+    | "scriptSettingsSavedMessage"
+    | "mapListChangeMessage"
   >,
 ): Promise<ServerResponse<Servers>> {
   return doServerActionWithAuth(

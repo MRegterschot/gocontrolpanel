@@ -5,6 +5,7 @@ import {
   getGbxClient,
   getGbxClientManager,
 } from "@/lib/managers/gbxclient-manager";
+import { formatTemplate } from "@/lib/utils";
 import { ModeScriptInfo } from "@/types/gbx";
 import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
@@ -97,8 +98,17 @@ export async function setScriptName(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
-      await client.call("SetScriptName", script);
+      const manager = await getGbxClientManager(serverId);
+      await manager.client.call("SetScriptName", script);
+
+      if (manager.info.chat?.scriptNameChangeMessage) {
+        const message = formatTemplate(
+          manager.info.chat.scriptNameChangeMessage,
+          { script },
+        );
+        manager.client.call("ChatSendServerMessage", message);
+      }
+
       await logAudit(
         session.user.id,
         serverId,
@@ -141,8 +151,17 @@ export async function loadMatchSettings(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
-      await client.call("LoadMatchSettings", filename);
+      const manager = await getGbxClientManager(serverId);
+      await manager.client.call("LoadMatchSettings", filename);
+
+      if (manager.info.chat?.matchSettingsLoadedMessage) {
+        const message = formatTemplate(
+          manager.info.chat.matchSettingsLoadedMessage,
+          { filename },
+        );
+        manager.client.call("ChatSendServerMessage", message);
+      }
+
       await logAudit(
         session.user.id,
         serverId,
@@ -275,9 +294,17 @@ export async function setModeScriptSettings(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
-      await client.call("SetModeScriptSettings", settings);
-      client.call("Echo", "", "UpdatedSettings");
+      const manager = await getGbxClientManager(serverId);
+      await manager.client.call("SetModeScriptSettings", settings);
+      manager.client.call("Echo", "", "UpdatedSettings");
+
+      if (manager.info.chat?.scriptSettingsSavedMessage) {
+        manager.client.call(
+          "ChatSendServerMessage",
+          manager.info.chat.scriptSettingsSavedMessage.trim(),
+        );
+      }
+
       await logAudit(
         session.user.id,
         serverId,

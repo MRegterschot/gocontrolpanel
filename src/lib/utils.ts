@@ -281,6 +281,17 @@ export function formatMessage(
   return msg.trim();
 }
 
+export function formatTemplate(
+  format: string,
+  variables: Record<string, string | number>,
+): string {
+  let msg = format;
+  for (const [key, value] of Object.entries(variables)) {
+    msg = msg.replaceAll(`{${key}}`, String(value));
+  }
+  return msg.trim();
+}
+
 export const permissions: string[] = [
   "users:view",
   "users:edit",

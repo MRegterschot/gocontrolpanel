@@ -371,6 +371,10 @@ export class GbxClientManager extends EventEmitter {
       messageFormat: server.messageFormat,
       connectMessage: server.connectMessage,
       disconnectMessage: server.disconnectMessage,
+      scriptNameChangeMessage: server.scriptNameChangeMessage,
+      matchSettingsLoadedMessage: server.matchSettingsLoadedMessage,
+      scriptSettingsSavedMessage: server.scriptSettingsSavedMessage,
+      mapListChangeMessage: server.mapListChangeMessage,
     };
 
     this.info.enableHelpCommand = server.enableHelpCommand;
