@@ -3,7 +3,9 @@
 <frame id="pickban-action" pos="0 0">
   <quad pos="0 0" z-index="0" size="120 10" bgcolor="222"/>
   <label pos="5 -4.75" z-index="0" size="10 10" text="" halign="center" valign="center" textsize="2.5" textcolor="DDD" textfont="GameFontRegular"/>
-  <label pos="12 -4.75" z-index="0" size="100 5" text="Marijn. is picking a map" valign="center" textcolor="DDD" textsize="1.75" textfont="GameFontSemiBold" />
+  <label pos="12 -4.75" z-index="0" size="94 5" text="Marijn. is picking a map" valign="center" textcolor="DDD" textsize="1.75" textfont="GameFontSemiBold" />
+  <label pos="115 -4.75" z-index="0" size="10 5" text="" halign="right" valign="center" textcolor="DDD" textsize="1.75" textfont="GameFontSemiBold" />
+  <quad pos="0 -9" z-index="1" size="120 1" bgcolor="DDD" opacity="0" />
 </frame>
 
 <framemodel id="map-info">
@@ -43,6 +45,7 @@
   Text login;
   Text[] players;
   Text nickName;
+  Integer timeoutSeconds;
 }
 {{/content}}
 
@@ -246,6 +249,40 @@ Void triggerSelectedMap(MapInfo[] mapInfos, Integer selectedIndex) {
   }
 }
 
+Text formatTimer(Integer secondsLeft) {
+  declare Integer minutes = secondsLeft / 60;
+  declare Text secondsText = TL::ToText(secondsLeft % 60);
+  if (secondsLeft % 60 < 10) {
+    secondsText = "0" ^ secondsText;
+  }
+  return TL::ToText(minutes) ^ ":" ^ secondsText;
+}
+
+Void updateTimerLabel(Integer secondsLeft) {
+  declare actionFrame <=> (Page.MainFrame.GetFirstChild("pickban-action") as CMlFrame);
+  declare timerLabel <=> (actionFrame.Controls[3] as CMlLabel);
+  if (secondsLeft > 0) {
+    timerLabel.SetText(formatTimer(secondsLeft));
+  } else {
+    timerLabel.SetText("");
+  }
+}
+
+// Restarts the progress bar for a fresh turn: snaps it back to full width,
+// then lets a single Linear AnimMgr tween drain it to 0 over the turn's
+// duration, so it stays in sync without us polling it every frame.
+Void startProgressBar(Integer timeoutSeconds) {
+  declare actionFrame <=> (Page.MainFrame.GetFirstChild("pickban-action") as CMlFrame);
+  declare progressQuad <=> (actionFrame.Controls[4] as CMlQuad);
+  if (timeoutSeconds > 0) {
+    progressQuad.Size = <120., 1.>;
+    progressQuad.Opacity = 0.9;
+    AnimMgr.Add(progressQuad, "<quad size='0 1' />", timeoutSeconds * 1000, CAnimManager::EAnimManagerEasing::Linear);
+  } else {
+    progressQuad.Opacity = 0.;
+  }
+}
+
 Integer updateWidget(MapInfo[] mapInfos, PickBanAction currentAction, Integer selectedIndex, Boolean selectionVisible) {
   declare mapsCount = mapInfos.count;
   declare index = 0;
@@ -273,6 +310,8 @@ Integer updateWidget(MapInfo[] mapInfos, PickBanAction currentAction, Integer se
 
   declare actionFrame <=> (Page.MainFrame.GetFirstChild("pickban-action") as CMlFrame);
   declare actionLabel <=> (actionFrame.Controls[2] as CMlLabel);
+  updateTimerLabel(currentAction.timeoutSeconds);
+  startProgressBar(currentAction.timeoutSeconds);
   if (currentAction.action == "pick") {
     actionLabel.SetText(currentAction.nickName ^ "$z is picking a map");
   } else if (currentAction.action == "ban") {
@@ -300,6 +339,9 @@ declare Integer LastPickBanUpdate for This = -1;
 declare Integer lastUpdate = -1;
 declare Integer SelectedMapIndex = -1;
 declare Boolean SelectionVisible = False;
+declare Integer TurnTimeoutSeconds = 0;
+declare Integer TurnStartGameTime = 0;
+declare Integer LastDisplayedSecondsLeft = -1;
 declare mapsFrame <=> (widget.GetFirstChild("maps") as CMlFrame);
 mapsFrame.ScrollActive = True;
 mapsFrame.ScrollMin = <0., 0.>;
@@ -311,6 +353,24 @@ mapsFrame.ScrollGrid = <0., 11.5>;
 if (LastPickBanUpdate != lastUpdate) {
   lastUpdate = LastPickBanUpdate;
   SelectedMapIndex = updateWidget(MapInfos, CurrentAction, SelectedMapIndex, SelectionVisible);
+
+  // The turn timeout is a fixed duration handed to us once when the turn
+  // starts; we count it down locally from GameTime rather than having the
+  // server push per-second updates.
+  TurnTimeoutSeconds = CurrentAction.timeoutSeconds;
+  TurnStartGameTime = LastPickBanUpdate;
+  LastDisplayedSecondsLeft = TurnTimeoutSeconds;
+}
+
+if (TurnTimeoutSeconds > 0) {
+  declare Integer secondsLeft = TurnTimeoutSeconds - (GameTime - TurnStartGameTime) / 1000;
+  if (secondsLeft < 0) {
+    secondsLeft = 0;
+  }
+  if (secondsLeft != LastDisplayedSecondsLeft) {
+    LastDisplayedSecondsLeft = secondsLeft;
+    updateTimerLabel(secondsLeft);
+  }
 }
 
 // Up/Down: read from Input.PendingEvents rather than polling KeyUp/KeyDown -

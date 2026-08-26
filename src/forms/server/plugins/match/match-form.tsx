@@ -489,6 +489,15 @@ export default function MatchForm({
                   />
                 )}
 
+                <FormElement
+                  name={"pickAndBan.timeout"}
+                  label="Turn Timeout (seconds)"
+                  description="The maximum time a player or team has to pick or ban a map. If they don't act in time, a random map is picked/banned for them. Leave empty or 0 to disable."
+                  placeholder="No timeout..."
+                  rootClassName="max-w-xs"
+                  type="number"
+                />
+
                 <div className="flex flex-col gap-2">
                   <div>
                     <FormLabel className="text-sm">Pick and Ban</FormLabel>

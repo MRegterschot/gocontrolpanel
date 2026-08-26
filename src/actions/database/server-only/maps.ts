@@ -18,3 +18,17 @@ export async function getMapByUidServer(uid: string): Promise<Maps | null> {
 
   return updatedMap;
 }
+
+export async function getMapsByFileNames(
+  fileNames: string[],
+): Promise<Maps[]> {
+  if (fileNames.length === 0) {
+    return [];
+  }
+
+  const db = getClient();
+
+  return await db.maps.findMany({
+    where: { fileName: { in: fileNames }, deletedAt: null },
+  });
+}
