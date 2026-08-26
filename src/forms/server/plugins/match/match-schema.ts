@@ -36,6 +36,7 @@ export const MatchPluginSchema = z.object({
       type: z.union([z.literal("player"), z.literal("team")]).optional(),
       order: PickAndBanOrderSchema,
       choosePosition: z.boolean().optional(),
+      timeout: z.coerce.number().min(0).optional(),
       teams: z
         .array(
           z.object({

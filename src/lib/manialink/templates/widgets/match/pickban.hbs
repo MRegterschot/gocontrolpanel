@@ -3,7 +3,9 @@
 <frame id="pickban-action" pos="0 0">
   <quad pos="0 0" z-index="0" size="120 10" bgcolor="222"/>
   <label pos="5 -4.75" z-index="0" size="10 10" text="" halign="center" valign="center" textsize="2.5" textcolor="DDD" textfont="GameFontRegular"/>
-  <label pos="12 -4.75" z-index="0" size="100 5" text="Marijn. is picking a map" valign="center" textcolor="DDD" textsize="1.75" textfont="GameFontSemiBold" />
+  <label pos="12 -4.75" z-index="0" size="94 5" text="Marijn. is picking a map" valign="center" textcolor="DDD" textsize="1.75" textfont="GameFontSemiBold" />
+  <label pos="115 -4.75" z-index="0" size="10 5" text="" halign="right" valign="center" textcolor="DDD" textsize="1.75" textfont="GameFontSemiBold" />
+  <quad pos="0 -9" z-index="1" size="120 1" bgcolor="DDD" opacity="0" />
 </frame>
 
 <framemodel id="map-info">
@@ -43,6 +45,7 @@
   Text login;
   Text[] players;
   Text nickName;
+  Integer timeoutSeconds;
 }
 {{/content}}
 
@@ -155,7 +158,132 @@ Integer getPickedMapsCount(MapInfo[] mapInfos) {
   return count;
 }
 
-Void updateWidget(MapInfo[] mapInfos, PickBanAction currentAction) {
+// Highlights (or unhighlights) the row at index. Deliberately does not call
+// Control.Focus() - claiming engine focus is what causes Escape's first press
+// to get consumed by our navigation scope instead of opening the pause menu.
+// We track the selected row ourselves, so we don't need engine focus for it.
+Void setRowHighlighted(Integer index, Boolean highlighted) {
+  declare mapsFrame <=> (Page.MainFrame.GetFirstChild("maps") as CMlFrame);
+  if (index < 0 || index >= mapsFrame.Controls.count - 1) {
+    return;
+  }
+
+  declare mapFrame <=> (mapsFrame.Controls[index + 1] as CMlFrame);
+
+  if (highlighted) {
+    (mapFrame.Controls[1] as CMlQuad).BgColor = CL::Hex3ToRgb("999");
+  } else {
+    (mapFrame.Controls[1] as CMlQuad).BgColor = CL::Hex3ToRgb("DDD");
+  }
+}
+
+Void scrollToRow(Integer index) {
+  declare mapsFrame <=> (Page.MainFrame.GetFirstChild("maps") as CMlFrame);
+  declare Real rowTop = index * 11.5;
+  declare Real rowBottom = rowTop + 11.5;
+  declare Real viewTop = mapsFrame.ScrollOffset.Y;
+  // Matches the 10-row (115 = 10 * 11.5) window updateScroll's ScrollMax is
+  // computed against, not the frame's own (taller) declared Size.Y - using
+  // Size.Y here made rows near the bottom look "already visible" before the
+  // real scroll bound would let them actually reach the bottom of the list.
+  declare Real viewportHeight = 115.;
+  declare Real viewBottom = viewTop + viewportHeight;
+
+  if (rowTop < viewTop) {
+    mapsFrame.ScrollOffset = <0., rowTop>;
+  } else if (rowBottom > viewBottom) {
+    mapsFrame.ScrollOffset = <0., rowBottom - viewportHeight>;
+  }
+}
+
+// Clamps targetIndex to the map list bounds, without touching any visuals.
+Integer clampMapIndex(MapInfo[] mapInfos, Integer targetIndex) {
+  if (mapInfos.count == 0) {
+    return -1;
+  }
+
+  declare Integer newIndex = targetIndex;
+  if (newIndex < 0) {
+    newIndex = 0;
+  } else if (newIndex >= mapInfos.count) {
+    newIndex = mapInfos.count - 1;
+  }
+
+  return newIndex;
+}
+
+// Moves the highlight/focus/scroll from previousIndex to newIndex.
+Void applySelection(Integer previousIndex, Integer newIndex) {
+  if (previousIndex != newIndex) {
+    setRowHighlighted(previousIndex, False);
+  }
+  setRowHighlighted(newIndex, True);
+  scrollToRow(newIndex);
+}
+
+// Moves the selection by delta, or - on the first interaction, when nothing is
+// visibly selected yet - just reveals the current position without moving it.
+// Returns the new selected index.
+Integer navigateSelection(MapInfo[] mapInfos, Integer currentIndex, Boolean selectionVisible, Integer delta) {
+  declare Integer targetIndex = currentIndex;
+  if (selectionVisible) {
+    targetIndex = currentIndex + delta;
+  }
+
+  declare Integer newIndex = clampMapIndex(mapInfos, targetIndex);
+  applySelection(currentIndex, newIndex);
+  return newIndex;
+}
+
+// Triggers the pick/ban action of the currently selected row, same as clicking it.
+Void triggerSelectedMap(MapInfo[] mapInfos, Integer selectedIndex) {
+  if (mapInfos.count == 0 || selectedIndex < 0) {
+    return;
+  }
+
+  declare mapsFrame <=> (Page.MainFrame.GetFirstChild("maps") as CMlFrame);
+  declare mapFrame <=> (mapsFrame.Controls[selectedIndex + 1] as CMlFrame);
+  declare Text action = mapFrame.DataAttributeGet("action");
+  if (action != "") {
+    TriggerPageAction(action);
+  }
+}
+
+Text formatTimer(Integer secondsLeft) {
+  declare Integer minutes = secondsLeft / 60;
+  declare Text secondsText = TL::ToText(secondsLeft % 60);
+  if (secondsLeft % 60 < 10) {
+    secondsText = "0" ^ secondsText;
+  }
+  return TL::ToText(minutes) ^ ":" ^ secondsText;
+}
+
+Void updateTimerLabel(Integer secondsLeft) {
+  declare actionFrame <=> (Page.MainFrame.GetFirstChild("pickban-action") as CMlFrame);
+  declare timerLabel <=> (actionFrame.Controls[3] as CMlLabel);
+  if (secondsLeft > 0) {
+    timerLabel.SetText(formatTimer(secondsLeft));
+  } else {
+    timerLabel.SetText("");
+  }
+}
+
+// Restarts the progress bar for a fresh turn: snaps it back to full width,
+// then lets a single Linear AnimMgr tween drain it to 0 over the turn's
+// duration, so it stays in sync without us polling it every frame.
+Void startProgressBar(Integer timeoutSeconds) {
+  declare actionFrame <=> (Page.MainFrame.GetFirstChild("pickban-action") as CMlFrame);
+  declare progressQuad <=> (actionFrame.Controls[4] as CMlQuad);
+  if (timeoutSeconds > 0) {
+    progressQuad.Size = <120., 1.>;
+    progressQuad.Opacity = 0.9;
+    AnimMgr.Add(progressQuad, "<quad size='0 1' />", timeoutSeconds * 1000, CAnimManager::EAnimManagerEasing::Linear);
+  } else {
+    progressQuad.Opacity = 0.;
+  }
+}
+
+Integer updateWidget(MapInfo[] mapInfos, PickBanAction currentAction, Integer selectedIndex, Boolean selectionVisible) {
   declare mapsCount = mapInfos.count;
   declare index = 0;
 
@@ -175,9 +303,15 @@ Void updateWidget(MapInfo[] mapInfos, PickBanAction currentAction) {
   }
   
   updateScroll(mapInfos.count);
+  declare Integer newSelectedIndex = clampMapIndex(mapInfos, selectedIndex);
+  if (selectionVisible) {
+    applySelection(selectedIndex, newSelectedIndex);
+  }
 
   declare actionFrame <=> (Page.MainFrame.GetFirstChild("pickban-action") as CMlFrame);
   declare actionLabel <=> (actionFrame.Controls[2] as CMlLabel);
+  updateTimerLabel(currentAction.timeoutSeconds);
+  startProgressBar(currentAction.timeoutSeconds);
   if (currentAction.action == "pick") {
     actionLabel.SetText(currentAction.nickName ^ "$z is picking a map");
   } else if (currentAction.action == "ban") {
@@ -193,6 +327,8 @@ Void updateWidget(MapInfo[] mapInfos, PickBanAction currentAction) {
     updateScroll(getPickedMapsCount(mapInfos));
     orderPickedMaps();
   }
+
+  return newSelectedIndex;
 }
 {{/content}}
 
@@ -201,6 +337,11 @@ declare MapInfo[] MapInfos for This;
 declare PickBanAction CurrentAction for This;
 declare Integer LastPickBanUpdate for This = -1;
 declare Integer lastUpdate = -1;
+declare Integer SelectedMapIndex = -1;
+declare Boolean SelectionVisible = False;
+declare Integer TurnTimeoutSeconds = 0;
+declare Integer TurnStartGameTime = 0;
+declare Integer LastDisplayedSecondsLeft = -1;
 declare mapsFrame <=> (widget.GetFirstChild("maps") as CMlFrame);
 mapsFrame.ScrollActive = True;
 mapsFrame.ScrollMin = <0., 0.>;
@@ -211,7 +352,47 @@ mapsFrame.ScrollGrid = <0., 11.5>;
 {{#content "loop"}}
 if (LastPickBanUpdate != lastUpdate) {
   lastUpdate = LastPickBanUpdate;
-  updateWidget(MapInfos, CurrentAction);
+  SelectedMapIndex = updateWidget(MapInfos, CurrentAction, SelectedMapIndex, SelectionVisible);
+
+  // The turn timeout is a fixed duration handed to us once when the turn
+  // starts; we count it down locally from GameTime rather than having the
+  // server push per-second updates.
+  TurnTimeoutSeconds = CurrentAction.timeoutSeconds;
+  TurnStartGameTime = LastPickBanUpdate;
+  LastDisplayedSecondsLeft = TurnTimeoutSeconds;
+}
+
+if (TurnTimeoutSeconds > 0) {
+  declare Integer secondsLeft = TurnTimeoutSeconds - (GameTime - TurnStartGameTime) / 1000;
+  if (secondsLeft < 0) {
+    secondsLeft = 0;
+  }
+  if (secondsLeft != LastDisplayedSecondsLeft) {
+    LastDisplayedSecondsLeft = secondsLeft;
+    updateTimerLabel(secondsLeft);
+  }
+}
+
+// Up/Down: read from Input.PendingEvents rather than polling KeyUp/KeyDown -
+// the keyboard is itself a "Pad" (EPadType::Keyboard) in this input system, so
+// arrow presses show up here too, and polling both doubled every move. This is
+// a separate, lower-level raw input queue (not the manialink page's own
+// CMlScript.PendingEvents), so reading it doesn't need EnableMenuNavigation and
+// doesn't touch scroll-wheel/Escape at all. Covers both keyboard and gamepad.
+foreach (padEvent in Input.PendingEvents) {
+  if (padEvent.Type != CInputEvent::EType::PadButtonPress || padEvent.IsAutoRepeat) continue;
+
+  if (padEvent.Button == CInputEvent::EButton::Up || padEvent.Button == CInputEvent::EButton::LeftStick_Up) {
+    SelectedMapIndex = navigateSelection(MapInfos, SelectedMapIndex, SelectionVisible, -1);
+    SelectionVisible = True;
+  } else if (padEvent.Button == CInputEvent::EButton::Down || padEvent.Button == CInputEvent::EButton::LeftStick_Down) {
+    SelectedMapIndex = navigateSelection(MapInfos, SelectedMapIndex, SelectionVisible, 1);
+    SelectionVisible = True;
+  } else if (padEvent.Button == CInputEvent::EButton::A) {
+    if (SelectionVisible) {
+      triggerSelectedMap(MapInfos, SelectedMapIndex);
+    }
+  }
 }
 {{/content}}
 

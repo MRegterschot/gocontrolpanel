@@ -1,3 +1,4 @@
+import { getMapsByFileNames } from "@/actions/database/server-only/maps";
 import { pauseMatch, setScriptName } from "@/actions/gbx/server-only/game";
 import {
   getMapList,
@@ -25,6 +26,8 @@ export type PickBanAction = {
   login: string;
   players: string[];
   nickName: string;
+  /** Seconds this turn has to complete before a random map is chosen. Unset/0 when the timeout is disabled. */
+  timeoutSeconds?: number;
 };
 
 type PickBanState = {
@@ -74,6 +77,7 @@ Commands:
 `;
   private widget: Widget;
   private windows: Map<string, Window> = new Map();
+  private pickBanTimeoutHandle: ReturnType<typeof setTimeout> | null = null;
 
   private matchState: MatchState = "not_started";
   private pickBanState: PickBanState = {
@@ -100,6 +104,7 @@ Commands:
   }
 
   async onLoad() {
+    this.clearPickBanTimeout();
     this.clientManager.addListeners(this.getPluginId(), {});
 
     this.clientManager.onCommand("matchstart", this.onMatchStartCommand);
@@ -118,6 +123,7 @@ Commands:
 
   async onUnload() {
     this.widget.destroy();
+    this.clearPickBanTimeout();
 
     this.clientManager.removeListeners(this.getPluginId());
 
@@ -194,7 +200,7 @@ Commands:
         map.bannedBy = this.pickBanState.currentAction.nickName;
       }
 
-      this.pickBanState.currentAction = this.getNextPickBanAction();
+      this.setCurrentPickBanAction(this.getNextPickBanAction());
       this.updatePickBan();
     } else if (this.pickBanState.type === "team") {
       // Add the player's login to the selectedBy array for the map
@@ -228,7 +234,7 @@ Commands:
           map.bannedBy = this.pickBanState.currentAction.nickName;
         }
 
-        this.pickBanState.currentAction = this.getNextPickBanAction();
+        this.setCurrentPickBanAction(this.getNextPickBanAction());
         this.updatePickBan();
       } else {
         this.updatePickBan();
@@ -383,6 +389,7 @@ Commands:
       return;
 
     this.widget.destroy();
+    this.clearPickBanTimeout();
     this.matchState = "not_started";
 
     this.clientManager.client.call("ChatSendServerMessage", "Match stopped");
@@ -633,7 +640,7 @@ Commands:
     this.windows.get(this.pickBanState.currentAction.login)?.destroy();
     this.windows.delete(this.pickBanState.currentAction.login);
 
-    this.pickBanState.currentAction = this.getNextPickBanAction();
+    this.setCurrentPickBanAction(this.getNextPickBanAction());
     this.updatePickBan();
 
     await this.handleNextPickBanAction();
@@ -743,21 +750,58 @@ Commands:
   }
 
   private async setPickBanState() {
-    const mapsInfo = await getMapsInfo(
-      this.clientManager,
-      this.config?.maps || [],
+    const filenames = this.config?.maps || [];
+
+    // Prefer map info already synced to the database (name/author/uid), since
+    // it avoids a sequential GetMapInfo GBX call per map; only maps missing
+    // from the database fall back to fetching directly from the game server.
+    const dbMaps = await getMapsByFileNames(filenames);
+    const dbMapByFilename = new Map(dbMaps.map((map) => [map.fileName, map]));
+
+    const missingFilenames = filenames.filter(
+      (filename) => !dbMapByFilename.has(filename),
+    );
+    const gbxMapsInfo =
+      missingFilenames.length > 0
+        ? await getMapsInfo(this.clientManager, missingFilenames)
+        : [];
+    const gbxMapByFilename = new Map(
+      gbxMapsInfo.map((map) => [map.FileName, map]),
     );
 
-    const maps = mapsInfo.map((map) => ({
-      name: map.Name,
-      author: map.Author,
-      uid: map.UId,
-      filename: map.FileName,
-      index: 0,
-      selectedBy: [],
-      pickedBy: "",
-      bannedBy: "",
-    }));
+    const maps = filenames.flatMap((filename) => {
+      const dbMap = dbMapByFilename.get(filename);
+      if (dbMap) {
+        return [
+          {
+            name: dbMap.name,
+            author: dbMap.author,
+            uid: dbMap.uid,
+            filename: dbMap.fileName,
+            index: 0,
+            selectedBy: [],
+            pickedBy: "",
+            bannedBy: "",
+          },
+        ];
+      }
+
+      const gbxMap = gbxMapByFilename.get(filename);
+      if (!gbxMap) return [];
+
+      return [
+        {
+          name: gbxMap.Name,
+          author: gbxMap.Author,
+          uid: gbxMap.UId,
+          filename: gbxMap.FileName,
+          index: 0,
+          selectedBy: [],
+          pickedBy: "",
+          bannedBy: "",
+        },
+      ];
+    });
 
     const order = stringToPickAndBan(this.config?.pickAndBan?.order);
 
@@ -812,7 +856,7 @@ Commands:
       positionsAvailable,
     };
 
-    this.pickBanState.currentAction = this.getCurrentPickBanAction();
+    this.setCurrentPickBanAction(this.getCurrentPickBanAction());
   }
 
   private isPickBanDone() {
@@ -870,6 +914,107 @@ Commands:
     return position;
   }
 
+  // Picks a random available map and applies it as either a pick or a ban,
+  // matching the action that timed out. Unlike handleRandomPickBan (which is
+  // only ever used for the explicit "random" pick-and-ban step, always a pick),
+  // this needs to respect whichever action a player/team failed to act on.
+  private applyTimeoutSelection(action: PickBanAction) {
+    const availableMaps = this.pickBanState.maps.filter(
+      (map) => !map.pickedBy && !map.bannedBy,
+    );
+
+    if (availableMaps.length === 0) return undefined;
+
+    const randomIndex = Math.floor(Math.random() * availableMaps.length);
+    const randomMap = availableMaps[randomIndex];
+
+    if (!randomMap) return undefined;
+
+    if (action.action === "ban") {
+      randomMap.bannedBy = action.nickName;
+      return randomMap;
+    }
+
+    let position = Object.entries(this.pickBanState.pickedMaps).length + 1; // Default to the end of the pickedMaps array
+
+    if (
+      this.pickBanState.type === "player" &&
+      this.pickBanState.choosePosition
+    ) {
+      const nextAvailablePosition =
+        this.pickBanState.positionsAvailable.shift();
+      if (nextAvailablePosition !== undefined) {
+        position = nextAvailablePosition;
+      }
+    }
+
+    this.setPickedMapAtPosition(randomMap.filename, position - 1);
+    randomMap.pickedBy = action.nickName;
+    randomMap.index = position;
+
+    return randomMap;
+  }
+
+  private clearPickBanTimeout() {
+    if (this.pickBanTimeoutHandle) {
+      clearTimeout(this.pickBanTimeoutHandle);
+      this.pickBanTimeoutHandle = null;
+    }
+  }
+
+  // Central place to change currentAction, so every path that advances a
+  // pick/ban turn automatically gets timeout handling for free.
+  private setCurrentPickBanAction(action: PickBanAction | null) {
+    this.clearPickBanTimeout();
+    this.pickBanState.currentAction = action;
+
+    const timeoutSeconds = this.config?.pickAndBan?.timeout;
+    if (
+      !action ||
+      action.action === "random" ||
+      !timeoutSeconds ||
+      timeoutSeconds <= 0
+    ) {
+      return;
+    }
+
+    action.timeoutSeconds = timeoutSeconds;
+
+    this.pickBanTimeoutHandle = setTimeout(() => {
+      this.pickBanTimeoutHandle = null;
+      this.handlePickBanTimeout();
+    }, timeoutSeconds * 1000);
+  }
+
+  private handlePickBanTimeout = async () => {
+    const action = this.pickBanState.currentAction;
+    if (!action) return;
+
+    if (action.login) {
+      this.windows.get(action.login)?.destroy();
+      this.windows.delete(action.login);
+    }
+
+    const randomMap = this.applyTimeoutSelection(action);
+    if (!randomMap) {
+      this.clientManager.client.call(
+        "ChatSendServerMessage",
+        "Failed to handle pick/ban timeout, no available maps left",
+      );
+      return;
+    }
+
+    this.clientManager.client.call(
+      "ChatSendServerMessage",
+      `${action.nickName || "The current player"} ran out of time, ${randomMap.name} was randomly ${action.action === "ban" ? "banned" : "picked"} for them`,
+    );
+
+    this.setCurrentPickBanAction(this.getNextPickBanAction());
+    this.updatePickBan();
+
+    await this.handleNextPickBanAction();
+  };
+
   private async handleNextPickBanAction() {
     if (this.isPickBanDone()) {
       await sleep(10000);
@@ -891,7 +1036,7 @@ Commands:
         );
         return;
       }
-      this.pickBanState.currentAction = this.getNextPickBanAction();
+      this.setCurrentPickBanAction(this.getNextPickBanAction());
       this.updatePickBan();
       this.handleNextPickBanAction();
     }
