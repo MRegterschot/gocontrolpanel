@@ -7,6 +7,7 @@ import { Form } from "@/components/ui/form";
 import { Servers } from "@/lib/prisma/generated";
 import {
   formatMessage as formatChatMessage,
+  formatTemplate,
   getErrorMessage,
 } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,7 +25,14 @@ export default function ChatConfigForm({
   serverId: string;
   chatConfig: Pick<
     Servers,
-    "manualRouting" | "messageFormat" | "connectMessage" | "disconnectMessage"
+    | "manualRouting"
+    | "messageFormat"
+    | "connectMessage"
+    | "disconnectMessage"
+    | "scriptNameChangeMessage"
+    | "matchSettingsLoadedMessage"
+    | "scriptSettingsSavedMessage"
+    | "mapListChangeMessage"
   >;
 }) {
   const session = useSession();
@@ -36,6 +44,10 @@ export default function ChatConfigForm({
       messageFormat: chatConfig.messageFormat ?? "",
       connectMessage: chatConfig.connectMessage ?? "",
       disconnectMessage: chatConfig.disconnectMessage ?? "",
+      scriptNameChangeMessage: chatConfig.scriptNameChangeMessage ?? "",
+      matchSettingsLoadedMessage: chatConfig.matchSettingsLoadedMessage ?? "",
+      scriptSettingsSavedMessage: chatConfig.scriptSettingsSavedMessage ?? "",
+      mapListChangeMessage: chatConfig.mapListChangeMessage ?? "",
     },
   });
 
@@ -46,6 +58,10 @@ export default function ChatConfigForm({
         messageFormat: values.messageFormat ?? null,
         connectMessage: values.connectMessage ?? null,
         disconnectMessage: values.disconnectMessage ?? null,
+        scriptNameChangeMessage: values.scriptNameChangeMessage ?? null,
+        matchSettingsLoadedMessage: values.matchSettingsLoadedMessage ?? null,
+        scriptSettingsSavedMessage: values.scriptSettingsSavedMessage ?? null,
+        mapListChangeMessage: values.mapListChangeMessage ?? null,
       });
       if (error) {
         throw new ServerError(error, "UpdateServerChatConfigError");
@@ -73,6 +89,26 @@ export default function ChatConfigForm({
     chatConfig.disconnectMessage ?? "",
   );
 
+  const scriptNameChangeMessageValue = form.watch(
+    "scriptNameChangeMessage",
+    chatConfig.scriptNameChangeMessage ?? "",
+  );
+
+  const matchSettingsLoadedMessageValue = form.watch(
+    "matchSettingsLoadedMessage",
+    chatConfig.matchSettingsLoadedMessage ?? "",
+  );
+
+  const scriptSettingsSavedMessageValue = form.watch(
+    "scriptSettingsSavedMessage",
+    chatConfig.scriptSettingsSavedMessage ?? "",
+  );
+
+  const mapListChangeMessageValue = form.watch(
+    "mapListChangeMessage",
+    chatConfig.mapListChangeMessage ?? "",
+  );
+
   function formatMessage(format: string): string {
     return formatChatMessage(
       format,
@@ -96,58 +132,145 @@ export default function ChatConfigForm({
           isRequired
         />
 
-        <div>
-          <FormElement
-            name={"messageFormat"}
-            label="Message Format"
-            description="Requires manual routing to be enabled. Define the format for chat messages. Available variables: {login}, {nickName}, {message}."
-            type="text"
-            placeholder="{nickName}: {message}"
-            rootClassName="max-w-full"
-            className="max-w-128"
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
+          <div>
+            <FormElement
+              name={"messageFormat"}
+              label="Message Format"
+              description="Requires manual routing to be enabled. Define the format for chat messages. Available variables: {login}, {nickName}, {message}."
+              type="text"
+              placeholder="{nickName}: {message}"
+              rootClassName="max-w-full"
+              className="max-w-full"
+            />
 
-          {messageFormatValue && (
-            <span className="text-sm text-muted-foreground">
-              {">"} {formatMessage(messageFormatValue)}
-            </span>
-          )}
+            {messageFormatValue && (
+              <span className="text-sm text-muted-foreground">
+                {">"} {formatMessage(messageFormatValue)}
+              </span>
+            )}
+          </div>
+
+          <div>
+            <FormElement
+              name={"connectMessage"}
+              label="Connect Message"
+              description="Message sent when a player connects. Available variables: {login}, {nickName}."
+              type="text"
+              placeholder="Welcome to the server {nickName}!"
+              className="max-w-full"
+              rootClassName="max-w-full"
+            />
+
+            {connectMessageValue && (
+              <span className="text-sm text-muted-foreground">
+                {">"} {formatMessage(connectMessageValue)}
+              </span>
+            )}
+          </div>
+
+          <div>
+            <FormElement
+              name={"disconnectMessage"}
+              label="Disconnect Message"
+              description="Message sent when a player disconnects. Available variables: {login}, {nickName}."
+              type="text"
+              placeholder="Goodbye {nickName}!"
+              rootClassName="max-w-full"
+              className="max-w-full"
+            />
+
+            {disconnectMessageValue && (
+              <span className="text-sm text-muted-foreground">
+                {">"} {formatMessage(disconnectMessageValue)}
+              </span>
+            )}
+          </div>
         </div>
 
-        <div>
-          <FormElement
-            name={"connectMessage"}
-            label="Connect Message"
-            description="Message sent when a player connects. Available variables: {login}, {nickName}."
-            type="text"
-            placeholder="Welcome to the server {nickName}!"
-            className="max-w-128"
-            rootClassName="max-w-full"
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
+          <div>
+            <FormElement
+              name={"scriptNameChangeMessage"}
+              label="Script Name Changed"
+              description="Message sent when the game mode script is changed. Available variables: {script}."
+              type="text"
+              placeholder="Game mode changed to {script}"
+              rootClassName="max-w-full"
+              className="max-w-full"
+            />
 
-          {connectMessageValue && (
-            <span className="text-sm text-muted-foreground">
-              {">"} {formatMessage(connectMessageValue)}
-            </span>
-          )}
-        </div>
+            {scriptNameChangeMessageValue && (
+              <span className="text-sm text-muted-foreground">
+                {">"}{" "}
+                {formatTemplate(scriptNameChangeMessageValue, {
+                  script: "TimeAttack.Script.txt",
+                })}
+              </span>
+            )}
+          </div>
 
-        <div>
-          <FormElement
-            name={"disconnectMessage"}
-            label="Disconnect Message"
-            description="Message sent when a player disconnects. Available variables: {login}, {nickName}."
-            type="text"
-            placeholder="Goodbye {nickName}!"
-            rootClassName="max-w-full"
-            className="max-w-128"
-          />
+          <div>
+            <FormElement
+              name={"matchSettingsLoadedMessage"}
+              label="Match Settings Loaded"
+              description="Message sent when match settings are loaded. Available variables: {filename}."
+              type="text"
+              placeholder="Match settings loaded: {filename}"
+              rootClassName="max-w-full"
+              className="max-w-full"
+            />
 
-          {disconnectMessageValue && (
-            <span className="text-sm text-muted-foreground">
-              {">"} {formatMessage(disconnectMessageValue)}
-            </span>
-          )}
+            {matchSettingsLoadedMessageValue && (
+              <span className="text-sm text-muted-foreground">
+                {">"}{" "}
+                {formatTemplate(matchSettingsLoadedMessageValue, {
+                  filename: "MyPlaylist.txt",
+                })}
+              </span>
+            )}
+          </div>
+
+          <div>
+            <FormElement
+              name={"scriptSettingsSavedMessage"}
+              label="Script Settings Saved"
+              description="Message sent when the mode script settings are saved."
+              type="text"
+              placeholder="Mode script settings have been updated"
+              rootClassName="max-w-full"
+              className="max-w-full"
+            />
+
+            {scriptSettingsSavedMessageValue && (
+              <span className="text-sm text-muted-foreground">
+                {">"} {formatTemplate(scriptSettingsSavedMessageValue, {})}
+              </span>
+            )}
+          </div>
+
+          <div>
+            <FormElement
+              name={"mapListChangeMessage"}
+              label="Map List Changed"
+              description="Message sent when the map list is changed. Available variables: {action} (added, removed or reordered), {count}, {maps}."
+              type="text"
+              placeholder="Map list updated ({count} map(s) {action}: {maps})"
+              rootClassName="max-w-full"
+              className="max-w-full"
+            />
+
+            {mapListChangeMessageValue && (
+              <span className="text-sm text-muted-foreground">
+                {">"}{" "}
+                {formatTemplate(mapListChangeMessageValue, {
+                  action: "added",
+                  count: 3,
+                  maps: "A01-Race, A02-Race, A03-Race",
+                })}
+              </span>
+            )}
+          </div>
         </div>
 
         <Button

@@ -176,6 +176,11 @@ model Servers {
   connectMessage    String?
   disconnectMessage String?
 
+  scriptNameChangeMessage     String?
+  matchSettingsLoadedMessage  String?
+  scriptSettingsSavedMessage  String?
+  mapListChangeMessage        String?
+
   enableHelpCommand Boolean @default(true)
 
   groupServers  GroupServers[]

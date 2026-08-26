@@ -40,6 +40,7 @@ import {
   isLastChance,
   isWinner,
   sleep,
+  splitChatMessage,
   withTimeout,
 } from "../utils";
 import PluginManager from "./plugin-manager";
@@ -371,6 +372,10 @@ export class GbxClientManager extends EventEmitter {
       messageFormat: server.messageFormat,
       connectMessage: server.connectMessage,
       disconnectMessage: server.disconnectMessage,
+      scriptNameChangeMessage: server.scriptNameChangeMessage,
+      matchSettingsLoadedMessage: server.matchSettingsLoadedMessage,
+      scriptSettingsSavedMessage: server.scriptSettingsSavedMessage,
+      mapListChangeMessage: server.mapListChangeMessage,
     };
 
     this.info.enableHelpCommand = server.enableHelpCommand;
@@ -521,6 +526,13 @@ export class GbxClientManager extends EventEmitter {
 export async function getGbxClient(serverId: string): Promise<GbxClient> {
   const manager = await getGbxClientManager(serverId);
   return manager.client;
+}
+
+export function sendChatMessage(manager: GbxClientManager, message: string) {
+  const chunks = splitChatMessage(message);
+  for (const chunk of chunks) {
+    manager.client.call("ChatSendServerMessage", chunk);
+  }
 }
 
 export async function getGbxClientManager(
@@ -772,7 +784,7 @@ async function onPlayerConnect(manager: GbxClientManager, login: string) {
     "",
   );
 
-  manager.client.call("ChatSendServerMessage", message);
+  sendChatMessage(manager, message);
 }
 
 async function onPlayerDisconnect(manager: GbxClientManager, login: string) {
@@ -789,7 +801,7 @@ async function onPlayerDisconnect(manager: GbxClientManager, login: string) {
       "",
     );
 
-    manager.client.call("ChatSendServerMessage", message);
+    sendChatMessage(manager, message);
   }
 
   manager.removeActivePlayer(login);
@@ -1581,5 +1593,5 @@ async function onPlayerChat(manager: GbxClientManager, chat: PlayerChat) {
     chat.Text,
   );
 
-  manager.client.call("ChatSendServerMessage", message);
+  sendChatMessage(manager, message);
 }

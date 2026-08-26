@@ -13,6 +13,8 @@ export type MatchPluginPickAndBan = {
   type?: "player" | "team";
   order: string;
   choosePosition: boolean;
+  /** Seconds a player/team has to pick or ban before a random map is chosen for them. 0 or unset disables the timeout. */
+  timeout?: number;
   teams?: {
     seed: number;
     name?: string;

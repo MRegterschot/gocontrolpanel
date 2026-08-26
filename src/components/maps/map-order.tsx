@@ -1,11 +1,12 @@
 "use client";
 import { getMapList } from "@/actions/database/maps";
-import { addMapList, removeMapList } from "@/actions/gbx/map";
+import { removeMapList, reorderMapList } from "@/actions/gbx/map";
 import { createColumns } from "@/app/(gocontroller)/server/[id]/maps/map-order-columns";
 import { Maps } from "@/lib/prisma/generated";
 import { getDivergingList, getErrorMessage } from "@/lib/utils";
 import { ServerError } from "@/types/responses";
 import {
+  IconArrowsShuffle,
   IconDeviceFloppy,
   IconMapMinus,
   IconRefresh,
@@ -44,14 +45,9 @@ export default function MapOrder({
 
       if (!files.length || files.length == 0) return;
 
-      const { error: removeError } = await removeMapList(serverId, files);
-      if (removeError) {
-        throw new ServerError(removeError, "RemoveMapListError");
-      }
-
-      const { error: addError } = await addMapList(serverId, files);
-      if (addError) {
-        throw new ServerError(addError, "AddMapListError");
+      const { error } = await reorderMapList(serverId, files);
+      if (error) {
+        throw new ServerError(error, "ReorderMapListError");
       }
 
       setMapList(mapOrder);
@@ -66,6 +62,15 @@ export default function MapOrder({
 
   function resetMapOrder() {
     setMapOrder(mapList);
+  }
+
+  function randomizeMapOrder() {
+    const shuffled = [...mapOrder];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    setMapOrder(shuffled);
   }
 
   function onRemoveMap(map: Maps) {
@@ -131,6 +136,11 @@ export default function MapOrder({
         <Button variant="outline" collapse="sm" onClick={onRefreshMapList}>
           <IconRefresh />
           Refresh
+        </Button>
+
+        <Button variant="outline" collapse="sm" onClick={randomizeMapOrder}>
+          <IconArrowsShuffle />
+          Randomize
         </Button>
 
         <Button
