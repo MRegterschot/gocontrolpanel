@@ -7,9 +7,11 @@ export interface Config {
   ECM: {
     URL: string;
   };
-  SPACETIME: {
+  TMSERVERS: {
     URI: string;
     MODULE: string;
+    DISABLED: boolean;
+    CLIENT_ID: string,
   };
   DEFAULT_ADMINS: string[];
   DEFAULT_PERMISSIONS: string[];

@@ -1,5 +1,6 @@
 "use client";
 
+import config from "../config";
 import { DbConnection, DbConnectionBuilder } from "../server-manager";
 import { onConnect, onConnectError, onDisconnect } from "./connection-handlers";
 
@@ -13,8 +14,8 @@ export const getDbConnectionBuilder = (
     throw new Error("Cannot use SpacetimeDB on the server.");
   }
 
-  const uri = process.env.NEXT_PUBLIC_SPACETIME_URI;
-  const moduleName = process.env.NEXT_PUBLIC_SPACETIME_MODULE;
+  const uri = config.TMSERVERS.URI;
+  const moduleName = config.TMSERVERS.MODULE;
 
   if (!uri || !moduleName || !token) return null;
 

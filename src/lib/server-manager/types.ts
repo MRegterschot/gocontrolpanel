@@ -889,24 +889,6 @@ export const ModeSettingsV2 = __t.enum("ModeSettingsV2", {
 });
 export type ModeSettingsV2 = __Infer<typeof ModeSettingsV2>;
 
-export const MyProjectV1 = __t.object("MyProjectV1", {
-  id: __t.u32(),
-  userId: __t.u32(),
-  creatorName: __t.string(),
-  name: __t.string(),
-  startingAt: __t.timestamp(),
-  endingAt: __t.timestamp(),
-  description: __t.string(),
-  get status() {
-    return ProjectStatus;
-  },
-  get kind() {
-    return ProjectKind;
-  },
-  verified: __t.bool(),
-});
-export type MyProjectV1 = __Infer<typeof MyProjectV1>;
-
 // The tagged union or sum type for the algebraic type `NodeHandle`.
 export const NodeHandle = __t.enum("NodeHandle", {
   MatchV1: __t.u32(),

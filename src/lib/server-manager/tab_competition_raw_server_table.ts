@@ -10,6 +10,7 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
-export default {
-  registrationId: __t.u32(),
-};
+export default __t.row({
+  competitionId: __t.u32().name("competition_id"),
+  serverId: __t.u32().name("server_id"),
+});

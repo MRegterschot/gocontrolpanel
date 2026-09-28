@@ -16,18 +16,18 @@ import {
 
 
 export default __t.row({
-  id: __t.u32(),
-  userId: __t.u32().name("user_id"),
-  creatorName: __t.string().name("creator_name"),
   name: __t.string(),
+  description: __t.string(),
   startingAt: __t.timestamp().name("starting_at"),
   endingAt: __t.timestamp().name("ending_at"),
-  description: __t.string(),
-  get status() {
-    return ProjectStatus;
-  },
+  userId: __t.u32().name("user_id"),
+  id: __t.u32(),
+  verified: __t.bool(),
   get kind() {
     return ProjectKind;
   },
-  verified: __t.bool(),
+  get status() {
+    return ProjectStatus;
+  },
+  rootCompetition: __t.u32().name("root_competition"),
 });

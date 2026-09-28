@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "gocontrolpanel",
@@ -49,6 +48,7 @@
         "cookie": "^1.0.2",
         "date-fns": "^4.1.0",
         "dotenv": "^16.4.7",
+        "elkjs": "^0.12.0",
         "embla-carousel-react": "^8.6.0",
         "fs": "^0.0.1-security",
         "handlebars": "^4.7.8",
@@ -77,7 +77,7 @@
         "recharts": "^2.15.1",
         "slugid": "^5.0.1",
         "sonner": "^2.0.3",
-        "spacetimedb": "^2.6.0",
+        "spacetimedb": "^2.10.1",
         "ssh2": "^1.16.0",
         "sshpk": "^1.18.0",
         "tailwind-merge": "^3.0.2",
@@ -942,6 +942,8 @@
 
     "electron-to-chromium": ["electron-to-chromium@1.5.335", "", {}, "sha512-q9n5T4BR4Xwa2cwbrwcsDJtHD/enpQ5S1xF1IAtdqf5AAgqDFmR/aakqH3ChFdqd/QXJhS3rnnXFtexU7rax6Q=="],
 
+    "elkjs": ["elkjs@0.12.0", "", {}, "sha512-YZcKynxVxYoKIOEpywEPwCFdg+BTbxQRNf3pbwdDCvc8O3kQD8bmIwSxKU1eOTVc4Xo+VG9Te+575mlfvOrhEQ=="],
+
     "embla-carousel": ["embla-carousel@8.6.0", "", {}, "sha512-SjWyZBHJPbqxHOzckOfo8lHisEaJWmwd23XppYFYVh10bU66/Pn5tkVkbkCMZVdbUE5eTCI2nD8OyIP4Z+uwkA=="],
 
     "embla-carousel-react": ["embla-carousel-react@8.6.0", "", { "dependencies": { "embla-carousel": "8.6.0", "embla-carousel-reactive-utils": "8.6.0" }, "peerDependencies": { "react": "^16.8.0 || ^17.0.1 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc" } }, "sha512-0/PjqU7geVmo6F734pmPqpyHqiM99olvyecY7zdweCw+6tKEXnrE90pBiBbMMU8s5tICemzpQ3hi5EpxzGW+JA=="],
@@ -1580,7 +1582,7 @@
 
     "source-map-support": ["source-map-support@0.5.21", "", { "dependencies": { "buffer-from": "^1.0.0", "source-map": "^0.6.0" } }, "sha512-uBHU3L3czsIyYXKX88fdrGovxdSCoTGDRZ6SYXtSRxLZUzHg5P/66Ht6uoUlHu9EZod+inXhKo3qQgwXUT/y1w=="],
 
-    "spacetimedb": ["spacetimedb@2.6.0", "", { "dependencies": { "base64-js": "^1.5.1", "headers-polyfill": "^4.0.3", "object-inspect": "^1.13.4", "prettier": "^3.3.3", "pure-rand": "^7.0.1", "safe-stable-stringify": "^2.5.0", "statuses": "^2.0.2", "url-polyfill": "^1.1.14" }, "peerDependencies": { "@angular/core": ">=17.0.0", "@tanstack/react-query": "^5.0.0", "react": "^18.0.0 || ^19.0.0-0 || ^19.0.0", "solid-js": "^1.6.0", "svelte": "^4.0.0 || ^5.0.0", "undici": "^6.19.2", "vue": "^3.3.0" }, "optionalPeers": ["@angular/core", "@tanstack/react-query", "react", "solid-js", "svelte", "undici", "vue"] }, "sha512-Dc0YiQ3jRmrO7mYV3aEoCuBfTKFZyifidl6L9UXvgMAtTQ/8EAhrWCt4fL6sxfB0JM6y43Bzb4Lx0oQ9jFvDfQ=="],
+    "spacetimedb": ["spacetimedb@2.10.1", "", { "dependencies": { "base64-js": "^1.5.1", "headers-polyfill": "^4.0.3", "object-inspect": "^1.13.4", "prettier": "^3.3.3", "pure-rand": "^7.0.1", "safe-stable-stringify": "^2.5.0", "statuses": "^2.0.2", "url-polyfill": "^1.1.14" }, "peerDependencies": { "@angular/core": ">=17.0.0", "@tanstack/react-query": "^5.0.0", "react": "^18.0.0 || ^19.0.0-0 || ^19.0.0", "solid-js": "^1.6.0", "svelte": "^4.0.0 || ^5.0.0", "undici": "^6.19.2", "vue": "^3.3.0" }, "optionalPeers": ["@angular/core", "@tanstack/react-query", "react", "solid-js", "svelte", "undici", "vue"] }, "sha512-X+9qO7r+v8lb9nUOyrlKMvEY6mFPRVYEjvn1eDBDIcmudIi7h2dB3r1QYS6opNSIVPHa6DhUxLH5dATS/Q0TPA=="],
 
     "split2": ["split2@4.2.0", "", {}, "sha512-UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg=="],
 
