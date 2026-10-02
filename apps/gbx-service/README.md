@@ -26,7 +26,10 @@ INTEGRATION_DATABASE_URL=postgresql://gcp:gcp@localhost:55432/gcp_test \
 INTEGRATION_REDIS_URL=redis://localhost:56379 \
   bun run --filter @gcp/gbx-service test:integration
 docker compose -p gcp-gbx-test -f apps/gbx-service/docker-compose.test.yml down -v
+DB=mysql bun run generate   # `deploy` regenerated the client for Postgres; switch back if you develop on MySQL
 ```
+
+To test against a real dedicated server (isolated Docker stack, seed script, `ws:watch` socket viewer), follow [docs/real-server-testing.md](../../docs/real-server-testing.md).
 
 `test/fakes/harness.ts` builds a real `ServerRuntime` on top of a scriptable fake dedicated server (`FakeGbxSession`) and in-memory repositories. Most behaviour tests are just "emit a callback, assert state/events/calls".
 

@@ -14,7 +14,8 @@
     "migrate:create": "bun run generate && prisma migrate dev --create-only --schema ./prisma/$DB/schema.prisma",
     "deploy": "bun run generate && prisma migrate deploy --schema ./prisma/$DB/schema.prisma",
     "reset": "prisma migrate reset --schema ./prisma/$DB/schema.prisma",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "migrate:deploy": "prisma migrate deploy --schema ./prisma/$DB/schema.prisma"
   },
   "dependencies": {
     "@prisma/client": "^6.8.2"

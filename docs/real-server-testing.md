@@ -1,0 +1,192 @@
+# Real server test plan: GBX service
+
+Goal: prove the GBX service behaves like the current web app against a real Trackmania dedicated server before phase 4 (web cut-over) starts. The automated suites already cover logic with fakes. This plan covers what fakes can't:
+
+- real XML-RPC encoding;
+- real callback payloads, order and timing;
+- manialinks rendering in the game client;
+- the Nadeo APIs;
+- behaviour over long sessions and reconnects.
+
+Each test has an ID so results can be logged in the table at the end.
+
+## 1. Setup
+
+### Prerequisites
+
+- A dedicated server account (login + password from https://www.trackmania.com/player/dedicated-servers).
+- A Trackmania client (your own account) to join the server. Fake players cover the rest.
+- Docker, Bun, `jq`.
+- Optional: Nadeo API credentials (server account + OAuth client) for world records, personal bests and map metadata.
+
+### Isolation
+
+The e2e stack has its own dedicated server, MariaDB and Redis on separate ports (`5010`, `53307`, `56380`, game port `2350`), and the service runs on `3101`. **Don't** point the web app at the e2e database while the service is running: the web app connects every server in its database, and two controllers on one dedicated server produce double records and double chat. The service is additionally pinned to the e2e server with `GBX_SERVICE_ENABLED_SERVERS=e2e-server`.
+
+If port `2350` is taken (another dedicated server), set `E2E_GAME_PORT`.
+
+### Bring-up
+
+```bash
+cd apps/gbx-service
+cp e2e/.env.example e2e/.env       # fill in TM_MASTERSERVER_*, E2E_ADMIN_LOGIN, optional NADEO_*
+bun run e2e:up                     # dedicated server + MariaDB + Redis
+bun run e2e:migrate                # web app migrations, incl. the plugin rows
+bun run e2e:seed                   # server row, your admin user, all plugins enabled
+bun run e2e:dev                    # the service, pretty logs, reloads on change
+```
+
+`e2e:seed` prints your admin user id; keep it for the notifications channel. Set `E2E_PLUGINS=map-info,live-round` to enable a subset (re-run the seed, then publish `server.plugins.updated`, see below).
+
+### Observation tools
+
+```bash
+# Live socket output, one line per message (add --full for raw JSON)
+bun run ws:watch live          # also: map, players, servers, clients
+bun run ws:watch notifications --user <admin user id>
+
+# Internal API
+export GCP=http://localhost:3101/internal/servers/e2e-server
+gcp() { curl -s -H "Authorization: Bearer e2e-service-token-0123456789abcdefghij" -H "Content-Type: application/json" "$@" | jq; }
+gcp $GCP/live
+gcp -X POST $GCP/gbx/call -d '{"method":"GetPlayerList","params":[100,0]}'
+
+# Database and Redis
+dc() { docker compose --env-file e2e/.env -f e2e/docker-compose.yml "$@"; }
+dc exec db mariadb -ugcp -pgcp gcp_e2e -e "select login, round, time, points, matchId from records order by createdAt desc limit 10"
+dc exec redis redis-cli lrange jukebox:e2e-server 0 -1
+
+# Lifecycle events, as the web app will publish them
+dc exec redis redis-cli publish gcp:server-events '{"type":"server.plugins.updated","serverId":"e2e-server"}'
+```
+
+Join the server from the game with `#qjoin=<server login>@Trackmania` (the login is in `gcp -X POST $GCP/gbx/call -d '{"method":"GetMainServerPlayerInfo"}'`) or through the server browser.
+
+Fake players: `gcp -X POST $GCP/gbx/call -d '{"method":"ConnectFakePlayer"}'`. They join and spectate, but never drive.
+
+## 2. Connection lifecycle
+
+| ID | Steps | Expected |
+|---|---|---|
+| C1 | Start the service with the dedicated server up | Log `Connected to GBX server`; `/ws/servers` shows `isConnected: true`; a `maps` row for the current map and a `matches` row exist |
+| C2 | `dc restart dedicated` | `disconnect` on `/ws/servers` and `/ws/clients`, `reconnect try` with a timestamp ~15 s ahead, then `connect`; widgets reappear in game without restarting the client |
+| C3 | `dc stop dedicated`, wait ~2.5 min (10 × 15 s) | Ten retries, then `reconnect stop` on `/ws/clients`; `isReconnecting: false`; no further attempts in the log |
+| C4 | After C3: `dc start dedicated`, then `gcp -X POST $GCP/reconnect` | `{ "connected": true }` |
+| C5 | `gcp -X POST $GCP/disconnect` | Disconnects and **stays** offline (no retries); widgets disappear in game; `POST $GCP/reconnect` brings it back |
+| C6 | `gcp -X POST $GCP/stop-reconnect` while retries are pending (during C3) | `reconnect stop`, no more attempts |
+| C7 | Change `password` of the server row in MariaDB, publish `server.updated` | Reconnects with the new password, fails authentication and retries; restore the password and publish again → connected |
+| C8 | Stop the service with Ctrl+C mid-match and start it again | Clean shutdown log; after restart all widgets are drawn again for players already on the server |
+| C9 | `docker kill` the dedicated server while a player is driving | Same as C2; no unhandled errors, service keeps running |
+| C10 | Start the service with the dedicated server down | Service starts and serves `/health`; retries in the background (regression test for the ECONNREFUSED crash) |
+
+## 3. Live state and sockets
+
+Run with yourself on the server and `ws:watch live` / `players` / `map` open.
+
+| ID | Steps | Expected |
+|---|---|---|
+| L1 | Join the server | `/ws/players`: `playerConnect` with your nickname; `/ws/live`: `playerConnect`; a `users` row for your login |
+| L2 | Spectate / play (switch with the in-game button) | `playerInfo` + `playerInfoChanged`; you leave and re-enter the active round |
+| L3 | Leave the server | `playerDisconnect` on both channels; `liveInfo.players[<you>].connected === false` |
+| L4 | Time attack: drive checkpoints and finish | `checkpoint` events with increasing `cp`; `finish`; `personalBest` on improvement only; one `records` row per finish with `round = NULL` |
+| L5 | Switch to rounds: `gcp -X POST $GCP/script -d '{"script":"Trackmania/TM_Rounds_Online.Script.txt"}'` then `gcp -X POST $GCP/gbx/call -d '{"method":"NextMap"}'` | On the next match: `modeChange` in the log, TA plugins unload, round plugins load; `liveInfo.type === "rounds"` |
+| L6 | Rounds: play 3 rounds (finish, give up, finish) | `beginRound` per round; `roundNumber` 1, 2, 3 in `records.round`; `giveUp` sets `hasGivenUp`; `endRound` carries match points |
+| L7 | Rounds with warm-up (`S_WarmUpNb: 1` via script settings) | `warmUpStart` / `warmUpStartRound` / `warmUpEnd`; **no** records during warm-up; round counting starts after warm-up |
+| L8 | Pause: `gcp -X POST $GCP/pause -d '{"paused":true}'`, wait, unpause | `isPaused` true then false; the paused round is not counted twice (check `records.round`) |
+| L9 | `NextMap` | `endMap` / `beginMap` / `startMap` on `/ws/live` and `/ws/map`; new `maps` row with Nadeo metadata when credentials are set |
+| L10 | Change script settings: `gcp -X PUT $GCP/script-settings -d '{"settings":{"S_PointsLimit":30}}'` | `updatedSettings` with `limit=30` |
+| L11 | Cup / reverse cup / knockout / teams (one map each) | Correct `type`; finalist/eliminated flags and team points on `endRound`; elimination events in knockout |
+| L12 | `GET $GCP/live` at any point | Snapshot matches what the sockets showed |
+
+## 4. Commands and passthrough
+
+| ID | Steps | Expected |
+|---|---|---|
+| A1 | `gcp -X POST $GCP/chat -d '{"message":"hello"}'` and with `"login":"<you>"` | Broadcast / private message in game |
+| A2 | Configure all chat templates in MariaDB (`servers.scriptNameChangeMessage` etc.), restart the service, run script change, match settings load, settings save, add/remove/reorder maps | Each action posts its template once; map names are stripped of `$` codes |
+| A3 | `POST $GCP/maps` with one valid file, one missing file, then two files | Single add returns `{count:1}`; a missing single file returns 502 with the server's error; batch returns the added count |
+| A4 | `POST $GCP/maps/remove` with every map in the list | 409 `RemoveLastMapError`, nothing removed |
+| A5 | `PUT $GCP/maps/order` | Order changed in game (`GetMapList`) |
+| A6 | Player and team points (round/map/match) on a rounds/teams map | Points change on the scoreboard; `playerUpdated` / `teamUpdated` on `/ws/live`; map points don't alter round points |
+| A7 | `POST $GCP/gbx/call` with `StopServer` | 403 `MethodNotAllowed` |
+| A8 | `PUT $GCP/chat-config` with `manualRouting: true` and a `messageFormat` | Chat from players is re-sent in the format; `/help` still answers |
+| A9 | Fake players: connect 3, kick one, ban/unban, guest list add/remove via passthrough | Same results as from the old panel |
+| A10 | Jukebox: `dc exec redis redis-cli rpush jukebox:e2e-server '{"fileName":"<file of another map>"}'`, finish the map | That map is next; the entry is popped |
+
+## 5. In-game plugins
+
+Check each widget visually in the game client. Compare with screenshots from the old app (section 8).
+
+| ID | Plugin | Steps | Expected |
+|---|---|---|---|
+| P1 | map-info | Join, change map | Name/author shown, hidden while driving, updates on map change |
+| P2 | records-info | Drive faster than the local record | LR updates live; WR shows the Nadeo holder (with credentials) |
+| P3 | player-info | Configure `playerInfos` (device/camera) for your login in `server_plugins.config`, publish `server.plugins.updated` | Card shows device/camera, PB and LR; updates without reconnecting |
+| P4 | ta-leaderboard | TA: finish twice (slower then faster) | First finish appears immediately; better time replaces it; players without a time are listed last |
+| P5 | ta-active-runs | TA: drive, respawn, give up | Rows move by checkpoint; finished runs drop to the bottom; reset on give-up |
+| P6 | live-ranking | Rounds: several rounds | Ranking by match points; spectators with 0 points hidden |
+| P7 | live-round | Rounds: you + fake players | Live splits; points per finish from the repartition; LR/WR badge only on the leading finish; `showPoints: false` hides points |
+| P8 | admin | Click the help button and `/admin need help` | `/ws/notifications` shows the notification for your user; rows in `notifications`; "Admins have been notified" in chat |
+| P9 | match | `/pickban` with order `b:1,p:1,r` and players `[{login: you, seed: 1}]`, ban then pick by clicking, wait for random | Widget updates per step; completes with "match is ready"; `/matchstart` loads exactly the picked maps |
+| P10 | match | Same with `choosePosition: true` and `timeout: 20`, let a turn time out | Position window works; timeout picks/bans randomly and announces it |
+| P11 | match | Order starting with `r` | Random step runs without anyone clicking (fixed bug) |
+| P12 | match | `/pause`, `/unpause`, `/lobby`, `/matchstop`, `/setseeds 2 1`; also as a non-admin | Admin: works and announces; non-admin: "not authorized" |
+| P13 | ecm | Open with `/ecm` and the action-group button; toggle recording, save an API key, change the round offset; as a non-editor (second account if available) | Config persisted in `server_plugins.config`; non-editors can't change it; with a real ECM key: finishes and rounds arrive in eCircuitMania |
+| P14 | all | Disable a plugin in `server_plugins`, publish `server.plugins.updated` | Its widgets disappear immediately, its commands stop answering |
+| P15 | all | `gcp -X POST $GCP/plugins/reload` and `POST $GCP/manialinks/resend` | Widgets redraw; nothing duplicated |
+| P16 | help | `/help`, `/help match`, then set `enableHelpCommand` false + `server.updated` | Plugin list and text; silent when disabled |
+
+## 6. Resilience
+
+| ID | Steps | Expected |
+|---|---|---|
+| R1 | `dc stop db` during rounds, finish a few times, `dc start db` | Errors logged for records/players, service and sockets keep working; records resume after the database is back |
+| R2 | `dc stop redis` during a match | Jukebox and Nadeo token cache errors logged; live state and sockets unaffected; recovers when Redis is back |
+| R3 | Remove the `NADEO_*` values and restart | Everything works except WR/PB/metadata; widgets show `-`/0 |
+| R4 | Malformed lifecycle message: `redis-cli publish gcp:server-events 'nope'` | Warning logged, nothing else |
+| R5 | Open 20 `ws:watch live` sockets and close them, ten times over | Service memory (`ps -o rss -p <pid>`) returns to its baseline; no errors logged |
+| R6 | Soak: 1 h with fake players and some driving, plus 20 dedicated-server restarts (`for i in $(seq 20); do dc restart dedicated; sleep 40; done`) | Memory of the service process stable (`ps -o rss`), one callback handler per session, records counted once per finish |
+
+## 7. Security checks
+
+| ID | Steps | Expected |
+|---|---|---|
+| S1 | Internal routes without/with a wrong token | 401 |
+| S2 | WebSocket without ticket, with an expired one (> 60 s old), reused ticket | Closed with 4401 |
+| S3 | `WS_ALLOWED_ORIGINS=http://localhost:3000`, connect from a different origin (`websocat -H 'Origin: http://evil' ...`) | Closed with 4403 |
+| S4 | Ticket for a user without access to the server on `/ws/live/e2e-server`; non-moderator on `/ws/players/e2e-server` | Closed with 4403 |
+
+## 8. Parity with the current web app
+
+The service must match the old behaviour apart from the fixed bugs listed in `backend-split-requirements.md`. Run the same scenario once with the old app and once with the service, **never both at the same time**:
+
+1. Stop the service. Temporarily point `DATABASE_URL` and `REDIS_URI` in the root `.env` at the e2e stack (`mysql://gcp:gcp@localhost:53307/gcp_e2e`, `redis://localhost:56380`) and run `bun run dev` from the repo root. The web app connects to `e2e-server` itself. Restore the `.env` afterwards.
+2. Play the scenario below; screenshot every widget; save the live dashboard's WebSocket frames (browser devtools → Network → WS → copy messages).
+3. Note the `matches`/`records` rows (`select round, count(*) from records where matchId = ... group by round`).
+4. Stop the web app and start the service (`bun run e2e:dev`), then repeat with `ws:watch live --full > service-live.log`.
+
+Scenario (rounds, points limit 30, 1 warm-up round): warm-up, 3 rounds with one finish and one give-up, pause/unpause in round 2, change script settings, next map, admin chat message, `/admin` notification.
+
+Compare:
+
+- the record rows per round;
+- the sequence and payload shapes of the socket messages;
+- the widget screenshots;
+- the chat output.
+
+Known intentional differences: map points no longer overwrite round points, the TA leaderboard ordering, and window close behaviour.
+
+## 9. Exit criteria for phase 4
+
+- All of sections 2–7 pass, or have an accepted issue linked in the results log.
+- The parity run shows no unexplained difference.
+- The R6 soak shows stable memory and no duplicate records.
+- Every bug found has a regression test in `apps/gbx-service/test`.
+
+## 10. Results log
+
+Copy per test run.
+
+| ID | Date | Mode / map | Result | Notes / issue |
+|---|---|---|---|---|
+| C1 | | | | |

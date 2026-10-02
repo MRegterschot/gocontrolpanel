@@ -10,7 +10,13 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:integration": "vitest run --config vitest.integration.config.ts"
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "e2e:up": "docker compose --env-file e2e/.env -f e2e/docker-compose.yml up -d",
+    "e2e:down": "docker compose --env-file e2e/.env -f e2e/docker-compose.yml down",
+    "e2e:migrate": "cd ../../packages/db && DB=mysql bun --env-file=../../apps/gbx-service/e2e/.env run migrate:deploy",
+    "e2e:seed": "tsx --env-file=e2e/.env scripts/seed-e2e.ts",
+    "e2e:dev": "tsx watch --env-file=e2e/.env src/main.ts | pino-pretty",
+    "ws:watch": "tsx --env-file=e2e/.env scripts/ws-watch.ts"
   },
   "dependencies": {
     "@evotm/gbxclient": "^1.5.0",
