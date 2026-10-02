@@ -180,7 +180,7 @@ Known intentional differences: map points no longer overwrite round points, the 
 
 ## 9. Web app against the service
 
-From `refactor/web-gbx-cutover` on, the web app has no GBX connections of its own and talks to the service, so it can run against the e2e stack next to it. Add to the root `.env` (keep a copy of your own values to restore afterwards):
+From `refactor/web-gbx-cutover` on, the web app has no GBX connections of its own and talks to the service, so it can run against the e2e stack next to it. Copy the root `.env` to `.env.e2e` (gitignored), remove the keys below from the copy and append:
 
 ```bash
 DB=mysql
@@ -192,7 +192,14 @@ GBX_SERVICE_TOKEN=e2e-service-token-0123456789abcdefghij
 WS_TICKET_SECRET=e2e-ticket-secret-0123456789abcdefghij
 ```
 
-Then `bun run generate` (MySQL client) and `bun run dev` next to `bun run e2e:dev`, and log in with the account from `E2E_ADMIN_LOGIN`. Keep the browser devtools open on Network → WS.
+Keep `DEFAULT_ADMINS` with your login: your first login then turns the seeded user into a panel admin, which W12 and W13 need. Run the web app next to `bun run e2e:dev`:
+
+```bash
+bun --env-file=.env.e2e run generate                    # MySQL Prisma client
+bun --env-file=.env.e2e run --filter @gcp/web dev       # http://localhost:3000
+```
+
+Log in with the account from `E2E_ADMIN_LOGIN` and keep the browser devtools open on Network → WS.
 
 | ID | Steps | Expected |
 |---|---|---|
