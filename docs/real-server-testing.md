@@ -52,12 +52,12 @@ gcp $GCP/live
 gcp -X POST $GCP/gbx/call -d '{"method":"GetPlayerList","params":[100,0]}'
 
 # Database and Redis
-dc() { docker compose --env-file e2e/.env -f e2e/docker-compose.yml "$@"; }
-dc exec db mariadb -ugcp -pgcp gcp_e2e -e "select login, round, time, points, matchId from records order by createdAt desc limit 10"
-dc exec redis redis-cli lrange jukebox:e2e-server 0 -1
+dce() { docker compose --env-file e2e/.env -f e2e/docker-compose.yml "$@"; }
+dce exec db mariadb -ugcp -pgcp gcp_e2e -e "select login, round, time, points, matchId from records order by createdAt desc limit 10"
+dce exec redis redis-cli lrange jukebox:e2e-server 0 -1
 
 # Lifecycle events, as the web app will publish them
-dc exec redis redis-cli publish gcp:server-events '{"type":"server.plugins.updated","serverId":"e2e-server"}'
+dce exec redis redis-cli publish gcp:server-events '{"type":"server.plugins.updated","serverId":"e2e-server"}'
 ```
 
 Join the server from the game with `#qjoin=<server login>@Trackmania` (the login is in `gcp -X POST $GCP/gbx/call -d '{"method":"GetMainServerPlayerInfo"}'`) or through the server browser.
@@ -69,9 +69,9 @@ Fake players: `gcp -X POST $GCP/gbx/call -d '{"method":"ConnectFakePlayer"}'`. T
 | ID | Steps | Expected |
 |---|---|---|
 | C1 | Start the service with the dedicated server up | Log `Connected to GBX server`; `/ws/servers` shows `isConnected: true`; a `maps` row for the current map and a `matches` row exist |
-| C2 | `dc restart dedicated` | `disconnect` on `/ws/servers` and `/ws/clients`, `reconnect try` with a timestamp ~15 s ahead, then `connect`; widgets reappear in game without restarting the client |
-| C3 | `dc stop dedicated`, wait ~2.5 min (10 × 15 s) | Ten retries, then `reconnect stop` on `/ws/clients`; `isReconnecting: false`; no further attempts in the log |
-| C4 | After C3: `dc start dedicated`, then `gcp -X POST $GCP/reconnect` | `{ "connected": true }` |
+| C2 | `dce restart dedicated` | `disconnect` on `/ws/servers` and `/ws/clients`, `reconnect try` with a timestamp ~15 s ahead, then `connect`; widgets reappear in game without restarting the client |
+| C3 | `dce stop dedicated`, wait ~2.5 min (10 × 15 s) | Ten retries, then `reconnect stop` on `/ws/clients`; `isReconnecting: false`; no further attempts in the log |
+| C4 | After C3: `dce start dedicated`, then `gcp -X POST $GCP/reconnect` | `{ "connected": true }` |
 | C5 | `gcp -X POST $GCP/disconnect` | Disconnects and **stays** offline (no retries); widgets disappear in game; `POST $GCP/reconnect` brings it back |
 | C6 | `gcp -X POST $GCP/stop-reconnect` while retries are pending (during C3) | `reconnect stop`, no more attempts |
 | C7 | Change `password` of the server row in MariaDB, publish `server.updated` | Reconnects with the new password, fails authentication and retries; restore the password and publish again → connected |
@@ -111,7 +111,7 @@ Run with yourself on the server and `ws:watch live` / `players` / `map` open.
 | A7 | `POST $GCP/gbx/call` with `StopServer` | 403 `MethodNotAllowed` |
 | A8 | `PUT $GCP/chat-config` with `manualRouting: true` and a `messageFormat` | Chat from players is re-sent in the format; `/help` still answers |
 | A9 | Fake players: connect 3, kick one, ban/unban, guest list add/remove via passthrough | Same results as from the old panel |
-| A10 | Jukebox: `dc exec redis redis-cli rpush jukebox:e2e-server '{"fileName":"<file of another map>"}'`, finish the map | That map is next; the entry is popped |
+| A10 | Jukebox: `dce exec redis redis-cli rpush jukebox:e2e-server '{"fileName":"<file of another map>"}'`, finish the map | That map is next; the entry is popped |
 
 ## 5. In-game plugins
 
@@ -140,12 +140,12 @@ Check each widget visually in the game client. Compare with screenshots from the
 
 | ID | Steps | Expected |
 |---|---|---|
-| R1 | `dc stop db` during rounds, finish a few times, `dc start db` | Errors logged for records/players, service and sockets keep working; records resume after the database is back |
-| R2 | `dc stop redis` during a match | Jukebox and Nadeo token cache errors logged; live state and sockets unaffected; recovers when Redis is back |
+| R1 | `dce stop db` during rounds, finish a few times, `dce start db` | Errors logged for records/players, service and sockets keep working; records resume after the database is back |
+| R2 | `dce stop redis` during a match | Jukebox and Nadeo token cache errors logged; live state and sockets unaffected; recovers when Redis is back |
 | R3 | Remove the `NADEO_*` values and restart | Everything works except WR/PB/metadata; widgets show `-`/0 |
 | R4 | Malformed lifecycle message: `redis-cli publish gcp:server-events 'nope'` | Warning logged, nothing else |
 | R5 | Open 20 `ws:watch live` sockets and close them, ten times over | Service memory (`ps -o rss -p <pid>`) returns to its baseline; no errors logged |
-| R6 | Soak: 1 h with fake players and some driving, plus 20 dedicated-server restarts (`for i in $(seq 20); do dc restart dedicated; sleep 40; done`) | Memory of the service process stable (`ps -o rss`), one callback handler per session, records counted once per finish |
+| R6 | Soak: 1 h with fake players and some driving, plus 20 dedicated-server restarts (`for i in $(seq 20); do dce restart dedicated; sleep 40; done`) | Memory of the service process stable (`ps -o rss`), one callback handler per session, records counted once per finish |
 
 ## 7. Security checks
 
