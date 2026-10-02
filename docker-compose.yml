@@ -18,35 +18,37 @@ services:
       DATABASE_URL: mysql://gocontrolpanel:VettePanel123@db:3306/gocontrolpanel
       REDIS_URI: redis://redis:6379
       HETZNER_KEY: 
+      GBX_SERVICE_URL: http://gbx-service:3100
+      GBX_SERVICE_WS_URL: ws://localhost:3100 # Must be reachable from the browser
+      GBX_SERVICE_TOKEN: # Same value as the GBX service, at least 32 characters
+      WS_TICKET_SECRET: # Same value as the GBX service, at least 32 characters
       LOG_LEVEL: info
     depends_on:
       - db
       - redis
 
-  # Enable once the web app talks to it (phase 4 in docs/refactor-plan.md); until then both
-  # would connect to the same dedicated servers.
-  # # GBX connections, in-game plugins and live WebSockets (see docs/refactor-plan.md)
-  # gbx-service:
-  #   image: marijnregterschot/gocontrolpanel-gbx-service:beta # Use marijnregterschot/gocontrolpanel-gbx-service-postgres:beta if you are using PostgreSQL
-  #   ports:
-  #     - 3100:3100 # WebSockets for the browser; /internal routes require GBX_SERVICE_TOKEN
-  #   restart: unless-stopped
-  #   environment:
-  #     DATABASE_URL: mysql://gocontrolpanel:VettePanel123@db:3306/gocontrolpanel
-  #     REDIS_URI: redis://redis:6379
-  #     GBX_SERVICE_TOKEN: # Same value as the web app, at least 32 characters
-  #     WS_TICKET_SECRET: # Same value as the web app, at least 32 characters
-  #     WS_ALLOWED_ORIGINS: http://localhost:3000
-  #     NADEO_SERVER_LOGIN: 
-  #     NADEO_SERVER_PASSWORD: 
-  #     NADEO_CONTACT: GoControlPanel / <your contact info>
-  #     NADEO_CLIENT_ID: 
-  #     NADEO_CLIENT_SECRET: 
-  #     LOG_LEVEL: info
-  #   depends_on:
-  #     - db
-  #     - redis
-  #     - gocontrolpanel # Runs the database migrations
+  # GBX connections, in-game plugins and live WebSockets (see docs/refactor-plan.md)
+  gbx-service:
+    image: marijnregterschot/gocontrolpanel-gbx-service:beta # Use marijnregterschot/gocontrolpanel-gbx-service-postgres:beta if you are using PostgreSQL
+    ports:
+      - 3100:3100 # WebSockets for the browser; /internal routes require GBX_SERVICE_TOKEN
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: mysql://gocontrolpanel:VettePanel123@db:3306/gocontrolpanel
+      REDIS_URI: redis://redis:6379
+      GBX_SERVICE_TOKEN: # Same value as the web app, at least 32 characters
+      WS_TICKET_SECRET: # Same value as the web app, at least 32 characters
+      WS_ALLOWED_ORIGINS: http://localhost:3000
+      NADEO_SERVER_LOGIN: 
+      NADEO_SERVER_PASSWORD: 
+      NADEO_CONTACT: GoControlPanel / <your contact info>
+      NADEO_CLIENT_ID: 
+      NADEO_CLIENT_SECRET: 
+      LOG_LEVEL: info
+    depends_on:
+      - db
+      - redis
+      - gocontrolpanel # Runs the database migrations
 
   dedicated:
     image: evoesports/trackmania:latest

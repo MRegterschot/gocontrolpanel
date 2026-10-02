@@ -4,7 +4,7 @@ import { getBlacklist } from "@/actions/gbx/player";
 import { createColumns } from "@/app/(gocontroller)/server/[id]/players/blacklist-columns";
 import BlacklistForm from "@/forms/server/players/blacklist-form";
 import { getErrorMessage } from "@/lib/utils";
-import { PlayerInfo } from "@/types/player";
+import { PlayerInfo } from "@gcp/shared";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DataTable } from "../table/data-table";

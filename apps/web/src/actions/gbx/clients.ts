@@ -1,21 +1,15 @@
 "use server";
 
 import { doServerActionWithAuth } from "@/lib/actions";
-import { getGbxClientManager } from "@/lib/managers/gbxclient-manager";
-import { ServerError, ServerResponse } from "@/types/responses";
+import { gbxService } from "@/lib/gbx-service";
+import { ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
 
 export async function stopReconnect(
   serverId: string,
 ): Promise<ServerResponse<void>> {
   return doServerActionWithAuth(["servers:clients:manage"], async (session) => {
-    const manager = await getGbxClientManager(serverId);
-
-    if (!manager) {
-      throw new ServerError("Client not found", "ClientNotFound");
-    }
-
-    manager.stopReconnect();
+    await gbxService.stopReconnect(serverId);
 
     await logAudit(session.user.id, serverId, "server.clients.reconnect.stop");
   });
@@ -25,13 +19,7 @@ export async function triggerReconnect(
   serverId: string,
 ): Promise<ServerResponse<void>> {
   return doServerActionWithAuth(["servers:clients:manage"], async (session) => {
-    const manager = await getGbxClientManager(serverId);
-
-    if (!manager) {
-      throw new ServerError("Client not found", "ClientNotFound");
-    }
-
-    manager.tryConnectWithRetry();
+    await gbxService.reconnect(serverId);
 
     await logAudit(
       session.user.id,
@@ -45,13 +33,7 @@ export async function resendAllManialinks(
   serverId: string,
 ): Promise<ServerResponse<void>> {
   return doServerActionWithAuth(["servers:clients:manage"], async (session) => {
-    const manager = await getGbxClientManager(serverId);
-
-    if (!manager) {
-      throw new ServerError("Client not found", "ClientNotFound");
-    }
-
-    manager.resendAllManialinks();
+    await gbxService.resendManialinks(serverId);
 
     await logAudit(
       session.user.id,
@@ -65,13 +47,7 @@ export async function disconnectClient(
   serverId: string,
 ): Promise<ServerResponse<void>> {
   return doServerActionWithAuth(["servers:clients:manage"], async (session) => {
-    const manager = await getGbxClientManager(serverId);
-
-    if (!manager) {
-      throw new ServerError("Client not found", "ClientNotFound");
-    }
-
-    manager.emit("disconnect");
+    await gbxService.disconnect(serverId);
 
     await logAudit(session.user.id, serverId, "server.clients.disconnect");
   });

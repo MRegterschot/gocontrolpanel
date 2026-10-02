@@ -4,6 +4,7 @@ import {
   markNotificationAsRead,
 } from "@/actions/database/notifications";
 import useWebSocket from "@/hooks/use-websocket";
+import { wsPaths } from "@gcp/shared";
 import { logger } from "@/lib/logger";
 import { Notifications } from "@gcp/db";
 import { ServerError } from "@/types/responses";
@@ -48,7 +49,7 @@ export const NotificationProvider = ({
   }, []);
 
   useWebSocket({
-    url: "/api/ws/notifications",
+    path: wsPaths.notifications,
     onMessage: handleMessage,
   });
 

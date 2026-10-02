@@ -6,6 +6,7 @@ import { TMServerSchemaType } from "@/forms/admin/hetzner/setup-steps/tm-server/
 import { doServerActionWithAuth } from "@/lib/actions";
 import { axiosHetzner } from "@/lib/axios/hetzner";
 import { getClient } from "@/lib/dbclient";
+import { publishServerEvent } from "@/lib/gbx-service";
 import { updateFileManager } from "@/lib/managers/file-manager";
 import {
   getKeyHetznerRecentlyCreatedServers,
@@ -312,6 +313,10 @@ export async function createAdvancedServerSetup(
               },
             },
           });
+          await publishServerEvent({
+            type: "server.created",
+            serverId: newServer.id,
+          });
 
           if (data.groupId) {
             await db.groups.update({
@@ -348,6 +353,10 @@ export async function createAdvancedServerSetup(
               filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
               filemanagerPassword: cachedServer.filemanagerPassword,
             },
+          });
+          await publishServerEvent({
+            type: "server.updated",
+            serverId: data.serverId,
           });
 
           updateFileManager(
@@ -614,6 +623,10 @@ export async function createSimpleServerSetup(
               },
             },
           });
+          await publishServerEvent({
+            type: "server.created",
+            serverId: newServer.id,
+          });
 
           if (data.groupId) {
             await db.groups.update({
@@ -650,6 +663,10 @@ export async function createSimpleServerSetup(
               filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
               filemanagerPassword: cachedServer.filemanagerPassword,
             },
+          });
+          await publishServerEvent({
+            type: "server.updated",
+            serverId: data.serverId,
           });
 
           updateFileManager(
@@ -847,6 +864,10 @@ export async function addTrackmaniaServer(
               },
             },
           });
+          await publishServerEvent({
+            type: "server.created",
+            serverId: newServer.id,
+          });
 
           if (tmServer.groupId) {
             await db.groups.update({
@@ -883,6 +904,10 @@ export async function addTrackmaniaServer(
               filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
               filemanagerPassword: cachedServer.filemanagerPassword,
             },
+          });
+          await publishServerEvent({
+            type: "server.updated",
+            serverId: tmServer.serverId,
           });
 
           updateFileManager(

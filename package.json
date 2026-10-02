@@ -17,8 +17,7 @@
     "migrate:create": "bun --env-file=.env run --filter @gcp/db migrate:create",
     "deploy": "bun --env-file=.env run --filter @gcp/db deploy",
     "reset": "bun --env-file=.env run --filter @gcp/db reset",
-    "pretty": "prettier --write \"**/*.{ts,tsx,json,css}\"",
-    "prepare": "next-ws patch"
+    "pretty": "prettier --write \"**/*.{ts,tsx,json,css}\""
   },
   "overrides": {
     "@radix-ui/react-focus-scope": "1.1.7"

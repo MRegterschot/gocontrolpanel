@@ -1,7 +1,7 @@
 "use server";
 
 import { doServerActionWithAuth } from "@/lib/actions";
-import { getGbxClient } from "@/lib/managers/gbxclient-manager";
+import { getGbxClient } from "@/lib/gbx-service";
 import { ServerPlugin } from "@/types/gbx/server-plugin";
 import { ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";

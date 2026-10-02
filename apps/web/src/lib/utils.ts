@@ -1,8 +1,6 @@
 import { TBreadcrumb } from "@/components/shell/breadcrumbs";
 import { MatchPluginPickAndBanOrder } from "@/forms/server/plugins/match/match-schema";
 import { routes } from "@/routes";
-import { SpectatorStatus } from "@/types/gbx/player";
-import { Player } from "@/types/gbx/scores";
 import { ServerError } from "@/types/responses";
 import { clsx, type ClassValue } from "clsx";
 import { Session } from "next-auth";
@@ -100,17 +98,6 @@ export function getCurrentId(pathname: string): string | null {
   return null;
 }
 
-export async function withTimeout<T>(
-  promise: Promise<T>,
-  ms: number,
-  errorMessage = "Operation timed out",
-): Promise<T> {
-  const timeout = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error(errorMessage)), ms),
-  );
-  return Promise.race([promise, timeout]);
-}
-
 export function formatBytes(bytes: number, decimals = 2): string {
   if (bytes === 0) return "0 B";
   const k = 1024;
@@ -189,26 +176,6 @@ export function removePrefix(str: string, prefix: string): string {
   return str;
 }
 
-export function initGbxWebsocketClient(
-  path: string,
-  params?: Record<string, string | string[]>,
-): WebSocket {
-  const searchParams = new URLSearchParams();
-
-  if (params) {
-    for (const key in params) {
-      const value = params[key];
-      if (Array.isArray(value)) {
-        value.forEach((v) => searchParams.append(key, v));
-      } else {
-        searchParams.append(key, value);
-      }
-    }
-  }
-
-  return new WebSocket(`${path}?${searchParams.toString()}`);
-}
-
 export function capitalize(str: string): string {
   if (str.length === 0) return str;
   return str.charAt(0).toUpperCase() + str.slice(1);
@@ -256,14 +223,6 @@ export function isEliminated(matchPoints: number): boolean {
   return -10000 < matchPoints && matchPoints <= -2000; // -9999 to -2000
 }
 
-export function isWinner(matchPoints: number, pointsLimit?: number): boolean {
-  if (pointsLimit === undefined) {
-    return false;
-  }
-
-  return matchPoints > pointsLimit;
-}
-
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -290,40 +249,6 @@ export function formatTemplate(
     msg = msg.replaceAll(`{${key}}`, String(value));
   }
   return msg.trim();
-}
-
-// The dedicated server rejects ChatSendServerMessage calls with a
-// "Text too long" fault once the message exceeds this length.
-export const CHAT_MESSAGE_MAX_LENGTH = 1000;
-
-export function splitChatMessage(
-  message: string,
-  maxLength: number = CHAT_MESSAGE_MAX_LENGTH,
-): string[] {
-  const trimmed = message.trim();
-
-  if (trimmed.length <= maxLength) {
-    return trimmed.length > 0 ? [trimmed] : [];
-  }
-
-  const chunks: string[] = [];
-  let remaining = trimmed;
-
-  while (remaining.length > maxLength) {
-    let splitAt = remaining.lastIndexOf(" ", maxLength);
-    if (splitAt <= 0) {
-      splitAt = maxLength;
-    }
-
-    chunks.push(remaining.slice(0, splitAt).trim());
-    remaining = remaining.slice(splitAt).trim();
-  }
-
-  if (remaining.length > 0) {
-    chunks.push(remaining);
-  }
-
-  return chunks;
 }
 
 export const permissions: string[] = [
@@ -484,74 +409,6 @@ export function weekDayNumberToName(dayNum: number): string {
   // dayNum should be 0–6
   return days[dayNum] || "Invalid day";
 }
-
-export function getSpectatorStatus(spectatorStatus: number): SpectatorStatus {
-  return {
-    spectator: spectatorStatus % 10 === 1,
-    temporarySpectator: Math.floor(spectatorStatus / 10) % 10 === 1,
-    pureSpectator: Math.floor(spectatorStatus / 100) % 10 === 1,
-    autoTarget: Math.floor(spectatorStatus / 1000) % 10 === 1,
-    currentTargetId: Math.floor(spectatorStatus / 10000),
-  };
-}
-
-export function rankPlayers(
-  players: Player[],
-  ta?: boolean,
-): (Player & { position: number })[] {
-  return [...players]
-    .sort((a, b) => {
-      const racetimeA = ta ? a.bestracetime : a.prevracetime;
-      const racetimeB = ta ? b.bestracetime : b.prevracetime;
-
-      if (racetimeA === -1 && racetimeB === -1) return 0; // order doesn't matter
-      if (racetimeA === -1) return 1; // a goes last
-      if (racetimeB === -1) return -1; // b goes last
-
-      // 1️⃣ Compare total prevracetime
-      if (racetimeA !== racetimeB) return racetimeA - racetimeB;
-
-      // 2️⃣ Tie-break: compare checkpoints from last to first (excluding first checkpoint if needed)
-      const cpA = ta ? a.bestracecheckpoints : a.prevracecheckpoints;
-      const cpB = ta ? b.bestracecheckpoints : b.prevracecheckpoints;
-      const len = Math.min(cpA.length, cpB.length);
-
-      for (let i = len - 1; i >= 0; i--) {
-        if (cpA[i] !== cpB[i]) return cpA[i] - cpB[i];
-      }
-
-      // 3️⃣ Fully equal
-      return 0;
-    })
-    .map((player, index) => ({
-      ...player,
-      position: index + 1,
-    }));
-}
-
-export const colorMapping: {
-  [key: string]: {
-    mainColor: string;
-    secondaryColor: string;
-    textColor: string;
-  };
-} = {
-  red: {
-    mainColor: "A22",
-    secondaryColor: "922",
-    textColor: "DDD",
-  },
-  blue: {
-    mainColor: "22A",
-    secondaryColor: "229",
-    textColor: "DDD",
-  },
-  default: {
-    mainColor: "",
-    secondaryColor: "",
-    textColor: "",
-  },
-};
 
 /**
  * Converts a pick and ban configuration to a string.

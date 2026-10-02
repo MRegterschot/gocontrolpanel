@@ -1,8 +1,8 @@
 "use server";
 
 import { doServerActionWithAuth } from "@/lib/actions";
-import { getGbxClient } from "@/lib/managers/gbxclient-manager";
-import { SPlayerInfo } from "@/types/gbx/player";
+import { gbxService, getGbxClient } from "@/lib/gbx-service";
+import { SPlayerInfo } from "@gcp/shared";
 import { ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
 
@@ -105,12 +105,7 @@ export async function sendChatMessage(
       const roleColor = role === "Admin" ? "D00" : "FC0";
       const fullMessage = `$z[$${roleColor}${role}$z] ${session.user.displayName}: ${message.trim()}`;
 
-      const client = await getGbxClient(serverId);
-      if (login) {
-        await client.call("ChatSendServerMessageToLogin", fullMessage, login);
-      } else {
-        await client.call("ChatSendServerMessage", fullMessage);
-      }
+      await gbxService.sendChat(serverId, fullMessage, login);
 
       await logAudit(
         session.user.id,

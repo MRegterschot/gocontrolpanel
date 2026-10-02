@@ -3,12 +3,11 @@
   "version": "0.12.0-beta",
   "private": true,
   "scripts": {
-    "dev": "bun run build:templates && tsx src/server.ts | pino-pretty",
-    "build": "bun run build:templates && next build --webpack",
+    "dev": "next dev --webpack | pino-pretty",
+    "build": "next build --webpack",
     "start": "cp -r .next/static .next/standalone/apps/web/.next/static && cp -r public .next/standalone/apps/web/public && cp -r hetzner .next/standalone/apps/web/hetzner/ && node .next/standalone/apps/web/server.js | pino-pretty",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit",
-    "build:templates": "handlebars src/lib/manialink/templates/ -f src/lib/manialink/compiled_templates.js -e hbs --commonjs handlebars/runtime"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@codemirror/lang-cpp": "^6.0.2",
@@ -17,8 +16,8 @@
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "@evotm/gbxclient": "^1.5.0",
     "@gcp/db": "workspace:*",
+    "@gcp/shared": "workspace:*",
     "@hookform/resolvers": "^5.0.1",
     "@radix-ui/react-alert-dialog": "^1.1.7",
     "@radix-ui/react-avatar": "^1.1.3",
@@ -46,18 +45,15 @@
     "@types/range_check": "^2.0.0",
     "@types/react-world-flags": "^1.6.0",
     "@types/twig": "^1.12.17",
-    "@types/ws": "^8.18.1",
     "@uiw/react-codemirror": "^4.23.12",
     "axios": "^1.15.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
-    "cookie": "^1.0.2",
     "dotenv": "^16.4.7",
     "embla-carousel-react": "^8.6.0",
     "fs": "^0.0.1-security",
     "handlebars": "^4.7.8",
-    "handlebars-layouts": "^3.1.4",
     "ioredis": "^5.6.1",
     "is-localhost-ip": "^2.0.0",
     "jsonwebtoken": "^9.0.2",
@@ -66,7 +62,6 @@
     "next-auth": "^4.24.11",
     "next-plausible": "^4.0.0",
     "next-themes": "^0.4.6",
-    "next-ws": "^2.2.11",
     "papaparse": "^5.5.4",
     "path": "^0.12.7",
     "pino": "^10.3.1",
@@ -88,7 +83,6 @@
     "tmtags": "^1.0.3",
     "tw-animate-css": "^1.2.5",
     "vaul": "^1.1.2",
-    "ws": "^8.18.3",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -105,7 +99,6 @@
     "eslint-config-prettier": "^10.1.1",
     "nextjs-node-loader": "^1.1.9",
     "tailwindcss": "^4",
-    "tsx": "^4.20.3",
     "typescript": "^5"
   }
 }

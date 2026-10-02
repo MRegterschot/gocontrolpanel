@@ -1,11 +1,10 @@
-import { getAllServers, syncAllMaps } from "./actions/database/server-only/gbx";
+import { syncAllMaps } from "./actions/database/server-only/gbx";
 import {
   authenticate,
   authenticateCredentials,
   getCredentialsToken,
   getTokens,
 } from "./lib/api/nadeo";
-import { getGbxClientManager } from "./lib/managers/gbxclient-manager";
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
@@ -25,8 +24,4 @@ export async function register() {
     await authenticateCredentials();
   }
   syncAllMaps();
-  const servers = await getAllServers();
-  for (const server of servers) {
-    getGbxClientManager(server.id);
-  }
 }

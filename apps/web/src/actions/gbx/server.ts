@@ -4,11 +4,8 @@ import { ServerSettingsSchemaType } from "@/forms/server/settings/settings-schem
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { getLogger } from "@/lib/logger";
+import { getGbxClient, publishServerEvent } from "@/lib/gbx-service";
 import { getFileManager } from "@/lib/managers/file-manager";
-import {
-  getGbxClient,
-  getGbxClientManager,
-} from "@/lib/managers/gbxclient-manager";
 import { LocalMapInfo } from "@/types/map";
 import { ServerError, ServerResponse } from "@/types/responses";
 import path from "path";
@@ -26,8 +23,11 @@ export async function getServerSettings(
         function: "getServerSettings",
       };
       const log = getLogger(serverId);
-      const manager = await getGbxClientManager(serverId);
-      const client = manager.client;
+      const client = getGbxClient(serverId);
+      const server = await getClient().servers.findUnique({
+        where: { id: serverId },
+        select: { enableHelpCommand: true },
+      });
       const settings = await client.multicall([
         ["GetServerOptions"],
         ["GetHideServer"],
@@ -77,7 +77,7 @@ export async function getServerSettings(
           downloadRate: systemInfo.ConnectionDownloadRate,
           uploadRate: systemInfo.ConnectionUploadRate,
           profileSkins: !profileSkinsDisabled,
-          enableHelpCommand: manager.info.enableHelpCommand ?? false,
+          enableHelpCommand: server?.enableHelpCommand ?? false,
         };
 
         return serverSettings;
@@ -102,8 +102,7 @@ export async function saveServerSettings(
         function: "saveServerSettings",
       };
       const log = getLogger(serverId);
-      const manager = await getGbxClientManager(serverId);
-      const client = manager.client;
+      const client = getGbxClient(serverId);
       const db = getClient();
 
       if (serverSettings.enableHelpCommand !== undefined) {
@@ -112,7 +111,7 @@ export async function saveServerSettings(
           data: { enableHelpCommand: serverSettings.enableHelpCommand },
         });
 
-        manager.info.enableHelpCommand = serverSettings.enableHelpCommand;
+        await publishServerEvent({ type: "server.updated", serverId });
       }
 
       serverSettings.defaultOptions.NextCallVoteTimeOut *= 1000; // Convert to milliseconds
@@ -188,7 +187,7 @@ export async function getLocalMaps(
         function: "getLocalMaps",
       };
       const log = getLogger(serverId);
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
 
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {

@@ -2,7 +2,7 @@
 
 import ClientCard from "@/components/servers/clients/client-card";
 import useWebSocket from "@/hooks/use-websocket";
-import { ServerClient } from "@/types/server";
+import { ServerClient, wsPaths } from "@gcp/shared";
 import { useCallback, useState } from "react";
 
 export default function AdminServerClientsPage() {
@@ -65,7 +65,7 @@ export default function AdminServerClientsPage() {
   }, []);
 
   useWebSocket({
-    url: "/api/ws/clients",
+    path: wsPaths.clients,
     onMessage: handleMessage,
   });
 

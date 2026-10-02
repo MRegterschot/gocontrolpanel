@@ -2,7 +2,7 @@
 
 import { createColumns } from "@/app/(gocontroller)/server/[id]/players/players-columns";
 import useWebSocket from "@/hooks/use-websocket";
-import { PlayerInfo } from "@/types/player";
+import { PlayerInfo, wsPaths } from "@gcp/shared";
 import { useCallback, useState } from "react";
 import { DataTable } from "../table/data-table";
 
@@ -37,7 +37,7 @@ export default function PlayerList({ serverId }: PlayerListProps) {
   }, []);
 
   useWebSocket({
-    url: `/api/ws/players/${serverId}`,
+    path: wsPaths.players(serverId),
     onMessage: handleMessage,
   });
 

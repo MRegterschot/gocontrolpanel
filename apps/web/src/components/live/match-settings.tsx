@@ -1,4 +1,4 @@
-import { Team } from "@/types/live";
+import { Team } from "@gcp/shared";
 import TeamsActions from "./teams-actions";
 
 interface MatchSettingsProps {

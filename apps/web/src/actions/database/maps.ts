@@ -3,10 +3,9 @@ import { doServerActionWithAuth } from "@/lib/actions";
 import { getAccountNames, getMapsInfo } from "@/lib/api/nadeo";
 import { getClient } from "@/lib/dbclient";
 import { getLogger, logger } from "@/lib/logger";
-import { getGbxClient } from "@/lib/managers/gbxclient-manager";
+import { getGbxClient } from "@/lib/gbx-service";
 import { Maps, Prisma } from "@gcp/db";
-import { SMapInfo } from "@/types/gbx/map";
-import { MapInfoMinimal } from "@/types/map";
+import { MapInfoMinimal, SMapInfo } from "@gcp/shared";
 import {
   PaginationResponse,
   ServerError,

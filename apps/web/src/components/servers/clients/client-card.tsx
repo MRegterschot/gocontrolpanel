@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getErrorMessage } from "@/lib/utils";
 import { ServerError } from "@/types/responses";
-import { ServerClient } from "@/types/server";
+import { ServerClient } from "@gcp/shared";
 import { IconPlugConnected, IconPlugConnectedX } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";

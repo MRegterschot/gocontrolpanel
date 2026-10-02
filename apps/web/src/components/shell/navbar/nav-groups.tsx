@@ -28,7 +28,7 @@ import { useServers } from "@/providers/servers-provider";
 import { connectionRoutes, routePermissions, routes } from "@/routes";
 import { UserGroup } from "@/types/auth";
 import { ServerError } from "@/types/responses";
-import { ServerInfo } from "@/types/server";
+import { ServerInfo } from "@gcp/shared";
 import {
   IconActivity,
   IconAdjustmentsAlt,

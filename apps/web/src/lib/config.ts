@@ -25,6 +25,14 @@ const config: Config = {
     CONTACT: process.env.NADEO_CONTACT || "",
   },
   REDISURI: process.env.REDIS_URI || "",
+  GBX_SERVICE: {
+    // Reached by the web server only
+    URL: process.env.GBX_SERVICE_URL || "http://localhost:3100",
+    // Reached by the browser for live updates
+    WS_URL: process.env.GBX_SERVICE_WS_URL || "ws://localhost:3100",
+    TOKEN: process.env.GBX_SERVICE_TOKEN || "",
+    WS_TICKET_SECRET: process.env.WS_TICKET_SECRET || "",
+  },
 };
 
 export default config;
