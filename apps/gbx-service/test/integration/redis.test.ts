@@ -14,7 +14,7 @@ describe.skipIf(!url)("Redis adapters", () => {
   let redis: Redis;
 
   beforeAll(async () => {
-    redis = createRedis(url!);
+    redis = createRedis(url!, silentLogger, "test");
     await redis.flushdb();
   });
 
@@ -38,7 +38,7 @@ describe.skipIf(!url)("Redis adapters", () => {
   });
 
   it("delivers lifecycle events and ignores malformed ones", async () => {
-    const subscriber = createRedis(url!);
+    const subscriber = createRedis(url!, silentLogger, "test");
     const received: ServerLifecycleEvent[] = [];
     const done = new Promise<void>((resolve) => {
       void subscribeToLifecycleEvents(

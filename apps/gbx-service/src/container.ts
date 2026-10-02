@@ -28,9 +28,9 @@ import { TicketVerifier } from "./http/ws/ticket-verifier";
 export function createContainer(config: Config) {
   const log = pino({ level: config.LOG_LEVEL });
   const db = createPrismaClient({ datasourceUrl: config.DATABASE_URL });
-  const redis = createRedis(config.REDIS_URI);
+  const redis = createRedis(config.REDIS_URI, log, "commands");
   // Subscriber connections cannot run normal commands
-  const subscriber = createRedis(config.REDIS_URI);
+  const subscriber = createRedis(config.REDIS_URI, log, "subscriber");
 
   const players = new PrismaPlayerRepository(db);
   const servers = new PrismaServerRepository(db);
