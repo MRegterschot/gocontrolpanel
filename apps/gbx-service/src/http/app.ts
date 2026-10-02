@@ -25,6 +25,14 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     logController: new LogController({ disableRequestLogging: true }),
   });
 
+  // Clients often send a JSON content type on bodyless POSTs (reconnect, disconnect, ...)
+  const parseJson = app.getDefaultJsonParser("error", "error");
+  app.removeContentTypeParser("application/json");
+  app.addContentTypeParser("application/json", { parseAs: "string" }, (request, body, done) => {
+    if (body === "") return done(null, undefined);
+    parseJson(request, body.toString(), done);
+  });
+
   app.setErrorHandler(errorHandler);
   app.setNotFoundHandler((request, reply) =>
     reply.status(404).send({ error: { code: "NotFound", message: `Route ${request.url} not found` } }),

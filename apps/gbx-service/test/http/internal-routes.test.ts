@@ -77,6 +77,28 @@ describe("connection controls", () => {
     expect(res.json().data).toEqual({ connected: true });
   });
 
+  it("accepts bodyless POSTs sent with a JSON content type", async () => {
+    const { app } = await setup();
+    const res = await app.inject({
+      method: "POST",
+      url: internalPaths.reconnect("server-1"),
+      headers: { authorization: `Bearer ${SERVICE_TOKEN}`, "content-type": "application/json" },
+    });
+    expect(res.statusCode).toBe(200);
+  });
+
+  it("still rejects malformed JSON", async () => {
+    const { app } = await setup();
+    const res = await app.inject({
+      method: "POST",
+      url: internalPaths.chat("server-1"),
+      headers: { authorization: `Bearer ${SERVICE_TOKEN}`, "content-type": "application/json" },
+      payload: "{nope",
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error.code).toBe("BadRequest");
+  });
+
   it("resends manialinks and reloads plugins", async () => {
     const { request } = await setup();
     expect((await request("POST", internalPaths.resendManialinks("server-1"))).statusCode).toBe(200);
