@@ -34,7 +34,7 @@ jobs:
       - name: Build and tag image
         run: |
           IMAGE=${{ secrets.DOCKER_USERNAME }}/${{ vars.DOCKER_IMAGE_NAME }}${{ matrix.db.suffix }}
-          docker build -t $IMAGE:${{ env.RELEASE_TAG }} . --build-arg DB_TYPE=${{ matrix.db.name }}
+          docker build -f apps/web/Dockerfile -t $IMAGE:${{ env.RELEASE_TAG }} . --build-arg DB_TYPE=${{ matrix.db.name }}
 
           if [ "${{ env.IS_PRERELEASE }}" = "true" ]; then
             docker tag $IMAGE:${{ env.RELEASE_TAG }} $IMAGE:beta
