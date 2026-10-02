@@ -12,10 +12,10 @@ Branch: `refactor/monorepo-gbx-service`
 | 1. Monorepo conversion | Done: web builds from `apps/web`; Prisma lives in `@gcp/db` |
 | 2. Shared contracts | Done: `@gcp/shared` |
 | 3. GBX service | Done: `apps/gbx-service`, 234 unit/component/HTTP/WS tests + 10 integration tests (real Postgres/Redis) + adapter tests against a fake GBXRemote 2 server |
-| 4. Web cut-over | Next |
+| 4. Web cut-over | Done on `refactor/web-gbx-cutover`, pending the real-server run in [real-server-testing.md](./real-server-testing.md) §9 |
 | 5. Server Actions → API routes | After 4 |
 
-The `gbx-service` block in `docker-compose.yml` is commented out until phase 4, so it can't run alongside the web app's own GBX connections by accident.
+`docker-compose.yml` runs the web app and `gbx-service` side by side; the web app no longer opens GBX connections itself.
 
 ## Decisions
 
@@ -125,11 +125,12 @@ Exit: `bun run --filter gbx-service typecheck test build` is green, and the serv
 
 **At this point the web app still runs its own GBX managers.** Don't run both against the same dedicated servers in production (X-2) until phase 4 lands.
 
-### Phase 4: web cut-over (next step, not part of this branch's first deliverable)
-- Next issues WS tickets (`/api/ws-ticket`). `useWebSocket` connects to the service, with the URL from env.
-- `src/actions/gbx/**` and the GBX-touching parts of `database/servers.ts` / `server-plugins.ts` call the internal API. Lifecycle events are published after DB writes.
-- Delete from web: `src/server.ts`, `next-ws`, `src/app/api/ws`, `src/lib/managers/{gbxclient,plugin,manialink}-manager.ts`, `src/plugins`, `src/lib/manialink`, the GBX boot in `instrumentation.ts`, `@evotm/gbxclient`, the handlebars deps.
-- Web switches its duplicated types to `@gcp/shared`.
+### Phase 4: web cut-over (branch `refactor/web-gbx-cutover`)
+- Next issues WS tickets (`/api/ws-ticket`), which also return the browser-facing socket URL (`GBX_SERVICE_WS_URL`), so the URL isn't baked into the build. `useWebSocket` takes a channel path from `wsPaths`, fetches a ticket per attempt and reconnects with backoff; every channel resends its state on open.
+- `src/lib/gbx-service.ts` is the only way the web app reaches a dedicated server: `getGbxClient(id)` for allowlisted passthrough calls, `gbxService.*` for stateful commands (script, match settings, script settings, pause, maps, points, chat, chat config, connection controls, plugin reload).
+- Lifecycle events go through `POST /internal/server-events` after DB writes (server create/update/delete, including the Hetzner setup flow, plugin enable/config changes, help-command toggle). The HTTP route is used instead of Redis pub/sub because the web's Redis client doesn't reconnect after a drop. A failed notification is logged, not thrown, because the DB write already succeeded and the service reads all servers on start.
+- Deleted from web: `src/server.ts`, `next-ws`, `src/app/api/ws`, `src/lib/managers/{gbxclient,plugin,manialink}-manager.ts`, `src/plugins`, `src/lib/manialink`, the GBX boot in `instrumentation.ts`, the manager-only DB helpers (records, matches, players, notifications), `@evotm/gbxclient`, `handlebars-layouts`, `ws`, `cookie`, `tsx`. `handlebars` stays for the Hetzner cloud-init templates.
+- Web imports live, player, map and server types from `@gcp/shared`. Plugin config types stay in web for now: the forms edit the optional input shape, while the shared ones are zod output types.
 
 ### Phase 5: Server Actions → API routes
 NX-1…NX-8: route handlers with `withApiAuth`, a typed client data layer, and a service/route/client split per feature.

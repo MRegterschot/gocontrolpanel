@@ -160,6 +160,8 @@ Check each widget visually in the game client. Compare with screenshots from the
 
 The service must match the old behaviour apart from the fixed bugs listed in `backend-split-requirements.md`. Run the same scenario once with the old app and once with the service, **never both at the same time**:
 
+The old web app only exists up to `refactor/monorepo-gbx-service`; `refactor/web-gbx-cutover` removes it. Check out that branch for step 1.
+
 1. Stop the service. Temporarily point `DATABASE_URL` and `REDIS_URI` in the root `.env` at the e2e stack (`mysql://gcp:gcp@localhost:53307/gcp_e2e`, `redis://localhost:56380`) and run `bun run dev` from the repo root. The web app connects to `e2e-server` itself. Restore the `.env` afterwards.
 2. Play the scenario below; screenshot every widget; save the live dashboard's WebSocket frames (browser devtools → Network → WS → copy messages).
 3. Note the `matches`/`records` rows (`select round, count(*) from records where matchId = ... group by round`).
@@ -176,14 +178,48 @@ Compare:
 
 Known intentional differences: map points no longer overwrite round points, the TA leaderboard ordering, and window close behaviour.
 
-## 9. Exit criteria for phase 4
+## 9. Web app against the service
+
+From `refactor/web-gbx-cutover` on, the web app has no GBX connections of its own and talks to the service, so it can run against the e2e stack next to it. Add to the root `.env` (keep a copy of your own values to restore afterwards):
+
+```bash
+DB=mysql
+DATABASE_URL=mysql://gcp:gcp@localhost:53307/gcp_e2e
+REDIS_URI=redis://localhost:56380
+GBX_SERVICE_URL=http://localhost:3101
+GBX_SERVICE_WS_URL=ws://localhost:3101
+GBX_SERVICE_TOKEN=e2e-service-token-0123456789abcdefghij
+WS_TICKET_SECRET=e2e-ticket-secret-0123456789abcdefghij
+```
+
+Then `bun run generate` (MySQL client) and `bun run dev` next to `bun run e2e:dev`, and log in with the account from `E2E_ADMIN_LOGIN`. Keep the browser devtools open on Network → WS.
+
+| ID | Steps | Expected |
+|---|---|---|
+| W1 | Open the panel | Sidebar lists `e2e-server` as connected; sockets go to `ws://localhost:3101/ws/...?ticket=...`; `/api/ws-ticket` returns 200 |
+| W2 | `dce restart dedicated` with the server page and `/admin/servers` open | Sidebar and client card go offline, show the reconnect countdown, and come back without a page reload |
+| W3 | Stop `e2e:dev` for ~20 s, then start it again | Sockets retry with growing intervals (1 s, 2 s, 4 s, ...) and resync on reconnect; actions in between show "GBX service is unavailable" |
+| W4 | Live page while driving (TA and rounds); set round/match points for a player and a team | Same updates as `ws:watch live`; points change on the scoreboard and in the dashboard |
+| W5 | Players page: list, kick, ban/unban, black list and guest list add/remove/load/save/clean, force spectator | Same results as A9; audit log rows written |
+| W6 | Maps page: add a local map, add several, remove one, remove all (expect an error), reorder, jump to a map, restart, next map | Matches A3–A5; "Cannot remove the last map from the server" shown as an error; map list chat template posted once per change |
+| W7 | Jukebox: queue a map, finish the current one | Queued map is played next and leaves the jukebox (A10) |
+| W8 | Game page: change script, load and save match settings, append/insert playlist, save script settings, pause/unpause from the live page | Chat templates posted once; `updatedSettings` arrives; paused round not counted twice (L8) |
+| W9 | Settings page: change server options, rates and toggles; turn the help command off | Values read back after a reload; `/help` stays silent without a service restart |
+| W10 | Chat config: enable manual routing with a message format; also save once with the dedicated server stopped | Player chat is re-sent in the format; the stopped-server save stores `manualRouting: false` and shows the error |
+| W11 | Plugins page: disable a plugin, change a plugin config, reload plugins | Widget disappears or updates immediately; no restart needed (P14, P15) |
+| W12 | `/admin/servers`: stop reconnect during retries, reconnect, resend manialinks, disconnect | Same as C3–C6, triggered from the UI |
+| W13 | Edit the server: rename it; then set a wrong XML-RPC password and save; then restore it | Service logs `server.updated` each time; the new name shows on `/admin/servers` (the sidebar takes names from the session, so after the next session refresh); the wrong password disconnects and retries (C7); restoring it reconnects |
+| W14 | Advanced page: connect and disconnect a fake player, copy the join link; send a chat message from the live page, public and to one player | Works as before; message prefixed with your role and name |
+| W15 | Click the admin help button in game | Notification toast in the panel (P8) |
+
+## 10. Exit criteria for phase 4
 
 - All of sections 2–7 pass, or have an accepted issue linked in the results log.
 - The parity run shows no unexplained difference.
 - The R6 soak shows stable memory and no duplicate records.
 - Every bug found has a regression test in `apps/gbx-service/test`.
 
-## 10. Results log
+## 11. Results log
 
 Copy per test run.
 
