@@ -1,0 +1,408 @@
+{{#extend "widget"}}
+{{#content "widget"}}
+<frame pos="0 0">
+  <quad pos="0 0" z-index="0" size="55 5" bgcolor="222"/>
+  <label pos="27.5 -2.25" z-index="0" size="55 5" text="Live Round" halign="center" textsize="1" textfont="GameFontSemiBold" valign="center"/>
+</frame>
+
+<framemodel id="round">
+  <quad pos ="0 0" z-index="0" size="5 5" bgcolor="222"/>
+  <quad pos="5 0" z-index="0" size="35.5 5" bgcolor="DDD"/>
+  <quad pos="40.5 0" z-index="0" size="14.5 5" bgcolor="BBB"/>
+  <label pos="2.4 -2.25" z-index="0" size="5 5" text="0" halign="center" valign="center" textsize="1.25" textcolor="DDD" textfont="GameFontSemiBold"/>
+  <quad pos="6.25 -1" z-index="0" size="4.5 3" bgcolor="DDD" image="file://Media/Flags/WOR.dds"/>
+  <label pos="12 -2.25" z-index="0" size="22 5" text="-" textcolor="222" textsize="1.2" textfont="GameFontRegular" valign="center"/>
+  <label pos="39.75 -2.25" z-index="0" size="5 5" text="0" halign="right" textcolor="222" textsize="1" textfont="GameFontSemiBold" valign="center"/>
+  <label pos="54 -2.25" z-index="0" size="12.5 5" text="--:--.---" valign="center" halign="right" textsize="1" textcolor="222" textfont="GameFontSemiBold"/>
+  
+  <frame pos="47.5 0" size="14 5" id="finish" z-index="-2">
+    <quad pos="0 0" size="7 5" bgcolor="222" z-index="-2" />
+    <label pos="3.5 -2.25" size="6 5" z-index="-1" text="" halign="center" valign="center" textsize="1.25" textcolor="DDD" />
+
+    <quad pos="7 0" size="7 5" bgcolor="222" z-index="-2" hidden="1" />
+    <label pos="10.5 -2.25" size="6 5" z-index="-1" text="WR" halign="center" valign="center" textsize="1.25" textfont="GameFontSemiBold" textcolor="DDD" hidden="1" />
+  </frame>
+
+  <quad class="trigger" pos="0 0" z-index="-2" size="57 5" bgcolor="000" opacity="0" scriptevents="1" />
+</framemodel>
+
+<frame id="rounds" pos="0 -5.25" size="69 42">
+<quad size="55 {{ multiply 100 5.25 }}" bgcolor="fff" opacity="0" scriptevents="1"/>
+{{#range 0 100}}
+<frameinstance modelid="round" pos="0 {{ multiply i -5.25 }}" />
+{{/range}}
+</frame>
+{{/content}}
+
+
+{{#content "globals"}}
+#Struct Team {
+  Text mainColor;
+  Text secondaryColor;
+  Text textColor;
+}
+
+#Struct Round {
+  Text login;
+  Text name;
+  Integer rank;
+  Integer points;
+  Integer[] checkpoints;
+  Integer time;
+  Team team;
+}
+
+#Struct Finish {
+  Text login;
+  Integer points;
+  Boolean isPersonalBest;
+  Boolean isLocalRecord;
+  Boolean isWorldRecord;
+}
+{{/content}}
+
+{{#content "script"}}
+Text formatTime(Integer time) {
+  declare Text secondString;
+  declare Text msString;
+
+  if (time < 0) {
+    return "--:--.---";
+  }
+
+  declare Integer seconds = time / 1000;
+  declare Integer minutes = seconds / 60;
+  declare Integer milliseconds = time - (seconds * 1000);
+  seconds = seconds - (minutes * 60);
+
+  secondString = TL::ToText(seconds);
+
+  if (seconds < 10) {
+    secondString = "0" ^ secondString;
+  }
+
+  if (milliseconds <= 0) {
+    msString = "000";
+  } else if (milliseconds < 10) {
+    msString = "00" ^ TL::ToText(milliseconds);
+  } else if (milliseconds < 100) {
+    msString = "0" ^ TL::ToText(milliseconds);
+  } else {
+    msString = TL::ToText(milliseconds);
+  }
+
+  if (minutes > 0) {
+    return TL::ToText(minutes) ^ ":" ^ secondString ^ "." ^ msString;
+  } else {
+    return secondString ^ "." ^ msString;
+  }
+
+  return "";
+}
+
+// Computes the checkpoint gap to the leader for every round, in rounds order.
+// Mirrors the Delta/MinDelta approach used to rank live players by checkpoint:
+// each player's gap is compared against the leader at their last reached checkpoint
+// (falling back to the leader's next checkpoint if the leader is already past it),
+// then clamped to never be smaller than the running gap of players ahead of them.
+Integer[] getCheckpointGaps(Round[] rounds) {
+  declare Integer[] gaps = Integer[];
+
+  if (rounds.count == 0) {
+    return gaps;
+  }
+
+  declare Round firstPlaceRound = rounds[0];
+
+  // The furthest checkpoint time reached by anyone currently racing
+  declare Integer GlobalLastCPTime = -1;
+  foreach (round in rounds) {
+    if (round.checkpoints.count == 0) continue;
+
+    declare Integer lastTime = round.checkpoints[round.checkpoints.count - 1];
+    if (lastTime > GlobalLastCPTime) {
+      GlobalLastCPTime = lastTime;
+    }
+  }
+
+  declare Integer MinDelta = 0;
+  declare Integer Index = 0;
+  foreach (round in rounds) {
+    declare Integer Delta = 0;
+
+    if (Index != 0 && round.checkpoints.count > 0) {
+      declare Integer lastCheckpointIndex = round.checkpoints.count - 1;
+      declare Integer playerCheckpointTime = round.checkpoints[lastCheckpointIndex];
+
+      if (firstPlaceRound.checkpoints.count > lastCheckpointIndex + 1) {
+        // Leader already reached the next checkpoint -> also compare against that
+        Delta = ML::Max(
+          playerCheckpointTime - firstPlaceRound.checkpoints[lastCheckpointIndex],
+          GlobalLastCPTime - firstPlaceRound.checkpoints[lastCheckpointIndex + 1]
+        );
+      } else if (firstPlaceRound.checkpoints.count > lastCheckpointIndex) {
+        Delta = playerCheckpointTime - firstPlaceRound.checkpoints[lastCheckpointIndex];
+      }
+    }
+
+    // The gap can never shrink compared to players ahead in the ranking
+    if (Delta > MinDelta) {
+      MinDelta = Delta;
+    } else {
+      Delta = MinDelta;
+    }
+
+    gaps.add(Delta);
+    Index += 1;
+  }
+
+  return gaps;
+}
+
+Text getTimeDiffText(Round playerRound, Integer checkpointGap) {
+  if (playerRound.login == "") {
+    return "--:--.---";
+  }
+
+  // If the player's time is -1, return DNF
+  if (playerRound.time == -1) {
+    return "DNF";
+  }
+
+  // If the player has no checkpoints, return --:--.---
+  if (playerRound.checkpoints.count == 0) {
+    return "--:--.---";
+  }
+
+  // If the player is rank 1, return their time
+  if (playerRound.rank == 1) {
+    return formatTime(playerRound.time);
+  }
+
+  return "+" ^ formatTime(checkpointGap);
+}
+
+Void updateRoundRow(Integer index, Round round, Integer checkpointGap, Text mode, Integer pointsLimit) {
+  declare roundsFrame <=> (Page.MainFrame.GetFirstChild("rounds") as CMlFrame);
+
+  if (index >= roundsFrame.Controls.count) {
+    return;
+  }
+
+  declare roundFrame <=> (roundsFrame.Controls[index + 1] as CMlFrame);
+  (roundFrame.Controls[3] as CMlLabel).SetText(TL::ToText(round.rank));
+  (roundFrame.Controls[4] as CMlQuad).ChangeImageUrl("file://ZoneFlags/Login/" ^ round.login ^ "/country");
+  (roundFrame.Controls[5] as CMlLabel).SetText(round.name);
+
+  declare Text pointsText = TL::ToText(round.points);
+  if (mode == "cup" && pointsLimit > 0) {
+    if (round.points > pointsLimit) {
+      pointsText = "$2C2W";
+    } else if (round.points == pointsLimit) {
+      pointsText = "$D22F";
+    }
+  } else if (mode == "rounds" && pointsLimit > 0) {
+    if (round.points >= pointsLimit && round.team.mainColor == "") {
+      pointsText = "$2C2W";
+    }
+  } else if (mode == "reversecup") {
+    if (-2000 < round.points && round.points <= -1000) {
+      pointsText = "$D22LC";
+    } else if (round.points <= -2000) {
+      pointsText = "$D22E";
+    }
+  }
+
+  (roundFrame.Controls[6] as CMlLabel).SetText(pointsText);
+  (roundFrame.Controls[7] as CMlLabel).SetText(getTimeDiffText(round, checkpointGap));
+  roundFrame.DataAttributeSet("login", round.login);
+
+  if (round.team.mainColor != "") {
+    (roundFrame.Controls[0] as CMlQuad).BgColor = CL::Hex3ToRgb(round.team.mainColor);
+    (roundFrame.Controls[1] as CMlQuad).BgColor = CL::Hex3ToRgb(round.team.secondaryColor);
+    (roundFrame.Controls[2] as CMlQuad).BgColor = CL::Hex3ToRgb(round.team.mainColor);
+    (roundFrame.Controls[4] as CMlQuad).BgColor = CL::Hex3ToRgb(round.team.secondaryColor);
+    (roundFrame.Controls[5] as CMlLabel).TextColor = CL::Hex3ToRgb(round.team.textColor);
+    (roundFrame.Controls[6] as CMlLabel).TextColor = CL::Hex3ToRgb(round.team.textColor);
+    (roundFrame.Controls[7] as CMlLabel).TextColor = CL::Hex3ToRgb(round.team.textColor);
+  } else {
+    (roundFrame.Controls[0] as CMlQuad).BgColor = CL::Hex3ToRgb("222");
+    (roundFrame.Controls[1] as CMlQuad).BgColor = CL::Hex3ToRgb("DDD");
+    (roundFrame.Controls[2] as CMlQuad).BgColor = CL::Hex3ToRgb("BBB");
+    (roundFrame.Controls[4] as CMlQuad).BgColor = CL::Hex3ToRgb("DDD");
+    (roundFrame.Controls[5] as CMlLabel).TextColor = CL::Hex3ToRgb("222");
+    (roundFrame.Controls[6] as CMlLabel).TextColor = CL::Hex3ToRgb("222");
+    (roundFrame.Controls[7] as CMlLabel).TextColor = CL::Hex3ToRgb("222");
+  }
+
+  roundFrame.Show();
+}
+
+Void updateFinish(Text login, Integer points, Boolean finished, Boolean isPersonalBest, Boolean isLocalRecord, Boolean isWorldRecord, Text localRecordText) {
+  declare roundsFrame <=> (Page.MainFrame.GetFirstChild("rounds") as CMlFrame);
+
+  foreach (control in roundsFrame.Controls) {
+    // Skip first control (invisible background quad)
+    if (control == roundsFrame.Controls[0]) {
+      continue;
+    }
+
+    declare roundFrame <=> (control as CMlFrame);
+    declare Text frameLogin = roundFrame.DataAttributeGet("login");
+
+    if (frameLogin == login) {
+      declare frameFinish <=> (roundFrame.GetFirstChild("finish") as CMlFrame);
+
+      AnimMgr.Flush(frameFinish);
+      
+      if (finished) {
+        if (points == 0) {
+          (frameFinish.Controls[1] as CMlLabel).SetText("");
+        } else {
+          declare Text pointsText = "+" ^ TL::ToText(points);
+          if (points < 0) {
+            pointsText = "-" ^ TL::ToText(-points);
+          }
+          
+          (frameFinish.Controls[1] as CMlLabel).SetText(pointsText);
+        }
+
+        if (isPersonalBest) {
+          (frameFinish.Controls[3] as CMlLabel).SetText("PB");
+        } 
+        
+        if (isLocalRecord) {
+          (frameFinish.Controls[3] as CMlLabel).SetText(localRecordText);
+        }
+        
+        if (isWorldRecord) {
+          (frameFinish.Controls[3] as CMlLabel).SetText("WR");
+        }
+
+        if (isWorldRecord || isLocalRecord || isPersonalBest) {
+          (frameFinish.Controls[2] as CMlQuad).Show();
+          (frameFinish.Controls[3] as CMlLabel).Show();
+        } else {
+          (frameFinish.Controls[2] as CMlQuad).Hide();
+          (frameFinish.Controls[3] as CMlLabel).Hide();
+        }
+        
+        AnimMgr.Add(frameFinish, """<frame pos='55 0' />""", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
+      } else {
+        AnimMgr.Add(frameFinish, """<frame pos='47.5 0' />""", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
+        (frameFinish.Controls[2] as CMlQuad).Hide();
+        (frameFinish.Controls[3] as CMlLabel).Hide();
+      }
+
+      break;
+    }
+  }
+}
+
+Void clearFinishes(Round[] rounds, Text localRecordText) {
+  foreach (round in rounds) {
+    updateFinish(round.login, 0, False, False, False, False, localRecordText);
+  }
+}
+
+Void updateScroll(Round[] rounds, Integer rowCount) {
+  declare roundsFrame <=> (Page.MainFrame.GetFirstChild("rounds") as CMlFrame);
+  declare Integer roundCount = rounds.count;
+  if (roundCount > roundsFrame.Controls.count) {
+    roundCount = roundsFrame.Controls.count;
+  }
+  declare Real maxY = (roundCount - rowCount) * 5.25;
+  if (maxY < 0) {
+    maxY = 0.;
+  }
+  roundsFrame.ScrollMax = <0., maxY>;
+  roundsFrame.Size = <69., rowCount * 5.25>;
+}
+
+Void updateWidget(Round[] rounds, Text mode, Integer pointsLimit, Integer rowCount) {
+  declare roundCount = rounds.count;
+  declare index = 0;
+
+  declare Integer[] checkpointGaps = getCheckpointGaps(rounds);
+
+  foreach (round in rounds) {
+    updateRoundRow(index, round, checkpointGaps[index], mode, pointsLimit);
+    index = index + 1;
+  }
+
+  declare roundsFrame <=> (Page.MainFrame.GetFirstChild("rounds") as CMlFrame);
+  // Hide unused rows
+  while (index < roundsFrame.Controls.count - 1) {
+    declare roundFrame <=> (roundsFrame.Controls[index + 1] as CMlFrame);
+    roundFrame.DataAttributeSet("login", "");
+    roundFrame.Hide();
+    index = index + 1;
+  }
+
+  updateScroll(rounds, rowCount);
+}
+{{/content}}
+
+{{#content "main"}}
+declare Round[] Rounds for This;
+declare Finish[] Finishes for This = [];
+declare Text Mode for This = "rounds";
+declare Text localRecordText for This;
+declare Integer rowCount for This;
+declare Integer PointsLimit for This = -1;
+declare Integer LastRoundsUpdate for This = -1;
+declare Integer lastUpdate = -1;
+declare Finish[] prevFinishes = [];
+declare roundsFrame <=> (widget.GetFirstChild("rounds") as CMlFrame);
+roundsFrame.ScrollActive = True;
+roundsFrame.ScrollMin = <0., 0.>;
+{{/content}}
+
+{{#content "loop"}}
+if (LastRoundsUpdate != lastUpdate) {
+  lastUpdate = LastRoundsUpdate;
+  
+  updateWidget(Rounds, Mode, PointsLimit, rowCount);
+
+  if (Finishes.count == 0) {
+    clearFinishes(Rounds, localRecordText);
+  }
+
+  if (Finishes.count != prevFinishes.count) {
+    if (Finishes.count > prevFinishes.count) {
+      // Find newly finished players
+      foreach (finish in Finishes) {
+        declare Boolean found = False;
+        foreach (prevFinish in prevFinishes) {
+          if (finish.login == prevFinish.login) {
+            found = True;
+            break;
+          }
+        }
+
+        if (!found) {
+          updateFinish(finish.login, finish.points, True, finish.isPersonalBest, finish.isLocalRecord, finish.isWorldRecord, localRecordText);
+        }
+      }
+    } else {
+      clearFinishes(Rounds, localRecordText);
+      // Re-apply finished players
+      foreach (finish in Finishes) {
+        updateFinish(finish.login, finish.points, True, finish.isPersonalBest, finish.isLocalRecord, finish.isWorldRecord, localRecordText);
+      }
+    }
+  }
+
+  prevFinishes = Finishes;
+}
+{{/content}}
+
+{{#content "events"}}
+if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::MouseClick) {
+  declare targetLogin = event.Control.Parent.DataAttributeGet("login");
+  if (targetLogin != "") {
+    SetSpectateTarget(targetLogin);
+  }
+}
+{{/content}}
+{{/extend}}

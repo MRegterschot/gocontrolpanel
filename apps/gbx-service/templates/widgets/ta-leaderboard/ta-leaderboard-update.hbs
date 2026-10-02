@@ -1,0 +1,23 @@
+{{#extend "manialink"}}
+{{#content "content"}}
+<script>
+<!--
+#Struct Record {
+  Integer rank;
+  Integer time;
+  Text name;
+  Text login;
+}
+
+main(){
+  declare Record[] Records for This;
+  declare Integer LastRecordsUpdate for This;
+  declare Text recordsJson = """{{{ default data.recordsJson '[]' }}}""";
+
+  Records.fromjson(recordsJson);
+  LastRecordsUpdate = GameTime;
+}
+-->
+</script>
+{{/content}}
+{{/extend}}

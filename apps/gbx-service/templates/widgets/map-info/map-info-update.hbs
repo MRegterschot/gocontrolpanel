@@ -1,0 +1,21 @@
+{{#extend "manialink"}}
+{{#content "content"}}
+<script>
+<!--
+#Struct Map {
+  Text name;
+  Text author;
+}
+
+main(){
+  declare Map MapInfo for This;
+  declare Integer LastMapInfoUpdate for This;
+  declare Text mapJson = """{{{ default data.mapJson '{}' }}}""";
+
+  MapInfo.fromjson(mapJson);
+  LastMapInfoUpdate = GameTime;
+}
+-->
+</script>
+{{/content}}
+{{/extend}}

@@ -1,0 +1,41 @@
+{
+  "name": "@gcp/gbx-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=.env src/main.ts | pino-pretty",
+    "build": "tsup",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
+  },
+  "dependencies": {
+    "@evotm/gbxclient": "^1.5.0",
+    "@fastify/websocket": "^11.3.1",
+    "@gcp/db": "workspace:*",
+    "@gcp/shared": "workspace:*",
+    "@prisma/client": "^6.8.2",
+    "@sentry/node": "^10",
+    "fastify": "^5.12.5",
+    "handlebars": "^4.7.8",
+    "handlebars-layouts": "^3.1.4",
+    "ioredis": "^5.6.1",
+    "pino": "^10.3.1",
+    "slugid": "^5.0.1",
+    "tmtags": "^1.0.3",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/ws": "^8.18.1",
+    "pino-pretty": "^13.1.3",
+    "tsup": "^8.5.1",
+    "tsx": "^4.20.3",
+    "typescript": "^5",
+    "vitest": "^5.0.3",
+    "ws": "^8.18.3"
+  }
+}

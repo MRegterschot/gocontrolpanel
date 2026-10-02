@@ -1,0 +1,21 @@
+{{#extend "manialink"}}
+{{#content "content"}}
+<script>
+<!--
+main(){
+  declare Boolean ECMIsEditor for This;
+  declare Text ECMAPIKey for This;
+  declare Boolean ECMIsRecording for This;
+  declare Integer ECMCurrentRound for This;
+  declare Integer LastECMUpdate for This;
+  
+  ECMIsEditor = {{ bool data.isEditor }};
+  ECMAPIKey = "{{ data.apiKey }}";
+  ECMIsRecording = {{ bool data.isRecording }};
+  ECMCurrentRound = {{ data.currentRound }};
+  LastECMUpdate = GameTime;
+}
+-->
+</script>
+{{/content}}
+{{/extend}}

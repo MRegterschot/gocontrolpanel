@@ -1,0 +1,23 @@
+{{#extend "manialink"}}
+{{#content "content"}}
+<script>
+<!--
+#Struct ActiveRun {
+  Text login;
+  Text name;
+  Integer time;
+  Integer checkpoint;
+}
+
+main(){
+  declare ActiveRun[] ActiveRuns for This;
+  declare Integer LastActiveRunsUpdate for This;
+  declare Text activeRunsJson = """{{{ default data.activeRunsJson '[]' }}}""";
+
+  ActiveRuns.fromjson(activeRunsJson);
+  LastActiveRunsUpdate = GameTime;
+}
+-->
+</script>
+{{/content}}
+{{/extend}}

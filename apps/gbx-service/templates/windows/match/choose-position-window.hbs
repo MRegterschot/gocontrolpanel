@@ -1,0 +1,14 @@
+{{#extend "window"}}
+{{#content "window"}}
+<frame pos="2 -2" id="choose-position-window" size="{{ subtract size.x 4 }} {{ subtract size.y 4 }}">
+  {{#each data.positionsAvailable}}
+    <frame pos="{{ multiply @index 12 }} 0" size="10 10">
+      <quad pos="0 0" z-index="0" size="10 10" bgcolor="222"/>
+      <label pos="5 -4.5" z-index="0" size="10 10" text="{{ this }}" halign="center" valign="center" textsize="3" textcolor="DDD" textfont="GameFontBlack"/>
+
+      <quad class="trigger" pos="0 0" z-index="-2" size="10 10" bgcolor="000" opacity="0" scriptevents="1" action="{{ @root.data.choosePositionAction }}-{{ this }}" />
+    </frame>
+  {{/each}}
+</frame>
+{{/content}}
+{{/extend}}

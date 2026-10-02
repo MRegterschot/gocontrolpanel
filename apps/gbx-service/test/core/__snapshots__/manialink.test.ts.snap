@@ -1,0 +1,3882 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`TemplateRenderer > renders action-group 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<frame id="widget" pos="1 2" z-index="10" hidden="1">
+<frame pos="0 0" size="10 5" z-index="10">
+  <frame size="10 5" pos="-5 0">
+    <frame pos="5 0" size="5 5">
+      <quad size="5 5" bgcolor="222" />
+      <label pos="2.6 -2.15" text="" halign="center" valign="center" textsize="2.5" textcolor="DDD" />
+    </frame>
+
+      <frame pos="0 0" size="5 5">
+        <quad size="5 5" bgcolor="DDD" action="act" />
+          <quad image="x" size="3.5 3.5" pos="0.75 -0.75" />
+      </frame>
+
+    <quad class="trigger" pos="5 0" z-index="2" size="5 5" bgcolor="000" opacity="0" scriptevents="1" />
+  </frame>
+</frame>
+
+</frame>
+
+<script><!--
+#Include "MathLib" as ML
+#Include "TextLib" as TL
+#Include "TimeLib" as TimeLib
+#Include "ColorLib" as CL
+
+
+
+declare CMlFrame widget;
+--></script>
+
+<script><!--
+declare Vec2 widgetBasePosition;
+declare CMlFrame HS_Target;
+declare Boolean HS_Hidden;
+
+Void hs_hide(Integer duration) {
+  HS_Hidden = True;
+  declare Real x;
+  if (widgetBasePosition[0] < 0.0) {
+    x = (HS_Target.Size[0] * -HS_Target.RelativeScale) - 322.0;
+  } else {
+    x = 322.0;
+  }
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ x ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::ExpInOut);
+}
+
+Void hs_show(Integer duration) {
+  HS_Hidden = False;
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ widgetBasePosition[0] ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::CircOut);
+}
+
+Void hidescript() {
+  if (HS_Target == Null){
+    HS_Target <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  }
+
+  declare hideSpeed = 10;
+
+  if (InputPlayer == Null) {
+    if (HS_Hidden) {
+      hs_show(600);
+    }
+    return;
+  }
+
+  declare Boolean overHidespeed = ML::Abs(InputPlayer.Speed * 3.6) > hideSpeed;
+
+  if (overHidespeed && !HS_Hidden) {
+    hs_hide(1000);
+
+    while(InputPlayer.Speed * 3.6 > hideSpeed){
+      yield;
+      hidescript();
+    }
+  }
+  
+  if (!overHidespeed && HS_Hidden) {
+    sleep(1000);
+    hs_show(600);
+  }
+}
+--></script>
+<script><!--
+
+--></script>
+
+<script><!--
+main() {
+  widget <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  widgetBasePosition = widget.AbsolutePosition_V3;
+
+  sleep(300);
+  widget.Show();
+
+  
+
+  while (True) {
+    yield;
+
+    foreach(event in PendingEvents){
+      if(event.Control == Null) continue;
+
+      if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::MouseClick) {
+  declare Boolean actionGroupIsOpen for This;
+
+  if (actionGroupIsOpen) {
+    AnimMgr.Add(event.Control.Parent, """<frame pos='-5 0' />""", 200, CAnimManager::EAnimManagerEasing::ExpInOut);
+    declare triggerIcon <=> ((event.Control.Parent.Controls[0] as CMlFrame).Controls[1] as CMlLabel);
+    AnimMgr.Add(triggerIcon, """<label rot='0' pos='2.6 -2.15' />""", 200, CAnimManager::EAnimManagerEasing::ExpInOut);
+  } else {
+    AnimMgr.Add(event.Control.Parent, """<frame pos='0 0' />""", 200, CAnimManager::EAnimManagerEasing::ExpInOut);
+    declare triggerIcon <=> ((event.Control.Parent.Controls[0] as CMlFrame).Controls[1] as CMlLabel);
+    AnimMgr.Add(triggerIcon, """<label rot='180' pos='2.25 -2.9' />""", 200, CAnimManager::EAnimManagerEasing::ExpInOut);
+  }
+
+  actionGroupIsOpen = !actionGroupIsOpen;
+}
+
+    }
+
+    
+
+      hidescript();
+  }
+}
+
+--></script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders manialink 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders scripts/hide 1`] = `
+"<script><!--
+declare Vec2 widgetBasePosition;
+declare CMlFrame HS_Target;
+declare Boolean HS_Hidden;
+
+Void hs_hide(Integer duration) {
+  HS_Hidden = True;
+  declare Real x;
+  if (widgetBasePosition[0] < 0.0) {
+    x = (HS_Target.Size[0] * -HS_Target.RelativeScale) - 322.0;
+  } else {
+    x = 322.0;
+  }
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ x ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::ExpInOut);
+}
+
+Void hs_show(Integer duration) {
+  HS_Hidden = False;
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ widgetBasePosition[0] ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::CircOut);
+}
+
+Void hidescript() {
+  if (HS_Target == Null){
+    HS_Target <=> (Page.MainFrame.GetFirstChild("") as CMlFrame);
+  }
+
+  declare hideSpeed = 10;
+
+  if (InputPlayer == Null) {
+    if (HS_Hidden) {
+      hs_show(600);
+    }
+    return;
+  }
+
+  declare Boolean overHidespeed = ML::Abs(InputPlayer.Speed * 3.6) > hideSpeed;
+
+  if (overHidespeed && !HS_Hidden) {
+    hs_hide(1000);
+
+    while(InputPlayer.Speed * 3.6 > hideSpeed){
+      yield;
+      hidescript();
+    }
+  }
+  
+  if (!overHidespeed && HS_Hidden) {
+    sleep(1000);
+    hs_show(600);
+  }
+}
+--></script>"
+`;
+
+exports[`TemplateRenderer > renders widget 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<frame id="widget" pos="1 2" z-index="10" hidden="1">
+
+</frame>
+
+<script><!--
+#Include "MathLib" as ML
+#Include "TextLib" as TL
+#Include "TimeLib" as TimeLib
+#Include "ColorLib" as CL
+
+
+
+declare CMlFrame widget;
+--></script>
+
+<script><!--
+declare Vec2 widgetBasePosition;
+declare CMlFrame HS_Target;
+declare Boolean HS_Hidden;
+
+Void hs_hide(Integer duration) {
+  HS_Hidden = True;
+  declare Real x;
+  if (widgetBasePosition[0] < 0.0) {
+    x = (HS_Target.Size[0] * -HS_Target.RelativeScale) - 322.0;
+  } else {
+    x = 322.0;
+  }
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ x ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::ExpInOut);
+}
+
+Void hs_show(Integer duration) {
+  HS_Hidden = False;
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ widgetBasePosition[0] ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::CircOut);
+}
+
+Void hidescript() {
+  if (HS_Target == Null){
+    HS_Target <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  }
+
+  declare hideSpeed = 10;
+
+  if (InputPlayer == Null) {
+    if (HS_Hidden) {
+      hs_show(600);
+    }
+    return;
+  }
+
+  declare Boolean overHidespeed = ML::Abs(InputPlayer.Speed * 3.6) > hideSpeed;
+
+  if (overHidespeed && !HS_Hidden) {
+    hs_hide(1000);
+
+    while(InputPlayer.Speed * 3.6 > hideSpeed){
+      yield;
+      hidescript();
+    }
+  }
+  
+  if (!overHidespeed && HS_Hidden) {
+    sleep(1000);
+    hs_show(600);
+  }
+}
+--></script>
+<script><!--
+
+--></script>
+
+<script><!--
+main() {
+  widget <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  widgetBasePosition = widget.AbsolutePosition_V3;
+
+  sleep(300);
+  widget.Show();
+
+  
+
+  while (True) {
+    yield;
+
+    foreach(event in PendingEvents){
+      if(event.Control == Null) continue;
+
+      
+    }
+
+    
+
+      hidescript();
+  }
+}
+
+--></script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders widgets/live-ranking/live-ranking 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<frame id="widget" pos="1 2" z-index="10" hidden="1">
+<frame pos="0 0">
+  <quad pos="0 0" z-index="0" size="55 5" bgcolor="222"/>
+  <label pos="27.5 -2.25" z-index="0" size="55 5" text="Live Ranking" halign="center" textsize="1" textfont="GameFontSemiBold" valign="center"/>
+</frame>
+
+<framemodel id="ranking">
+  <quad pos="0 0" z-index="0" size="5 5" bgcolor="222"/>
+  <quad pos="5 0" z-index="0" size="50 5" bgcolor="DDD"/>
+  <label pos="2.4 -2.25" z-index="0" size="5 5" text="0" halign="center" valign="center" textsize="1.25" textcolor="DDD" textfont="GameFontSemiBold"/>
+  <quad pos="6.25 -1" z-index="0" size="4.5 3" bgcolor="DDD" image="file://Media/Flags/WOR.dds"/>
+  <label pos="12 -2.25" z-index="0" size="32 5" text="-" textcolor="222" textsize="1.2" textfont="GameFontRegular" valign="center"/>
+  <label pos="53 -2.25" z-index="0" size="7.5 5" text="0" valign="center" halign="right" textsize="1" textcolor="222" textfont="GameFontSemiBold"/>
+
+  <quad class="trigger" pos="0 0" z-index="-2" size="55 5" bgcolor="000" opacity="0" scriptevents="1" />
+</framemodel>
+
+<frame id="rankings" pos="0 -5.25" size="55 42">
+<quad size="55 525" bgcolor="fff" opacity="0" scriptevents="1"/>
+  <frameinstance modelid="ranking" pos="0 0" />
+  <frameinstance modelid="ranking" pos="0 -5.25" />
+  <frameinstance modelid="ranking" pos="0 -10.5" />
+  <frameinstance modelid="ranking" pos="0 -15.75" />
+  <frameinstance modelid="ranking" pos="0 -21" />
+  <frameinstance modelid="ranking" pos="0 -26.25" />
+  <frameinstance modelid="ranking" pos="0 -31.5" />
+  <frameinstance modelid="ranking" pos="0 -36.75" />
+  <frameinstance modelid="ranking" pos="0 -42" />
+  <frameinstance modelid="ranking" pos="0 -47.25" />
+  <frameinstance modelid="ranking" pos="0 -52.5" />
+  <frameinstance modelid="ranking" pos="0 -57.75" />
+  <frameinstance modelid="ranking" pos="0 -63" />
+  <frameinstance modelid="ranking" pos="0 -68.25" />
+  <frameinstance modelid="ranking" pos="0 -73.5" />
+  <frameinstance modelid="ranking" pos="0 -78.75" />
+  <frameinstance modelid="ranking" pos="0 -84" />
+  <frameinstance modelid="ranking" pos="0 -89.25" />
+  <frameinstance modelid="ranking" pos="0 -94.5" />
+  <frameinstance modelid="ranking" pos="0 -99.75" />
+  <frameinstance modelid="ranking" pos="0 -105" />
+  <frameinstance modelid="ranking" pos="0 -110.25" />
+  <frameinstance modelid="ranking" pos="0 -115.5" />
+  <frameinstance modelid="ranking" pos="0 -120.75" />
+  <frameinstance modelid="ranking" pos="0 -126" />
+  <frameinstance modelid="ranking" pos="0 -131.25" />
+  <frameinstance modelid="ranking" pos="0 -136.5" />
+  <frameinstance modelid="ranking" pos="0 -141.75" />
+  <frameinstance modelid="ranking" pos="0 -147" />
+  <frameinstance modelid="ranking" pos="0 -152.25" />
+  <frameinstance modelid="ranking" pos="0 -157.5" />
+  <frameinstance modelid="ranking" pos="0 -162.75" />
+  <frameinstance modelid="ranking" pos="0 -168" />
+  <frameinstance modelid="ranking" pos="0 -173.25" />
+  <frameinstance modelid="ranking" pos="0 -178.5" />
+  <frameinstance modelid="ranking" pos="0 -183.75" />
+  <frameinstance modelid="ranking" pos="0 -189" />
+  <frameinstance modelid="ranking" pos="0 -194.25" />
+  <frameinstance modelid="ranking" pos="0 -199.5" />
+  <frameinstance modelid="ranking" pos="0 -204.75" />
+  <frameinstance modelid="ranking" pos="0 -210" />
+  <frameinstance modelid="ranking" pos="0 -215.25" />
+  <frameinstance modelid="ranking" pos="0 -220.5" />
+  <frameinstance modelid="ranking" pos="0 -225.75" />
+  <frameinstance modelid="ranking" pos="0 -231" />
+  <frameinstance modelid="ranking" pos="0 -236.25" />
+  <frameinstance modelid="ranking" pos="0 -241.5" />
+  <frameinstance modelid="ranking" pos="0 -246.75" />
+  <frameinstance modelid="ranking" pos="0 -252" />
+  <frameinstance modelid="ranking" pos="0 -257.25" />
+  <frameinstance modelid="ranking" pos="0 -262.5" />
+  <frameinstance modelid="ranking" pos="0 -267.75" />
+  <frameinstance modelid="ranking" pos="0 -273" />
+  <frameinstance modelid="ranking" pos="0 -278.25" />
+  <frameinstance modelid="ranking" pos="0 -283.5" />
+  <frameinstance modelid="ranking" pos="0 -288.75" />
+  <frameinstance modelid="ranking" pos="0 -294" />
+  <frameinstance modelid="ranking" pos="0 -299.25" />
+  <frameinstance modelid="ranking" pos="0 -304.5" />
+  <frameinstance modelid="ranking" pos="0 -309.75" />
+  <frameinstance modelid="ranking" pos="0 -315" />
+  <frameinstance modelid="ranking" pos="0 -320.25" />
+  <frameinstance modelid="ranking" pos="0 -325.5" />
+  <frameinstance modelid="ranking" pos="0 -330.75" />
+  <frameinstance modelid="ranking" pos="0 -336" />
+  <frameinstance modelid="ranking" pos="0 -341.25" />
+  <frameinstance modelid="ranking" pos="0 -346.5" />
+  <frameinstance modelid="ranking" pos="0 -351.75" />
+  <frameinstance modelid="ranking" pos="0 -357" />
+  <frameinstance modelid="ranking" pos="0 -362.25" />
+  <frameinstance modelid="ranking" pos="0 -367.5" />
+  <frameinstance modelid="ranking" pos="0 -372.75" />
+  <frameinstance modelid="ranking" pos="0 -378" />
+  <frameinstance modelid="ranking" pos="0 -383.25" />
+  <frameinstance modelid="ranking" pos="0 -388.5" />
+  <frameinstance modelid="ranking" pos="0 -393.75" />
+  <frameinstance modelid="ranking" pos="0 -399" />
+  <frameinstance modelid="ranking" pos="0 -404.25" />
+  <frameinstance modelid="ranking" pos="0 -409.5" />
+  <frameinstance modelid="ranking" pos="0 -414.75" />
+  <frameinstance modelid="ranking" pos="0 -420" />
+  <frameinstance modelid="ranking" pos="0 -425.25" />
+  <frameinstance modelid="ranking" pos="0 -430.5" />
+  <frameinstance modelid="ranking" pos="0 -435.75" />
+  <frameinstance modelid="ranking" pos="0 -441" />
+  <frameinstance modelid="ranking" pos="0 -446.25" />
+  <frameinstance modelid="ranking" pos="0 -451.5" />
+  <frameinstance modelid="ranking" pos="0 -456.75" />
+  <frameinstance modelid="ranking" pos="0 -462" />
+  <frameinstance modelid="ranking" pos="0 -467.25" />
+  <frameinstance modelid="ranking" pos="0 -472.5" />
+  <frameinstance modelid="ranking" pos="0 -477.75" />
+  <frameinstance modelid="ranking" pos="0 -483" />
+  <frameinstance modelid="ranking" pos="0 -488.25" />
+  <frameinstance modelid="ranking" pos="0 -493.5" />
+  <frameinstance modelid="ranking" pos="0 -498.75" />
+  <frameinstance modelid="ranking" pos="0 -504" />
+  <frameinstance modelid="ranking" pos="0 -509.25" />
+  <frameinstance modelid="ranking" pos="0 -514.5" />
+  <frameinstance modelid="ranking" pos="0 -519.75" />
+</frame>
+
+</frame>
+
+<script><!--
+#Include "MathLib" as ML
+#Include "TextLib" as TL
+#Include "TimeLib" as TimeLib
+#Include "ColorLib" as CL
+
+#Struct Team {
+  Text mainColor;
+  Text secondaryColor;
+  Text textColor;
+}
+
+#Struct Ranking {
+  Text login;
+  Text name;
+  Integer rank;
+  Integer points;
+  Team team;
+}
+
+
+declare CMlFrame widget;
+--></script>
+
+<script><!--
+declare Vec2 widgetBasePosition;
+declare CMlFrame HS_Target;
+declare Boolean HS_Hidden;
+
+Void hs_hide(Integer duration) {
+  HS_Hidden = True;
+  declare Real x;
+  if (widgetBasePosition[0] < 0.0) {
+    x = (HS_Target.Size[0] * -HS_Target.RelativeScale) - 322.0;
+  } else {
+    x = 322.0;
+  }
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ x ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::ExpInOut);
+}
+
+Void hs_show(Integer duration) {
+  HS_Hidden = False;
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ widgetBasePosition[0] ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::CircOut);
+}
+
+Void hidescript() {
+  if (HS_Target == Null){
+    HS_Target <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  }
+
+  declare hideSpeed = 10;
+
+  if (InputPlayer == Null) {
+    if (HS_Hidden) {
+      hs_show(600);
+    }
+    return;
+  }
+
+  declare Boolean overHidespeed = ML::Abs(InputPlayer.Speed * 3.6) > hideSpeed;
+
+  if (overHidespeed && !HS_Hidden) {
+    hs_hide(1000);
+
+    while(InputPlayer.Speed * 3.6 > hideSpeed){
+      yield;
+      hidescript();
+    }
+  }
+  
+  if (!overHidespeed && HS_Hidden) {
+    sleep(1000);
+    hs_show(600);
+  }
+}
+--></script>
+<script><!--
+Void updateRankingRow(Integer index, Ranking ranking, Text mode, Integer pointsLimit) {
+  declare rankingsFrame <=> (Page.MainFrame.GetFirstChild("rankings") as CMlFrame);
+
+  if (index >= rankingsFrame.Controls.count) {
+    return;
+  }
+
+  declare rankingFrame <=> (rankingsFrame.Controls[index + 1] as CMlFrame);
+  (rankingFrame.Controls[2] as CMlLabel).SetText(TL::ToText(ranking.rank));
+  (rankingFrame.Controls[3] as CMlQuad).ChangeImageUrl("file://ZoneFlags/Login/" ^ ranking.login ^ "/country");
+  (rankingFrame.Controls[4] as CMlLabel).SetText(ranking.name);
+  
+  declare Text pointsText = TL::ToText(ranking.points);
+  if (mode == "cup" && pointsLimit > 0) {
+    if (ranking.points > pointsLimit) {
+      pointsText = "$2C2W";
+    } else if (ranking.points == pointsLimit) {
+      pointsText = "$D22F";
+    }
+  } else if (mode == "rounds" && pointsLimit > 0 && ranking.team.mainColor == "") {
+    if (ranking.points >= pointsLimit) {
+      pointsText = "$2C2W";
+    }
+  } else if (mode == "reversecup") {
+    if (-2000 < ranking.points && ranking.points <= -1000) {
+      pointsText = "$D22LC";
+    } else if (ranking.points <= -2000) {
+      pointsText = "$D22E";
+    }
+  }
+
+  (rankingFrame.Controls[5] as CMlLabel).SetText(pointsText);
+  rankingFrame.DataAttributeSet("login", ranking.login);
+
+  if (ranking.team.mainColor != "") {
+    (rankingFrame.Controls[0] as CMlQuad).BgColor = CL::Hex3ToRgb(ranking.team.mainColor);
+    (rankingFrame.Controls[1] as CMlQuad).BgColor = CL::Hex3ToRgb(ranking.team.secondaryColor);
+    (rankingFrame.Controls[3] as CMlQuad).BgColor = CL::Hex3ToRgb(ranking.team.secondaryColor);
+    (rankingFrame.Controls[4] as CMlLabel).TextColor = CL::Hex3ToRgb(ranking.team.textColor);
+    (rankingFrame.Controls[5] as CMlLabel).TextColor = CL::Hex3ToRgb(ranking.team.textColor);
+  } else {
+    (rankingFrame.Controls[0] as CMlQuad).BgColor = CL::Hex3ToRgb("222");
+    (rankingFrame.Controls[1] as CMlQuad).BgColor = CL::Hex3ToRgb("DDD");
+    (rankingFrame.Controls[3] as CMlQuad).BgColor = CL::Hex3ToRgb("DDD");
+    (rankingFrame.Controls[4] as CMlLabel).TextColor = CL::Hex3ToRgb("222");
+    (rankingFrame.Controls[5] as CMlLabel).TextColor = CL::Hex3ToRgb("222");
+  }
+
+  rankingFrame.Show();
+}
+
+Void updateScroll(Ranking[] rankings) {
+  declare rankingsFrame <=> (Page.MainFrame.GetFirstChild("rankings") as CMlFrame);
+  declare Integer rankingCount = rankings.count;
+  if (rankingCount > rankingsFrame.Controls.count) {
+    rankingCount = rankingsFrame.Controls.count;
+  }
+  declare Real maxY = rankingCount * 5.25 - 42;
+  if (maxY < 0) {
+    maxY = 0.;
+  }
+  rankingsFrame.ScrollMax = <0., maxY>;
+}
+
+Void updateWidget(Ranking[] rankings, Text mode, Integer pointsLimit) {
+  declare rankingCount = rankings.count;
+  declare index = 0;
+
+  foreach (ranking in rankings) {
+    updateRankingRow(index, ranking, mode, pointsLimit);
+    index = index + 1;
+  }
+
+  declare rankingsFrame <=> (Page.MainFrame.GetFirstChild("rankings") as CMlFrame);
+  // Hide unused rows
+  while (index < rankingsFrame.Controls.count - 1) {
+    declare rankingFrame <=> (rankingsFrame.Controls[index + 1] as CMlFrame);
+    rankingFrame.DataAttributeSet("login", "");
+    rankingFrame.Hide();
+    index = index + 1;
+  }
+
+  updateScroll(rankings);
+}
+
+--></script>
+
+<script><!--
+main() {
+  widget <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  widgetBasePosition = widget.AbsolutePosition_V3;
+
+  sleep(300);
+  widget.Show();
+
+  declare Ranking[] Rankings for This;
+declare Text Mode for This = "rounds";
+declare Integer PointsLimit for This = -1;
+declare Integer LastRankingsUpdate for This = -1;
+declare Integer lastUpdate = -1;
+declare rankingsFrame <=> (widget.GetFirstChild("rankings") as CMlFrame);
+rankingsFrame.ScrollActive = True;
+rankingsFrame.ScrollMin = <0., 0.>;
+
+
+  while (True) {
+    yield;
+
+    foreach(event in PendingEvents){
+      if(event.Control == Null) continue;
+
+      if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::MouseClick) {
+  declare targetLogin = event.Control.Parent.DataAttributeGet("login");
+  if (targetLogin != "") {
+    if(!IsSpectatorClient) RequestSpectatorClient(True);
+    SetSpectateTarget(targetLogin);
+  }
+}
+
+    }
+
+    if (LastRankingsUpdate != lastUpdate) {
+  lastUpdate = LastRankingsUpdate;
+  updateWidget(Rankings, Mode, PointsLimit);
+}
+
+
+      hidescript();
+  }
+}
+
+--></script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders widgets/live-ranking/live-ranking-update 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<script>
+<!--
+#Struct Team {
+  Text mainColor;
+  Text secondaryColor;
+  Text textColor;
+}
+
+#Struct Ranking {
+  Text login;
+  Text name;
+  Integer rank;
+  Integer points;
+  Team team;
+}
+
+main(){
+  declare Ranking[] Rankings for This;
+  declare Text Mode for This;
+  declare Integer PointsLimit for This;
+  declare Integer LastRankingsUpdate for This;
+  declare Text rankingsJson = """[]""";
+
+  Rankings.fromjson(rankingsJson);
+  Mode = """rounds""";
+  PointsLimit = -1;
+  LastRankingsUpdate = GameTime;
+}
+-->
+</script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders widgets/live-round/live-round 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<frame id="widget" pos="1 2" z-index="10" hidden="1">
+<frame pos="0 0">
+  <quad pos="0 0" z-index="0" size="55 5" bgcolor="222"/>
+  <label pos="27.5 -2.25" z-index="0" size="55 5" text="Live Round" halign="center" textsize="1" textfont="GameFontSemiBold" valign="center"/>
+</frame>
+
+<framemodel id="round">
+  <quad pos ="0 0" z-index="0" size="5 5" bgcolor="222"/>
+  <quad pos="5 0" z-index="0" size="35.5 5" bgcolor="DDD"/>
+  <quad pos="40.5 0" z-index="0" size="14.5 5" bgcolor="BBB"/>
+  <label pos="2.4 -2.25" z-index="0" size="5 5" text="0" halign="center" valign="center" textsize="1.25" textcolor="DDD" textfont="GameFontSemiBold"/>
+  <quad pos="6.25 -1" z-index="0" size="4.5 3" bgcolor="DDD" image="file://Media/Flags/WOR.dds"/>
+  <label pos="12 -2.25" z-index="0" size="22 5" text="-" textcolor="222" textsize="1.2" textfont="GameFontRegular" valign="center"/>
+  <label pos="39.75 -2.25" z-index="0" size="5 5" text="0" halign="right" textcolor="222" textsize="1" textfont="GameFontSemiBold" valign="center"/>
+  <label pos="54 -2.25" z-index="0" size="12.5 5" text="--:--.---" valign="center" halign="right" textsize="1" textcolor="222" textfont="GameFontSemiBold"/>
+  
+  <frame pos="47.5 0" size="14 5" id="finish" z-index="-2">
+    <quad pos="0 0" size="7 5" bgcolor="222" z-index="-2" />
+    <label pos="3.5 -2.25" size="6 5" z-index="-1" text="" halign="center" valign="center" textsize="1.25" textcolor="DDD" />
+
+    <quad pos="7 0" size="7 5" bgcolor="222" z-index="-2" hidden="1" />
+    <label pos="10.5 -2.25" size="6 5" z-index="-1" text="WR" halign="center" valign="center" textsize="1.25" textfont="GameFontSemiBold" textcolor="DDD" hidden="1" />
+  </frame>
+
+  <quad class="trigger" pos="0 0" z-index="-2" size="57 5" bgcolor="000" opacity="0" scriptevents="1" />
+</framemodel>
+
+<frame id="rounds" pos="0 -5.25" size="69 42">
+<quad size="55 525" bgcolor="fff" opacity="0" scriptevents="1"/>
+<frameinstance modelid="round" pos="0 0" />
+<frameinstance modelid="round" pos="0 -5.25" />
+<frameinstance modelid="round" pos="0 -10.5" />
+<frameinstance modelid="round" pos="0 -15.75" />
+<frameinstance modelid="round" pos="0 -21" />
+<frameinstance modelid="round" pos="0 -26.25" />
+<frameinstance modelid="round" pos="0 -31.5" />
+<frameinstance modelid="round" pos="0 -36.75" />
+<frameinstance modelid="round" pos="0 -42" />
+<frameinstance modelid="round" pos="0 -47.25" />
+<frameinstance modelid="round" pos="0 -52.5" />
+<frameinstance modelid="round" pos="0 -57.75" />
+<frameinstance modelid="round" pos="0 -63" />
+<frameinstance modelid="round" pos="0 -68.25" />
+<frameinstance modelid="round" pos="0 -73.5" />
+<frameinstance modelid="round" pos="0 -78.75" />
+<frameinstance modelid="round" pos="0 -84" />
+<frameinstance modelid="round" pos="0 -89.25" />
+<frameinstance modelid="round" pos="0 -94.5" />
+<frameinstance modelid="round" pos="0 -99.75" />
+<frameinstance modelid="round" pos="0 -105" />
+<frameinstance modelid="round" pos="0 -110.25" />
+<frameinstance modelid="round" pos="0 -115.5" />
+<frameinstance modelid="round" pos="0 -120.75" />
+<frameinstance modelid="round" pos="0 -126" />
+<frameinstance modelid="round" pos="0 -131.25" />
+<frameinstance modelid="round" pos="0 -136.5" />
+<frameinstance modelid="round" pos="0 -141.75" />
+<frameinstance modelid="round" pos="0 -147" />
+<frameinstance modelid="round" pos="0 -152.25" />
+<frameinstance modelid="round" pos="0 -157.5" />
+<frameinstance modelid="round" pos="0 -162.75" />
+<frameinstance modelid="round" pos="0 -168" />
+<frameinstance modelid="round" pos="0 -173.25" />
+<frameinstance modelid="round" pos="0 -178.5" />
+<frameinstance modelid="round" pos="0 -183.75" />
+<frameinstance modelid="round" pos="0 -189" />
+<frameinstance modelid="round" pos="0 -194.25" />
+<frameinstance modelid="round" pos="0 -199.5" />
+<frameinstance modelid="round" pos="0 -204.75" />
+<frameinstance modelid="round" pos="0 -210" />
+<frameinstance modelid="round" pos="0 -215.25" />
+<frameinstance modelid="round" pos="0 -220.5" />
+<frameinstance modelid="round" pos="0 -225.75" />
+<frameinstance modelid="round" pos="0 -231" />
+<frameinstance modelid="round" pos="0 -236.25" />
+<frameinstance modelid="round" pos="0 -241.5" />
+<frameinstance modelid="round" pos="0 -246.75" />
+<frameinstance modelid="round" pos="0 -252" />
+<frameinstance modelid="round" pos="0 -257.25" />
+<frameinstance modelid="round" pos="0 -262.5" />
+<frameinstance modelid="round" pos="0 -267.75" />
+<frameinstance modelid="round" pos="0 -273" />
+<frameinstance modelid="round" pos="0 -278.25" />
+<frameinstance modelid="round" pos="0 -283.5" />
+<frameinstance modelid="round" pos="0 -288.75" />
+<frameinstance modelid="round" pos="0 -294" />
+<frameinstance modelid="round" pos="0 -299.25" />
+<frameinstance modelid="round" pos="0 -304.5" />
+<frameinstance modelid="round" pos="0 -309.75" />
+<frameinstance modelid="round" pos="0 -315" />
+<frameinstance modelid="round" pos="0 -320.25" />
+<frameinstance modelid="round" pos="0 -325.5" />
+<frameinstance modelid="round" pos="0 -330.75" />
+<frameinstance modelid="round" pos="0 -336" />
+<frameinstance modelid="round" pos="0 -341.25" />
+<frameinstance modelid="round" pos="0 -346.5" />
+<frameinstance modelid="round" pos="0 -351.75" />
+<frameinstance modelid="round" pos="0 -357" />
+<frameinstance modelid="round" pos="0 -362.25" />
+<frameinstance modelid="round" pos="0 -367.5" />
+<frameinstance modelid="round" pos="0 -372.75" />
+<frameinstance modelid="round" pos="0 -378" />
+<frameinstance modelid="round" pos="0 -383.25" />
+<frameinstance modelid="round" pos="0 -388.5" />
+<frameinstance modelid="round" pos="0 -393.75" />
+<frameinstance modelid="round" pos="0 -399" />
+<frameinstance modelid="round" pos="0 -404.25" />
+<frameinstance modelid="round" pos="0 -409.5" />
+<frameinstance modelid="round" pos="0 -414.75" />
+<frameinstance modelid="round" pos="0 -420" />
+<frameinstance modelid="round" pos="0 -425.25" />
+<frameinstance modelid="round" pos="0 -430.5" />
+<frameinstance modelid="round" pos="0 -435.75" />
+<frameinstance modelid="round" pos="0 -441" />
+<frameinstance modelid="round" pos="0 -446.25" />
+<frameinstance modelid="round" pos="0 -451.5" />
+<frameinstance modelid="round" pos="0 -456.75" />
+<frameinstance modelid="round" pos="0 -462" />
+<frameinstance modelid="round" pos="0 -467.25" />
+<frameinstance modelid="round" pos="0 -472.5" />
+<frameinstance modelid="round" pos="0 -477.75" />
+<frameinstance modelid="round" pos="0 -483" />
+<frameinstance modelid="round" pos="0 -488.25" />
+<frameinstance modelid="round" pos="0 -493.5" />
+<frameinstance modelid="round" pos="0 -498.75" />
+<frameinstance modelid="round" pos="0 -504" />
+<frameinstance modelid="round" pos="0 -509.25" />
+<frameinstance modelid="round" pos="0 -514.5" />
+<frameinstance modelid="round" pos="0 -519.75" />
+</frame>
+
+</frame>
+
+<script><!--
+#Include "MathLib" as ML
+#Include "TextLib" as TL
+#Include "TimeLib" as TimeLib
+#Include "ColorLib" as CL
+
+#Struct Team {
+  Text mainColor;
+  Text secondaryColor;
+  Text textColor;
+}
+
+#Struct Round {
+  Text login;
+  Text name;
+  Integer rank;
+  Integer points;
+  Integer[] checkpoints;
+  Integer time;
+  Team team;
+}
+
+#Struct Finish {
+  Text login;
+  Integer points;
+  Boolean isPersonalBest;
+  Boolean isLocalRecord;
+  Boolean isWorldRecord;
+}
+
+
+declare CMlFrame widget;
+--></script>
+
+<script><!--
+declare Vec2 widgetBasePosition;
+declare CMlFrame HS_Target;
+declare Boolean HS_Hidden;
+
+Void hs_hide(Integer duration) {
+  HS_Hidden = True;
+  declare Real x;
+  if (widgetBasePosition[0] < 0.0) {
+    x = (HS_Target.Size[0] * -HS_Target.RelativeScale) - 322.0;
+  } else {
+    x = 322.0;
+  }
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ x ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::ExpInOut);
+}
+
+Void hs_show(Integer duration) {
+  HS_Hidden = False;
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ widgetBasePosition[0] ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::CircOut);
+}
+
+Void hidescript() {
+  if (HS_Target == Null){
+    HS_Target <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  }
+
+  declare hideSpeed = 10;
+
+  if (InputPlayer == Null) {
+    if (HS_Hidden) {
+      hs_show(600);
+    }
+    return;
+  }
+
+  declare Boolean overHidespeed = ML::Abs(InputPlayer.Speed * 3.6) > hideSpeed;
+
+  if (overHidespeed && !HS_Hidden) {
+    hs_hide(1000);
+
+    while(InputPlayer.Speed * 3.6 > hideSpeed){
+      yield;
+      hidescript();
+    }
+  }
+  
+  if (!overHidespeed && HS_Hidden) {
+    sleep(1000);
+    hs_show(600);
+  }
+}
+--></script>
+<script><!--
+Text formatTime(Integer time) {
+  declare Text secondString;
+  declare Text msString;
+
+  if (time < 0) {
+    return "--:--.---";
+  }
+
+  declare Integer seconds = time / 1000;
+  declare Integer minutes = seconds / 60;
+  declare Integer milliseconds = time - (seconds * 1000);
+  seconds = seconds - (minutes * 60);
+
+  secondString = TL::ToText(seconds);
+
+  if (seconds < 10) {
+    secondString = "0" ^ secondString;
+  }
+
+  if (milliseconds <= 0) {
+    msString = "000";
+  } else if (milliseconds < 10) {
+    msString = "00" ^ TL::ToText(milliseconds);
+  } else if (milliseconds < 100) {
+    msString = "0" ^ TL::ToText(milliseconds);
+  } else {
+    msString = TL::ToText(milliseconds);
+  }
+
+  if (minutes > 0) {
+    return TL::ToText(minutes) ^ ":" ^ secondString ^ "." ^ msString;
+  } else {
+    return secondString ^ "." ^ msString;
+  }
+
+  return "";
+}
+
+// Computes the checkpoint gap to the leader for every round, in rounds order.
+// Mirrors the Delta/MinDelta approach used to rank live players by checkpoint:
+// each player's gap is compared against the leader at their last reached checkpoint
+// (falling back to the leader's next checkpoint if the leader is already past it),
+// then clamped to never be smaller than the running gap of players ahead of them.
+Integer[] getCheckpointGaps(Round[] rounds) {
+  declare Integer[] gaps = Integer[];
+
+  if (rounds.count == 0) {
+    return gaps;
+  }
+
+  declare Round firstPlaceRound = rounds[0];
+
+  // The furthest checkpoint time reached by anyone currently racing
+  declare Integer GlobalLastCPTime = -1;
+  foreach (round in rounds) {
+    if (round.checkpoints.count == 0) continue;
+
+    declare Integer lastTime = round.checkpoints[round.checkpoints.count - 1];
+    if (lastTime > GlobalLastCPTime) {
+      GlobalLastCPTime = lastTime;
+    }
+  }
+
+  declare Integer MinDelta = 0;
+  declare Integer Index = 0;
+  foreach (round in rounds) {
+    declare Integer Delta = 0;
+
+    if (Index != 0 && round.checkpoints.count > 0) {
+      declare Integer lastCheckpointIndex = round.checkpoints.count - 1;
+      declare Integer playerCheckpointTime = round.checkpoints[lastCheckpointIndex];
+
+      if (firstPlaceRound.checkpoints.count > lastCheckpointIndex + 1) {
+        // Leader already reached the next checkpoint -> also compare against that
+        Delta = ML::Max(
+          playerCheckpointTime - firstPlaceRound.checkpoints[lastCheckpointIndex],
+          GlobalLastCPTime - firstPlaceRound.checkpoints[lastCheckpointIndex + 1]
+        );
+      } else if (firstPlaceRound.checkpoints.count > lastCheckpointIndex) {
+        Delta = playerCheckpointTime - firstPlaceRound.checkpoints[lastCheckpointIndex];
+      }
+    }
+
+    // The gap can never shrink compared to players ahead in the ranking
+    if (Delta > MinDelta) {
+      MinDelta = Delta;
+    } else {
+      Delta = MinDelta;
+    }
+
+    gaps.add(Delta);
+    Index += 1;
+  }
+
+  return gaps;
+}
+
+Text getTimeDiffText(Round playerRound, Integer checkpointGap) {
+  if (playerRound.login == "") {
+    return "--:--.---";
+  }
+
+  // If the player's time is -1, return DNF
+  if (playerRound.time == -1) {
+    return "DNF";
+  }
+
+  // If the player has no checkpoints, return --:--.---
+  if (playerRound.checkpoints.count == 0) {
+    return "--:--.---";
+  }
+
+  // If the player is rank 1, return their time
+  if (playerRound.rank == 1) {
+    return formatTime(playerRound.time);
+  }
+
+  return "+" ^ formatTime(checkpointGap);
+}
+
+Void updateRoundRow(Integer index, Round round, Integer checkpointGap, Text mode, Integer pointsLimit) {
+  declare roundsFrame <=> (Page.MainFrame.GetFirstChild("rounds") as CMlFrame);
+
+  if (index >= roundsFrame.Controls.count) {
+    return;
+  }
+
+  declare roundFrame <=> (roundsFrame.Controls[index + 1] as CMlFrame);
+  (roundFrame.Controls[3] as CMlLabel).SetText(TL::ToText(round.rank));
+  (roundFrame.Controls[4] as CMlQuad).ChangeImageUrl("file://ZoneFlags/Login/" ^ round.login ^ "/country");
+  (roundFrame.Controls[5] as CMlLabel).SetText(round.name);
+
+  declare Text pointsText = TL::ToText(round.points);
+  if (mode == "cup" && pointsLimit > 0) {
+    if (round.points > pointsLimit) {
+      pointsText = "$2C2W";
+    } else if (round.points == pointsLimit) {
+      pointsText = "$D22F";
+    }
+  } else if (mode == "rounds" && pointsLimit > 0) {
+    if (round.points >= pointsLimit && round.team.mainColor == "") {
+      pointsText = "$2C2W";
+    }
+  } else if (mode == "reversecup") {
+    if (-2000 < round.points && round.points <= -1000) {
+      pointsText = "$D22LC";
+    } else if (round.points <= -2000) {
+      pointsText = "$D22E";
+    }
+  }
+
+  (roundFrame.Controls[6] as CMlLabel).SetText(pointsText);
+  (roundFrame.Controls[7] as CMlLabel).SetText(getTimeDiffText(round, checkpointGap));
+  roundFrame.DataAttributeSet("login", round.login);
+
+  if (round.team.mainColor != "") {
+    (roundFrame.Controls[0] as CMlQuad).BgColor = CL::Hex3ToRgb(round.team.mainColor);
+    (roundFrame.Controls[1] as CMlQuad).BgColor = CL::Hex3ToRgb(round.team.secondaryColor);
+    (roundFrame.Controls[2] as CMlQuad).BgColor = CL::Hex3ToRgb(round.team.mainColor);
+    (roundFrame.Controls[4] as CMlQuad).BgColor = CL::Hex3ToRgb(round.team.secondaryColor);
+    (roundFrame.Controls[5] as CMlLabel).TextColor = CL::Hex3ToRgb(round.team.textColor);
+    (roundFrame.Controls[6] as CMlLabel).TextColor = CL::Hex3ToRgb(round.team.textColor);
+    (roundFrame.Controls[7] as CMlLabel).TextColor = CL::Hex3ToRgb(round.team.textColor);
+  } else {
+    (roundFrame.Controls[0] as CMlQuad).BgColor = CL::Hex3ToRgb("222");
+    (roundFrame.Controls[1] as CMlQuad).BgColor = CL::Hex3ToRgb("DDD");
+    (roundFrame.Controls[2] as CMlQuad).BgColor = CL::Hex3ToRgb("BBB");
+    (roundFrame.Controls[4] as CMlQuad).BgColor = CL::Hex3ToRgb("DDD");
+    (roundFrame.Controls[5] as CMlLabel).TextColor = CL::Hex3ToRgb("222");
+    (roundFrame.Controls[6] as CMlLabel).TextColor = CL::Hex3ToRgb("222");
+    (roundFrame.Controls[7] as CMlLabel).TextColor = CL::Hex3ToRgb("222");
+  }
+
+  roundFrame.Show();
+}
+
+Void updateFinish(Text login, Integer points, Boolean finished, Boolean isPersonalBest, Boolean isLocalRecord, Boolean isWorldRecord, Text localRecordText) {
+  declare roundsFrame <=> (Page.MainFrame.GetFirstChild("rounds") as CMlFrame);
+
+  foreach (control in roundsFrame.Controls) {
+    // Skip first control (invisible background quad)
+    if (control == roundsFrame.Controls[0]) {
+      continue;
+    }
+
+    declare roundFrame <=> (control as CMlFrame);
+    declare Text frameLogin = roundFrame.DataAttributeGet("login");
+
+    if (frameLogin == login) {
+      declare frameFinish <=> (roundFrame.GetFirstChild("finish") as CMlFrame);
+
+      AnimMgr.Flush(frameFinish);
+      
+      if (finished) {
+        if (points == 0) {
+          (frameFinish.Controls[1] as CMlLabel).SetText("");
+        } else {
+          declare Text pointsText = "+" ^ TL::ToText(points);
+          if (points < 0) {
+            pointsText = "-" ^ TL::ToText(-points);
+          }
+          
+          (frameFinish.Controls[1] as CMlLabel).SetText(pointsText);
+        }
+
+        if (isPersonalBest) {
+          (frameFinish.Controls[3] as CMlLabel).SetText("PB");
+        } 
+        
+        if (isLocalRecord) {
+          (frameFinish.Controls[3] as CMlLabel).SetText(localRecordText);
+        }
+        
+        if (isWorldRecord) {
+          (frameFinish.Controls[3] as CMlLabel).SetText("WR");
+        }
+
+        if (isWorldRecord || isLocalRecord || isPersonalBest) {
+          (frameFinish.Controls[2] as CMlQuad).Show();
+          (frameFinish.Controls[3] as CMlLabel).Show();
+        } else {
+          (frameFinish.Controls[2] as CMlQuad).Hide();
+          (frameFinish.Controls[3] as CMlLabel).Hide();
+        }
+        
+        AnimMgr.Add(frameFinish, """<frame pos='55 0' />""", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
+      } else {
+        AnimMgr.Add(frameFinish, """<frame pos='47.5 0' />""", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
+        (frameFinish.Controls[2] as CMlQuad).Hide();
+        (frameFinish.Controls[3] as CMlLabel).Hide();
+      }
+
+      break;
+    }
+  }
+}
+
+Void clearFinishes(Round[] rounds, Text localRecordText) {
+  foreach (round in rounds) {
+    updateFinish(round.login, 0, False, False, False, False, localRecordText);
+  }
+}
+
+Void updateScroll(Round[] rounds, Integer rowCount) {
+  declare roundsFrame <=> (Page.MainFrame.GetFirstChild("rounds") as CMlFrame);
+  declare Integer roundCount = rounds.count;
+  if (roundCount > roundsFrame.Controls.count) {
+    roundCount = roundsFrame.Controls.count;
+  }
+  declare Real maxY = (roundCount - rowCount) * 5.25;
+  if (maxY < 0) {
+    maxY = 0.;
+  }
+  roundsFrame.ScrollMax = <0., maxY>;
+  roundsFrame.Size = <69., rowCount * 5.25>;
+}
+
+Void updateWidget(Round[] rounds, Text mode, Integer pointsLimit, Integer rowCount) {
+  declare roundCount = rounds.count;
+  declare index = 0;
+
+  declare Integer[] checkpointGaps = getCheckpointGaps(rounds);
+
+  foreach (round in rounds) {
+    updateRoundRow(index, round, checkpointGaps[index], mode, pointsLimit);
+    index = index + 1;
+  }
+
+  declare roundsFrame <=> (Page.MainFrame.GetFirstChild("rounds") as CMlFrame);
+  // Hide unused rows
+  while (index < roundsFrame.Controls.count - 1) {
+    declare roundFrame <=> (roundsFrame.Controls[index + 1] as CMlFrame);
+    roundFrame.DataAttributeSet("login", "");
+    roundFrame.Hide();
+    index = index + 1;
+  }
+
+  updateScroll(rounds, rowCount);
+}
+
+--></script>
+
+<script><!--
+main() {
+  widget <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  widgetBasePosition = widget.AbsolutePosition_V3;
+
+  sleep(300);
+  widget.Show();
+
+  declare Round[] Rounds for This;
+declare Finish[] Finishes for This = [];
+declare Text Mode for This = "rounds";
+declare Text localRecordText for This;
+declare Integer rowCount for This;
+declare Integer PointsLimit for This = -1;
+declare Integer LastRoundsUpdate for This = -1;
+declare Integer lastUpdate = -1;
+declare Finish[] prevFinishes = [];
+declare roundsFrame <=> (widget.GetFirstChild("rounds") as CMlFrame);
+roundsFrame.ScrollActive = True;
+roundsFrame.ScrollMin = <0., 0.>;
+
+
+  while (True) {
+    yield;
+
+    foreach(event in PendingEvents){
+      if(event.Control == Null) continue;
+
+      if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::MouseClick) {
+  declare targetLogin = event.Control.Parent.DataAttributeGet("login");
+  if (targetLogin != "") {
+    SetSpectateTarget(targetLogin);
+  }
+}
+
+    }
+
+    if (LastRoundsUpdate != lastUpdate) {
+  lastUpdate = LastRoundsUpdate;
+  
+  updateWidget(Rounds, Mode, PointsLimit, rowCount);
+
+  if (Finishes.count == 0) {
+    clearFinishes(Rounds, localRecordText);
+  }
+
+  if (Finishes.count != prevFinishes.count) {
+    if (Finishes.count > prevFinishes.count) {
+      // Find newly finished players
+      foreach (finish in Finishes) {
+        declare Boolean found = False;
+        foreach (prevFinish in prevFinishes) {
+          if (finish.login == prevFinish.login) {
+            found = True;
+            break;
+          }
+        }
+
+        if (!found) {
+          updateFinish(finish.login, finish.points, True, finish.isPersonalBest, finish.isLocalRecord, finish.isWorldRecord, localRecordText);
+        }
+      }
+    } else {
+      clearFinishes(Rounds, localRecordText);
+      // Re-apply finished players
+      foreach (finish in Finishes) {
+        updateFinish(finish.login, finish.points, True, finish.isPersonalBest, finish.isLocalRecord, finish.isWorldRecord, localRecordText);
+      }
+    }
+  }
+
+  prevFinishes = Finishes;
+}
+
+
+      hidescript();
+  }
+}
+
+--></script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders widgets/live-round/live-round-update 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<script>
+<!--
+#Struct Team {
+  Text mainColor;
+  Text secondaryColor;
+  Text textColor;
+}
+
+#Struct Round {
+  Text login;
+  Text name;
+  Integer rank;
+  Integer points;
+  Integer[] checkpoints;
+  Integer time;
+  Team team;
+}
+
+#Struct Finish {
+  Text login;
+  Integer points;
+  Boolean isPersonalBest;
+  Boolean isLocalRecord;
+  Boolean isWorldRecord;
+}
+
+main(){
+  declare Round[] Rounds for This;
+  declare Finish[] Finishes for This;
+  declare Text Mode for This;
+  declare Text localRecordText for This;
+  declare Integer rowCount for This;
+  declare Integer PointsLimit for This;
+  declare Integer LastRoundsUpdate for This;
+  declare Text roundsJson = """[]""";
+  declare Text finishesJson = """[]""";
+  localRecordText = "LR";
+  rowCount = 8;
+
+  Rounds.fromjson(roundsJson);
+  Finishes.fromjson(finishesJson);
+  Mode = """rounds""";
+  PointsLimit = -1;
+  LastRoundsUpdate = GameTime;
+}
+-->
+</script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders widgets/map-info/map-info 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<frame id="widget" pos="1 2" z-index="10" hidden="1">
+<frame pos="0 0" id="map">
+  <quad pos="0 0" z-index="0" size="10 10" bgcolor="222"/>
+  <quad pos="10 0" z-index="0" size="45 10" bgcolor="DDD"/>
+  <label pos="5 -4.75" z-index="0" size="10 10" text="" halign="center" valign="center" textsize="2.5" textcolor="DDD" textfont="GameFontRegular"/>
+  <label pos="12 -5.25" z-index="0" size="41 5" text="-" textcolor="222" textsize="1.75" textfont="GameFontSemiBold" valign="bottom"/>
+  <label pos="11.75 -5.5" z-index="0" size="41 5" text="-" textcolor="222" textprefix="$i" textfont="GameFontRegular" valign="top" textsize="1"/>
+</frame>
+
+</frame>
+
+<script><!--
+#Include "MathLib" as ML
+#Include "TextLib" as TL
+#Include "TimeLib" as TimeLib
+#Include "ColorLib" as CL
+
+#Struct Map {
+  Text name;
+  Text author;
+}
+
+
+declare CMlFrame widget;
+--></script>
+
+<script><!--
+declare Vec2 widgetBasePosition;
+declare CMlFrame HS_Target;
+declare Boolean HS_Hidden;
+
+Void hs_hide(Integer duration) {
+  HS_Hidden = True;
+  declare Real x;
+  if (widgetBasePosition[0] < 0.0) {
+    x = (HS_Target.Size[0] * -HS_Target.RelativeScale) - 322.0;
+  } else {
+    x = 322.0;
+  }
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ x ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::ExpInOut);
+}
+
+Void hs_show(Integer duration) {
+  HS_Hidden = False;
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ widgetBasePosition[0] ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::CircOut);
+}
+
+Void hidescript() {
+  if (HS_Target == Null){
+    HS_Target <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  }
+
+  declare hideSpeed = 10;
+
+  if (InputPlayer == Null) {
+    if (HS_Hidden) {
+      hs_show(600);
+    }
+    return;
+  }
+
+  declare Boolean overHidespeed = ML::Abs(InputPlayer.Speed * 3.6) > hideSpeed;
+
+  if (overHidespeed && !HS_Hidden) {
+    hs_hide(1000);
+
+    while(InputPlayer.Speed * 3.6 > hideSpeed){
+      yield;
+      hidescript();
+    }
+  }
+  
+  if (!overHidespeed && HS_Hidden) {
+    sleep(1000);
+    hs_show(600);
+  }
+}
+--></script>
+<script><!--
+Void updateWidget(Map mapInfo) {
+  declare mapFrame <=> (Page.MainFrame.GetFirstChild("map") as CMlFrame);
+
+  (mapFrame.Controls[3] as CMlLabel).SetText(mapInfo.name);
+  (mapFrame.Controls[4] as CMlLabel).SetText(mapInfo.author);
+}
+
+--></script>
+
+<script><!--
+main() {
+  widget <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  widgetBasePosition = widget.AbsolutePosition_V3;
+
+  sleep(300);
+  widget.Show();
+
+  declare Map MapInfo for This;
+declare Integer LastMapInfoUpdate for This = -1;
+declare Integer lastUpdate = -1;
+
+
+  while (True) {
+    yield;
+
+    foreach(event in PendingEvents){
+      if(event.Control == Null) continue;
+
+      
+    }
+
+    if (LastMapInfoUpdate != lastUpdate) {
+  lastUpdate = LastMapInfoUpdate;
+  updateWidget(MapInfo);
+}
+
+
+      hidescript();
+  }
+}
+
+--></script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders widgets/map-info/map-info-update 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<script>
+<!--
+#Struct Map {
+  Text name;
+  Text author;
+}
+
+main(){
+  declare Map MapInfo for This;
+  declare Integer LastMapInfoUpdate for This;
+  declare Text mapJson = """{}""";
+
+  MapInfo.fromjson(mapJson);
+  LastMapInfoUpdate = GameTime;
+}
+-->
+</script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders widgets/match/pickban 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<frame id="widget" pos="1 2" z-index="10" hidden="1">
+<frame id="pickban-action" pos="0 0">
+  <quad pos="0 0" z-index="0" size="120 10" bgcolor="222"/>
+  <label pos="5 -4.75" z-index="0" size="10 10" text="" halign="center" valign="center" textsize="2.5" textcolor="DDD" textfont="GameFontRegular"/>
+  <label pos="12 -4.75" z-index="0" size="94 5" text="Marijn. is picking a map" valign="center" textcolor="DDD" textsize="1.75" textfont="GameFontSemiBold" />
+  <label pos="115 -4.75" z-index="0" size="10 5" text="" halign="right" valign="center" textcolor="DDD" textsize="1.75" textfont="GameFontSemiBold" />
+  <quad pos="0 -9" z-index="1" size="120 1" bgcolor="DDD" opacity="0" />
+</frame>
+
+<framemodel id="map-info">
+  <quad pos="0 0" z-index="0" size="10 10" bgcolor="222"/>
+  <quad pos="10 0" z-index="0" size="90 10" bgcolor="DDD"/>
+  <label pos="5 -4.5" z-index="0" size="10 10" text="" halign="center" valign="center" textsize="3" textcolor="DDD" textfont="GameFontBlack"/>
+  <label pos="12 -5.25" z-index="0" size="41 5" text="-" textcolor="222" textsize="1.75" textfont="GameFontSemiBold" valign="bottom"/>
+  <label pos="11.75 -5.5" z-index="0" size="41 5" text="-" textcolor="222" textprefix="$i" textfont="GameFontRegular" valign="top" textsize="1"/>
+
+  <label pos="95 -4.75" z-index="0" size="41 5" text="" textcolor="222" textsize="1.75" textfont="GameFontSemiBold" valign="center" halign="right" />
+
+  <quad class="trigger" pos="0 0" z-index="-2" size="100 10" bgcolor="000" opacity="0" scriptevents="1" />
+</framemodel>
+
+<frame id="maps" pos="0 -10" size="120 124">
+<quad pos="0 1150" size="120 1159" bgcolor="222" opacity="0.75" scriptevents="1"/>
+<frameinstance modelid="map-info" pos="5 -5" />
+<frameinstance modelid="map-info" pos="5 -16.5" />
+<frameinstance modelid="map-info" pos="5 -28" />
+<frameinstance modelid="map-info" pos="5 -39.5" />
+<frameinstance modelid="map-info" pos="5 -51" />
+<frameinstance modelid="map-info" pos="5 -62.5" />
+<frameinstance modelid="map-info" pos="5 -74" />
+<frameinstance modelid="map-info" pos="5 -85.5" />
+<frameinstance modelid="map-info" pos="5 -97" />
+<frameinstance modelid="map-info" pos="5 -108.5" />
+<frameinstance modelid="map-info" pos="5 -120" />
+<frameinstance modelid="map-info" pos="5 -131.5" />
+<frameinstance modelid="map-info" pos="5 -143" />
+<frameinstance modelid="map-info" pos="5 -154.5" />
+<frameinstance modelid="map-info" pos="5 -166" />
+<frameinstance modelid="map-info" pos="5 -177.5" />
+<frameinstance modelid="map-info" pos="5 -189" />
+<frameinstance modelid="map-info" pos="5 -200.5" />
+<frameinstance modelid="map-info" pos="5 -212" />
+<frameinstance modelid="map-info" pos="5 -223.5" />
+<frameinstance modelid="map-info" pos="5 -235" />
+<frameinstance modelid="map-info" pos="5 -246.5" />
+<frameinstance modelid="map-info" pos="5 -258" />
+<frameinstance modelid="map-info" pos="5 -269.5" />
+<frameinstance modelid="map-info" pos="5 -281" />
+<frameinstance modelid="map-info" pos="5 -292.5" />
+<frameinstance modelid="map-info" pos="5 -304" />
+<frameinstance modelid="map-info" pos="5 -315.5" />
+<frameinstance modelid="map-info" pos="5 -327" />
+<frameinstance modelid="map-info" pos="5 -338.5" />
+<frameinstance modelid="map-info" pos="5 -350" />
+<frameinstance modelid="map-info" pos="5 -361.5" />
+<frameinstance modelid="map-info" pos="5 -373" />
+<frameinstance modelid="map-info" pos="5 -384.5" />
+<frameinstance modelid="map-info" pos="5 -396" />
+<frameinstance modelid="map-info" pos="5 -407.5" />
+<frameinstance modelid="map-info" pos="5 -419" />
+<frameinstance modelid="map-info" pos="5 -430.5" />
+<frameinstance modelid="map-info" pos="5 -442" />
+<frameinstance modelid="map-info" pos="5 -453.5" />
+<frameinstance modelid="map-info" pos="5 -465" />
+<frameinstance modelid="map-info" pos="5 -476.5" />
+<frameinstance modelid="map-info" pos="5 -488" />
+<frameinstance modelid="map-info" pos="5 -499.5" />
+<frameinstance modelid="map-info" pos="5 -511" />
+<frameinstance modelid="map-info" pos="5 -522.5" />
+<frameinstance modelid="map-info" pos="5 -534" />
+<frameinstance modelid="map-info" pos="5 -545.5" />
+<frameinstance modelid="map-info" pos="5 -557" />
+<frameinstance modelid="map-info" pos="5 -568.5" />
+<frameinstance modelid="map-info" pos="5 -580" />
+<frameinstance modelid="map-info" pos="5 -591.5" />
+<frameinstance modelid="map-info" pos="5 -603" />
+<frameinstance modelid="map-info" pos="5 -614.5" />
+<frameinstance modelid="map-info" pos="5 -626" />
+<frameinstance modelid="map-info" pos="5 -637.5" />
+<frameinstance modelid="map-info" pos="5 -649" />
+<frameinstance modelid="map-info" pos="5 -660.5" />
+<frameinstance modelid="map-info" pos="5 -672" />
+<frameinstance modelid="map-info" pos="5 -683.5" />
+<frameinstance modelid="map-info" pos="5 -695" />
+<frameinstance modelid="map-info" pos="5 -706.5" />
+<frameinstance modelid="map-info" pos="5 -718" />
+<frameinstance modelid="map-info" pos="5 -729.5" />
+<frameinstance modelid="map-info" pos="5 -741" />
+<frameinstance modelid="map-info" pos="5 -752.5" />
+<frameinstance modelid="map-info" pos="5 -764" />
+<frameinstance modelid="map-info" pos="5 -775.5" />
+<frameinstance modelid="map-info" pos="5 -787" />
+<frameinstance modelid="map-info" pos="5 -798.5" />
+<frameinstance modelid="map-info" pos="5 -810" />
+<frameinstance modelid="map-info" pos="5 -821.5" />
+<frameinstance modelid="map-info" pos="5 -833" />
+<frameinstance modelid="map-info" pos="5 -844.5" />
+<frameinstance modelid="map-info" pos="5 -856" />
+<frameinstance modelid="map-info" pos="5 -867.5" />
+<frameinstance modelid="map-info" pos="5 -879" />
+<frameinstance modelid="map-info" pos="5 -890.5" />
+<frameinstance modelid="map-info" pos="5 -902" />
+<frameinstance modelid="map-info" pos="5 -913.5" />
+<frameinstance modelid="map-info" pos="5 -925" />
+<frameinstance modelid="map-info" pos="5 -936.5" />
+<frameinstance modelid="map-info" pos="5 -948" />
+<frameinstance modelid="map-info" pos="5 -959.5" />
+<frameinstance modelid="map-info" pos="5 -971" />
+<frameinstance modelid="map-info" pos="5 -982.5" />
+<frameinstance modelid="map-info" pos="5 -994" />
+<frameinstance modelid="map-info" pos="5 -1005.5" />
+<frameinstance modelid="map-info" pos="5 -1017" />
+<frameinstance modelid="map-info" pos="5 -1028.5" />
+<frameinstance modelid="map-info" pos="5 -1040" />
+<frameinstance modelid="map-info" pos="5 -1051.5" />
+<frameinstance modelid="map-info" pos="5 -1063" />
+<frameinstance modelid="map-info" pos="5 -1074.5" />
+<frameinstance modelid="map-info" pos="5 -1086" />
+<frameinstance modelid="map-info" pos="5 -1097.5" />
+<frameinstance modelid="map-info" pos="5 -1109" />
+<frameinstance modelid="map-info" pos="5 -1120.5" />
+<frameinstance modelid="map-info" pos="5 -1132" />
+<frameinstance modelid="map-info" pos="5 -1143.5" />
+</frame>
+
+</frame>
+
+<script><!--
+#Include "MathLib" as ML
+#Include "TextLib" as TL
+#Include "TimeLib" as TimeLib
+#Include "ColorLib" as CL
+
+#Struct MapInfo {
+  Text name;
+  Text author;
+  Text uid;
+  Integer index;
+  Text[] selectedBy;
+  Text pickedBy;
+  Text bannedBy;
+}
+
+#Struct PickBanAction {
+  Text action;
+  Text login;
+  Text[] players;
+  Text nickName;
+  Integer timeoutSeconds;
+}
+
+
+declare CMlFrame widget;
+--></script>
+
+<script><!--
+declare Vec2 widgetBasePosition;
+declare CMlFrame HS_Target;
+declare Boolean HS_Hidden;
+
+Void hs_hide(Integer duration) {
+  HS_Hidden = True;
+  declare Real x;
+  if (widgetBasePosition[0] < 0.0) {
+    x = (HS_Target.Size[0] * -HS_Target.RelativeScale) - 322.0;
+  } else {
+    x = 322.0;
+  }
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ x ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::ExpInOut);
+}
+
+Void hs_show(Integer duration) {
+  HS_Hidden = False;
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ widgetBasePosition[0] ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::CircOut);
+}
+
+Void hidescript() {
+  if (HS_Target == Null){
+    HS_Target <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  }
+
+  declare hideSpeed = 10;
+
+  if (InputPlayer == Null) {
+    if (HS_Hidden) {
+      hs_show(600);
+    }
+    return;
+  }
+
+  declare Boolean overHidespeed = ML::Abs(InputPlayer.Speed * 3.6) > hideSpeed;
+
+  if (overHidespeed && !HS_Hidden) {
+    hs_hide(1000);
+
+    while(InputPlayer.Speed * 3.6 > hideSpeed){
+      yield;
+      hidescript();
+    }
+  }
+  
+  if (!overHidespeed && HS_Hidden) {
+    sleep(1000);
+    hs_show(600);
+  }
+}
+--></script>
+<script><!--
+Void updateScroll(Integer maps) {
+  declare mapsFrame <=> (Page.MainFrame.GetFirstChild("maps") as CMlFrame);
+  declare Integer mapCount = maps;
+  if (mapCount > mapsFrame.Controls.count) {
+    mapCount = mapsFrame.Controls.count;
+  }
+  declare Real maxY = mapCount * 11.5 - 115;
+  declare CMlQuad mapsBackground <=> (mapsFrame.Controls[0] as CMlQuad);
+  AnimMgr.Add(mapsBackground, "<quad pos='0 " ^ 1159 + mapCount * -11.5 - 9 ^ "' />", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
+  if (maxY < 0) {
+    maxY = 0.;
+  }
+  mapsFrame.ScrollMax = <0., maxY>;
+}
+
+Void updateMapStatus(CMlFrame mapFrame, MapInfo map) {
+  if (mapFrame.DataAttributeGet("pickedBy") != map.pickedBy) {
+    mapFrame.DataAttributeSet("pickedBy", map.pickedBy);
+    mapFrame.DataAttributeSet("position", TL::ToText(map.index));
+    (mapFrame.Controls[2] as CMlLabel).SetText(TL::ToText(map.index));
+    if (map.pickedBy == "random") {
+      (mapFrame.Controls[5] as CMlLabel).SetText("Random");
+    } else {
+      (mapFrame.Controls[5] as CMlLabel).SetText("Picked by " ^ map.pickedBy);
+    }
+    AnimMgr.Add(mapFrame, "<frame pos='15 " ^ mapFrame.RelativePosition_V3.Y ^ "' />", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
+  }
+
+  if (mapFrame.DataAttributeGet("bannedBy") != map.bannedBy) {
+    mapFrame.DataAttributeSet("bannedBy", map.bannedBy);
+    (mapFrame.Controls[2] as CMlLabel).SetText("");
+    (mapFrame.Controls[5] as CMlLabel).SetText("Banned by " ^ map.bannedBy);
+    (mapFrame.Controls[1] as CMlQuad).Opacity = 0.7;
+  }
+
+  if (map.bannedBy == "" && map.pickedBy == "") {
+    if (map.selectedBy.count == 0) {
+      (mapFrame.Controls[5] as CMlLabel).SetText("");
+    } else {
+      (mapFrame.Controls[5] as CMlLabel).SetText("" ^ map.selectedBy.count);
+    }
+  }
+}
+
+Void updateMapInfoRow(Integer index, MapInfo map, MapInfo[] maps) {
+  declare mapsFrame <=> (Page.MainFrame.GetFirstChild("maps") as CMlFrame);
+
+  if (index >= mapsFrame.Controls.count - 1) {
+    return;
+  }
+
+  declare mapFrame <=> (mapsFrame.Controls[index + 1] as CMlFrame);
+
+  if (mapFrame.DataAttributeGet("action") != "") {
+    updateMapStatus(mapFrame, map);
+    return;
+  }
+
+  (mapFrame.Controls[3] as CMlLabel).SetText(map.name);
+  (mapFrame.Controls[4] as CMlLabel).SetText(map.author);
+
+  mapFrame.DataAttributeSet("action", "-" ^ map.uid);
+  
+  updateMapStatus(mapFrame, map);
+
+  mapFrame.Show();
+}
+
+Void hideUnpickedMaps() {
+  declare mapsFrame <=> (Page.MainFrame.GetFirstChild("maps") as CMlFrame);
+  declare index = 0;
+
+  while (index < mapsFrame.Controls.count - 1) {
+    declare mapFrame <=> (mapsFrame.Controls[index + 1] as CMlFrame);
+    if (mapFrame.DataAttributeGet("pickedBy") == "") {
+      AnimMgr.Add(mapFrame, "<frame pos='-120 " ^ mapFrame.RelativePosition_V3.Y ^ "' />", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
+    } else {
+      AnimMgr.Add(mapFrame, "<frame pos='10 " ^ mapFrame.RelativePosition_V3.Y ^ "' />", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
+    }
+    index = index + 1;
+  }
+}
+
+Void orderPickedMaps() {
+  declare mapsFrame <=> (Page.MainFrame.GetFirstChild("maps") as CMlFrame);
+  declare index = 0;
+  
+  while (index < mapsFrame.Controls.count - 1) {
+    declare mapFrame <=> (mapsFrame.Controls[index + 1] as CMlFrame);
+    if (mapFrame.DataAttributeGet("pickedBy") != "") {
+      declare Integer position = TL::ToInteger(mapFrame.DataAttributeGet("position"));
+      declare Real newY = 5 + (position - 1) * 11.5;
+      AnimMgr.Add(mapFrame, "<frame pos='10 " ^ -newY ^ "' />", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
+    }
+    index = index + 1;
+  }
+}
+
+Integer getPickedMapsCount(MapInfo[] mapInfos) {
+  declare Integer count = 0;
+  foreach (map in mapInfos) {
+    if (map.pickedBy != "") {
+      count = count + 1;
+    }
+  }
+  return count;
+}
+
+// Highlights (or unhighlights) the row at index. Deliberately does not call
+// Control.Focus() - claiming engine focus is what causes Escape's first press
+// to get consumed by our navigation scope instead of opening the pause menu.
+// We track the selected row ourselves, so we don't need engine focus for it.
+Void setRowHighlighted(Integer index, Boolean highlighted) {
+  declare mapsFrame <=> (Page.MainFrame.GetFirstChild("maps") as CMlFrame);
+  if (index < 0 || index >= mapsFrame.Controls.count - 1) {
+    return;
+  }
+
+  declare mapFrame <=> (mapsFrame.Controls[index + 1] as CMlFrame);
+
+  if (highlighted) {
+    (mapFrame.Controls[1] as CMlQuad).BgColor = CL::Hex3ToRgb("999");
+  } else {
+    (mapFrame.Controls[1] as CMlQuad).BgColor = CL::Hex3ToRgb("DDD");
+  }
+}
+
+Void scrollToRow(Integer index) {
+  declare mapsFrame <=> (Page.MainFrame.GetFirstChild("maps") as CMlFrame);
+  declare Real rowTop = index * 11.5;
+  declare Real rowBottom = rowTop + 11.5;
+  declare Real viewTop = mapsFrame.ScrollOffset.Y;
+  // Matches the 10-row (115 = 10 * 11.5) window updateScroll's ScrollMax is
+  // computed against, not the frame's own (taller) declared Size.Y - using
+  // Size.Y here made rows near the bottom look "already visible" before the
+  // real scroll bound would let them actually reach the bottom of the list.
+  declare Real viewportHeight = 115.;
+  declare Real viewBottom = viewTop + viewportHeight;
+
+  if (rowTop < viewTop) {
+    mapsFrame.ScrollOffset = <0., rowTop>;
+  } else if (rowBottom > viewBottom) {
+    mapsFrame.ScrollOffset = <0., rowBottom - viewportHeight>;
+  }
+}
+
+// Clamps targetIndex to the map list bounds, without touching any visuals.
+Integer clampMapIndex(MapInfo[] mapInfos, Integer targetIndex) {
+  if (mapInfos.count == 0) {
+    return -1;
+  }
+
+  declare Integer newIndex = targetIndex;
+  if (newIndex < 0) {
+    newIndex = 0;
+  } else if (newIndex >= mapInfos.count) {
+    newIndex = mapInfos.count - 1;
+  }
+
+  return newIndex;
+}
+
+// Moves the highlight/focus/scroll from previousIndex to newIndex.
+Void applySelection(Integer previousIndex, Integer newIndex) {
+  if (previousIndex != newIndex) {
+    setRowHighlighted(previousIndex, False);
+  }
+  setRowHighlighted(newIndex, True);
+  scrollToRow(newIndex);
+}
+
+// Moves the selection by delta, or - on the first interaction, when nothing is
+// visibly selected yet - just reveals the current position without moving it.
+// Returns the new selected index.
+Integer navigateSelection(MapInfo[] mapInfos, Integer currentIndex, Boolean selectionVisible, Integer delta) {
+  declare Integer targetIndex = currentIndex;
+  if (selectionVisible) {
+    targetIndex = currentIndex + delta;
+  }
+
+  declare Integer newIndex = clampMapIndex(mapInfos, targetIndex);
+  applySelection(currentIndex, newIndex);
+  return newIndex;
+}
+
+// Triggers the pick/ban action of the currently selected row, same as clicking it.
+Void triggerSelectedMap(MapInfo[] mapInfos, Integer selectedIndex) {
+  if (mapInfos.count == 0 || selectedIndex < 0) {
+    return;
+  }
+
+  declare mapsFrame <=> (Page.MainFrame.GetFirstChild("maps") as CMlFrame);
+  declare mapFrame <=> (mapsFrame.Controls[selectedIndex + 1] as CMlFrame);
+  declare Text action = mapFrame.DataAttributeGet("action");
+  if (action != "") {
+    TriggerPageAction(action);
+  }
+}
+
+Text formatTimer(Integer secondsLeft) {
+  declare Integer minutes = secondsLeft / 60;
+  declare Text secondsText = TL::ToText(secondsLeft % 60);
+  if (secondsLeft % 60 < 10) {
+    secondsText = "0" ^ secondsText;
+  }
+  return TL::ToText(minutes) ^ ":" ^ secondsText;
+}
+
+Void updateTimerLabel(Integer secondsLeft) {
+  declare actionFrame <=> (Page.MainFrame.GetFirstChild("pickban-action") as CMlFrame);
+  declare timerLabel <=> (actionFrame.Controls[3] as CMlLabel);
+  if (secondsLeft > 0) {
+    timerLabel.SetText(formatTimer(secondsLeft));
+  } else {
+    timerLabel.SetText("");
+  }
+}
+
+// Restarts the progress bar for a fresh turn: snaps it back to full width,
+// then lets a single Linear AnimMgr tween drain it to 0 over the turn's
+// duration, so it stays in sync without us polling it every frame.
+Void startProgressBar(Integer timeoutSeconds) {
+  declare actionFrame <=> (Page.MainFrame.GetFirstChild("pickban-action") as CMlFrame);
+  declare progressQuad <=> (actionFrame.Controls[4] as CMlQuad);
+  if (timeoutSeconds > 0) {
+    progressQuad.Size = <120., 1.>;
+    progressQuad.Opacity = 0.9;
+    AnimMgr.Add(progressQuad, "<quad size='0 1' />", timeoutSeconds * 1000, CAnimManager::EAnimManagerEasing::Linear);
+  } else {
+    progressQuad.Opacity = 0.;
+  }
+}
+
+Integer updateWidget(MapInfo[] mapInfos, PickBanAction currentAction, Integer selectedIndex, Boolean selectionVisible) {
+  declare mapsCount = mapInfos.count;
+  declare index = 0;
+
+  foreach (map in mapInfos) {
+    updateMapInfoRow(index, map, mapInfos);
+    index = index + 1;
+  }
+
+  declare mapsFrame <=> (Page.MainFrame.GetFirstChild("maps") as CMlFrame);
+
+  // Hide unused rows
+  while (index < mapsFrame.Controls.count - 1) {
+    declare mapFrame <=> (mapsFrame.Controls[index + 1] as CMlFrame);
+    mapFrame.DataAttributeSet("action", "");
+    mapFrame.Hide();
+    index = index + 1;
+  }
+  
+  updateScroll(mapInfos.count);
+  declare Integer newSelectedIndex = clampMapIndex(mapInfos, selectedIndex);
+  if (selectionVisible) {
+    applySelection(selectedIndex, newSelectedIndex);
+  }
+
+  declare actionFrame <=> (Page.MainFrame.GetFirstChild("pickban-action") as CMlFrame);
+  declare actionLabel <=> (actionFrame.Controls[2] as CMlLabel);
+  updateTimerLabel(currentAction.timeoutSeconds);
+  startProgressBar(currentAction.timeoutSeconds);
+  if (currentAction.action == "pick") {
+    actionLabel.SetText(currentAction.nickName ^ "$z is picking a map");
+  } else if (currentAction.action == "ban") {
+    actionLabel.SetText(currentAction.nickName ^ "$z is banning a map");
+  } else if (currentAction.action == "random") {
+    actionLabel.SetText("Random map is being picked");
+  } else {
+    actionLabel.SetText("Pick and ban completed");
+    sleep(5000);
+    hideUnpickedMaps();
+    mapsFrame.ScrollMax = <0., 0.>;
+    sleep(400);
+    updateScroll(getPickedMapsCount(mapInfos));
+    orderPickedMaps();
+  }
+
+  return newSelectedIndex;
+}
+
+--></script>
+
+<script><!--
+main() {
+  widget <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  widgetBasePosition = widget.AbsolutePosition_V3;
+
+  sleep(300);
+  widget.Show();
+
+  declare MapInfo[] MapInfos for This;
+declare PickBanAction CurrentAction for This;
+declare Integer LastPickBanUpdate for This = -1;
+declare Integer lastUpdate = -1;
+declare Integer SelectedMapIndex = -1;
+declare Boolean SelectionVisible = False;
+declare Integer TurnTimeoutSeconds = 0;
+declare Integer TurnStartGameTime = 0;
+declare Integer LastDisplayedSecondsLeft = -1;
+declare mapsFrame <=> (widget.GetFirstChild("maps") as CMlFrame);
+mapsFrame.ScrollActive = True;
+mapsFrame.ScrollMin = <0., 0.>;
+mapsFrame.ScrollGrid = <0., 11.5>;
+
+
+  while (True) {
+    yield;
+
+    foreach(event in PendingEvents){
+      if(event.Control == Null) continue;
+
+      if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::MouseClick) {
+  declare action = event.Control.Parent.DataAttributeGet("action");
+  if (action != "") {
+    TriggerPageAction(action);
+  }
+}
+
+    }
+
+    if (LastPickBanUpdate != lastUpdate) {
+  lastUpdate = LastPickBanUpdate;
+  SelectedMapIndex = updateWidget(MapInfos, CurrentAction, SelectedMapIndex, SelectionVisible);
+
+  // The turn timeout is a fixed duration handed to us once when the turn
+  // starts; we count it down locally from GameTime rather than having the
+  // server push per-second updates.
+  TurnTimeoutSeconds = CurrentAction.timeoutSeconds;
+  TurnStartGameTime = LastPickBanUpdate;
+  LastDisplayedSecondsLeft = TurnTimeoutSeconds;
+}
+
+if (TurnTimeoutSeconds > 0) {
+  declare Integer secondsLeft = TurnTimeoutSeconds - (GameTime - TurnStartGameTime) / 1000;
+  if (secondsLeft < 0) {
+    secondsLeft = 0;
+  }
+  if (secondsLeft != LastDisplayedSecondsLeft) {
+    LastDisplayedSecondsLeft = secondsLeft;
+    updateTimerLabel(secondsLeft);
+  }
+}
+
+// Up/Down: read from Input.PendingEvents rather than polling KeyUp/KeyDown -
+// the keyboard is itself a "Pad" (EPadType::Keyboard) in this input system, so
+// arrow presses show up here too, and polling both doubled every move. This is
+// a separate, lower-level raw input queue (not the manialink page's own
+// CMlScript.PendingEvents), so reading it doesn't need EnableMenuNavigation and
+// doesn't touch scroll-wheel/Escape at all. Covers both keyboard and gamepad.
+foreach (padEvent in Input.PendingEvents) {
+  if (padEvent.Type != CInputEvent::EType::PadButtonPress || padEvent.IsAutoRepeat) continue;
+
+  if (padEvent.Button == CInputEvent::EButton::Up || padEvent.Button == CInputEvent::EButton::LeftStick_Up) {
+    SelectedMapIndex = navigateSelection(MapInfos, SelectedMapIndex, SelectionVisible, -1);
+    SelectionVisible = True;
+  } else if (padEvent.Button == CInputEvent::EButton::Down || padEvent.Button == CInputEvent::EButton::LeftStick_Down) {
+    SelectedMapIndex = navigateSelection(MapInfos, SelectedMapIndex, SelectionVisible, 1);
+    SelectionVisible = True;
+  } else if (padEvent.Button == CInputEvent::EButton::A) {
+    if (SelectionVisible) {
+      triggerSelectedMap(MapInfos, SelectedMapIndex);
+    }
+  }
+}
+
+
+      hidescript();
+  }
+}
+
+--></script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders widgets/match/pickban-update 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<script>
+<!--
+#Struct MapInfo {
+  Text name;
+  Text author;
+  Text uid;
+  Integer index;
+  Text[] selectedBy;
+  Text pickedBy;
+  Text bannedBy;
+}
+
+#Struct PickBanAction {
+  Text action;
+  Text login;
+  Text[] players;
+  Text nickName;
+  Integer timeoutSeconds;
+}
+
+main(){
+  declare MapInfo[] MapInfos for This;
+  declare PickBanAction CurrentAction for This;
+  declare Integer LastPickBanUpdate for This;
+  declare Text mapInfosJson = """[]""";
+  declare Text currentActionJson = """{}""";
+
+  MapInfos.fromjson(mapInfosJson);
+  CurrentAction.fromjson(currentActionJson);
+  LastPickBanUpdate = GameTime;
+}
+-->
+</script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders widgets/notify-admin/notify-admin 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<frame id="widget" pos="1 2" z-index="10" hidden="1">
+<frame pos="0 0" id="notify-admin">
+  <quad pos="0 0" z-index="0" size="36 8" bgcolor="DDD"/>
+  <quad pos="0 -8" z-index="0" size="36 0.5" bgcolor="222"/>
+  <label pos="18 -3.75" z-index="0" size="36 8" text="Notify Admin" halign="center" valign="center" textsize="2" textcolor="222" textfont="GameFontSemiBold"/>
+
+  <quad pos="0 0" size="36 8.5" z-index="-2" scriptevents="1" bgcolor="fff" opacity="0" action="" />
+</frame>
+
+</frame>
+
+<script><!--
+#Include "MathLib" as ML
+#Include "TextLib" as TL
+#Include "TimeLib" as TimeLib
+#Include "ColorLib" as CL
+
+
+
+declare CMlFrame widget;
+--></script>
+
+<script><!--
+declare Vec2 widgetBasePosition;
+declare CMlFrame HS_Target;
+declare Boolean HS_Hidden;
+
+Void hs_hide(Integer duration) {
+  HS_Hidden = True;
+  declare Real x;
+  if (widgetBasePosition[0] < 0.0) {
+    x = (HS_Target.Size[0] * -HS_Target.RelativeScale) - 322.0;
+  } else {
+    x = 322.0;
+  }
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ x ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::ExpInOut);
+}
+
+Void hs_show(Integer duration) {
+  HS_Hidden = False;
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ widgetBasePosition[0] ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::CircOut);
+}
+
+Void hidescript() {
+  if (HS_Target == Null){
+    HS_Target <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  }
+
+  declare hideSpeed = 10;
+
+  if (InputPlayer == Null) {
+    if (HS_Hidden) {
+      hs_show(600);
+    }
+    return;
+  }
+
+  declare Boolean overHidespeed = ML::Abs(InputPlayer.Speed * 3.6) > hideSpeed;
+
+  if (overHidespeed && !HS_Hidden) {
+    hs_hide(1000);
+
+    while(InputPlayer.Speed * 3.6 > hideSpeed){
+      yield;
+      hidescript();
+    }
+  }
+  
+  if (!overHidespeed && HS_Hidden) {
+    sleep(1000);
+    hs_show(600);
+  }
+}
+--></script>
+<script><!--
+
+--></script>
+
+<script><!--
+main() {
+  widget <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  widgetBasePosition = widget.AbsolutePosition_V3;
+
+  sleep(300);
+  widget.Show();
+
+  
+
+  while (True) {
+    yield;
+
+    foreach(event in PendingEvents){
+      if(event.Control == Null) continue;
+
+      
+    }
+
+    
+
+      hidescript();
+  }
+}
+
+--></script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders widgets/player-info/player-info 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<frame id="widget" pos="1 2" z-index="10" hidden="1">
+<frame pos="0 0" id="player-info-container" hidden="1">
+  <frame pos="0 0" id="player-name">
+    <quad pos="0 0" z-index="0" size="7 7" bgcolor="222"/>
+    <quad pos="7 0" z-index="0" size="48 7" bgcolor="DDD"/>
+    <quad pos="3.5 -3.5" z-index="0" size="4.5 3" bgcolor="222" image="file://Media/Flags/WOR.dds" halign="center" valign="center" />
+    <label pos="8.5 -3.25" z-index="0" size="47 7" text="" valign="center" textcolor="222" textsize="2" textfont="GameFontSemiBold"/>
+  </frame>
+
+  <frame pos="0 -8" id="player-info-title">
+    <quad pos="0 0" z-index="0" size="55 5" bgcolor="222"/>
+    <label pos="27.5 -2.25" z-index="0" size="55 5" text="Player Info" halign="center" textsize="1" textfont="GameFontSemiBold" valign="center"/>
+  </frame>
+
+  <frame pos="0 -13.25" id="records-info">
+    <quad pos="0 0" z-index="0" size="8 8" bgcolor="222"/>
+    <quad pos="8 0" z-index="0" size="19.5 8" bgcolor="DDD"/>
+    <label pos="4 -3.75" z-index="0" size="8 8" text="PB" halign="center" valign="center" textsize="1.5" textcolor="DDD" textfont="GameFontBlack"/>
+    <label pos="17.75 -3.75" z-index="0" size="15.5 8" text="--:--.---" valign="center" halign="center" textcolor="222" textsize="1.5" textfont="GameFontSemiBold"/>
+
+    <quad pos="27.5 0" z-index="0" size="8 8" bgcolor="222"/>
+    <quad pos="35.5 0" z-index="0" size="19.5 8" bgcolor="DDD"/>
+    <label pos="31.5 -3.75" z-index="0" size="8 8" text="LR" halign="center" valign="center" textsize="1.5" textcolor="DDD" textfont="GameFontBlack"/>
+    <label pos="45.25 -3.75" z-index="0" size="15.5 8" text="--:--.---" valign="center" halign="center" textcolor="222" textsize="1.5" textfont="GameFontSemiBold"/>
+  </frame>
+
+  <frame pos="0 -21.5" id="other-info">
+    <quad pos="0 0" z-index="0" size="8 8" bgcolor="222"/>
+    <quad pos="8 0" z-index="0" size="19.5 8" bgcolor="DDD"/>
+    <label pos="4 -3.75" z-index="0" size="8 8" text="" halign="center" valign="center" textsize="1.5" textcolor="DDD" textfont="GameFontBlack"/>
+    <label pos="17.75 -3.75" z-index="0" size="15.5 8" text="" valign="center" halign="center" textcolor="222" textsize="1.5" textfont="GameFontSemiBold"/>
+
+    <quad pos="27.5 0" z-index="0" size="8 8" bgcolor="222"/>
+    <quad pos="35.5 0" z-index="0" size="19.5 8" bgcolor="DDD"/>
+    <label pos="31.5 -3.75" z-index="0" size="8 8" text="" halign="center" valign="center" textsize="1.5" textcolor="DDD" textfont="GameFontBlack"/>
+    <label pos="45.25 -3.75" z-index="0" size="15.5 8" text="" valign="center" halign="center" textcolor="222" textsize="1.5" textfont="GameFontSemiBold"/>
+  </frame>
+</frame>
+
+</frame>
+
+<script><!--
+#Include "MathLib" as ML
+#Include "TextLib" as TL
+#Include "TimeLib" as TimeLib
+#Include "ColorLib" as CL
+
+#Struct PlayerInfo {
+  Text login;
+  Text name;
+  Integer personalBest;
+  Integer localRecord;
+  Text device;
+  Text camera;
+}
+
+
+declare CMlFrame widget;
+--></script>
+
+<script><!--
+declare Vec2 widgetBasePosition;
+declare CMlFrame HS_Target;
+declare Boolean HS_Hidden;
+
+Void hs_hide(Integer duration) {
+  HS_Hidden = True;
+  declare Real x;
+  if (widgetBasePosition[0] < 0.0) {
+    x = (HS_Target.Size[0] * -HS_Target.RelativeScale) - 322.0;
+  } else {
+    x = 322.0;
+  }
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ x ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::ExpInOut);
+}
+
+Void hs_show(Integer duration) {
+  HS_Hidden = False;
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ widgetBasePosition[0] ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::CircOut);
+}
+
+Void hidescript() {
+  if (HS_Target == Null){
+    HS_Target <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  }
+
+  declare hideSpeed = 10;
+
+  if (InputPlayer == Null) {
+    if (HS_Hidden) {
+      hs_show(600);
+    }
+    return;
+  }
+
+  declare Boolean overHidespeed = ML::Abs(InputPlayer.Speed * 3.6) > hideSpeed;
+
+  if (overHidespeed && !HS_Hidden) {
+    hs_hide(1000);
+
+    while(InputPlayer.Speed * 3.6 > hideSpeed){
+      yield;
+      hidescript();
+    }
+  }
+  
+  if (!overHidespeed && HS_Hidden) {
+    sleep(1000);
+    hs_show(600);
+  }
+}
+--></script>
+<script><!--
+Text formatTime(Integer time) {
+  declare Text secondString;
+  declare Text msString;
+
+  if (time <= 0) {
+    return "--:--.---";
+  }
+
+  declare Integer seconds = time / 1000;
+  declare Integer minutes = seconds / 60;
+  declare Integer milliseconds = time - (seconds * 1000);
+  seconds = seconds - (minutes * 60);
+
+  secondString = TL::ToText(seconds);
+
+  if (seconds < 10) {
+    secondString = "0" ^ secondString;
+  }
+
+  if (milliseconds <= 0) {
+    msString = "000";
+  } else if (milliseconds < 10) {
+    msString = "00" ^ TL::ToText(milliseconds);
+  } else if (milliseconds < 100) {
+    msString = "0" ^ TL::ToText(milliseconds);
+  } else {
+    msString = TL::ToText(milliseconds);
+  }
+
+  if (minutes > 0) {
+    return TL::ToText(minutes) ^ ":" ^ secondString ^ "." ^ msString;
+  } else {
+    return secondString ^ "." ^ msString;
+  }
+
+  return "";
+}
+
+Void updateWidget(PlayerInfo[] playerInfos, Text spectatorTargetLogin, Text spectatorTargetName, Text playerLogin) {
+  declare playerInfoContainerFrame <=> (Page.MainFrame.GetFirstChild("player-info-container") as CMlFrame);
+
+  if (spectatorTargetLogin == "" || spectatorTargetLogin == playerLogin) {
+    playerInfoContainerFrame.Hide();
+    return;
+  }
+
+  foreach (playerInfo in playerInfos) {
+    if (playerInfo.login != spectatorTargetLogin) {
+      continue;
+    }
+
+    declare playerNameFrame <=> (playerInfoContainerFrame.GetFirstChild("player-name") as CMlFrame);
+    declare playerInfoTitleFrame <=> (playerInfoContainerFrame.GetFirstChild("player-info-title") as CMlFrame);
+    declare recordsInfoFrame <=> (playerInfoContainerFrame.GetFirstChild("records-info") as CMlFrame);
+    declare otherInfoFrame <=> (playerInfoContainerFrame.GetFirstChild("other-info") as CMlFrame);
+
+    // Update Player Info
+    (playerNameFrame.Controls[2] as CMlQuad).ChangeImageUrl("file://ZoneFlags/Login/" ^ spectatorTargetLogin ^ "/country");
+    (playerNameFrame.Controls[3] as CMlLabel).SetText(spectatorTargetName);
+
+    // Update Records Info
+    (recordsInfoFrame.Controls[3] as CMlLabel).SetText(formatTime(playerInfo.personalBest));
+    (recordsInfoFrame.Controls[7] as CMlLabel).SetText(formatTime(playerInfo.localRecord));
+
+    // Update Other Info
+    (otherInfoFrame.Controls[3] as CMlLabel).SetText(playerInfo.device);
+    (otherInfoFrame.Controls[7] as CMlLabel).SetText(playerInfo.camera);
+
+    playerInfoContainerFrame.Show();
+
+    break;
+  }
+
+}
+
+--></script>
+
+<script><!--
+main() {
+  widget <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  widgetBasePosition = widget.AbsolutePosition_V3;
+
+  sleep(300);
+  widget.Show();
+
+  declare PlayerInfo[] PlayerInfos for This;
+declare Integer LastPlayerInfosUpdate for This = -1;
+declare Integer lastUpdate = -1;
+declare Text spectatorTargetLogin = "";
+declare Text spectatorTargetName = "";
+declare Text playerLogin = "";
+
+
+  while (True) {
+    yield;
+
+    foreach(event in PendingEvents){
+      if(event.Control == Null) continue;
+
+      
+    }
+
+    if (playerLogin == "" && InputPlayer != Null) {
+  playerLogin = InputPlayer.User.Login;
+  updateWidget(PlayerInfos, spectatorTargetLogin, spectatorTargetName, playerLogin);
+}
+
+if (LastPlayerInfosUpdate != lastUpdate) {
+  lastUpdate = LastPlayerInfosUpdate;
+  updateWidget(PlayerInfos, spectatorTargetLogin, spectatorTargetName, playerLogin);
+}
+
+if (GUIPlayer != Null) {
+  if (spectatorTargetLogin != GUIPlayer.User.Login) {
+    spectatorTargetLogin = GUIPlayer.User.Login;
+    spectatorTargetName = GUIPlayer.User.Name;
+    updateWidget(PlayerInfos, spectatorTargetLogin, spectatorTargetName, playerLogin);
+  }
+} else {
+  if (spectatorTargetLogin != "") {
+    spectatorTargetLogin = "";
+    spectatorTargetName = "";
+    updateWidget(PlayerInfos, spectatorTargetLogin, spectatorTargetName, playerLogin);
+  }
+}
+
+
+      hidescript();
+  }
+}
+
+--></script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders widgets/player-info/player-info-update 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<script>
+<!--
+#Struct PlayerInfo {
+  Text login;
+  Text name;
+  Integer personalBest;
+  Integer localRecord;
+  Text device;
+  Text camera;
+}
+
+main(){
+  declare PlayerInfo[] PlayerInfos for This;
+  declare Integer LastPlayerInfosUpdate for This;
+  declare Text playerInfosJson = """[]""";
+
+  PlayerInfos.fromjson(playerInfosJson);
+  LastPlayerInfosUpdate = GameTime;
+}
+-->
+</script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders widgets/records-info/records-info 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<frame id="widget" pos="1 2" z-index="10" hidden="1">
+<frame pos="0 0" id="world-record">
+  <quad pos="0 0" z-index="0" size="10 5" bgcolor="222"/>
+  <quad pos="10 0" z-index="0" size="45 5" bgcolor="DDD"/>
+  <label pos="5 -2.25" z-index="0" size="10 5" text="WR" halign="center" valign="center" textsize="1" textcolor="DDD" textfont="GameFontSemiBold"/>
+  <label pos="11.5 -2.25" z-index="0" size="32.5 5" text="-" textcolor="222" textsize="1" textfont="GameFontRegular" valign="center" textprefix="$i"/>
+  <label pos="53 -2.25" z-index="0" size="12.5 5" text="--:--.---" valign="center" halign="right" textcolor="222" textsize="1" textfont="GameFontSemiBold"/>
+</frame>
+
+<frame pos="0 -5.25" id="local-record">
+  <quad pos="0 0" z-index="0" size="10 5" bgcolor="222"/>
+  <quad pos="10 0" z-index="0" size="45 5" bgcolor="DDD"/>
+  <label pos="5 -2.25" z-index="0" size="10 5" text="LR" halign="center" valign="center" textsize="1" textcolor="DDD" textfont="GameFontSemiBold"/>
+  <label pos="11.5 -2.25" z-index="0" size="32.5 5" text="-" textcolor="222" textsize="1" textfont="GameFontRegular" valign="center" textprefix="$i"/>
+  <label pos="53 -2.25" z-index="0" size="12.5 5" text="--:--.---" valign="center" halign="right" textcolor="222" textsize="1" textfont="GameFontSemiBold"/>
+</frame>
+
+</frame>
+
+<script><!--
+#Include "MathLib" as ML
+#Include "TextLib" as TL
+#Include "TimeLib" as TimeLib
+#Include "ColorLib" as CL
+
+ #Struct RecordInfo {
+  Integer time;
+  Text nickName;
+}
+
+#Struct RecordsInfo {
+  RecordInfo worldRecord;
+  RecordInfo localRecord;
+}
+
+
+declare CMlFrame widget;
+--></script>
+
+<script><!--
+declare Vec2 widgetBasePosition;
+declare CMlFrame HS_Target;
+declare Boolean HS_Hidden;
+
+Void hs_hide(Integer duration) {
+  HS_Hidden = True;
+  declare Real x;
+  if (widgetBasePosition[0] < 0.0) {
+    x = (HS_Target.Size[0] * -HS_Target.RelativeScale) - 322.0;
+  } else {
+    x = 322.0;
+  }
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ x ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::ExpInOut);
+}
+
+Void hs_show(Integer duration) {
+  HS_Hidden = False;
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ widgetBasePosition[0] ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::CircOut);
+}
+
+Void hidescript() {
+  if (HS_Target == Null){
+    HS_Target <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  }
+
+  declare hideSpeed = 10;
+
+  if (InputPlayer == Null) {
+    if (HS_Hidden) {
+      hs_show(600);
+    }
+    return;
+  }
+
+  declare Boolean overHidespeed = ML::Abs(InputPlayer.Speed * 3.6) > hideSpeed;
+
+  if (overHidespeed && !HS_Hidden) {
+    hs_hide(1000);
+
+    while(InputPlayer.Speed * 3.6 > hideSpeed){
+      yield;
+      hidescript();
+    }
+  }
+  
+  if (!overHidespeed && HS_Hidden) {
+    sleep(1000);
+    hs_show(600);
+  }
+}
+--></script>
+<script><!--
+Text formatTime(Integer time) {
+  declare Text secondString;
+  declare Text msString;
+
+  if (time <= 0) {
+    return "--:--.---";
+  }
+
+  declare Integer seconds = time / 1000;
+  declare Integer minutes = seconds / 60;
+  declare Integer milliseconds = time - (seconds * 1000);
+  seconds = seconds - (minutes * 60);
+
+  secondString = TL::ToText(seconds);
+
+  if (seconds < 10) {
+    secondString = "0" ^ secondString;
+  }
+
+  if (milliseconds <= 0) {
+    msString = "000";
+  } else if (milliseconds < 10) {
+    msString = "00" ^ TL::ToText(milliseconds);
+  } else if (milliseconds < 100) {
+    msString = "0" ^ TL::ToText(milliseconds);
+  } else {
+    msString = TL::ToText(milliseconds);
+  }
+
+  if (minutes > 0) {
+    return TL::ToText(minutes) ^ ":" ^ secondString ^ "." ^ msString;
+  } else {
+    return secondString ^ "." ^ msString;
+  }
+
+  return "";
+}
+
+Void updateWidget(RecordsInfo recordsInfo, Text localRecordText) {
+  declare worldRecordFrame <=> (Page.MainFrame.GetFirstChild("world-record") as CMlFrame);
+  declare localRecordFrame <=> (Page.MainFrame.GetFirstChild("local-record") as CMlFrame);
+
+  // Update World Record
+  declare Text wrName = recordsInfo.worldRecord.nickName;
+  declare Integer wrTime = recordsInfo.worldRecord.time;
+
+  (worldRecordFrame.Controls[3] as CMlLabel).SetText(wrName);
+  (worldRecordFrame.Controls[4] as CMlLabel).SetText(formatTime(wrTime));
+
+  // Update Local Record
+  declare Text lrName = recordsInfo.localRecord.nickName;
+  declare Integer lrTime = recordsInfo.localRecord.time;
+
+  (localRecordFrame.Controls[3] as CMlLabel).SetText(lrName);
+  (localRecordFrame.Controls[4] as CMlLabel).SetText(formatTime(lrTime));
+
+  // Update Local Record Label
+  (localRecordFrame.Controls[2] as CMlLabel).SetText(localRecordText);
+}
+
+--></script>
+
+<script><!--
+main() {
+  widget <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  widgetBasePosition = widget.AbsolutePosition_V3;
+
+  sleep(300);
+  widget.Show();
+
+  declare RecordsInfo RecordsInfos for This;
+declare Integer LastRecordsInfosUpdate for This = -1;
+declare Text localRecordText for This;
+declare Integer lastUpdate = -1;
+
+
+  while (True) {
+    yield;
+
+    foreach(event in PendingEvents){
+      if(event.Control == Null) continue;
+
+      
+    }
+
+    if (LastRecordsInfosUpdate != lastUpdate) {
+  lastUpdate = LastRecordsInfosUpdate;
+  updateWidget(RecordsInfos, localRecordText);
+}
+
+
+      hidescript();
+  }
+}
+
+--></script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders widgets/records-info/records-info-update 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<script>
+<!--
+#Struct RecordInfo {
+  Integer time;
+  Text nickName;
+}
+
+#Struct RecordsInfo {
+  RecordInfo worldRecord;
+  RecordInfo localRecord;
+}
+
+main(){
+  declare RecordsInfo RecordsInfos for This;
+  declare Text localRecordText for This;
+  declare Integer LastRecordsInfosUpdate for This;
+  declare Text recordsInfoJson = """{}""";
+  localRecordText = "LR";
+
+  RecordsInfos.fromjson(recordsInfoJson);
+  LastRecordsInfosUpdate = GameTime;
+}
+-->
+</script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders widgets/ta-active-runs/ta-active-runs 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<frame id="widget" pos="1 2" z-index="10" hidden="1">
+<frame pos="0 0">
+  <quad pos="0 0" z-index="0" size="55 5" bgcolor="222"/>
+  <label pos="27.5 -2.25" z-index="0" size="55 5" text="Active Runs" halign="center" textsize="1" textfont="GameFontSemiBold" valign="center"/>
+</frame>
+
+<framemodel id="active-run">
+  <quad pos="0 0" z-index="0" size="40.5 5" bgcolor="DDD"/>
+  <quad pos="40.5 0" z-index="0" size="14.5 5" bgcolor="BBB"/>
+  <quad pos="1.25 -1" z-index="0" size="4.5 3" bgcolor="DDD" image="file://Media/Flags/WOR.dds"/>
+  <label pos="7 -2.25" z-index="0" size="30.5 5" text="-" textcolor="222" textsize="1.2" textfont="GameFontRegular" valign="center"/>
+  <label pos="39.75 -2.25" z-index="0" size="5 5" text="0" halign="right" textcolor="222" textsize="1" textfont="GameFontRegular" valign="center"/>
+  <label pos="54 -2.25" z-index="0" size="12.5 5" text="--:--.---" valign="center" halign="right" textsize="1" textcolor="222" textfont="GameFontSemiBold"/>
+  
+  <quad class="trigger" pos="0 0" z-index="-2" size="55 5" bgcolor="000" opacity="0" scriptevents="1" />
+</framemodel>
+
+<frame id="active-runs" pos="0 -5.25" size="55 42">
+<quad size="55 525" bgcolor="fff" opacity="0" scriptevents="1"/>
+<frameinstance modelid="active-run" pos="0 0" />
+<frameinstance modelid="active-run" pos="0 -5.25" />
+<frameinstance modelid="active-run" pos="0 -10.5" />
+<frameinstance modelid="active-run" pos="0 -15.75" />
+<frameinstance modelid="active-run" pos="0 -21" />
+<frameinstance modelid="active-run" pos="0 -26.25" />
+<frameinstance modelid="active-run" pos="0 -31.5" />
+<frameinstance modelid="active-run" pos="0 -36.75" />
+<frameinstance modelid="active-run" pos="0 -42" />
+<frameinstance modelid="active-run" pos="0 -47.25" />
+<frameinstance modelid="active-run" pos="0 -52.5" />
+<frameinstance modelid="active-run" pos="0 -57.75" />
+<frameinstance modelid="active-run" pos="0 -63" />
+<frameinstance modelid="active-run" pos="0 -68.25" />
+<frameinstance modelid="active-run" pos="0 -73.5" />
+<frameinstance modelid="active-run" pos="0 -78.75" />
+<frameinstance modelid="active-run" pos="0 -84" />
+<frameinstance modelid="active-run" pos="0 -89.25" />
+<frameinstance modelid="active-run" pos="0 -94.5" />
+<frameinstance modelid="active-run" pos="0 -99.75" />
+<frameinstance modelid="active-run" pos="0 -105" />
+<frameinstance modelid="active-run" pos="0 -110.25" />
+<frameinstance modelid="active-run" pos="0 -115.5" />
+<frameinstance modelid="active-run" pos="0 -120.75" />
+<frameinstance modelid="active-run" pos="0 -126" />
+<frameinstance modelid="active-run" pos="0 -131.25" />
+<frameinstance modelid="active-run" pos="0 -136.5" />
+<frameinstance modelid="active-run" pos="0 -141.75" />
+<frameinstance modelid="active-run" pos="0 -147" />
+<frameinstance modelid="active-run" pos="0 -152.25" />
+<frameinstance modelid="active-run" pos="0 -157.5" />
+<frameinstance modelid="active-run" pos="0 -162.75" />
+<frameinstance modelid="active-run" pos="0 -168" />
+<frameinstance modelid="active-run" pos="0 -173.25" />
+<frameinstance modelid="active-run" pos="0 -178.5" />
+<frameinstance modelid="active-run" pos="0 -183.75" />
+<frameinstance modelid="active-run" pos="0 -189" />
+<frameinstance modelid="active-run" pos="0 -194.25" />
+<frameinstance modelid="active-run" pos="0 -199.5" />
+<frameinstance modelid="active-run" pos="0 -204.75" />
+<frameinstance modelid="active-run" pos="0 -210" />
+<frameinstance modelid="active-run" pos="0 -215.25" />
+<frameinstance modelid="active-run" pos="0 -220.5" />
+<frameinstance modelid="active-run" pos="0 -225.75" />
+<frameinstance modelid="active-run" pos="0 -231" />
+<frameinstance modelid="active-run" pos="0 -236.25" />
+<frameinstance modelid="active-run" pos="0 -241.5" />
+<frameinstance modelid="active-run" pos="0 -246.75" />
+<frameinstance modelid="active-run" pos="0 -252" />
+<frameinstance modelid="active-run" pos="0 -257.25" />
+<frameinstance modelid="active-run" pos="0 -262.5" />
+<frameinstance modelid="active-run" pos="0 -267.75" />
+<frameinstance modelid="active-run" pos="0 -273" />
+<frameinstance modelid="active-run" pos="0 -278.25" />
+<frameinstance modelid="active-run" pos="0 -283.5" />
+<frameinstance modelid="active-run" pos="0 -288.75" />
+<frameinstance modelid="active-run" pos="0 -294" />
+<frameinstance modelid="active-run" pos="0 -299.25" />
+<frameinstance modelid="active-run" pos="0 -304.5" />
+<frameinstance modelid="active-run" pos="0 -309.75" />
+<frameinstance modelid="active-run" pos="0 -315" />
+<frameinstance modelid="active-run" pos="0 -320.25" />
+<frameinstance modelid="active-run" pos="0 -325.5" />
+<frameinstance modelid="active-run" pos="0 -330.75" />
+<frameinstance modelid="active-run" pos="0 -336" />
+<frameinstance modelid="active-run" pos="0 -341.25" />
+<frameinstance modelid="active-run" pos="0 -346.5" />
+<frameinstance modelid="active-run" pos="0 -351.75" />
+<frameinstance modelid="active-run" pos="0 -357" />
+<frameinstance modelid="active-run" pos="0 -362.25" />
+<frameinstance modelid="active-run" pos="0 -367.5" />
+<frameinstance modelid="active-run" pos="0 -372.75" />
+<frameinstance modelid="active-run" pos="0 -378" />
+<frameinstance modelid="active-run" pos="0 -383.25" />
+<frameinstance modelid="active-run" pos="0 -388.5" />
+<frameinstance modelid="active-run" pos="0 -393.75" />
+<frameinstance modelid="active-run" pos="0 -399" />
+<frameinstance modelid="active-run" pos="0 -404.25" />
+<frameinstance modelid="active-run" pos="0 -409.5" />
+<frameinstance modelid="active-run" pos="0 -414.75" />
+<frameinstance modelid="active-run" pos="0 -420" />
+<frameinstance modelid="active-run" pos="0 -425.25" />
+<frameinstance modelid="active-run" pos="0 -430.5" />
+<frameinstance modelid="active-run" pos="0 -435.75" />
+<frameinstance modelid="active-run" pos="0 -441" />
+<frameinstance modelid="active-run" pos="0 -446.25" />
+<frameinstance modelid="active-run" pos="0 -451.5" />
+<frameinstance modelid="active-run" pos="0 -456.75" />
+<frameinstance modelid="active-run" pos="0 -462" />
+<frameinstance modelid="active-run" pos="0 -467.25" />
+<frameinstance modelid="active-run" pos="0 -472.5" />
+<frameinstance modelid="active-run" pos="0 -477.75" />
+<frameinstance modelid="active-run" pos="0 -483" />
+<frameinstance modelid="active-run" pos="0 -488.25" />
+<frameinstance modelid="active-run" pos="0 -493.5" />
+<frameinstance modelid="active-run" pos="0 -498.75" />
+<frameinstance modelid="active-run" pos="0 -504" />
+<frameinstance modelid="active-run" pos="0 -509.25" />
+<frameinstance modelid="active-run" pos="0 -514.5" />
+<frameinstance modelid="active-run" pos="0 -519.75" />
+</frame>
+
+</frame>
+
+<script><!--
+#Include "MathLib" as ML
+#Include "TextLib" as TL
+#Include "TimeLib" as TimeLib
+#Include "ColorLib" as CL
+
+#Struct ActiveRun {
+  Text login;
+  Text name;
+  Integer time;
+  Integer checkpoint;
+}
+
+
+declare CMlFrame widget;
+--></script>
+
+<script><!--
+declare Vec2 widgetBasePosition;
+declare CMlFrame HS_Target;
+declare Boolean HS_Hidden;
+
+Void hs_hide(Integer duration) {
+  HS_Hidden = True;
+  declare Real x;
+  if (widgetBasePosition[0] < 0.0) {
+    x = (HS_Target.Size[0] * -HS_Target.RelativeScale) - 322.0;
+  } else {
+    x = 322.0;
+  }
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ x ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::ExpInOut);
+}
+
+Void hs_show(Integer duration) {
+  HS_Hidden = False;
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ widgetBasePosition[0] ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::CircOut);
+}
+
+Void hidescript() {
+  if (HS_Target == Null){
+    HS_Target <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  }
+
+  declare hideSpeed = 10;
+
+  if (InputPlayer == Null) {
+    if (HS_Hidden) {
+      hs_show(600);
+    }
+    return;
+  }
+
+  declare Boolean overHidespeed = ML::Abs(InputPlayer.Speed * 3.6) > hideSpeed;
+
+  if (overHidespeed && !HS_Hidden) {
+    hs_hide(1000);
+
+    while(InputPlayer.Speed * 3.6 > hideSpeed){
+      yield;
+      hidescript();
+    }
+  }
+  
+  if (!overHidespeed && HS_Hidden) {
+    sleep(1000);
+    hs_show(600);
+  }
+}
+--></script>
+<script><!--
+Text formatTime(Integer time) {
+  declare Text secondString;
+  declare Text msString;
+
+  if (time <= 0) {
+    return "--:--.---";
+  }
+
+  declare Integer seconds = time / 1000;
+  declare Integer minutes = seconds / 60;
+  declare Integer milliseconds = time - (seconds * 1000);
+  seconds = seconds - (minutes * 60);
+
+  secondString = TL::ToText(seconds);
+
+  if (seconds < 10) {
+    secondString = "0" ^ secondString;
+  }
+
+  if (milliseconds <= 0) {
+    msString = "000";
+  } else if (milliseconds < 10) {
+    msString = "00" ^ TL::ToText(milliseconds);
+  } else if (milliseconds < 100) {
+    msString = "0" ^ TL::ToText(milliseconds);
+  } else {
+    msString = TL::ToText(milliseconds);
+  }
+
+  if (minutes > 0) {
+    return TL::ToText(minutes) ^ ":" ^ secondString ^ "." ^ msString;
+  } else {
+    return secondString ^ "." ^ msString;
+  }
+
+  return "";
+}
+
+Void updateActiveRunRow(Integer index, ActiveRun activeRun) {
+  declare activeRunsFrame <=> (Page.MainFrame.GetFirstChild("active-runs") as CMlFrame);
+
+  if (index >= activeRunsFrame.Controls.count) {
+    return;
+  }
+
+  declare activeRunFrame <=> (activeRunsFrame.Controls[index + 1] as CMlFrame);
+  (activeRunFrame.Controls[2] as CMlQuad).ChangeImageUrl("file://ZoneFlags/Login/" ^ activeRun.login ^ "/country");
+  (activeRunFrame.Controls[3] as CMlLabel).SetText(activeRun.name);
+  declare Text checkpointText = "0";
+  if (activeRun.checkpoint == -69) {
+    checkpointText = "";
+  } else {
+    checkpointText = TL::ToText(activeRun.checkpoint);
+  }
+  (activeRunFrame.Controls[4] as CMlLabel).SetText(checkpointText);
+  (activeRunFrame.Controls[5] as CMlLabel).SetText(formatTime(activeRun.time));
+  activeRunFrame.DataAttributeSet("login", activeRun.login);
+  activeRunFrame.Show();
+}
+
+Void updateScroll(ActiveRun[] activeRuns) {
+  declare activeRunsFrame <=> (Page.MainFrame.GetFirstChild("active-runs") as CMlFrame);
+  declare Integer activeRunCount = activeRuns.count;
+  if (activeRunCount > activeRunsFrame.Controls.count) {
+    activeRunCount = activeRunsFrame.Controls.count;
+  }
+  declare Real maxY = activeRunCount * 5.25 - 42;
+  if (maxY < 0) {
+    maxY = 0.;
+  }
+  activeRunsFrame.ScrollMax = <0., maxY>;
+}
+
+Void updateWidget(ActiveRun[] activeRuns) {
+  declare activeRunCount = activeRuns.count;
+  declare index = 0;
+
+  foreach (activeRun in activeRuns) {
+    updateActiveRunRow(index, activeRun);
+    index = index + 1;
+  }
+
+  declare activeRunsFrame <=> (Page.MainFrame.GetFirstChild("active-runs") as CMlFrame);
+  // Hide unused rows
+  while (index < activeRunsFrame.Controls.count - 1) {
+    declare activeRunFrame <=> (activeRunsFrame.Controls[index + 1] as CMlFrame);
+    activeRunFrame.DataAttributeSet("login", "");
+    activeRunFrame.Hide();
+    index = index + 1;
+  }
+
+  updateScroll(activeRuns);
+}
+
+--></script>
+
+<script><!--
+main() {
+  widget <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  widgetBasePosition = widget.AbsolutePosition_V3;
+
+  sleep(300);
+  widget.Show();
+
+  declare ActiveRun[] ActiveRuns for This;
+declare Integer LastActiveRunsUpdate for This = -1;
+declare Integer lastUpdate = -1;
+declare activeRunsFrame <=> (widget.GetFirstChild("active-runs") as CMlFrame);
+activeRunsFrame.ScrollActive = True;
+activeRunsFrame.ScrollMin = <0., 0.>;
+
+
+  while (True) {
+    yield;
+
+    foreach(event in PendingEvents){
+      if(event.Control == Null) continue;
+
+      if (event.Control.HasClass("trigger") && event.Type == CMlScriptEvent::Type::MouseClick) {
+  declare targetLogin = event.Control.Parent.DataAttributeGet("login");
+  if (targetLogin != "") {
+    SetSpectateTarget(targetLogin);
+  }
+}
+
+    }
+
+    if (LastActiveRunsUpdate != lastUpdate) {
+  lastUpdate = LastActiveRunsUpdate;
+  updateWidget(ActiveRuns);
+}
+
+
+      hidescript();
+  }
+}
+
+--></script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders widgets/ta-active-runs/ta-active-runs-update 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<script>
+<!--
+#Struct ActiveRun {
+  Text login;
+  Text name;
+  Integer time;
+  Integer checkpoint;
+}
+
+main(){
+  declare ActiveRun[] ActiveRuns for This;
+  declare Integer LastActiveRunsUpdate for This;
+  declare Text activeRunsJson = """[]""";
+
+  ActiveRuns.fromjson(activeRunsJson);
+  LastActiveRunsUpdate = GameTime;
+}
+-->
+</script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders widgets/ta-leaderboard/ta-leaderboard 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<frame id="widget" pos="1 2" z-index="10" hidden="1">
+<frame pos="0 0">
+  <quad pos="0 0" z-index="0" size="55 5" bgcolor="222"/>
+  <label pos="27.5 -2.25" z-index="0" size="55 5" text="Leaderboard" halign="center" textsize="1" textfont="GameFontSemiBold" valign="center"/>
+</frame>
+
+<framemodel id="record">
+  <quad pos="0 0" z-index="0" size="5 5" bgcolor="222"/>
+  <quad pos="5 0" z-index="0" size="50 5" bgcolor="DDD"/>
+  <label pos="2.4 -2.25" z-index="0" size="5 5" text="0" halign="center" valign="center" textsize="1.25" textcolor="DDD" textfont="GameFontSemiBold"/>
+  <quad pos="6.25 -1" z-index="0" size="4.5 3" bgcolor="DDD" image="file://Media/Flags/WOR.dds"/>
+  <label pos="12 -2.25" z-index="0" size="27 5" text="-" textcolor="222" textsize="1.2" textfont="GameFontRegular" valign="center"/>
+  <label pos="53 -2.25" z-index="0" size="12.5 5" text="--:--.---" valign="center" halign="right" textsize="1" textcolor="222" textfont="GameFontSemiBold"/>
+
+  <frame pos="56 0" size="14.5 5" z-index="2" id="personalBest">
+    <quad pos="0 0" size="14.5 5" bgcolor="22D" z-index="2" />
+    <label pos="7.25 -2.25" size="14.5 5" text="-00.000" z-index="2" halign="center" valign="center" textsize="1" textcolor="DDD" textfont="GameFontSemiBold"/>
+  </frame>
+</framemodel>
+
+<frame id="records" pos="0 -5.25" size="55 42">
+<quad size="55 525" bgcolor="fff" opacity="0" scriptevents="1"/>
+<frameinstance modelid="record" pos="0 0" />
+<frameinstance modelid="record" pos="0 -5.25" />
+<frameinstance modelid="record" pos="0 -10.5" />
+<frameinstance modelid="record" pos="0 -15.75" />
+<frameinstance modelid="record" pos="0 -21" />
+<frameinstance modelid="record" pos="0 -26.25" />
+<frameinstance modelid="record" pos="0 -31.5" />
+<frameinstance modelid="record" pos="0 -36.75" />
+<frameinstance modelid="record" pos="0 -42" />
+<frameinstance modelid="record" pos="0 -47.25" />
+<frameinstance modelid="record" pos="0 -52.5" />
+<frameinstance modelid="record" pos="0 -57.75" />
+<frameinstance modelid="record" pos="0 -63" />
+<frameinstance modelid="record" pos="0 -68.25" />
+<frameinstance modelid="record" pos="0 -73.5" />
+<frameinstance modelid="record" pos="0 -78.75" />
+<frameinstance modelid="record" pos="0 -84" />
+<frameinstance modelid="record" pos="0 -89.25" />
+<frameinstance modelid="record" pos="0 -94.5" />
+<frameinstance modelid="record" pos="0 -99.75" />
+<frameinstance modelid="record" pos="0 -105" />
+<frameinstance modelid="record" pos="0 -110.25" />
+<frameinstance modelid="record" pos="0 -115.5" />
+<frameinstance modelid="record" pos="0 -120.75" />
+<frameinstance modelid="record" pos="0 -126" />
+<frameinstance modelid="record" pos="0 -131.25" />
+<frameinstance modelid="record" pos="0 -136.5" />
+<frameinstance modelid="record" pos="0 -141.75" />
+<frameinstance modelid="record" pos="0 -147" />
+<frameinstance modelid="record" pos="0 -152.25" />
+<frameinstance modelid="record" pos="0 -157.5" />
+<frameinstance modelid="record" pos="0 -162.75" />
+<frameinstance modelid="record" pos="0 -168" />
+<frameinstance modelid="record" pos="0 -173.25" />
+<frameinstance modelid="record" pos="0 -178.5" />
+<frameinstance modelid="record" pos="0 -183.75" />
+<frameinstance modelid="record" pos="0 -189" />
+<frameinstance modelid="record" pos="0 -194.25" />
+<frameinstance modelid="record" pos="0 -199.5" />
+<frameinstance modelid="record" pos="0 -204.75" />
+<frameinstance modelid="record" pos="0 -210" />
+<frameinstance modelid="record" pos="0 -215.25" />
+<frameinstance modelid="record" pos="0 -220.5" />
+<frameinstance modelid="record" pos="0 -225.75" />
+<frameinstance modelid="record" pos="0 -231" />
+<frameinstance modelid="record" pos="0 -236.25" />
+<frameinstance modelid="record" pos="0 -241.5" />
+<frameinstance modelid="record" pos="0 -246.75" />
+<frameinstance modelid="record" pos="0 -252" />
+<frameinstance modelid="record" pos="0 -257.25" />
+<frameinstance modelid="record" pos="0 -262.5" />
+<frameinstance modelid="record" pos="0 -267.75" />
+<frameinstance modelid="record" pos="0 -273" />
+<frameinstance modelid="record" pos="0 -278.25" />
+<frameinstance modelid="record" pos="0 -283.5" />
+<frameinstance modelid="record" pos="0 -288.75" />
+<frameinstance modelid="record" pos="0 -294" />
+<frameinstance modelid="record" pos="0 -299.25" />
+<frameinstance modelid="record" pos="0 -304.5" />
+<frameinstance modelid="record" pos="0 -309.75" />
+<frameinstance modelid="record" pos="0 -315" />
+<frameinstance modelid="record" pos="0 -320.25" />
+<frameinstance modelid="record" pos="0 -325.5" />
+<frameinstance modelid="record" pos="0 -330.75" />
+<frameinstance modelid="record" pos="0 -336" />
+<frameinstance modelid="record" pos="0 -341.25" />
+<frameinstance modelid="record" pos="0 -346.5" />
+<frameinstance modelid="record" pos="0 -351.75" />
+<frameinstance modelid="record" pos="0 -357" />
+<frameinstance modelid="record" pos="0 -362.25" />
+<frameinstance modelid="record" pos="0 -367.5" />
+<frameinstance modelid="record" pos="0 -372.75" />
+<frameinstance modelid="record" pos="0 -378" />
+<frameinstance modelid="record" pos="0 -383.25" />
+<frameinstance modelid="record" pos="0 -388.5" />
+<frameinstance modelid="record" pos="0 -393.75" />
+<frameinstance modelid="record" pos="0 -399" />
+<frameinstance modelid="record" pos="0 -404.25" />
+<frameinstance modelid="record" pos="0 -409.5" />
+<frameinstance modelid="record" pos="0 -414.75" />
+<frameinstance modelid="record" pos="0 -420" />
+<frameinstance modelid="record" pos="0 -425.25" />
+<frameinstance modelid="record" pos="0 -430.5" />
+<frameinstance modelid="record" pos="0 -435.75" />
+<frameinstance modelid="record" pos="0 -441" />
+<frameinstance modelid="record" pos="0 -446.25" />
+<frameinstance modelid="record" pos="0 -451.5" />
+<frameinstance modelid="record" pos="0 -456.75" />
+<frameinstance modelid="record" pos="0 -462" />
+<frameinstance modelid="record" pos="0 -467.25" />
+<frameinstance modelid="record" pos="0 -472.5" />
+<frameinstance modelid="record" pos="0 -477.75" />
+<frameinstance modelid="record" pos="0 -483" />
+<frameinstance modelid="record" pos="0 -488.25" />
+<frameinstance modelid="record" pos="0 -493.5" />
+<frameinstance modelid="record" pos="0 -498.75" />
+<frameinstance modelid="record" pos="0 -504" />
+<frameinstance modelid="record" pos="0 -509.25" />
+<frameinstance modelid="record" pos="0 -514.5" />
+<frameinstance modelid="record" pos="0 -519.75" />
+</frame>
+
+</frame>
+
+<script><!--
+#Include "MathLib" as ML
+#Include "TextLib" as TL
+#Include "TimeLib" as TimeLib
+#Include "ColorLib" as CL
+
+#Struct Record {
+  Integer rank;
+  Integer time;
+  Text name;
+  Text login;
+}
+
+#Struct PersonalBest {
+  Text login;
+  Integer timeDiff;
+}
+
+
+declare CMlFrame widget;
+--></script>
+
+<script><!--
+declare Vec2 widgetBasePosition;
+declare CMlFrame HS_Target;
+declare Boolean HS_Hidden;
+
+Void hs_hide(Integer duration) {
+  HS_Hidden = True;
+  declare Real x;
+  if (widgetBasePosition[0] < 0.0) {
+    x = (HS_Target.Size[0] * -HS_Target.RelativeScale) - 322.0;
+  } else {
+    x = 322.0;
+  }
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ x ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::ExpInOut);
+}
+
+Void hs_show(Integer duration) {
+  HS_Hidden = False;
+  AnimMgr.Add(HS_Target, "<frame pos='" ^ widgetBasePosition[0] ^ " " ^ widgetBasePosition[1] ^ "' />", duration, CAnimManager::EAnimManagerEasing::CircOut);
+}
+
+Void hidescript() {
+  if (HS_Target == Null){
+    HS_Target <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  }
+
+  declare hideSpeed = 10;
+
+  if (InputPlayer == Null) {
+    if (HS_Hidden) {
+      hs_show(600);
+    }
+    return;
+  }
+
+  declare Boolean overHidespeed = ML::Abs(InputPlayer.Speed * 3.6) > hideSpeed;
+
+  if (overHidespeed && !HS_Hidden) {
+    hs_hide(1000);
+
+    while(InputPlayer.Speed * 3.6 > hideSpeed){
+      yield;
+      hidescript();
+    }
+  }
+  
+  if (!overHidespeed && HS_Hidden) {
+    sleep(1000);
+    hs_show(600);
+  }
+}
+--></script>
+<script><!--
+Text formatTime(Integer time) {
+  declare Text secondString;
+  declare Text msString;
+
+  if (time <= 0) {
+    return "--:--.---";
+  }
+
+  declare Integer seconds = time / 1000;
+  declare Integer minutes = seconds / 60;
+  declare Integer milliseconds = time - (seconds * 1000);
+  seconds = seconds - (minutes * 60);
+
+  secondString = TL::ToText(seconds);
+
+  if (seconds < 10) {
+    secondString = "0" ^ secondString;
+  }
+
+  if (milliseconds <= 0) {
+    msString = "000";
+  } else if (milliseconds < 10) {
+    msString = "00" ^ TL::ToText(milliseconds);
+  } else if (milliseconds < 100) {
+    msString = "0" ^ TL::ToText(milliseconds);
+  } else {
+    msString = TL::ToText(milliseconds);
+  }
+
+  if (minutes > 0) {
+    return TL::ToText(minutes) ^ ":" ^ secondString ^ "." ^ msString;
+  } else {
+    return secondString ^ "." ^ msString;
+  }
+
+  return "";
+}
+
+PersonalBest[] getPersonalBests(Record[] previousRecords, Record[] currentRecords) {
+  declare PersonalBest[] personalBests = [];
+
+  foreach (prevRecord in previousRecords) {
+    foreach (currRecord in currentRecords) {
+      if (currRecord.time <= 0) {
+        // Skip invalid times
+        continue;
+      }
+
+      if (prevRecord.login == currRecord.login) {
+        if (currRecord.time < prevRecord.time) {
+          personalBests.add(PersonalBest{
+            login = currRecord.login,
+            timeDiff = prevRecord.time - currRecord.time
+          });
+        }
+        break;
+      }
+    }
+  }
+
+  return personalBests;
+}
+
+Void updateRecordRow(Integer index, Record record) {
+  declare recordsFrame <=> (Page.MainFrame.GetFirstChild("records") as CMlFrame);
+
+  if (index >= recordsFrame.Controls.count) {
+    return;
+  }
+
+  declare recordFrame <=> (recordsFrame.Controls[index + 1] as CMlFrame);
+  (recordFrame.Controls[2] as CMlLabel).SetText(TL::ToText(record.rank));
+  (recordFrame.Controls[3] as CMlQuad).ChangeImageUrl("file://ZoneFlags/Login/" ^ record.login ^ "/country");
+  (recordFrame.Controls[4] as CMlLabel).SetText(record.name);
+  (recordFrame.Controls[5] as CMlLabel).SetText(formatTime(record.time));
+  recordFrame.DataAttributeSet("login", record.login);
+  recordFrame.Show();
+}
+
+Void updateScroll(Record[] records) {
+  declare recordsFrame <=> (Page.MainFrame.GetFirstChild("records") as CMlFrame);
+  declare Integer recordCount = records.count;
+  if (recordCount > recordsFrame.Controls.count) {
+    recordCount = recordsFrame.Controls.count;
+  }
+  declare Real maxY = recordCount * 5.25 - 42;
+  if (maxY < 0) {
+    maxY = 0.;
+  }
+  recordsFrame.ScrollMax = <0., maxY>;
+}
+
+Void updateWidget(Record[] records) {
+  declare recordCount = records.count;
+  declare index = 0;
+
+  foreach (record in records) {
+    updateRecordRow(index, record);
+    index = index + 1;
+  }
+
+  declare recordsFrame <=> (Page.MainFrame.GetFirstChild("records") as CMlFrame);
+  // Hide unused rows
+  while (index < recordsFrame.Controls.count - 1) {
+    declare recordFrame <=> (recordsFrame.Controls[index + 1] as CMlFrame);
+    recordFrame.DataAttributeSet("login", "");
+    recordFrame.Hide();
+    index = index + 1;
+  }
+
+  updateScroll(records);
+}
+
+Void updatePersonalBest(PersonalBest pb) {
+  declare recordsFrame <=> (Page.MainFrame.GetFirstChild("records") as CMlFrame);
+
+  foreach (control in recordsFrame.Controls) {
+    // Skip first control (invisible background quad)
+    if (control == recordsFrame.Controls[0]) {
+      continue;
+    }
+
+    declare recordFrame <=> (control as CMlFrame);
+    declare Text login = recordFrame.DataAttributeGet("login");
+
+    if (login == pb.login) {
+      declare CMlFrame personalBestFrame <=> (recordFrame.GetFirstChild("personalBest") as CMlFrame);
+      declare CMlLabel personalBestLabel = personalBestFrame.Controls[1] as CMlLabel;
+
+      // Update personal best label
+      personalBestLabel.SetText("-" ^ formatTime(pb.timeDiff));
+
+      AnimMgr.Flush(personalBestFrame); // Clear any ongoing animations
+
+      // Start animation
+      AnimMgr.Add(personalBestFrame, """<frame pos='""" ^ "40.5 0" ^ """' />""", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
+      
+      // Hold position while not blocking code
+      AnimMgr.AddChain(personalBestFrame, """<frame pos='""" ^ "40.5 0" ^ """' />""", 3000, CAnimManager::EAnimManagerEasing::ExpInOut);
+
+      // Hide animation
+      AnimMgr.AddChain(personalBestFrame, """<frame pos='""" ^ "56 0" ^ """' />""", 600, CAnimManager::EAnimManagerEasing::ExpInOut);
+
+      break;
+    }
+  }
+}
+
+--></script>
+
+<script><!--
+main() {
+  widget <=> (Page.MainFrame.GetFirstChild("widget") as CMlFrame);
+  widgetBasePosition = widget.AbsolutePosition_V3;
+
+  sleep(300);
+  widget.Show();
+
+  declare Record[] Records for This;
+declare Record[] lastRecords = [];
+declare Integer LastRecordsUpdate for This = -1;
+declare Integer lastUpdate = -1;
+declare recordsFrame <=> (widget.GetFirstChild("records") as CMlFrame);
+recordsFrame.ScrollActive = True;
+recordsFrame.ScrollMin = <0., 0.>;
+
+
+  while (True) {
+    yield;
+
+    foreach(event in PendingEvents){
+      if(event.Control == Null) continue;
+
+      
+    }
+
+    if (LastRecordsUpdate != lastUpdate) {
+  lastUpdate = LastRecordsUpdate;
+
+  declare PersonalBest[] personalBests = getPersonalBests(lastRecords, Records);
+  lastRecords = Records;
+
+  updateWidget(Records);
+  
+  foreach (pb in personalBests) {
+    updatePersonalBest(pb);
+  }
+}
+
+
+      hidescript();
+  }
+}
+
+--></script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders widgets/ta-leaderboard/ta-leaderboard-update 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<script>
+<!--
+#Struct Record {
+  Integer rank;
+  Integer time;
+  Text name;
+  Text login;
+}
+
+main(){
+  declare Record[] Records for This;
+  declare Integer LastRecordsUpdate for This;
+  declare Text recordsJson = """[]""";
+
+  Records.fromjson(recordsJson);
+  LastRecordsUpdate = GameTime;
+}
+-->
+</script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders window 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<frame id="window" pos="-25 20" size="50 45" z-index="20">
+  <quad pos="0 0" size="50 5" bgcolor="222" />
+  <label pos="1.5 -2.25" text="Title" size="40.5 5" valign="center" halign="left" textsize="1" color="DDD" textfont="GameFontSemiBold" />
+  <label pos="48.5 -2.25" text="" size="5 5" valign="center" halign="right" textsize="1" color="222" action="close-window-test-id" focusareacolor2="fff0" />
+
+  <quad pos="0 -5" size="50 40" bgcolor="DDD" />
+  <frame pos="0 -5" size="50 40">
+    
+  </frame>
+</frame>
+
+<script><!--
+#Include "MathLib" as ML
+#Include "TextLib" as TL
+#Include "TimeLib" as TimeLib
+#Include "ColorLib" as CL
+
+
+
+
+
+main() {
+  
+
+  while (True) {
+    yield;
+
+    foreach(event in PendingEvents){
+      if(event.Control == Null) continue;
+
+      
+    }
+
+    
+  }
+}
+--></script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders windows/ecm/ecm-window 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<frame id="window" pos="-25 20" size="50 45" z-index="20">
+  <quad pos="0 0" size="50 5" bgcolor="222" />
+  <label pos="1.5 -2.25" text="Title" size="40.5 5" valign="center" halign="left" textsize="1" color="DDD" textfont="GameFontSemiBold" />
+  <label pos="48.5 -2.25" text="" size="5 5" valign="center" halign="right" textsize="1" color="222" action="close-window-test-id" focusareacolor2="fff0" />
+
+  <quad pos="0 -5" size="50 40" bgcolor="DDD" />
+  <frame pos="0 -5" size="50 40">
+    <frame pos="2 -2" id="ecm-window" size="46 36" hidden="1">
+  <frame id="recording-status" size="46 5">
+    <label text="" pos="0 -2.25" textcolor="D22" textsize="1" valign="center" />
+    <label text="Not Recording" pos="3.5 -2.25" size="20 5" textsize="1" textcolor="222" valign="center" textfont="GameFontRegular" />
+
+    <frame id="toggle-recording" pos="25 0" size="25 5">
+      <quad pos="0 0" size="25 5" bgcolor="CCC" action="ecm-toggle-recording" />
+      <quad pos="0 -4.75" size="25 0.25" bgcolor="222" />
+      <label pos="12.5 -2.25" text="Start recording" textsize="1" textcolor="222" valign="center" halign="center" textfont="GameFontRegular" />
+    </frame>
+  </frame>
+
+  <frame id="api-key-frame" pos="0 -6" size="46 12.25">
+    <label text="API Key" pos="0 -2.25" size="25 3" textsize="0.6" textcolor="222" valign="center" textfont="GameFontSemiBold" />
+    <frame id="input-frame" pos="0 -4.5" size="46 7.75">
+      <quad pos="0 -4.75" size="37 0.25" bgcolor="222" />
+      <entry pos="0 -2.25" default="" size="32 5" name="ecm-api-key-entry" id="ecm-api-key-entry" class="ecm-api-key-entry" textsize="1" focusareacolor1="CCC" focusareacolor2="CCC" textcolor="222" scriptevents="1" textformat="Password" valuetype="Ml_String" valign="center" textfont="GameFontRegular" />
+      <label pos="34.5 -2.25" size="5 5" text="" textcolor="222" focusareacolor1="CCC" focusareacolor2="CCC" halign="center" valign="center" textsize="1" scriptevents="1" class="ecm-api-key-entry-toggle" />
+
+      <frame id="save-api-key" pos="38 0" size="12 5">
+        <quad pos="0 0" size="12 5" bgcolor="CCC" action="ecm-save-api-key" />
+        <quad pos="0 -4.75" size="12 0.25" bgcolor="222" />
+        <label pos="6 -2.25" text="Save" textsize="1" textcolor="222" valign="center" halign="center" textfont="GameFontRegular" />
+      </frame>
+
+      <label id="error-label" pos="0 -6.25" size="46 3" textsize="0.6" textcolor="D22" valign="center" textfont="GameFontRegular" />
+    </frame>
+  </frame>
+
+  <frame id="round-info-frame" pos="0 -19" size="46 9.5">
+    <label text="Round info" pos="0 -2.25" size="25 3" textsize="0.6" textcolor="222" valign="center" textfont="GameFontSemiBold" />
+    <frame id="round-info" pos="0 -4.5" size="46 5">
+      <label text="Round " pos="0 -2.25" size="12 5" textsize="1" textcolor="222" valign="center" textfont="GameFontRegular" />
+
+      <frame id="round-controls">
+        <frame id="decrease-round-offset" pos="14 0" size="5 5">
+          <quad pos="0 0" size="5 5" bgcolor="CCC" action="ecm-decrease-round-offset" />
+          <quad pos="0 -4.75" size="5 0.25" bgcolor="222" />
+          <label pos="2.5 -2.25" text="-" textsize="1" textcolor="222" valign="center" halign="center" textfont="GameFontRegular" />
+        </frame>
+
+        <frame id="increase-round-offset" pos="20 0" size="5 5">
+          <quad pos="0 0" size="5 5" bgcolor="CCC" action="ecm-increase-round-offset" />
+          <quad pos="0 -4.75" size="5 0.25" bgcolor="222" />
+          <label pos="2.5 -2.25" text="+" textsize="1" textcolor="222" valign="center" halign="center" textfont="GameFontRegular" />
+        </frame>
+      </frame>
+    </frame>
+  </frame>
+</frame>
+
+  </frame>
+</frame>
+
+<script><!--
+#Include "MathLib" as ML
+#Include "TextLib" as TL
+#Include "TimeLib" as TimeLib
+#Include "ColorLib" as CL
+
+
+
+Void updateIsEditor(Boolean isEditor) {
+  declare window <=> (Page.MainFrame.GetFirstChild("ecm-window") as CMlFrame);
+  declare toggleRecordingFrame <=> ((window.GetFirstChild("recording-status") as CMlFrame).GetFirstChild("toggle-recording") as CMlFrame);
+  declare apiKeyFrame <=> (window.GetFirstChild("api-key-frame") as CMlFrame);
+  declare roundInfoFrame <=> (window.GetFirstChild("round-info-frame") as CMlFrame);
+  declare roundControlsFrame <=> ((roundInfoFrame.GetFirstChild("round-info") as CMlFrame).GetFirstChild("round-controls") as CMlFrame);
+
+  if (isEditor) {
+    toggleRecordingFrame.Show();
+    apiKeyFrame.Show();
+    roundInfoFrame.RelativePosition_V3 = <0., -19.>;
+    roundControlsFrame.Show();
+  } else {
+    toggleRecordingFrame.Hide();
+    apiKeyFrame.Hide();
+    roundInfoFrame.RelativePosition_V3 = <0., -6.>;
+    roundControlsFrame.Hide();
+  }
+
+  window.Show();
+}
+
+Void updateRecording(Boolean isRecording) {
+  declare window <=> (Page.MainFrame.GetFirstChild("ecm-window") as CMlFrame);
+  declare statusFrame <=> (window.GetFirstChild("recording-status") as CMlFrame);
+  declare toggleRecordingFrame <=> (statusFrame.GetFirstChild("toggle-recording") as CMlFrame);
+
+  declare recordingStatusLabel <=> statusFrame.Controls[0] as CMlLabel;
+  declare labelText <=> statusFrame.Controls[1] as CMlLabel;
+  declare toggleRecordingLabel <=> toggleRecordingFrame.Controls[2] as CMlLabel;
+
+  declare Real low = 2./16.;
+  declare Real high = 14./16.;
+
+  if (isRecording) {
+    recordingStatusLabel.TextColor = <low,high,low>;
+    labelText.SetText("Recording");
+    toggleRecordingLabel.SetText("Stop recording");
+  } else {
+    recordingStatusLabel.TextColor = <high,low,low>;
+    labelText.SetText("Not Recording");
+    toggleRecordingLabel.SetText("Start recording");
+  }
+}
+
+Void updateApiKey(Text apiKey) {
+  declare window <=> (Page.MainFrame.GetFirstChild("ecm-window") as CMlFrame);
+  declare apiKeyFrame <=> (window.GetFirstChild("api-key-frame") as CMlFrame);
+  declare inputFrame <=> (apiKeyFrame.GetFirstChild("input-frame") as CMlFrame);
+  declare apiKeyEntry <=> (inputFrame.GetFirstChild("ecm-api-key-entry") as CMlEntry);
+
+  apiKeyEntry.SetText(apiKey, False);
+}
+
+Void updateRoundInfo(Integer currentRound) {
+  declare window <=> (Page.MainFrame.GetFirstChild("ecm-window") as CMlFrame);
+  declare roundInfoFrame <=> (window.GetFirstChild("round-info-frame") as CMlFrame);
+  declare roundInfo <=> (roundInfoFrame.GetFirstChild("round-info") as CMlFrame);
+  declare roundInfoLabel <=> (roundInfo.Controls[0] as CMlLabel);
+
+  roundInfoLabel.SetText("Round " ^ currentRound);
+}
+
+Void updateWindow(Boolean ecmIsEditor, Text ecmAPIKey, Boolean ecmIsRecording, Integer ecmCurrentRound) {
+  updateIsEditor(ecmIsEditor);
+  updateRecording(ecmIsRecording);
+  updateApiKey(ecmAPIKey);
+  updateRoundInfo(ecmCurrentRound);
+}
+
+
+main() {
+  declare Boolean ECMIsEditor for This = False;
+declare Text ECMAPIKey for This = "";
+declare Boolean ECMIsRecording for This = False;
+declare Integer ECMCurrentRound for This = 1;
+declare Integer LastECMUpdate for This = -1;
+declare Integer lastUpdate = -1;
+
+
+  while (True) {
+    yield;
+
+    foreach(event in PendingEvents){
+      if(event.Control == Null) continue;
+
+      if (event.Control.HasClass("ecm-api-key-entry") && event.Type == CMlScriptEvent::Type::EntrySubmit) {
+  declare entryControl <=> (event.Control as CMlEntry);
+  declare errorLabel <=> (entryControl.Parent.GetFirstChild("error-label") as CMlLabel);
+
+  declare Integer nbUnderscores = TL::Split("_", entryControl.Value, False).count - 1;
+  if (nbUnderscores < 0) {
+    nbUnderscores = 0;
+  }
+
+  if (TL::Length(entryControl.Value) > 0 && nbUnderscores != 1) {
+    errorLabel.SetText("Expected 1 underscore, found " ^ nbUnderscores);
+  } else {
+    errorLabel.SetText("");
+  }
+}
+
+if (event.Control.HasClass("ecm-api-key-entry-toggle") && event.Type == CMlScriptEvent::Type::MouseClick) {
+  declare entryControl <=> (event.Control.Parent.GetFirstChild("ecm-api-key-entry") as CMlEntry);
+  if (entryControl.TextFormat == CMlEntry::ETextFormat::Password) {
+    entryControl.TextFormat = CMlEntry::ETextFormat::Basic;
+    (event.Control as CMlLabel).SetText("");
+  } else {
+    entryControl.TextFormat = CMlEntry::ETextFormat::Password;
+    (event.Control as CMlLabel).SetText("");
+  }
+}
+
+    }
+
+    if (LastECMUpdate != lastUpdate) {
+  lastUpdate = LastECMUpdate;
+  updateWindow(ECMIsEditor, ECMAPIKey, ECMIsRecording, ECMCurrentRound);
+}
+
+  }
+}
+--></script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders windows/ecm/ecm-window-update 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<script>
+<!--
+main(){
+  declare Boolean ECMIsEditor for This;
+  declare Text ECMAPIKey for This;
+  declare Boolean ECMIsRecording for This;
+  declare Integer ECMCurrentRound for This;
+  declare Integer LastECMUpdate for This;
+  
+  ECMIsEditor = False;
+  ECMAPIKey = "";
+  ECMIsRecording = False;
+  ECMCurrentRound = ;
+  LastECMUpdate = GameTime;
+}
+-->
+</script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders windows/match/choose-position-window 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<frame id="window" pos="-25 20" size="50 45" z-index="20">
+  <quad pos="0 0" size="50 5" bgcolor="222" />
+  <label pos="1.5 -2.25" text="Title" size="40.5 5" valign="center" halign="left" textsize="1" color="DDD" textfont="GameFontSemiBold" />
+  <label pos="48.5 -2.25" text="" size="5 5" valign="center" halign="right" textsize="1" color="222" action="close-window-test-id" focusareacolor2="fff0" />
+
+  <quad pos="0 -5" size="50 40" bgcolor="DDD" />
+  <frame pos="0 -5" size="50 40">
+    <frame pos="2 -2" id="choose-position-window" size="46 36">
+    <frame pos="0 0" size="10 10">
+      <quad pos="0 0" z-index="0" size="10 10" bgcolor="222"/>
+      <label pos="5 -4.5" z-index="0" size="10 10" text="1" halign="center" valign="center" textsize="3" textcolor="DDD" textfont="GameFontBlack"/>
+
+      <quad class="trigger" pos="0 0" z-index="-2" size="10 10" bgcolor="000" opacity="0" scriptevents="1" action="-1" />
+    </frame>
+    <frame pos="12 0" size="10 10">
+      <quad pos="0 0" z-index="0" size="10 10" bgcolor="222"/>
+      <label pos="5 -4.5" z-index="0" size="10 10" text="2" halign="center" valign="center" textsize="3" textcolor="DDD" textfont="GameFontBlack"/>
+
+      <quad class="trigger" pos="0 0" z-index="-2" size="10 10" bgcolor="000" opacity="0" scriptevents="1" action="-2" />
+    </frame>
+</frame>
+
+  </frame>
+</frame>
+
+<script><!--
+#Include "MathLib" as ML
+#Include "TextLib" as TL
+#Include "TimeLib" as TimeLib
+#Include "ColorLib" as CL
+
+
+
+
+
+main() {
+  
+
+  while (True) {
+    yield;
+
+    foreach(event in PendingEvents){
+      if(event.Control == Null) continue;
+
+      
+    }
+
+    
+  }
+}
+--></script>
+
+</manialink>
+"
+`;
