@@ -168,7 +168,7 @@ describe("reconnecting", () => {
     expect(sockets).toHaveLength(2);
   });
 
-  it("starts the backoff over after a successful open", async () => {
+  it("starts the backoff over once a socket has stayed open for 10 s", async () => {
     const { sockets } = setup();
     await settle();
 
@@ -179,18 +179,88 @@ describe("reconnecting", () => {
     expect(sockets).toHaveLength(3);
 
     sockets[2].open();
+    await vi.advanceTimersByTimeAsync(10_000);
     sockets[2].closeWith(1006);
     await vi.advanceTimersByTimeAsync(1000);
     expect(sockets).toHaveLength(4);
   });
 
-  it.each([4403, 4404, 1001])("does not reconnect after close code %i", async (code) => {
+  it("keeps backing off when sockets open but close straight away", async () => {
     const { sockets } = setup();
     await settle();
 
-    sockets[0].closeWith(code, "final");
+    for (const delay of [1000, 2000, 4000]) {
+      const socket = sockets[sockets.length - 1];
+      const before = sockets.length;
+      socket.open();
+      socket.closeWith(1011);
+
+      await vi.advanceTimersByTimeAsync(delay - 1);
+      expect(sockets).toHaveLength(before); // not reconnected yet
+      await vi.advanceTimersByTimeAsync(1);
+      expect(sockets).toHaveLength(before + 1);
+    }
+  });
+
+  it("does not reconnect after the forbidden close code 4403", async () => {
+    const { sockets } = setup();
+    await settle();
+
+    sockets[0].closeWith(4403, "Not allowed to view this server");
     await vi.advanceTimersByTimeAsync(120_000);
     expect(sockets).toHaveLength(1);
+  });
+
+  it("reconnects and resyncs after 1001, which a restarting proxy sends", async () => {
+    const { options, sockets } = setup();
+    await settle();
+
+    for (let i = 0; i < 3; i++) {
+      sockets[i].open();
+      sockets[i].closeWith(1001, "Going away");
+      await vi.advanceTimersByTimeAsync(2 ** i * 1000);
+      expect(sockets).toHaveLength(i + 2);
+    }
+    expect(options.onOpen).toHaveBeenCalledTimes(3);
+  });
+
+  describe("when the service does not manage the server (4404)", () => {
+    it("retries with a growing delay and gives up after five tries", async () => {
+      const { sockets } = setup();
+      await settle();
+
+      for (const [i, delay] of [1000, 2000, 4000, 8000, 16_000].entries()) {
+        sockets[i].open();
+        sockets[i].closeWith(4404, "Server is not managed by this service");
+        await vi.advanceTimersByTimeAsync(delay - 1);
+        expect(sockets).toHaveLength(i + 1);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(sockets).toHaveLength(i + 2);
+      }
+
+      sockets[5].open();
+      sockets[5].closeWith(4404);
+      await vi.advanceTimersByTimeAsync(300_000);
+      expect(sockets).toHaveLength(6);
+    });
+
+    it("connects once the service has registered the server", async () => {
+      const { options, sockets } = setup();
+      await settle();
+
+      sockets[0].open();
+      sockets[0].closeWith(4404);
+      await vi.advanceTimersByTimeAsync(1000);
+
+      sockets[1].open();
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(options.onOpen).toHaveBeenCalledTimes(2);
+
+      // Healthy for a while: the count of 4404s starts over, so a later one is retried again
+      sockets[1].closeWith(4404);
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(sockets).toHaveLength(3);
+    });
   });
 });
 
@@ -209,6 +279,16 @@ describe("stopping", () => {
     second.stop();
     expect(second.sockets[0].closed).toBe(true);
     expect(second.options.onSocket).toHaveBeenLastCalledWith(null);
+  });
+
+  it("leaves no timer behind", async () => {
+    const { sockets, stop } = setup();
+    await settle();
+    sockets[0].open(); // starts the stable-open timer
+
+    stop();
+
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it("does not open a socket when stopped while the ticket is loading", async () => {
