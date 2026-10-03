@@ -74,7 +74,7 @@ gbx-service:
 
 Copy the Nadeo values from the `gocontrolpanel` service. Everything else in the old service block (`NEXTAUTH_*`, `DEFAULT_*`, `HETZNER_KEY`, Sentry and Plausible variables) stays on the web container only.
 
-> **Check the images exist.** `docker-publish-on-release.yml` currently builds only `apps/web/Dockerfile`. The `gocontrolpanel-gbx-service` image is not published by CI yet, so until it is, build it yourself (see [Building the images yourself](#building-the-images-yourself)) or add the build to the workflow.
+> **Images.** The release workflow publishes `gocontrolpanel-gbx-service` (and the `-postgres` variant) next to the web image, with the same `latest`/`beta`/version tags. Set the repository variable `DOCKER_GBX_IMAGE_NAME` to use another image name.
 
 If you started from one of the stacks in [`docker/`](../docker) (PyPlanet, EvoSC, ManiaControl, MiniControl), those compose files do not contain `gbx-service` yet. Add the block above to them and point `DATABASE_URL`/`REDIS_URI` at the same hosts the `gocontrolpanel` service uses.
 
@@ -175,24 +175,11 @@ Never run both at once. Restore the dump only if you made schema changes of your
 - **Reconnects.** The browser reconnects to the live sockets with a growing delay. Close code 4404 (server not managed yet) is retried about five times, which covers a newly created server the service has not registered yet.
 - **Built-in plugins** were ported to a new plugin SDK. Custom changes you made to `src/plugins/**`, `src/lib/manialink/**` or the manager classes on `dev` do not carry over and must be ported to `apps/gbx-service` (plugins in `src/core/plugins`, templates in `templates/`).
 
-## Building the images yourself
-
-Build context is the repo root.
-
-```bash
-# web
-docker build -f apps/web/Dockerfile -t gocontrolpanel:local --build-arg DB_TYPE=mysql .
-# gbx-service
-docker build -f apps/gbx-service/Dockerfile -t gocontrolpanel-gbx-service:local --build-arg DB_TYPE=mysql .
-```
-
-Use `DB_TYPE=postgres` for PostgreSQL. `DB_TYPE` selects the Prisma schema at build time, so build both images with the same value as your database. A plain `docker build .` no longer works since the root `Dockerfile` moved to `apps/web/Dockerfile`.
-
 ## For developers and forks
 
 - Old paths: `src/**` → `apps/web/src/**`; `src/lib/prisma/{mysql,postgres}` → `packages/db/prisma/{mysql,postgres}`; `Dockerfile` and `start.sh` → `apps/web/`.
 - Imports from `@/lib/prisma/generated` become `@gcp/db`. Live, player, map and server types come from `@gcp/shared`.
 - Removed from the web app: `src/server.ts` (custom server), `next-ws`, `/api/ws`, the `gbxclient`/`plugin`/`manialink` managers, `build:templates` and `@evotm/gbxclient`. The web app reaches dedicated servers only through `apps/web/src/lib/gbx-service.ts`.
 - Commands are now run from the repo root: `bun install`, `bun run infra:up`, `bun run deploy` (migrations), `bun run dev` (web) and `bun run dev:gbx` (service). See [CONTRIBUTING.md](../CONTRIBUTING.md).
-- CI: `workspace-check.yml` typechecks, tests and builds both apps; the release workflow builds from `apps/web/Dockerfile`.
+- CI: `workspace-check.yml` typechecks, tests and builds both apps; the release workflow builds and pushes both images (`apps/web/Dockerfile` and `apps/gbx-service/Dockerfile`).
 - To test a change against a real dedicated server, follow [real-server-testing.md](./real-server-testing.md).
