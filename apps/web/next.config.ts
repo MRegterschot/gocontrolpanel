@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 import path from "node:path";
 
+// Monorepo: the root .env is the base. Real environment variables and apps/web/.env* win over it.
+// Missing in Docker/CI, where the variables come from the environment.
+try {
+  process.loadEnvFile(path.join(__dirname, "../../.env"));
+} catch (error) {
+  if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+}
+
 const nextConfig: NextConfig = {
   output: "standalone",
   // Trace from the monorepo root so workspace packages end up in the standalone build

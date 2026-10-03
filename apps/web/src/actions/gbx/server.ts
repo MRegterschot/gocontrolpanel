@@ -3,11 +3,13 @@
 import { ServerSettingsSchemaType } from "@/forms/server/settings/settings-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
+import { callEach } from "@/lib/gbx-batch";
 import { getLogger } from "@/lib/logger";
 import { getGbxClient, publishServerEvent } from "@/lib/gbx-service";
 import { getFileManager } from "@/lib/managers/file-manager";
 import { LocalMapInfo } from "@/types/map";
 import { ServerError, ServerResponse } from "@/types/responses";
+import { type SMapInfo } from "@gcp/shared";
 import path from "path";
 import { logAudit } from "../database/server-only/audit-logs";
 
@@ -24,19 +26,21 @@ export async function getServerSettings(
       };
       const log = getLogger(serverId);
       const client = getGbxClient(serverId);
-      const server = await getClient().servers.findUnique({
-        where: { id: serverId },
-        select: { enableHelpCommand: true },
-      });
-      const settings = await client.multicall([
-        ["GetServerOptions"],
-        ["GetHideServer"],
-        ["IsKeepingPlayerSlots"],
-        ["AreHornsDisabled"],
-        ["AreServiceAnnouncesDisabled"],
-        ["GetSystemInfo"],
-        ["AreProfileSkinsDisabled"],
-        ["IsMapDownloadAllowed"],
+      const [server, settings] = await Promise.all([
+        getClient().servers.findUnique({
+          where: { id: serverId },
+          select: { enableHelpCommand: true },
+        }),
+        client.multicall([
+          ["GetServerOptions"],
+          ["GetHideServer"],
+          ["IsKeepingPlayerSlots"],
+          ["AreHornsDisabled"],
+          ["AreServiceAnnouncesDisabled"],
+          ["GetSystemInfo"],
+          ["AreProfileSkinsDisabled"],
+          ["IsMapDownloadAllowed"],
+        ]),
       ]);
 
       if (!settings) {
@@ -226,24 +230,16 @@ export async function getLocalMaps(
         throw new ServerError("Failed to get maps", "GetLocalMapsError");
       }
 
+      const infos = await callEach<SMapInfo>(client, "GetMapInfo", maps.map((map: string) => [map]));
       const mapInfoList: LocalMapInfo[] = [];
 
-      for (const map of maps) {
-        try {
-          const mapInfo = await client.call("GetMapInfo", map);
-
-          if (!mapInfo) {
-            throw new ServerError("Failed to get map info", "GetMapInfoError");
-          }
-
-          mapInfoList.push({
-            ...mapInfo,
-            Path: path.dirname(map),
-          } as LocalMapInfo);
-        } catch (error) {
-          log.error({ meta, error, map }, "Error getting map info");
+      infos.forEach((mapInfo, i) => {
+        if (!mapInfo) {
+          log.error({ meta, map: maps[i] }, "Error getting map info");
+          return;
         }
-      }
+        mapInfoList.push({ ...mapInfo, Path: path.dirname(maps[i]) } as LocalMapInfo);
+      });
 
       return mapInfoList;
     },

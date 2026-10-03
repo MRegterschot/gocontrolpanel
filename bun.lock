@@ -134,6 +134,7 @@
         "nextjs-node-loader": "^1.1.9",
         "tailwindcss": "^4",
         "typescript": "^5",
+        "vitest": "^5.0.3",
       },
     },
     "packages/db": {

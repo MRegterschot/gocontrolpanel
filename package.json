@@ -7,8 +7,13 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "bun --env-file=.env run --filter @gcp/web dev",
-    "dev:gbx": "bun --env-file=.env run --filter @gcp/gbx-service dev",
+    "dev": "bun run --filter @gcp/web dev",
+    "dev:gbx": "bun run --filter @gcp/gbx-service dev",
+    "setup": "bun install && bun run deploy",
+    "infra:up": "docker compose --env-file .env -f dev/docker-compose.yml up -d --wait redis mariadb",
+    "infra:up:postgres": "docker compose --env-file .env -f dev/docker-compose.yml up -d --wait redis postgres",
+    "infra:dedicated": "docker compose --env-file .env -f dev/docker-compose.yml up -d dedicated filemanager",
+    "infra:down": "docker compose --env-file .env -f dev/docker-compose.yml --profile \"*\" down",
     "build": "bun --env-file=.env run --filter '*' build",
     "test": "bun --env-file=.env run --filter '*' test",
     "typecheck": "bun --env-file=.env run --filter '*' typecheck",

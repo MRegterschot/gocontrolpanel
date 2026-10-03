@@ -70,14 +70,15 @@ Fake players: `gcp -X POST $GCP/gbx/call -d '{"method":"ConnectFakePlayer"}'`. T
 |---|---|---|
 | C1 | Start the service with the dedicated server up | Log `Connected to GBX server`; `/ws/servers` shows `isConnected: true`; a `maps` row for the current map and a `matches` row exist |
 | C2 | `dce restart dedicated` | `disconnect` on `/ws/servers` and `/ws/clients`, `reconnect try` with a timestamp ~15 s ahead, then `connect`; widgets reappear in game without restarting the client |
-| C3 | `dce stop dedicated`, wait ~2.5 min (10 × 15 s) | Ten retries, then `reconnect stop` on `/ws/clients`; `isReconnecting: false`; no further attempts in the log |
+| C3 | `dce stop dedicated` while the service is connected, wait ~2.5 min (10 × 15 s) | Ten retries, then `reconnect stop` on `/ws/clients`; `isReconnecting: false`; no further attempts in the log |
 | C4 | After C3: `dce start dedicated`, then `gcp -X POST $GCP/reconnect` | `{ "connected": true }` |
 | C5 | `gcp -X POST $GCP/disconnect` | Disconnects and **stays** offline (no retries); widgets disappear in game; `POST $GCP/reconnect` brings it back |
 | C6 | `gcp -X POST $GCP/stop-reconnect` while retries are pending (during C3) | `reconnect stop`, no more attempts |
 | C7 | Change `password` of the server row in MariaDB, publish `server.updated` | Reconnects with the new password, fails authentication and retries; restore the password and publish again → connected |
+| C7b | `gcp -X POST $GCP/disconnect`, rename the server in MariaDB, publish `server.updated` | The new name shows in `/ws/clients`; the server stays offline and does not reconnect. Changing the host, port, user or password instead reconnects at once |
 | C8 | Stop the service with Ctrl+C mid-match and start it again | Clean shutdown log; after restart all widgets are drawn again for players already on the server |
 | C9 | `docker kill` the dedicated server while a player is driving | Same as C2; no unhandled errors, service keeps running |
-| C10 | Start the service with the dedicated server down | Service starts and serves `/health`; retries in the background (regression test for the ECONNREFUSED crash) |
+| C10 | Start the service with the dedicated server down, start the dedicated server ~5 min later | Service starts and serves `/health` (regression test for the ECONNREFUSED crash); it never connected, so it retries for 15 min (15 s apart, then every minute) and connects once the server is up |
 
 ## 3. Live state and sockets
 
@@ -144,6 +145,7 @@ Check each widget visually in the game client. Compare with screenshots from the
 | R2 | `dce stop redis` during a match | Jukebox and Nadeo token cache errors logged; live state and sockets unaffected; recovers when Redis is back |
 | R3 | Remove the `NADEO_*` values and restart | Everything works except WR/PB/metadata; widgets show `-`/0 |
 | R4 | Malformed lifecycle message: `redis-cli publish gcp:server-events 'nope'` | Warning logged, nothing else |
+| R4b | Break the HTTP route: set the web app's `GBX_SERVICE_URL` to a dead port, restart it, then toggle a plugin or delete a server | Web log: `GBX service request failed, event delivered over Redis instead`; the service still applies the change |
 | R5 | Open 20 `ws:watch live` sockets and close them, ten times over | Service memory (`ps -o rss -p <pid>`) returns to its baseline; no errors logged |
 | R6 | Soak: 1 h with fake players and some driving, plus 20 dedicated-server restarts (`for i in $(seq 20); do dce restart dedicated; sleep 40; done`) | Memory of the service process stable (`ps -o rss`), one callback handler per session, records counted once per finish |
 
@@ -206,13 +208,18 @@ Log in with the account from `E2E_ADMIN_LOGIN` and keep the browser devtools ope
 | W1 | Open the panel | Sidebar lists `e2e-server` as connected; sockets go to `ws://localhost:3101/ws/...?ticket=...`; `/api/ws-ticket` returns 200 |
 | W2 | `dce restart dedicated` with the server page and `/admin/servers` open | Sidebar and client card go offline, show the reconnect countdown, and come back without a page reload |
 | W3 | Stop `e2e:dev` for ~20 s, then start it again | Sockets retry with growing intervals (1 s, 2 s, 4 s, ...) and resync on reconnect; actions in between show "GBX service is unavailable" |
+| W3b | Freeze the service: `kill -STOP <pid of the service>` (`pgrep -f 'src/main.ts'`), then use any action, e.g. send a chat message; afterwards `kill -CONT <pid>` | After 30 s the action fails with "GBX service did not respond within 30 s" (not after 5 minutes); map-list changes, reconnect and plugin reload wait up to 120 s; everything works again after `kill -CONT` |
+| W3c | Create a server in the panel and open its live page straight away; then delete a server while its live page is open | The new server's page connects by itself (a 4404 right after creation is retried). For the deleted one the page stops after about 31 s of retries and does not keep reconnecting |
+| W3d | Ban 150+ logins (or put 150+ maps in the file manager), open the ban list and local maps pages; also leave one banned login that has never connected | Pages load in about a second, not one request per row. The login the server does not know is shown with nickname `-`. In the service log there are 2 multicalls per 150 items, not 150 calls |
 | W4 | Live page while driving (TA and rounds); set round/match points for a player and a team | Same updates as `ws:watch live`; points change on the scoreboard and in the dashboard |
 | W5 | Players page: list, kick, ban/unban, black list and guest list add/remove/load/save/clean, force spectator | Same results as A9; audit log rows written |
 | W6 | Maps page: add a local map, add several, remove one, remove all (expect an error), reorder, jump to a map, restart, next map | Matches A3–A5; "Cannot remove the last map from the server" shown as an error; map list chat template posted once per change |
 | W7 | Jukebox: queue a map, finish the current one | Queued map is played next and leaves the jukebox (A10) |
 | W8 | Game page: change script, load and save match settings, append/insert playlist, save script settings, pause/unpause from the live page | Chat templates posted once; `updatedSettings` arrives; paused round not counted twice (L8) |
 | W9 | Settings page: change server options, rates and toggles; turn the help command off | Values read back after a reload; `/help` stays silent without a service restart |
-| W10 | Chat config: enable manual routing with a message format; also save once with the dedicated server stopped | Player chat is re-sent in the format; the stopped-server save stores `manualRouting: false` and shows the error |
+| W10 | Chat config: enable manual routing with a message format | Player chat is re-sent in the format |
+| W10b | Chat config: stop the dedicated server and edit a template (manual routing stays on), then start it again | The save succeeds without an error and keeps `manualRouting: true`; after the reconnect the new template and manual routing are in effect |
+| W10c | Chat config: stop the GBX service (not the dedicated server), edit a template and save, then start the service | The save succeeds; the service uses the new template after it is back (Redis event or the database read on start) |
 | W11 | Plugins page: disable a plugin, change a plugin config, reload plugins | Widget disappears or updates immediately; no restart needed (P14, P15) |
 | W12 | `/admin/servers`: stop reconnect during retries, reconnect, resend manialinks, disconnect | Same as C3–C6, triggered from the UI |
 | W13 | Edit the server: rename it; then set a wrong XML-RPC password and save; then restore it | Service logs `server.updated` each time; the new name shows on `/admin/servers` (the sidebar takes names from the session, so after the next session refresh); the wrong password disconnects and retries (C7); restoring it reconnects |

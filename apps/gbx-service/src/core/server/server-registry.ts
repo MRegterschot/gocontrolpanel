@@ -64,8 +64,9 @@ export class ServerRegistry {
     const runtime = this.runtimes.get(serverId);
     if (!runtime) return;
 
-    await runtime.dispose();
+    // Unregister first, so a duplicate event (HTTP plus the Redis fallback) cannot dispose it twice
     this.runtimes.delete(serverId);
+    await runtime.dispose();
     this.events.emit("runtimeRemoved", serverId);
   }
 

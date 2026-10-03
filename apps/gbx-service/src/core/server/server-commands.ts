@@ -159,7 +159,8 @@ export class ServerCommands {
     bus.emit("teamUpdated", team);
   }
 
-  // Manual routing may be refused by the server; it is then turned off and reported back
+  // Manual routing may be refused by the server; it is then turned off and reported back.
+  // An offline server is not a refusal: it applies the stored config when it connects.
   async applyChatConfig(config: ChatConfig): Promise<ChatConfigResult> {
     let error: string | undefined;
     const applied = { ...config };
@@ -167,9 +168,11 @@ export class ServerCommands {
     try {
       await this.deps.gbx.call("ChatEnableManualRouting", config.manualRouting);
     } catch (e) {
-      error = errorMessage(e);
-      applied.manualRouting = false;
-      this.deps.log.error({ err: e }, "Failed to apply manual chat routing");
+      if (!(e instanceof AppError && e.code === "ServerNotConnected")) {
+        error = errorMessage(e);
+        applied.manualRouting = false;
+        this.deps.log.error({ err: e }, "Failed to apply manual chat routing");
+      }
     }
 
     this.deps.state.chat = applied;

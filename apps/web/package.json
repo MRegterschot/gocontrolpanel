@@ -7,7 +7,8 @@
     "build": "next build --webpack",
     "start": "cp -r .next/static .next/standalone/apps/web/.next/static && cp -r public .next/standalone/apps/web/public && cp -r hetzner .next/standalone/apps/web/hetzner/ && node .next/standalone/apps/web/server.js | pino-pretty",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@codemirror/lang-cpp": "^6.0.2",
@@ -99,6 +100,7 @@
     "eslint-config-prettier": "^10.1.1",
     "nextjs-node-loader": "^1.1.9",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^5.0.3"
   }
 }

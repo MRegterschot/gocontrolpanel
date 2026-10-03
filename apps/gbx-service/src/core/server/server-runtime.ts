@@ -61,16 +61,16 @@ export interface RuntimeDependencies {
   connectTimeoutMs?: number;
   retryDelayMs?: number;
   maxRetries?: number;
+  initialConnectWindowMs?: number;
+  slowRetryDelayMs?: number;
 }
 
 const API_VERSION = "2023-04-24";
 
 type ConnectionTarget = Pick<ServerRecord, "host" | "port" | "user" | "password">;
 
-function sameTarget(a: ConnectionTarget | null, b: ConnectionTarget): boolean {
-  return (
-    !!a && a.host === b.host && a.port === b.port && a.user === b.user && a.password === b.password
-  );
+function sameTarget(a: ConnectionTarget, b: ConnectionTarget): boolean {
+  return a.host === b.host && a.port === b.port && a.user === b.user && a.password === b.password;
 }
 
 // Everything GoControlPanel runs for one dedicated server
@@ -89,7 +89,8 @@ export class ServerRuntime {
   private session: GbxSession | null = null;
   private connected = false;
   private name: string | null = null;
-  private target: ConnectionTarget | null = null;
+  // Details of the last connection attempt, whether or not it succeeded
+  private attemptedTarget: ConnectionTarget | null = null;
 
   constructor(
     readonly serverId: string,
@@ -196,6 +197,8 @@ export class ServerRuntime {
       log,
       retryDelayMs: deps.retryDelayMs,
       maxRetries: deps.maxRetries,
+      initialConnectWindowMs: deps.initialConnectWindowMs,
+      slowRetryDelayMs: deps.slowRetryDelayMs,
       onReconnectScheduled: (at) => bus.emit("reconnect", "try", at),
       onReconnectStopped: () => bus.emit("reconnect", "stop", null),
     });
@@ -263,20 +266,43 @@ export class ServerRuntime {
     if (this.connected) await this.syncPlugins(true);
   }
 
-  // servers row changed; reconnects only when the connection details changed
+  // servers row changed. Only new connection details restart the connection; any other edit must not
+  // undo a manual disconnect or revive a server whose retries were stopped.
   async applyServerUpdate(): Promise<void> {
     const record = await this.deps.servers.findById(this.serverId);
     if (!record) return;
 
     this.name = record.name;
     this.state.enableHelpCommand = record.enableHelpCommand;
+    await this.refreshChatConfig(record.chat);
 
-    if (this.target && !sameTarget(this.target, record)) {
-      this.log.info("Connection details changed, reconnecting");
+    // No attempt yet: the one that is about to run reads this record anyway
+    if (!this.attemptedTarget || sameTarget(this.attemptedTarget, record)) return;
+
+    this.log.info("Connection details changed, reconnecting");
+    // Not awaited: the caller does not need to wait for the game server
+    void this.restart();
+  }
+
+  // The stored chat config changed (saved while the service could not be reached, for instance)
+  private async refreshChatConfig(chat: ServerRecord["chat"]): Promise<void> {
+    const previous = this.state.chat;
+    this.state.chat = chat;
+
+    if (!this.connected || !previous || previous.manualRouting === chat.manualRouting) return;
+    try {
+      await this.gbx.call("ChatEnableManualRouting", chat.manualRouting);
+    } catch (error) {
+      this.log.error({ err: error }, "Failed to apply manual chat routing");
+    }
+  }
+
+  private async restart(): Promise<void> {
+    try {
       await this.disconnect();
       await this.start();
-    } else if (!this.connected) {
-      await this.reconnect();
+    } catch (error) {
+      this.log.error({ err: error }, "Failed to reconnect after the connection details changed");
     }
   }
 
@@ -296,6 +322,7 @@ export class ServerRuntime {
       throw new AppError("ServerNotFound", `Server ${this.serverId} not found`);
     }
     this.name = server.name;
+    this.attemptedTarget = server;
 
     // A fresh session per attempt, so listeners never pile up across reconnects
     const session = this.deps.sessionFactory();
@@ -311,7 +338,6 @@ export class ServerRuntime {
     }
 
     this.session = session;
-    this.target = server;
     session.onDisconnect(() => void this.onSessionLost(session));
 
     try {

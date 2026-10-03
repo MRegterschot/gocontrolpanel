@@ -3,6 +3,7 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { getLogger } from "@/lib/logger";
+import { saveChatConfig } from "@/lib/chat-config";
 import { gbxService, publishServerEvent } from "@/lib/gbx-service";
 import { updateFileManager } from "@/lib/managers/file-manager";
 import { Prisma, Servers } from "@gcp/db";
@@ -378,17 +379,13 @@ export async function updateServerChatConfig(
       };
       const log = getLogger(serverId);
 
-      // Manual routing is turned off when the server refuses it
-      const { applied, error } = await gbxService.applyChatConfig(
-        serverId,
-        chatConfig,
-      );
-
       const db = getClient();
-      const updatedServer = await db.servers.update({
-        where: { id: serverId },
-        data: { ...applied },
-        omit: omitSecrets,
+      const { server, applied, error } = await saveChatConfig(chatConfig, {
+        save: (data) =>
+          db.servers.update({ where: { id: serverId }, data, omit: omitSecrets }),
+        apply: (config) => gbxService.applyChatConfig(serverId, config),
+        notifyUpdated: () => publishServerEvent({ type: "server.updated", serverId }),
+        log,
       });
 
       await logAudit(
@@ -404,7 +401,7 @@ export async function updateServerChatConfig(
         throw new ServerError(error, "UpdateChatConfigError");
       }
 
-      return updatedServer;
+      return server;
     },
   );
 }
