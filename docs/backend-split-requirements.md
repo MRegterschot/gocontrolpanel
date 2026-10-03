@@ -61,7 +61,7 @@ After the split, Next.js should be a stock Next app: no `src/server.ts`, no `nex
   - created → create and connect a manager (today this happens lazily, on the next WS open);
   - updated (host/port/user/password) → reconnect with the new credentials, compared with the details of the last connection attempt, so fixing a wrong password also works for a server that never connected. Other edits (name, help command) never touch the connection: a manual disconnect or stopped retries survive them. The reconnect runs in the background, so the web action does not wait for the game server;
   - deleted (soft delete) → stop reconnect, remove listeners, drop the manager;
-  - chat config updated → `ChatEnableManualRouting` + refresh the cached chat config. If the GBX call fails, force `manualRouting=false` and still persist (current behaviour);
+  - chat config updated → the web app writes the database first, then the service calls `ChatEnableManualRouting` and refreshes the cached chat config. If the game server refuses manual routing, it is forced off and saved that way. An offline game server or an unreachable service is not a refusal: the config is saved as requested, a `server.updated` event makes the service re-read it, and every connect applies the stored config;
   - plugins enabled/disabled/config changed → refresh `info.plugins` and run `updatePlugins()`;
   - plugins "reload" → `reloadPlugins()`.
 

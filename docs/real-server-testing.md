@@ -214,7 +214,9 @@ Log in with the account from `E2E_ADMIN_LOGIN` and keep the browser devtools ope
 | W7 | Jukebox: queue a map, finish the current one | Queued map is played next and leaves the jukebox (A10) |
 | W8 | Game page: change script, load and save match settings, append/insert playlist, save script settings, pause/unpause from the live page | Chat templates posted once; `updatedSettings` arrives; paused round not counted twice (L8) |
 | W9 | Settings page: change server options, rates and toggles; turn the help command off | Values read back after a reload; `/help` stays silent without a service restart |
-| W10 | Chat config: enable manual routing with a message format; also save once with the dedicated server stopped | Player chat is re-sent in the format; the stopped-server save stores `manualRouting: false` and shows the error |
+| W10 | Chat config: enable manual routing with a message format | Player chat is re-sent in the format |
+| W10b | Chat config: stop the dedicated server and edit a template (manual routing stays on), then start it again | The save succeeds without an error and keeps `manualRouting: true`; after the reconnect the new template and manual routing are in effect |
+| W10c | Chat config: stop the GBX service (not the dedicated server), edit a template and save, then start the service | The save succeeds; the service uses the new template after it is back (Redis event or the database read on start) |
 | W11 | Plugins page: disable a plugin, change a plugin config, reload plugins | Widget disappears or updates immediately; no restart needed (P14, P15) |
 | W12 | `/admin/servers`: stop reconnect during retries, reconnect, resend manialinks, disconnect | Same as C3–C6, triggered from the UI |
 | W13 | Edit the server: rename it; then set a wrong XML-RPC password and save; then restore it | Service logs `server.updated` each time; the new name shows on `/admin/servers` (the sidebar takes names from the session, so after the next session refresh); the wrong password disconnects and retries (C7); restoring it reconnects |

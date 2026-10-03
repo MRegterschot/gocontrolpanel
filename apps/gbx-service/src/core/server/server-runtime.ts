@@ -274,6 +274,7 @@ export class ServerRuntime {
 
     this.name = record.name;
     this.state.enableHelpCommand = record.enableHelpCommand;
+    await this.refreshChatConfig(record.chat);
 
     // No attempt yet: the one that is about to run reads this record anyway
     if (!this.attemptedTarget || sameTarget(this.attemptedTarget, record)) return;
@@ -281,6 +282,19 @@ export class ServerRuntime {
     this.log.info("Connection details changed, reconnecting");
     // Not awaited: the caller does not need to wait for the game server
     void this.restart();
+  }
+
+  // The stored chat config changed (saved while the service could not be reached, for instance)
+  private async refreshChatConfig(chat: ServerRecord["chat"]): Promise<void> {
+    const previous = this.state.chat;
+    this.state.chat = chat;
+
+    if (!this.connected || !previous || previous.manualRouting === chat.manualRouting) return;
+    try {
+      await this.gbx.call("ChatEnableManualRouting", chat.manualRouting);
+    } catch (error) {
+      this.log.error({ err: error }, "Failed to apply manual chat routing");
+    }
   }
 
   private async restart(): Promise<void> {

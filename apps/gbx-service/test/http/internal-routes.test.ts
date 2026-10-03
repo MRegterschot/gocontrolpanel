@@ -204,6 +204,20 @@ describe("stateful commands", () => {
   });
 });
 
+describe("chat config while the dedicated server is offline", () => {
+  it("accepts it and keeps manual routing as requested", async () => {
+    const { request, h } = await setup();
+    await request("POST", internalPaths.disconnect("server-1"));
+
+    const config = { ...serverRecord().chat, manualRouting: true, connectMessage: "Welcome" };
+    const res = await request("PUT", internalPaths.chatConfig("server-1"), config);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json().data).toEqual({ applied: config });
+    expect(h.runtime.state.chat).toEqual(config);
+  });
+});
+
 describe("lifecycle events over http", () => {
   it("removes deleted servers", async () => {
     const { request, registry } = await setup();

@@ -185,6 +185,58 @@ describe("ServerRuntime updates", () => {
     expect(h.runtime.state.enableHelpCommand).toBe(false);
   });
 
+  describe("the stored chat config changes", () => {
+    const stored = (overrides: Partial<ReturnType<typeof serverRecord>["chat"]>) =>
+      serverRecord({ chat: { ...serverRecord().chat, ...overrides } });
+
+    it("is picked up without touching the connection", async () => {
+      const h = await createHarness();
+      h.session.calls.length = 0;
+      h.servers.add(stored({ connectMessage: "Hello {nickName}", manualRouting: true }));
+
+      await h.runtime.applyServerUpdate();
+      await flush();
+
+      expect(h.runtime.state.chat).toMatchObject({ connectMessage: "Hello {nickName}", manualRouting: true });
+      expect(h.session.callsTo("ChatEnableManualRouting")[0].params).toEqual([true]);
+      expect(h.sessions).toHaveLength(1);
+    });
+
+    it("only calls the game server when the routing flag changed", async () => {
+      const h = await createHarness();
+      h.session.calls.length = 0;
+      h.servers.add(stored({ connectMessage: "Hello" }));
+
+      await h.runtime.applyServerUpdate();
+
+      expect(h.runtime.state.chat?.connectMessage).toBe("Hello");
+      expect(h.session.callsTo("ChatEnableManualRouting")).toHaveLength(0);
+    });
+
+    it("is stored for an offline server without calling it", async () => {
+      const h = await createHarness();
+      await h.runtime.disconnect();
+      h.servers.add(stored({ connectMessage: "Hello", manualRouting: true }));
+
+      await expect(h.runtime.applyServerUpdate()).resolves.toBeUndefined();
+
+      expect(h.runtime.state.chat).toMatchObject({ connectMessage: "Hello", manualRouting: true });
+    });
+
+    it("survives the game server refusing manual routing", async () => {
+      const h = await createHarness({
+        configure: (s) =>
+          s.respond("ChatEnableManualRouting", (enabled: boolean) => {
+            if (enabled) throw new Error("routing already taken");
+            return true;
+          }),
+      });
+      h.servers.add(stored({ manualRouting: true }));
+
+      await expect(h.runtime.applyServerUpdate()).resolves.toBeUndefined();
+    });
+  });
+
   it("does not undo a manual disconnect when an unrelated field changes", async () => {
     const h = await createHarness();
     await h.runtime.disconnect();
