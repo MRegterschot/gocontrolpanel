@@ -6,7 +6,8 @@ export const EditServerSchema = z.object({
   host: z.string().min(1, { message: "Host is required" }),
   port: z.coerce.number().min(1, { message: "Port must be greater than 0" }),
   user: z.string().min(1, { message: "User is required" }),
-  password: z.string().min(1, { message: "Password is required" }),
+  // Empty keeps the stored password
+  password: z.string().optional(),
   userServers: z
     .array(
       z.object({
