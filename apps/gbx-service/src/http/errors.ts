@@ -44,7 +44,9 @@ export function errorHandler(
     body = { error: { code: "InternalError", message: "Internal server error" } };
   }
 
-  if (status >= 500) {
+  // A fault from the dedicated server means it rejected the input, not that the service failed
+  const serverRejected = error instanceof AppError && error.code === "GbxCallFailed";
+  if (status >= 500 && !serverRejected) {
     request.log.error({ err: error }, "Request failed");
   } else {
     request.log.warn({ err: errorMessage(error), status }, "Request rejected");
