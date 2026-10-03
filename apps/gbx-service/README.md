@@ -5,8 +5,8 @@ Long-running Fastify service that owns every connection to the Trackmania dedica
 ## Running
 
 ```bash
-cp apps/gbx-service/.env.example apps/gbx-service/.env   # or reuse the root .env
-bun run dev:gbx                                            # from the repo root
+cp .env.example .env     # the root .env is read from any folder; apps/gbx-service/.env is an optional override on top
+bun run dev:gbx            # from the repo root, or `bun run dev` inside apps/gbx-service
 ```
 
 The service needs the same database and Redis as the web app. Migrations are owned by the web app/`@gcp/db` (`bun run deploy`).

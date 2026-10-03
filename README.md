@@ -409,7 +409,7 @@ docker compose logs gocontrolpanel
 
 ## Contributing
 
-Contributions are welcome! If you have suggestions or improvements, please create a pull request or open an issue. Feel free to fork the repository and make changes as needed.
+Contributions are welcome! If you have suggestions or improvements, please create a pull request or open an issue. Feel free to fork the repository and make changes as needed. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to set up a local development environment.
 
 ---
 

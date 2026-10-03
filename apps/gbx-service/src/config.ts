@@ -41,7 +41,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const result = envSchema.safeParse(env);
   if (!result.success) {
     const issues = result.error.issues.map((i) => `  ${i.path.join(".")}: ${i.message}`);
-    throw new Error(`Invalid configuration:\n${issues.join("\n")}`);
+    throw new Error(
+      `Invalid configuration:\n${issues.join("\n")}\n` +
+        "Set these as environment variables. For local development put them in the repo root .env " +
+        "(see .env.example); apps/gbx-service/.env is an optional override.",
+    );
   }
 
   return {
