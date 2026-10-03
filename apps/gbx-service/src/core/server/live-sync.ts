@@ -115,12 +115,6 @@ export class LiveSync {
     );
   }
 
-  // On the podium the next script is already known; remember a type change for BeginMatch
-  async prepareNextMode(): Promise<void> {
-    const scriptName = await this.deps.gbx.call<ScriptName>("GetScriptName");
-    this.applyMode(scriptName.NextValue);
-  }
-
   private applyMode(scriptName: string): void {
     const { state } = this.deps;
     const previous = state.liveInfo.type;

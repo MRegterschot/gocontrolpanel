@@ -296,13 +296,17 @@ describe("maps and matches", () => {
     expect(h.jukebox.queues.get("server-1")).toHaveLength(1);
   });
 
-  it("detects a mode change on the podium and announces it at the next match", async () => {
+  it("keeps the current mode through the podium and announces a change at the next match", async () => {
     const h = await createHarness();
     const modeChange = vi.fn();
     h.runtime.events.on("modeChange", modeChange);
+    const before = h.runtime.state.liveInfo.type;
 
     h.world.scriptName = "Trackmania/TM_TimeAttack_Online.Script.txt";
     await h.script("Maniaplanet.Podium_Start");
+    expect(h.runtime.state.liveInfo.type).toBe(before);
+    expect(modeChange).not.toHaveBeenCalled();
+
     await h.callback("ManiaPlanet.BeginMatch", []);
 
     expect(modeChange).toHaveBeenCalledWith("timeattack");
