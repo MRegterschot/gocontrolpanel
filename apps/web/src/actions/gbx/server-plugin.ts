@@ -1,7 +1,7 @@
 "use server";
 
 import { doServerActionWithAuth } from "@/lib/actions";
-import { getGbxClient } from "@/lib/managers/gbxclient-manager";
+import { getGbxClient } from "@/lib/gbx-service";
 import { ServerPlugin } from "@/types/gbx/server-plugin";
 import { ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
@@ -12,7 +12,7 @@ export async function getServerPlugin(
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async () => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       return await client.call("GetServerPlugin");
     },
   );
@@ -27,7 +27,7 @@ export async function setServerPlugin(
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("SetServerPlugin", forceReload, name, settings);
       await logAudit(
         session.user.id,
@@ -45,7 +45,7 @@ export async function getServerPluginVariables(
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async () => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       return await client.call("GetServerPluginVariables");
     },
   );
@@ -58,7 +58,7 @@ export async function setServerPluginVariables(
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("SetServerPluginVariables", variables);
       await logAudit(
         session.user.id,
@@ -78,7 +78,7 @@ export async function triggerServerPluginEvent(
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("TriggerServerPluginEvent", eventName, param);
       await logAudit(
         session.user.id,
@@ -98,7 +98,7 @@ export async function triggerServerPluginEventArray(
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("TriggerServerPluginEventArray", eventName, params);
       await logAudit(
         session.user.id,

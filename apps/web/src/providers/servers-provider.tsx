@@ -4,7 +4,7 @@ import useWebSocket from "@/hooks/use-websocket";
 import { getCurrentId } from "@/lib/utils";
 import { connectionRoutes } from "@/routes";
 import { ServerError } from "@/types/responses";
-import { ServerInfo } from "@/types/server";
+import { ServerInfo, wsPaths } from "@gcp/shared";
 import { usePathname, useRouter } from "next/navigation";
 import {
   createContext,
@@ -95,7 +95,7 @@ export const ServersProvider = ({
   }, [servers, router, serverId]);
 
   useWebSocket({
-    url: "/api/ws/servers",
+    path: wsPaths.servers,
     onMessage: handleMessage,
     onError: () => setLoading(false),
   });

@@ -3,17 +3,14 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { getLogger } from "@/lib/logger";
+import { saveChatConfig } from "@/lib/chat-config";
+import { gbxService, publishServerEvent } from "@/lib/gbx-service";
 import { updateFileManager } from "@/lib/managers/file-manager";
-import {
-  deleteGbxClientManager,
-  getGbxClientManager,
-} from "@/lib/managers/gbxclient-manager";
 import { Prisma, Servers } from "@gcp/db";
 import {
   getKeyHetznerRecentlyCreatedServers,
   getRedisClient,
 } from "@/lib/redis";
-import { getErrorMessage } from "@/lib/utils";
 import { HetznerServerCache } from "@/types/api/hetzner/servers";
 import { PaginationResponse, ServerError, ServerResponse } from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
@@ -170,6 +167,7 @@ export async function createServer(
     });
 
     await logAudit(session.user.id, newServer.id, "server.create", server);
+    await publishServerEvent({ type: "server.created", serverId: newServer.id });
 
     if (recentlyCreatedProjectId) {
       const client = await getRedisClient();
@@ -270,6 +268,7 @@ export async function updateServer(
       }
 
       await logAudit(session.user.id, serverId, "server.edit", server);
+      await publishServerEvent({ type: "server.updated", serverId });
 
       return updatedServer;
     },
@@ -348,41 +347,29 @@ export async function updateServerChatConfig(
         function: "updateServerChatConfig",
       };
       const log = getLogger(serverId);
-      const manager = await getGbxClientManager(serverId);
-      let error;
-
-      try {
-        await manager.client.call(
-          "ChatEnableManualRouting",
-          chatConfig.manualRouting,
-        );
-      } catch (e) {
-        error = e;
-        chatConfig.manualRouting = false;
-      }
 
       const db = getClient();
-      const updatedServer = await db.servers.update({
-        where: { id: serverId },
-        data: { ...chatConfig },
+      const { server, applied, error } = await saveChatConfig(chatConfig, {
+        save: (data) => db.servers.update({ where: { id: serverId }, data }),
+        apply: (config) => gbxService.applyChatConfig(serverId, config),
+        notifyUpdated: () => publishServerEvent({ type: "server.updated", serverId }),
+        log,
       });
-
-      manager.info.chat = chatConfig;
 
       await logAudit(
         session.user.id,
         serverId,
         "server.plugins.chat.edit",
-        chatConfig,
-        error ? getErrorMessage(error) : undefined,
+        applied,
+        error,
       );
 
       if (error) {
         log.error({ meta, error }, "Failed to update chat config on server");
-        throw error;
+        throw new ServerError(error, "UpdateChatConfigError");
       }
 
-      return updatedServer;
+      return server;
     },
   );
 }
@@ -396,7 +383,7 @@ export async function deleteServer(serverId: string): Promise<ServerResponse> {
         where: { id: serverId },
         data: { deletedAt: new Date() },
       });
-      await deleteGbxClientManager(serverId);
+      await publishServerEvent({ type: "server.deleted", serverId });
 
       await logAudit(session.user.id, serverId, "server.delete");
     },

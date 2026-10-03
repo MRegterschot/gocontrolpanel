@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch --env-file-if-exists=.env src/main.ts | pino-pretty",
+    "dev": "tsx watch --env-file-if-exists=../../.env --env-file-if-exists=.env src/main.ts | pino-pretty",
     "build": "tsup",
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit",

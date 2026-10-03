@@ -1,7 +1,7 @@
 "use client";
 import { Card } from "@/components/ui/card";
 import SetTeamMatchPointsForm from "@/forms/server/live/teams/set-team-match-points-form";
-import { Team } from "@/types/live";
+import { Team } from "@gcp/shared";
 import { IconX } from "@tabler/icons-react";
 import { DefaultModalProps } from "../../default-props";
 

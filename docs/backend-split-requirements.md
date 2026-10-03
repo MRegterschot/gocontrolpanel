@@ -55,13 +55,13 @@ After the split, Next.js should be a stock Next app: no `src/server.ts`, no `nex
   7. `syncMap` → `syncLiveInfo` (GS-12).
   8. Delete all stored manialinks for the server in Redis.
   9. Load + start plugins.
-- **GS-3 Reconnect policy.** On disconnect: unload plugins, emit `disconnect`, schedule a retry. 15 s delay, max 10 retries, retry count resets on success, no double scheduling. Expose `reconnectAt` (epoch ms) for the clients view.
+- **GS-3 Reconnect policy.** On disconnect: unload plugins, emit `disconnect`, schedule a retry. 15 s delay, max 10 retries, retry count resets on success, no double scheduling. A server that has never connected (a cloud VM that is still booting) keeps retrying every minute after those retries, until 15 minutes after its first attempt; a manual reconnect starts a new window. Expose `reconnectAt` (epoch ms) for the clients view.
 - **GS-4 Manual controls** (backs `src/actions/gbx/clients.ts`): stop reconnecting, trigger reconnect now, resend all manialinks, disconnect client.
 - **GS-5 Server lifecycle hooks.** The service must react when Next changes a server:
   - created → create and connect a manager (today this happens lazily, on the next WS open);
-  - updated (host/port/user/password) → reconnect with the new credentials (today nothing happens until the next reconnect);
+  - updated (host/port/user/password) → reconnect with the new credentials, compared with the details of the last connection attempt, so fixing a wrong password also works for a server that never connected. Other edits (name, help command) never touch the connection: a manual disconnect or stopped retries survive them. The reconnect runs in the background, so the web action does not wait for the game server;
   - deleted (soft delete) → stop reconnect, remove listeners, drop the manager;
-  - chat config updated → `ChatEnableManualRouting` + refresh the cached chat config. If the GBX call fails, force `manualRouting=false` and still persist (current behaviour);
+  - chat config updated → the web app writes the database first, then the service calls `ChatEnableManualRouting` and refreshes the cached chat config. If the game server refuses manual routing, it is forced off and saved that way. An offline game server or an unreachable service is not a refusal: the config is saved as requested, a `server.updated` event makes the service re-read it, and every connect applies the stored config;
   - plugins enabled/disabled/config changed → refresh `info.plugins` and run `updatePlugins()`;
   - plugins "reload" → `reloadPlugins()`.
 

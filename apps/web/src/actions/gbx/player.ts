@@ -1,14 +1,29 @@
 "use server";
 
 import { doServerActionWithAuth } from "@/lib/actions";
-import {
-  getGbxClient,
-  getGbxClientManager,
-} from "@/lib/managers/gbxclient-manager";
-import { PlayerRound, Team } from "@/types/live";
-import { PlayerInfo } from "@/types/player";
+import { callEach } from "@/lib/gbx-batch";
+import { gbxService, getGbxClient, type GbxClient } from "@/lib/gbx-service";
+import { PlayerInfo } from "@gcp/shared";
 import { ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
+
+// One round trip for the whole list; a player the server no longer knows is shown by login only
+async function getPlayerInfos(client: GbxClient, logins: string[]): Promise<PlayerInfo[]> {
+  const infos = await callEach(client, "GetPlayerInfo", logins.map((login) => [login]));
+
+  return logins.map((login, i) => {
+    const info = infos[i];
+    return info
+      ? {
+          nickName: info.NickName,
+          login: info.Login,
+          playerId: info.PlayerId,
+          spectatorStatus: info.SpectatorStatus,
+          teamId: info.TeamId,
+        }
+      : { nickName: "-", login, playerId: 0, spectatorStatus: 0, teamId: 0 };
+  });
+}
 
 export async function getPlayerList(
   serverId: string,
@@ -23,7 +38,7 @@ export async function getPlayerList(
       `group:servers:${serverId}:admin`,
     ],
     async () => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       const playerList = await client.call("GetPlayerList", 1000, 0);
 
       if (!playerList || !Array.isArray(playerList)) {
@@ -69,7 +84,7 @@ export async function banPlayer(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("Ban", login, reason);
       await logAudit(session.user.id, serverId, "server.players.banlist.add", {
         login,
@@ -91,7 +106,7 @@ export async function unbanPlayer(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("UnBan", login);
       await logAudit(
         session.user.id,
@@ -114,32 +129,10 @@ export async function getBanList(
       `group:servers:${serverId}:admin`,
     ],
     async () => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       const banList = await client.call("GetBanList", 1000, 0);
 
-      const playerList: PlayerInfo[] = [];
-      for (const player of banList) {
-        try {
-          const playerInfo = await client.call("GetPlayerInfo", player.Login);
-          playerList.push({
-            nickName: playerInfo.NickName,
-            login: playerInfo.Login,
-            playerId: playerInfo.PlayerId,
-            spectatorStatus: playerInfo.SpectatorStatus,
-            teamId: playerInfo.TeamId,
-          });
-        } catch {
-          playerList.push({
-            nickName: "-",
-            login: player.Login,
-            playerId: 0,
-            spectatorStatus: 0,
-            teamId: 0,
-          });
-        }
-      }
-
-      return playerList;
+      return getPlayerInfos(client, banList.map((player: { Login: string }) => player.Login));
     },
   );
 }
@@ -153,7 +146,7 @@ export async function cleanBanList(serverId: string): Promise<ServerResponse> {
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("CleanBanList");
       await logAudit(session.user.id, serverId, "server.players.banlist.clear");
     },
@@ -172,7 +165,7 @@ export async function blacklistPlayer(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("BlackList", login);
       await logAudit(
         session.user.id,
@@ -196,7 +189,7 @@ export async function unblacklistPlayer(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("UnBlackList", login);
       await logAudit(
         session.user.id,
@@ -219,32 +212,10 @@ export async function getBlacklist(
       `group:servers:${serverId}:admin`,
     ],
     async () => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       const blacklist = await client.call("GetBlackList", 1000, 0);
 
-      const playerList: PlayerInfo[] = [];
-      for (const player of blacklist) {
-        try {
-          const playerInfo = await client.call("GetPlayerInfo", player.Login);
-          playerList.push({
-            nickName: playerInfo.NickName,
-            login: playerInfo.Login,
-            playerId: playerInfo.PlayerId,
-            spectatorStatus: playerInfo.SpectatorStatus,
-            teamId: playerInfo.TeamId,
-          });
-        } catch {
-          playerList.push({
-            nickName: "-",
-            login: player.Login,
-            playerId: 0,
-            spectatorStatus: 0,
-            teamId: 0,
-          });
-        }
-      }
-
-      return playerList;
+      return getPlayerInfos(client, blacklist.map((player: { Login: string }) => player.Login));
     },
   );
 }
@@ -261,7 +232,7 @@ export async function loadBlacklist(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("LoadBlackList", filename);
       await logAudit(
         session.user.id,
@@ -285,7 +256,7 @@ export async function saveBlacklist(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("SaveBlackList", filename);
       await logAudit(
         session.user.id,
@@ -308,7 +279,7 @@ export async function cleanBlacklist(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("CleanBlackList");
       await logAudit(
         session.user.id,
@@ -331,7 +302,7 @@ export async function addGuest(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("AddGuest", login);
       await logAudit(
         session.user.id,
@@ -355,7 +326,7 @@ export async function removeGuest(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("RemoveGuest", login);
       await logAudit(
         session.user.id,
@@ -378,32 +349,10 @@ export async function getGuestlist(
       `group:servers:${serverId}:admin`,
     ],
     async () => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       const guestlist = await client.call("GetGuestList", 1000, 0);
 
-      const playerList: PlayerInfo[] = [];
-      for (const player of guestlist) {
-        try {
-          const playerInfo = await client.call("GetPlayerInfo", player.Login);
-          playerList.push({
-            nickName: playerInfo.NickName,
-            login: playerInfo.Login,
-            playerId: playerInfo.PlayerId,
-            spectatorStatus: playerInfo.SpectatorStatus,
-            teamId: playerInfo.TeamId,
-          });
-        } catch {
-          playerList.push({
-            nickName: "-",
-            login: player.Login,
-            playerId: 0,
-            spectatorStatus: 0,
-            teamId: 0,
-          });
-        }
-      }
-
-      return playerList;
+      return getPlayerInfos(client, guestlist.map((player: { Login: string }) => player.Login));
     },
   );
 }
@@ -420,7 +369,7 @@ export async function loadGuestlist(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("LoadGuestList", filename);
       await logAudit(
         session.user.id,
@@ -444,7 +393,7 @@ export async function saveGuestlist(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("SaveGuestList", filename);
       await logAudit(
         session.user.id,
@@ -467,7 +416,7 @@ export async function cleanGuestlist(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("CleanGuestList");
       await logAudit(
         session.user.id,
@@ -491,7 +440,7 @@ export async function kickPlayer(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("Kick", login, reason);
       await logAudit(session.user.id, serverId, "server.players.kick", {
         login,
@@ -515,7 +464,7 @@ export async function forceSpectator(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("ForceSpectator", login, status);
       await logAudit(
         session.user.id,
@@ -540,23 +489,7 @@ export async function setPlayerRoundPoints(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const manager = await getGbxClientManager(serverId);
-      await manager.client.callScript(
-        "Trackmania.SetPlayerPoints",
-        login,
-        points.toString(),
-        "",
-        "",
-      );
-
-      const playerRound: PlayerRound = {
-        ...manager.info.liveInfo.players[login],
-        roundPoints: points,
-      };
-
-      manager.setPlayer(login, playerRound);
-
-      manager.emit("playerUpdated", playerRound);
+      await gbxService.setPlayerPoints(serverId, login, "round", points);
 
       await logAudit(
         session.user.id,
@@ -581,23 +514,7 @@ export async function setPlayerMapPoints(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const manager = await getGbxClientManager(serverId);
-      await manager.client.callScript(
-        "Trackmania.SetPlayerPoints",
-        login,
-        "",
-        points.toString(),
-        "",
-      );
-
-      const playerRound: PlayerRound = {
-        ...manager.info.liveInfo.players[login],
-        roundPoints: points,
-      };
-
-      manager.setPlayer(login, playerRound);
-
-      manager.emit("playerUpdated", playerRound);
+      await gbxService.setPlayerPoints(serverId, login, "map", points);
 
       await logAudit(
         session.user.id,
@@ -622,23 +539,7 @@ export async function setPlayerMatchPoints(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const manager = await getGbxClientManager(serverId);
-      await manager.client.callScript(
-        "Trackmania.SetPlayerPoints",
-        login,
-        "",
-        "",
-        points.toString(),
-      );
-
-      const playerRound: PlayerRound = {
-        ...manager.info.liveInfo.players[login],
-        matchPoints: points,
-      };
-
-      manager.setPlayer(login, playerRound);
-
-      manager.emit("playerUpdated", playerRound);
+      await gbxService.setPlayerPoints(serverId, login, "match", points);
 
       await logAudit(
         session.user.id,
@@ -663,25 +564,7 @@ export async function setTeamRoundPoints(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const manager = await getGbxClientManager(serverId);
-      await manager.client.callScript(
-        "Trackmania.SetTeamPoints",
-        teamId.toString(),
-        points.toString(),
-        "",
-        "",
-      );
-
-      if (manager.info.liveInfo.teams?.[teamId]) {
-        const team: Team = {
-          ...manager.info.liveInfo.teams?.[teamId],
-          roundPoints: points,
-        };
-
-        manager.setTeam(teamId, team);
-
-        manager.emit("teamUpdated", team);
-      }
+      await gbxService.setTeamPoints(serverId, teamId, "round", points);
 
       await logAudit(
         session.user.id,
@@ -706,25 +589,7 @@ export async function setTeamMapPoints(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const manager = await getGbxClientManager(serverId);
-      await manager.client.callScript(
-        "Trackmania.SetTeamPoints",
-        teamId.toString(),
-        "",
-        points.toString(),
-        "",
-      );
-
-      if (manager.info.liveInfo.teams?.[teamId]) {
-        const team: Team = {
-          ...manager.info.liveInfo.teams?.[teamId],
-          mapPoints: points,
-        };
-
-        manager.setTeam(teamId, team);
-
-        manager.emit("teamUpdated", team);
-      }
+      await gbxService.setTeamPoints(serverId, teamId, "map", points);
 
       await logAudit(
         session.user.id,
@@ -749,25 +614,7 @@ export async function setTeamMatchPoints(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const manager = await getGbxClientManager(serverId);
-      await manager.client.callScript(
-        "Trackmania.SetTeamPoints",
-        teamId.toString(),
-        "",
-        "",
-        points.toString(),
-      );
-
-      if (manager.info.liveInfo.teams?.[teamId]) {
-        const team: Team = {
-          ...manager.info.liveInfo.teams?.[teamId],
-          matchPoints: points,
-        };
-
-        manager.setTeam(teamId, team);
-
-        manager.emit("teamUpdated", team);
-      }
+      await gbxService.setTeamPoints(serverId, teamId, "match", points);
 
       await logAudit(
         session.user.id,

@@ -1,3 +1,4 @@
+import { MIN_SECRET_LENGTH } from "@gcp/shared";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { DEFAULT_ECM_URL } from "./infra/ecm/ecm-client";
@@ -19,8 +20,12 @@ const envSchema = z.object({
   LOG_LEVEL: z.string().default("info"),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   REDIS_URI: z.string().min(1, "REDIS_URI is required"),
-  GBX_SERVICE_TOKEN: z.string().min(32, "GBX_SERVICE_TOKEN must be at least 32 characters"),
-  WS_TICKET_SECRET: z.string().min(32, "WS_TICKET_SECRET must be at least 32 characters"),
+  GBX_SERVICE_TOKEN: z
+    .string()
+    .min(MIN_SECRET_LENGTH, `GBX_SERVICE_TOKEN must be at least ${MIN_SECRET_LENGTH} characters`),
+  WS_TICKET_SECRET: z
+    .string()
+    .min(MIN_SECRET_LENGTH, `WS_TICKET_SECRET must be at least ${MIN_SECRET_LENGTH} characters`),
   WS_ALLOWED_ORIGINS: csv,
   // Limit which servers this instance manages; empty manages all (see X-2 in the requirements)
   GBX_SERVICE_ENABLED_SERVERS: csv,
@@ -41,7 +46,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const result = envSchema.safeParse(env);
   if (!result.success) {
     const issues = result.error.issues.map((i) => `  ${i.path.join(".")}: ${i.message}`);
-    throw new Error(`Invalid configuration:\n${issues.join("\n")}`);
+    throw new Error(
+      `Invalid configuration:\n${issues.join("\n")}\n` +
+        "Set these as environment variables. For local development put them in the repo root .env " +
+        "(see .env.example); apps/gbx-service/.env is an optional override.",
+    );
   }
 
   return {

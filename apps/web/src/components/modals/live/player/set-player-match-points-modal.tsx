@@ -1,7 +1,7 @@
 "use client";
 import { Card } from "@/components/ui/card";
 import SetPlayerMatchPointsForm from "@/forms/server/live/player/set-player-match-points-form";
-import { PlayerRound } from "@/types/live";
+import { PlayerRound } from "@gcp/shared";
 import { IconX } from "@tabler/icons-react";
 import { DefaultModalProps } from "../../default-props";
 

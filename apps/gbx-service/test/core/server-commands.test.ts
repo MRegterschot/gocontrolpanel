@@ -123,6 +123,18 @@ describe("ServerCommands", () => {
     expect(h.runtime.state.chat?.manualRouting).toBe(false);
   });
 
+  it("keeps manual routing for an offline server instead of treating it as refused", async () => {
+    const h = await createHarness();
+    await h.runtime.disconnect();
+
+    const result = await h.runtime.commands.applyChatConfig({ ...announcing, manualRouting: true });
+
+    // The stored config is applied when the server connects
+    expect(result).toEqual({ applied: { ...announcing, manualRouting: true } });
+    expect(h.runtime.state.chat?.manualRouting).toBe(true);
+    expect(h.runtime.state.chat?.connectMessage).toBe(announcing.connectMessage);
+  });
+
   it("fails cleanly while disconnected", async () => {
     const h = await createHarness();
     await h.runtime.disconnect();

@@ -2,11 +2,11 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getAccountNames, getMapsInfo } from "@/lib/api/nadeo";
 import { getClient } from "@/lib/dbclient";
+import { callEach } from "@/lib/gbx-batch";
 import { getLogger, logger } from "@/lib/logger";
-import { getGbxClient } from "@/lib/managers/gbxclient-manager";
+import { getGbxClient } from "@/lib/gbx-service";
 import { Maps, Prisma } from "@gcp/db";
-import { SMapInfo } from "@/types/gbx/map";
-import { MapInfoMinimal } from "@/types/map";
+import { MapInfoMinimal, SMapInfo } from "@gcp/shared";
 import {
   PaginationResponse,
   ServerError,
@@ -90,7 +90,7 @@ export async function getMapList(
         function: "getMapList",
       };
       const log = getLogger(serverId);
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       const pageSize = 100;
       let allMapList: MapInfoMinimal[] = [];
 
@@ -136,57 +136,57 @@ export async function getMapList(
       );
 
       if (missingMaps.length > 0) {
-        const mapUids = missingMaps.map((map) => map.UId);
         const BATCH_SIZE = 200;
-
         const now = new Date();
         const newMaps: Maps[] = [];
 
-        for (let i = 0; i < mapUids.length; i += BATCH_SIZE) {
-          const batch = mapUids.slice(i, i + BATCH_SIZE);
-          const { data: apiMapsInfo } = await getMapsInfo(batch);
-
-          for (const map of missingMaps) {
-            try {
-              const mapInfo: SMapInfo = await client.call(
-                "GetMapInfo",
-                map.FileName,
-              );
-              const mapInfoFromApi = apiMapsInfo?.find(
-                (m) => m.mapUid === map.UId,
-              );
-
-              if (newMaps.some((m) => m.uid === mapInfo.UId)) {
-                log.warn({ meta, mapInfo }, "Duplicate map UID found");
-                continue;
-              }
-
-              newMaps.push({
-                id: crypto.randomUUID(),
-                name: mapInfo.Name || "Unknown",
-                uid: mapInfo.UId,
-                fileName: mapInfo.FileName || "",
-                author: mapInfo.Author || "",
-                authorNickname: mapInfo.AuthorNickname || "",
-                authorTime: mapInfo.AuthorTime || 0,
-                goldTime: mapInfo.GoldTime || 0,
-                silverTime: mapInfo.SilverTime || 0,
-                bronzeTime: mapInfo.BronzeTime || 0,
-                submitter: mapInfoFromApi?.submitter || null,
-                timestamp: mapInfoFromApi?.timestamp || null,
-                fileUrl: mapInfoFromApi?.fileUrl || null,
-                thumbnailUrl: mapInfoFromApi?.thumbnailUrl || null,
-                uploadCheck: now,
-                createdAt: now,
-                updatedAt: now,
-                deletedAt: null,
-              });
-            } catch (error) {
-              log.error({ meta, error, map }, "Failed to get map info");
-              continue;
-            }
-          }
+        const apiMapsInfo: NonNullable<Awaited<ReturnType<typeof getMapsInfo>>["data"]> = [];
+        for (let i = 0; i < missingMaps.length; i += BATCH_SIZE) {
+          const batch = missingMaps.slice(i, i + BATCH_SIZE).map((map) => map.UId);
+          const { data } = await getMapsInfo(batch);
+          if (data) apiMapsInfo.push(...data);
         }
+
+        const mapInfos = await callEach<SMapInfo>(
+          client,
+          "GetMapInfo",
+          missingMaps.map((map) => [map.FileName]),
+        );
+
+        missingMaps.forEach((map, i) => {
+          const mapInfo = mapInfos[i];
+          if (!mapInfo) {
+            log.error({ meta, map }, "Failed to get map info");
+            return;
+          }
+
+          if (newMaps.some((m) => m.uid === mapInfo.UId)) {
+            log.warn({ meta, mapInfo }, "Duplicate map UID found");
+            return;
+          }
+
+          const mapInfoFromApi = apiMapsInfo.find((m) => m.mapUid === map.UId);
+          newMaps.push({
+            id: crypto.randomUUID(),
+            name: mapInfo.Name || "Unknown",
+            uid: mapInfo.UId,
+            fileName: mapInfo.FileName || "",
+            author: mapInfo.Author || "",
+            authorNickname: mapInfo.AuthorNickname || "",
+            authorTime: mapInfo.AuthorTime || 0,
+            goldTime: mapInfo.GoldTime || 0,
+            silverTime: mapInfo.SilverTime || 0,
+            bronzeTime: mapInfo.BronzeTime || 0,
+            submitter: mapInfoFromApi?.submitter || null,
+            timestamp: mapInfoFromApi?.timestamp || null,
+            fileUrl: mapInfoFromApi?.fileUrl || null,
+            thumbnailUrl: mapInfoFromApi?.thumbnailUrl || null,
+            uploadCheck: now,
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+          });
+        });
 
         await db.maps.createMany({ data: newMaps });
         existingMaps.push(...newMaps);

@@ -1,4 +1,4 @@
-import { PlayerRound } from "@/types/live";
+import { PlayerRound } from "@gcp/shared";
 import { MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 import SetPlayerMatchPointsModal from "../modals/live/player/set-player-match-points-modal";

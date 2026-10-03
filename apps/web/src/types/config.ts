@@ -18,4 +18,10 @@ export interface Config {
     CONTACT: string;
   };
   REDISURI: string;
+  GBX_SERVICE: {
+    URL: string;
+    WS_URL: string;
+    TOKEN: string;
+    WS_TICKET_SECRET: string;
+  };
 }

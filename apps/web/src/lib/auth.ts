@@ -8,17 +8,13 @@ import {
 } from "@/actions/database/server-only/auth";
 import { UserGroup } from "@/types/auth";
 import { ServerError } from "@/types/responses";
-import { parse } from "cookie";
 import {
   GetServerSidePropsContext,
   NextApiRequest,
   NextApiResponse,
 } from "next";
 import { getServerSession, NextAuthOptions, Profile, Session } from "next-auth";
-import { getToken } from "next-auth/jwt";
 import { OAuthConfig } from "next-auth/providers/oauth";
-import { NextRequest } from "next/server";
-import { IncomingMessage } from "node:http";
 import slugid from "slugid";
 import { getWebIdentities } from "./api/nadeo";
 import config from "./config";
@@ -286,25 +282,6 @@ export async function withAuth(
   }
 
   return session;
-}
-
-export async function parseTokenFromRequest(
-  req: IncomingMessage | NextRequest,
-) {
-  if (!(req instanceof IncomingMessage)) {
-    return getToken({
-      req,
-      secret: process.env.NEXTAUTH_SECRET!,
-    });
-  }
-
-  const cookies = parse(req.headers.cookie || "");
-  (req as any).cookies = cookies;
-
-  return getToken({
-    req: req as any,
-    secret: process.env.NEXTAUTH_SECRET!,
-  });
 }
 
 export async function hasPermission(

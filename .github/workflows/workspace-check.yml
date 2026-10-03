@@ -37,6 +37,7 @@ jobs:
         run: |
           bun run --filter @gcp/shared test
           bun run --filter @gcp/gbx-service test
+          bun run --filter @gcp/web test
 
       - name: Build GBX service
         run: bun run --filter @gcp/gbx-service build

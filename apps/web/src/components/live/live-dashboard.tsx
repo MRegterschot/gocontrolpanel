@@ -3,9 +3,13 @@ import { getPlayerList } from "@/actions/gbx/player";
 import useWebSocket from "@/hooks/use-websocket";
 import { getErrorMessage, hasPermissionSync } from "@/lib/utils";
 import { routePermissions } from "@/routes";
-import { DetailedPlayerChat, SPlayerInfo } from "@/types/gbx/player";
-import { LiveInfo } from "@/types/live";
-import { PlayerInfo } from "@/types/player";
+import {
+  DetailedPlayerChat,
+  LiveInfo,
+  PlayerInfo,
+  SPlayerInfo,
+  wsPaths,
+} from "@gcp/shared";
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -213,7 +217,7 @@ export default function LiveDashboard({
   }, []);
 
   useWebSocket({
-    url: `/api/ws/live/${serverId}`,
+    path: wsPaths.live(serverId),
     onMessage: handleMessage,
   });
 

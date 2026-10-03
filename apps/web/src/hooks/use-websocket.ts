@@ -1,17 +1,27 @@
+import { openChannelSocket, type Ticket } from "@/lib/channel-socket";
 import { logger } from "@/lib/logger";
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useRef } from "react";
 
 interface WebSocketProps {
-  url: string;
+  // Channel path on the GBX service, see wsPaths in @gcp/shared
+  path: string;
   onMessage: (type: string, data: any) => void;
-  onError?: (error: Event) => void;
+  onError?: (error: unknown) => void;
   onOpen?: () => void;
   onClose?: () => void;
 }
 
+async function fetchTicket(): Promise<Ticket> {
+  const res = await fetch("/api/ws-ticket", { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error(`Failed to get a WebSocket ticket (${res.status})`);
+  }
+  return res.json();
+}
+
 export default function useWebSocket({
-  url,
+  path,
   onMessage,
   onError,
   onOpen,
@@ -28,38 +38,22 @@ export default function useWebSocket({
   useEffect(() => {
     if (status !== "authenticated") return;
 
-    const ws = new WebSocket(url);
-    wsRef.current = ws;
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      stableOnMessage(data.type, data.data);
-    };
-
-    ws.onclose = () => {
-      stableOnClose();
-    };
-
-    ws.onerror = (error) => {
-      ws.close();
-      stableOnError(error);
-    };
-
-    ws.onopen = stableOnOpen;
-
-    return () => {
-      if (wsRef.current) {
-        const meta = {
-          type: "hook",
-          module: "useWebSocket",
-          function: "cleanup",
-        };
-        logger.trace({ meta }, "Cleaning up WebSocket connection");
-        wsRef.current.close();
-      }
-    };
+    return openChannelSocket({
+      path,
+      fetchTicket,
+      createSocket: (url) => new WebSocket(url),
+      onMessage: stableOnMessage,
+      onError: stableOnError,
+      onOpen: stableOnOpen,
+      onClose: stableOnClose,
+      onSocket: (socket) => {
+        wsRef.current = socket as WebSocket | null;
+      },
+      log: logger,
+      meta: { type: "hook", module: "useWebSocket" },
+    });
   }, [
-    url,
+    path,
     status,
     stableOnMessage,
     stableOnError,

@@ -1,12 +1,8 @@
 "use server";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getLogger } from "@/lib/logger";
-import {
-  getGbxClient,
-  getGbxClientManager,
-  sendChatMessage,
-} from "@/lib/managers/gbxclient-manager";
-import { formatTemplate } from "@/lib/utils";
+import { gbxService, getGbxClient } from "@/lib/gbx-service";
+import { getErrorMessage } from "@/lib/utils";
 import { ModeScriptInfo } from "@/types/gbx";
 import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
@@ -20,7 +16,7 @@ export async function restartMap(serverId: string): Promise<ServerResponse> {
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("RestartMap");
       await logAudit(session.user.id, serverId, "server.game.map.restart");
     },
@@ -36,7 +32,7 @@ export async function nextMap(serverId: string): Promise<ServerResponse> {
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("NextMap");
       await logAudit(session.user.id, serverId, "server.game.map.next");
     },
@@ -55,7 +51,7 @@ export async function setShowOpponents(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("SetForceShowAllOpponents", count);
       await logAudit(
         session.user.id,
@@ -81,7 +77,7 @@ export async function getShowOpponents(serverId: string): Promise<
       `group:servers:${serverId}:admin`,
     ],
     async () => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       return await client.call("GetForceShowAllOpponents");
     },
   );
@@ -99,16 +95,7 @@ export async function setScriptName(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const manager = await getGbxClientManager(serverId);
-      await manager.client.call("SetScriptName", script);
-
-      if (manager.info.chat?.scriptNameChangeMessage) {
-        const message = formatTemplate(
-          manager.info.chat.scriptNameChangeMessage,
-          { script },
-        );
-        sendChatMessage(manager, message);
-      }
+      await gbxService.setScriptName(serverId, script);
 
       await logAudit(
         session.user.id,
@@ -134,7 +121,7 @@ export async function getScriptName(serverId: string): Promise<
       `group:servers:${serverId}:admin`,
     ],
     async () => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       return await client.call("GetScriptName");
     },
   );
@@ -152,16 +139,7 @@ export async function loadMatchSettings(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const manager = await getGbxClientManager(serverId);
-      await manager.client.call("LoadMatchSettings", filename);
-
-      if (manager.info.chat?.matchSettingsLoadedMessage) {
-        const message = formatTemplate(
-          manager.info.chat.matchSettingsLoadedMessage,
-          { filename },
-        );
-        sendChatMessage(manager, message);
-      }
+      await gbxService.loadMatchSettings(serverId, filename);
 
       await logAudit(
         session.user.id,
@@ -185,7 +163,7 @@ export async function appendPlaylist(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("AppendPlaylistFromMatchSettings", filename);
       await logAudit(
         session.user.id,
@@ -209,7 +187,7 @@ export async function saveMatchSettings(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("SaveMatchSettings", filename);
       await logAudit(
         session.user.id,
@@ -233,7 +211,7 @@ export async function insertPlaylist(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("InsertPlaylistFromMatchSettings", filename);
       await logAudit(
         session.user.id,
@@ -256,7 +234,7 @@ export async function getModeScriptInfo(
       `group:servers:${serverId}:admin`,
     ],
     async () => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       return await client.call("GetModeScriptInfo");
     },
   );
@@ -275,7 +253,7 @@ export async function getModeScriptSettings(serverId: string): Promise<
       `group:servers:${serverId}:admin`,
     ],
     async () => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       return await client.call("GetModeScriptSettings");
     },
   );
@@ -295,16 +273,7 @@ export async function setModeScriptSettings(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const manager = await getGbxClientManager(serverId);
-      await manager.client.call("SetModeScriptSettings", settings);
-      manager.client.call("Echo", "", "UpdatedSettings");
-
-      if (manager.info.chat?.scriptSettingsSavedMessage) {
-        sendChatMessage(
-          manager,
-          manager.info.chat.scriptSettingsSavedMessage.trim(),
-        );
-      }
+      await gbxService.setScriptSettings(serverId, settings);
 
       await logAudit(
         session.user.id,
@@ -329,7 +298,7 @@ export async function triggerModeScriptEventArray(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("TriggerModeScriptEventArray", method, params);
       await logAudit(session.user.id, serverId, "server.live.scriptevent", {
         method,
@@ -357,11 +326,12 @@ export async function pauseMatch(
         function: "pauseMatch",
       };
       const log = getLogger(serverId);
-      const { error } = await triggerModeScriptEventArray(
-        serverId,
-        "Maniaplanet.Pause.SetActive",
-        pause ? ["true"] : ["false"],
-      );
+      let error: string | undefined;
+      try {
+        await gbxService.setPaused(serverId, pause);
+      } catch (e) {
+        error = getErrorMessage(e);
+      }
 
       await logAudit(
         session.user.id,
@@ -374,14 +344,6 @@ export async function pauseMatch(
       if (error) {
         log.error({ meta, error, pause }, "Failed to pause match");
         throw new ServerError(error, "PauseMatchError");
-      }
-
-      if (pause) {
-        const manager = await getGbxClientManager(serverId);
-        manager.info.liveInfo.isPaused = true;
-        if (manager.roundNumber !== null) {
-          manager.roundNumber--;
-        }
       }
     },
   );

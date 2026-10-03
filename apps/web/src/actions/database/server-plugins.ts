@@ -3,7 +3,7 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { getLogger } from "@/lib/logger";
-import { getGbxClientManager } from "@/lib/managers/gbxclient-manager";
+import { gbxService, publishServerEvent } from "@/lib/gbx-service";
 import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "./server-only/audit-logs";
 import { ServerPluginsWithPlugin } from "./server-only/gbx";
@@ -40,17 +40,7 @@ export async function updateServerPlugins(
 
       await db.$transaction(pluginUpdates);
 
-      const updatedPlugins = await db.serverPlugins.findMany({
-        where: { serverId },
-        include: {
-          plugin: true,
-        },
-      });
-
-      const manager = await getGbxClientManager(serverId);
-
-      manager.info.plugins = updatedPlugins;
-      manager.pluginManager.updatePlugins();
+      await publishServerEvent({ type: "server.plugins.updated", serverId });
 
       await logAudit(
         session.user.id,
@@ -105,17 +95,7 @@ export async function updateServerPlugin(
         });
       }
 
-      const manager = await getGbxClientManager(serverId);
-
-      const updatedPlugins = await db.serverPlugins.findMany({
-        where: { serverId },
-        include: {
-          plugin: true,
-        },
-      });
-
-      manager.info.plugins = updatedPlugins;
-      manager.pluginManager.updatePlugins();
+      await publishServerEvent({ type: "server.plugins.updated", serverId });
 
       await logAudit(
         session.user.id,
@@ -187,8 +167,7 @@ export async function reloadServerPlugins(
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async () => {
-      const manager = await getGbxClientManager(serverId);
-      manager.pluginManager.reloadPlugins();
+      await gbxService.reloadPlugins(serverId);
     },
   );
 }

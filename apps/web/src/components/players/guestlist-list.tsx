@@ -4,7 +4,7 @@ import { getGuestlist } from "@/actions/gbx/player";
 import { createColumns } from "@/app/(gocontroller)/server/[id]/players/guestlist-columns";
 import GuestlistForm from "@/forms/server/players/guestlist-form";
 import { getErrorMessage } from "@/lib/utils";
-import { PlayerInfo } from "@/types/player";
+import { PlayerInfo } from "@gcp/shared";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DataTable } from "../table/data-table";

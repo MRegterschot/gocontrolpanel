@@ -3,7 +3,7 @@
 import { cleanBanList, getBanList } from "@/actions/gbx/player";
 import { createColumns } from "@/app/(gocontroller)/server/[id]/players/banlist-columns";
 import { getErrorMessage } from "@/lib/utils";
-import { PlayerInfo } from "@/types/player";
+import { PlayerInfo } from "@gcp/shared";
 import { IconTrash } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";

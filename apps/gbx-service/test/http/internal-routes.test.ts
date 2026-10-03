@@ -138,6 +138,26 @@ describe("gbx passthrough", () => {
     expect(res.json().data).toEqual([{ Name: "srv" }]);
   });
 
+  it("reports a call the dedicated server rejected inside a multicall as null", async () => {
+    const { request } = await setup({
+      configure: (s) => s.respond("GetPlayerInfo", (login: string) => (login === "gone" ? undefined : { Login: login })),
+    });
+    const res = await request("POST", internalPaths.gbxMulticall("server-1"), {
+      calls: [
+        { method: "GetPlayerInfo", params: ["a"] },
+        { method: "GetPlayerInfo", params: ["gone"] },
+        { method: "GetPlayerInfo", params: ["b"] },
+      ],
+    });
+    expect(res.json().data).toEqual([{ Login: "a" }, null, { Login: "b" }]);
+  });
+
+  it("refuses more than 100 calls in one multicall", async () => {
+    const { request } = await setup();
+    const calls = Array.from({ length: 101 }, () => ({ method: "GetPlayerInfo", params: ["a"] }));
+    expect((await request("POST", internalPaths.gbxMulticall("server-1"), { calls })).statusCode).toBe(400);
+  });
+
   it("maps server faults to 502", async () => {
     const { request } = await setup({
       configure: (s) =>
@@ -201,6 +221,20 @@ describe("stateful commands", () => {
     const { request } = await setup();
     const res = await request("PUT", internalPaths.chatConfig("server-1"), { ...serverRecord().chat, manualRouting: true });
     expect(res.json().data).toEqual({ applied: { ...serverRecord().chat, manualRouting: true } });
+  });
+});
+
+describe("chat config while the dedicated server is offline", () => {
+  it("accepts it and keeps manual routing as requested", async () => {
+    const { request, h } = await setup();
+    await request("POST", internalPaths.disconnect("server-1"));
+
+    const config = { ...serverRecord().chat, manualRouting: true, connectMessage: "Welcome" };
+    const res = await request("PUT", internalPaths.chatConfig("server-1"), config);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json().data).toEqual({ applied: config });
+    expect(h.runtime.state.chat).toEqual(config);
   });
 });
 

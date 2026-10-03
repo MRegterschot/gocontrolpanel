@@ -1,0 +1,86 @@
+# Local development infrastructure. Run it through the root scripts (see CONTRIBUTING.md):
+#   bun run infra:up           Redis + MariaDB
+#   bun run infra:up:postgres  Redis + PostgreSQL (use with DB=postgres)
+#   bun run infra:dedicated    dedicated Trackmania server + file manager
+#   bun run infra:down         stop everything (data is kept)
+#
+# Everything except the game port only listens on 127.0.0.1: these databases use throwaway passwords.
+name: gcp-dev
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  mariadb:
+    image: mariadb:11
+    ports:
+      - "127.0.0.1:3306:3306"
+    environment:
+      # root, because `prisma migrate dev` has to create a shadow database
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: gocontrolpanel
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+    restart: unless-stopped
+
+  postgres:
+    profiles: [postgres]
+    image: postgres:17-alpine
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gocontrolpanel
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d gocontrolpanel"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+    restart: unless-stopped
+
+  # Needs the dedicated server account in .env (NADEO_SERVER_LOGIN / NADEO_SERVER_PASSWORD)
+  dedicated:
+    profiles: [dedicated]
+    image: evoesports/trackmania:latest
+    ports:
+      - "2351:2350/udp"
+      - "2351:2350/tcp"
+      - "127.0.0.1:5001:5000/tcp"
+    environment:
+      TM_MASTERSERVER_LOGIN: ${NADEO_SERVER_LOGIN:-}
+      TM_MASTERSERVER_PASSWORD: ${NADEO_SERVER_PASSWORD:-}
+      TM_SYSTEM_XMLRPC_ALLOWREMOTE: "True"
+      TM_AUTHORIZATION_SUPERADMIN_PASSWORD: SuperAdmin
+    volumes:
+      - userdata:/server/UserData
+    restart: unless-stopped
+
+  filemanager:
+    profiles: [dedicated]
+    image: marijnregterschot/trackmania-server-fm:latest
+    ports:
+      - "127.0.0.1:3300:3300"
+    volumes:
+      - userdata:/app/UserData
+    restart: unless-stopped
+
+volumes:
+  mariadb-data:
+  postgres-data:
+  userdata:

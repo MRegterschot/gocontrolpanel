@@ -3,14 +3,13 @@
 import { ServerSettingsSchemaType } from "@/forms/server/settings/settings-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
+import { callEach } from "@/lib/gbx-batch";
 import { getLogger } from "@/lib/logger";
+import { getGbxClient, publishServerEvent } from "@/lib/gbx-service";
 import { getFileManager } from "@/lib/managers/file-manager";
-import {
-  getGbxClient,
-  getGbxClientManager,
-} from "@/lib/managers/gbxclient-manager";
 import { LocalMapInfo } from "@/types/map";
 import { ServerError, ServerResponse } from "@/types/responses";
+import { type SMapInfo } from "@gcp/shared";
 import path from "path";
 import { logAudit } from "../database/server-only/audit-logs";
 
@@ -26,17 +25,22 @@ export async function getServerSettings(
         function: "getServerSettings",
       };
       const log = getLogger(serverId);
-      const manager = await getGbxClientManager(serverId);
-      const client = manager.client;
-      const settings = await client.multicall([
-        ["GetServerOptions"],
-        ["GetHideServer"],
-        ["IsKeepingPlayerSlots"],
-        ["AreHornsDisabled"],
-        ["AreServiceAnnouncesDisabled"],
-        ["GetSystemInfo"],
-        ["AreProfileSkinsDisabled"],
-        ["IsMapDownloadAllowed"],
+      const client = getGbxClient(serverId);
+      const [server, settings] = await Promise.all([
+        getClient().servers.findUnique({
+          where: { id: serverId },
+          select: { enableHelpCommand: true },
+        }),
+        client.multicall([
+          ["GetServerOptions"],
+          ["GetHideServer"],
+          ["IsKeepingPlayerSlots"],
+          ["AreHornsDisabled"],
+          ["AreServiceAnnouncesDisabled"],
+          ["GetSystemInfo"],
+          ["AreProfileSkinsDisabled"],
+          ["IsMapDownloadAllowed"],
+        ]),
       ]);
 
       if (!settings) {
@@ -77,7 +81,7 @@ export async function getServerSettings(
           downloadRate: systemInfo.ConnectionDownloadRate,
           uploadRate: systemInfo.ConnectionUploadRate,
           profileSkins: !profileSkinsDisabled,
-          enableHelpCommand: manager.info.enableHelpCommand ?? false,
+          enableHelpCommand: server?.enableHelpCommand ?? false,
         };
 
         return serverSettings;
@@ -102,8 +106,7 @@ export async function saveServerSettings(
         function: "saveServerSettings",
       };
       const log = getLogger(serverId);
-      const manager = await getGbxClientManager(serverId);
-      const client = manager.client;
+      const client = getGbxClient(serverId);
       const db = getClient();
 
       if (serverSettings.enableHelpCommand !== undefined) {
@@ -112,7 +115,7 @@ export async function saveServerSettings(
           data: { enableHelpCommand: serverSettings.enableHelpCommand },
         });
 
-        manager.info.enableHelpCommand = serverSettings.enableHelpCommand;
+        await publishServerEvent({ type: "server.updated", serverId });
       }
 
       serverSettings.defaultOptions.NextCallVoteTimeOut *= 1000; // Convert to milliseconds
@@ -188,7 +191,7 @@ export async function getLocalMaps(
         function: "getLocalMaps",
       };
       const log = getLogger(serverId);
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
 
       const fileManager = await getFileManager(serverId);
       if (!fileManager?.health) {
@@ -227,24 +230,16 @@ export async function getLocalMaps(
         throw new ServerError("Failed to get maps", "GetLocalMapsError");
       }
 
+      const infos = await callEach<SMapInfo>(client, "GetMapInfo", maps.map((map: string) => [map]));
       const mapInfoList: LocalMapInfo[] = [];
 
-      for (const map of maps) {
-        try {
-          const mapInfo = await client.call("GetMapInfo", map);
-
-          if (!mapInfo) {
-            throw new ServerError("Failed to get map info", "GetMapInfoError");
-          }
-
-          mapInfoList.push({
-            ...mapInfo,
-            Path: path.dirname(map),
-          } as LocalMapInfo);
-        } catch (error) {
-          log.error({ meta, error, map }, "Error getting map info");
+      infos.forEach((mapInfo, i) => {
+        if (!mapInfo) {
+          log.error({ meta, map: maps[i] }, "Error getting map info");
+          return;
         }
-      }
+        mapInfoList.push({ ...mapInfo, Path: path.dirname(maps[i]) } as LocalMapInfo);
+      });
 
       return mapInfoList;
     },
