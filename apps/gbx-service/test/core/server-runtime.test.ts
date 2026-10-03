@@ -58,6 +58,30 @@ describe("ServerRuntime connect sequence", () => {
     expect(h.runtime.status().isReconnecting).toBe(true);
   });
 
+  it("keeps retrying a server that is still booting, past the normal retry budget", async () => {
+    // Like a cloud VM: nothing listens for the first five minutes
+    let attempts = 0;
+    const h = await createHarness({
+      connect: false,
+      configure: (session) => {
+        if (++attempts <= 13) session.connectError = new Error("ECONNREFUSED");
+      },
+    });
+    const startedAt = h.clock.now();
+
+    expect(await h.runtime.start()).toBe(false);
+    expect(h.runtime.status().isReconnecting).toBe(true);
+
+    for (let i = 0; i < 60 && !h.runtime.isConnected; i++) {
+      await h.clock.advance(15_000);
+    }
+
+    expect(h.runtime.isConnected).toBe(true);
+    expect(h.clock.now() - startedAt).toBeGreaterThan(150_000); // the old give-up point
+    expect(h.runtime.status().isReconnecting).toBe(false);
+    expect(h.sessions).toHaveLength(14);
+  });
+
   it("fails to start for a server that does not exist", async () => {
     const h = await createHarness({ connect: false });
     h.servers.servers.clear();

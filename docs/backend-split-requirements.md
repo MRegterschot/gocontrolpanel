@@ -55,7 +55,7 @@ After the split, Next.js should be a stock Next app: no `src/server.ts`, no `nex
   7. `syncMap` → `syncLiveInfo` (GS-12).
   8. Delete all stored manialinks for the server in Redis.
   9. Load + start plugins.
-- **GS-3 Reconnect policy.** On disconnect: unload plugins, emit `disconnect`, schedule a retry. 15 s delay, max 10 retries, retry count resets on success, no double scheduling. Expose `reconnectAt` (epoch ms) for the clients view.
+- **GS-3 Reconnect policy.** On disconnect: unload plugins, emit `disconnect`, schedule a retry. 15 s delay, max 10 retries, retry count resets on success, no double scheduling. A server that has never connected (a cloud VM that is still booting) keeps retrying every minute after those retries, until 15 minutes after its first attempt; a manual reconnect starts a new window. Expose `reconnectAt` (epoch ms) for the clients view.
 - **GS-4 Manual controls** (backs `src/actions/gbx/clients.ts`): stop reconnecting, trigger reconnect now, resend all manialinks, disconnect client.
 - **GS-5 Server lifecycle hooks.** The service must react when Next changes a server:
   - created → create and connect a manager (today this happens lazily, on the next WS open);

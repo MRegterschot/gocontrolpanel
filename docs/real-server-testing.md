@@ -70,14 +70,14 @@ Fake players: `gcp -X POST $GCP/gbx/call -d '{"method":"ConnectFakePlayer"}'`. T
 |---|---|---|
 | C1 | Start the service with the dedicated server up | Log `Connected to GBX server`; `/ws/servers` shows `isConnected: true`; a `maps` row for the current map and a `matches` row exist |
 | C2 | `dce restart dedicated` | `disconnect` on `/ws/servers` and `/ws/clients`, `reconnect try` with a timestamp ~15 s ahead, then `connect`; widgets reappear in game without restarting the client |
-| C3 | `dce stop dedicated`, wait ~2.5 min (10 × 15 s) | Ten retries, then `reconnect stop` on `/ws/clients`; `isReconnecting: false`; no further attempts in the log |
+| C3 | `dce stop dedicated` while the service is connected, wait ~2.5 min (10 × 15 s) | Ten retries, then `reconnect stop` on `/ws/clients`; `isReconnecting: false`; no further attempts in the log |
 | C4 | After C3: `dce start dedicated`, then `gcp -X POST $GCP/reconnect` | `{ "connected": true }` |
 | C5 | `gcp -X POST $GCP/disconnect` | Disconnects and **stays** offline (no retries); widgets disappear in game; `POST $GCP/reconnect` brings it back |
 | C6 | `gcp -X POST $GCP/stop-reconnect` while retries are pending (during C3) | `reconnect stop`, no more attempts |
 | C7 | Change `password` of the server row in MariaDB, publish `server.updated` | Reconnects with the new password, fails authentication and retries; restore the password and publish again → connected |
 | C8 | Stop the service with Ctrl+C mid-match and start it again | Clean shutdown log; after restart all widgets are drawn again for players already on the server |
 | C9 | `docker kill` the dedicated server while a player is driving | Same as C2; no unhandled errors, service keeps running |
-| C10 | Start the service with the dedicated server down | Service starts and serves `/health`; retries in the background (regression test for the ECONNREFUSED crash) |
+| C10 | Start the service with the dedicated server down, start the dedicated server ~5 min later | Service starts and serves `/health` (regression test for the ECONNREFUSED crash); it never connected, so it retries for 15 min (15 s apart, then every minute) and connects once the server is up |
 
 ## 3. Live state and sockets
 

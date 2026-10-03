@@ -61,6 +61,8 @@ export interface RuntimeDependencies {
   connectTimeoutMs?: number;
   retryDelayMs?: number;
   maxRetries?: number;
+  initialConnectWindowMs?: number;
+  slowRetryDelayMs?: number;
 }
 
 const API_VERSION = "2023-04-24";
@@ -196,6 +198,8 @@ export class ServerRuntime {
       log,
       retryDelayMs: deps.retryDelayMs,
       maxRetries: deps.maxRetries,
+      initialConnectWindowMs: deps.initialConnectWindowMs,
+      slowRetryDelayMs: deps.slowRetryDelayMs,
       onReconnectScheduled: (at) => bus.emit("reconnect", "try", at),
       onReconnectStopped: () => bus.emit("reconnect", "stop", null),
     });
