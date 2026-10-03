@@ -167,6 +167,7 @@ describe("ServerRuntime updates", () => {
     h.servers.add(serverRecord({ host: "10.0.0.2", name: "Renamed" }));
 
     await h.runtime.applyServerUpdate();
+    await flush();
 
     expect(h.sessions).toHaveLength(2);
     expect(h.session.connectedTo?.host).toBe("10.0.0.2");
@@ -178,9 +179,94 @@ describe("ServerRuntime updates", () => {
     h.servers.add(serverRecord({ name: "Renamed", enableHelpCommand: false }));
 
     await h.runtime.applyServerUpdate();
+    await flush();
 
     expect(h.sessions).toHaveLength(1);
     expect(h.runtime.state.enableHelpCommand).toBe(false);
+  });
+
+  it("does not undo a manual disconnect when an unrelated field changes", async () => {
+    const h = await createHarness();
+    await h.runtime.disconnect();
+
+    h.servers.add(serverRecord({ name: "Renamed", enableHelpCommand: false }));
+    await h.runtime.applyServerUpdate();
+    await flush();
+    await h.clock.advance(120_000);
+
+    expect(h.sessions).toHaveLength(1);
+    expect(h.runtime.isConnected).toBe(false);
+    expect(h.runtime.status()).toMatchObject({ name: "Renamed", isReconnecting: false });
+    expect(h.runtime.state.enableHelpCommand).toBe(false);
+  });
+
+  it("does not revive a server whose retries were stopped", async () => {
+    const h = await createHarness();
+    h.session.drop();
+    await flush();
+    h.runtime.stopReconnect();
+
+    h.servers.add(serverRecord({ name: "Renamed" }));
+    await h.runtime.applyServerUpdate();
+    await flush();
+    await h.clock.advance(120_000);
+
+    expect(h.sessions).toHaveLength(1);
+    expect(h.runtime.isConnected).toBe(false);
+  });
+
+  describe("a server that rejects the stored password", () => {
+    // Authentication only succeeds with the password the admin fixes it to
+    const wrongPassword = (session: { respond: (m: string, h: unknown) => unknown }) =>
+      session.respond("Authenticate", (_user: string, password: string) => {
+        if (password !== "fixed") throw new Error("Invalid password");
+        return true;
+      });
+
+    it("connects right away once the password is corrected", async () => {
+      const h = await createHarness({ connect: false, configure: wrongPassword });
+      expect(await h.runtime.start()).toBe(false);
+
+      h.servers.add(serverRecord({ password: "fixed" }));
+      await h.runtime.applyServerUpdate();
+      await flush();
+
+      expect(h.runtime.isConnected).toBe(true);
+      expect(h.sessions).toHaveLength(2);
+    });
+
+    it("does not force a retry when only the name changes", async () => {
+      const h = await createHarness({ connect: false, configure: wrongPassword });
+      await h.runtime.start();
+
+      h.servers.add(serverRecord({ name: "Renamed" }));
+      await h.runtime.applyServerUpdate();
+      await flush();
+
+      // Nothing happens beyond the supervisor's own schedule
+      expect(h.sessions).toHaveLength(1);
+      expect(h.runtime.isConnected).toBe(false);
+      await h.clock.advance(15_000);
+      expect(h.sessions).toHaveLength(2);
+    });
+  });
+
+  it("returns without waiting for the game server to answer", async () => {
+    let sessions = 0;
+    const h = await createHarness({
+      configure: (session) => {
+        // Every session after the first never finishes connecting
+        if (++sessions > 1) session.connect = () => new Promise(() => {});
+      },
+    });
+    h.servers.add(serverRecord({ host: "10.0.0.2" }));
+
+    const done = vi.fn();
+    void h.runtime.applyServerUpdate().then(done);
+    await flush();
+
+    expect(done).toHaveBeenCalledTimes(1);
+    expect(h.sessions).toHaveLength(2);
   });
 
   it("loads plugins that were enabled in the database", async () => {

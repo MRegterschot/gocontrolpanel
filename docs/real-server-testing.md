@@ -75,6 +75,7 @@ Fake players: `gcp -X POST $GCP/gbx/call -d '{"method":"ConnectFakePlayer"}'`. T
 | C5 | `gcp -X POST $GCP/disconnect` | Disconnects and **stays** offline (no retries); widgets disappear in game; `POST $GCP/reconnect` brings it back |
 | C6 | `gcp -X POST $GCP/stop-reconnect` while retries are pending (during C3) | `reconnect stop`, no more attempts |
 | C7 | Change `password` of the server row in MariaDB, publish `server.updated` | Reconnects with the new password, fails authentication and retries; restore the password and publish again → connected |
+| C7b | `gcp -X POST $GCP/disconnect`, rename the server in MariaDB, publish `server.updated` | The new name shows in `/ws/clients`; the server stays offline and does not reconnect. Changing the host, port, user or password instead reconnects at once |
 | C8 | Stop the service with Ctrl+C mid-match and start it again | Clean shutdown log; after restart all widgets are drawn again for players already on the server |
 | C9 | `docker kill` the dedicated server while a player is driving | Same as C2; no unhandled errors, service keeps running |
 | C10 | Start the service with the dedicated server down, start the dedicated server ~5 min later | Service starts and serves `/health` (regression test for the ECONNREFUSED crash); it never connected, so it retries for 15 min (15 s apart, then every minute) and connects once the server is up |

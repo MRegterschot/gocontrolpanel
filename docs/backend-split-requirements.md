@@ -59,7 +59,7 @@ After the split, Next.js should be a stock Next app: no `src/server.ts`, no `nex
 - **GS-4 Manual controls** (backs `src/actions/gbx/clients.ts`): stop reconnecting, trigger reconnect now, resend all manialinks, disconnect client.
 - **GS-5 Server lifecycle hooks.** The service must react when Next changes a server:
   - created → create and connect a manager (today this happens lazily, on the next WS open);
-  - updated (host/port/user/password) → reconnect with the new credentials (today nothing happens until the next reconnect);
+  - updated (host/port/user/password) → reconnect with the new credentials, compared with the details of the last connection attempt, so fixing a wrong password also works for a server that never connected. Other edits (name, help command) never touch the connection: a manual disconnect or stopped retries survive them. The reconnect runs in the background, so the web action does not wait for the game server;
   - deleted (soft delete) → stop reconnect, remove listeners, drop the manager;
   - chat config updated → `ChatEnableManualRouting` + refresh the cached chat config. If the GBX call fails, force `manualRouting=false` and still persist (current behaviour);
   - plugins enabled/disabled/config changed → refresh `info.plugins` and run `updatePlugins()`;
