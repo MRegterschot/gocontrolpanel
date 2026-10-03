@@ -23,6 +23,14 @@ function frame(handle: number, xml: string): Buffer {
   return Buffer.concat([header, body]);
 }
 
+// Returned by a responder to answer with an XML-RPC fault
+class Fault {
+  constructor(
+    readonly code: number,
+    readonly reason: string,
+  ) {}
+}
+
 class FakeGbxServer {
   readonly requests: string[] = [];
   private server: Server;
@@ -48,9 +56,11 @@ class FakeGbxServer {
           const method = /<methodName>([^<]+)<\/methodName>/.exec(xml)?.[1] ?? "";
           this.requests.push(method);
           const result = this.respond(method, xml);
-          socket.write(
-            frame(handle, `<?xml version="1.0"?><methodResponse><params><param>${value(result)}</param></params></methodResponse>`),
-          );
+          const body =
+            result instanceof Fault
+              ? `<fault>${value({ faultCode: result.code, faultString: result.reason })}</fault>`
+              : `<params><param>${value(result)}</param></params>`;
+          socket.write(frame(handle, `<?xml version="1.0"?><methodResponse>${body}</methodResponse>`));
         }
       });
     });
@@ -130,6 +140,28 @@ describe("EvotmGbxSession against a GBXRemote 2 server", () => {
     const dropped = new Promise<boolean>((resolve) => session.onDisconnect(() => resolve(true)));
     server.dropClients();
     expect(await dropped).toBe(true);
+  });
+
+  it("rejects faults with the server's reason as the message", async () => {
+    const { port, session } = await start(() => new Fault(-1000, "Map unknown."));
+    await session.connect("127.0.0.1", port, 2000);
+
+    await expect(session.call("AddMap", "nope.Map.Gbx")).rejects.toThrow(/^Map unknown\.$/);
+    await expect(session.callScript("Trackmania.GetScores")).rejects.toThrow(/^Map unknown\.$/);
+  });
+
+  it("clears the library's connect timer after a refused connection", async () => {
+    const { port, server } = await start();
+    await server.close();
+    servers.length = 0;
+
+    const session = new EvotmGbxSession(silentLogger);
+    sessions.push(session);
+    await expect(session.connect("127.0.0.1", port, 500)).rejects.toThrow();
+
+    // Left running, it prints "[ERROR] Attempt at connection exceeded timeout value." to stderr
+    const gbx = (session as unknown as { client: { gbx: { timeoutHandler: unknown } } }).client.gbx;
+    expect(gbx.timeoutHandler).toBeNull();
   });
 
   it("rejects instead of crashing when nothing listens on the port", async () => {
