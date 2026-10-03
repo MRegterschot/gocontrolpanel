@@ -278,10 +278,11 @@ export class GameEventHandler {
       .catch((error) => this.deps.log.error({ err: error }, "Action dispatch failed"));
   }
 
-  private onPodiumStart(): void {
+  private async onPodiumStart(): Promise<void> {
     this.deps.jukebox
       .queueNextMap()
       .catch((error) => this.deps.log.error({ err: error }, "Failed to queue jukebox map"));
+    await this.deps.liveSync.prepareNextMode();
   }
 
   private onWaypoint(waypoint: Waypoint): void {
