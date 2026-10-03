@@ -8,6 +8,7 @@ import {
 } from "@/actions/gbx/game";
 import { getCurrentMapIndex } from "@/actions/gbx/map";
 import MapCarousel from "@/components/maps/map-carousel";
+import ServerUnavailable from "@/components/servers/server-unavailable";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MatchSettingsForm from "@/forms/server/game/match-settings-form";
@@ -37,7 +38,10 @@ export default async function ServerGamePage({
   );
 
   const { data: mapList } = await getMapList(id);
-  const { data: currentIndex } = await getCurrentMapIndex(id);
+  const { data: currentIndex, error } = await getCurrentMapIndex(id);
+  if (error) {
+    return <ServerUnavailable error={error} />;
+  }
 
   let showOpponents = 0;
   let scriptName = "";
@@ -53,8 +57,8 @@ export default async function ServerGamePage({
         getMatchSettings(id),
       ]);
 
-    showOpponents = showOpponentsRes.data.NextValue || 0;
-    scriptName = scriptNameRes.data.NextValue || "";
+    showOpponents = showOpponentsRes.data?.NextValue || 0;
+    scriptName = scriptNameRes.data?.NextValue || "";
     scripts = scriptsRes.data || [];
     matchSettings = matchSettingsRes.data || [];
   }
@@ -78,8 +82,8 @@ export default async function ServerGamePage({
       getModeScriptSettings(id),
     ]);
 
-    modeScriptInfo = modeScriptInfoRes.data;
-    modeScriptSettings = modeScriptSettingsRes.data;
+    modeScriptInfo = modeScriptInfoRes.data ?? modeScriptInfo;
+    modeScriptSettings = modeScriptSettingsRes.data ?? modeScriptSettings;
   }
 
   return (
