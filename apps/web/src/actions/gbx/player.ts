@@ -1,10 +1,29 @@
 "use server";
 
 import { doServerActionWithAuth } from "@/lib/actions";
-import { gbxService, getGbxClient } from "@/lib/gbx-service";
+import { callEach } from "@/lib/gbx-batch";
+import { gbxService, getGbxClient, type GbxClient } from "@/lib/gbx-service";
 import { PlayerInfo } from "@gcp/shared";
 import { ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
+
+// One round trip for the whole list; a player the server no longer knows is shown by login only
+async function getPlayerInfos(client: GbxClient, logins: string[]): Promise<PlayerInfo[]> {
+  const infos = await callEach(client, "GetPlayerInfo", logins.map((login) => [login]));
+
+  return logins.map((login, i) => {
+    const info = infos[i];
+    return info
+      ? {
+          nickName: info.NickName,
+          login: info.Login,
+          playerId: info.PlayerId,
+          spectatorStatus: info.SpectatorStatus,
+          teamId: info.TeamId,
+        }
+      : { nickName: "-", login, playerId: 0, spectatorStatus: 0, teamId: 0 };
+  });
+}
 
 export async function getPlayerList(
   serverId: string,
@@ -113,29 +132,7 @@ export async function getBanList(
       const client = await getGbxClient(serverId);
       const banList = await client.call("GetBanList", 1000, 0);
 
-      const playerList: PlayerInfo[] = [];
-      for (const player of banList) {
-        try {
-          const playerInfo = await client.call("GetPlayerInfo", player.Login);
-          playerList.push({
-            nickName: playerInfo.NickName,
-            login: playerInfo.Login,
-            playerId: playerInfo.PlayerId,
-            spectatorStatus: playerInfo.SpectatorStatus,
-            teamId: playerInfo.TeamId,
-          });
-        } catch {
-          playerList.push({
-            nickName: "-",
-            login: player.Login,
-            playerId: 0,
-            spectatorStatus: 0,
-            teamId: 0,
-          });
-        }
-      }
-
-      return playerList;
+      return getPlayerInfos(client, banList.map((player: { Login: string }) => player.Login));
     },
   );
 }
@@ -218,29 +215,7 @@ export async function getBlacklist(
       const client = await getGbxClient(serverId);
       const blacklist = await client.call("GetBlackList", 1000, 0);
 
-      const playerList: PlayerInfo[] = [];
-      for (const player of blacklist) {
-        try {
-          const playerInfo = await client.call("GetPlayerInfo", player.Login);
-          playerList.push({
-            nickName: playerInfo.NickName,
-            login: playerInfo.Login,
-            playerId: playerInfo.PlayerId,
-            spectatorStatus: playerInfo.SpectatorStatus,
-            teamId: playerInfo.TeamId,
-          });
-        } catch {
-          playerList.push({
-            nickName: "-",
-            login: player.Login,
-            playerId: 0,
-            spectatorStatus: 0,
-            teamId: 0,
-          });
-        }
-      }
-
-      return playerList;
+      return getPlayerInfos(client, blacklist.map((player: { Login: string }) => player.Login));
     },
   );
 }
@@ -377,29 +352,7 @@ export async function getGuestlist(
       const client = await getGbxClient(serverId);
       const guestlist = await client.call("GetGuestList", 1000, 0);
 
-      const playerList: PlayerInfo[] = [];
-      for (const player of guestlist) {
-        try {
-          const playerInfo = await client.call("GetPlayerInfo", player.Login);
-          playerList.push({
-            nickName: playerInfo.NickName,
-            login: playerInfo.Login,
-            playerId: playerInfo.PlayerId,
-            spectatorStatus: playerInfo.SpectatorStatus,
-            teamId: playerInfo.TeamId,
-          });
-        } catch {
-          playerList.push({
-            nickName: "-",
-            login: player.Login,
-            playerId: 0,
-            spectatorStatus: 0,
-            teamId: 0,
-          });
-        }
-      }
-
-      return playerList;
+      return getPlayerInfos(client, guestlist.map((player: { Login: string }) => player.Login));
     },
   );
 }

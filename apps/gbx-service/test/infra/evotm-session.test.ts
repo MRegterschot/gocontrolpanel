@@ -124,6 +124,19 @@ describe("EvotmGbxSession against a GBXRemote 2 server", () => {
     expect(calls).toEqual([["GetServerName"], ["GetServerComment"]]);
   });
 
+  it("returns undefined for a call that faulted inside a multicall and keeps the others", async () => {
+    const { port, session } = await start(() => [
+      [{ Login: "online" }],
+      { faultCode: -1000, faultString: "Login unknown." },
+      [7],
+    ]);
+    await session.connect("127.0.0.1", port, 2000);
+
+    const out = await session.multicall([["GetPlayerInfo", "online"], ["GetPlayerInfo", "gone"], ["Other"]]);
+
+    expect(out).toEqual([{ Login: "online" }, undefined, 7]);
+  });
+
   it("reports a dropped connection", async () => {
     const { server, port, session } = await start();
     await session.connect("127.0.0.1", port, 2000);
