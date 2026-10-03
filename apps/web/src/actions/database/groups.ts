@@ -43,7 +43,8 @@ const groupUsersServersSchema = Prisma.validator<Prisma.GroupsInclude>()({
       },
     },
     include: {
-      server: true,
+      // Credentials stay on the server
+      server: { omit: { password: true, filemanagerPassword: true } },
     },
   },
   _count: {

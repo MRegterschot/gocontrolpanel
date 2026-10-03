@@ -38,9 +38,26 @@ const serversUsersSchema = Prisma.validator<Prisma.ServersInclude>()({
   },
 });
 
+// Credentials never leave the server: edit forms leave them empty to keep the stored value
+const omitSecrets = Prisma.validator<Prisma.ServersOmit>()({
+  password: true,
+  filemanagerPassword: true,
+});
+
 export type ServersWithUsers = Prisma.ServersGetPayload<{
   include: typeof serversUsersSchema;
+  omit: typeof omitSecrets;
 }>;
+
+function redactSecrets<T extends { password?: string; filemanagerPassword?: string | null }>(
+  server: T,
+) {
+  return {
+    ...server,
+    ...(server.password && { password: "[redacted]" }),
+    ...(server.filemanagerPassword && { filemanagerPassword: "[redacted]" }),
+  };
+}
 
 export type ServerMinimal = Pick<Servers, "id" | "name">;
 
@@ -120,6 +137,7 @@ export async function getServersPaginated(
         orderBy: { [sorting.field]: sorting.order },
         where,
         include: serversUsersSchema,
+        omit: omitSecrets,
       });
 
       return {
@@ -164,9 +182,15 @@ export async function createServer(
         },
       },
       include: serversUsersSchema,
+      omit: omitSecrets,
     });
 
-    await logAudit(session.user.id, newServer.id, "server.create", server);
+    await logAudit(
+      session.user.id,
+      newServer.id,
+      "server.create",
+      redactSecrets(server),
+    );
     await publishServerEvent({ type: "server.created", serverId: newServer.id });
 
     if (recentlyCreatedProjectId) {
@@ -226,7 +250,13 @@ export async function updateServer(
         },
       });
 
-      const { userServers, ...scalarFields } = server;
+      // An empty password keeps the stored one
+      const { userServers, password, filemanagerPassword, ...rest } = server;
+      const scalarFields = {
+        ...rest,
+        ...(password && { password }),
+        ...(filemanagerPassword && { filemanagerPassword }),
+      };
       const updatedServer = await db.servers.update({
         where: { id: serverId },
         data: {
@@ -240,6 +270,7 @@ export async function updateServer(
           },
         },
         include: serversUsersSchema,
+        omit: omitSecrets,
       });
 
       let filemanagerUrlChanged =
@@ -248,26 +279,24 @@ export async function updateServer(
         filemanagerUrlChanged = false;
       }
 
-      let filemanagerPasswordChanged =
-        scalarFields.filemanagerPassword !==
-        originalServer?.filemanagerPassword;
-
-      if (
-        !scalarFields.filemanagerPassword &&
-        !originalServer?.filemanagerPassword
-      ) {
-        filemanagerPasswordChanged = false;
-      }
+      const filemanagerPasswordChanged =
+        !!filemanagerPassword &&
+        filemanagerPassword !== originalServer?.filemanagerPassword;
 
       if (filemanagerUrlChanged || filemanagerPasswordChanged) {
         await updateFileManager(
           serverId,
           scalarFields.filemanagerUrl,
-          scalarFields.filemanagerPassword,
+          filemanagerPassword || originalServer?.filemanagerPassword || undefined,
         );
       }
 
-      await logAudit(session.user.id, serverId, "server.edit", server);
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.edit",
+        redactSecrets(server),
+      );
       await publishServerEvent({ type: "server.updated", serverId });
 
       return updatedServer;
@@ -337,7 +366,9 @@ export async function updateServerChatConfig(
     | "scriptSettingsSavedMessage"
     | "mapListChangeMessage"
   >,
-): Promise<ServerResponse<Servers>> {
+): Promise<
+  ServerResponse<Omit<Servers, "password" | "filemanagerPassword">>
+> {
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
@@ -350,7 +381,8 @@ export async function updateServerChatConfig(
 
       const db = getClient();
       const { server, applied, error } = await saveChatConfig(chatConfig, {
-        save: (data) => db.servers.update({ where: { id: serverId }, data }),
+        save: (data) =>
+          db.servers.update({ where: { id: serverId }, data, omit: omitSecrets }),
         apply: (config) => gbxService.applyChatConfig(serverId, config),
         notifyUpdated: () => publishServerEvent({ type: "server.updated", serverId }),
         log,

@@ -32,13 +32,11 @@ export default function EditServerForm({
       host: server.host,
       port: server.port,
       user: server.user,
-      password: server.password,
       userServers: server.userServers.map((userServer) => ({
         userId: userServer.userId,
         role: userServer.role,
       })),
       filemanagerUrl: server.filemanagerUrl || undefined,
-      filemanagerPassword: server.filemanagerPassword || undefined,
     },
   });
 
@@ -128,8 +126,8 @@ export default function EditServerForm({
         <FormElement
           name={"password"}
           label="Password"
-          description="The XMLRPC password."
-          placeholder="Enter password"
+          description="The XMLRPC password. Leave empty to keep the current one."
+          placeholder="Unchanged"
           isRequired
         />
 
@@ -194,8 +192,8 @@ export default function EditServerForm({
         <FormElement
           name={"filemanagerPassword"}
           label="Filemanager password"
-          description="The password for the filemanager."
-          placeholder="Enter filemanager password"
+          description="The password for the filemanager. Leave empty to keep the current one."
+          placeholder="Unchanged"
         />
 
         <Button
