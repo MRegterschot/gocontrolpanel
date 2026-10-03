@@ -163,7 +163,7 @@ export async function getCurrentMapIndex(
         function: "getCurrentMapIndex",
       };
       const log = getLogger(serverId);
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       const mapIndex = await client.call("GetCurrentMapIndex");
 
       if (typeof mapIndex !== "number") {
@@ -191,7 +191,7 @@ export async function jumpToMap(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("JumpToMapIndex", index);
       await logAudit(session.user.id, serverId, "server.game.map.jump", index);
     },

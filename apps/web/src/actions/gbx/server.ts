@@ -26,19 +26,21 @@ export async function getServerSettings(
       };
       const log = getLogger(serverId);
       const client = getGbxClient(serverId);
-      const server = await getClient().servers.findUnique({
-        where: { id: serverId },
-        select: { enableHelpCommand: true },
-      });
-      const settings = await client.multicall([
-        ["GetServerOptions"],
-        ["GetHideServer"],
-        ["IsKeepingPlayerSlots"],
-        ["AreHornsDisabled"],
-        ["AreServiceAnnouncesDisabled"],
-        ["GetSystemInfo"],
-        ["AreProfileSkinsDisabled"],
-        ["IsMapDownloadAllowed"],
+      const [server, settings] = await Promise.all([
+        getClient().servers.findUnique({
+          where: { id: serverId },
+          select: { enableHelpCommand: true },
+        }),
+        client.multicall([
+          ["GetServerOptions"],
+          ["GetHideServer"],
+          ["IsKeepingPlayerSlots"],
+          ["AreHornsDisabled"],
+          ["AreServiceAnnouncesDisabled"],
+          ["GetSystemInfo"],
+          ["AreProfileSkinsDisabled"],
+          ["IsMapDownloadAllowed"],
+        ]),
       ]);
 
       if (!settings) {

@@ -16,7 +16,7 @@ export async function restartMap(serverId: string): Promise<ServerResponse> {
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("RestartMap");
       await logAudit(session.user.id, serverId, "server.game.map.restart");
     },
@@ -32,7 +32,7 @@ export async function nextMap(serverId: string): Promise<ServerResponse> {
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("NextMap");
       await logAudit(session.user.id, serverId, "server.game.map.next");
     },
@@ -51,7 +51,7 @@ export async function setShowOpponents(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("SetForceShowAllOpponents", count);
       await logAudit(
         session.user.id,
@@ -77,7 +77,7 @@ export async function getShowOpponents(serverId: string): Promise<
       `group:servers:${serverId}:admin`,
     ],
     async () => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       return await client.call("GetForceShowAllOpponents");
     },
   );
@@ -121,7 +121,7 @@ export async function getScriptName(serverId: string): Promise<
       `group:servers:${serverId}:admin`,
     ],
     async () => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       return await client.call("GetScriptName");
     },
   );
@@ -163,7 +163,7 @@ export async function appendPlaylist(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("AppendPlaylistFromMatchSettings", filename);
       await logAudit(
         session.user.id,
@@ -187,7 +187,7 @@ export async function saveMatchSettings(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("SaveMatchSettings", filename);
       await logAudit(
         session.user.id,
@@ -211,7 +211,7 @@ export async function insertPlaylist(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("InsertPlaylistFromMatchSettings", filename);
       await logAudit(
         session.user.id,
@@ -234,7 +234,7 @@ export async function getModeScriptInfo(
       `group:servers:${serverId}:admin`,
     ],
     async () => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       return await client.call("GetModeScriptInfo");
     },
   );
@@ -253,7 +253,7 @@ export async function getModeScriptSettings(serverId: string): Promise<
       `group:servers:${serverId}:admin`,
     ],
     async () => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       return await client.call("GetModeScriptSettings");
     },
   );
@@ -298,7 +298,7 @@ export async function triggerModeScriptEventArray(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("TriggerModeScriptEventArray", method, params);
       await logAudit(session.user.id, serverId, "server.live.scriptevent", {
         method,

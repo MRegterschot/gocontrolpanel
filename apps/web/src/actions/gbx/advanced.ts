@@ -12,7 +12,7 @@ export async function connectFakePlayer(
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       const login = await client.call("ConnectFakePlayer");
       await logAudit(
         session.user.id,
@@ -31,7 +31,7 @@ export async function disconnectFakePlayer(
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       await client.call("DisconnectFakePlayer", login);
       await logAudit(
         session.user.id,
@@ -49,7 +49,7 @@ export async function getJoinLink(
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async () => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       const [serverInfo, serverOptions] = await client.multicall([
         ["GetMainServerPlayerInfo"],
         ["GetServerOptions"],
@@ -74,7 +74,7 @@ export async function getServerPlayerInfo(
       `group:servers:${serverId}:admin`,
     ],
     async () => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       return await client.call("GetMainServerPlayerInfo");
     },
   );
@@ -130,7 +130,7 @@ export async function getChatHistory(
       `group:servers:${serverId}:admin`,
     ],
     async () => {
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       return await client.call("GetChatLines");
     },
   );

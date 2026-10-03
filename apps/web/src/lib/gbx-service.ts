@@ -6,11 +6,9 @@ import {
   type ChatConfig,
   type ChatConfigResult,
   type GbxCallBody,
-  type LiveSnapshot,
   type MapsChangeResult,
   type PointsBody,
   type ServerLifecycleEvent,
-  type ServerStatus,
 } from "@gcp/shared";
 import "server-only";
 import config from "./config";
@@ -61,11 +59,6 @@ export function getGbxClient(serverId: string): GbxClient {
 
 // Commands that also update live state, plugins or chat announcements in the service
 export const gbxService = {
-  getServer: (serverId: string) =>
-    request<ServerStatus>("GET", internalPaths.server(serverId)),
-  getLive: (serverId: string) =>
-    request<LiveSnapshot>("GET", internalPaths.live(serverId)),
-
   reconnect: (serverId: string) =>
     request<{ connected: boolean }>("POST", internalPaths.reconnect(serverId), undefined, {
       timeoutMs: LONG_TIMEOUT_MS,

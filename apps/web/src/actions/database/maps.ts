@@ -90,7 +90,7 @@ export async function getMapList(
         function: "getMapList",
       };
       const log = getLogger(serverId);
-      const client = await getGbxClient(serverId);
+      const client = getGbxClient(serverId);
       const pageSize = 100;
       let allMapList: MapInfoMinimal[] = [];
 
