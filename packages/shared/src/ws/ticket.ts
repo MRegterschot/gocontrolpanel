@@ -11,9 +11,12 @@ export interface VerifiedWsTicket {
   claims: SessionClaims;
 }
 
+// Shortest accepted value for GBX_SERVICE_TOKEN and WS_TICKET_SECRET
+export const MIN_SECRET_LENGTH = 32;
+
 function encodeSecret(secret: string): Uint8Array {
-  if (secret.length < 32) {
-    throw new Error("WS ticket secret must be at least 32 characters");
+  if (secret.length < MIN_SECRET_LENGTH) {
+    throw new Error(`WS ticket secret must be at least ${MIN_SECRET_LENGTH} characters`);
   }
   return new TextEncoder().encode(secret);
 }

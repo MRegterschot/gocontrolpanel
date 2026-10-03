@@ -39,7 +39,7 @@ These `.env` values have no usable default:
 | `NADEO_CLIENT_ID`, `NADEO_CLIENT_SECRET` | from your OAuth app |
 | `NADEO_SERVER_LOGIN`, `NADEO_SERVER_PASSWORD` | your dedicated server account. The web app signs in with it on startup and exits if it is wrong |
 
-The service token and ticket secret in `.env.example` are throwaway values that work as they are.
+The service token and ticket secret in `.env.example` are throwaway values that work as they are. Both apps refuse to start when `GBX_SERVICE_TOKEN` or `WS_TICKET_SECRET` is missing or shorter than 32 characters, and the two apps must use the same values.
 
 Both apps read the root `.env` whichever folder you start them from, then an optional `.env` in their own folder on top for app-only overrides. Variables you export in your shell win over both. Prefer the root file alone: a second copy of a secret like `NEXTAUTH_SECRET` in `apps/web/.env` that drifts from the root one invalidates sessions without any error.
 
