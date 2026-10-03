@@ -98,4 +98,33 @@ describe("ServerRegistry", () => {
     expect(created.get("a")!.dispose).toHaveBeenCalled();
     expect(removed).toHaveBeenCalledWith("a");
   });
+
+  // The web app sends an event over HTTP and falls back to Redis, so the same one can arrive twice
+  it("handles the same lifecycle event delivered twice", async () => {
+    const { registry, created } = setup();
+    const removed = vi.fn();
+    registry.events.on("runtimeRemoved", removed);
+
+    await registry.handleLifecycleEvent({ type: "server.created", serverId: "a" });
+    await registry.handleLifecycleEvent({ type: "server.created", serverId: "a" });
+    expect(registry.list()).toHaveLength(1);
+    expect(created.get("a")!.start).toHaveBeenCalledTimes(1);
+
+    await registry.handleLifecycleEvent({ type: "server.plugins.updated", serverId: "a" });
+    await registry.handleLifecycleEvent({ type: "server.plugins.updated", serverId: "a" });
+    expect(created.get("a")!.refreshPlugins).toHaveBeenCalledTimes(2);
+
+    // Both deliveries can be in flight at the same time
+    await Promise.all([
+      registry.handleLifecycleEvent({ type: "server.deleted", serverId: "a" }),
+      registry.handleLifecycleEvent({ type: "server.deleted", serverId: "a" }),
+    ]);
+    expect(created.get("a")!.dispose).toHaveBeenCalledTimes(1);
+    expect(removed).toHaveBeenCalledTimes(1);
+    expect(registry.find("a")).toBeUndefined();
+
+    await expect(
+      registry.handleLifecycleEvent({ type: "server.deleted", serverId: "a" }),
+    ).resolves.toBeUndefined();
+  });
 });

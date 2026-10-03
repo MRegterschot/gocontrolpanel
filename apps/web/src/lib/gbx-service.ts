@@ -1,5 +1,8 @@
 import {
+  deliverServerEvent,
+  encodeServerLifecycleEvent,
   internalPaths,
+  SERVER_EVENTS_CHANNEL,
   type ApiErrorBody,
   type ChatConfig,
   type ChatConfigResult,
@@ -13,6 +16,9 @@ import {
 import "server-only";
 import config from "./config";
 import { logger } from "./logger";
+import { getRedisClient } from "./redis";
+import { reportException } from "./sentry/report";
+import { getErrorMessage } from "./utils";
 import { ServerError } from "@/types/responses";
 
 // Client for the internal API of the GBX service, which owns all dedicated server connections
@@ -142,13 +148,42 @@ export const gbxService = {
     }),
 };
 
-// Tells the service a server row changed. The database write already succeeded, and the
-// service reads every server again on start, so a failure is logged instead of thrown.
+// Tells the service a server row changed. The database write already succeeded, so this never throws.
+// HTTP applies the change before the caller continues; if that call fails the event goes out on the
+// Redis channel the service subscribes to. A service that is down reads the database when it starts.
 export async function publishServerEvent(event: ServerLifecycleEvent) {
-  try {
-    await request<null>("POST", internalPaths.serverEvents, event);
-  } catch (error) {
-    const meta = { type: "gbx", module: "gbx-service", function: "publishServerEvent" };
-    logger.warn({ meta, error, event }, "Failed to notify the GBX service");
+  const { deliveredBy, failures } = await deliverServerEvent(event, [
+    {
+      name: "http",
+      send: async (e) => {
+        await request<null>("POST", internalPaths.serverEvents, e);
+      },
+    },
+    {
+      name: "redis",
+      send: async (e) => {
+        const redis = await getRedisClient();
+        await redis.publish(SERVER_EVENTS_CHANNEL, encodeServerLifecycleEvent(e));
+      },
+    },
+  ]);
+
+  if (failures.length === 0) return;
+
+  const meta = { type: "gbx", module: "gbx-service", function: "publishServerEvent" };
+  // Errors don't serialize inside nested objects, so log their messages
+  const reasons = failures.map((f) => ({ transport: f.transport, error: getErrorMessage(f.error) }));
+  if (deliveredBy) {
+    logger.warn(
+      { meta, event, deliveredBy, failures: reasons },
+      "GBX service request failed, event delivered over Redis instead",
+    );
+    return;
   }
+
+  logger.error(
+    { meta, event, failures: reasons },
+    "Failed to notify the GBX service, it stays out of date until it restarts",
+  );
+  reportException(failures[0].error, meta);
 }

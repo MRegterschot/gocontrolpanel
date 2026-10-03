@@ -30,6 +30,36 @@ export function decodeServerLifecycleEvent(
   }
 }
 
+export interface EventTransport {
+  name: string;
+  send(event: ServerLifecycleEvent): Promise<void>;
+}
+
+export interface DeliveryResult {
+  // Name of the transport that accepted the event, null when all of them failed
+  deliveredBy: string | null;
+  failures: { transport: string; error: unknown }[];
+}
+
+// Tries the transports in order and stops at the first one that accepts the event
+export async function deliverServerEvent(
+  event: ServerLifecycleEvent,
+  transports: EventTransport[],
+): Promise<DeliveryResult> {
+  const failures: DeliveryResult["failures"] = [];
+
+  for (const transport of transports) {
+    try {
+      await transport.send(event);
+      return { deliveredBy: transport.name, failures };
+    } catch (error) {
+      failures.push({ transport: transport.name, error });
+    }
+  }
+
+  return { deliveredBy: null, failures };
+}
+
 export const redisKeys = {
   // List of JSON JukeboxEntry, head is played next; written by web, popped by the GBX service
   jukebox: (serverId: string) => `jukebox:${serverId}`,

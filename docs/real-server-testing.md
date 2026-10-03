@@ -144,6 +144,7 @@ Check each widget visually in the game client. Compare with screenshots from the
 | R2 | `dce stop redis` during a match | Jukebox and Nadeo token cache errors logged; live state and sockets unaffected; recovers when Redis is back |
 | R3 | Remove the `NADEO_*` values and restart | Everything works except WR/PB/metadata; widgets show `-`/0 |
 | R4 | Malformed lifecycle message: `redis-cli publish gcp:server-events 'nope'` | Warning logged, nothing else |
+| R4b | Break the HTTP route: set the web app's `GBX_SERVICE_URL` to a dead port, restart it, then toggle a plugin or delete a server | Web log: `GBX service request failed, event delivered over Redis instead`; the service still applies the change |
 | R5 | Open 20 `ws:watch live` sockets and close them, ten times over | Service memory (`ps -o rss -p <pid>`) returns to its baseline; no errors logged |
 | R6 | Soak: 1 h with fake players and some driving, plus 20 dedicated-server restarts (`for i in $(seq 20); do dce restart dedicated; sleep 40; done`) | Memory of the service process stable (`ps -o rss`), one callback handler per session, records counted once per finish |
 
