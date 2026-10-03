@@ -41,6 +41,24 @@ async function main() {
       update: { role: "Admin" },
       create: { userId: user.id, serverId, role: "Admin" },
     });
+
+    // The web app's server switcher (/ws/servers) only lists servers reached through a group
+    const groupId = `${serverId}-group`;
+    await db.groups.upsert({
+      where: { id: groupId },
+      update: { deletedAt: null },
+      create: { id: groupId, name: "GCP e2e", description: "Real server test group" },
+    });
+    await db.groupServers.upsert({
+      where: { groupId_serverId: { groupId, serverId } },
+      update: {},
+      create: { groupId, serverId },
+    });
+    await db.groupMember.upsert({
+      where: { userId_groupId: { userId: user.id, groupId } },
+      update: { role: "Admin" },
+      create: { userId: user.id, groupId, role: "Admin" },
+    });
   }
 
   const rows = await db.plugins.findMany();
