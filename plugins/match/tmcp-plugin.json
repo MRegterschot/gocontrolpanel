@@ -1,0 +1,27 @@
+{
+  "slug": "match",
+  "name": "Match",
+  "version": "1.0.0",
+  "sdk": 1,
+  "description": "Manages a match on the server: starting and stopping it, pausing, a pick and ban phase and a lobby.",
+  "author": "GoControlPanel",
+  "license": "MIT",
+  "repository": "https://github.com/MRegterschot/gocontrolpanel",
+  "commands": [
+    "matchstart",
+    "matchstop",
+    "pause",
+    "unpause",
+    "pickban",
+    "lobby",
+    "setseeds"
+  ],
+  "capabilities": [
+    "ui",
+    "chat:send",
+    "maps:read",
+    "maps:write",
+    "mode:control"
+  ],
+  "helpText": "With this plugin you can easily manage matches, including pick and ban phases, pausing, and unpausing.\nCommands:\n/matchstart - Starts the match\n/matchstop - Stops the match\n/pause - Pauses the match\n/unpause - Unpauses the match\n/pickban - Starts the pick and ban phase\n/lobby - Sets the server to lobby state\n/setseeds <seed1> <seed2> ... - Sets the seeds for the pick and ban order"
+}

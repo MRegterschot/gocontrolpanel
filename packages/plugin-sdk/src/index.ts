@@ -1,5 +1,6 @@
 import type { PluginDefinition } from "./types";
 
+export * from "./helpers";
 export * from "./types";
 
 // Registers the plugin with the sandbox it is loaded into. Bundle the plugin so this call runs

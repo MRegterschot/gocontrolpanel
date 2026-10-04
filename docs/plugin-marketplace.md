@@ -83,12 +83,12 @@ What the sandbox can't stop: a plugin with the `ui` capability runs ManiaScript 
 
 | Table | Holds |
 |---|---|
-| `plugins` | One row per plugin name. `source` is `builtin`, `marketplace` or `upload`; `ownerId` is the uploader of a private plugin. |
+| `plugins` | One row per plugin name. `source` is `marketplace` or `upload` (`builtin` only on panels that haven't started the new service yet); `ownerId` is the uploader of a private plugin. |
 | `plugin_versions` | Stored packages (zip bytes, sha256, manifest, `yanked`) of marketplace and uploaded plugins. |
 | `server_plugins` | A plugin on a server: on/off, settings, the installed `versionId` and the `grantedCapabilities` the admin accepted. |
 | `plugin_storage` | `ctx.storage` values per server and plugin, removed on uninstall. |
 
-Built-in plugins are unchanged: they are rows with `source = builtin` and no version. Marketplace versions nobody runs any more are deleted with their last install. Private uploads stay until their owner deletes them.
+The [first-party plugins](./first-party-plugins.md) are marketplace rows whose versions the service stores on start. Other marketplace versions nobody runs any more are deleted with their last install. Private uploads stay until their owner deletes them.
 
 ## Coverage of the requirements
 
@@ -96,13 +96,13 @@ Against section 12 of [backend-split-requirements.md](./backend-split-requiremen
 
 | Requirement | Status |
 |---|---|
-| PM-1 SDK boundary | Done for marketplace and uploaded plugins: they only get the sandboxed `ctx`. |
-| PM-2 Port the built-ins | Not done. Built-ins stay native and trusted; their `ctx` is a superset of the sandboxed one. |
-| PM-3 Dynamic registry | Done for third-party plugins. Built-ins keep their migration-seeded rows. |
+| PM-1 SDK boundary | Done: every plugin only gets the sandboxed `ctx`. |
+| PM-2 Port the built-ins | Done: the [first-party plugins](./first-party-plugins.md) are SDK packages, installed on start, with existing installs moved onto them. |
+| PM-3 Dynamic registry | Done. |
 | PM-4 Namespaced, runtime-loaded templates | Done. |
 | PM-5 Isolation | Done: QuickJS in WebAssembly. |
 | PM-6 Storage API | Done. |
-| PM-7 Config schema owned by the plugin | Done for third-party plugins, with a generated form and write-only secrets. Built-ins keep their own forms. |
+| PM-7 Config schema owned by the plugin | Done, with a generated form and write-only secrets. The first-party plugins keep the panel's own forms. |
 | PM-10 Package format | Done. Integrity comes from sha256 pins in the reviewed index rather than signatures. |
 | PM-11 Capabilities and consent | Done, including consent again for updates that add capabilities. |
 | PM-12 Resource limits | Done; going over a hard limit turns the plugin off and notifies admins. |

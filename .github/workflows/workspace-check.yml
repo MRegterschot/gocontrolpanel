@@ -28,10 +28,11 @@ jobs:
       - name: Generate Prisma Client for ${{ matrix.db }}
         run: bun run generate
 
-      - name: Typecheck shared packages, plugin SDK and GBX service
+      - name: Typecheck shared packages, plugin SDK, first-party plugins and GBX service
         run: |
           bun run --filter @gcp/shared typecheck
           bun run --filter @tmcontrolpanel/plugin-sdk typecheck
+          bun run --filter @gcp/first-party-plugins typecheck
           bun run --filter @gcp/gbx-service typecheck
 
       - name: Unit tests
@@ -41,6 +42,7 @@ jobs:
           bun run --filter @gcp/gbx-service test
           bun run --filter @gcp/web test
 
+      # Also packs the first-party plugins into apps/gbx-service/first-party
       - name: Build GBX service and plugin SDK
         run: |
           bun run --filter @gcp/gbx-service build

@@ -42,34 +42,17 @@ To test against a real dedicated server (isolated Docker stack, seed script, `ws
 | `src/core/live/` | `LiveState` and pure helpers (mode detection, script settings, cup points) |
 | `src/core/gbx/` | `GbxConnection` port, callback parser, passthrough allowlist |
 | `src/core/manialink/` | Runtime-compiled Handlebars renderer, `ManialinkService`, components |
-| `src/core/plugins/` | Plugin SDK (`PluginContext`), `PluginHost`, built-in plugins, the marketplace watcher (takedowns) |
-| `src/core/plugins/sandbox/` | Marketplace and uploaded plugins: QuickJS sandbox, the code that runs inside it, capability checks, limits |
-| `src/infra/` | Adapters: `@evotm/gbxclient`, Prisma repositories, Redis, Nadeo, eCircuitMania, plugin HTTPS, the marketplace index, sandbox assets |
+| `src/core/plugins/` | `PluginHost`, the host-side `PluginContext`, the first-party installer, the marketplace watcher (takedowns) |
+| `src/core/plugins/sandbox/` | Every plugin package: QuickJS sandbox, the code that runs inside it, capability checks, limits |
+| `src/infra/` | Adapters: `@evotm/gbxclient`, Prisma repositories, Redis, Nadeo, plugin HTTPS, first-party packages, the marketplace index, sandbox assets |
 | `src/http/` | `buildApp()`, service-token auth, internal routes, WebSocket channels |
 | `src/container.ts` | Composition root: the only file that picks concrete implementations |
 | `templates/` | Manialink templates (`.hbs`), loaded at startup |
 
 ## Sandboxed plugins
 
-Plugins installed from the [marketplace](../../docs/plugin-marketplace.md) or uploaded privately are packages, not code in this repository. `PackageLoader` reads the installed version from the database and checks its sha256. `SandboxedPlugin` then runs it in its own QuickJS WebAssembly instance and answers its host calls, but only those its granted capabilities allow. The code that runs inside the sandbox is `guest-runtime.ts`; it is serialized with `toString()`, so it can't use anything from its module. `test/plugins/sandbox.test.ts` runs packaged plugins against the fake dedicated server.
+Plugins are packages: the first-party ones, plugins installed from the [marketplace](../../docs/plugin-marketplace.md) and private uploads. `PackageLoader` reads the installed version from the database and checks its sha256. `SandboxedPlugin` then runs it in its own QuickJS WebAssembly instance and answers its host calls, but only those its granted capabilities allow. The code that runs inside the sandbox is `guest-runtime.ts`; it is serialized with `toString()`, so it can't use anything from its module. `test/plugins/sandbox.test.ts` runs packaged plugins against the fake dedicated server.
 
-## Adding a plugin
+## Plugins
 
-The full guide, with the lifecycle, the whole context API, widgets and testing, is in [docs/builtin-plugins.md](../../docs/builtin-plugins.md). Plugins that aren't part of GoControlPanel use the sandboxed [plugin SDK](../../docs/plugin-sdk.md) instead.
-
-Write a definition and register it in `src/core/plugins/builtin/index.ts`. The `id` must match a row in the `plugins` table.
-
-```ts
-export const helloPlugin = definePlugin({
-  id: "hello",
-  gamemodes: ["timeattack"], // omit for every mode
-  helpText: "/hello - says hi",
-  configSchema: z.object({ greeting: z.string().default("Hi") }),
-  create: (ctx) => {
-    ctx.command("hello", (_, login) => ctx.chat.sendTo(login, ctx.config()?.greeting ?? "Hi"));
-    return {};
-  },
-});
-```
-
-Everything registered through `ctx` (events, commands, actions, timers, widgets, action-group buttons) is removed automatically when the plugin unloads.
+Every plugin is a package, including the ones that ship with GoControlPanel. Those are built from [`plugins/`](../../plugins) into `first-party/`, and `installFirstPartyPlugins` stores them on every start, before any server connects, moving installs from before the marketplace onto them. See [docs/first-party-plugins.md](../../docs/first-party-plugins.md) for working on them and [docs/plugin-sdk.md](../../docs/plugin-sdk.md) for the API.

@@ -4,6 +4,7 @@ import type {
   LiveInfo,
   PlayerInfo,
   PlayerRound,
+  PlayerStatus,
   Scores,
   Team,
   Waypoint,
@@ -188,7 +189,11 @@ export interface PluginContext<Config = Record<string, unknown>> {
     readonly activePlayers: PlayerInfo[];
     readonly activeMapUid: string | null;
     readonly roundNumber: number;
+    readonly isReverseCup: boolean;
     findActivePlayer(login: string): PlayerInfo | null;
+    // Spectating, eliminated or on last chance; all false outside reverse cup
+    reverseCupGetPlayerStatus(login: string): PlayerStatus;
+    reverseCupGetPointsRepartition(playerCount: number): number[];
   };
   readonly players: {
     get(login: string): Promise<PlayerInfo>;

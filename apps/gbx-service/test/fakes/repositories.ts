@@ -1,6 +1,5 @@
 import type { JukeboxEntry, NotificationDto, PlayerInfo } from "@gcp/shared";
 import type {
-  EcmClient,
   JukeboxStore,
   LeaderboardEntry,
   LocalRecord,
@@ -275,18 +274,5 @@ export class FakeNadeo implements MapMetadataProvider, NadeoRecordsProvider {
 
   async getAccountNames(accountIds: string[]) {
     return Object.fromEntries(accountIds.filter((id) => this.names[id]).map((id) => [id, this.names[id]]));
-  }
-}
-
-export class FakeEcm implements EcmClient {
-  readonly finishes: { apiKey: string; body: unknown }[] = [];
-  readonly rounds: { apiKey: string; body: Parameters<EcmClient["roundEnd"]>[1] }[] = [];
-
-  async driverFinish(apiKey: string, body: Parameters<EcmClient["driverFinish"]>[1]) {
-    this.finishes.push({ apiKey, body });
-  }
-
-  async roundEnd(apiKey: string, body: Parameters<EcmClient["roundEnd"]>[1]) {
-    this.rounds.push({ apiKey, body });
   }
 }

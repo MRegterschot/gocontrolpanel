@@ -11,7 +11,6 @@ import { Window } from "../manialink/components/window";
 import type { ManialinkService } from "../manialink/manialink-service";
 import type {
   Clock,
-  EcmClient,
   NadeoRecordsProvider,
   NotificationRepository,
   RecordRepository,
@@ -46,7 +45,6 @@ export interface PluginServices {
   servers: ServerRepository;
   notifications: NotificationRepository;
   nadeo: NadeoRecordsProvider;
-  ecm: EcmClient;
   clock: Clock;
   manialinks: ManialinkService;
   disablePlugin(pluginId: string, name: string, reason: string): Promise<void>;
@@ -87,7 +85,6 @@ export function createPluginContext(
     chat: services.chat,
     mapList: services.mapList,
     nadeo: services.nadeo,
-    ecm: services.ecm,
 
     config: () => config,
     serverName: services.serverName,

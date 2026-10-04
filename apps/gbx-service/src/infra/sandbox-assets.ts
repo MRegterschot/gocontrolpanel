@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { BASE_TEMPLATES } from "@gcp/shared/plugin-package";
 import type { SandboxAssets } from "../core/plugins/sandbox/sandboxed-plugin";
+import { precompileTemplates } from "../core/plugins/sandbox/templates";
 import { loadTemplateSources } from "./templates";
 
 const require = createRequire(import.meta.url);
@@ -32,6 +33,6 @@ export async function loadSandboxAssets(templatesDir: string): Promise<SandboxAs
     wasmModule: await wasmApi.compile(wasm),
     handlebars: readFileSync(require.resolve("handlebars/dist/handlebars.min.js"), "utf8"),
     layouts: readFileSync(require.resolve("handlebars-layouts"), "utf8"),
-    baseTemplates,
+    baseTemplates: precompileTemplates(baseTemplates),
   };
 }

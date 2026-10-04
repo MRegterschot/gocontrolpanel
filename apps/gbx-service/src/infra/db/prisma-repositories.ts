@@ -1,6 +1,8 @@
-import type { NotificationDto, PlayerInfo } from "@gcp/shared";
+import type { NotificationDto, PlayerInfo, PluginManifest } from "@gcp/shared";
 import type { DbClient, Maps, Notifications, Prisma } from "@gcp/db";
 import type {
+  FirstPartyInstall,
+  FirstPartyRepository,
   LocalRecord,
   MapMetadata,
   MapRecord,
@@ -470,5 +472,89 @@ export class PrismaNotificationRepository implements NotificationRepository {
       ),
     );
     return rows.map(toNotificationDto);
+  }
+}
+
+export class PrismaFirstPartyRepository implements FirstPartyRepository {
+  constructor(private readonly db: DbClient) {}
+
+  async install(manifest: PluginManifest, sha256: string, bytes: Uint8Array): Promise<FirstPartyInstall> {
+    const result: FirstPartyInstall = {
+      slug: manifest.slug,
+      version: manifest.version,
+      stored: false,
+      migrated: 0,
+      removed: 0,
+    };
+
+    return this.db.$transaction(async (tx) => {
+      const details = {
+        displayName: manifest.name,
+        description: manifest.description,
+        author: manifest.author,
+      };
+
+      let plugin = await tx.plugins.findUnique({ where: { name: manifest.slug } });
+      if (plugin?.source === "upload") {
+        return { ...result, skipped: "an uploaded plugin uses this name" };
+      }
+      if (!plugin) {
+        plugin = await tx.plugins.create({
+          data: { name: manifest.slug, source: "marketplace", ...details },
+        });
+      } else if (plugin.source === "builtin") {
+        plugin = await tx.plugins.update({
+          where: { id: plugin.id },
+          data: { source: "marketplace", ...details },
+        });
+      }
+
+      let version = await tx.pluginVersions.findUnique({
+        where: { pluginId_version: { pluginId: plugin.id, version: manifest.version } },
+        select: { id: true },
+      });
+      if (!version) {
+        version = await tx.pluginVersions.create({
+          data: {
+            pluginId: plugin.id,
+            version: manifest.version,
+            sdk: manifest.sdk,
+            sha256,
+            size: bytes.byteLength,
+            manifest: manifest as unknown as Prisma.InputJsonValue,
+            package: Buffer.from(bytes),
+          },
+          select: { id: true },
+        });
+        result.stored = true;
+      }
+
+      // Built-in installs from before the marketplace have no version
+      const legacy = await tx.serverPlugins.findMany({
+        where: { pluginId: plugin.id, versionId: null },
+        select: { serverId: true, enabled: true, config: true },
+      });
+      for (const row of legacy) {
+        const key = { serverId_pluginId: { serverId: row.serverId, pluginId: plugin.id } };
+        // The old plugins form saved a row for every plugin; untouched ones aren't installs
+        if (!row.enabled && row.config === null) {
+          await tx.serverPlugins.delete({ where: key });
+          result.removed++;
+          continue;
+        }
+        await tx.serverPlugins.update({
+          where: key,
+          data: {
+            versionId: version.id,
+            // They ran with full access before; this is what the package needs
+            grantedCapabilities: manifest.capabilities,
+            installedAt: new Date(),
+          },
+        });
+        result.migrated++;
+      }
+
+      return result;
+    });
   }
 }

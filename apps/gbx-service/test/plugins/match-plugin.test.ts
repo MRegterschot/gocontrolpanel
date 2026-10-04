@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { matchPlugin } from "../../src/core/plugins/builtin/match";
-import { createHarness, player, pluginRecord } from "../fakes/harness";
+import { normalizeConfig } from "../../../../plugins/match/src";
+import { createHarness, firstPartyPackage, player } from "../fakes/harness";
 
 const config = {
   admins: ["admin"],
@@ -11,9 +11,8 @@ const config = {
 
 async function setup(overrides: Record<string, unknown> = {}) {
   return createHarness({
-    plugins: [matchPlugin],
     players: [player("admin"), player("p1"), player("p2")],
-    server: { plugins: [pluginRecord("match", { ...config, ...overrides })] },
+    packages: [{ bytes: await firstPartyPackage("match"), config: { ...config, ...overrides } }],
   });
 }
 
@@ -23,6 +22,16 @@ const broadcast = (h: Awaited<ReturnType<typeof setup>>) =>
   h.session.callsTo("ChatSendServerMessage").map((c) => c.params[0]);
 
 describe("match plugin", () => {
+  it("reads settings saved by older forms", () => {
+    expect(normalizeConfig({ pickAndBan: { type: "player", timeout: "30" } }).pickAndBan).toEqual({
+      type: "player",
+      order: "",
+      choosePosition: false,
+      timeout: 30,
+    });
+    expect(normalizeConfig(null)).toEqual({});
+  });
+
   it("rejects commands from non-admins", async () => {
     const h = await setup();
     await h.chat("p1", "/pickban");
@@ -33,13 +42,13 @@ describe("match plugin", () => {
     const h = await setup();
     await h.chat("admin", "/pickban");
     expect(broadcast(h).at(-1)).toContain("Pick and ban phase started");
-    expect(h.session.widgetJson("match-pickban-widget-update", "currentActionJson")).toMatchObject({
+    expect(h.session.widgetJson("plg.match.match-pickban-widget-update", "currentActionJson")).toMatchObject({
       action: "ban",
       login: "p1",
     });
 
-    await h.click("p1", "match-pickban-action-map-a-uid");
-    await h.click("p2", "match-pickban-action-map-b-uid");
+    await h.click("p1", "match:match-pickban-action-map-a-uid");
+    await h.click("p2", "match:match-pickban-action-map-b-uid");
     expect(broadcast(h)).toContain("Pick and ban phase completed, match is ready to start");
 
     h.session.calls.length = 0;

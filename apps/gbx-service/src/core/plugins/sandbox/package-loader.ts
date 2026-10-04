@@ -3,13 +3,19 @@ import { readPluginPackage, type PluginPackage } from "@gcp/shared/plugin-packag
 import type { PluginPackageRepository, ServerPluginRecord } from "../../ports";
 import type { PluginDefinition } from "../sdk";
 import { sandboxedDefinition, type SandboxDependencies } from "./sandboxed-plugin";
+import { precompileTemplates } from "./templates";
+
+interface LoadedPackage {
+  pkg: PluginPackage;
+  templates: Record<string, string>;
+}
 
 const MAX_CACHED = 100;
 
 // Turns installed package versions into plugin definitions. Parsed packages are cached by
 // sha256, which also proves the stored bytes are the ones that were installed.
 export class PackageLoader {
-  private readonly cache = new Map<string, PluginPackage>();
+  private readonly cache = new Map<string, LoadedPackage>();
 
   constructor(
     private readonly packages: PluginPackageRepository,
@@ -23,17 +29,19 @@ export class PackageLoader {
       throw new Error(`${record.name}@${ref.version} was withdrawn from the marketplace`);
     }
 
-    let pkg = this.cache.get(ref.sha256);
-    if (!pkg) {
+    let loaded = this.cache.get(ref.sha256);
+    if (!loaded) {
       const bytes = await this.packages.loadPackage(ref.versionId);
       if (!bytes) throw new Error(`Package ${record.name}@${ref.version} is missing from the database`);
 
-      pkg = readPluginPackage(bytes);
+      const pkg = readPluginPackage(bytes);
       if (pkg.sha256 !== ref.sha256) {
         throw new Error(`Package ${record.name}@${ref.version} does not match its checksum`);
       }
-      this.remember(ref.sha256, pkg);
+      loaded = { pkg, templates: precompileTemplates(pkg.templates) };
+      this.remember(ref.sha256, loaded);
     }
+    const { pkg, templates } = loaded;
 
     if (pkg.manifest.slug !== record.name) {
       throw new Error(`Package ${pkg.manifest.slug} is installed as ${record.name}`);
@@ -43,10 +51,10 @@ export class PackageLoader {
         `${record.name}@${ref.version} needs plugin SDK ${pkg.manifest.sdk}, this service runs ${PLUGIN_SDK_VERSION}`,
       );
     }
-    return sandboxedDefinition(pkg, { ...record, package: ref }, this.deps);
+    return sandboxedDefinition(pkg, templates, { ...record, package: ref }, this.deps);
   }
 
-  private remember(sha256: string, pkg: PluginPackage): void {
+  private remember(sha256: string, pkg: LoadedPackage): void {
     if (this.cache.size >= MAX_CACHED) {
       const oldest = this.cache.keys().next().value;
       if (oldest !== undefined) this.cache.delete(oldest);

@@ -1,5 +1,6 @@
 // Creates the e2e server row, an admin user and plugin rows in the e2e database
 import { createPrismaClient } from "@gcp/db";
+import { compareVersions, isFirstPartySlug } from "@gcp/shared";
 
 const env = process.env;
 const serverId = env.E2E_SERVER_ID ?? "e2e-server";
@@ -61,8 +62,19 @@ async function main() {
     });
   }
 
-  const rows = await db.plugins.findMany();
+  // First-party plugins only; before the service's first start they are still built-in rows
+  // without a version, which the service moves onto its packages when it starts
+  const rows = (await db.plugins.findMany({
+    include: { versions: { select: { id: true, version: true, manifest: true } } },
+  })).filter((plugin) => isFirstPartySlug(plugin.name) && plugin.source !== "upload");
   for (const plugin of rows) {
+    const newest = plugin.versions.sort((a, b) => compareVersions(b.version, a.version))[0];
+    const installed = newest
+      ? {
+          versionId: newest.id,
+          grantedCapabilities: (newest.manifest as { capabilities?: string[] }).capabilities ?? [],
+        }
+      : {};
     const enabled = plugins.includes("all") || plugins.includes(plugin.name);
     const config =
       plugin.name === "match" && adminLogin
@@ -72,8 +84,8 @@ async function main() {
           : {};
     await db.serverPlugins.upsert({
       where: { serverId_pluginId: { serverId, pluginId: plugin.id } },
-      update: { enabled },
-      create: { serverId, pluginId: plugin.id, enabled, config },
+      update: { enabled, ...installed },
+      create: { serverId, pluginId: plugin.id, enabled, config, ...installed },
     });
   }
 

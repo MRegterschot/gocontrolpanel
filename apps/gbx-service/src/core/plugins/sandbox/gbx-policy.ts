@@ -9,6 +9,7 @@ const ALWAYS: readonly string[] = [
   "GetNextMapIndex",
   "GetPlayerList",
   "GetPlayerInfo",
+  "GetMainServerPlayerInfo",
   "GetModeScriptInfo",
   "GetModeScriptSettings",
   "GetScriptName",

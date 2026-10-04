@@ -11,6 +11,7 @@ import { getAdminServers, uploadOwnerFilter, type ServerSummary } from "@/lib/pl
 import { getErrorMessage } from "@/lib/utils";
 import { routePermissions } from "@/routes";
 import type {
+  AvailablePlugin,
   CatalogPlugin,
   CatalogPluginDetail,
   CatalogVersion,
@@ -23,9 +24,11 @@ import type {
 import { ServerResponse } from "@/types/responses";
 import {
   compareVersions,
+  isFirstPartySlug,
   isVersionCompatible,
   latestVersion,
   maskSecrets,
+  PLUGIN_SDK_VERSION,
   pluginManifestSchema,
   reportPluginUrl,
   type MarketplacePlugin,
@@ -252,6 +255,7 @@ export async function getInstalledPlugins(
       return {
         pluginId: row.pluginId,
         slug: row.plugin.name,
+        firstParty: source === "marketplace" && isFirstPartySlug(row.plugin.name),
         name: manifest?.name ?? row.plugin.displayName ?? row.plugin.name,
         description: manifest?.description ?? row.plugin.description,
         author: manifest?.author ?? row.plugin.author,
@@ -333,6 +337,57 @@ export async function getUploadedPlugins(): Promise<ServerResponse<UploadedPlugi
         version: sp.version?.version ?? "?",
       })),
     }));
+  });
+}
+
+// Stored plugins the server doesn't run yet: the first-party ones, earlier marketplace
+// downloads and the user's uploads
+export async function getAvailablePlugins(
+  serverId: string,
+): Promise<ServerResponse<AvailablePlugin[]>> {
+  return doServerActionWithAuth(serverAdmin(serverId), async (session) => {
+    const rows = await getClient().plugins.findMany({
+      where: {
+        serverPlugins: { none: { serverId } },
+        OR: [{ source: "marketplace" }, { source: "upload", ...uploadOwnerFilter(session) }],
+      },
+      select: {
+        id: true,
+        name: true,
+        displayName: true,
+        description: true,
+        source: true,
+        versions: {
+          where: { yanked: false },
+          select: { id: true, version: true, sdk: true, manifest: true },
+        },
+      },
+      orderBy: { name: "asc" },
+    });
+
+    return rows
+      .map((row): AvailablePlugin => {
+        const source = row.source as PluginSourceKind;
+        return {
+          pluginId: row.id,
+          slug: row.name,
+          name: row.displayName ?? row.name,
+          description: row.description,
+          source,
+          firstParty: source === "marketplace" && isFirstPartySlug(row.name),
+          versions: row.versions
+            .filter((version) => version.sdk <= PLUGIN_SDK_VERSION)
+            .map((version) => ({
+              id: version.id,
+              version: version.version,
+              capabilities: storedManifest(version.manifest)?.capabilities ?? [],
+            }))
+            .sort((a, b) => compareVersions(b.version, a.version)),
+        };
+      })
+      .filter((plugin) => plugin.versions.length > 0)
+      // First-party plugins first, the way the old built-in list showed them
+      .sort((a, b) => Number(b.firstParty) - Number(a.firstParty));
   });
 }
 

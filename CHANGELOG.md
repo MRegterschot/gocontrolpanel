@@ -8,10 +8,11 @@ Release notes of GoControlPanel, newest first. The entries are the descriptions 
 
 - **Split into two containers.** The GBX connections, in-game plugins, manialinks and live WebSockets moved out of the web app into a separate `gbx-service` container. The web app no longer connects to dedicated servers itself. This needs two new secrets (`GBX_SERVICE_TOKEN`, `WS_TICKET_SECRET`) and port `3100` reachable from the browser. The database schema is unchanged. See the [migration guide](docs/migrating-from-dev.md).
 - Release images are published for both the web app and the GBX service, each with a MariaDB/MySQL and a `-postgres` flavour.
-- The repository is a Bun workspaces monorepo (`apps/web`, `apps/gbx-service`, `packages/db`, `packages/shared`, `packages/plugin-sdk`).
+- The repository is a Bun workspaces monorepo (`apps/web`, `apps/gbx-service`, `packages/db`, `packages/shared`, `packages/plugin-sdk`, `plugins`).
 - New database tables for plugin packages and plugin storage, applied by the migrations on start.
 - The web app reads through GET API routes and TanStack Query. Server Actions are kept for writes.
-- Built-in plugins use a new internal plugin API, see [built-in plugins](docs/builtin-plugins.md).
+- **The built-in plugins are plugin packages now** and run sandboxed like any other plugin, with only the access they need. The GBX service ships them and installs them on start. Servers that had them on keep them on, with their settings. A server installs or removes them on its Plugins page, which no longer has a separate built-in list. See [first-party plugins](docs/first-party-plugins.md).
+- The `ECM_URL` setting is gone; the eCircuitMania plugin calls the eCircuitMania API itself.
 
 ### New Features
 

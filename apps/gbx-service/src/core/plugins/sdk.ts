@@ -10,7 +10,6 @@ import type { ActionButton } from "../manialink/components/action-group";
 import type { Manialink, ManialinkOptions } from "../manialink/components/manialink";
 import type { Window, WindowOptions } from "../manialink/components/window";
 import type {
-  EcmClient,
   LocalRecord,
   MapRecord,
   NadeoRecordsProvider,
@@ -56,7 +55,6 @@ export interface PluginContext<Config = unknown> {
   readonly ui: PluginUi;
   readonly mapList: MapList;
   readonly nadeo: NadeoRecordsProvider;
-  readonly ecm: EcmClient;
 
   config(): Config | null;
   serverName(): string | null;

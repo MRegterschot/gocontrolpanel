@@ -36,6 +36,9 @@ async function main() {
     log,
   );
 
+  // Ships with the image; moves installs from before the marketplace onto the packages
+  await container.installFirstPartyPlugins();
+
   // Flag withdrawn plugin versions before the servers load their plugins, without holding up
   // startup for long when the marketplace can't be reached
   if (container.marketplace) {

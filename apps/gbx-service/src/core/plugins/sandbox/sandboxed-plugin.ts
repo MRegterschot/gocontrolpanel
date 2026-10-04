@@ -34,7 +34,7 @@ export interface SandboxAssets {
   handlebars: string;
   // handlebars-layouts, a CommonJS module
   layouts: string;
-  // Layouts plugin templates may extend: manialink, widget, window, scripts/hide
+  // Layouts plugin templates may extend (manialink, widget, window, scripts/hide), precompiled
   baseTemplates: Record<string, string>;
 }
 
@@ -58,7 +58,7 @@ const capabilityError = (capability: string) =>
 const invalid = (message: string) => new HostError("ValidationError", message);
 
 const LOG_LEVELS = ["debug", "info", "warn", "error"] as const;
-const LIVE_FIELDS = ["liveInfo", "activePlayers", "activeMapUid", "roundNumber"] as const;
+const LIVE_FIELDS = ["liveInfo", "activePlayers", "activeMapUid", "roundNumber", "isReverseCup"] as const;
 const PAGE_ID = /^[A-Za-z0-9_-]{1,64}$/;
 const ACTION_NAME = /^[A-Za-z0-9_\-.{}]{1,100}$/;
 const STORAGE_KEY = /^[\x21-\x7e]+$/;
@@ -104,6 +104,8 @@ function jsonSize(value: unknown): number {
 // Builds the definition PluginHost loads for an installed package
 export function sandboxedDefinition(
   pkg: PluginPackage,
+  // The package's templates, precompiled (see templates.ts)
+  templates: Record<string, string>,
   record: ServerPluginRecord & { package: InstalledPackageRef },
   deps: SandboxDependencies,
 ): PluginDefinition<unknown> {
@@ -111,7 +113,7 @@ export function sandboxedDefinition(
     id: pkg.manifest.slug,
     gamemodes: pkg.manifest.gamemodes,
     helpText: pkg.manifest.helpText,
-    create: (ctx) => new SandboxedPlugin(ctx, pkg, record, deps),
+    create: (ctx) => new SandboxedPlugin(ctx, pkg, templates, record, deps),
   };
 }
 
@@ -144,6 +146,7 @@ export class SandboxedPlugin implements PluginInstance {
   constructor(
     private readonly ctx: PluginContext,
     private readonly pkg: PluginPackage,
+    private readonly templates: Record<string, string>,
     record: ServerPluginRecord & { package: InstalledPackageRef },
     private readonly deps: SandboxDependencies,
   ) {
@@ -415,7 +418,7 @@ export class SandboxedPlugin implements PluginInstance {
       pluginId: this.pkg.manifest.slug,
       serverId: this.ctx.serverId,
       actionPrefix: this.prefix,
-      templates: { ...this.deps.assets.baseTemplates, ...this.pkg.templates },
+      templates: { ...this.deps.assets.baseTemplates, ...this.templates },
     }),
 
     log: (level: unknown, message: unknown, data: unknown) => {
@@ -514,6 +517,17 @@ export class SandboxedPlugin implements PluginInstance {
 
     "live.findPlayer": (login: unknown) =>
       this.ctx.live.findActivePlayer(text(login, "login", 100)) ?? null,
+
+    "live.reverseCupStatus": (login: unknown) =>
+      this.ctx.live.reverseCupGetPlayerStatus(text(login, "login", 100)),
+
+    "live.reverseCupRepartition": (count: unknown) => {
+      const players = Number(count);
+      if (!Number.isInteger(players) || players < 0 || players > 1000) {
+        throw invalid("The player count must be a whole number");
+      }
+      return this.ctx.live.reverseCupGetPointsRepartition(players);
+    },
 
     "ui.create": (kind: unknown, options: any) => {
       this.require("ui");

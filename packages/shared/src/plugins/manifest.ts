@@ -8,8 +8,9 @@ import { isValidVersion } from "./version";
 
 export const MANIFEST_FILE = "tmcp-plugin.json";
 
-// Names of the plugins compiled into the GBX service
-export const BUILTIN_PLUGIN_NAMES = [
+// The plugins of GoControlPanel itself, published in the marketplace and preinstalled.
+// Private uploads can't use these names.
+export const FIRST_PARTY_PLUGIN_NAMES = [
   "ta-leaderboard",
   "map-info",
   "records-info",
@@ -23,10 +24,11 @@ export const BUILTIN_PLUGIN_NAMES = [
 ] as const;
 
 const RESERVED_SLUGS = new Set<string>([
-  ...BUILTIN_PLUGIN_NAMES,
   "help",
   "gcp",
   "gocontrolpanel",
+  "tmcp",
+  "tmcontrolpanel",
   "plugin",
   "plugins",
   "core",
@@ -39,6 +41,10 @@ export const PLUGIN_COMMAND = /^[a-z0-9][a-z0-9_-]{0,31}$/;
 
 export function isReservedSlug(slug: string): boolean {
   return RESERVED_SLUGS.has(slug);
+}
+
+export function isFirstPartySlug(slug: string): boolean {
+  return (FIRST_PARTY_PLUGIN_NAMES as readonly string[]).includes(slug);
 }
 
 const httpsUrl = z

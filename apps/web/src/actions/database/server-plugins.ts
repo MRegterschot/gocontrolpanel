@@ -4,60 +4,12 @@ import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { gbxService, publishServerEvent } from "@/lib/gbx-service";
 import { ServerError, ServerResponse } from "@/types/responses";
+import type { Prisma } from "@gcp/db";
+import { isFirstPartySlug } from "@gcp/shared";
 import { logAudit } from "./server-only/audit-logs";
 
-export async function updateServerPlugins(
-  serverId: string,
-  plugins: {
-    pluginId: string;
-    enabled: boolean;
-  }[],
-): Promise<ServerResponse> {
-  return doServerActionWithAuth(
-    [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
-    async (session) => {
-      const db = getClient();
-      // Built-ins only; the others go through the actions in actions/plugins.ts
-      const builtins = await db.plugins.count({
-        where: { id: { in: plugins.map((p) => p.pluginId) }, source: "builtin" },
-      });
-      if (builtins !== new Set(plugins.map((p) => p.pluginId)).size) {
-        throw new ServerError("Unknown built-in plugin", "PluginNotFound");
-      }
-
-      const pluginUpdates = plugins.map((p) =>
-        db.serverPlugins.upsert({
-          where: {
-            serverId_pluginId: {
-              serverId,
-              pluginId: p.pluginId,
-            },
-          },
-          create: {
-            serverId,
-            pluginId: p.pluginId,
-            enabled: p.enabled,
-          },
-          update: {
-            enabled: p.enabled,
-          },
-        }),
-      );
-
-      await db.$transaction(pluginUpdates);
-
-      await publishServerEvent({ type: "server.plugins.updated", serverId });
-
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.plugins.plugins.edit",
-        plugins,
-      );
-    },
-  );
-}
-
+// Settings from the panel's own forms for the first-party plugins; other plugins
+// are configured through their config schema (actions/plugins.ts)
 export async function updateServerPlugin(
   serverId: string,
   pluginId: string,
@@ -68,52 +20,29 @@ export async function updateServerPlugin(
     async (session) => {
       const db = getClient();
 
-      const plugin = await db.plugins.findUnique({ where: { id: pluginId } });
-      if (plugin?.source !== "builtin") {
-        throw new ServerError("Unknown built-in plugin", "PluginNotFound");
-      }
-
-      // Check if plugin exists for server
-      const existingPlugin = await db.serverPlugins.findUnique({
-        where: {
-          serverId_pluginId: {
-            serverId,
-            pluginId,
-          },
-        },
+      const row = await db.serverPlugins.findUnique({
+        where: { serverId_pluginId: { serverId, pluginId } },
+        select: { versionId: true, plugin: { select: { name: true, source: true } } },
       });
-
-      // If not, create it with the config
-      if (!existingPlugin) {
-        await db.serverPlugins.create({
-          data: {
-            serverId,
-            pluginId,
-            enabled: false,
-            config,
-          },
-        });
-        return;
-      } else {
-        await db.serverPlugins.updateMany({
-          where: {
-            serverId,
-            pluginId,
-          },
-          data: {
-            config,
-          },
-        });
+      if (
+        !row?.versionId ||
+        row.plugin.source !== "marketplace" ||
+        !isFirstPartySlug(row.plugin.name)
+      ) {
+        throw new ServerError("The plugin is not installed on this server", "PluginNotFound");
       }
+
+      await db.serverPlugins.update({
+        where: { serverId_pluginId: { serverId, pluginId } },
+        data: { config: config as Prisma.InputJsonValue },
+      });
 
       await publishServerEvent({ type: "server.plugins.updated", serverId });
 
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.plugins.plugins.config.edit",
-        { pluginId, config },
-      );
+      await logAudit(session.user.id, serverId, "server.plugins.config.edit", {
+        slug: row.plugin.name,
+        keys: Object.keys(config),
+      });
     },
   );
 }

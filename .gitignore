@@ -41,3 +41,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# First-party plugin packages, built by plugins/scripts/build.ts
+apps/gbx-service/first-party

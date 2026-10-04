@@ -1,5 +1,6 @@
 import type {
   ChatConfig,
+  PluginManifest,
   JukeboxEntry,
   NotificationDto,
   PlayerInfo,
@@ -71,6 +72,24 @@ export interface YankedInstall {
 export interface PluginCatalogRepository {
   // Marks the versions yanked, turns off every server plugin running one and returns those
   applyYanks(yanks: PluginYank[]): Promise<YankedInstall[]>;
+}
+
+export interface FirstPartyInstall {
+  slug: string;
+  version: string;
+  // The version was new to this panel
+  stored: boolean;
+  // Built-in installs from before the marketplace that now run the package
+  migrated: number;
+  // Built-in rows that were never turned on or configured, dropped instead
+  removed: number;
+  // Why nothing was installed, if so
+  skipped?: string;
+}
+
+// The plugins that ship with the service, stored and installed like marketplace plugins
+export interface FirstPartyRepository {
+  install(manifest: PluginManifest, sha256: string, bytes: Uint8Array): Promise<FirstPartyInstall>;
 }
 
 export interface PluginStorageUsage {
@@ -217,21 +236,6 @@ export interface NadeoRecordsProvider {
   // Personal bests keyed by account id
   getPersonalBests(mapUid: string, accountIds: string[]): Promise<Map<string, number>>;
   getAccountNames(accountIds: string[]): Promise<Record<string, string>>;
-}
-
-export interface EcmClient {
-  driverFinish(
-    apiKey: string,
-    body: { finishTime: number; ubisoftUid: string; roundNum: number; mapId: string },
-  ): Promise<void>;
-  roundEnd(
-    apiKey: string,
-    body: {
-      players: { finishTime: number; ubisoftUid: string; position: number }[];
-      roundNum: number;
-      mapId: string;
-    },
-  ): Promise<void>;
 }
 
 export interface Clock {

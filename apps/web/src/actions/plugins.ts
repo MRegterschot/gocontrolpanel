@@ -17,6 +17,7 @@ import { ServerError, ServerResponse } from "@/types/responses";
 import type { Prisma } from "@gcp/db";
 import {
   findVersion,
+  isFirstPartySlug,
   isVersionCompatible,
   mergeSecrets,
   PLUGIN_SDK_VERSION,
@@ -327,7 +328,8 @@ export async function uninstallServerPlugin(
       }),
     ]);
     // Marketplace downloads nobody runs any more are dropped; uploads stay in their owner's list
-    if (row.plugin.source === "marketplace") {
+    // and first-party plugins ship with the service, so they stay installable
+    if (row.plugin.source === "marketplace" && !isFirstPartySlug(row.plugin.name)) {
       const remaining = await db.serverPlugins.count({ where: { pluginId: args.pluginId } });
       if (remaining === 0) await db.plugins.delete({ where: { id: args.pluginId } });
     }
@@ -398,6 +400,12 @@ export async function uploadPluginPackage(formData: FormData): Promise<ServerRes
       throw error;
     }
     const { manifest } = pkg;
+    if (isFirstPartySlug(manifest.slug)) {
+      throw new ServerError(
+        `"${manifest.slug}" is a plugin that ships with GoControlPanel; change the slug`,
+        "PluginNameTaken",
+      );
+    }
     if (manifest.sdk > PLUGIN_SDK_VERSION) {
       throw new ServerError(
         `The plugin needs plugin SDK ${manifest.sdk}; this panel runs ${PLUGIN_SDK_VERSION}`,

@@ -2,7 +2,7 @@ import { createPrismaClient } from "@gcp/db";
 import pino from "pino";
 import type { Config } from "./config";
 import { TemplateRenderer } from "./core/manialink/template-renderer";
-import { builtinPlugins } from "./core/plugins/builtin";
+import { installFirstPartyPlugins } from "./core/plugins/first-party";
 import { MarketplaceWatcher } from "./core/plugins/marketplace-watcher";
 import { PackageLoader } from "./core/plugins/sandbox/package-loader";
 import { systemClock } from "./core/ports";
@@ -10,6 +10,7 @@ import { ServerRegistry } from "./core/server/server-registry";
 import { ServerRuntime, type RuntimeDependencies } from "./core/server/server-runtime";
 import {
   PrismaMapRepository,
+  PrismaFirstPartyRepository,
   PrismaMatchRepository,
   PrismaNotificationRepository,
   PrismaPlayerRepository,
@@ -19,8 +20,8 @@ import {
   PrismaRecordRepository,
   PrismaServerRepository,
 } from "./infra/db/prisma-repositories";
-import { HttpEcmClient } from "./infra/ecm/ecm-client";
 import { EvotmGbxSession } from "./infra/gbx/evotm-session";
+import { loadFirstPartyPackages } from "./infra/first-party-packages";
 import { HttpsPluginClient } from "./infra/http/plugin-http-client";
 import { HttpMarketplaceIndexSource } from "./infra/marketplace/index-source";
 import { NadeoClient } from "./infra/nadeo/nadeo-client";
@@ -69,7 +70,8 @@ export async function createContainer(config: Config) {
     clock: systemClock,
     sessionFactory: () => new EvotmGbxSession(log.child({ module: "gbx" })),
     renderer: new TemplateRenderer(loadTemplateSources(config.templatesDir)),
-    plugins: builtinPlugins,
+    // Every plugin is a package now; first-party ones are installed on start
+    plugins: [],
     packages,
     servers,
     players,
@@ -81,7 +83,6 @@ export async function createContainer(config: Config) {
     jukebox: new RedisJukeboxStore(redis),
     mapMetadata: nadeo,
     nadeo,
-    ecm: new HttpEcmClient(log.child({ module: "ecm" }), config.ECM_URL),
   };
 
   const registry = new ServerRegistry({
@@ -112,6 +113,12 @@ export async function createContainer(config: Config) {
     log,
     registry,
     marketplace,
+    installFirstPartyPlugins: () =>
+      installFirstPartyPlugins(
+        loadFirstPartyPackages(config.firstPartyDir, log),
+        new PrismaFirstPartyRepository(db),
+        log.child({ module: "first-party" }),
+      ),
     tickets: new TicketVerifier(config.WS_TICKET_SECRET, systemClock),
     subscriber,
     async close() {

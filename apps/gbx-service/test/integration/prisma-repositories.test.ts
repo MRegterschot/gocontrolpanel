@@ -1,6 +1,8 @@
 import { createPrismaClient, type DbClient } from "@gcp/db";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { createPluginPackage, readPluginPackage } from "@gcp/shared/plugin-package";
 import {
+  PrismaFirstPartyRepository,
   PrismaMapRepository,
   PrismaMatchRepository,
   PrismaNotificationRepository,
@@ -37,7 +39,8 @@ describe.skipIf(!url)("Prisma repositories", () => {
     await db.pluginStorage.deleteMany();
     await db.serverPlugins.deleteMany();
     await db.pluginVersions.deleteMany();
-    await db.plugins.deleteMany({ where: { source: { not: "builtin" } } });
+    // Includes the rows the migrations seed; tests create the ones they need
+    await db.plugins.deleteMany();
     await db.servers.deleteMany();
     await db.maps.deleteMany();
     await db.users.deleteMany();
@@ -336,5 +339,81 @@ describe.skipIf(!url)("Prisma repositories", () => {
 
     // A second check finds nothing left to turn off
     expect(await catalog.applyYanks([{ slug: "hello", version: "1.0.0", reason: "Steals API keys" }])).toEqual([]);
+  });
+
+  it("moves built-in installs onto the first-party package and keeps their settings", async () => {
+    await createServer("configured");
+    await createServer("untouched");
+    await createServer("enabled");
+    const legacy = await db.plugins.create({
+      data: { name: "map-info", description: "Old description", source: "builtin" },
+    });
+    await db.serverPlugins.createMany({
+      data: [
+        { serverId: "configured", pluginId: legacy.id, enabled: false, config: { a: 1 } },
+        { serverId: "untouched", pluginId: legacy.id, enabled: false },
+        { serverId: "enabled", pluginId: legacy.id, enabled: true },
+      ],
+    });
+
+    const bytes = createPluginPackage({
+      "tmcp-plugin.json": JSON.stringify({
+        slug: "map-info",
+        name: "Map info",
+        version: "1.0.0",
+        sdk: 1,
+        description: "Shows the current map.",
+        author: "GoControlPanel",
+        capabilities: ["ui", "maps:read"],
+      }),
+      "index.js": "globalThis.__tmcpRegister({ create() { return {}; } });",
+    });
+    const pkg = readPluginPackage(bytes);
+    const repo = new PrismaFirstPartyRepository(db);
+
+    expect(await repo.install(pkg.manifest, pkg.sha256, bytes)).toEqual({
+      slug: "map-info",
+      version: "1.0.0",
+      stored: true,
+      migrated: 2,
+      removed: 1,
+    });
+
+    const plugin = await db.plugins.findUniqueOrThrow({ where: { name: "map-info" } });
+    expect(plugin).toMatchObject({ id: legacy.id, source: "marketplace", displayName: "Map info" });
+    const rows = await db.serverPlugins.findMany({ orderBy: { serverId: "asc" } });
+    expect(rows.map((r) => [r.serverId, r.enabled, r.config, r.grantedCapabilities])).toEqual([
+      ["configured", false, { a: 1 }, ["ui", "maps:read"]],
+      ["enabled", true, null, ["ui", "maps:read"]],
+    ]);
+    expect(rows.every((r) => r.versionId !== null)).toBe(true);
+
+    // Every start runs it again; nothing changes the second time
+    expect(await repo.install(pkg.manifest, pkg.sha256, bytes)).toMatchObject({
+      stored: false,
+      migrated: 0,
+      removed: 0,
+    });
+    expect(await db.pluginVersions.count()).toBe(1);
+  });
+
+  it("leaves an uploaded plugin with a first-party name alone", async () => {
+    await db.plugins.create({ data: { name: "ecm", source: "upload" } });
+    const bytes = createPluginPackage({
+      "tmcp-plugin.json": JSON.stringify({
+        slug: "ecm",
+        name: "eCircuitMania",
+        version: "1.0.0",
+        sdk: 1,
+        description: "x",
+        author: "x",
+        capabilities: [],
+      }),
+      "index.js": "globalThis.__tmcpRegister({ create() { return {}; } });",
+    });
+    const pkg = readPluginPackage(bytes);
+    const result = await new PrismaFirstPartyRepository(db).install(pkg.manifest, pkg.sha256, bytes);
+    expect(result.skipped).toMatch(/uploaded/);
+    expect(await db.pluginVersions.count()).toBe(0);
   });
 });

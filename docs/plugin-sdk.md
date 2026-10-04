@@ -2,7 +2,7 @@
 
 Plugins add widgets, windows, chat commands and automation to Trackmania servers managed by GoControlPanel. A plugin is a small package: a manifest, one JavaScript bundle and its manialink templates. Admins install it per server from the [marketplace](./plugin-marketplace.md), or upload it privately to their own panel. It runs in a sandbox and can only do what the admin allowed when they installed it.
 
-This guide is for plugin authors. For how panels run and review plugins, see [plugin-marketplace.md](./plugin-marketplace.md). For the plugins that ship with GoControlPanel, see [builtin-plugins.md](./builtin-plugins.md).
+This guide is for plugin authors. For how panels run and review plugins, see [plugin-marketplace.md](./plugin-marketplace.md). The plugins that ship with GoControlPanel are written with this SDK too; see [first-party-plugins.md](./first-party-plugins.md).
 
 ## Quick start
 
@@ -67,7 +67,7 @@ A package may be at most 5 MB, unpack to at most 10 MB and hold at most 500 file
 
 | Field | Rules |
 |---|---|
-| `slug` | 3-40 characters: lowercase letters, digits and dashes, starting with a letter. It identifies the plugin and prefixes its widget ids and actions. Built-in plugin names and a few others (`help`, `plugins`, `server`, ...) are reserved. |
+| `slug` | 3-40 characters: lowercase letters, digits and dashes, starting with a letter. It identifies the plugin and prefixes its widget ids and actions. The names of the [first-party plugins](./first-party-plugins.md) and a few others (`help`, `plugins`, `server`, ...) are reserved. |
 | `name`, `description`, `author` | At most 60, 300 and 100 characters. |
 | `version` | A [semantic version](https://semver.org): `1.2.3`, or `1.2.3-beta.1` for a pre-release. |
 | `sdk` | The plugin SDK version the plugin targets. Currently `1`. Panels refuse plugins for a newer SDK than they run. |
@@ -206,7 +206,7 @@ ctx.action("wave", (answer) => ctx.chat.sendTo(answer.login, "Hi!"));
 ```
 
 - **Ids and actions are prefixed** with the plugin's slug: the page id is `plg.<slug>.<id>` and actions are `<slug>:<name>`. Use `{{action "name"}}` in templates (`{{action "pick-" uid}}` joins its arguments) and `ctx.action("name", ...)` in code. In ManiaScript, `{{actionPrefix}}` gives the prefix. A pattern like `ctx.action("pick-{uid}", ...)` passes the matched part as `params.uid`. Anyone can send any action from their game client, so check `answer.login` before doing something privileged.
-- **Update pages.** By default a widget is a pair of pages, like the built-ins: `<template>` holds the layout and script, and `<template>-update` carries only data. `widget.update()` sends the data page, so the main page keeps its client-side state. With `withUpdate: false` there's a single page, and `display()` re-renders it.
+- **Update pages.** By default a widget is a pair of pages: `<template>` holds the layout and script, and `<template>-update` carries only data. `widget.update()` sends the data page, so the main page keeps its client-side state. With `withUpdate: false` there's a single page, and `display()` re-renders it.
 - **Windows** belong to one player: `ctx.ui.window({ id, template, login, title, onClose })`. The close button and `window.close()` remove the window and call `onClose`.
 - **The button bar** in the top-left corner: `ctx.ui.addButton({ name, icon, action })`, where `icon` is a text glyph or, with `type: "image"`, an image URL.
 - **Rules for pages.** A rendered page must be one `<manialink>` element with the page's own id, at most 128 KB. Pages that break this are refused with an error. Template helpers: `default`, `eq`, `bool`, `boolToNum`, `length`, `jsonLength`, `range`, `add`, `subtract`, `multiply`, `divide`, `action`, `actionPrefix`.

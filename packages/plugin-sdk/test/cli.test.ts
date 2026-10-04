@@ -137,12 +137,12 @@ describe("registry", () => {
       join(registry, "plugins", "beta", "versions", "2.0.0.json"),
       readFileSync(join(registry, "plugins", "beta", "versions", "1.0.0.json")),
     );
-    mkdirSync(join(registry, "plugins", "match", "versions"), { recursive: true });
+    mkdirSync(join(registry, "plugins", "server", "versions"), { recursive: true });
 
     const { errors } = await buildRegistry({ registry, out });
     expect(errors.join("\n")).toMatch(/alpha\/versions\/1.0.0.json: sha256 is [a-f0-9]{64}, the file says 0{64}/);
     expect(errors.join("\n")).toMatch(/beta\/versions\/2.0.0.json: the package is version 1.0.0, not 2.0.0/);
-    expect(errors.join("\n")).toMatch(/plugins\/match: not a valid plugin slug/);
+    expect(errors.join("\n")).toMatch(/plugins\/server: not a valid plugin slug/);
     expect(existsSync(join(out, "index.json"))).toBe(false);
   });
 

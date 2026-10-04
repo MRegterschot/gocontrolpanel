@@ -109,16 +109,18 @@ export function guestRuntime(global: any): void {
     return out;
   });
 
-  const templates: Record<string, string> = info.templates;
+  // Precompiled by the host; evaluating the specs is cheap compared to parsing templates here
+  const specs: Record<string, string> = info.templates;
   const compiled = new Map<string, (context: unknown) => string>();
-  for (const name of Object.keys(templates)) hb.registerPartial(name, templates[name]);
+  const evaluate = global.eval as (source: string) => unknown;
+  for (const name of Object.keys(specs)) {
+    const template = hb.template(evaluate(`(${specs[name]})`));
+    hb.registerPartial(name, template);
+    compiled.set(name, template);
+  }
   const render = (name: string, context: unknown): string => {
-    let template = compiled.get(name);
-    if (!template) {
-      if (!(name in templates)) throw new Error(`Unknown template "${name}"`);
-      template = hb.compile(templates[name]) as (context: unknown) => string;
-      compiled.set(name, template);
-    }
+    const template = compiled.get(name);
+    if (!template) throw new Error(`Unknown template "${name}"`);
     return template(context);
   };
 
@@ -264,7 +266,13 @@ export function guestRuntime(global: any): void {
       get roundNumber() {
         return call("live", "roundNumber");
       },
+      get isReverseCup() {
+        return call("live", "isReverseCup");
+      },
       findActivePlayer: (login: string) => call("live.findPlayer", login),
+      reverseCupGetPlayerStatus: (login: string) => call("live.reverseCupStatus", login),
+      reverseCupGetPointsRepartition: (playerCount: number) =>
+        call("live.reverseCupRepartition", Number(playerCount)),
     }),
     players: Object.freeze({ get: (login: string) => callAsync("players.get", login) }),
 

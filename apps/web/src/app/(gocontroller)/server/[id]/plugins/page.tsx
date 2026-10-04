@@ -1,18 +1,15 @@
 import InstalledPlugins from "@/components/plugins/installed-plugins";
-import { getPlugins } from "@/services/database/plugins";
-import { getServerPlugins } from "@/services/database/server-plugins";
 import { getServerChatConfig } from "@/services/database/servers";
 import { getPluginScripts } from "@/services/filemanager";
 import { getServerPlugin } from "@/services/gbx/server-plugin";
 import {
+  getAvailablePlugins,
   getInstalledPlugins,
   getServerPluginsContext,
-  getUploadedPlugins,
 } from "@/services/plugins";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChatConfigForm from "@/forms/server/plugins/chatconfig-form";
-import PluginsForm from "@/forms/server/plugins/plugins-form";
 import ServerPluginsForm from "@/forms/server/plugins/server-plugins-form";
 import { hasPermission } from "@/lib/auth";
 import { routePermissions, routes } from "@/routes";
@@ -33,15 +30,12 @@ export default async function ServerPluginsPage({
 
   const { data } = await getServerChatConfig(id);
 
-  const { data: serverPlugins } = await getServerPlugins(id);
-  const { data: plugins } = await getPlugins();
-
   const { data: serverPlugin } = await getServerPlugin(id);
   const { data: scripts } = await getPluginScripts(id);
 
-  const [{ data: installed }, { data: uploads }, { data: context }] = await Promise.all([
+  const [{ data: installed }, { data: available }, { data: context }] = await Promise.all([
     getInstalledPlugins(id),
-    getUploadedPlugins(),
+    getAvailablePlugins(id),
     getServerPluginsContext(id),
   ]);
 
@@ -63,19 +57,11 @@ export default async function ServerPluginsPage({
 
         <TabsContent value="plugins" className="flex flex-col gap-6">
           <Card className="p-6">
-            <PluginsForm
-              serverId={id}
-              plugins={plugins}
-              serverPlugins={serverPlugins}
-            />
-          </Card>
-
-          <Card className="p-6">
             <InstalledPlugins
               serverId={id}
               serverName={context?.serverName ?? "this server"}
               plugins={installed ?? []}
-              uploads={uploads ?? []}
+              available={available ?? []}
               marketplaceEnabled={context?.marketplaceEnabled ?? false}
             />
           </Card>

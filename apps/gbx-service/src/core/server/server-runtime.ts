@@ -18,7 +18,6 @@ import type { PackageLoader } from "../plugins/sandbox/package-loader";
 import type { PluginDefinition } from "../plugins/sdk";
 import type {
   Clock,
-  EcmClient,
   JukeboxStore,
   MapMetadataProvider,
   MapRepository,
@@ -60,7 +59,6 @@ export interface RuntimeDependencies {
   jukebox: JukeboxStore;
   mapMetadata: MapMetadataProvider;
   nadeo: NadeoRecordsProvider;
-  ecm: EcmClient;
   connectTimeoutMs?: number;
   retryDelayMs?: number;
   maxRetries?: number;
@@ -166,7 +164,6 @@ export class ServerRuntime {
             servers: deps.servers,
             notifications: deps.notifications,
             nadeo: deps.nadeo,
-            ecm: deps.ecm,
             clock,
             manialinks: this.manialinks,
             disablePlugin: (pluginId, name, reason) => this.disablePlugin(pluginId, name, reason),

@@ -1,6 +1,10 @@
 import type { SMapInfo, SPlayerInfo } from "@gcp/shared";
 import { readPluginPackage } from "@gcp/shared/plugin-package";
+import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { packPlugin } from "@tmcontrolpanel/plugin-sdk/cli";
 import { TemplateRenderer } from "../../src/core/manialink/template-renderer";
 import { PackageLoader } from "../../src/core/plugins/sandbox/package-loader";
 import type { SandboxAssets } from "../../src/core/plugins/sandbox/sandboxed-plugin";
@@ -14,7 +18,6 @@ import { FakeClock, flush } from "./clock";
 import { FakeGbxSession } from "./fake-gbx";
 import { silentLogger } from "./logger";
 import {
-  FakeEcm,
   FakeHttpClient,
   FakeNadeo,
   InMemoryJukeboxStore,
@@ -38,9 +41,40 @@ export function testSandboxAssets(): Promise<SandboxAssets> {
   return assets;
 }
 
+const PLUGINS_DIR = fileURLToPath(new URL("../../../../plugins", import.meta.url));
+const FIRST_PARTY = readdirSync(PLUGINS_DIR, { withFileTypes: true })
+  .filter((entry) => entry.isDirectory() && existsSync(join(PLUGINS_DIR, entry.name, "tmcp-plugin.json")))
+  .map((entry) => entry.name);
+
+// The service's layouts plus every first-party plugin's templates, as the sandbox sees them
 export function testRenderer(): TemplateRenderer {
-  renderer ??= new TemplateRenderer(loadTemplateSources(TEMPLATES_DIR));
+  renderer ??= new TemplateRenderer({
+    ...loadTemplateSources(TEMPLATES_DIR),
+    ...Object.assign(
+      {},
+      ...FIRST_PARTY.map((name) => {
+        const dir = join(PLUGINS_DIR, name, "templates");
+        return existsSync(dir) ? loadTemplateSources(dir) : {};
+      }),
+    ),
+  });
   return renderer;
+}
+
+const firstParty = new Map<string, Promise<Uint8Array>>();
+
+// A first-party plugin from plugins/, built once per test run
+export function firstPartyPackage(slug: string): Promise<Uint8Array> {
+  let bytes = firstParty.get(slug);
+  if (!bytes) {
+    const outDir = mkdtempSync(join(tmpdir(), `gcp-${slug}-`));
+    bytes = packPlugin(join(PLUGINS_DIR, slug), { outDir }).then((result) => {
+      rmSync(outDir, { recursive: true, force: true });
+      return result.bytes;
+    });
+    firstParty.set(slug, bytes);
+  }
+  return bytes;
 }
 
 export const MAP_A: SMapInfo = {
@@ -162,7 +196,6 @@ export async function createHarness(options: HarnessOptions = {}) {
   const notifications = new InMemoryNotificationRepository();
   const jukebox = new InMemoryJukeboxStore();
   const nadeo = new FakeNadeo();
-  const ecm = new FakeEcm();
   const sessions: FakeGbxSession[] = [];
   const pluginPackages = new InMemoryPluginPackages();
   const pluginStorage = new InMemoryPluginStorage();
@@ -230,7 +263,6 @@ export async function createHarness(options: HarnessOptions = {}) {
     jukebox,
     mapMetadata: nadeo,
     nadeo,
-    ecm,
   });
 
   if (options.connect !== false) {
@@ -255,7 +287,6 @@ export async function createHarness(options: HarnessOptions = {}) {
     notifications,
     jukebox,
     nadeo,
-    ecm,
     pluginPackages,
     pluginStorage,
     http,

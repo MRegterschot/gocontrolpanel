@@ -76,7 +76,7 @@ describe("manifest", () => {
   it("rejects reserved names, /help and unknown capabilities", () => {
     const result = parseManifest({
       ...validManifest,
-      slug: "match",
+      slug: "server",
       commands: ["help"],
       capabilities: ["root"],
     });
@@ -85,6 +85,10 @@ describe("manifest", () => {
     expect(result.issues.join("\n")).toMatch(/slug: This name is reserved/);
     expect(result.issues.join("\n")).toMatch(/commands.0/);
     expect(result.issues.join("\n")).toMatch(/capabilities.0: Unknown capability/);
+  });
+
+  it("accepts first-party names, which the marketplace publishes", () => {
+    expect(parseManifest({ ...validManifest, slug: "match" }).success).toBe(true);
   });
 
   it("rejects unknown keys and entries outside the package", () => {

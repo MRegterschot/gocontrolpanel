@@ -1,7 +1,9 @@
 "use client";
 
+import { reloadServerPlugins } from "@/actions/database/server-plugins";
 import {
   changeServerPluginVersion,
+  installMarketplacePlugin,
   installUploadedPlugin,
   saveServerPluginConfig,
   setServerPluginEnabled,
@@ -29,7 +31,7 @@ import {
 } from "@/components/ui/select";
 import { generatePath, getErrorMessage } from "@/lib/utils";
 import { routes } from "@/routes";
-import type { InstalledPlugin, UploadedPlugin } from "@/types/plugins/catalog";
+import type { AvailablePlugin, InstalledPlugin } from "@/types/plugins/catalog";
 import { ServerError } from "@/types/responses";
 import type { PluginConfig } from "@gcp/shared";
 import {
@@ -38,6 +40,7 @@ import {
   IconBuildingStore,
   IconDownload,
   IconHistory,
+  IconReload,
   IconSettings,
   IconTrash,
 } from "@tabler/icons-react";
@@ -46,6 +49,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CapabilityBadges } from "./capability-list";
+import { FirstPartySettings } from "./first-party-settings";
 import { InstallDialog } from "./install-dialog";
 import { PluginConfigForm } from "./plugin-config-form";
 
@@ -92,6 +96,11 @@ function ConfigDialog({ serverId, plugin }: { serverId: string; plugin: Installe
       </DialogContent>
     </Dialog>
   );
+}
+
+function sourceLabel(plugin: { source: string; firstParty: boolean }): string {
+  if (plugin.firstParty) return "Built in";
+  return plugin.source === "marketplace" ? "Marketplace" : "Private";
 }
 
 function InstalledPluginCard({
@@ -164,7 +173,7 @@ function InstalledPluginCard({
           />
           <div className="flex flex-col gap-1">
             <div className="flex flex-wrap items-center gap-2">
-              {plugin.source === "marketplace" ? (
+              {plugin.source === "marketplace" && !plugin.firstParty ? (
                 <Link
                   href={generatePath(routes.plugins.detail, { slug: plugin.slug })}
                   className="font-semibold hover:underline"
@@ -175,9 +184,7 @@ function InstalledPluginCard({
                 <span className="font-semibold">{plugin.name}</span>
               )}
               <Badge variant="outline">{plugin.version}</Badge>
-              <Badge variant="secondary">
-                {plugin.source === "marketplace" ? "Marketplace" : "Private"}
-              </Badge>
+              <Badge variant="secondary">{sourceLabel(plugin)}</Badge>
               {plugin.update && !plugin.yanked && <Badge>Update: {plugin.update.version}</Badge>}
             </div>
             {plugin.description && (
@@ -208,6 +215,7 @@ function InstalledPluginCard({
             />
           )}
           <ConfigDialog serverId={serverId} plugin={plugin} />
+          <FirstPartySettings serverId={serverId} plugin={plugin} />
           {versions.length > 1 && (
             <InstallDialog
               name={plugin.name}
@@ -259,28 +267,37 @@ function InstalledPluginCard({
   );
 }
 
-function InstallUpload({
+function InstallAvailable({
   serverId,
   serverName,
-  uploads,
+  available,
 }: {
   serverId: string;
   serverName: string;
-  uploads: UploadedPlugin[];
+  available: AvailablePlugin[];
 }) {
-  const [pluginId, setPluginId] = useState(uploads[0]?.pluginId ?? "");
-  const plugin = uploads.find((p) => p.pluginId === pluginId);
+  const [pluginId, setPluginId] = useState(available[0]?.pluginId ?? "");
+  const plugin = available.find((p) => p.pluginId === pluginId) ?? available[0];
+
+  function install(version: string, accepted: string[]) {
+    if (plugin.source === "marketplace") {
+      return installMarketplacePlugin(serverId, plugin.slug, version, accepted);
+    }
+    const id = plugin.versions.find((v) => v.version === version)?.id ?? "";
+    return installUploadedPlugin(serverId, plugin.pluginId, id, accepted);
+  }
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-      <Select value={pluginId} onValueChange={setPluginId}>
-        <SelectTrigger className="sm:w-64">
-          <SelectValue placeholder="Choose an uploaded plugin" />
+      <Select value={plugin?.pluginId ?? ""} onValueChange={setPluginId}>
+        <SelectTrigger className="sm:w-72" aria-label="Plugin to install">
+          <SelectValue placeholder="Choose a plugin" />
         </SelectTrigger>
         <SelectContent>
-          {uploads.map((upload) => (
-            <SelectItem key={upload.pluginId} value={upload.pluginId}>
-              {upload.name}
+          {available.map((option) => (
+            <SelectItem key={option.pluginId} value={option.pluginId}>
+              {option.name}
+              <span className="text-muted-foreground"> · {sourceLabel(option)}</span>
             </SelectItem>
           ))}
         </SelectContent>
@@ -291,18 +308,11 @@ function InstallUpload({
           name={plugin.name}
           targets={[{ id: serverId, name: serverName, installedVersion: null }]}
           versions={plugin.versions.map((v) => ({ version: v.version, capabilities: v.capabilities }))}
-          install={(_, version, accepted) =>
-            installUploadedPlugin(
-              serverId,
-              plugin.pluginId,
-              plugin.versions.find((v) => v.version === version)?.id ?? "",
-              accepted,
-            )
-          }
+          install={(_, version, accepted) => install(version, accepted)}
           trigger={
             <Button variant="outline">
               <IconDownload />
-              Install uploaded plugin
+              Install
             </Button>
           }
         />
@@ -311,50 +321,73 @@ function InstallUpload({
   );
 }
 
-// Marketplace and uploaded plugins on one server
+function ReloadButton({ serverId }: { serverId: string }) {
+  const [busy, setBusy] = useState(false);
+
+  async function reload() {
+    setBusy(true);
+    try {
+      const { error } = await reloadServerPlugins(serverId);
+      if (error) throw new ServerError(error, "ReloadServerPluginsError");
+      toast.success("Plugins reloaded successfully");
+    } catch (error) {
+      toast.error("Failed to reload plugins", { description: getErrorMessage(error) });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Button variant="outline" onClick={reload} disabled={busy}>
+      <IconReload />
+      Reload plugins
+    </Button>
+  );
+}
+
+// Every plugin on one server: built in, from the marketplace or uploaded
 export default function InstalledPlugins({
   serverId,
   serverName,
   plugins,
-  uploads,
+  available,
   marketplaceEnabled,
 }: {
   serverId: string;
   serverName: string;
   plugins: InstalledPlugin[];
-  uploads: UploadedPlugin[];
+  available: AvailablePlugin[];
   marketplaceEnabled: boolean;
 }) {
-  const installable = uploads.filter(
-    (upload) => !plugins.some((p) => p.pluginId === upload.pluginId),
-  );
-
   return (
     <section aria-labelledby="installed-plugins-title" className="flex flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex flex-col gap-1">
           <h2 id="installed-plugins-title" className="text-lg font-semibold">
-            Marketplace and uploaded plugins
+            Plugins
           </h2>
           <p className="text-sm text-muted-foreground">
             They run in a sandbox with only the permissions you accepted. A plugin that misbehaves
             is turned off and the admins are notified.
           </p>
         </div>
-        {marketplaceEnabled && (
-          <Link href={routes.plugins.index} className={buttonVariants({ variant: "outline" })}>
-            <IconBuildingStore />
-            Browse marketplace
-          </Link>
-        )}
+        <div className="flex flex-wrap gap-2">
+          <ReloadButton serverId={serverId} />
+          {marketplaceEnabled && (
+            <Link href={routes.plugins.index} className={buttonVariants({ variant: "outline" })}>
+              <IconBuildingStore />
+              Browse marketplace
+            </Link>
+          )}
+        </div>
       </div>
 
-      {installable.length > 0 && (
-        <InstallUpload serverId={serverId} serverName={serverName} uploads={installable} />
+      {available.length > 0 && (
+        <InstallAvailable serverId={serverId} serverName={serverName} available={available} />
       )}
 
       {plugins.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No marketplace or uploaded plugins on this server yet.</p>
+        <p className="text-sm text-muted-foreground">No plugins on this server yet.</p>
       ) : (
         plugins.map((plugin) => (
           <InstalledPluginCard

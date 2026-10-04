@@ -189,6 +189,16 @@
         "vitest": "^5.0.3",
       },
     },
+    "plugins": {
+      "name": "@gcp/first-party-plugins",
+      "version": "0.0.0",
+      "devDependencies": {
+        "@tmcontrolpanel/plugin-sdk": "workspace:*",
+        "@types/node": "^20",
+        "tsx": "^4.20.3",
+        "typescript": "^5",
+      },
+    },
   },
   "overrides": {
     "@radix-ui/react-focus-scope": "1.1.7",
@@ -367,6 +377,8 @@
     "@floating-ui/utils": ["@floating-ui/utils@0.2.11", "", {}, "sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg=="],
 
     "@gcp/db": ["@gcp/db@workspace:packages/db"],
+
+    "@gcp/first-party-plugins": ["@gcp/first-party-plugins@workspace:plugins"],
 
     "@gcp/gbx-service": ["@gcp/gbx-service@workspace:apps/gbx-service"],
 

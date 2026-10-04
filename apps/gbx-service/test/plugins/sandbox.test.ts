@@ -358,6 +358,13 @@ describe("sandboxed plugins", () => {
     expect(h.runtime.plugins.loadedIds()).toEqual(["test-plugin"]);
   });
 
+  it("doesn't load a package whose templates don't compile", async () => {
+    const h = await createHarness({
+      packages: [{ bytes: testPackage(`return {};`, {}, { broken: "{{#if open}}never closed" }) }],
+    });
+    expect(h.runtime.plugins.loadedIds()).toEqual([]);
+  });
+
   it("refuses a stored package that doesn't match its checksum", async () => {
     const h = await createHarness({ packages: [{ bytes: hello }] });
     const tampered = testPackage(`return {};`, { slug: "hello" });

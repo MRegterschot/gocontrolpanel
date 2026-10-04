@@ -72,6 +72,8 @@ export interface VersionChoice {
 export interface InstalledPlugin {
   pluginId: string;
   slug: string;
+  // Ships with GoControlPanel; configured with the panel's own forms
+  firstParty: boolean;
   name: string;
   description: string | null;
   author: string | null;
@@ -90,6 +92,19 @@ export interface InstalledPlugin {
   setSecrets: string[];
   update: VersionChoice | null;
   versions: VersionChoice[];
+}
+
+// A plugin stored on this panel that a server can install without the marketplace
+export interface AvailablePlugin {
+  pluginId: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  source: PluginSourceKind;
+  // Ships with GoControlPanel
+  firstParty: boolean;
+  // Newest first, withdrawn ones left out
+  versions: { id: string; version: string; capabilities: string[] }[];
 }
 
 export interface UploadedVersion {

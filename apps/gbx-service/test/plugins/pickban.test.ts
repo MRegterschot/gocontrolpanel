@@ -5,8 +5,8 @@ import {
   PickBan,
   type PickBanMap,
   type PickBanSetup,
-} from "../../src/core/plugins/builtin/match/pickban";
-import { stringToPickAndBan } from "@gcp/shared";
+  stringToPickAndBan,
+} from "../../../../plugins/match/src/pickban";
 
 function maps(count: number): PickBanMap[] {
   return Array.from({ length: count }, (_, i) => ({

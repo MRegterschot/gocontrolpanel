@@ -1,6 +1,12 @@
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
-import { isReservedSlug, MANIFEST_FILE, PLUGIN_SDK_VERSION, PLUGIN_SLUG } from "@gcp/shared";
+import {
+  isFirstPartySlug,
+  isReservedSlug,
+  MANIFEST_FILE,
+  PLUGIN_SDK_VERSION,
+  PLUGIN_SLUG,
+} from "@gcp/shared";
 import { CliError } from "./project";
 
 // Scaffolds a plugin project with a widget, a command and a config field
@@ -11,9 +17,9 @@ export function initPlugin(target: string, options: { slug?: string; name?: stri
   }
 
   const slug = options.slug ?? basename(dir).toLowerCase().replace(/[^a-z0-9-]+/g, "-");
-  if (!PLUGIN_SLUG.test(slug) || isReservedSlug(slug) || slug.includes("--")) {
+  if (!PLUGIN_SLUG.test(slug) || isReservedSlug(slug) || isFirstPartySlug(slug) || slug.includes("--")) {
     throw new CliError(
-      `"${slug}" can't be a plugin slug: 3-40 lowercase letters, digits and dashes, not a built-in name. Pass --slug.`,
+      `"${slug}" can't be a plugin slug: 3-40 lowercase letters, digits and dashes, not a reserved or first-party name. Pass --slug.`,
     );
   }
   const name = options.name ?? slug.replace(/(^|-)(\w)/g, (_, dash: string, c: string) => `${dash ? " " : ""}${c.toUpperCase()}`);

@@ -151,3 +151,69 @@ export interface Scores {
   teams: ScoresTeam[];
   players: ScoresPlayer[];
 }
+
+// Dedicated server payloads, as returned by ctx.gbx.call (field casing is the server's)
+
+export interface SMapInfo {
+  UId: string;
+  Name: string;
+  FileName: string;
+  Author: string;
+  AuthorNickname: string;
+  Environnement: string;
+  Mood: string;
+  BronzeTime: number;
+  SilverTime: number;
+  GoldTime: number;
+  AuthorTime: number;
+  CopperPrice: number;
+  LapRace: boolean;
+  NbLaps: number;
+  NbCheckpoints: number;
+  MapType: string;
+  MapStyle: string;
+}
+
+export interface MapInfoMinimal {
+  Name: string;
+  UId: string;
+  FileName: string;
+  Environnement: string;
+  Author: string;
+  AuthorNickname: string;
+  GoldTime: number;
+  CopperPrice: number;
+  MapType: string;
+  MapStyle: string;
+}
+
+export interface SPlayerInfo {
+  Login: string;
+  NickName: string;
+  PlayerId: number;
+  SpectatorStatus: number;
+  TeamId: number;
+  LadderRanking: number;
+  Flags: number;
+}
+
+export interface MainServerPlayerInfo {
+  Login: string;
+  NickName: string;
+  PlayerId: number;
+}
+
+export interface SpectatorStatus {
+  spectator: boolean;
+  temporarySpectator: boolean;
+  pureSpectator: boolean;
+  autoTarget: boolean;
+  currentTargetId: number;
+}
+
+// A player's state in reverse cup
+export interface PlayerStatus {
+  spectator: boolean;
+  eliminated: boolean;
+  lastChance: boolean;
+}

@@ -1,0 +1,16 @@
+{
+  "name": "@gcp/first-party-plugins",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsx scripts/build.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@tmcontrolpanel/plugin-sdk": "workspace:*",
+    "@types/node": "^20",
+    "tsx": "^4.20.3",
+    "typescript": "^5"
+  }
+}
