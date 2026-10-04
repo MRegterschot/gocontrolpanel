@@ -1,4 +1,4 @@
-import { getLogs } from "@/actions/hetzner/server-actions";
+import { getLogs } from "@/lib/api-client/hetzner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {

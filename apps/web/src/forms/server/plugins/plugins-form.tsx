@@ -1,10 +1,7 @@
 "use client";
 
 import { ServerPluginsWithPlugin } from "@/actions/database/server-only/gbx";
-import {
-  reloadServerPlugins,
-  updateServerPlugins,
-} from "@/actions/database/server-plugins";
+import { reloadServerPlugins, updateServerPlugins } from "@/actions/database/server-plugins";
 import FormElement from "@/components/form/form-element";
 import Modal from "@/components/modals/modal";
 import EcircuitmaniaPluginModal from "@/components/modals/plugins/plugins/ecircuitmania-plugin-modal";

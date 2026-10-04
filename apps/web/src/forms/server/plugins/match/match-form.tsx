@@ -1,9 +1,9 @@
 "use client";
 
 import { updateServerPlugin } from "@/actions/database/server-plugins";
-import { UserMinimal } from "@/actions/database/users";
-import { getScripts } from "@/actions/filemanager";
-import { getLocalMaps } from "@/actions/gbx/server";
+import type { UserMinimal } from "@/services/database/users";
+import { getScripts } from "@/lib/api-client/filemanager";
+import { getLocalMaps } from "@/lib/api-client/gbx";
 import FormElement from "@/components/form/form-element";
 import Modal from "@/components/modals/modal";
 import SelectFolderModal from "@/components/modals/plugins/plugins/select-folder-modal";

@@ -1,4 +1,4 @@
-import { getJoinLink } from "@/actions/gbx/advanced";
+import { getJoinLink } from "@/services/gbx/advanced";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdvancedActionsForm from "@/forms/server/advanced/advanced-actions-form";

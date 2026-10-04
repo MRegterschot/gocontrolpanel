@@ -1,6 +1,6 @@
 "use client";
 
-import { RecordsWithUser } from "@/actions/database/matches";
+import type { RecordsWithUser } from "@/services/database/matches";
 import TimeDisplay from "@/components/time-display";
 import { ColumnDef } from "@tanstack/react-table";
 import { parseTmTags } from "tmtags";

@@ -16,7 +16,10 @@ export async function GET() {
   const claims = sessionClaimsSchema.safeParse(session.user);
   if (!claims.success) {
     const meta = { type: "api", module: "ws-ticket", function: "GET" };
-    logger.error({ meta, error: claims.error }, "Session does not match ticket claims");
+    logger.error(
+      { meta, error: claims.error },
+      "Session does not match ticket claims",
+    );
     return NextResponse.json({ error: "Invalid session" }, { status: 500 });
   }
 

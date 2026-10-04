@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  restartTrackmaniaServer,
-  stopTrackmaniaServer,
-} from "@/actions/hetzner/server-actions";
+import { restartTrackmaniaServer, stopTrackmaniaServer } from "@/actions/hetzner/server-actions";
 import { deleteTrackmaniaServer } from "@/actions/hetzner/server-setup";
 import {
   Accordion,

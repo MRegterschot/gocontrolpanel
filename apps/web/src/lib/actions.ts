@@ -27,6 +27,7 @@ export async function doServerAction<T>(
     return {
       data: undefined as T,
       error: getErrorMessage(error),
+      code: error instanceof Error ? error.name : undefined,
     };
   }
 }
@@ -54,6 +55,7 @@ export async function doServerActionWithAuth<T>(
     return {
       data: undefined as T,
       error: getErrorMessage(error),
+      code: error instanceof Error ? error.name : undefined,
     };
   }
 
@@ -70,6 +72,7 @@ export async function doServerActionWithAuth<T>(
     return {
       data: undefined as T,
       error: getErrorMessage(error),
+      code: error instanceof Error ? error.name : undefined,
     };
   }
 }

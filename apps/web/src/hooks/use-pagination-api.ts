@@ -1,50 +1,55 @@
+import { fetchPaginated } from "@/lib/api-client/http";
 import { logger } from "@/lib/logger";
-import { PaginationResponse, ServerError, ServerResponse } from "@/types/responses";
+import { ServerError } from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-interface PaginationAPIHook<TData, TFetch> {
+interface PaginationAPIHook<TData> {
   data: TData[];
   totalCount: number;
   loading: boolean;
   refetch: () => Promise<void>;
-  fetchArgs?: TFetch;
 }
 
-export const usePaginationAPI = <TData, TFetch>(
-  fetchData: (
-    pagination: PaginationState,
-    sorting: { field: string; order: "asc" | "desc" },
-    filter: string,
-    fetchArgs?: TFetch,
-  ) => Promise<ServerResponse<PaginationResponse<TData>>>,
+export const usePaginationAPI = <TData>(
+  endpoint: string,
   pagination: PaginationState,
   sorting: { field: string; order: "asc" | "desc" } = {
     field: "createdAt",
     order: "desc",
   },
   filter: string = "",
-  fetchArgs?: TFetch,
-): PaginationAPIHook<TData, TFetch> => {
+): PaginationAPIHook<TData> => {
   const [data, setData] = useState<TData[]>([]);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
+  const inFlight = useRef<AbortController | null>(null);
 
-  const fetchDataFromAPI = async () => {
+  const fetchDataFromAPI = useCallback(async () => {
+    // A slow answer for an older page must not overwrite a newer one
+    inFlight.current?.abort();
+    const controller = new AbortController();
+    inFlight.current = controller;
+
     setLoading(true);
     try {
-      const {
-        data: { data: fetchedData, totalCount: fetchedTotalCount },
-        error,
-      } = await fetchData(pagination, sorting, filter, fetchArgs);
+      const { data: page, error } = await fetchPaginated<TData>(
+        endpoint,
+        pagination,
+        sorting,
+        filter,
+        controller.signal,
+      );
 
       if (error) {
         throw new ServerError(error, "FetchDataFromAPIError");
       }
 
-      setData(fetchedData);
-      setTotalCount(fetchedTotalCount);
+      setData(page.data);
+      setTotalCount(page.totalCount);
     } catch (error) {
+      if (controller.signal.aborted) return;
+
       const meta = {
         type: "hook",
         module: "usePaginationAPI",
@@ -52,19 +57,21 @@ export const usePaginationAPI = <TData, TFetch>(
       };
       logger.error({ meta, error }, "Error fetching data");
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchDataFromAPI();
   }, [
+    endpoint,
     pagination.pageIndex,
     pagination.pageSize,
     sorting.field,
     sorting.order,
     filter,
   ]);
+
+  useEffect(() => {
+    fetchDataFromAPI();
+    return () => inFlight.current?.abort();
+  }, [fetchDataFromAPI]);
 
   return { data, totalCount, loading, refetch: fetchDataFromAPI };
 };

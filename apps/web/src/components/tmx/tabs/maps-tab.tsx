@@ -1,4 +1,4 @@
-import { searchMaps } from "@/actions/tmx/maps";
+import { searchMaps } from "@/services/tmx/maps";
 import MapSearch from "../map-search";
 
 export default async function MapsTab({

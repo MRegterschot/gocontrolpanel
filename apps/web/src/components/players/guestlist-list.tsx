@@ -1,6 +1,6 @@
 "use client";
 
-import { getGuestlist } from "@/actions/gbx/player";
+import { getGuestlist } from "@/lib/api-client/gbx";
 import { createColumns } from "@/app/(gocontroller)/server/[id]/players/guestlist-columns";
 import GuestlistForm from "@/forms/server/players/guestlist-form";
 import { getErrorMessage } from "@/lib/utils";

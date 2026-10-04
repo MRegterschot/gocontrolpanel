@@ -1,6 +1,6 @@
 "use client";
 
-import { getMapList } from "@/actions/database/maps";
+import { getMapList } from "@/lib/api-client/database";
 import { addMapList } from "@/actions/gbx/map";
 import { createColumns as createLocalMapColumns } from "@/app/(gocontroller)/server/[id]/maps/local-maps-columns";
 import { Maps } from "@gcp/db";

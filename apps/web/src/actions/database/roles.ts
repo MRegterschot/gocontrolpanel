@@ -2,68 +2,10 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
-import { Prisma, Roles } from "@gcp/db";
+import { Roles } from "@gcp/db";
 import { getList } from "@/lib/utils";
-import { PaginationResponse, ServerResponse } from "@/types/responses";
-import { PaginationState } from "@tanstack/react-table";
+import { ServerResponse } from "@/types/responses";
 import { logAudit } from "./server-only/audit-logs";
-
-export type RoleMinimal = Pick<Roles, "id" | "name" | "permissions">;
-
-export async function getRolesMinimal(): Promise<
-  ServerResponse<RoleMinimal[]>
-> {
-  return doServerActionWithAuth(["users:edit"], async () => {
-    const db = getClient();
-
-    return await db.roles.findMany({
-      where: { deletedAt: null },
-      select: {
-        id: true,
-        name: true,
-        permissions: true,
-      },
-    });
-  });
-}
-
-export async function getRolesPaginated(
-  pagination: PaginationState,
-  sorting: { field: string; order: "asc" | "desc" },
-  filter?: string,
-): Promise<ServerResponse<PaginationResponse<Roles>>> {
-  return doServerActionWithAuth(["roles:view"], async () => {
-    const db = getClient();
-
-    const where: Prisma.RolesWhereInput = {
-      deletedAt: null,
-      ...(filter && {
-        OR: [
-          { name: { contains: filter } },
-          { permissions: { array_contains: [filter] } },
-        ],
-      }),
-    };
-
-    const totalCount = await db.roles.count({
-      where,
-    });
-
-    const roles = await db.roles.findMany({
-      where,
-      skip: pagination.pageIndex * pagination.pageSize,
-      take: pagination.pageSize,
-      orderBy: {
-        [sorting.field]: sorting.order,
-      },
-    });
-
-    return {
-      data: roles,
-      totalCount,
-    };
-  });
-}
 
 export async function createRole(
   role: Omit<Roles, "id" | "createdAt" | "updatedAt" | "deletedAt">,

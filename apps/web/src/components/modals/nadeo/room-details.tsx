@@ -1,9 +1,6 @@
 "use client";
-import {
-  addRoomToServer,
-  downloadRoom,
-  getClubRoomWithNamesAndMaps,
-} from "@/actions/nadeo/clubs";
+import { addRoomToServer, downloadRoom } from "@/actions/nadeo/clubs";
+import { getClubRoomWithNamesAndMaps } from "@/lib/api-client/nadeo";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getErrorMessage } from "@/lib/utils";

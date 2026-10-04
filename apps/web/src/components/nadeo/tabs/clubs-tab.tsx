@@ -1,4 +1,4 @@
-import { getClub, getClubMembersCount } from "@/actions/nadeo/clubs";
+import { getClub, getClubMembersCount } from "@/services/nadeo/clubs";
 import ClubActivities from "@/components/nadeo/clubs/club-activities";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

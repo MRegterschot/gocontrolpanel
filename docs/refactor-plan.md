@@ -13,7 +13,7 @@ Branch: `refactor/monorepo-gbx-service`
 | 2. Shared contracts | Done: `@gcp/shared` |
 | 3. GBX service | Done: `apps/gbx-service`, 234 unit/component/HTTP/WS tests + 10 integration tests (real Postgres/Redis) + adapter tests against a fake GBXRemote 2 server |
 | 4. Web cut-over | Done on `refactor/web-gbx-cutover`, pending the real-server run in [real-server-testing.md](./real-server-testing.md) §9 |
-| 5. Server Actions → API routes | After 4 |
+| 5. Reads → API routes | Done on `refactor/web-read-api`: every read a client component makes is a GET route; Server Actions are left for writes |
 
 `docker-compose.yml` runs the web app and `gbx-service` side by side; the web app no longer opens GBX connections itself.
 
@@ -136,8 +136,19 @@ Exit: `bun run --filter gbx-service typecheck test build` is green, and the serv
 - Deleted from web: `src/server.ts`, `next-ws`, `src/app/api/ws`, `src/lib/managers/{gbxclient,plugin,manialink}-manager.ts`, `src/plugins`, `src/lib/manialink`, the GBX boot in `instrumentation.ts`, the manager-only DB helpers (records, matches, players, notifications), `@evotm/gbxclient`, `handlebars-layouts`, `ws`, `cookie`, `tsx`. `handlebars` stays for the Hetzner cloud-init templates.
 - Web imports live, player, map and server types from `@gcp/shared`. Plugin config types stay in web for now: the forms edit the optional input shape, while the shared ones are zod output types.
 
-### Phase 5: Server Actions → API routes
-NX-1…NX-8: route handlers with `withApiAuth`, a typed client data layer, and a service/route/client split per feature.
+### Phase 5: reads → API routes (branch `refactor/web-read-api`)
+NX-1, NX-2, NX-7 and NX-8 for the reads. Forms and other writes stay Server Actions, which is what they are for: they are tied to a form submit, get CSRF protection and progressive enhancement, and need no client data layer.
+
+- **Services.** Every read moved out of `src/actions/**` into `src/services/**` (same folders and names, `server-only`, no `"use server"`), so a read is no longer reachable as a POST action. A service is the old action body, unchanged: it still goes through `doServerActionWithAuth` with its permission list and returns `{ data, error }`. `src/actions/**` now holds writes only. Types, Prisma include shapes and helpers the writes need moved with them and are imported back.
+- **Server components** (`page.tsx` and async tabs) import the services directly; nothing calls its own HTTP API during SSR.
+- **Routes.** 45 `GET` handlers under `src/app/api`, one per read a client component makes (plus the paginated tables), grouped like the old folders: `servers/[serverId]/…`, `hetzner/[projectId]/…`, `nadeo/…`, `users`, `roles`, and so on. `apiRoute` (`src/lib/api-route.ts`) wraps each one: 401 without a session, the status that fits the failure (`Unauthorized` 403, `ServerNotFound` 404, `ServerNotConnected` and `GbxServiceUnavailable` 503, bad input 400, anything else 500), the `{ data, error, code }` envelope, and `Cache-Control: private, no-store`, because the payloads depend on the caller's permissions. Permissions are enforced by the services as before, so a route can't be more permissive than the action it replaces.
+- **Input.** Query strings and path params go through zod. The paginated routes share one schema: `pageSize` is capped at 100 (a caller could previously ask a Server Action for a whole table), and `sortField` must be a plain column name because it ends up in a Prisma `orderBy`. Match export columns, TMX filters and ID lists are bounded too.
+- **Client.** `src/lib/api-client/*` has the same function names and signatures as the old actions and returns the same `{ data, error }`, so call sites only changed their import. A failed request, including a network error or a non-JSON body from a proxy, comes back as an `error` and never throws. Payloads from the database get their ISO timestamps turned back into `Date`s (Server Actions preserved them; JSON does not); the Hetzner, Nadeo and TMX payloads are left as plain strings.
+- **Paginated tables.** `PaginationTable` takes an `endpoint` instead of a server action (a function can't be passed from a server component to a client component over HTTP anyway). `usePaginationAPI` aborts the request it supersedes, so a slow answer for an old page can't overwrite a newer one.
+- **Not changed.** Mutations, the uploads (NX-6, still `uploadFiles`), `getCampaignWithMaps` and the other reads only server components call (no route needed), and the Redis-only jukebox writes.
+- Dead reads were deleted: `getUsersMinimal`, `getHetznerImages`, `getClubActivitiesPaginated`, `getClubMembersWithNamesPaginated`, `getServerPluginVariables`.
+
+Checked against the e2e stack with the production build and a minted session: unauthenticated 401, a user without permissions 403 on the admin and server routes, `pageSize=5000` and `sortField=a.b` rejected with 400, and the database, GBX and TMX reads return data.
 
 ## Testing strategy
 

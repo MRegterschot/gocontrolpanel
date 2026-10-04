@@ -1,4 +1,4 @@
-import { getRoute } from "@/actions/filemanager";
+import { getRoute } from "@/services/filemanager";
 import Browser from "@/components/filemanager/browser";
 
 export default async function ServerFilesPage({

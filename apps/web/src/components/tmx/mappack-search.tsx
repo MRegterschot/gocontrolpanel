@@ -1,6 +1,6 @@
 "use client";
 
-import { searchMappacks } from "@/actions/tmx/mappacks";
+import { searchMappacks } from "@/lib/api-client/tmx";
 import { getErrorMessage } from "@/lib/utils";
 import { TMXMappack } from "@/types/api/tmx";
 import { IconSearch } from "@tabler/icons-react";

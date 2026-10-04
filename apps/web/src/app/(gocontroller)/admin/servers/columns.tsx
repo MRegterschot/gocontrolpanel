@@ -1,7 +1,8 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
-import { deleteServer, ServersWithUsers } from "@/actions/database/servers";
+import { deleteServer } from "@/actions/database/servers";
+import type { ServersWithUsers } from "@/services/database/servers";
 import ConfirmModal from "@/components/modals/confirm-modal";
 import Modal from "@/components/modals/modal";
 import EditServerModal from "@/components/modals/servers/edit-server";

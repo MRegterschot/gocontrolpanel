@@ -1,5 +1,5 @@
 "use client";
-import { getMapList } from "@/actions/database/maps";
+import { getMapList } from "@/lib/api-client/database";
 import { removeMapList, reorderMapList } from "@/actions/gbx/map";
 import { createColumns } from "@/app/(gocontroller)/server/[id]/maps/map-order-columns";
 import { Maps } from "@gcp/db";

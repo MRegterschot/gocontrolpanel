@@ -1,7 +1,4 @@
-import {
-  getAllSeasonalCampaigns,
-  getCampaignWithMaps,
-} from "@/actions/nadeo/campaigns";
+import { getAllSeasonalCampaigns, getCampaignWithMaps } from "@/services/nadeo/campaigns";
 import OfficialCampaignMaps from "../official-campaign-maps";
 import OfficialCampaigns from "../official-campaigns";
 

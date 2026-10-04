@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  cleanGuestlist,
-  loadGuestlist,
-  saveGuestlist,
-} from "@/actions/gbx/player";
+import { cleanGuestlist, loadGuestlist, saveGuestlist } from "@/actions/gbx/player";
 import FormElement from "@/components/form/form-element";
 import ConfirmModal from "@/components/modals/confirm-modal";
 import { Button } from "@/components/ui/button";

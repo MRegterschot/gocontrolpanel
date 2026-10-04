@@ -1,9 +1,5 @@
-import {
-  getUsersByIds,
-  getUsersByLogins,
-  searchUser,
-  UserMinimal,
-} from "@/actions/database/users";
+import type { UserMinimal } from "@/services/database/users";
+import { getUsersByIds, getUsersByLogins, searchUser } from "@/lib/api-client/database";
 import { getErrorMessage } from "@/lib/utils";
 import { ServerError } from "@/types/responses";
 import { useEffect, useState } from "react";

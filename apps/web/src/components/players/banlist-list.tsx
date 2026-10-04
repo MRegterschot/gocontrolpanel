@@ -1,6 +1,7 @@
 "use client";
 
-import { cleanBanList, getBanList } from "@/actions/gbx/player";
+import { cleanBanList } from "@/actions/gbx/player";
+import { getBanList } from "@/lib/api-client/gbx";
 import { createColumns } from "@/app/(gocontroller)/server/[id]/players/banlist-columns";
 import { getErrorMessage } from "@/lib/utils";
 import { PlayerInfo } from "@gcp/shared";

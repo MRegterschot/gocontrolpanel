@@ -1,4 +1,4 @@
-import { getClubCampaignWithMaps } from "@/actions/nadeo/clubs";
+import { getClubCampaignWithMaps } from "@/services/nadeo/clubs";
 import ClubCampaignMaps from "../club-campaign-maps";
 import ClubCampaigns from "../club-campaigns";
 

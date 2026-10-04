@@ -1,4 +1,4 @@
-import { getFile } from "@/actions/filemanager";
+import { getFile } from "@/services/filemanager";
 import FilesBreadcrumbs from "@/components/filemanager/breadcrumbs";
 import TextEditor from "@/components/filemanager/text-editor";
 import { arrayBufferToBase64, pathToBreadcrumbs } from "@/lib/utils";

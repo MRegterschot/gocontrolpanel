@@ -1,44 +1,13 @@
 "use server";
 
 import { doServerActionWithAuth } from "@/lib/actions";
-import { downloadTMXMap, searchTMXMaps } from "@/lib/api/tmx";
+import { downloadTMXMap } from "@/lib/api/tmx";
 import { getLogger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
-import { TMXMapSearch } from "@/types/api/tmx";
 import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
 import { uploadFiles } from "../filemanager";
 import { addMap } from "../gbx/map";
-
-export async function searchMaps(
-  serverId: string,
-  queryParams: Record<string, string>,
-  after?: number,
-  count: number = 12,
-): Promise<ServerResponse<TMXMapSearch>> {
-  return doServerActionWithAuth(
-    [
-      `servers:${serverId}:moderator`,
-      `servers:${serverId}:admin`,
-      `group:servers:${serverId}:moderator`,
-      `group:servers:${serverId}:admin`,
-    ],
-    async (session) => {
-      await logAudit(session.user.id, serverId, "server.tmx.map.search", {
-        queryParams,
-        after,
-      });
-
-      return searchTMXMaps(
-        {
-          ...queryParams,
-          ...(after ? { after: after.toString() } : {}),
-        },
-        count,
-      );
-    },
-  );
-}
 
 export async function downloadMap(
   serverId: string,

@@ -1,6 +1,6 @@
-import { getMapList } from "@/actions/database/maps";
-import { getJukebox } from "@/actions/gbx/map";
-import { getLocalMaps } from "@/actions/gbx/server";
+import { getMapList } from "@/services/database/maps";
+import { getJukebox } from "@/services/gbx/map";
+import { getLocalMaps } from "@/services/gbx/server";
 import Jukebox from "@/components/maps/jukebox";
 import ServerMaps from "@/components/maps/server-maps";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

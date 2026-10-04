@@ -1,6 +1,6 @@
 "use client";
 
-import { getClubActivitiesList } from "@/actions/nadeo/clubs";
+import { getClubActivitiesList } from "@/lib/api-client/nadeo";
 import { getErrorMessage } from "@/lib/utils";
 import { ClubActivity } from "@/types/api/nadeo";
 import { ServerError } from "@/types/responses";

@@ -1,6 +1,7 @@
 "use client";
 import { createGroup } from "@/actions/database/groups";
-import { getServersMinimal, ServerMinimal } from "@/actions/database/servers";
+import type { ServerMinimal } from "@/services/database/servers";
+import { getServersMinimal } from "@/lib/api-client/database";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form, FormLabel } from "@/components/ui/form";

@@ -1,5 +1,5 @@
 "use client";
-import { GroupsWithUsersWithServers } from "@/actions/database/groups";
+import type { GroupsWithUsersWithServers } from "@/services/database/groups";
 import EditGroupForm from "@/forms/admin/group/edit-group-form";
 import { IconX } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";

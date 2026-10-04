@@ -1,4 +1,4 @@
-import { searchMappacks } from "@/actions/tmx/mappacks";
+import { searchMappacks } from "@/services/tmx/mappacks";
 import MappackSearch from "../mappack-search";
 
 export default async function MappacksTab({

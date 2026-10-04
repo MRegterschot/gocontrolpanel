@@ -1,8 +1,6 @@
 "use client";
-import {
-  getNotifications,
-  markNotificationAsRead,
-} from "@/actions/database/notifications";
+import { markNotificationAsRead } from "@/actions/database/notifications";
+import { getNotifications } from "@/lib/api-client/database";
 import useWebSocket from "@/hooks/use-websocket";
 import { wsPaths } from "@gcp/shared";
 import { logger } from "@/lib/logger";

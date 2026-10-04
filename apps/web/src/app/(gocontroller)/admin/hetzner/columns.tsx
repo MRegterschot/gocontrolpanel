@@ -1,9 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client";
-import {
-  deleteHetznerProject,
-  HetznerProjectsWithUsers,
-} from "@/actions/database/hetzner-projects";
+import { deleteHetznerProject } from "@/actions/database/hetzner-projects";
+import type { HetznerProjectsWithUsers } from "@/services/database/hetzner-projects";
 import ConfirmModal from "@/components/modals/confirm-modal";
 import Modal from "@/components/modals/modal";
 import EditProjectModal from "@/components/modals/projects/edit-project";

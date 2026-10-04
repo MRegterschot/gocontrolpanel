@@ -1,4 +1,4 @@
-import { MapsWithRecords } from "@/actions/database/maps";
+import type { MapsWithRecords } from "@/services/database/maps";
 import { DataTable } from "@/components/table/data-table";
 import { formatTime } from "@/lib/utils";
 import { IconPhoto, IconStopwatch, IconUser, IconX } from "@tabler/icons-react";

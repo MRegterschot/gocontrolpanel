@@ -1,4 +1,4 @@
-import { MatchesWithMapAndRecords } from "@/actions/database/matches";
+import type { MatchesWithMapAndRecords } from "@/services/database/matches";
 import { DataTable } from "@/components/table/data-table";
 import { formatTime } from "@/lib/utils";
 import {

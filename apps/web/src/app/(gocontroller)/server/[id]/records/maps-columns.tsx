@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client";
-import { MapsWithRecords } from "@/actions/database/maps";
+import type { MapsWithRecords } from "@/services/database/maps";
 import Modal from "@/components/modals/modal";
 import MapRecordsModal from "@/components/modals/records/map-records";
 import { DataTableColumnHeader } from "@/components/table/data-table-column-header";

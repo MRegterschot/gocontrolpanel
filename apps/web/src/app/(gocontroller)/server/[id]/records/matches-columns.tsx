@@ -1,9 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client";
-import {
-  deleteMatch,
-  MatchesWithMapAndRecords,
-} from "@/actions/database/matches";
+import { deleteMatch } from "@/actions/database/matches";
+import type { MatchesWithMapAndRecords } from "@/services/database/matches";
 import ConfirmModal from "@/components/modals/confirm-modal";
 import Modal from "@/components/modals/modal";
 import ExportMatchModal from "@/components/modals/records/export-match";

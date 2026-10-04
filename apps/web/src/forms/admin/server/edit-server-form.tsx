@@ -1,5 +1,6 @@
 "use client";
-import { ServersWithUsers, updateServer } from "@/actions/database/servers";
+import { updateServer } from "@/actions/database/servers";
+import type { ServersWithUsers } from "@/services/database/servers";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form, FormLabel } from "@/components/ui/form";

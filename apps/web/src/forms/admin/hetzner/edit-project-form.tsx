@@ -1,8 +1,6 @@
 "use client";
-import {
-  HetznerProjectsWithUsers,
-  updateHetznerProject,
-} from "@/actions/database/hetzner-projects";
+import { updateHetznerProject } from "@/actions/database/hetzner-projects";
+import type { HetznerProjectsWithUsers } from "@/services/database/hetzner-projects";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form, FormLabel } from "@/components/ui/form";

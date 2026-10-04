@@ -1,4 +1,3 @@
-import { getAuditLogsPaginated } from "@/actions/database/audit-logs";
 import { PaginationTable } from "@/components/table/pagination-table";
 import { hasPermission } from "@/lib/auth";
 import { routePermissions, routes } from "@/routes";
@@ -24,7 +23,7 @@ export default async function AdminAuditLogsPage() {
 
       <PaginationTable
         createColumns={createColumns}
-        fetchData={getAuditLogsPaginated}
+        endpoint="/api/audit-logs"
         filter
       />
     </div>

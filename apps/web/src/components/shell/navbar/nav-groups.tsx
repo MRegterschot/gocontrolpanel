@@ -1,8 +1,5 @@
 "use client";
-import {
-  updateGroupOrder,
-  updateGroupServersOrder,
-} from "@/actions/database/groups";
+import { updateGroupOrder, updateGroupServersOrder } from "@/actions/database/groups";
 import IconNadeo from "@/components/icons/nadeo";
 import IconTmx from "@/components/icons/tmx-svg";
 import { Button } from "@/components/ui/button";
