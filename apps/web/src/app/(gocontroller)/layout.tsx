@@ -5,7 +5,13 @@ import { auth } from "@/lib/auth";
 import { NotificationProvider } from "@/providers/notification-provider";
 import { ServersProvider } from "@/providers/servers-provider";
 import { routes } from "@/routes";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+
+// The panel is private
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function GoControllerLayout({
   children,

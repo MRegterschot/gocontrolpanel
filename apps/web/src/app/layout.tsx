@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/sonner";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/site";
 import PlausibleProvider from "@/providers/plausible-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { SessionWrapper } from "@/providers/session-wrapper";
@@ -18,9 +19,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GoControlPanel",
-  description: "Manage your trackmania servers with ease.",
-  keywords: ["Trackmania", "Servers", "Administration", "GoControlPanel"],
+  metadataBase: new URL(SITE_URL),
+  title: { default: SITE_TITLE, template: `%s | ${SITE_NAME}` },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: [
+    "Trackmania",
+    "Trackmania server",
+    "Trackmania dedicated server",
+    "server controller",
+    "server administration",
+    "GoControlPanel",
+  ],
   authors: [
     {
       name: "Marijn Regterschot",
@@ -28,32 +38,25 @@ export const metadata: Metadata = {
     },
   ],
   creator: "Marijn Regterschot",
+  category: "games",
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon.ico",
     apple: "/apple-icon.png",
   },
+  // The share images come from app/opengraph-image.png and app/twitter-image.png
   openGraph: {
-    title: "GoControlPanel",
-    description: "Manage your trackmania servers with ease.",
-    url: "https://gocontrolpanel.com",
-    siteName: "GoControlPanel",
-    images: [
-      {
-        url: "https://gocontrolpanel.com/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "GoControlPanel Open Graph Image",
-      },
-    ],
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    url: "/",
+    siteName: SITE_NAME,
     locale: "en_US",
     type: "website",
   },
   twitter: {
-    card: "summary_large_image",
-    title: "GoControlPanel",
-    description: "Manage your trackmania servers with ease.",
-    images: ["https://gocontrolpanel.com/twitter-image.png"],
+    card: "summary",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
     creator: "@MRegterschot",
   },
 };
