@@ -9,7 +9,7 @@ import { getServersMinimal } from "@/lib/api-client/database";
 import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { getErrorMessage } from "@/lib/utils";
 import { ServerError } from "@/types/responses";
-import { GroupRole } from "@gcp/db";
+import { GroupRole } from "@tmcp/db";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";

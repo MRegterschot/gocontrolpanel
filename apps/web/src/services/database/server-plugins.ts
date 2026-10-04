@@ -3,7 +3,7 @@ import { getClient } from "@/lib/dbclient";
 import { getLogger } from "@/lib/logger";
 import { ServerError, ServerResponse } from "@/types/responses";
 import { storedManifest } from "@/services/plugins";
-import { maskSecrets } from "@gcp/shared";
+import { maskSecrets } from "@tmcp/shared";
 import "server-only";
 
 export async function exportServerPluginConfig(

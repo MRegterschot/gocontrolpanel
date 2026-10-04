@@ -65,7 +65,7 @@ After the split, Next.js should be a stock Next app: no `src/server.ts`, no `nex
   - plugins enabled/disabled/config changed → refresh `info.plugins` and run `updatePlugins()`;
   - plugins "reload" → `reloadPlugins()`.
 
-  Do this either through explicit internal endpoints that Next calls after its DB write, or through a Redis pub/sub channel (`gcp:server-events`). Pub/sub is better because Next doesn't need to know whether the service is up.
+  Do this either through explicit internal endpoints that Next calls after its DB write, or through a Redis pub/sub channel (`tmcp:server-events`). Pub/sub is better because Next doesn't need to know whether the service is up.
 - **GS-6 Status queries.** Per server: `isConnected`, `isReconnecting`, `reconnectAt`, `serverName`. List all managers (for `/clients`).
 
 ## 3. GBX service: event processing and live state
@@ -73,7 +73,7 @@ After the split, Next.js should be a stock Next app: no `src/server.ts`, no `nex
 - **GS-10 Callbacks handled** (must keep exact semantics of `callbackListener`):
   - `ManiaPlanet.PlayerConnect/PlayerDisconnect/PlayerInfoChanged/BeginMap/EndMap/BeginMatch/Echo/PlayerChat/PlayerManialinkPageAnswer`
   - `ModeScriptCallbackArray`: `Maniaplanet.Podium_Start`, `Trackmania.Event.WayPoint` (split finish vs checkpoint on `isendrace`), `Maniaplanet.EndMap_Start`, `Maniaplanet.StartMap_Start`, `Maniaplanet.StartRound_Start`, `Trackmania.Scores` (+ `EndRound` / `PreEndRound` sections), `Trackmania.WarmUp.Status/Start/End/StartRound`, `Maniaplanet.Pause.Status`, `Trackmania.Event.GiveUp/SkipOutro/StartLine`, `Trackmania.Knockout.Elimination`.
-  - Script responses filtered on `responseid === "gocontrolpanel"` for Scores, WarmUp.Status, Pause.Status.
+  - Script responses filtered on `responseid === "tmcontrolpanel"` for Scores, WarmUp.Status, Pause.Status.
 - **GS-11 Live state model.** Port `ServerClientInfo` 1:1: `activePlayers`, `activeMap`, `chat`, `enableHelpCommand`, `plugins`, and `liveInfo` (`maps`, `players`, `activeRound.players`, `teams`, `isWarmUp`, `warmUpRound`, `warmUpTotalRounds`, `mode`, `type`, `currentMap`, `pointsLimit`, `roundsLimit`, `mapLimit`, `nbWinners`, `pointsRepartition`, `pointsRepartitionMap`, `fastForwardPointsRepartition`, `pauseAvailable`, `isPaused`), plus `currentMatchId`, `roundNumber`, `modeChanged`.
 - **GS-12 syncLiveInfo.** Player list sync, warm-up status, script name → mode **type** detection (`timeattack, rounds, reversecup, cup, tmwc, tmwt, teams, knockout`, fallback `rounds`, order matters: `reversecup` before `cup`), `modeChange` emit, create match, current map, script settings parsing (GS-13), map list, request scores + pause status.
 - **GS-13 Script settings parsing.** Per-mode variable mapping (`S_PointsLimit` / `S_MapPointsLimit`, `S_MapsPerMatch` / `S_MatchPointsLimit`, `S_PointsRepartition` / `S_EliminatedPlayersNbRanks`), `S_ComplexPointsRepartition` JSON for reverse cup, `S_FastForwardPointsRepartition`, teams-mode auto repartition from `S_MaxPointsPerRound` + ranking size. Re-run on `Echo("UpdatedSettings")`.
@@ -273,6 +273,6 @@ Today, plugins are compiled into the app (hardcoded list in `plugin-manager.ts`)
 
 ### 12c. Open questions
 
-- **Central or per-instance marketplace?** GoControlPanel is self-hosted, so each installation has its own DB. A shared marketplace across installations means running a central registry service (with its own accounts and review team), with self-hosted panels pulling from it. A per-instance one is just "private plugins + an admin approval step". This is the biggest decision here, and it changes PM-15, PM-16 and PM-19.
+- **Central or per-instance marketplace?** TMControlPanel is self-hosted, so each installation has its own DB. A shared marketplace across installations means running a central registry service (with its own accounts and review team), with self-hosted panels pulling from it. A per-instance one is just "private plugins + an admin approval step". This is the biggest decision here, and it changes PM-15, PM-16 and PM-19.
 - **Sandbox technology** (PM-5), which ties back to the service language choice in section 11.
 - **Custom config UI.** Is JSON Schema + UI hints enough, or do some plugins (the `match` pick & ban setup) need custom UI? Sandboxed iframes are possible but add a whole new attack surface.

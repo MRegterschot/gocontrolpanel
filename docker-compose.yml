@@ -1,6 +1,6 @@
 services:
-  gocontrolpanel:
-    image: marijnregterschot/gocontrolpanel:beta # Use marijnregterschot/gocontrolpanel-postgres:beta if you are using PostgreSQL
+  tmcontrolpanel:
+    image: marijnregterschot/tmcontrolpanel:beta # Use marijnregterschot/tmcontrolpanel-postgres:beta if you are using PostgreSQL
     ports:
       - 3000:3000
     restart: unless-stopped
@@ -14,8 +14,8 @@ services:
       NADEO_REDIRECT_URI: http://localhost:3000/api/auth/callback/nadeo
       NADEO_SERVER_LOGIN: 
       NADEO_SERVER_PASSWORD: 
-      NADEO_CONTACT: GoControlPanel / <your contact info>
-      DATABASE_URL: mysql://gocontrolpanel:VettePanel123@db:3306/gocontrolpanel
+      NADEO_CONTACT: TMControlPanel / <your contact info>
+      DATABASE_URL: mysql://tmcontrolpanel:VettePanel123@db:3306/tmcontrolpanel
       REDIS_URI: redis://redis:6379
       HETZNER_KEY: 
       GBX_SERVICE_URL: http://gbx-service:3100
@@ -29,26 +29,26 @@ services:
 
   # GBX connections, in-game plugins and live WebSockets (see docs/refactor-plan.md)
   gbx-service:
-    image: marijnregterschot/gocontrolpanel-gbx-service:beta # Use marijnregterschot/gocontrolpanel-gbx-service-postgres:beta if you are using PostgreSQL
+    image: marijnregterschot/tmcontrolpanel-gbx-service:beta # Use marijnregterschot/tmcontrolpanel-gbx-service-postgres:beta if you are using PostgreSQL
     ports:
       - 3100:3100 # WebSockets for the browser; /internal routes require GBX_SERVICE_TOKEN
     restart: unless-stopped
     environment:
-      DATABASE_URL: mysql://gocontrolpanel:VettePanel123@db:3306/gocontrolpanel
+      DATABASE_URL: mysql://tmcontrolpanel:VettePanel123@db:3306/tmcontrolpanel
       REDIS_URI: redis://redis:6379
       GBX_SERVICE_TOKEN: # Same value as the web app, at least 32 characters
       WS_TICKET_SECRET: # Same value as the web app, at least 32 characters
       WS_ALLOWED_ORIGINS: http://localhost:3000
       NADEO_SERVER_LOGIN: 
       NADEO_SERVER_PASSWORD: 
-      NADEO_CONTACT: GoControlPanel / <your contact info>
+      NADEO_CONTACT: TMControlPanel / <your contact info>
       NADEO_CLIENT_ID: 
       NADEO_CLIENT_SECRET: 
       LOG_LEVEL: info
     depends_on:
       - db
       - redis
-      - gocontrolpanel # Runs the database migrations
+      - tmcontrolpanel # Runs the database migrations
 
   dedicated:
     image: evoesports/trackmania:latest
@@ -74,9 +74,9 @@ services:
     restart: unless-stopped
     environment:
       MARIADB_ROOT_PASSWORD: password_whatever
-      MARIADB_USER: gocontrolpanel
+      MARIADB_USER: tmcontrolpanel
       MARIADB_PASSWORD: VettePanel123
-      MARIADB_DATABASE: gocontrolpanel
+      MARIADB_DATABASE: tmcontrolpanel
     volumes:
       - db-data:/var/lib/mysql
 

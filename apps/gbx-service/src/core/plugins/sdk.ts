@@ -1,4 +1,4 @@
-import type { GameModeType, NotificationDto, PlayerInfo } from "@gcp/shared";
+import type { GameModeType, NotificationDto, PlayerInfo } from "@tmcp/shared";
 import type { z } from "zod";
 import type { ChatService } from "../chat/chat-service";
 import type { CommandHandler } from "../chat/command-router";

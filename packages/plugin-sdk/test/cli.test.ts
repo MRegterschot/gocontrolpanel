@@ -1,4 +1,4 @@
-import { createPluginPackage, readPluginPackage, sha256Hex } from "@gcp/shared/plugin-package";
+import { createPluginPackage, readPluginPackage, sha256Hex } from "@tmcp/shared/plugin-package";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -10,7 +10,7 @@ const EXAMPLE = fileURLToPath(new URL("../examples/hello", import.meta.url));
 const dirs: string[] = [];
 
 function temp(): string {
-  const dir = mkdtempSync(join(tmpdir(), "gcp-sdk-"));
+  const dir = mkdtempSync(join(tmpdir(), "tmcp-sdk-"));
   dirs.push(dir);
   return dir;
 }

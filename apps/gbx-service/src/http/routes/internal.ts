@@ -11,7 +11,7 @@ import {
   scriptSettingsBodySchema,
   serverLifecycleEventSchema,
   type ApiSuccess,
-} from "@gcp/shared";
+} from "@tmcp/shared";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { AppError } from "../../core/errors";

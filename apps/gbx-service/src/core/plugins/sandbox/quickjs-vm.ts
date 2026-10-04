@@ -84,7 +84,7 @@ export class QuickJsVm {
     });
   }
 
-  // Calls __gcp[method]; returns the plain result, or a promise when the guest returned one
+  // Calls __tmcp[method]; returns the plain result, or a promise when the guest returned one
   callBridge(method: string, args: BridgeArg[], budgetMs: number): unknown {
     let promise: Promise<unknown> | null = null;
     const value = this.enter(budgetMs, () => {
@@ -163,7 +163,7 @@ export class QuickJsVm {
 
   private bridgeHandle(): QuickJSHandle {
     if (!this.bridge) {
-      const handle = this.vm.getProp(this.vm.global, "__gcp");
+      const handle = this.vm.getProp(this.vm.global, "__tmcp");
       if (this.vm.typeof(handle) !== "object") {
         handle.dispose();
         throw new SandboxFault("crash", "The sandbox runtime is missing");

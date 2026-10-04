@@ -4,8 +4,8 @@ import {
   type MarketplaceIndex,
   type MarketplacePlugin,
   type MarketplaceVersion,
-} from "@gcp/shared";
-import { readPluginPackage, sha256Hex, type PluginPackage } from "@gcp/shared/plugin-package";
+} from "@tmcp/shared";
+import { readPluginPackage, sha256Hex, type PluginPackage } from "@tmcp/shared/plugin-package";
 import "server-only";
 import config from "./config";
 import { logger } from "./logger";

@@ -1,4 +1,4 @@
-import type { ApiErrorBody } from "@gcp/shared";
+import type { ApiErrorBody } from "@tmcp/shared";
 import type { FastifyError, FastifyReply, FastifyRequest } from "fastify";
 import { ZodError, type ZodType, type ZodTypeDef } from "zod";
 import { AppError, errorMessage } from "../core/errors";

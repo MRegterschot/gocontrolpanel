@@ -14,7 +14,7 @@ import type {
   WarmUpStatus,
   Waypoint,
   WaypointEvent,
-} from "@gcp/shared";
+} from "@tmcp/shared";
 import type { ChatService } from "../chat/chat-service";
 import type { CommandRouter } from "../chat/command-router";
 import { TypedEventBus } from "../events";

@@ -2,7 +2,7 @@ import { ServerError } from "@/types/responses";
 import "server-only";
 import { appGlobals } from "./global";
 import { logger } from "./logger";
-import { PrismaClient } from "@gcp/db";
+import { PrismaClient } from "@tmcp/db";
 import { reportException } from "./sentry/report";
 
 export function getClient(): PrismaClient {

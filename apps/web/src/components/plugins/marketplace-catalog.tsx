@@ -13,7 +13,7 @@ import {
 import { generatePath } from "@/lib/utils";
 import { routes } from "@/routes";
 import type { CatalogPlugin, Marketplace } from "@/types/plugins/catalog";
-import { describeCapability, GAME_MODE_TYPES } from "@gcp/shared";
+import { describeCapability, GAME_MODE_TYPES } from "@tmcp/shared";
 import {
   IconAlertTriangle,
   IconBrandGithub,

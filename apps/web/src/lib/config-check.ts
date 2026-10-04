@@ -1,5 +1,5 @@
 import { ServerError } from "@/types/responses";
-import { MIN_SECRET_LENGTH } from "@gcp/shared";
+import { MIN_SECRET_LENGTH } from "@tmcp/shared";
 
 interface GbxServiceSecrets {
   TOKEN: string;

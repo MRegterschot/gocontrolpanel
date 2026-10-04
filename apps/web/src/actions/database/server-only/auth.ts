@@ -1,5 +1,5 @@
 import { getClient } from "@/lib/dbclient";
-import { Prisma, Users } from "@gcp/db";
+import { Prisma, Users } from "@tmcp/db";
 import { getList } from "@/lib/utils";
 import { MinimalServer } from "@/types/auth";
 import "server-only";

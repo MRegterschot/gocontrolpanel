@@ -2,7 +2,7 @@ import "server-only";
 
 import { FileManager } from "@/types/filemanager";
 import Redis from "ioredis";
-import { PrismaClient } from "@gcp/db";
+import { PrismaClient } from "@tmcp/db";
 
 type GlobalState = {
   prisma?: PrismaClient;

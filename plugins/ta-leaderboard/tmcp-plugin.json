@@ -4,9 +4,9 @@
   "version": "1.0.0",
   "sdk": 1,
   "description": "A widget that shows the time attack leaderboard for the current map.",
-  "author": "GoControlPanel",
+  "author": "TMControlPanel",
   "license": "MIT",
-  "repository": "https://github.com/MRegterschot/gocontrolpanel",
+  "repository": "https://github.com/MRegterschot/tmcontrolpanel",
   "gamemodes": [
     "timeattack"
   ],

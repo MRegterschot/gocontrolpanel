@@ -128,7 +128,7 @@ export default async function ProjectPage({
       </Tabs>
 
       <p className="text-sm text-muted-foreground">
-        Important Notice: GoControlPanel is not the actual provider or host of
+        Important Notice: TMControlPanel is not the actual provider or host of
         your servers. It serves only as a convenience tool for managing
         deployments. You are fully responsible for any servers created through
         the panel. Please regularly check your{" "}
@@ -140,7 +140,7 @@ export default async function ProjectPage({
         >
           Hetzner Cloud Console
         </Link>{" "}
-        to monitor server status, usage, and billing. GoControlPanel assumes no
+        to monitor server status, usage, and billing. TMControlPanel assumes no
         responsibility for active resources or charges incurred.
       </p>
     </div>

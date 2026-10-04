@@ -1,4 +1,4 @@
-import { encodeServerLifecycleEvent, SERVER_EVENTS_CHANNEL, type ServerLifecycleEvent } from "@gcp/shared";
+import { encodeServerLifecycleEvent, SERVER_EVENTS_CHANNEL, type ServerLifecycleEvent } from "@tmcp/shared";
 import type { Redis } from "ioredis";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { RedisCache } from "../../src/infra/redis/cache";

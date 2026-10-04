@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useRef } from "react";
 
 interface WebSocketProps {
-  // Channel path on the GBX service, see wsPaths in @gcp/shared
+  // Channel path on the GBX service, see wsPaths in @tmcp/shared
   path: string;
   onMessage: (type: string, data: any) => void;
   onError?: (error: unknown) => void;

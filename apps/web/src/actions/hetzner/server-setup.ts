@@ -969,7 +969,7 @@ export async function deleteTrackmaniaServer(
         throw new ServerError("SSH private key not found for the server", "SSHPrivateKeyNotFound");
       }
 
-      const script = `docker compose -p stack-${tmServerNumber} -f /root/gocontrolpanel-master/hetzner/docker-compose.yml down -v`;
+      const script = `docker compose -p stack-${tmServerNumber} -f /root/tmcontrolpanel-master/hetzner/docker-compose.yml down -v`;
 
       const sshConn = await connectToSSHServer(
         hetznerServer.public_net.ipv4?.ip || "",

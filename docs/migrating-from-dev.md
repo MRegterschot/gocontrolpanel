@@ -1,12 +1,12 @@
 # Migrating from `dev` to the monorepo + GBX service
 
-This guide is for people running GoControlPanel from the `dev` branch (a single Next.js app with a custom server) who want to move to `refactor/monorepo-gbx-service`. For the reasoning behind the split see [refactor-plan.md](./refactor-plan.md).
+This guide is for people running TMControlPanel from the `dev` branch (a single Next.js app with a custom server) who want to move to `refactor/monorepo-gbx-service`. For the reasoning behind the split see [refactor-plan.md](./refactor-plan.md).
 
 ## What changed
 
 | | `dev` | `refactor/monorepo-gbx-service` |
 |---|---|---|
-| Processes | One container (`gocontrolpanel`) runs the web app, the GBX connections, the plugins and the live WebSockets | Two containers: `gocontrolpanel` (web) and `gbx-service` (GBX connections, plugins, manialinks, live WebSockets) |
+| Processes | One container (`tmcontrolpanel`) runs the web app, the GBX connections, the plugins and the live WebSockets | Two containers: `tmcontrolpanel` (web) and `gbx-service` (GBX connections, plugins, manialinks, live WebSockets) |
 | Repo layout | Next.js app at the repo root | Bun workspaces: `apps/web`, `apps/gbx-service`, `packages/db`, `packages/shared` |
 | Browser WebSockets | Same origin as the web app (`/api/ws`, port 3000) | Directly on the GBX service (`/ws/*`, port 3100) with a short-lived ticket issued by the web app |
 | Manialink state | Redis | In memory in the service (rebuilt on every connect) |
@@ -35,7 +35,7 @@ openssl rand -base64 32   # WS_TICKET_SECRET
 
 Compare with the [`docker-compose.yml`](../docker-compose.yml) in the repo root. Two changes:
 
-**a) Add four variables to the existing `gocontrolpanel` service:**
+**a) Add four variables to the existing `tmcontrolpanel` service:**
 
 ```yaml
 GBX_SERVICE_URL: http://gbx-service:3100       # server-to-server, container network
@@ -50,33 +50,33 @@ WS_TICKET_SECRET: <secret 2>
 
 ```yaml
 gbx-service:
-  image: marijnregterschot/gocontrolpanel-gbx-service:beta # -postgres variant for PostgreSQL
+  image: marijnregterschot/tmcontrolpanel-gbx-service:beta # -postgres variant for PostgreSQL
   ports:
     - 3100:3100
   restart: unless-stopped
   environment:
-    DATABASE_URL: <same as gocontrolpanel>
-    REDIS_URI: <same as gocontrolpanel>
+    DATABASE_URL: <same as tmcontrolpanel>
+    REDIS_URI: <same as tmcontrolpanel>
     GBX_SERVICE_TOKEN: <secret 1>
     WS_TICKET_SECRET: <secret 2>
     WS_ALLOWED_ORIGINS: http://localhost:3000  # origin(s) of the web app, comma separated
     NADEO_SERVER_LOGIN:
     NADEO_SERVER_PASSWORD:
-    NADEO_CONTACT: GoControlPanel / <your contact info>
+    NADEO_CONTACT: TMControlPanel / <your contact info>
     NADEO_CLIENT_ID:
     NADEO_CLIENT_SECRET:
     LOG_LEVEL: info
   depends_on:
     - db
     - redis
-    - gocontrolpanel # runs the database migrations
+    - tmcontrolpanel # runs the database migrations
 ```
 
-Copy the Nadeo values from the `gocontrolpanel` service. Everything else in the old service block (`NEXTAUTH_*`, `DEFAULT_*`, `HETZNER_KEY`, Sentry and Plausible variables) stays on the web container only.
+Copy the Nadeo values from the `tmcontrolpanel` service. Everything else in the old service block (`NEXTAUTH_*`, `DEFAULT_*`, `HETZNER_KEY`, Sentry and Plausible variables) stays on the web container only.
 
-> **Images.** The release workflow publishes `gocontrolpanel-gbx-service` (and the `-postgres` variant) next to the web image, with the same `latest`/`beta`/version tags. Set the repository variable `DOCKER_GBX_IMAGE_NAME` to use another image name.
+> **Images.** The release workflow publishes `tmcontrolpanel-gbx-service` (and the `-postgres` variant) next to the web image, with the same `latest`/`beta`/version tags. Set the repository variable `DOCKER_GBX_IMAGE_NAME` to use another image name.
 
-If you started from one of the stacks in [`docker/`](../docker) (PyPlanet, EvoSC, ManiaControl, MiniControl), compare your file with the one in that folder: they now contain `gbx-service` and the new `gocontrolpanel` variables. Add them to your own file and point `DATABASE_URL`/`REDIS_URI` at the same hosts the `gocontrolpanel` service uses.
+If you started from one of the stacks in [`docker/`](../docker) (PyPlanet, EvoSC, ManiaControl, MiniControl), compare your file with the one in that folder: they now contain `gbx-service` and the new `tmcontrolpanel` variables. Add them to your own file and point `DATABASE_URL`/`REDIS_URI` at the same hosts the `tmcontrolpanel` service uses.
 
 ### 3. Open port 3100 to browsers
 
@@ -115,18 +115,18 @@ The live pages, notifications and the server list now connect from the browser s
 
 ```bash
 docker compose pull
-docker compose stop gocontrolpanel   # stops the old GBX connections
+docker compose stop tmcontrolpanel   # stops the old GBX connections
 docker compose up -d
 ```
 
-`docker compose up -d` recreates `gocontrolpanel` with the new image, which runs `prisma migrate deploy` (a no-op for an up-to-date `dev` database) and then starts the web app. `gbx-service` then connects to every server in the database.
+`docker compose up -d` recreates `tmcontrolpanel` with the new image, which runs `prisma migrate deploy` (a no-op for an up-to-date `dev` database) and then starts the web app. `gbx-service` then connects to every server in the database.
 
 Order matters only in that the old container must be gone before the service connects. Starting everything with one `up -d` after pulling is fine.
 
 ### 5. Verify
 
 ```bash
-docker compose logs gocontrolpanel gbx-service
+docker compose logs tmcontrolpanel gbx-service
 curl http://localhost:3100/health    # {"status":"ok","servers":N,"connected":N}
 ```
 
@@ -159,16 +159,16 @@ curl http://localhost:3100/health    # {"status":"ok","servers":N,"connected":N}
 
 The database schema is unchanged, so rolling back is just running the old image again:
 
-1. `docker compose stop gbx-service gocontrolpanel`
-2. Switch the `gocontrolpanel` image back to the `dev` build and remove the `GBX_SERVICE_*` / `WS_TICKET_SECRET` variables (optional, they are ignored).
-3. `docker compose up -d gocontrolpanel`
+1. `docker compose stop gbx-service tmcontrolpanel`
+2. Switch the `tmcontrolpanel` image back to the `dev` build and remove the `GBX_SERVICE_*` / `WS_TICKET_SECRET` variables (optional, they are ignored).
+3. `docker compose up -d tmcontrolpanel`
 
 Never run both at once. Restore the dump only if you made schema changes of your own after upgrading.
 
 ## Things that behave differently
 
 - **Redis** is still required (jukebox queue, Nadeo caches, lifecycle events). Manialink state and the active map are no longer stored there, so old `{serverId}:manialinks:*` and `active-map:*` keys are dead and can be deleted. Nothing reads them.
-- **Plugin reloads and live reconnects** now go through the service. If the service is down, actions that touch a dedicated server show a "service unavailable" error while pages that only read the database keep working. Server create/update/delete and plugin config changes fall back to the Redis `gcp:server-events` channel; the service also reads all servers when it starts.
+- **Plugin reloads and live reconnects** now go through the service. If the service is down, actions that touch a dedicated server show a "service unavailable" error while pages that only read the database keep working. Server create/update/delete and plugin config changes fall back to the Redis `tmcp:server-events` channel; the service also reads all servers when it starts.
 - **Server passwords** are no longer sent to the browser or written to the audit log. Nothing to do on your side.
 - **Errors at startup are stricter.** The web app exits with a list of missing values when `GBX_SERVICE_TOKEN` or `WS_TICKET_SECRET` is missing or too short, and the service exits on invalid config. Read the container logs first when a container will not stay up.
 - **Reconnects.** The browser reconnects to the live sockets with a growing delay. Close code 4404 (server not managed yet) is retried about five times, which covers a newly created server the service has not registered yet.
@@ -177,7 +177,7 @@ Never run both at once. Restore the dump only if you made schema changes of your
 ## For developers and forks
 
 - Old paths: `src/**` → `apps/web/src/**`; `src/lib/prisma/{mysql,postgres}` → `packages/db/prisma/{mysql,postgres}`; `Dockerfile` and `start.sh` → `apps/web/`.
-- Imports from `@/lib/prisma/generated` become `@gcp/db`. Live, player, map and server types come from `@gcp/shared`.
+- Imports from `@/lib/prisma/generated` become `@tmcp/db`. Live, player, map and server types come from `@tmcp/shared`.
 - Removed from the web app: `src/server.ts` (custom server), `next-ws`, `/api/ws`, the `gbxclient`/`plugin`/`manialink` managers, `build:templates` and `@evotm/gbxclient`. The web app reaches dedicated servers only through `apps/web/src/lib/gbx-service.ts`.
 - Commands are now run from the repo root: `bun install`, `bun run infra:up`, `bun run deploy` (migrations), `bun run dev` (web) and `bun run dev:gbx` (service). See [CONTRIBUTING.md](../CONTRIBUTING.md).
 - CI: `workspace-check.yml` typechecks, tests and builds both apps; the release workflow builds and pushes both images (`apps/web/Dockerfile` and `apps/gbx-service/Dockerfile`).

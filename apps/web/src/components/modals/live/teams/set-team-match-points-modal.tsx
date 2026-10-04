@@ -3,7 +3,7 @@
 import { ModalContent } from "@/components/modals/modal";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import SetTeamMatchPointsForm from "@/forms/server/live/teams/set-team-match-points-form";
-import { Team } from "@gcp/shared";
+import { Team } from "@tmcp/shared";
 import { DefaultModalProps } from "../../default-props";
 
 export default function SetTeamMatchPointsModal({

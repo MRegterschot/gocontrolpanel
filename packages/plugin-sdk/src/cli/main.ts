@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
-import { describeCapability } from "@gcp/shared";
-import { PluginPackageError, readPluginPackage, type PluginPackage } from "@gcp/shared/plugin-package";
+import { describeCapability } from "@tmcp/shared";
+import { PluginPackageError, readPluginPackage, type PluginPackage } from "@tmcp/shared/plugin-package";
 import { buildPlugin } from "./build";
 import { initPlugin } from "./init";
 import { packPlugin } from "./pack";

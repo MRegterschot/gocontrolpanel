@@ -1,6 +1,6 @@
 # First-party plugins
 
-The plugins that ship with GoControlPanel are ordinary [plugin SDK](./plugin-sdk.md) packages. They run in the same sandbox as marketplace plugins, with only the capabilities they declare. This guide is for contributors who change them or add one.
+The plugins that ship with TMControlPanel are ordinary [plugin SDK](./plugin-sdk.md) packages. They run in the same sandbox as marketplace plugins, with only the capabilities they declare. This guide is for contributors who change them or add one.
 
 | Plugin | What it does | Capabilities |
 |---|---|---|
@@ -20,8 +20,8 @@ The plugins that ship with GoControlPanel are ordinary [plugin SDK](./plugin-sdk
 Each plugin is a folder in [`plugins/`](../plugins), laid out like any SDK project: `tmcp-plugin.json`, `src/index.ts`, `templates/` and a `README.md`. The `plugins/` workspace builds them all:
 
 ```bash
-bun run --filter @gcp/first-party-plugins build      # packs every plugin into apps/gbx-service/first-party
-bun run --filter @gcp/first-party-plugins typecheck
+bun run --filter @tmcp/first-party-plugins build      # packs every plugin into apps/gbx-service/first-party
+bun run --filter @tmcp/first-party-plugins typecheck
 ```
 
 The GBX service's `dev` and `build` scripts run that build, and the Docker image ships the zips in `first-party/` (`FIRST_PARTY_PLUGINS_DIR` overrides the folder).

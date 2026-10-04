@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
-import { unbanPlayer } from "@/actions/gbx/player";
+import { removeGuest } from "@/actions/gbx/player";
 import ConfirmModal from "@/components/modals/confirm-modal";
 import { DataTableColumnHeader } from "@/components/table/data-table-column-header";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getErrorMessage } from "@/lib/utils";
-import { PlayerInfo } from "@gcp/shared";
+import { PlayerInfo } from "@tmcp/shared";
 import { ServerError } from "@/types/responses";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
@@ -47,19 +47,19 @@ export const createColumns = (
     id: "actions",
     cell: ({ row }) => {
       const player = row.original;
-      const [confirmUnban, setConfirmUnban] = useState(false);
+      const [confirmRemoveGuest, setConfirmRemoveGuest] = useState(false);
 
-      const handleUnban = async () => {
+      const handleRemoveGuest = async () => {
         try {
-          const { error } = await unbanPlayer(serverId, player.login);
+          const { error } = await removeGuest(serverId, player.login);
           if (error) {
-            throw new ServerError(error, "UnbanPlayerError");
+            throw new ServerError(error, "RemoveGuestError");
           }
 
           refetch();
-          toast.success("Player successfully unbanned");
+          toast.success("Player successfully removed from guest list");
         } catch (error) {
-          toast.error("Error unbanning player", {
+          toast.error("Error removing player from guest list", {
             description: getErrorMessage(error),
           });
         }
@@ -77,20 +77,20 @@ export const createColumns = (
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 variant="destructive"
-                onClick={() => setConfirmUnban(true)}
+                onClick={() => setConfirmRemoveGuest(true)}
               >
-                Unban player
+                Remove from guest list
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
           <ConfirmModal
-            isOpen={confirmUnban}
-            onClose={() => setConfirmUnban(false)}
-            title="Unban player"
-            description={`Are you sure you want to unban ${player.nickName}?`}
-            onConfirm={handleUnban}
-            confirmText="Unban"
+            isOpen={confirmRemoveGuest}
+            onClose={() => setConfirmRemoveGuest(false)}
+            title="Remove from guest list"
+            description={`Are you sure you want to remove ${player.nickName} from the guest list?`}
+            onConfirm={handleRemoveGuest}
+            confirmText="Remove"
             cancelText="Cancel"
           />
         </div>

@@ -3,7 +3,7 @@
 exports[`TemplateRenderer > renders action-group 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <frame id="widget" pos="1 2" z-index="10" hidden="1">
 <frame pos="0 0" size="10 5" z-index="10">
   <frame size="10 5" pos="-5 0">
@@ -139,7 +139,7 @@ main() {
 exports[`TemplateRenderer > renders manialink 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 
 </manialink>
 "
@@ -203,7 +203,7 @@ Void hidescript() {
 exports[`TemplateRenderer > renders widget 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <frame id="widget" pos="1 2" z-index="10" hidden="1">
 
 </frame>
@@ -309,7 +309,7 @@ main() {
 exports[`TemplateRenderer > renders widgets/live-ranking/live-ranking 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <frame id="widget" pos="1 2" z-index="10" hidden="1">
 <frame pos="0 0">
   <quad pos="0 0" z-index="0" size="55 5" bgcolor="222"/>
@@ -650,7 +650,7 @@ rankingsFrame.ScrollMin = <0., 0.>;
 exports[`TemplateRenderer > renders widgets/live-ranking/live-ranking-update 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <script>
 <!--
 #Struct Team {
@@ -689,7 +689,7 @@ main(){
 exports[`TemplateRenderer > renders widgets/live-round/live-round 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <frame id="widget" pos="1 2" z-index="10" hidden="1">
 <frame pos="0 0">
   <quad pos="0 0" z-index="0" size="55 5" bgcolor="222"/>
@@ -1280,7 +1280,7 @@ roundsFrame.ScrollMin = <0., 0.>;
 exports[`TemplateRenderer > renders widgets/live-round/live-round-update 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <script>
 <!--
 #Struct Team {
@@ -1336,7 +1336,7 @@ main(){
 exports[`TemplateRenderer > renders widgets/map-info/map-info 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <frame id="widget" pos="1 2" z-index="10" hidden="1">
 <frame pos="0 0" id="map">
   <quad pos="0 0" z-index="0" size="10 10" bgcolor="222"/>
@@ -1466,7 +1466,7 @@ declare Integer lastUpdate = -1;
 exports[`TemplateRenderer > renders widgets/map-info/map-info-update 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <script>
 <!--
 #Struct Map {
@@ -1492,7 +1492,7 @@ main(){
 exports[`TemplateRenderer > renders widgets/match/pickban 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <frame id="widget" pos="1 2" z-index="10" hidden="1">
 <frame id="pickban-action" pos="0 0">
   <quad pos="0 0" z-index="0" size="120 10" bgcolor="222"/>
@@ -2081,7 +2081,7 @@ foreach (padEvent in Input.PendingEvents) {
 exports[`TemplateRenderer > renders widgets/match/pickban-update 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <script>
 <!--
 #Struct MapInfo {
@@ -2123,7 +2123,7 @@ main(){
 exports[`TemplateRenderer > renders widgets/notify-admin/notify-admin 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <frame id="widget" pos="1 2" z-index="10" hidden="1">
 <frame pos="0 0" id="notify-admin">
   <quad pos="0 0" z-index="0" size="36 8" bgcolor="DDD"/>
@@ -2236,7 +2236,7 @@ main() {
 exports[`TemplateRenderer > renders widgets/player-info/player-info 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <frame id="widget" pos="1 2" z-index="10" hidden="1">
 <frame pos="0 0" id="player-info-container" hidden="1">
   <frame pos="0 0" id="player-name">
@@ -2490,7 +2490,7 @@ if (GUIPlayer != Null) {
 exports[`TemplateRenderer > renders widgets/player-info/player-info-update 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <script>
 <!--
 #Struct PlayerInfo {
@@ -2520,7 +2520,7 @@ main(){
 exports[`TemplateRenderer > renders widgets/records-info/records-info 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <frame id="widget" pos="1 2" z-index="10" hidden="1">
 <frame pos="0 0" id="world-record">
   <quad pos="0 0" z-index="0" size="10 5" bgcolor="222"/>
@@ -2717,7 +2717,7 @@ declare Integer lastUpdate = -1;
 exports[`TemplateRenderer > renders widgets/records-info/records-info-update 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <script>
 <!--
 #Struct RecordInfo {
@@ -2750,7 +2750,7 @@ main(){
 exports[`TemplateRenderer > renders widgets/ta-active-runs/ta-active-runs 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <frame id="widget" pos="1 2" z-index="10" hidden="1">
 <frame pos="0 0">
   <quad pos="0 0" z-index="0" size="55 5" bgcolor="222"/>
@@ -3090,7 +3090,7 @@ activeRunsFrame.ScrollMin = <0., 0.>;
 exports[`TemplateRenderer > renders widgets/ta-active-runs/ta-active-runs-update 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <script>
 <!--
 #Struct ActiveRun {
@@ -3118,7 +3118,7 @@ main(){
 exports[`TemplateRenderer > renders widgets/ta-leaderboard/ta-leaderboard 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <frame id="widget" pos="1 2" z-index="10" hidden="1">
 <frame pos="0 0">
   <quad pos="0 0" z-index="0" size="55 5" bgcolor="222"/>
@@ -3523,7 +3523,7 @@ recordsFrame.ScrollMin = <0., 0.>;
 exports[`TemplateRenderer > renders widgets/ta-leaderboard/ta-leaderboard-update 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <script>
 <!--
 #Struct Record {
@@ -3551,7 +3551,7 @@ main(){
 exports[`TemplateRenderer > renders window 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <frame id="window" pos="-25 20" size="50 45" z-index="20">
   <quad pos="0 0" size="50 5" bgcolor="222" />
   <label pos="1.5 -2.25" text="Title" size="40.5 5" valign="center" halign="left" textsize="1" color="DDD" textfont="GameFontSemiBold" />
@@ -3597,7 +3597,7 @@ main() {
 exports[`TemplateRenderer > renders windows/ecm/ecm-window 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <frame id="window" pos="-25 20" size="50 45" z-index="20">
   <quad pos="0 0" size="50 5" bgcolor="222" />
   <label pos="1.5 -2.25" text="Title" size="40.5 5" valign="center" halign="left" textsize="1" color="DDD" textfont="GameFontSemiBold" />
@@ -3798,7 +3798,7 @@ if (event.Control.HasClass("ecm-api-key-entry-toggle") && event.Type == CMlScrip
 exports[`TemplateRenderer > renders windows/ecm/ecm-window-update 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <script>
 <!--
 main(){
@@ -3824,7 +3824,7 @@ main(){
 exports[`TemplateRenderer > renders windows/match/choose-position-window 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
-<manialink name="GCP:test-id" id="test-id" version="3">
+<manialink name="TMCP:test-id" id="test-id" version="3">
 <frame id="window" pos="-25 20" size="50 45" z-index="20">
   <quad pos="0 0" size="50 5" bgcolor="222" />
   <label pos="1.5 -2.25" text="Title" size="40.5 5" valign="center" halign="left" textsize="1" color="DDD" textfont="GameFontSemiBold" />

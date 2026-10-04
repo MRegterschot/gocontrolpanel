@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     "Trackmania dedicated server",
     "server controller",
     "server administration",
-    "GoControlPanel",
+    "TMControlPanel",
   ],
   authors: [
     {

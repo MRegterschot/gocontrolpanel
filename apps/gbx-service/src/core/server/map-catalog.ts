@@ -1,4 +1,4 @@
-import type { SMapInfo } from "@gcp/shared";
+import type { SMapInfo } from "@tmcp/shared";
 import type { Logger } from "../logger";
 import type {
   Clock,

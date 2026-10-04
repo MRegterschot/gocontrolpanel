@@ -1,7 +1,7 @@
 "use client";
 
 import { cleanBanList } from "@/actions/gbx/player";
-import { createColumns } from "@/app/(gocontroller)/server/[id]/players/banlist-columns";
+import { createColumns } from "@/app/(tmcontrolpanel)/server/[id]/players/banlist-columns";
 import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
 import { getBanList } from "@/lib/api-client/gbx";
 import { queryKeys, unwrap } from "@/lib/api-client/query";

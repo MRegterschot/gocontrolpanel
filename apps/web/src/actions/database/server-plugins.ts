@@ -4,8 +4,8 @@ import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { gbxService, publishServerEvent } from "@/lib/gbx-service";
 import { ServerError, ServerResponse } from "@/types/responses";
-import type { Prisma } from "@gcp/db";
-import { isFirstPartySlug } from "@gcp/shared";
+import type { Prisma } from "@tmcp/db";
+import { isFirstPartySlug } from "@tmcp/shared";
 import { logAudit } from "./server-only/audit-logs";
 
 // Settings from the panel's own forms for the first-party plugins; other plugins

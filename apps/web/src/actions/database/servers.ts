@@ -6,7 +6,7 @@ import { getLogger } from "@/lib/logger";
 import { saveChatConfig } from "@/lib/chat-config";
 import { gbxService, publishServerEvent } from "@/lib/gbx-service";
 import { updateFileManager } from "@/lib/managers/file-manager";
-import { Servers } from "@gcp/db";
+import { Servers } from "@tmcp/db";
 import {
   getKeyHetznerRecentlyCreatedServers,
   getRedisClient,

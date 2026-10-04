@@ -1,4 +1,4 @@
-import type { LiveSnapshot, ServerClient } from "@gcp/shared";
+import type { LiveSnapshot, ServerClient } from "@tmcp/shared";
 import { ChatService } from "../chat/chat-service";
 import { CommandRouter } from "../chat/command-router";
 import { AppError, errorMessage } from "../errors";
@@ -74,7 +74,7 @@ function sameTarget(a: ConnectionTarget, b: ConnectionTarget): boolean {
   return a.host === b.host && a.port === b.port && a.user === b.user && a.password === b.password;
 }
 
-// Everything GoControlPanel runs for one dedicated server
+// Everything TMControlPanel runs for one dedicated server
 export class ServerRuntime {
   readonly events: TypedEventBus<ServerEventMap>;
   readonly state = new LiveState();

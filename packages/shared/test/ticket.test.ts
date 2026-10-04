@@ -24,8 +24,8 @@ describe("ws tickets", () => {
   it("rejects expired tickets", async () => {
     const ticket = await new SignJWT({ claims: makeClaims() })
       .setProtectedHeader({ alg: "HS256" })
-      .setIssuer("gcp-web")
-      .setAudience("gcp-gbx-ws")
+      .setIssuer("tmcp-web")
+      .setAudience("tmcp-gbx-ws")
       .setJti("x")
       .setIssuedAt(Math.floor(Date.now() / 1000) - 120)
       .setExpirationTime(Math.floor(Date.now() / 1000) - 60)
@@ -36,7 +36,7 @@ describe("ws tickets", () => {
   it("rejects tokens meant for another audience", async () => {
     const ticket = await new SignJWT({ claims: makeClaims() })
       .setProtectedHeader({ alg: "HS256" })
-      .setIssuer("gcp-web")
+      .setIssuer("tmcp-web")
       .setAudience("something-else")
       .setJti("x")
       .setExpirationTime("1m")

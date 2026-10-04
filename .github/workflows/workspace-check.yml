@@ -30,22 +30,22 @@ jobs:
 
       - name: Typecheck shared packages, plugin SDK, first-party plugins and GBX service
         run: |
-          bun run --filter @gcp/shared typecheck
+          bun run --filter @tmcp/shared typecheck
           bun run --filter @tmcontrolpanel/plugin-sdk typecheck
-          bun run --filter @gcp/first-party-plugins typecheck
-          bun run --filter @gcp/gbx-service typecheck
+          bun run --filter @tmcp/first-party-plugins typecheck
+          bun run --filter @tmcp/gbx-service typecheck
 
       - name: Unit tests
         run: |
-          bun run --filter @gcp/shared test
+          bun run --filter @tmcp/shared test
           bun run --filter @tmcontrolpanel/plugin-sdk test
-          bun run --filter @gcp/gbx-service test
-          bun run --filter @gcp/web test
+          bun run --filter @tmcp/gbx-service test
+          bun run --filter @tmcp/web test
 
       # Also packs the first-party plugins into apps/gbx-service/first-party
       - name: Build GBX service and plugin SDK
         run: |
-          bun run --filter @gcp/gbx-service build
+          bun run --filter @tmcp/gbx-service build
           bun run --filter @tmcontrolpanel/plugin-sdk build
 
       # The example registry must keep validating with the current package format
@@ -59,12 +59,12 @@ jobs:
       postgres:
         image: postgres:17-alpine
         env:
-          POSTGRES_USER: gcp
-          POSTGRES_PASSWORD: gcp
-          POSTGRES_DB: gcp_test
+          POSTGRES_USER: tmcp
+          POSTGRES_PASSWORD: tmcp
+          POSTGRES_DB: tmcp_test
         ports:
           - 5432:5432
-        options: --health-cmd "pg_isready -U gcp" --health-interval 2s --health-retries 20
+        options: --health-cmd "pg_isready -U tmcp" --health-interval 2s --health-retries 20
       redis:
         image: redis:7-alpine
         ports:
@@ -72,8 +72,8 @@ jobs:
 
     env:
       DB: postgres
-      DATABASE_URL: postgresql://gcp:gcp@localhost:5432/gcp_test
-      INTEGRATION_DATABASE_URL: postgresql://gcp:gcp@localhost:5432/gcp_test
+      DATABASE_URL: postgresql://tmcp:tmcp@localhost:5432/tmcp_test
+      INTEGRATION_DATABASE_URL: postgresql://tmcp:tmcp@localhost:5432/tmcp_test
       INTEGRATION_REDIS_URL: redis://localhost:6379
 
     steps:
@@ -89,4 +89,4 @@ jobs:
         run: bun run deploy
 
       - name: Integration tests
-        run: bun run --filter @gcp/gbx-service test:integration
+        run: bun run --filter @tmcp/gbx-service test:integration

@@ -7,7 +7,7 @@ import {
   ServerError,
   ServerResponse,
 } from "@/types/responses";
-import { Prisma } from "@gcp/db";
+import { Prisma } from "@tmcp/db";
 import { PaginationState } from "@tanstack/react-table";
 import "server-only";
 import slugid from "slugid";

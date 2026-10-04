@@ -71,7 +71,7 @@ export function SiteHeader() {
 
         <div className="ml-auto flex gap-2 lg:gap-4">
           <Link
-            href="https://github.com/MRegterschot/gocontrolpanel/wiki"
+            href="https://github.com/MRegterschot/tmcontrolpanel/wiki"
             target="_blank"
           >
             <IconBook />
@@ -83,7 +83,7 @@ export function SiteHeader() {
             <IconCoffee />
           </Link>
           <Link
-            href="https://github.com/MRegterschot/gocontrolpanel"
+            href="https://github.com/MRegterschot/tmcontrolpanel"
             target="_blank"
           >
             <IconBrandGithub />

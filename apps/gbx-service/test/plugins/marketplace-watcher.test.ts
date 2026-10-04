@@ -1,4 +1,4 @@
-import type { MarketplaceIndex } from "@gcp/shared";
+import type { MarketplaceIndex } from "@tmcp/shared";
 import { describe, expect, it } from "vitest";
 import { MarketplaceWatcher } from "../../src/core/plugins/marketplace-watcher";
 import type { PluginCatalogRepository, PluginYank, YankedInstall } from "../../src/core/ports";

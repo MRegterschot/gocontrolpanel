@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { getErrorMessage } from "@/lib/utils";
 import { ServerError, ServerResponse } from "@/types/responses";
-import { addedCapabilities } from "@gcp/shared";
+import { addedCapabilities } from "@tmcp/shared";
 import { IconDownload } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

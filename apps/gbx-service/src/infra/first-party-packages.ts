@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { readPluginPackage } from "@gcp/shared/plugin-package";
+import { readPluginPackage } from "@tmcp/shared/plugin-package";
 import type { Logger } from "../core/logger";
 import type { FirstPartyPackage } from "../core/plugins/first-party";
 
@@ -9,7 +9,7 @@ export function loadFirstPartyPackages(dir: string, log: Logger): FirstPartyPack
   if (!existsSync(dir)) {
     log.warn(
       { dir },
-      "No first-party plugins found; build them with: bun run --filter @gcp/first-party-plugins build",
+      "No first-party plugins found; build them with: bun run --filter @tmcp/first-party-plugins build",
     );
     return [];
   }

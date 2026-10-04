@@ -1,4 +1,4 @@
-import type { ChatConfig, PlayerChat, PlayerInfo } from "@gcp/shared";
+import type { ChatConfig, PlayerChat, PlayerInfo } from "@tmcp/shared";
 import type { GbxConnection } from "../gbx/connection";
 import type { LiveState } from "../live/live-state";
 import type { Logger } from "../logger";

@@ -1,6 +1,6 @@
 "use client";
 
-import { createColumns } from "@/app/(gocontroller)/server/[id]/players/blacklist-columns";
+import { createColumns } from "@/app/(tmcontrolpanel)/server/[id]/players/blacklist-columns";
 import BlacklistForm from "@/forms/server/players/blacklist-form";
 import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
 import { getBlacklist } from "@/lib/api-client/gbx";

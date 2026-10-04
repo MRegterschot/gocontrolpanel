@@ -6,7 +6,7 @@ import {
   MANIFEST_FILE,
   PLUGIN_SDK_VERSION,
   PLUGIN_SLUG,
-} from "@gcp/shared";
+} from "@tmcp/shared";
 import { CliError } from "./project";
 
 // Scaffolds a plugin project with a widget, a command and a config field
@@ -31,7 +31,7 @@ export function initPlugin(target: string, options: { slug?: string; name?: stri
         name,
         version: "0.1.0",
         sdk: PLUGIN_SDK_VERSION,
-        description: `${name} for GoControlPanel.`,
+        description: `${name} for TMControlPanel.`,
         author: "Your name",
         license: "MIT",
         commands: [slug],
@@ -94,7 +94,7 @@ export default definePlugin<Config>({
 `,
     "README.md": `# ${name}
 
-A GoControlPanel plugin.
+A TMControlPanel plugin.
 
 \`\`\`bash
 npm install

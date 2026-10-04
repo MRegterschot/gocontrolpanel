@@ -1,6 +1,6 @@
 import { nextMap, restartMap } from "@/actions/gbx/game";
 import { jumpToMap } from "@/actions/gbx/map";
-import { Maps } from "@gcp/db";
+import { Maps } from "@tmcp/db";
 import { cn, getErrorMessage } from "@/lib/utils";
 import {
   IconBounceRight,

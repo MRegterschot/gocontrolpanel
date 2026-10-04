@@ -1,4 +1,4 @@
-import type { PluginPackage } from "@gcp/shared/plugin-package";
+import type { PluginPackage } from "@tmcp/shared/plugin-package";
 import type { Logger } from "../logger";
 import type { FirstPartyInstall, FirstPartyRepository } from "../ports";
 

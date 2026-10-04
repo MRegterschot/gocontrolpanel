@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
-import { removeGuest } from "@/actions/gbx/player";
+import { unblacklistPlayer } from "@/actions/gbx/player";
 import ConfirmModal from "@/components/modals/confirm-modal";
 import { DataTableColumnHeader } from "@/components/table/data-table-column-header";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getErrorMessage } from "@/lib/utils";
-import { PlayerInfo } from "@gcp/shared";
+import { PlayerInfo } from "@tmcp/shared";
 import { ServerError } from "@/types/responses";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
@@ -47,19 +47,19 @@ export const createColumns = (
     id: "actions",
     cell: ({ row }) => {
       const player = row.original;
-      const [confirmRemoveGuest, setConfirmRemoveGuest] = useState(false);
+      const [confirmUnblacklist, setConfirmUnblacklist] = useState(false);
 
-      const handleRemoveGuest = async () => {
+      const handleUnblacklist = async () => {
         try {
-          const { error } = await removeGuest(serverId, player.login);
+          const { error } = await unblacklistPlayer(serverId, player.login);
           if (error) {
-            throw new ServerError(error, "RemoveGuestError");
+            throw new ServerError(error, "UnblacklistPlayerError");
           }
 
           refetch();
-          toast.success("Player successfully removed from guest list");
+          toast.success("Player successfully removed from blacklist");
         } catch (error) {
-          toast.error("Error removing player from guest list", {
+          toast.error("Error removing player from blacklist", {
             description: getErrorMessage(error),
           });
         }
@@ -77,19 +77,19 @@ export const createColumns = (
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 variant="destructive"
-                onClick={() => setConfirmRemoveGuest(true)}
+                onClick={() => setConfirmUnblacklist(true)}
               >
-                Remove from guest list
+                Remove from blacklist
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
           <ConfirmModal
-            isOpen={confirmRemoveGuest}
-            onClose={() => setConfirmRemoveGuest(false)}
-            title="Remove from guest list"
-            description={`Are you sure you want to remove ${player.nickName} from the guest list?`}
-            onConfirm={handleRemoveGuest}
+            isOpen={confirmUnblacklist}
+            onClose={() => setConfirmUnblacklist(false)}
+            title="Remove from blacklist"
+            description={`Are you sure you want to remove ${player.nickName} from the blacklist?`}
+            onConfirm={handleUnblacklist}
             confirmText="Remove"
             cancelText="Cancel"
           />

@@ -24,4 +24,4 @@ jobs:
           ssh -i ~/.ssh/id_ed25519 \
             -o StrictHostKeyChecking=no \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            "sudo /usr/local/bin/deploy-gocontrolpanel-staging"
+            "sudo /usr/local/bin/deploy-tmcontrolpanel-staging"

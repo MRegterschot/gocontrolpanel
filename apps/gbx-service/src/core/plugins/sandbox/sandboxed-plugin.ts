@@ -5,8 +5,8 @@ import {
   validatePluginConfig,
   type PlayerManialinkPageAnswer,
   type PluginConfig,
-} from "@gcp/shared";
-import type { PluginPackage } from "@gcp/shared/plugin-package";
+} from "@tmcp/shared";
+import type { PluginPackage } from "@tmcp/shared/plugin-package";
 import type {
   Clock,
   InstalledPackageRef,
@@ -184,11 +184,11 @@ export class SandboxedPlugin implements PluginInstance {
       const { loadMs } = this.limits;
       vm.evaluate(assets.handlebars, "handlebars.js", loadMs);
       vm.evaluate(
-        `globalThis.__gcpLayouts = (function (module, exports) {\n${assets.layouts}\nreturn module.exports;\n})({ exports: {} }, {});`,
+        `globalThis.__tmcpLayouts = (function (module, exports) {\n${assets.layouts}\nreturn module.exports;\n})({ exports: {} }, {});`,
         "handlebars-layouts.js",
         loadMs,
       );
-      vm.evaluate(guestRuntimeScript(), "gcp-runtime.js", loadMs);
+      vm.evaluate(guestRuntimeScript(), "tmcp-runtime.js", loadMs);
       vm.evaluate(this.pkg.entry, this.pkg.manifest.entry, loadMs);
       vm.callBridge("create", [], loadMs);
       await this.runHook("start", loadMs);

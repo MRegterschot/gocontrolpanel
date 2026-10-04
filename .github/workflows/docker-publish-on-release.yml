@@ -33,11 +33,11 @@ jobs:
 
       - name: Build and tag images
         run: |
-          GBX_IMAGE_NAME=${{ vars.DOCKER_GBX_IMAGE_NAME || 'gocontrolpanel-gbx-service' }}
+          GBX_IMAGE_NAME=${{ vars.DOCKER_GBX_IMAGE_NAME || 'tmcontrolpanel-gbx-service' }}
 
           # <dockerfile>=<image name>
           for target in \
-            "apps/web/Dockerfile=${{ vars.DOCKER_IMAGE_NAME }}" \
+            "apps/web/Dockerfile=${{ vars.DOCKER_IMAGE_NAME || 'tmcontrolpanel' }}" \
             "apps/gbx-service/Dockerfile=$GBX_IMAGE_NAME"; do
             DOCKERFILE=${target%%=*}
             IMAGE=${{ secrets.DOCKER_USERNAME }}/${target#*=}${{ matrix.db.suffix }}

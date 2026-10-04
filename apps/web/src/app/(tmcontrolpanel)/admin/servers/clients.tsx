@@ -2,7 +2,7 @@
 
 import ClientCard from "@/components/servers/clients/client-card";
 import useWebSocket from "@/hooks/use-websocket";
-import { ServerClient, wsPaths } from "@gcp/shared";
+import { ServerClient, wsPaths } from "@tmcp/shared";
 import { useCallback, useState } from "react";
 
 export default function AdminServerClientsPage() {

@@ -45,4 +45,4 @@ jobs:
             nextjs-${{ matrix.db }}-${{ runner.os }}-
 
       - name: Build web for ${{ matrix.db }}
-        run: bun run --filter @gcp/web build
+        run: bun run --filter @tmcp/web build

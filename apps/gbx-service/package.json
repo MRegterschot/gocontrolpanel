@@ -1,5 +1,5 @@
 {
-  "name": "@gcp/gbx-service",
+  "name": "@tmcp/gbx-service",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -21,8 +21,8 @@
   "dependencies": {
     "@evotm/gbxclient": "^1.5.0",
     "@fastify/websocket": "^11.3.1",
-    "@gcp/db": "workspace:*",
-    "@gcp/shared": "workspace:*",
+    "@tmcp/db": "workspace:*",
+    "@tmcp/shared": "workspace:*",
     "@jitl/quickjs-wasmfile-release-sync": "0.32.0",
     "@prisma/client": "^6.8.2",
     "@sentry/node": "^10",

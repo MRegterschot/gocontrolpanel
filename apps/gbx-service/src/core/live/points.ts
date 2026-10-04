@@ -1,4 +1,4 @@
-import type { ScoresPlayer, SpectatorStatus } from "@gcp/shared";
+import type { ScoresPlayer, SpectatorStatus } from "@tmcp/shared";
 
 // Reverse cup / cup point thresholds as used by the Nadeo mode scripts
 // Points may be unknown before the first scores callback; unknown never matches

@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
-import { unblacklistPlayer } from "@/actions/gbx/player";
+import { unbanPlayer } from "@/actions/gbx/player";
 import ConfirmModal from "@/components/modals/confirm-modal";
 import { DataTableColumnHeader } from "@/components/table/data-table-column-header";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getErrorMessage } from "@/lib/utils";
-import { PlayerInfo } from "@gcp/shared";
+import { PlayerInfo } from "@tmcp/shared";
 import { ServerError } from "@/types/responses";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
@@ -47,19 +47,19 @@ export const createColumns = (
     id: "actions",
     cell: ({ row }) => {
       const player = row.original;
-      const [confirmUnblacklist, setConfirmUnblacklist] = useState(false);
+      const [confirmUnban, setConfirmUnban] = useState(false);
 
-      const handleUnblacklist = async () => {
+      const handleUnban = async () => {
         try {
-          const { error } = await unblacklistPlayer(serverId, player.login);
+          const { error } = await unbanPlayer(serverId, player.login);
           if (error) {
-            throw new ServerError(error, "UnblacklistPlayerError");
+            throw new ServerError(error, "UnbanPlayerError");
           }
 
           refetch();
-          toast.success("Player successfully removed from blacklist");
+          toast.success("Player successfully unbanned");
         } catch (error) {
-          toast.error("Error removing player from blacklist", {
+          toast.error("Error unbanning player", {
             description: getErrorMessage(error),
           });
         }
@@ -77,20 +77,20 @@ export const createColumns = (
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 variant="destructive"
-                onClick={() => setConfirmUnblacklist(true)}
+                onClick={() => setConfirmUnban(true)}
               >
-                Remove from blacklist
+                Unban player
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
           <ConfirmModal
-            isOpen={confirmUnblacklist}
-            onClose={() => setConfirmUnblacklist(false)}
-            title="Remove from blacklist"
-            description={`Are you sure you want to remove ${player.nickName} from the blacklist?`}
-            onConfirm={handleUnblacklist}
-            confirmText="Remove"
+            isOpen={confirmUnban}
+            onClose={() => setConfirmUnban(false)}
+            title="Unban player"
+            description={`Are you sure you want to unban ${player.nickName}?`}
+            onConfirm={handleUnban}
+            confirmText="Unban"
             cancelText="Cancel"
           />
         </div>

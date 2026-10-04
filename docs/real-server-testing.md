@@ -46,23 +46,23 @@ bun run ws:watch live          # also: map, players, servers, clients
 bun run ws:watch notifications --user <admin user id>
 
 # Internal API
-export GCP=http://localhost:3101/internal/servers/e2e-server
-gcp() { curl -s -H "Authorization: Bearer e2e-service-token-0123456789abcdefghij" -H "Content-Type: application/json" "$@" | jq; }
-gcp $GCP/live
-gcp -X POST $GCP/gbx/call -d '{"method":"GetPlayerList","params":[100,0]}'
+export TMCP=http://localhost:3101/internal/servers/e2e-server
+tmcp() { curl -s -H "Authorization: Bearer e2e-service-token-0123456789abcdefghij" -H "Content-Type: application/json" "$@" | jq; }
+tmcp $TMCP/live
+tmcp -X POST $TMCP/gbx/call -d '{"method":"GetPlayerList","params":[100,0]}'
 
 # Database and Redis
 dce() { docker compose --env-file e2e/.env -f e2e/docker-compose.yml "$@"; }
-dce exec db mariadb -ugcp -pgcp gcp_e2e -e "select login, round, time, points, matchId from records order by createdAt desc limit 10"
+dce exec db mariadb -utmcp -ptmcp tmcp_e2e -e "select login, round, time, points, matchId from records order by createdAt desc limit 10"
 dce exec redis redis-cli lrange jukebox:e2e-server 0 -1
 
 # Lifecycle events, as the web app will publish them
-dce exec redis redis-cli publish gcp:server-events '{"type":"server.plugins.updated","serverId":"e2e-server"}'
+dce exec redis redis-cli publish tmcp:server-events '{"type":"server.plugins.updated","serverId":"e2e-server"}'
 ```
 
-Join the server from the game with `#qjoin=<server login>@Trackmania` (the login is in `gcp -X POST $GCP/gbx/call -d '{"method":"GetMainServerPlayerInfo"}'`) or through the server browser.
+Join the server from the game with `#qjoin=<server login>@Trackmania` (the login is in `tmcp -X POST $TMCP/gbx/call -d '{"method":"GetMainServerPlayerInfo"}'`) or through the server browser.
 
-Fake players: `gcp -X POST $GCP/gbx/call -d '{"method":"ConnectFakePlayer"}'`. They join and spectate, but never drive.
+Fake players: `tmcp -X POST $TMCP/gbx/call -d '{"method":"ConnectFakePlayer"}'`. They join and spectate, but never drive.
 
 ## 2. Connection lifecycle
 
@@ -71,11 +71,11 @@ Fake players: `gcp -X POST $GCP/gbx/call -d '{"method":"ConnectFakePlayer"}'`. T
 | C1 | Start the service with the dedicated server up | Log `Connected to GBX server`; `/ws/servers` shows `isConnected: true`; a `maps` row for the current map and a `matches` row exist |
 | C2 | `dce restart dedicated` | `disconnect` on `/ws/servers` and `/ws/clients`, `reconnect try` with a timestamp ~15 s ahead, then `connect`; widgets reappear in game without restarting the client |
 | C3 | `dce stop dedicated` while the service is connected, wait ~2.5 min (10 × 15 s) | Ten retries, then `reconnect stop` on `/ws/clients`; `isReconnecting: false`; no further attempts in the log |
-| C4 | After C3: `dce start dedicated`, then `gcp -X POST $GCP/reconnect` | `{ "connected": true }` |
-| C5 | `gcp -X POST $GCP/disconnect` | Disconnects and **stays** offline (no retries); widgets disappear in game; `POST $GCP/reconnect` brings it back |
-| C6 | `gcp -X POST $GCP/stop-reconnect` while retries are pending (during C3) | `reconnect stop`, no more attempts |
+| C4 | After C3: `dce start dedicated`, then `tmcp -X POST $TMCP/reconnect` | `{ "connected": true }` |
+| C5 | `tmcp -X POST $TMCP/disconnect` | Disconnects and **stays** offline (no retries); widgets disappear in game; `POST $TMCP/reconnect` brings it back |
+| C6 | `tmcp -X POST $TMCP/stop-reconnect` while retries are pending (during C3) | `reconnect stop`, no more attempts |
 | C7 | Change `password` of the server row in MariaDB, publish `server.updated` | Reconnects with the new password, fails authentication and retries; restore the password and publish again → connected |
-| C7b | `gcp -X POST $GCP/disconnect`, rename the server in MariaDB, publish `server.updated` | The new name shows in `/ws/clients`; the server stays offline and does not reconnect. Changing the host, port, user or password instead reconnects at once |
+| C7b | `tmcp -X POST $TMCP/disconnect`, rename the server in MariaDB, publish `server.updated` | The new name shows in `/ws/clients`; the server stays offline and does not reconnect. Changing the host, port, user or password instead reconnects at once |
 | C8 | Stop the service with Ctrl+C mid-match and start it again | Clean shutdown log; after restart all widgets are drawn again for players already on the server |
 | C9 | `docker kill` the dedicated server while a player is driving | Same as C2; no unhandled errors, service keeps running |
 | C10 | Start the service with the dedicated server down, start the dedicated server ~5 min later | Service starts and serves `/health` (regression test for the ECONNREFUSED crash); it never connected, so it retries for 15 min (15 s apart, then every minute) and connects once the server is up |
@@ -90,27 +90,27 @@ Run with yourself on the server and `ws:watch live` / `players` / `map` open.
 | L2 | Spectate / play (switch with the in-game button) | `playerInfo` + `playerInfoChanged`; you leave and re-enter the active round |
 | L3 | Leave the server | `playerDisconnect` on both channels; `liveInfo.players[<you>].connected === false` |
 | L4 | Time attack: drive checkpoints and finish | `checkpoint` events with increasing `cp`; `finish`; `personalBest` on improvement only; one `records` row per finish with `round = NULL` |
-| L5 | Switch to rounds: `gcp -X POST $GCP/script -d '{"script":"Trackmania/TM_Rounds_Online.Script.txt"}'` then `gcp -X POST $GCP/gbx/call -d '{"method":"NextMap"}'` | On the next match: `modeChange` in the log, TA plugins unload, round plugins load; `liveInfo.type === "rounds"` |
+| L5 | Switch to rounds: `tmcp -X POST $TMCP/script -d '{"script":"Trackmania/TM_Rounds_Online.Script.txt"}'` then `tmcp -X POST $TMCP/gbx/call -d '{"method":"NextMap"}'` | On the next match: `modeChange` in the log, TA plugins unload, round plugins load; `liveInfo.type === "rounds"` |
 | L6 | Rounds: play 3 rounds (finish, give up, finish) | `beginRound` per round; `roundNumber` 1, 2, 3 in `records.round`; `giveUp` sets `hasGivenUp`; `endRound` carries match points |
 | L7 | Rounds with warm-up (`S_WarmUpNb: 1` via script settings) | `warmUpStart` / `warmUpStartRound` / `warmUpEnd`; **no** records during warm-up; round counting starts after warm-up |
-| L8 | Pause: `gcp -X POST $GCP/pause -d '{"paused":true}'`, wait, unpause | `isPaused` true then false; the paused round is not counted twice (check `records.round`) |
+| L8 | Pause: `tmcp -X POST $TMCP/pause -d '{"paused":true}'`, wait, unpause | `isPaused` true then false; the paused round is not counted twice (check `records.round`) |
 | L9 | `NextMap` | `endMap` / `beginMap` / `startMap` on `/ws/live` and `/ws/map`; new `maps` row with Nadeo metadata when credentials are set |
-| L10 | Change script settings: `gcp -X PUT $GCP/script-settings -d '{"settings":{"S_PointsLimit":30}}'` | `updatedSettings` with `limit=30` |
+| L10 | Change script settings: `tmcp -X PUT $TMCP/script-settings -d '{"settings":{"S_PointsLimit":30}}'` | `updatedSettings` with `limit=30` |
 | L11 | Cup / reverse cup / knockout / teams (one map each) | Correct `type`; finalist/eliminated flags and team points on `endRound`; elimination events in knockout |
-| L12 | `GET $GCP/live` at any point | Snapshot matches what the sockets showed |
+| L12 | `GET $TMCP/live` at any point | Snapshot matches what the sockets showed |
 
 ## 4. Commands and passthrough
 
 | ID | Steps | Expected |
 |---|---|---|
-| A1 | `gcp -X POST $GCP/chat -d '{"message":"hello"}'` and with `"login":"<you>"` | Broadcast / private message in game |
+| A1 | `tmcp -X POST $TMCP/chat -d '{"message":"hello"}'` and with `"login":"<you>"` | Broadcast / private message in game |
 | A2 | Configure all chat templates in MariaDB (`servers.scriptNameChangeMessage` etc.), restart the service, run script change, match settings load, settings save, add/remove/reorder maps | Each action posts its template once; map names are stripped of `$` codes |
-| A3 | `POST $GCP/maps` with one valid file, one missing file, then two files | Single add returns `{count:1}`; a missing single file returns 502 with the server's error; batch returns the added count |
-| A4 | `POST $GCP/maps/remove` with every map in the list | 409 `RemoveLastMapError`, nothing removed |
-| A5 | `PUT $GCP/maps/order` | Order changed in game (`GetMapList`) |
+| A3 | `POST $TMCP/maps` with one valid file, one missing file, then two files | Single add returns `{count:1}`; a missing single file returns 502 with the server's error; batch returns the added count |
+| A4 | `POST $TMCP/maps/remove` with every map in the list | 409 `RemoveLastMapError`, nothing removed |
+| A5 | `PUT $TMCP/maps/order` | Order changed in game (`GetMapList`) |
 | A6 | Player and team points (round/map/match) on a rounds/teams map | Points change on the scoreboard; `playerUpdated` / `teamUpdated` on `/ws/live`; map points don't alter round points |
-| A7 | `POST $GCP/gbx/call` with `StopServer` | 403 `MethodNotAllowed` |
-| A8 | `PUT $GCP/chat-config` with `manualRouting: true` and a `messageFormat` | Chat from players is re-sent in the format; `/help` still answers |
+| A7 | `POST $TMCP/gbx/call` with `StopServer` | 403 `MethodNotAllowed` |
+| A8 | `PUT $TMCP/chat-config` with `manualRouting: true` and a `messageFormat` | Chat from players is re-sent in the format; `/help` still answers |
 | A9 | Fake players: connect 3, kick one, ban/unban, guest list add/remove via passthrough | Same results as from the old panel |
 | A10 | Jukebox: `dce exec redis redis-cli rpush jukebox:e2e-server '{"fileName":"<file of another map>"}'`, finish the map | That map is next; the entry is popped |
 
@@ -134,7 +134,7 @@ Check each widget visually in the game client. Compare with screenshots from the
 | P12 | match | `/pause`, `/unpause`, `/lobby`, `/matchstop`, `/setseeds 2 1`; also as a non-admin | Admin: works and announces; non-admin: "not authorized" |
 | P13 | ecm | Open with `/ecm` and the action-group button; toggle recording, save an API key, change the round offset; as a non-editor (second account if available) | Config persisted in `server_plugins.config`; non-editors can't change it; with a real ECM key: finishes and rounds arrive in eCircuitMania |
 | P14 | all | Disable a plugin in `server_plugins`, publish `server.plugins.updated` | Its widgets disappear immediately, its commands stop answering |
-| P15 | all | `gcp -X POST $GCP/plugins/reload` and `POST $GCP/manialinks/resend` | Widgets redraw; nothing duplicated |
+| P15 | all | `tmcp -X POST $TMCP/plugins/reload` and `POST $TMCP/manialinks/resend` | Widgets redraw; nothing duplicated |
 | P16 | help | `/help`, `/help match`, then set `enableHelpCommand` false + `server.updated` | Plugin list and text; silent when disabled |
 
 ## 6. Resilience
@@ -144,7 +144,7 @@ Check each widget visually in the game client. Compare with screenshots from the
 | R1 | `dce stop db` during rounds, finish a few times, `dce start db` | Errors logged for records/players, service and sockets keep working; records resume after the database is back |
 | R2 | `dce stop redis` during a match | Jukebox and Nadeo token cache errors logged; live state and sockets unaffected; recovers when Redis is back |
 | R3 | Remove the `NADEO_*` values and restart | Everything works except WR/PB/metadata; widgets show `-`/0 |
-| R4 | Malformed lifecycle message: `redis-cli publish gcp:server-events 'nope'` | Warning logged, nothing else |
+| R4 | Malformed lifecycle message: `redis-cli publish tmcp:server-events 'nope'` | Warning logged, nothing else |
 | R4b | Break the HTTP route: set the web app's `GBX_SERVICE_URL` to a dead port, restart it, then toggle a plugin or delete a server | Web log: `GBX service request failed, event delivered over Redis instead`; the service still applies the change |
 | R5 | Open 20 `ws:watch live` sockets and close them, ten times over | Service memory (`ps -o rss -p <pid>`) returns to its baseline; no errors logged |
 | R6 | Soak: 1 h with fake players and some driving, plus 20 dedicated-server restarts (`for i in $(seq 20); do dce restart dedicated; sleep 40; done`) | Memory of the service process stable (`ps -o rss`), one callback handler per session, records counted once per finish |
@@ -164,7 +164,7 @@ The service must match the old behaviour apart from the fixed bugs listed in `ba
 
 The old web app only exists up to `refactor/monorepo-gbx-service`; `refactor/web-gbx-cutover` removes it. Check out that branch for step 1.
 
-1. Stop the service. Temporarily point `DATABASE_URL` and `REDIS_URI` in the root `.env` at the e2e stack (`mysql://gcp:gcp@localhost:53307/gcp_e2e`, `redis://localhost:56380`) and run `bun run dev` from the repo root. The web app connects to `e2e-server` itself. Restore the `.env` afterwards.
+1. Stop the service. Temporarily point `DATABASE_URL` and `REDIS_URI` in the root `.env` at the e2e stack (`mysql://tmcp:tmcp@localhost:53307/tmcp_e2e`, `redis://localhost:56380`) and run `bun run dev` from the repo root. The web app connects to `e2e-server` itself. Restore the `.env` afterwards.
 2. Play the scenario below; screenshot every widget; save the live dashboard's WebSocket frames (browser devtools → Network → WS → copy messages).
 3. Note the `matches`/`records` rows (`select round, count(*) from records where matchId = ... group by round`).
 4. Stop the web app and start the service (`bun run e2e:dev`), then repeat with `ws:watch live --full > service-live.log`.
@@ -186,7 +186,7 @@ From `refactor/web-gbx-cutover` on, the web app has no GBX connections of its ow
 
 ```bash
 DB=mysql
-DATABASE_URL=mysql://gcp:gcp@localhost:53307/gcp_e2e
+DATABASE_URL=mysql://tmcp:tmcp@localhost:53307/tmcp_e2e
 REDIS_URI=redis://localhost:56380
 GBX_SERVICE_URL=http://localhost:3101
 GBX_SERVICE_WS_URL=ws://localhost:3101
@@ -198,7 +198,7 @@ Keep `DEFAULT_ADMINS` with your login: your first login then turns the seeded us
 
 ```bash
 bun --env-file=.env.e2e run generate                    # MySQL Prisma client
-bun --env-file=.env.e2e run --filter @gcp/web dev       # http://localhost:3000
+bun --env-file=.env.e2e run --filter @tmcp/web dev       # http://localhost:3000
 ```
 
 Log in with the account from `E2E_ADMIN_LOGIN` and keep the browser devtools open on Network → WS.

@@ -1,8 +1,8 @@
 # Plugin SDK
 
-Plugins add widgets, windows, chat commands and automation to Trackmania servers managed by GoControlPanel. A plugin is a small package: a manifest, one JavaScript bundle and its manialink templates. Admins install it per server from the [marketplace](./plugin-marketplace.md), or upload it privately to their own panel. It runs in a sandbox and can only do what the admin allowed when they installed it.
+Plugins add widgets, windows, chat commands and automation to Trackmania servers managed by TMControlPanel. A plugin is a small package: a manifest, one JavaScript bundle and its manialink templates. Admins install it per server from the [marketplace](./plugin-marketplace.md), or upload it privately to their own panel. It runs in a sandbox and can only do what the admin allowed when they installed it.
 
-This guide is for plugin authors. For how panels run and review plugins, see [plugin-marketplace.md](./plugin-marketplace.md). The plugins that ship with GoControlPanel are written with this SDK too; see [first-party-plugins.md](./first-party-plugins.md).
+This guide is for plugin authors. For how panels run and review plugins, see [plugin-marketplace.md](./plugin-marketplace.md). The plugins that ship with TMControlPanel are written with this SDK too; see [first-party-plugins.md](./first-party-plugins.md).
 
 ## Quick start
 
@@ -14,7 +14,7 @@ tmcp-plugin pack             # builds and checks dist/my-plugin-0.1.0.zip
 
 Upload the zip on **Plugins → Uploaded**, then install it on one of your servers. It's private to you until you [publish it](#publishing-to-the-marketplace).
 
-> **The SDK is not on npm yet.** Until it is, run the CLI from a clone of this repository, for example `bun packages/plugin-sdk/src/cli/main.ts init ~/my-plugin`. The other commands work the same way. For editor types, install it from the clone: `npm install --save-dev ../gocontrolpanel/packages/plugin-sdk`. The build doesn't need it installed.
+> **The SDK is not on npm yet.** Until it is, run the CLI from a clone of this repository, for example `bun packages/plugin-sdk/src/cli/main.ts init ~/my-plugin`. The other commands work the same way. For editor types, install it from the clone: `npm install --save-dev ../tmcontrolpanel/packages/plugin-sdk`. The build doesn't need it installed.
 
 | Command | What it does |
 |---|---|
@@ -285,7 +285,7 @@ A plugin that is turned off stays off on that server until an admin turns it bac
 
 - Unit-test the plugin's own logic with any test runner. `definePlugin` only registers the plugin when it runs inside a panel.
 - Try it on a test server. Upload the zip on **Plugins → Uploaded**, install it on a server you're an admin of, and watch the GBX service log: everything the plugin logs carries its `pluginId`.
-- To work on GoControlPanel itself, `apps/gbx-service/test/plugins/sandbox.test.ts` runs packaged plugins against a fake dedicated server, and the [real-server test plan](./real-server-testing.md) covers a real one.
+- To work on TMControlPanel itself, `apps/gbx-service/test/plugins/sandbox.test.ts` runs packaged plugins against a fake dedicated server, and the [real-server test plan](./real-server-testing.md) covers a real one.
 
 ## Publishing to the marketplace
 

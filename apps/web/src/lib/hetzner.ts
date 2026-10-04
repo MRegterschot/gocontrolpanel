@@ -3,7 +3,7 @@ import "server-only";
 import config from "./config";
 import { getClient } from "./dbclient";
 import { logger } from "./logger";
-import { Prisma } from "@gcp/db";
+import { Prisma } from "@tmcp/db";
 import { getList } from "./utils";
 import { reportException } from "./sentry/report";
 

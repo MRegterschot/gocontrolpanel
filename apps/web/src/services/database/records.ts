@@ -1,7 +1,7 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { ServerResponse } from "@/types/responses";
-import { Records } from "@gcp/db";
+import { Records } from "@tmcp/db";
 import "server-only";
 
 export async function exportRecords(

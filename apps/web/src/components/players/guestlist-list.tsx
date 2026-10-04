@@ -1,6 +1,6 @@
 "use client";
 
-import { createColumns } from "@/app/(gocontroller)/server/[id]/players/guestlist-columns";
+import { createColumns } from "@/app/(tmcontrolpanel)/server/[id]/players/guestlist-columns";
 import GuestlistForm from "@/forms/server/players/guestlist-form";
 import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
 import { getGuestlist } from "@/lib/api-client/gbx";

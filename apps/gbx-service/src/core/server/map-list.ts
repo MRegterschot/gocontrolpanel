@@ -1,4 +1,4 @@
-import type { MapInfoMinimal, SMapInfo } from "@gcp/shared";
+import type { MapInfoMinimal, SMapInfo } from "@tmcp/shared";
 import { AppError } from "../errors";
 import type { GbxConnection } from "../gbx/connection";
 import type { Logger } from "../logger";

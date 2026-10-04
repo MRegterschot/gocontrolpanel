@@ -1,6 +1,6 @@
 import { getClient } from "@/lib/dbclient";
 import { decryptHetznerToken, encryptHetznerToken } from "@/lib/hetzner";
-import { HetznerServers } from "@gcp/db";
+import { HetznerServers } from "@tmcp/db";
 import "server-only";
 
 export async function getDBHetznerServer(

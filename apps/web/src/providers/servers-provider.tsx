@@ -4,7 +4,7 @@ import useWebSocket from "@/hooks/use-websocket";
 import { getCurrentId } from "@/lib/utils";
 import { connectionRoutes } from "@/routes";
 import { ServerError } from "@/types/responses";
-import { ServerInfo, wsPaths } from "@gcp/shared";
+import { ServerInfo, wsPaths } from "@tmcp/shared";
 import { usePathname, useRouter } from "next/navigation";
 import {
   createContext,

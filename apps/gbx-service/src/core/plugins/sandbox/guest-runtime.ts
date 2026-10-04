@@ -18,11 +18,11 @@ export function guestRuntime(global: any): void {
   const hostCall: (method: string, args: string) => string = global.__host_call;
   const hostAsync: (id: number, method: string, args: string) => void = global.__host_async;
   const Handlebars = global.Handlebars;
-  const layouts = global.__gcpLayouts;
+  const layouts = global.__tmcpLayouts;
   delete global.__host_call;
   delete global.__host_async;
   delete global.Handlebars;
-  delete global.__gcpLayouts;
+  delete global.__tmcpLayouts;
 
   const toError = (raw: any): Error => {
     const error = new Error(raw && typeof raw.message === "string" ? raw.message : "Host call failed");
@@ -362,7 +362,7 @@ export function guestRuntime(global: any): void {
     },
   };
 
-  Object.defineProperty(global, "__gcp", { value: Object.freeze(bridge) });
+  Object.defineProperty(global, "__tmcp", { value: Object.freeze(bridge) });
 }
 
 // The script the sandbox evaluates. tsx (dev mode) compiles with keepNames, which wraps functions in

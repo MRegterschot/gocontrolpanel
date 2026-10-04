@@ -1,5 +1,5 @@
-import type { NotificationDto, PlayerInfo, PluginManifest } from "@gcp/shared";
-import type { DbClient, Maps, Notifications, Prisma } from "@gcp/db";
+import type { NotificationDto, PlayerInfo, PluginManifest } from "@tmcp/shared";
+import type { DbClient, Maps, Notifications, Prisma } from "@tmcp/db";
 import type {
   FirstPartyInstall,
   FirstPartyRepository,

@@ -1,4 +1,4 @@
-import { GAME_MODE_TYPES, GameModeType } from "@gcp/shared";
+import { GAME_MODE_TYPES, GameModeType } from "@tmcp/shared";
 import type { Logger } from "../logger";
 
 // Order matters: "reversecup" must be matched before "cup"

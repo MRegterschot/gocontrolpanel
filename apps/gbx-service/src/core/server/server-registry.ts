@@ -1,4 +1,4 @@
-import type { ServerLifecycleEvent } from "@gcp/shared";
+import type { ServerLifecycleEvent } from "@tmcp/shared";
 import { AppError } from "../errors";
 import { TypedEventBus } from "../events";
 import type { Logger } from "../logger";

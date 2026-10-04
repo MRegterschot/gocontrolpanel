@@ -1,5 +1,5 @@
 import { packPlugin } from "@tmcontrolpanel/plugin-sdk/cli";
-import { createPluginPackage } from "@gcp/shared/plugin-package";
+import { createPluginPackage } from "@tmcp/shared/plugin-package";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -14,7 +14,7 @@ let outDir: string;
 let hello: Uint8Array;
 
 beforeAll(async () => {
-  outDir = mkdtempSync(join(tmpdir(), "gcp-sandbox-"));
+  outDir = mkdtempSync(join(tmpdir(), "tmcp-sandbox-"));
   hello = (await packPlugin(EXAMPLE, { outDir })).bytes;
 });
 

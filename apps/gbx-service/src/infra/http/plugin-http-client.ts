@@ -67,7 +67,7 @@ function publicLookup(hostname: string, options: { all?: boolean }, callback: Lo
 }
 
 export class HttpsPluginClient implements PluginHttpClient {
-  constructor(private readonly userAgent = "GoControlPanel-Plugin") {}
+  constructor(private readonly userAgent = "TMControlPanel-Plugin") {}
 
   fetch(input: PluginHttpRequest): Promise<PluginHttpResponse> {
     const url = new URL(input.url);

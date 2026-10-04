@@ -1,5 +1,5 @@
 import { getClient } from "@/lib/dbclient";
-import { Maps } from "@gcp/db";
+import { Maps } from "@tmcp/db";
 import "server-only";
 import { checkAndUpdateMapsInfoIfNeeded } from "./gbx";
 

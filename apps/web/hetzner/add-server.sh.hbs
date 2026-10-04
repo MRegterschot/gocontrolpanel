@@ -2,13 +2,13 @@
 
 set -x -e
 
-cd ~/gocontrolpanel-master/hetzner
+cd ~/tmcontrolpanel-master/hetzner
 
-STACK_DIR="/root/gocontrolpanel-master/hetzner/{{{stack_name}}}"
+STACK_DIR="/root/tmcontrolpanel-master/hetzner/{{{stack_name}}}"
 ENV_FILE="$STACK_DIR/.env"
 mkdir -p "$(dirname "$ENV_FILE")"
 
-COMPOSE_DIR="/root/gocontrolpanel-master/hetzner"
+COMPOSE_DIR="/root/tmcontrolpanel-master/hetzner"
 COMPOSE_FILES="-f $COMPOSE_DIR/docker-compose.yml"
 
 TM_SYSTEM_FORCE_IP_ADDRESS=$(dig +short myip.opendns.com @resolver1.opendns.com)

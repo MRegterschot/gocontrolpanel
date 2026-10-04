@@ -8,7 +8,7 @@ import { getRolesMinimal } from "@/lib/api-client/database";
 import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { getErrorMessage, getList, permissions } from "@/lib/utils";
 import { ServerError } from "@/types/responses";
-import { Users } from "@gcp/db";
+import { Users } from "@tmcp/db";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconClipboardPlus, IconDeviceFloppy } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";

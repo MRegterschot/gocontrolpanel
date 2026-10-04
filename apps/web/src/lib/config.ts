@@ -1,5 +1,5 @@
 import { Config } from "@/types/config";
-import { DEFAULT_MARKETPLACE_INDEX_URL } from "@gcp/shared";
+import { DEFAULT_MARKETPLACE_INDEX_URL } from "@tmcp/shared";
 import "dotenv/config";
 
 const config: Config = {

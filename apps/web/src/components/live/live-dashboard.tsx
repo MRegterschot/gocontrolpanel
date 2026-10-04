@@ -10,7 +10,7 @@ import {
   LiveInfo,
   SPlayerInfo,
   wsPaths,
-} from "@gcp/shared";
+} from "@tmcp/shared";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useState } from "react";

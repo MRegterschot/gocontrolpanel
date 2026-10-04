@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getErrorMessage } from "@/lib/utils";
-import { PlayerInfo } from "@gcp/shared";
+import { PlayerInfo } from "@tmcp/shared";
 import { ServerError } from "@/types/responses";
 import { IconCamera, IconSteeringWheelFilled } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
