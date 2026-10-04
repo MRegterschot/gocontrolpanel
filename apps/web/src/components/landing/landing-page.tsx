@@ -279,16 +279,9 @@ export default function LandingPage({
       {/* Features */}
       <section id="features" className="scroll-mt-8 py-24">
         <div className="mx-auto flex max-w-6xl flex-col gap-12 px-4 sm:px-6">
-          <div className="flex max-w-2xl flex-col gap-3">
-            <h2 className="text-3xl font-bold tracking-tight">
-              Everything a server admin does, in one place
-            </h2>
-            <p className="text-muted-foreground">
-              No more switching between the in-game console, an FTP client and
-              chat commands. Each page does one job and saves straight to the
-              server.
-            </p>
-          </div>
+          <h2 className="text-3xl font-bold tracking-tight">
+            Everything a server admin does, in one place
+          </h2>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {features.map(({ icon: Icon, title, description }) => (
