@@ -436,6 +436,7 @@ export default function MatchForm({
                   <Button
                     type="button"
                     variant="outline"
+                    className="w-fit"
                     onClick={() => appendAdmin({ login: "" })}
                   >
                     <IconPlus />

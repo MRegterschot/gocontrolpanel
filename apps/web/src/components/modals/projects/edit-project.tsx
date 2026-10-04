@@ -1,8 +1,9 @@
 "use client";
-import type { HetznerProjectsWithUsers } from "@/services/database/hetzner-projects";
+
+import { ModalContent } from "@/components/modals/modal";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EditProjectForm from "@/forms/admin/hetzner/edit-project-form";
-import { IconX } from "@tabler/icons-react";
-import { Card } from "../../ui/card";
+import type { HetznerProjectsWithUsers } from "@/services/database/hetzner-projects";
 import { DefaultModalProps } from "../default-props";
 
 export default function EditProjectModal({
@@ -12,28 +13,17 @@ export default function EditProjectModal({
 }: DefaultModalProps<HetznerProjectsWithUsers>) {
   if (!data) return null;
 
-  const stopPropagation = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
   const handleCallback = () => {
     onSubmit?.();
     closeModal?.();
   };
 
   return (
-    <Card
-      onClick={stopPropagation}
-      className="p-6 gap-6 sm:min-w-[400px] max-sm:w-full max-h-[90vh] overflow-y-auto"
-    >
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Edit {data.name}</h1>
-        <IconX
-          className="h-6 w-6 cursor-pointer text-muted-foreground"
-          onClick={closeModal}
-        />
-      </div>
+    <ModalContent>
+      <DialogHeader className="pr-6">
+        <DialogTitle>Edit {data.name}</DialogTitle>
+      </DialogHeader>
       <EditProjectForm project={data} callback={handleCallback} />
-    </Card>
+    </ModalContent>
   );
 }

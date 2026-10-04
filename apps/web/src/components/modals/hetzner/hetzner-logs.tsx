@@ -1,6 +1,6 @@
-import { getLogs } from "@/lib/api-client/hetzner";
+import { ModalContent } from "@/components/modals/modal";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -8,14 +8,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getLogs } from "@/lib/api-client/hetzner";
 import { HetznerServer } from "@/types/api/hetzner/servers";
-import { IconX } from "@tabler/icons-react";
+import { ServerError } from "@/types/responses";
 import { useState } from "react";
 import { DefaultModalProps } from "../default-props";
-import { ServerError } from "@/types/responses";
 
 export default function HetznerLogsModal({
-  closeModal,
   data,
 }: DefaultModalProps<{
   projectId: string;
@@ -30,10 +29,6 @@ export default function HetznerLogsModal({
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
 
   if (!data) return null;
-
-  const stopPropagation = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
 
   const loadLogs = async () => {
     try {
@@ -65,12 +60,9 @@ export default function HetznerLogsModal({
   };
 
   return (
-    <Card
-      onClick={stopPropagation}
-      className="p-6 gap-6 sm:min-w-100 max-sm:w-full max-h-[90vh] overflow-y-auto max-w-4xl"
-    >
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-bold">Logs</h1>
+    <ModalContent className="max-w-[min(56rem,calc(100vw-2rem))]">
+      <DialogHeader className="flex-row flex-wrap items-center justify-between pr-6">
+        <DialogTitle>Logs</DialogTitle>
 
         <div className="flex gap-4 items-center">
           <Select
@@ -100,13 +92,8 @@ export default function HetznerLogsModal({
               </SelectItem>
             </SelectContent>
           </Select>
-
-          <IconX
-            className="h-6 w-6 cursor-pointer text-muted-foreground"
-            onClick={closeModal}
-          />
         </div>
-      </div>
+      </DialogHeader>
 
       <div className="flex gap-2">
         <Button variant="outline" onClick={loadLogs} disabled={isLoadingLogs}>
@@ -123,6 +110,6 @@ export default function HetznerLogsModal({
           {logs || (isLoadingLogs ? "Loading logs..." : "No logs loaded yet.")}
         </pre>
       )}
-    </Card>
+    </ModalContent>
   );
 }

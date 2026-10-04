@@ -1,14 +1,14 @@
+import { ModalContent } from "@/components/modals/modal";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
 import { getHetznerServerMetrics } from "@/lib/api-client/hetzner";
 import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { capitalize, formatBytes, getErrorMessage } from "@/lib/utils";
 import { HetznerServerMetrics } from "@/types/api/hetzner/servers";
-import { IconX } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { Card } from "../../ui/card";
 import {
   ChartConfig,
   ChartContainer,
@@ -33,7 +33,6 @@ type MetricsData = {
 };
 
 export default function HetznerServerMetricsModal({
-  closeModal,
   data,
 }: DefaultModalProps<{
   projectId: string;
@@ -146,10 +145,6 @@ export default function HetznerServerMetricsModal({
 
   if (!data) return null;
 
-  const stopPropagation = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
   const cpuChartConfig: ChartConfig = {
     cpu: {
       label: "CPU Usage",
@@ -180,14 +175,9 @@ export default function HetznerServerMetricsModal({
   };
 
   return (
-    <Card
-      onClick={stopPropagation}
-      className="p-6 gap-6 sm:min-w-[400px] max-sm:w-full max-h-[90vh] overflow-y-auto"
-    >
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">
-          {isMobile ? "Metrics" : "Server Metrics"}
-        </h1>
+    <ModalContent className="max-w-[min(64rem,calc(100vw-2rem))]">
+      <DialogHeader className="flex-row flex-wrap items-center justify-between pr-6">
+        <DialogTitle>{isMobile ? "Metrics" : "Server Metrics"}</DialogTitle>
 
         <div className="flex gap-4 items-center">
           <ToggleGroup
@@ -224,13 +214,8 @@ export default function HetznerServerMetricsModal({
               </SelectItem>
             </SelectContent>
           </Select>
-
-          <IconX
-            className="h-6 w-6 cursor-pointer text-muted-foreground"
-            onClick={closeModal}
-          />
         </div>
-      </div>
+      </DialogHeader>
 
       {error ? (
         <span>{error}</span>
@@ -529,6 +514,6 @@ export default function HetznerServerMetricsModal({
           </ChartContainer>
         </div>
       )}
-    </Card>
+    </ModalContent>
   );
 }

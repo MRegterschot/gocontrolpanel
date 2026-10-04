@@ -1,9 +1,9 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
+import { ModalContent } from "@/components/modals/modal";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import SelectFolderForm from "@/forms/server/plugins/match/select-folder";
 import { LocalMapInfo } from "@/types/map";
-import { IconX } from "@tabler/icons-react";
 import { DefaultModalProps } from "../../default-props";
 
 export default function SelectFolderModal({
@@ -15,30 +15,18 @@ export default function SelectFolderModal({
     return null;
   }
 
-  const stopPropagation = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
   const handleSubmit = (maps: LocalMapInfo[]) => {
     closeModal?.();
     onSubmit?.(maps);
   };
 
   return (
-    <Card
-      onClick={stopPropagation}
-      className="p-6 gap-6 sm:min-w-100 max-sm:w-full max-h-[90vh] overflow-y-auto"
-    >
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Select Folder</h1>
-
-        <IconX
-          className="h-6 w-6 cursor-pointer text-muted-foreground ml-2"
-          onClick={closeModal}
-        />
-      </div>
+    <ModalContent>
+      <DialogHeader className="pr-6">
+        <DialogTitle>Select Folder</DialogTitle>
+      </DialogHeader>
 
       <SelectFolderForm localFolders={data} onSubmit={handleSubmit} />
-    </Card>
+    </ModalContent>
   );
 }

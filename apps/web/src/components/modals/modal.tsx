@@ -1,14 +1,39 @@
 "use client";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import {
   Children,
   cloneElement,
+  ComponentProps,
+  createContext,
   Dispatch,
   isValidElement,
   PropsWithChildren,
   ReactElement,
+  useContext,
   useState,
 } from "react";
 import { DefaultModalProps } from "./default-props";
+
+const BackdropCloseContext = createContext(true);
+
+export function ModalContent(props: ComponentProps<typeof DialogContent>) {
+  const closeOnBackdropClick = useContext(BackdropCloseContext);
+
+  return (
+    <DialogContent
+      aria-describedby={undefined}
+      {...props}
+      onClick={(event) => {
+        props.onClick?.(event);
+        event.stopPropagation();
+      }}
+      onPointerDownOutside={(event) => {
+        props.onPointerDownOutside?.(event);
+        if (!closeOnBackdropClick) event.preventDefault();
+      }}
+    />
+  );
+}
 
 interface ModalProps {
   isOpen?: boolean;
@@ -43,10 +68,6 @@ export default function Modal({
     triggerElement = childrenArray[1] as ReactElement<{ onClick?: () => void }>;
   }
 
-  const handleBackdropClick = () => {
-    if (closeOnBackdropClick) setIsOpen(false);
-  };
-
   const closeModal = () => {
     setIsOpen(false);
     if (onClose) {
@@ -55,22 +76,19 @@ export default function Modal({
   };
 
   return (
-    <>
-      {triggerElement &&
-        cloneElement(triggerElement, {
-          onClick: () => setIsOpen(true),
-        })}
-
-      {isOpen && modalElement && (
-        <div
-          className="fixed top-0 left-0 z-[9998] p-4 flex h-screen w-screen items-center justify-center bg-black/50"
-          onClick={handleBackdropClick}
-        >
-          {cloneElement(modalElement, {
-            closeModal: closeModal,
-          })}
-        </div>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (open) setIsOpen(true);
+        else closeModal();
+      }}
+    >
+      {triggerElement && (
+        <DialogTrigger asChild>{triggerElement}</DialogTrigger>
       )}
-    </>
+      <BackdropCloseContext.Provider value={closeOnBackdropClick}>
+        {isOpen && modalElement && cloneElement(modalElement, { closeModal })}
+      </BackdropCloseContext.Provider>
+    </Dialog>
   );
 }

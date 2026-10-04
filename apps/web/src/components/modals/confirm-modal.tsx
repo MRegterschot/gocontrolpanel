@@ -1,7 +1,14 @@
 "use client";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { IconCancel, IconCheck } from "@tabler/icons-react";
-import { useEffect } from "react";
 import { Button } from "../ui/button";
 
 interface ConfirmModalProps {
@@ -31,36 +38,19 @@ export default function ConfirmModal({
   cancelText,
   variant = "destructive",
 }: ConfirmModalProps) {
-  // Close on ESC key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    };
-    if (isOpen) {
-      window.addEventListener("keydown", handleKeyDown);
-    }
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={onClose}
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
     >
-      <div
-        className="bg-white dark:bg-zinc-900 rounded-xl shadow-lg w-full max-w-md p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="text-lg font-bold">{title}</h2>
-        <p className="text-sm text-muted-foreground mt-1 text-wrap">
-          {description}
-        </p>
-
-        <div className="mt-6 flex justify-end gap-2">
+      <DialogContent onClick={(event) => event.stopPropagation()}>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             <IconCancel />
             {cancelText}
@@ -75,8 +65,8 @@ export default function ConfirmModal({
             <IconCheck />
             {confirmText}
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

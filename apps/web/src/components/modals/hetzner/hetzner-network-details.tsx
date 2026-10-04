@@ -1,30 +1,18 @@
+import { ModalContent } from "@/components/modals/modal";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HetznerNetwork } from "@/types/api/hetzner/networks";
-import { IconX } from "@tabler/icons-react";
-import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
 
 export default function HetznerNetworkDetailsModal({
-  closeModal,
   data,
 }: DefaultModalProps<HetznerNetwork>) {
   if (!data) return null;
 
-  const stopPropagation = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
   return (
-    <Card
-      onClick={stopPropagation}
-      className="p-6 gap-6 sm:min-w-[400px] max-sm:w-full max-h-[90vh] overflow-y-auto"
-    >
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Network Details</h1>
-        <IconX
-          className="h-6 w-6 cursor-pointer text-muted-foreground"
-          onClick={closeModal}
-        />
-      </div>
+    <ModalContent className="max-w-[min(64rem,calc(100vw-2rem))]">
+      <DialogHeader className="pr-6">
+        <DialogTitle>Network Details</DialogTitle>
+      </DialogHeader>
 
       <div className="gap-4 grid md:grid-cols-2 md:gap-8">
         <div className="flex flex-col gap-4">
@@ -121,6 +109,6 @@ export default function HetznerNetworkDetailsModal({
           </div>
         </div>
       </div>
-    </Card>
+    </ModalContent>
   );
 }

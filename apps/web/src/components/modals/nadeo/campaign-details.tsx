@@ -1,10 +1,13 @@
 "use client";
+
 import {
   addCampaignToServer,
   downloadCampaign,
 } from "@/actions/nadeo/campaigns";
+import { ModalContent } from "@/components/modals/modal";
 import PlaylistMapCard from "@/components/nadeo/playlist-map-card";
 import { Button } from "@/components/ui/button";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
 import { getClubCampaignWithMaps } from "@/lib/api-client/nadeo";
@@ -12,12 +15,7 @@ import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { getErrorMessage } from "@/lib/utils";
 import { ClubActivity } from "@/types/api/nadeo";
 import { ServerError } from "@/types/responses";
-import {
-  IconDownload,
-  IconMapPlus,
-  IconPhoto,
-  IconX,
-} from "@tabler/icons-react";
+import { IconDownload, IconMapPlus, IconPhoto } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useState } from "react";
@@ -27,7 +25,6 @@ import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
 
 export default function CampaignDetailsModal({
-  closeModal,
   data,
 }: DefaultModalProps<{
   activity: ClubActivity;
@@ -141,24 +138,13 @@ export default function CampaignDetailsModal({
     }
   };
 
-  const stopPropagation = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
   if (!data) return null;
 
   return (
-    <Card
-      onClick={stopPropagation}
-      className="p-6 gap-6 sm:min-w-[400px] max-sm:w-full max-h-[90vh] overflow-y-auto"
-    >
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Campaign Details</h1>
-        <IconX
-          className="h-6 w-6 cursor-pointer text-muted-foreground"
-          onClick={closeModal}
-        />
-      </div>
+    <ModalContent className="max-w-[min(64rem,calc(100vw-2rem))]">
+      <DialogHeader className="pr-6">
+        <DialogTitle>Campaign Details</DialogTitle>
+      </DialogHeader>
 
       {loading && <span>Loading...</span>}
 
@@ -267,6 +253,6 @@ export default function CampaignDetailsModal({
           </div>
         </div>
       )}
-    </Card>
+    </ModalContent>
   );
 }

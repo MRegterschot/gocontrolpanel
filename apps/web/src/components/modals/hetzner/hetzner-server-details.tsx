@@ -1,24 +1,19 @@
+import { ModalContent } from "@/components/modals/modal";
 import { Button } from "@/components/ui/button";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HetznerServer } from "@/types/api/hetzner/servers";
-import { IconX } from "@tabler/icons-react";
 import Flag from "react-world-flags";
-import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
 import Modal from "../modal";
 import HetznerTMServersModal from "./hetzner-tmservers";
 
 export default function HetznerServerDetailsModal({
-  closeModal,
   data,
 }: DefaultModalProps<{
   projectId: string;
   server: HetznerServer;
 }>) {
   if (!data) return null;
-
-  const stopPropagation = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
 
   const pricing = data.server.server_type.prices.find(
     (price) => price.location === data.server.location.name,
@@ -39,17 +34,10 @@ export default function HetznerServerDetailsModal({
   );
 
   return (
-    <Card
-      onClick={stopPropagation}
-      className="p-6 gap-6 sm:min-w-100 max-sm:w-full max-h-[90vh] overflow-y-auto"
-    >
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Server Details</h1>
-        <IconX
-          className="h-6 w-6 cursor-pointer text-muted-foreground"
-          onClick={closeModal}
-        />
-      </div>
+    <ModalContent className="max-w-[min(64rem,calc(100vw-2rem))]">
+      <DialogHeader className="pr-6">
+        <DialogTitle>Server Details</DialogTitle>
+      </DialogHeader>
 
       <div className="gap-4 grid md:grid-cols-2 md:gap-8">
         <div className="flex flex-col gap-4">
@@ -300,6 +288,6 @@ export default function HetznerServerDetailsModal({
           </div>
         </div>
       </div>
-    </Card>
+    </ModalContent>
   );
 }

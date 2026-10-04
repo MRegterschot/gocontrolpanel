@@ -1,12 +1,13 @@
-import type { MatchesWithMapAndRecords } from "@/services/database/matches";
+import { ModalContent } from "@/components/modals/modal";
 import { DataTable } from "@/components/table/data-table";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatTime } from "@/lib/utils";
+import type { MatchesWithMapAndRecords } from "@/services/database/matches";
 import {
   IconPhoto,
   IconScript,
   IconStopwatch,
   IconUser,
-  IconX,
 } from "@tabler/icons-react";
 import Image from "next/image";
 import { parseTmTags } from "tmtags";
@@ -15,14 +16,9 @@ import { DefaultModalProps } from "../default-props";
 import { createColumns } from "./match-details-columns";
 
 export default function MatchDetailsModal({
-  closeModal,
   data,
 }: DefaultModalProps<MatchesWithMapAndRecords>) {
   if (!data) return null;
-
-  const stopPropagation = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
 
   const columns = createColumns(
     data.records.some((record) => record.round),
@@ -30,17 +26,10 @@ export default function MatchDetailsModal({
   );
 
   return (
-    <Card
-      onClick={stopPropagation}
-      className="p-6 gap-6 sm:min-w-[400px] max-sm:w-full max-h-[90vh] overflow-y-auto"
-    >
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Match Details</h1>
-        <IconX
-          className="h-6 w-6 cursor-pointer text-muted-foreground"
-          onClick={closeModal}
-        />
-      </div>
+    <ModalContent className="max-w-[min(64rem,calc(100vw-2rem))]">
+      <DialogHeader className="pr-6">
+        <DialogTitle>Match Details</DialogTitle>
+      </DialogHeader>
 
       <div className="flex flex-col-reverse sm:flex-row gap-4 flex-1 min-h-0 max-w-full">
         <DataTable
@@ -99,6 +88,6 @@ export default function MatchDetailsModal({
           </div>
         </Card>
       </div>
-    </Card>
+    </ModalContent>
   );
 }

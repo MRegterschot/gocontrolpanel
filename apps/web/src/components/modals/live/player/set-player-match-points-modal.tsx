@@ -1,8 +1,9 @@
 "use client";
-import { Card } from "@/components/ui/card";
+
+import { ModalContent } from "@/components/modals/modal";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import SetPlayerMatchPointsForm from "@/forms/server/live/player/set-player-match-points-form";
 import { PlayerRound } from "@gcp/shared";
-import { IconX } from "@tabler/icons-react";
 import { DefaultModalProps } from "../../default-props";
 
 export default function SetPlayerMatchPointsModal({
@@ -12,28 +13,17 @@ export default function SetPlayerMatchPointsModal({
 }: DefaultModalProps<PlayerRound>) {
   if (!data || !serverId) return null;
 
-  const stopPropagation = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
   return (
-    <Card
-      onClick={stopPropagation}
-      className="p-6 gap-6 sm:min-w-[400px] max-sm:w-full max-h-[90vh] overflow-y-auto"
-    >
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Set Points for {data.name}</h1>
-        <IconX
-          className="h-6 w-6 cursor-pointer text-muted-foreground"
-          onClick={closeModal}
-        />
-      </div>
+    <ModalContent>
+      <DialogHeader className="pr-6">
+        <DialogTitle>Set Points for {data.name}</DialogTitle>
+      </DialogHeader>
       <SetPlayerMatchPointsForm
         serverId={serverId}
         login={data.login}
         points={data.matchPoints}
         callback={closeModal}
       />
-    </Card>
+    </ModalContent>
   );
 }

@@ -1,30 +1,18 @@
+import { ModalContent } from "@/components/modals/modal";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { AuditLogsWithUsers } from "@/services/database/audit-logs";
-import { IconX } from "@tabler/icons-react";
-import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
 
 export default function AuditLogDetailsModal({
-  closeModal,
   data,
 }: DefaultModalProps<AuditLogsWithUsers>) {
   if (!data) return null;
 
-  const stopPropagation = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
   return (
-    <Card
-      onClick={stopPropagation}
-      className="p-6 gap-6 sm:min-w-[400px] max-sm:w-full max-h-[90vh] overflow-y-auto"
-    >
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Log Details</h1>
-        <IconX
-          className="h-6 w-6 cursor-pointer text-muted-foreground"
-          onClick={closeModal}
-        />
-      </div>
+    <ModalContent>
+      <DialogHeader className="pr-6">
+        <DialogTitle>Log Details</DialogTitle>
+      </DialogHeader>
 
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
@@ -64,12 +52,10 @@ export default function AuditLogDetailsModal({
         {data.error && (
           <div className="flex flex-col gap-2">
             <h4 className="text-muted-foreground">Error</h4>
-            <span className="truncate">
-              {data.error}
-            </span>
+            <span className="truncate">{data.error}</span>
           </div>
         )}
       </div>
-    </Card>
+    </ModalContent>
   );
 }

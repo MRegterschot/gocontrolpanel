@@ -1,6 +1,9 @@
 "use client";
+
 import { addRoomToServer, downloadRoom } from "@/actions/nadeo/clubs";
+import { ModalContent } from "@/components/modals/modal";
 import { Button } from "@/components/ui/button";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
 import { getClubRoomWithNamesAndMaps } from "@/lib/api-client/nadeo";
@@ -25,7 +28,6 @@ import { DefaultModalProps } from "../default-props";
 import ActivityMapCard from "./activity-map-card";
 
 export default function RoomDetailsModal({
-  closeModal,
   data,
 }: DefaultModalProps<{
   activity: ClubActivity;
@@ -128,24 +130,13 @@ export default function RoomDetailsModal({
     }
   };
 
-  const stopPropagation = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
   if (!data) return null;
 
   return (
-    <Card
-      onClick={stopPropagation}
-      className="p-6 gap-6 sm:min-w-[400px] max-sm:w-full max-h-[90vh] overflow-y-auto"
-    >
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Room Details</h1>
-        <IconX
-          className="h-6 w-6 cursor-pointer text-muted-foreground"
-          onClick={closeModal}
-        />
-      </div>
+    <ModalContent className="max-w-[min(64rem,calc(100vw-2rem))]">
+      <DialogHeader className="pr-6">
+        <DialogTitle>Room Details</DialogTitle>
+      </DialogHeader>
 
       {loading && <span>Loading...</span>}
 
@@ -312,6 +303,6 @@ export default function RoomDetailsModal({
           )}
         </div>
       )}
-    </Card>
+    </ModalContent>
   );
 }

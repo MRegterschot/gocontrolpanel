@@ -1,8 +1,9 @@
 "use client";
+
+import { ModalContent } from "@/components/modals/modal";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import CreateFileEntryForm from "@/forms/server/files/create-file-entry-form";
 import { FileEntry } from "@/types/filemanager";
-import { IconX } from "@tabler/icons-react";
-import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
 
 export default function CreateFileEntryModal({
@@ -16,29 +17,16 @@ export default function CreateFileEntryModal({
   path: string;
   isDir?: boolean;
 } & DefaultModalProps<void, FileEntry>) {
-  const stopPropagation = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
   const handleSubmit = (fileEntry: FileEntry) => {
     onSubmit?.(fileEntry);
     closeModal?.();
   };
 
   return (
-    <Card
-      onClick={stopPropagation}
-      className="p-6 gap-6 sm:min-w-[400px] max-sm:w-full max-h-[90vh] overflow-y-auto"
-    >
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">
-          {isDir ? "Create Directory" : "Create File"}
-        </h1>
-        <IconX
-          className="h-6 w-6 cursor-pointer text-muted-foreground"
-          onClick={closeModal}
-        />
-      </div>
+    <ModalContent>
+      <DialogHeader className="pr-6">
+        <DialogTitle>{isDir ? "Create Directory" : "Create File"}</DialogTitle>
+      </DialogHeader>
 
       <CreateFileEntryForm
         serverId={serverId}
@@ -46,6 +34,6 @@ export default function CreateFileEntryModal({
         isDir={isDir}
         callback={handleSubmit}
       />
-    </Card>
+    </ModalContent>
   );
 }

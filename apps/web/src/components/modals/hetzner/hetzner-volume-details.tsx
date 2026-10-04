@@ -1,31 +1,19 @@
+import { ModalContent } from "@/components/modals/modal";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HetznerVolume } from "@/types/api/hetzner/volumes";
-import { IconX } from "@tabler/icons-react";
 import Flag from "react-world-flags";
-import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
 
 export default function HetznerVolumeDetailsModal({
-  closeModal,
   data,
 }: DefaultModalProps<HetznerVolume>) {
   if (!data) return null;
 
-  const stopPropagation = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
   return (
-    <Card
-      onClick={stopPropagation}
-      className="p-6 gap-6 sm:min-w-[400px] max-sm:w-full max-h-[90vh] overflow-y-auto"
-    >
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Volume Details</h1>
-        <IconX
-          className="h-6 w-6 cursor-pointer text-muted-foreground"
-          onClick={closeModal}
-        />
-      </div>
+    <ModalContent className="max-w-[min(64rem,calc(100vw-2rem))]">
+      <DialogHeader className="pr-6">
+        <DialogTitle>Volume Details</DialogTitle>
+      </DialogHeader>
 
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
@@ -84,6 +72,6 @@ export default function HetznerVolumeDetailsModal({
           </div>
         </div>
       </div>
-    </Card>
+    </ModalContent>
   );
 }

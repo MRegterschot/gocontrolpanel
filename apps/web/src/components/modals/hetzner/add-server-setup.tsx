@@ -1,4 +1,7 @@
 "use client";
+
+import { ModalContent } from "@/components/modals/modal";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import AdvancedServerSetupForm from "@/forms/admin/hetzner/setup-steps/advanced/server-setup-form";
 import SimpleServerSetupForm from "@/forms/admin/hetzner/setup-steps/simple/server-setup-form";
 import {
@@ -10,9 +13,7 @@ import {
 } from "@/hooks/use-hetzner-queries";
 import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
 import { getErrorMessage } from "@/lib/utils";
-import { IconX } from "@tabler/icons-react";
 import { useState } from "react";
-import { Card } from "../../ui/card";
 import {
   Select,
   SelectContent,
@@ -75,23 +76,16 @@ export default function AddServerSetupModal({
 
   if (!data) return null;
 
-  const stopPropagation = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
   const handleSubmit = () => {
     onSubmit?.();
     closeModal?.();
   };
 
   return (
-    <Card
-      onClick={stopPropagation}
-      className="p-6 gap-6 sm:min-w-[400px] max-sm:w-full max-h-[90vh] overflow-y-auto"
-    >
-      <div className="flex items-center justify-between">
+    <ModalContent className="max-w-[min(64rem,calc(100vw-2rem))]">
+      <DialogHeader className="flex-row flex-wrap items-center justify-between pr-6">
         <div className="flex gap-4 items-center">
-          <h1 className="text-xl font-bold">Add Server</h1>
+          <DialogTitle>Add Server</DialogTitle>
 
           <Select
             value={mode}
@@ -116,11 +110,7 @@ export default function AddServerSetupModal({
             </SelectContent>
           </Select>
         </div>
-        <IconX
-          className="h-6 w-6 cursor-pointer text-muted-foreground"
-          onClick={closeModal}
-        />
-      </div>
+      </DialogHeader>
 
       {loading && <span className="text-muted-foreground">Loading...</span>}
 
@@ -152,6 +142,6 @@ export default function AddServerSetupModal({
           )}
         </>
       )}
-    </Card>
+    </ModalContent>
   );
 }

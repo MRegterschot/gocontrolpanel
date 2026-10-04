@@ -1,7 +1,8 @@
 "use client";
+
+import { ModalContent } from "@/components/modals/modal";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import AddHetznerDatabaseForm from "@/forms/admin/hetzner/database/add-hetzner-database-form";
-import { IconX } from "@tabler/icons-react";
-import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
 
 export default function AddHetznerDatabaseModal({
@@ -11,29 +12,18 @@ export default function AddHetznerDatabaseModal({
 }: DefaultModalProps<string>) {
   if (!data) return null;
 
-  const stopPropagation = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
   const handleSubmit = () => {
     onSubmit?.();
     closeModal?.();
   };
 
   return (
-    <Card
-      onClick={stopPropagation}
-      className="p-6 gap-6 sm:min-w-[400px] max-sm:w-full max-h-[90vh] overflow-y-auto"
-    >
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Add Database</h1>
-        <IconX
-          className="h-6 w-6 cursor-pointer text-muted-foreground"
-          onClick={closeModal}
-        />
-      </div>
+    <ModalContent>
+      <DialogHeader className="pr-6">
+        <DialogTitle>Add Database</DialogTitle>
+      </DialogHeader>
 
       <AddHetznerDatabaseForm projectId={data} callback={handleSubmit} />
-    </Card>
+    </ModalContent>
   );
 }

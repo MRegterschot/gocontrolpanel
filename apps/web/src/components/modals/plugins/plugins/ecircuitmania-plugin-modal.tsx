@@ -1,15 +1,16 @@
 "use client";
 
-import { exportServerPluginConfig } from "@/lib/api-client/database";
+import { ModalContent } from "@/components/modals/modal";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import ECMForm from "@/forms/server/plugins/ecm/ecm-form";
+import { exportServerPluginConfig } from "@/lib/api-client/database";
 import { getErrorMessage } from "@/lib/utils";
 import { ECMPluginConfig } from "@/types/plugins/ecm";
-import { IconDownload, IconX } from "@tabler/icons-react";
+import { ServerError } from "@/types/responses";
+import { IconDownload } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { DefaultModalProps } from "../../default-props";
-import { ServerError } from "@/types/responses";
 
 export default function EcircuitmaniaPluginModal({
   serverId,
@@ -26,10 +27,6 @@ export default function EcircuitmaniaPluginModal({
   if (!serverId || !data || !data.pluginId) {
     return null;
   }
-
-  const stopPropagation = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
 
   const handleSubmit = (config: ECMPluginConfig) => {
     closeModal?.();
@@ -63,24 +60,16 @@ export default function EcircuitmaniaPluginModal({
   };
 
   return (
-    <Card
-      onClick={stopPropagation}
-      className="p-6 gap-6 sm:min-w-100 max-sm:w-full max-h-[90vh] overflow-y-auto"
-    >
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">eCircuitMania Plugin</h1>
+    <ModalContent>
+      <DialogHeader className="flex-row flex-wrap items-center justify-between pr-6">
+        <DialogTitle>eCircuitMania Plugin</DialogTitle>
 
         <div className="flex gap-2 items-center">
           <Button size={"icon"} variant={"outline"} onClick={handleExport}>
             <IconDownload />
           </Button>
-
-          <IconX
-            className="h-6 w-6 cursor-pointer text-muted-foreground ml-2"
-            onClick={closeModal}
-          />
         </div>
-      </div>
+      </DialogHeader>
 
       <ECMForm
         serverId={serverId}
@@ -89,6 +78,6 @@ export default function EcircuitmaniaPluginModal({
         onSubmit={handleSubmit}
         onClose={closeModal}
       />
-    </Card>
+    </ModalContent>
   );
 }

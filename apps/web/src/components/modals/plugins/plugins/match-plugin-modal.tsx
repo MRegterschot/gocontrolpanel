@@ -1,13 +1,14 @@
 "use client";
 
-import { exportServerPluginConfig } from "@/lib/api-client/database";
+import { ModalContent } from "@/components/modals/modal";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import MatchForm from "@/forms/server/plugins/match/match-form";
+import { exportServerPluginConfig } from "@/lib/api-client/database";
 import { getErrorMessage } from "@/lib/utils";
 import { MatchPluginConfig } from "@/types/plugins/match";
 import { ServerError } from "@/types/responses";
-import { IconDownload, IconX } from "@tabler/icons-react";
+import { IconDownload } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { DefaultModalProps } from "../../default-props";
 
@@ -26,10 +27,6 @@ export default function MatchPluginModal({
   if (!serverId || !data || !data.pluginId) {
     return null;
   }
-
-  const stopPropagation = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
 
   const handleSubmit = (config: MatchPluginConfig) => {
     closeModal?.();
@@ -63,24 +60,16 @@ export default function MatchPluginModal({
   };
 
   return (
-    <Card
-      onClick={stopPropagation}
-      className="p-6 gap-6 sm:min-w-100 max-sm:w-full max-h-[90vh] overflow-y-auto"
-    >
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Match Plugin</h1>
+    <ModalContent>
+      <DialogHeader className="flex-row flex-wrap items-center justify-between pr-6">
+        <DialogTitle>Match Plugin</DialogTitle>
 
         <div className="flex gap-2 items-center">
           <Button size={"icon"} variant={"outline"} onClick={handleExport}>
             <IconDownload />
           </Button>
-
-          <IconX
-            className="h-6 w-6 cursor-pointer text-muted-foreground ml-2"
-            onClick={closeModal}
-          />
         </div>
-      </div>
+      </DialogHeader>
 
       <MatchForm
         serverId={serverId}
@@ -89,6 +78,6 @@ export default function MatchPluginModal({
         onSubmit={handleSubmit}
         onClose={closeModal}
       />
-    </Card>
+    </ModalContent>
   );
 }

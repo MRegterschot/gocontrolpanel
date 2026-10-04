@@ -1,6 +1,11 @@
 "use client";
 
-import { restartTrackmaniaServer, stopTrackmaniaServer } from "@/actions/hetzner/server-actions";
+import { ModalContent } from "@/components/modals/modal";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  restartTrackmaniaServer,
+  stopTrackmaniaServer,
+} from "@/actions/hetzner/server-actions";
 import { deleteTrackmaniaServer } from "@/actions/hetzner/server-setup";
 import {
   Accordion,
@@ -11,14 +16,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { HetznerServer } from "@/types/api/hetzner/servers";
+import { ServerError } from "@/types/responses";
 import { IconLogs, IconRefresh, IconTrash, IconX } from "@tabler/icons-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
 import Modal from "../modal";
 import HetznerLogsModal from "./hetzner-logs";
-import { ServerError } from "@/types/responses";
 
 export default function HetznerTMServersModal({
   closeModal,
@@ -32,10 +36,6 @@ export default function HetznerTMServersModal({
   const [isStopping, setIsStopping] = useState<number | null>(null);
 
   if (!data) return null;
-
-  const stopPropagation = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
 
   const servers: Record<
     string,
@@ -142,17 +142,10 @@ export default function HetznerTMServersModal({
   };
 
   return (
-    <Card
-      onClick={stopPropagation}
-      className="p-6 gap-6 sm:min-w-100 max-sm:w-full max-h-[90vh] overflow-y-auto"
-    >
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Trackmania Servers</h1>
-        <IconX
-          className="h-6 w-6 cursor-pointer text-muted-foreground"
-          onClick={closeModal}
-        />
-      </div>
+    <ModalContent className="max-w-[min(64rem,calc(100vw-2rem))]">
+      <DialogHeader className="pr-6">
+        <DialogTitle>Trackmania Servers</DialogTitle>
+      </DialogHeader>
 
       <Accordion type="multiple" className="w-full">
         {Object.keys(servers).map((serverNumber) => (
@@ -255,6 +248,6 @@ export default function HetznerTMServersModal({
           </AccordionItem>
         ))}
       </Accordion>
-    </Card>
+    </ModalContent>
   );
 }
