@@ -1,3 +1,4 @@
+import { BrandMark } from "@/components/brand-mark";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,7 +12,6 @@ import {
   IconBrandGithub,
   IconBroadcast,
   IconCloud,
-  IconDeviceGamepad2,
   IconFolders,
   IconHistory,
   IconMap,
@@ -175,9 +175,7 @@ export default function LandingPage({
       <header className="absolute inset-x-0 top-0 z-20">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <a href="#" className="flex items-center gap-2 text-white">
-            <span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <IconDeviceGamepad2 className="size-5" />
-            </span>
+            <BrandMark className="size-9 shrink-0" />
             <span className="text-lg font-bold">TMControlPanel</span>
           </a>
           <nav
