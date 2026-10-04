@@ -8,9 +8,9 @@ import type { ActionRouter } from "../manialink/action-router";
 import type { ActionGroup } from "../manialink/components/action-group";
 import { Manialink, type ManialinkDeps } from "../manialink/components/manialink";
 import { Window } from "../manialink/components/window";
+import type { ManialinkService } from "../manialink/manialink-service";
 import type {
   Clock,
-  EcmClient,
   NadeoRecordsProvider,
   NotificationRepository,
   RecordRepository,
@@ -45,8 +45,9 @@ export interface PluginServices {
   servers: ServerRepository;
   notifications: NotificationRepository;
   nadeo: NadeoRecordsProvider;
-  ecm: EcmClient;
   clock: Clock;
+  manialinks: ManialinkService;
+  disablePlugin(pluginId: string, name: string, reason: string): Promise<void>;
 }
 
 function parseConfig(
@@ -71,6 +72,8 @@ export function createPluginContext(
 ): ScopedContext {
   const cleanup = new CleanupStack();
   const log = services.log.child({ pluginId: definition.id });
+  const pages = new Set<string>();
+  const pageKey = (id: string, login?: string) => `${login ?? ""}\u0000${id}`;
   let config = parseConfig(definition, record.config, log);
 
   const ctx: PluginContext<unknown> = {
@@ -82,7 +85,6 @@ export function createPluginContext(
     chat: services.chat,
     mapList: services.mapList,
     nadeo: services.nadeo,
-    ecm: services.ecm,
 
     config: () => config,
     serverName: services.serverName,
@@ -131,6 +133,24 @@ export function createPluginContext(
       removeAction(name) {
         services.actionGroup.remove(name);
       },
+      page: {
+        display(id, xml, login) {
+          if (!pages.has(pageKey(id, login))) {
+            pages.add(pageKey(id, login));
+            cleanup.add(() => {
+              if (pages.delete(pageKey(id, login))) services.manialinks.destroy(id, login);
+            });
+          }
+          services.manialinks.display(id, xml, login);
+        },
+        hide(id, login) {
+          services.manialinks.hide(id, login);
+        },
+        destroy(id, login) {
+          pages.delete(pageKey(id, login));
+          services.manialinks.destroy(id, login);
+        },
+      },
     },
 
     players: {
@@ -147,6 +167,7 @@ export function createPluginContext(
       forPlayers: (mapUid, logins) =>
         services.records.findPlayerRecords(services.serverId, mapUid, logins),
     },
+    disable: (reason) => services.disablePlugin(record.pluginId, definition.id, reason),
     async notifyAdmins(message, description) {
       const notifications = await services.notifications.createForServerAdmins({
         serverId: services.serverId,

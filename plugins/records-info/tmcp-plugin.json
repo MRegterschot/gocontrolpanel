@@ -1,0 +1,15 @@
+{
+  "slug": "records-info",
+  "name": "Records Info",
+  "version": "1.0.0",
+  "sdk": 1,
+  "description": "A widget that shows the records for the current map. This includes the world record and the local server record.",
+  "author": "GoControlPanel",
+  "license": "MIT",
+  "repository": "https://github.com/MRegterschot/gocontrolpanel",
+  "capabilities": [
+    "ui",
+    "records:read",
+    "nadeo:read"
+  ]
+}

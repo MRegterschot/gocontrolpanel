@@ -1,6 +1,8 @@
-import type { NotificationDto, PlayerInfo } from "@gcp/shared";
-import type { DbClient, Maps, Notifications } from "@gcp/db";
+import type { NotificationDto, PlayerInfo, PluginManifest } from "@gcp/shared";
+import type { DbClient, Maps, Notifications, Prisma } from "@gcp/db";
 import type {
+  FirstPartyInstall,
+  FirstPartyRepository,
   LocalRecord,
   MapMetadata,
   MapRecord,
@@ -9,12 +11,18 @@ import type {
   NewMap,
   NotificationRepository,
   PlayerRepository,
+  PluginCatalogRepository,
+  PluginPackageRepository,
+  PluginStorageRepository,
+  PluginStorageUsage,
+  PluginYank,
   RecordInput,
   RecordRepository,
   ServerPluginRecord,
   ServerRecord,
   ServerRepository,
   UserRepository,
+  YankedInstall,
 } from "../../core/ports";
 
 function toMapRecord(map: Maps): MapRecord {
@@ -56,6 +64,36 @@ function metadataFields(metadata: MapMetadata | null) {
   };
 }
 
+const serverPluginInclude = {
+  plugin: { select: { name: true, source: true } },
+  version: { select: { id: true, version: true, sha256: true, yanked: true } },
+} satisfies Prisma.ServerPluginsInclude;
+
+type ServerPluginRow = Prisma.ServerPluginsGetPayload<{ include: typeof serverPluginInclude }>;
+
+function toPluginRecord(sp: ServerPluginRow): ServerPluginRecord {
+  const source = sp.plugin.source;
+  return {
+    pluginId: sp.pluginId,
+    name: sp.plugin.name,
+    enabled: sp.enabled,
+    config: sp.config,
+    package:
+      sp.version && source !== "builtin"
+        ? {
+            versionId: sp.version.id,
+            version: sp.version.version,
+            sha256: sp.version.sha256,
+            source,
+            grantedCapabilities: Array.isArray(sp.grantedCapabilities)
+              ? sp.grantedCapabilities.filter((c): c is string => typeof c === "string")
+              : [],
+            yanked: sp.version.yanked,
+          }
+        : null,
+  };
+}
+
 export class PrismaServerRepository implements ServerRepository {
   constructor(private readonly db: DbClient) {}
 
@@ -70,7 +108,7 @@ export class PrismaServerRepository implements ServerRepository {
   async findById(serverId: string): Promise<ServerRecord | null> {
     const server = await this.db.servers.findFirst({
       where: { id: serverId, deletedAt: null },
-      include: { serverPlugins: { include: { plugin: true } } },
+      include: { serverPlugins: { include: serverPluginInclude } },
     });
     if (!server) return null;
 
@@ -92,26 +130,16 @@ export class PrismaServerRepository implements ServerRepository {
         scriptSettingsSavedMessage: server.scriptSettingsSavedMessage,
         mapListChangeMessage: server.mapListChangeMessage,
       },
-      plugins: server.serverPlugins.map((sp) => ({
-        pluginId: sp.pluginId,
-        name: sp.plugin.name,
-        enabled: sp.enabled,
-        config: sp.config,
-      })),
+      plugins: server.serverPlugins.map(toPluginRecord),
     };
   }
 
   async findPlugins(serverId: string): Promise<ServerPluginRecord[]> {
     const rows = await this.db.serverPlugins.findMany({
       where: { serverId },
-      include: { plugin: true },
+      include: serverPluginInclude,
     });
-    return rows.map((sp) => ({
-      pluginId: sp.pluginId,
-      name: sp.plugin.name,
-      enabled: sp.enabled,
-      config: sp.config,
-    }));
+    return rows.map(toPluginRecord);
   }
 
   async updatePluginConfig(serverId: string, pluginId: string, config: unknown): Promise<void> {
@@ -119,6 +147,110 @@ export class PrismaServerRepository implements ServerRepository {
       where: { serverId_pluginId: { serverId, pluginId } },
       data: { config: config as never },
     });
+  }
+
+  async setPluginEnabled(serverId: string, pluginId: string, enabled: boolean): Promise<void> {
+    await this.db.serverPlugins.updateMany({ where: { serverId, pluginId }, data: { enabled } });
+  }
+}
+
+export class PrismaPluginPackageRepository implements PluginPackageRepository {
+  constructor(private readonly db: DbClient) {}
+
+  async loadPackage(versionId: string): Promise<Uint8Array | null> {
+    const row = await this.db.pluginVersions.findUnique({
+      where: { id: versionId },
+      select: { package: true },
+    });
+    return row ? new Uint8Array(row.package) : null;
+  }
+}
+
+export class PrismaPluginCatalogRepository implements PluginCatalogRepository {
+  constructor(private readonly db: DbClient) {}
+
+  async applyYanks(yanks: PluginYank[]): Promise<YankedInstall[]> {
+    const affected: YankedInstall[] = [];
+    for (const yank of yanks) {
+      const version = await this.db.pluginVersions.findFirst({
+        where: { version: yank.version, plugin: { name: yank.slug, source: "marketplace" } },
+        select: { id: true, yanked: true },
+      });
+      if (!version) continue;
+
+      const running = await this.db.serverPlugins.findMany({
+        where: { versionId: version.id, enabled: true },
+        select: { serverId: true, pluginId: true },
+      });
+      if (!version.yanked) {
+        await this.db.pluginVersions.update({
+          where: { id: version.id },
+          data: { yanked: true, yankReason: yank.reason },
+        });
+      }
+      if (running.length > 0) {
+        await this.db.serverPlugins.updateMany({
+          where: { versionId: version.id },
+          data: { enabled: false },
+        });
+      }
+      for (const sp of running) {
+        affected.push({ ...sp, name: yank.slug, version: yank.version, reason: yank.reason });
+      }
+    }
+    return affected;
+  }
+}
+
+export class PrismaPluginStorageRepository implements PluginStorageRepository {
+  constructor(private readonly db: DbClient) {}
+
+  async get(serverId: string, pluginId: string, key: string): Promise<unknown> {
+    const row = await this.db.pluginStorage.findUnique({
+      where: { serverId_pluginId_key: { serverId, pluginId, key } },
+      select: { value: true },
+    });
+    return row ? row.value : null;
+  }
+
+  async set(serverId: string, pluginId: string, key: string, value: unknown, size: number) {
+    const json = value as Prisma.InputJsonValue;
+    await this.db.pluginStorage.upsert({
+      where: { serverId_pluginId_key: { serverId, pluginId, key } },
+      create: { serverId, pluginId, key, value: json, size },
+      update: { value: json, size },
+    });
+  }
+
+  async delete(serverId: string, pluginId: string, key: string): Promise<void> {
+    await this.db.pluginStorage.deleteMany({ where: { serverId, pluginId, key } });
+  }
+
+  async keys(serverId: string, pluginId: string, prefix: string, limit: number): Promise<string[]> {
+    const rows = await this.db.pluginStorage.findMany({
+      where: { serverId, pluginId, ...(prefix ? { key: { startsWith: prefix } } : {}) },
+      select: { key: true },
+      orderBy: { key: "asc" },
+      take: limit,
+    });
+    return rows.map((row) => row.key);
+  }
+
+  async usage(serverId: string, pluginId: string): Promise<PluginStorageUsage> {
+    const result = await this.db.pluginStorage.aggregate({
+      where: { serverId, pluginId },
+      _count: { _all: true },
+      _sum: { size: true },
+    });
+    return { keys: result._count._all, bytes: result._sum.size ?? 0 };
+  }
+
+  async sizeOf(serverId: string, pluginId: string, key: string): Promise<number> {
+    const row = await this.db.pluginStorage.findUnique({
+      where: { serverId_pluginId_key: { serverId, pluginId, key } },
+      select: { size: true },
+    });
+    return row?.size ?? 0;
   }
 }
 
@@ -340,5 +472,89 @@ export class PrismaNotificationRepository implements NotificationRepository {
       ),
     );
     return rows.map(toNotificationDto);
+  }
+}
+
+export class PrismaFirstPartyRepository implements FirstPartyRepository {
+  constructor(private readonly db: DbClient) {}
+
+  async install(manifest: PluginManifest, sha256: string, bytes: Uint8Array): Promise<FirstPartyInstall> {
+    const result: FirstPartyInstall = {
+      slug: manifest.slug,
+      version: manifest.version,
+      stored: false,
+      migrated: 0,
+      removed: 0,
+    };
+
+    return this.db.$transaction(async (tx) => {
+      const details = {
+        displayName: manifest.name,
+        description: manifest.description,
+        author: manifest.author,
+      };
+
+      let plugin = await tx.plugins.findUnique({ where: { name: manifest.slug } });
+      if (plugin?.source === "upload") {
+        return { ...result, skipped: "an uploaded plugin uses this name" };
+      }
+      if (!plugin) {
+        plugin = await tx.plugins.create({
+          data: { name: manifest.slug, source: "marketplace", ...details },
+        });
+      } else if (plugin.source === "builtin") {
+        plugin = await tx.plugins.update({
+          where: { id: plugin.id },
+          data: { source: "marketplace", ...details },
+        });
+      }
+
+      let version = await tx.pluginVersions.findUnique({
+        where: { pluginId_version: { pluginId: plugin.id, version: manifest.version } },
+        select: { id: true },
+      });
+      if (!version) {
+        version = await tx.pluginVersions.create({
+          data: {
+            pluginId: plugin.id,
+            version: manifest.version,
+            sdk: manifest.sdk,
+            sha256,
+            size: bytes.byteLength,
+            manifest: manifest as unknown as Prisma.InputJsonValue,
+            package: Buffer.from(bytes),
+          },
+          select: { id: true },
+        });
+        result.stored = true;
+      }
+
+      // Built-in installs from before the marketplace have no version
+      const legacy = await tx.serverPlugins.findMany({
+        where: { pluginId: plugin.id, versionId: null },
+        select: { serverId: true, enabled: true, config: true },
+      });
+      for (const row of legacy) {
+        const key = { serverId_pluginId: { serverId: row.serverId, pluginId: plugin.id } };
+        // The old plugins form saved a row for every plugin; untouched ones aren't installs
+        if (!row.enabled && row.config === null) {
+          await tx.serverPlugins.delete({ where: key });
+          result.removed++;
+          continue;
+        }
+        await tx.serverPlugins.update({
+          where: key,
+          data: {
+            versionId: version.id,
+            // They ran with full access before; this is what the package needs
+            grantedCapabilities: manifest.capabilities,
+            installedAt: new Date(),
+          },
+        });
+        result.migrated++;
+      }
+
+      return result;
+    });
   }
 }

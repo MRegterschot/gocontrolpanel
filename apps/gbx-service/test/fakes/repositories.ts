@@ -1,6 +1,5 @@
 import type { JukeboxEntry, NotificationDto, PlayerInfo } from "@gcp/shared";
 import type {
-  EcmClient,
   JukeboxStore,
   LeaderboardEntry,
   LocalRecord,
@@ -13,6 +12,12 @@ import type {
   NewMap,
   NotificationRepository,
   PlayerRepository,
+  PluginHttpClient,
+  PluginHttpRequest,
+  PluginHttpResponse,
+  PluginPackageRepository,
+  PluginStorageRepository,
+  PluginStorageUsage,
   RecordInput,
   RecordRepository,
   ServerPluginRecord,
@@ -47,6 +52,69 @@ export class InMemoryServerRepository implements ServerRepository {
     this.configUpdates.push({ serverId, pluginId, config });
     const plugin = this.servers.get(serverId)?.plugins.find((p) => p.pluginId === pluginId);
     if (plugin) plugin.config = config;
+  }
+
+  async setPluginEnabled(serverId: string, pluginId: string, enabled: boolean) {
+    const plugin = this.servers.get(serverId)?.plugins.find((p) => p.pluginId === pluginId);
+    if (plugin) plugin.enabled = enabled;
+  }
+}
+
+export class InMemoryPluginPackages implements PluginPackageRepository {
+  readonly packages = new Map<string, Uint8Array>();
+  loads = 0;
+
+  async loadPackage(versionId: string) {
+    this.loads++;
+    return this.packages.get(versionId) ?? null;
+  }
+}
+
+export class InMemoryPluginStorage implements PluginStorageRepository {
+  readonly values = new Map<string, { value: unknown; size: number }>();
+
+  private key(serverId: string, pluginId: string, key: string) {
+    return `${serverId}/${pluginId}/${key}`;
+  }
+
+  async get(serverId: string, pluginId: string, key: string) {
+    return structuredClone(this.values.get(this.key(serverId, pluginId, key))?.value ?? null);
+  }
+
+  async set(serverId: string, pluginId: string, key: string, value: unknown, size: number) {
+    this.values.set(this.key(serverId, pluginId, key), { value: structuredClone(value), size });
+  }
+
+  async delete(serverId: string, pluginId: string, key: string) {
+    this.values.delete(this.key(serverId, pluginId, key));
+  }
+
+  async keys(serverId: string, pluginId: string, prefix: string, limit: number) {
+    const start = this.key(serverId, pluginId, prefix);
+    return [...this.values.keys()]
+      .filter((k) => k.startsWith(start))
+      .map((k) => k.slice(`${serverId}/${pluginId}/`.length))
+      .sort()
+      .slice(0, limit);
+  }
+
+  async usage(serverId: string, pluginId: string): Promise<PluginStorageUsage> {
+    const own = [...this.values.entries()].filter(([k]) => k.startsWith(`${serverId}/${pluginId}/`));
+    return { keys: own.length, bytes: own.reduce((sum, [, v]) => sum + v.size, 0) };
+  }
+
+  async sizeOf(serverId: string, pluginId: string, key: string) {
+    return this.values.get(this.key(serverId, pluginId, key))?.size ?? 0;
+  }
+}
+
+export class FakeHttpClient implements PluginHttpClient {
+  readonly requests: PluginHttpRequest[] = [];
+  response: PluginHttpResponse = { status: 200, headers: {}, body: "{}" };
+
+  async fetch(request: PluginHttpRequest) {
+    this.requests.push(request);
+    return this.response;
   }
 }
 
@@ -206,18 +274,5 @@ export class FakeNadeo implements MapMetadataProvider, NadeoRecordsProvider {
 
   async getAccountNames(accountIds: string[]) {
     return Object.fromEntries(accountIds.filter((id) => this.names[id]).map((id) => [id, this.names[id]]));
-  }
-}
-
-export class FakeEcm implements EcmClient {
-  readonly finishes: { apiKey: string; body: unknown }[] = [];
-  readonly rounds: { apiKey: string; body: Parameters<EcmClient["roundEnd"]>[1] }[] = [];
-
-  async driverFinish(apiKey: string, body: Parameters<EcmClient["driverFinish"]>[1]) {
-    this.finishes.push({ apiKey, body });
-  }
-
-  async roundEnd(apiKey: string, body: Parameters<EcmClient["roundEnd"]>[1]) {
-    this.rounds.push({ apiKey, body });
   }
 }

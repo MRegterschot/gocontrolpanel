@@ -1,0 +1,30 @@
+{
+  "slug": "hello",
+  "name": "Hello",
+  "version": "1.0.0",
+  "sdk": 1,
+  "description": "Greets players when they join, keeps count per player and shows a small greeting widget.",
+  "author": "GoControlPanel",
+  "license": "MIT",
+  "repository": "https://github.com/MRegterschot/gocontrolpanel",
+  "commands": ["hello"],
+  "capabilities": ["ui", "chat:send", "storage"],
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "greeting": {
+        "type": "string",
+        "title": "Greeting",
+        "description": "Sent to players when they join or type /hello.",
+        "default": "Welcome",
+        "maxLength": 100
+      },
+      "showWidget": {
+        "type": "boolean",
+        "title": "Show the widget",
+        "default": true
+      }
+    }
+  },
+  "helpText": "/hello - the server says hi and tells you how often it did"
+}

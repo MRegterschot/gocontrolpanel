@@ -1,0 +1,15 @@
+{
+  "slug": "player-info",
+  "name": "Player Info",
+  "version": "1.0.0",
+  "sdk": 1,
+  "description": "A widget that shows information about the spectated player. This includes their name, personal best and optionally device and camera.",
+  "author": "GoControlPanel",
+  "license": "MIT",
+  "repository": "https://github.com/MRegterschot/gocontrolpanel",
+  "capabilities": [
+    "ui",
+    "records:read",
+    "nadeo:read"
+  ]
+}

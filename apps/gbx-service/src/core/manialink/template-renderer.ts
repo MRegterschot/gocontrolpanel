@@ -25,6 +25,9 @@ function registerHelpers(hbs: typeof Handlebars) {
       return out;
     },
   );
+  // Same helpers as the plugin sandbox, without a prefix: service pages use plain action names
+  hbs.registerHelper("action", (...args: unknown[]) => args.slice(0, -1).join(""));
+  hbs.registerHelper("actionPrefix", () => "");
   hbs.registerHelper("add", (a: number, b: number) => a + b);
   hbs.registerHelper("subtract", (a: number, b: number) => a - b);
   hbs.registerHelper("multiply", (a: number, b: number) => a * b);

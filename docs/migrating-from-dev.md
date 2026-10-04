@@ -148,7 +148,6 @@ curl http://localhost:3100/health    # {"status":"ok","servers":N,"connected":N}
 | `NADEO_CLIENT_ID`, `NADEO_CLIENT_SECRET` | yes | yes | Without them the service's account name lookups stay empty |
 | `GBX_SERVICE_ENABLED_SERVERS` | no | optional (new) | Comma separated server ids to manage; empty manages all |
 | `PORT`, `HOST` | no | optional (new) | Default `3100` / `0.0.0.0` |
-| `ECM_URL` | no | optional (new) | Overrides the eCircuitMania API URL |
 | `SENTRY_DSN`, `SENTRY_ENVIRONMENT` | no | optional (new) | The service reports to Sentry separately from the web app |
 | `NEXTAUTH_*`, `DEFAULT_ADMINS`, `DEFAULT_PERMISSIONS`, `HETZNER_KEY`, `PLAUSIBLE_API_HOST`, `*SENTRY*` (web) | yes | no | Unchanged |
 

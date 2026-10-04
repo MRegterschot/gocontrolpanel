@@ -6,6 +6,7 @@ import NavAdmin from "./nav-admin";
 import NavAdminGroups from "./nav-admin-groups";
 import NavFooter from "./nav-footer";
 import NavGroups from "./nav-groups";
+import NavPlugins from "./nav-plugins";
 
 export interface NavItem {
   id?: number;
@@ -37,6 +38,7 @@ export default async function Navbar() {
   const canViewAuditLogs = await hasPermission(
     routePermissions.admin.auditLogs.view,
   );
+  const canViewPlugins = await hasPermission(routePermissions.plugins.view);
 
   const canViewAdmin =
     canViewUsers ||
@@ -53,6 +55,7 @@ export default async function Navbar() {
         <SidebarSeparator />
       )}
       {session?.user.admin && <NavAdminGroups />}
+      {session && canViewPlugins && <NavPlugins />}
       {session && canViewAdmin && (
         <NavAdmin
           canViewUsers={canViewUsers}

@@ -1,0 +1,36 @@
+{
+  "name": "@tmcontrolpanel/plugin-sdk",
+  "version": "0.1.0",
+  "description": "Types and command line tools for GoControlPanel plugins",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./cli": "./src/cli/index.ts"
+  },
+  "bin": {
+    "tmcp-plugin": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "cli": "tsx src/cli/main.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "esbuild": "^0.27.4",
+    "fflate": "^0.8.3",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@gcp/shared": "workspace:*",
+    "@types/node": "^20",
+    "tsup": "^8.5.1",
+    "tsx": "^4.20.3",
+    "typescript": "^5",
+    "vitest": "^5.0.3"
+  }
+}

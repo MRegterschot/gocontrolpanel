@@ -24,4 +24,8 @@ export interface Config {
     TOKEN: string;
     WS_TICKET_SECRET: string;
   };
+  MARKETPLACE: {
+    // Empty turns browsing the marketplace off; uploading plugins keeps working
+    INDEX_URL: string;
+  };
 }

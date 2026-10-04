@@ -1,7 +1,6 @@
-import { MIN_SECRET_LENGTH } from "@gcp/shared";
+import { DEFAULT_MARKETPLACE_INDEX_URL, MIN_SECRET_LENGTH } from "@gcp/shared";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
-import { DEFAULT_ECM_URL } from "./infra/ecm/ecm-client";
 
 const csv = z
   .string()
@@ -34,13 +33,17 @@ const envSchema = z.object({
   NADEO_CONTACT: z.string().default("GoControlPanel"),
   NADEO_CLIENT_ID: z.string().default(""),
   NADEO_CLIENT_SECRET: z.string().default(""),
-  ECM_URL: z.string().url().default(DEFAULT_ECM_URL),
+  // Plugin marketplace index, checked for withdrawn (yanked) versions; empty turns that off
+  MARKETPLACE_INDEX_URL: z.union([z.literal(""), z.string().url()]).default(DEFAULT_MARKETPLACE_INDEX_URL),
+  MARKETPLACE_CHECK_MINUTES: z.coerce.number().int().min(0).default(30),
   SENTRY_DSN: z.string().optional(),
   SENTRY_ENVIRONMENT: z.string().optional(),
   TEMPLATES_DIR: z.string().optional(),
+  // Packages of the first-party plugins, installed on start
+  FIRST_PARTY_PLUGINS_DIR: z.string().optional(),
 });
 
-export type Config = z.infer<typeof envSchema> & { templatesDir: string };
+export type Config = z.infer<typeof envSchema> & { templatesDir: string; firstPartyDir: string };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const result = envSchema.safeParse(env);
@@ -58,5 +61,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     // Resolves to apps/gbx-service/templates from both src/ (tsx) and dist/ (bundle)
     templatesDir:
       result.data.TEMPLATES_DIR ?? fileURLToPath(new URL("../templates", import.meta.url)),
+    // apps/gbx-service/first-party, from both src/ and dist/
+    firstPartyDir:
+      result.data.FIRST_PARTY_PLUGINS_DIR ??
+      fileURLToPath(new URL("../first-party", import.meta.url)),
   };
 }

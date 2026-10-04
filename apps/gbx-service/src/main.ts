@@ -14,7 +14,7 @@ async function main() {
     });
   }
 
-  const container = createContainer(config);
+  const container = await createContainer(config);
   const { log, registry } = container;
 
   process.on("unhandledRejection", (reason) => {
@@ -36,8 +36,23 @@ async function main() {
     log,
   );
 
+  // Ships with the image; moves installs from before the marketplace onto the packages
+  await container.installFirstPartyPlugins();
+
+  // Flag withdrawn plugin versions before the servers load their plugins, without holding up
+  // startup for long when the marketplace can't be reached
+  if (container.marketplace) {
+    await Promise.race([
+      container.marketplace
+        .check()
+        .catch((error) => log.warn({ err: error }, "Could not check the plugin marketplace")),
+      new Promise((resolve) => setTimeout(resolve, 5000)),
+    ]);
+  }
+
   await registry.startAll();
   await app.listen({ host: config.HOST, port: config.PORT });
+  container.marketplace?.start(false);
 
   let stopping = false;
   const shutdown = async (signal: string) => {

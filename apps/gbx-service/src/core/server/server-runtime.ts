@@ -14,10 +14,10 @@ import { ManialinkService } from "../manialink/manialink-service";
 import type { TemplateRenderer } from "../manialink/template-renderer";
 import { createPluginContext } from "../plugins/plugin-context";
 import { PluginHost } from "../plugins/plugin-host";
+import type { PackageLoader } from "../plugins/sandbox/package-loader";
 import type { PluginDefinition } from "../plugins/sdk";
 import type {
   Clock,
-  EcmClient,
   JukeboxStore,
   MapMetadataProvider,
   MapRepository,
@@ -47,6 +47,8 @@ export interface RuntimeDependencies {
   sessionFactory: GbxSessionFactory;
   renderer: TemplateRenderer;
   plugins: PluginDefinition<any>[];
+  // Runs marketplace and uploaded plugins; without it only built-ins load
+  packages?: PackageLoader;
   servers: ServerRepository;
   players: PlayerRepository;
   users: UserRepository;
@@ -57,7 +59,6 @@ export interface RuntimeDependencies {
   jukebox: JukeboxStore;
   mapMetadata: MapMetadataProvider;
   nadeo: NadeoRecordsProvider;
-  ecm: EcmClient;
   connectTimeoutMs?: number;
   retryDelayMs?: number;
   maxRetries?: number;
@@ -163,13 +164,15 @@ export class ServerRuntime {
             servers: deps.servers,
             notifications: deps.notifications,
             nadeo: deps.nadeo,
-            ecm: deps.ecm,
             clock,
+            manialinks: this.manialinks,
+            disablePlugin: (pluginId, name, reason) => this.disablePlugin(pluginId, name, reason),
           },
           definition,
           record,
         ),
       log,
+      async (record) => (deps.packages ? deps.packages.resolve(record) : null),
     );
 
     this.handler = new GameEventHandler({
@@ -258,6 +261,23 @@ export class ServerRuntime {
   async reloadPlugins(): Promise<void> {
     this.assertConnected();
     await this.plugins.reload(this.state.plugins, this.state.liveInfo.type);
+  }
+
+  // A plugin broke its limits or was yanked: turn it off for this server and tell the admins
+  async disablePlugin(pluginId: string, name: string, reason: string): Promise<void> {
+    await this.deps.servers.setPluginEnabled(this.serverId, pluginId, false);
+    try {
+      const notifications = await this.deps.notifications.createForServerAdmins({
+        serverId: this.serverId,
+        type: "pluginDisabled",
+        message: `Plugin ${name} was turned off on ${this.name ?? "the server"}`,
+        description: reason,
+      });
+      this.events.emit("adminCommand", notifications);
+    } catch (error) {
+      this.log.error({ err: error, pluginId: name }, "Failed to notify admins about a disabled plugin");
+    }
+    await this.refreshPlugins();
   }
 
   // server_plugins changed in the database

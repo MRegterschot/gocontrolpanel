@@ -1,32 +1,80 @@
 import type { SMapInfo, SPlayerInfo } from "@gcp/shared";
+import { readPluginPackage } from "@gcp/shared/plugin-package";
+import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { packPlugin } from "@tmcontrolpanel/plugin-sdk/cli";
 import { TemplateRenderer } from "../../src/core/manialink/template-renderer";
+import { PackageLoader } from "../../src/core/plugins/sandbox/package-loader";
+import type { SandboxAssets } from "../../src/core/plugins/sandbox/sandboxed-plugin";
+import type { SandboxLimits } from "../../src/core/plugins/sandbox/limits";
 import type { PluginDefinition } from "../../src/core/plugins/sdk";
 import type { ServerPluginRecord, ServerRecord } from "../../src/core/ports";
 import { ServerRuntime } from "../../src/core/server/server-runtime";
+import { loadSandboxAssets } from "../../src/infra/sandbox-assets";
 import { loadTemplateSources } from "../../src/infra/templates";
 import { FakeClock, flush } from "./clock";
 import { FakeGbxSession } from "./fake-gbx";
 import { silentLogger } from "./logger";
 import {
-  FakeEcm,
+  FakeHttpClient,
   FakeNadeo,
   InMemoryJukeboxStore,
   InMemoryMapRepository,
   InMemoryMatchRepository,
   InMemoryNotificationRepository,
   InMemoryPlayerRepository,
+  InMemoryPluginPackages,
+  InMemoryPluginStorage,
   InMemoryRecordRepository,
   InMemoryServerRepository,
 } from "./repositories";
 
 let renderer: TemplateRenderer | null = null;
+let assets: Promise<SandboxAssets> | null = null;
 
+const TEMPLATES_DIR = fileURLToPath(new URL("../../templates", import.meta.url));
+
+export function testSandboxAssets(): Promise<SandboxAssets> {
+  assets ??= loadSandboxAssets(TEMPLATES_DIR);
+  return assets;
+}
+
+const PLUGINS_DIR = fileURLToPath(new URL("../../../../plugins", import.meta.url));
+const FIRST_PARTY = readdirSync(PLUGINS_DIR, { withFileTypes: true })
+  .filter((entry) => entry.isDirectory() && existsSync(join(PLUGINS_DIR, entry.name, "tmcp-plugin.json")))
+  .map((entry) => entry.name);
+
+// The service's layouts plus every first-party plugin's templates, as the sandbox sees them
 export function testRenderer(): TemplateRenderer {
-  renderer ??= new TemplateRenderer(
-    loadTemplateSources(fileURLToPath(new URL("../../templates", import.meta.url))),
-  );
+  renderer ??= new TemplateRenderer({
+    ...loadTemplateSources(TEMPLATES_DIR),
+    ...Object.assign(
+      {},
+      ...FIRST_PARTY.map((name) => {
+        const dir = join(PLUGINS_DIR, name, "templates");
+        return existsSync(dir) ? loadTemplateSources(dir) : {};
+      }),
+    ),
+  });
   return renderer;
+}
+
+const firstParty = new Map<string, Promise<Uint8Array>>();
+
+// A first-party plugin from plugins/, built once per test run
+export function firstPartyPackage(slug: string): Promise<Uint8Array> {
+  let bytes = firstParty.get(slug);
+  if (!bytes) {
+    const outDir = mkdtempSync(join(tmpdir(), `gcp-${slug}-`));
+    bytes = packPlugin(join(PLUGINS_DIR, slug), { outDir }).then((result) => {
+      rmSync(outDir, { recursive: true, force: true });
+      return result.bytes;
+    });
+    firstParty.set(slug, bytes);
+  }
+  return bytes;
 }
 
 export const MAP_A: SMapInfo = {
@@ -94,6 +142,34 @@ export function pluginRecord(name: string, config: unknown = null, enabled = tru
   return { pluginId: `plugin-${name}`, name, enabled, config };
 }
 
+export interface PackageInstall {
+  bytes: Uint8Array;
+  // Defaults to everything the manifest declares
+  granted?: string[];
+  config?: unknown;
+  enabled?: boolean;
+  versionId?: string;
+}
+
+// The server_plugins row of an installed package, as the repository returns it
+export function packageRecord(install: PackageInstall): ServerPluginRecord {
+  const pkg = readPluginPackage(install.bytes);
+  const versionId = install.versionId ?? `version-${pkg.manifest.slug}-${pkg.manifest.version}`;
+  return {
+    pluginId: `plugin-${pkg.manifest.slug}`,
+    name: pkg.manifest.slug,
+    enabled: install.enabled ?? true,
+    config: install.config ?? null,
+    package: {
+      versionId,
+      version: pkg.manifest.version,
+      sha256: pkg.sha256,
+      source: "upload",
+      grantedCapabilities: install.granted ?? pkg.manifest.capabilities,
+    },
+  };
+}
+
 export interface HarnessOptions {
   server?: Partial<ServerRecord>;
   plugins?: PluginDefinition<any>[];
@@ -103,6 +179,9 @@ export interface HarnessOptions {
   // Extra per-session setup, applied to every new session
   configure?: (session: FakeGbxSession) => void;
   connect?: boolean;
+  // Installed marketplace/uploaded plugins, run in the sandbox
+  packages?: PackageInstall[];
+  sandboxLimits?: SandboxLimits;
 }
 
 export type Harness = Awaited<ReturnType<typeof createHarness>>;
@@ -117,8 +196,24 @@ export async function createHarness(options: HarnessOptions = {}) {
   const notifications = new InMemoryNotificationRepository();
   const jukebox = new InMemoryJukeboxStore();
   const nadeo = new FakeNadeo();
-  const ecm = new FakeEcm();
   const sessions: FakeGbxSession[] = [];
+  const pluginPackages = new InMemoryPluginPackages();
+  const pluginStorage = new InMemoryPluginStorage();
+  const http = new FakeHttpClient();
+
+  const server = servers.servers.get(SERVER_ID)!;
+  for (const install of options.packages ?? []) {
+    const record = packageRecord(install);
+    pluginPackages.packages.set(record.package!.versionId, install.bytes);
+    server.plugins.push(record);
+  }
+  const packages = new PackageLoader(pluginPackages, {
+    assets: await testSandboxAssets(),
+    storage: pluginStorage,
+    http,
+    clock,
+    limits: options.sandboxLimits,
+  });
 
   const world = {
     players: [...(options.players ?? [])],
@@ -157,6 +252,7 @@ export async function createHarness(options: HarnessOptions = {}) {
     sessionFactory: newSession,
     renderer: testRenderer(),
     plugins: options.plugins ?? [],
+    packages,
     servers,
     players,
     users: players,
@@ -167,7 +263,6 @@ export async function createHarness(options: HarnessOptions = {}) {
     jukebox,
     mapMetadata: nadeo,
     nadeo,
-    ecm,
   });
 
   if (options.connect !== false) {
@@ -192,7 +287,9 @@ export async function createHarness(options: HarnessOptions = {}) {
     notifications,
     jukebox,
     nadeo,
-    ecm,
+    pluginPackages,
+    pluginStorage,
+    http,
     // Emits a callback on the current session and waits for handlers to settle
     async callback(method: string, data: unknown) {
       sessions[sessions.length - 1].emit(method, data);

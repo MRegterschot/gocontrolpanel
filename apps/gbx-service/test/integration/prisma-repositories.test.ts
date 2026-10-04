@@ -1,10 +1,15 @@
 import { createPrismaClient, type DbClient } from "@gcp/db";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { createPluginPackage, readPluginPackage } from "@gcp/shared/plugin-package";
 import {
+  PrismaFirstPartyRepository,
   PrismaMapRepository,
   PrismaMatchRepository,
   PrismaNotificationRepository,
   PrismaPlayerRepository,
+  PrismaPluginCatalogRepository,
+  PrismaPluginPackageRepository,
+  PrismaPluginStorageRepository,
   PrismaRecordRepository,
   PrismaServerRepository,
 } from "../../src/infra/db/prisma-repositories";
@@ -31,7 +36,11 @@ describe.skipIf(!url)("Prisma repositories", () => {
     await db.groupMember.deleteMany();
     await db.groups.deleteMany();
     await db.userServers.deleteMany();
+    await db.pluginStorage.deleteMany();
     await db.serverPlugins.deleteMany();
+    await db.pluginVersions.deleteMany();
+    // Includes the rows the migrations seed; tests create the ones they need
+    await db.plugins.deleteMany();
     await db.servers.deleteMany();
     await db.maps.deleteMany();
     await db.users.deleteMany();
@@ -219,5 +228,192 @@ describe.skipIf(!url)("Prisma repositories", () => {
     expect(created.map((n) => n.userId).sort()).toEqual([both.id, direct.id, group.id].sort());
     expect(created[0]).toMatchObject({ serverId: "s1", read: false, description: null });
     expect(typeof created[0].timestamp).toBe("string");
+  });
+
+  const installPackage = async (serverId: string, version = "1.0.0", enabled = true) => {
+    const plugin = await db.plugins.upsert({
+      where: { name: "hello" },
+      update: {},
+      create: { name: "hello", source: "marketplace" },
+    });
+    const row = await db.pluginVersions.upsert({
+      where: { pluginId_version: { pluginId: plugin.id, version } },
+      update: {},
+      create: {
+        pluginId: plugin.id,
+        version,
+        sdk: 1,
+        sha256: "a".repeat(64),
+        size: 3,
+        manifest: { slug: "hello" },
+        package: Buffer.from([1, 2, 3]),
+      },
+    });
+    await db.serverPlugins.upsert({
+      where: { serverId_pluginId: { serverId, pluginId: plugin.id } },
+      create: {
+        serverId,
+        pluginId: plugin.id,
+        enabled,
+        versionId: row.id,
+        grantedCapabilities: ["ui", "storage"],
+      },
+      update: { versionId: row.id, enabled },
+    });
+    return { plugin, version: row };
+  };
+
+  it("loads installed packages with their granted capabilities", async () => {
+    await createServer("s1");
+    const { plugin, version } = await installPackage("s1");
+
+    const repo = new PrismaServerRepository(db);
+    expect(await repo.findPlugins("s1")).toEqual([
+      {
+        pluginId: plugin.id,
+        name: "hello",
+        enabled: true,
+        config: null,
+        package: {
+          versionId: version.id,
+          version: "1.0.0",
+          sha256: "a".repeat(64),
+          source: "marketplace",
+          grantedCapabilities: ["ui", "storage"],
+          yanked: false,
+        },
+      },
+    ]);
+    expect(await new PrismaPluginPackageRepository(db).loadPackage(version.id)).toEqual(
+      new Uint8Array([1, 2, 3]),
+    );
+
+    await repo.setPluginEnabled("s1", plugin.id, false);
+    expect((await repo.findPlugins("s1"))[0].enabled).toBe(false);
+  });
+
+  it("keeps plugin storage per server and plugin", async () => {
+    await createServer("s1");
+    await createServer("s2");
+    const { plugin } = await installPackage("s1");
+    const storage = new PrismaPluginStorageRepository(db);
+
+    await storage.set("s1", plugin.id, "a:1", { n: 1 }, 7);
+    await storage.set("s1", plugin.id, "a:2", [1, 2], 5);
+    await storage.set("s1", plugin.id, "b", "x", 3);
+    await storage.set("s2", plugin.id, "a:1", 1, 1);
+    await storage.set("s1", plugin.id, "a:1", { n: 2 }, 7);
+
+    expect(await storage.get("s1", plugin.id, "a:1")).toEqual({ n: 2 });
+    expect(await storage.get("s1", plugin.id, "missing")).toBeNull();
+    expect(await storage.keys("s1", plugin.id, "a:", 10)).toEqual(["a:1", "a:2"]);
+    expect(await storage.usage("s1", plugin.id)).toEqual({ keys: 3, bytes: 15 });
+    expect(await storage.sizeOf("s1", plugin.id, "a:2")).toBe(5);
+
+    await storage.delete("s1", plugin.id, "a:2");
+    expect(await storage.usage("s1", plugin.id)).toEqual({ keys: 2, bytes: 10 });
+    expect(await storage.usage("s2", plugin.id)).toEqual({ keys: 1, bytes: 1 });
+  });
+
+  it("marks yanked versions and turns off only the servers running them", async () => {
+    await createServer("s1");
+    await createServer("s2");
+    await createServer("s3");
+    const { plugin } = await installPackage("s1");
+    await installPackage("s2", "1.0.0", false);
+
+    const catalog = new PrismaPluginCatalogRepository(db);
+    const affected = await catalog.applyYanks([
+      { slug: "hello", version: "1.0.0", reason: "Steals API keys" },
+      { slug: "unknown", version: "9.9.9", reason: null },
+    ]);
+    expect(affected).toEqual([
+      { serverId: "s1", pluginId: plugin.id, name: "hello", version: "1.0.0", reason: "Steals API keys" },
+    ]);
+    const version = await db.pluginVersions.findFirstOrThrow({ where: { pluginId: plugin.id } });
+    expect([version.yanked, version.yankReason]).toEqual([true, "Steals API keys"]);
+    expect((await db.serverPlugins.findMany({ where: { pluginId: plugin.id } })).map((sp) => sp.enabled)).toEqual([
+      false,
+      false,
+    ]);
+
+    // A second check finds nothing left to turn off
+    expect(await catalog.applyYanks([{ slug: "hello", version: "1.0.0", reason: "Steals API keys" }])).toEqual([]);
+  });
+
+  it("moves built-in installs onto the first-party package and keeps their settings", async () => {
+    await createServer("configured");
+    await createServer("untouched");
+    await createServer("enabled");
+    const legacy = await db.plugins.create({
+      data: { name: "map-info", description: "Old description", source: "builtin" },
+    });
+    await db.serverPlugins.createMany({
+      data: [
+        { serverId: "configured", pluginId: legacy.id, enabled: false, config: { a: 1 } },
+        { serverId: "untouched", pluginId: legacy.id, enabled: false },
+        { serverId: "enabled", pluginId: legacy.id, enabled: true },
+      ],
+    });
+
+    const bytes = createPluginPackage({
+      "tmcp-plugin.json": JSON.stringify({
+        slug: "map-info",
+        name: "Map info",
+        version: "1.0.0",
+        sdk: 1,
+        description: "Shows the current map.",
+        author: "GoControlPanel",
+        capabilities: ["ui", "maps:read"],
+      }),
+      "index.js": "globalThis.__tmcpRegister({ create() { return {}; } });",
+    });
+    const pkg = readPluginPackage(bytes);
+    const repo = new PrismaFirstPartyRepository(db);
+
+    expect(await repo.install(pkg.manifest, pkg.sha256, bytes)).toEqual({
+      slug: "map-info",
+      version: "1.0.0",
+      stored: true,
+      migrated: 2,
+      removed: 1,
+    });
+
+    const plugin = await db.plugins.findUniqueOrThrow({ where: { name: "map-info" } });
+    expect(plugin).toMatchObject({ id: legacy.id, source: "marketplace", displayName: "Map info" });
+    const rows = await db.serverPlugins.findMany({ orderBy: { serverId: "asc" } });
+    expect(rows.map((r) => [r.serverId, r.enabled, r.config, r.grantedCapabilities])).toEqual([
+      ["configured", false, { a: 1 }, ["ui", "maps:read"]],
+      ["enabled", true, null, ["ui", "maps:read"]],
+    ]);
+    expect(rows.every((r) => r.versionId !== null)).toBe(true);
+
+    // Every start runs it again; nothing changes the second time
+    expect(await repo.install(pkg.manifest, pkg.sha256, bytes)).toMatchObject({
+      stored: false,
+      migrated: 0,
+      removed: 0,
+    });
+    expect(await db.pluginVersions.count()).toBe(1);
+  });
+
+  it("leaves an uploaded plugin with a first-party name alone", async () => {
+    await db.plugins.create({ data: { name: "ecm", source: "upload" } });
+    const bytes = createPluginPackage({
+      "tmcp-plugin.json": JSON.stringify({
+        slug: "ecm",
+        name: "eCircuitMania",
+        version: "1.0.0",
+        sdk: 1,
+        description: "x",
+        author: "x",
+        capabilities: [],
+      }),
+      "index.js": "globalThis.__tmcpRegister({ create() { return {}; } });",
+    });
+    const pkg = readPluginPackage(bytes);
+    const result = await new PrismaFirstPartyRepository(db).install(pkg.manifest, pkg.sha256, bytes);
+    expect(result.skipped).toMatch(/uploaded/);
+    expect(await db.pluginVersions.count()).toBe(0);
   });
 });

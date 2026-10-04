@@ -1,0 +1,19 @@
+{
+  "slug": "live-ranking",
+  "name": "Live Ranking",
+  "version": "1.0.0",
+  "sdk": 1,
+  "description": "A widget that shows the current standings in points during a match.",
+  "author": "GoControlPanel",
+  "license": "MIT",
+  "repository": "https://github.com/MRegterschot/gocontrolpanel",
+  "gamemodes": [
+    "rounds",
+    "cup",
+    "reversecup",
+    "teams"
+  ],
+  "capabilities": [
+    "ui"
+  ]
+}

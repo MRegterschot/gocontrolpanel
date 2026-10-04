@@ -1,0 +1,19 @@
+{
+  "slug": "admin",
+  "name": "Admin Help",
+  "version": "1.0.0",
+  "sdk": 1,
+  "description": "A widget and admin command to notify a server admin. The command is '/admin <message>'.",
+  "author": "GoControlPanel",
+  "license": "MIT",
+  "repository": "https://github.com/MRegterschot/gocontrolpanel",
+  "commands": [
+    "admin"
+  ],
+  "capabilities": [
+    "ui",
+    "chat:send",
+    "notifications"
+  ],
+  "helpText": "This plugin allows players to notify admins when they need help.\nCommands:\n/admin <message> - Notifies admins that you need help"
+}
