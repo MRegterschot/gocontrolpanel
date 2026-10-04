@@ -1,15 +1,16 @@
 "use client";
 
-import { getHetznerLocations } from "@/lib/api-client/hetzner";
 import { createHetznerVolume } from "@/actions/hetzner/volumes";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
+import { useHetznerLocations } from "@/hooks/use-hetzner-queries";
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
 import { getErrorMessage } from "@/lib/utils";
-import { HetznerLocation } from "@/types/api/hetzner/locations";
+import { ServerError } from "@/types/responses";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import Flag from "react-world-flags";
 import { toast } from "sonner";
@@ -17,7 +18,6 @@ import {
   AddHetznerVolumeSchema,
   AddHetznerVolumeSchemaType,
 } from "./add-hetzner-volume-schema";
-import { ServerError } from "@/types/responses";
 
 export default function AddHetznerVolumeForm({
   projectId,
@@ -26,44 +26,32 @@ export default function AddHetznerVolumeForm({
   projectId: string;
   callback: () => void;
 }) {
-  const [locations, setLocations] = useState<HetznerLocation[]>([]);
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetch() {
-      try {
-        const { data, error } = await getHetznerLocations(projectId);
-        if (error) {
-          throw new ServerError(error, "GetHetznerLocationsError");
-        }
-        setLocations(data);
-        form.setValue(
-          "location",
-          data.length > 0
-            ? data.find((loc) => loc.name === "fsn1")?.name || data[0].name
-            : "",
-        );
-      } catch (err) {
-        setError("Failed to get locations: " + getErrorMessage(err));
-        toast.error("Failed to fetch locations", {
-          description: getErrorMessage(err),
-        });
-      }
-
-      setLoading(false);
-    }
-
-    fetch();
-  }, []);
-
   const form = useForm<AddHetznerVolumeSchemaType>({
     resolver: zodResolver(AddHetznerVolumeSchema),
     defaultValues: {
       size: 10,
     },
   });
+
+  const locationsQuery = useHetznerLocations(projectId);
+  const locations = locationsQuery.data ?? [];
+  const loading = locationsQuery.isPending;
+  const error = locationsQuery.error
+    ? "Failed to get locations: " + getErrorMessage(locationsQuery.error)
+    : null;
+  useQueryErrorToast(locationsQuery.error, "Failed to fetch locations");
+
+  useEffect(() => {
+    const data = locationsQuery.data;
+    if (!data) return;
+    form.setValue(
+      "location",
+      data.length > 0
+        ? data.find((loc) => loc.name === "fsn1")?.name || data[0].name
+        : "",
+    );
+     
+  }, [locationsQuery.data]);
 
   async function onSubmit(values: AddHetznerVolumeSchemaType) {
     try {

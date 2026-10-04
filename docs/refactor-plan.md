@@ -148,6 +148,13 @@ NX-1, NX-2, NX-7 and NX-8 for the reads. Forms and other writes stay Server Acti
 - **Not changed.** Mutations, the uploads (NX-6, still `uploadFiles`), `getCampaignWithMaps` and the other reads only server components call (no route needed), and the Redis-only jukebox writes.
 - Dead reads were deleted: `getUsersMinimal`, `getHetznerImages`, `getClubActivitiesPaginated`, `getClubMembersWithNamesPaginated`, `getServerPluginVariables`.
 
+**TanStack Query** (branch `feat/web-tanstack-query`, on top of the above). The client reads go through `@tanstack/react-query` instead of `useEffect` + `useState` + try/catch + toast.
+- `QueryProvider` sits in the root layout, one `QueryClient` per mount. Defaults: no retry (a failed read is almost always a stopped server or a missing permission) and no refetch on window focus (each read reaches a game server).
+- `unwrap` (`src/lib/api-client/query.ts`) turns the client's `{ data, error }` into a thrown error, and `queryKeys` holds the cache keys, nested per server so one invalidation covers a server's reads. `useQueryErrorToast` keeps the old "toast once per failure".
+- Migrated: the paginated tables (`usePaginationAPI`, with `keepPreviousData` and request cancellation from the query's signal), the ban, black and guest lists, the live player list (refetched when the socket reports a change), map info (cached 5 min), the jukebox (10 s polling), notifications (the socket and mark-as-read update the cache), the settings, server plugin and match plugin forms, the user, group and Hetzner forms and the add-server modal (`use-hetzner-queries.ts` shares locations, server types and SSH keys between forms for 5 min), Hetzner metrics, club room and campaign details, club activities (`useInfiniteQuery`) and the user search defaults.
+- Left imperative on purpose: reads the user triggers, or whose result a component edits locally: the map order and local-maps refresh, TMX search and "load more", the exports, the Hetzner logs.
+- Side effects of the move: the black and guest lists load when the page opens (they were empty until something changed them), and the user search defaults load once the session is there.
+
 Checked against the e2e stack with the production build and a minted session: unauthenticated 401, a user without permissions 403 on the admin and server routes, `pageSize=5000` and `sortField=a.b` rejected with 400, and the database, GBX and TMX reads return data.
 
 ## Testing strategy

@@ -1,17 +1,19 @@
 "use client";
 
-import { getHetznerLocations } from "@/lib/api-client/hetzner";
-import { getServerTypes } from "@/lib/api-client/hetzner";
 import { createHetznerDatabase } from "@/actions/hetzner/servers";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
+import {
+  useHetznerLocations,
+  useHetznerServerTypes,
+} from "@/hooks/use-hetzner-queries";
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
 import { getErrorMessage } from "@/lib/utils";
-import { HetznerLocation } from "@/types/api/hetzner/locations";
-import { HetznerServerType } from "@/types/api/hetzner/servers";
+import { ServerError } from "@/types/responses";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import Flag from "react-world-flags";
 import { toast } from "sonner";
@@ -19,7 +21,6 @@ import {
   AddHetznerDatabaseSchema,
   AddHetznerDatabaseSchemaType,
 } from "./add-hetzner-database-schema";
-import { ServerError } from "@/types/responses";
 
 export default function AddHetznerDatabaseForm({
   projectId,
@@ -28,65 +29,50 @@ export default function AddHetznerDatabaseForm({
   projectId: string;
   callback?: () => void;
 }) {
-  const [locations, setLocations] = useState<HetznerLocation[]>([]);
-  const [serverTypes, setServerTypes] = useState<HetznerServerType[]>([]);
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetch() {
-      try {
-        const { data, error } = await getHetznerLocations(projectId);
-        if (error) {
-          throw new ServerError(error, "GetHetznerLocationsError");
-        }
-        setLocations(data);
-        form.setValue(
-          "location",
-          data.length > 0
-            ? data.find((loc) => loc.name === "fsn1")?.name || data[0].name
-            : "",
-        );
-      } catch (err) {
-        setError("Failed to get locations: " + getErrorMessage(err));
-        toast.error("Failed to fetch locations", {
-          description: getErrorMessage(err),
-        });
-      }
-
-      try {
-        const { data, error } = await getServerTypes(projectId);
-        if (error) {
-          throw new ServerError(error, "GetServerTypesError");
-        }
-        setServerTypes(data);
-        form.setValue(
-          "serverType",
-          data.length > 0
-            ? data.find((st) => st.name === "cpx11")?.id.toString() ||
-                data[0].id.toString()
-            : "",
-        );
-      } catch (err) {
-        setError("Failed to get server types: " + getErrorMessage(err));
-        toast.error("Failed to fetch server types", {
-          description: getErrorMessage(err),
-        });
-      }
-
-      setLoading(false);
-    }
-
-    fetch();
-  }, []);
-
   const form = useForm<AddHetznerDatabaseSchemaType>({
     resolver: zodResolver(AddHetznerDatabaseSchema),
     defaultValues: {
       databaseType: "mysql",
     },
   });
+
+  const locationsQuery = useHetznerLocations(projectId);
+  const serverTypesQuery = useHetznerServerTypes(projectId);
+  const locations = locationsQuery.data ?? [];
+  const serverTypes = serverTypesQuery.data ?? [];
+  const loading = locationsQuery.isPending || serverTypesQuery.isPending;
+  const error = locationsQuery.error
+    ? "Failed to get locations: " + getErrorMessage(locationsQuery.error)
+    : serverTypesQuery.error
+      ? "Failed to get server types: " + getErrorMessage(serverTypesQuery.error)
+      : null;
+  useQueryErrorToast(locationsQuery.error, "Failed to fetch locations");
+  useQueryErrorToast(serverTypesQuery.error, "Failed to fetch server types");
+
+  useEffect(() => {
+    const data = locationsQuery.data;
+    if (!data) return;
+    form.setValue(
+      "location",
+      data.length > 0
+        ? data.find((loc) => loc.name === "fsn1")?.name || data[0].name
+        : "",
+    );
+     
+  }, [locationsQuery.data]);
+
+  useEffect(() => {
+    const data = serverTypesQuery.data;
+    if (!data) return;
+    form.setValue(
+      "serverType",
+      data.length > 0
+        ? data.find((st) => st.name === "cpx11")?.id.toString() ||
+            data[0].id.toString()
+        : "",
+    );
+     
+  }, [serverTypesQuery.data]);
 
   async function onSubmit(values: AddHetznerDatabaseSchemaType) {
     try {

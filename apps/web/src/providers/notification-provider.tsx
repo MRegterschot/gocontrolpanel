@@ -1,17 +1,18 @@
 "use client";
 import { markNotificationAsRead } from "@/actions/database/notifications";
-import { getNotifications } from "@/lib/api-client/database";
 import useWebSocket from "@/hooks/use-websocket";
-import { wsPaths } from "@gcp/shared";
+import { getNotifications } from "@/lib/api-client/database";
+import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { logger } from "@/lib/logger";
-import { Notifications } from "@gcp/db";
 import { ServerError } from "@/types/responses";
+import { Notifications } from "@gcp/db";
+import { wsPaths } from "@gcp/shared";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React, {
   createContext,
   useCallback,
   useContext,
   useEffect,
-  useState,
 } from "react";
 import { toast } from "sonner";
 
@@ -40,7 +41,33 @@ export const NotificationProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [notifications, setNotifications] = useState<Notifications[]>([]);
+  const queryClient = useQueryClient();
+
+  const { data, error } = useQuery({
+    queryKey: queryKeys.notifications,
+    queryFn: () => unwrap(getNotifications(), "FetchNotificationsError"),
+  });
+  const notifications = data ?? [];
+
+  // Sockets and mark-as-read update the cached list in place
+  const setNotifications = useCallback(
+    (update: (prev: Notifications[]) => Notifications[]) =>
+      queryClient.setQueryData<Notifications[]>(
+        queryKeys.notifications,
+        (prev) => update(prev ?? []),
+      ),
+    [queryClient],
+  );
+
+  useEffect(() => {
+    if (!error) return;
+    const meta = {
+      type: "provider",
+      module: "notification-provider",
+      function: "fetchNotifications",
+    };
+    logger.error({ meta, error }, "Failed to fetch notifications");
+  }, [error]);
 
   const handleMessage = useCallback((_: string, data: Notifications) => {
     addNotification(data);
@@ -50,26 +77,6 @@ export const NotificationProvider = ({
     path: wsPaths.notifications,
     onMessage: handleMessage,
   });
-
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const { data, error } = await getNotifications();
-        if (error) {
-          throw new ServerError(error, "FetchNotificationsError");
-        }
-        setNotifications(data);
-      } catch (error) {
-        const meta = {
-          type: "provider",
-          module: "notification-provider",
-          function: "fetchNotifications",
-        };
-        logger.error({ meta, error }, "Failed to fetch notifications");
-      }
-    };
-    fetchNotifications();
-  }, []);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 

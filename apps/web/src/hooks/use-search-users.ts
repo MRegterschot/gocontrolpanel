@@ -1,8 +1,15 @@
-import type { UserMinimal } from "@/services/database/users";
-import { getUsersByIds, getUsersByLogins, searchUser } from "@/lib/api-client/database";
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
+import {
+  getUsersByIds,
+  getUsersByLogins,
+  searchUser,
+} from "@/lib/api-client/database";
+import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { getErrorMessage } from "@/lib/utils";
+import type { UserMinimal } from "@/services/database/users";
 import { ServerError } from "@/types/responses";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 interface UseSearchUsersProps {
@@ -14,45 +21,41 @@ export function useSearchUsers({
   defaultUsers,
   field = "id",
 }: UseSearchUsersProps) {
-  const [searchResults, setSearchResults] = useState<UserMinimal[]>([]);
-  const [loading, setLoading] = useState(true);
+  // What the user searched for, on top of the users the form started with
+  const [searched, setSearched] = useState<UserMinimal[]>([]);
   const [searching, setSearching] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function getDefaultUsers() {
-      if (!defaultUsers || defaultUsers.length === 0) {
-        setLoading(false);
-        return;
-      }
+  const hasDefaults = !!defaultUsers && defaultUsers.length > 0;
+  const defaultsQuery = useQuery({
+    queryKey: queryKeys.users(field, defaultUsers ?? []),
+    queryFn: () =>
+      unwrap(
+        field === "id"
+          ? getUsersByIds(defaultUsers!)
+          : getUsersByLogins(defaultUsers!),
+        "GetDefaultUsersError",
+      ),
+    enabled: hasDefaults,
+    // The form owns the list from here on; don't swap it under the user
+    staleTime: Infinity,
+    gcTime: 0,
+  });
+  const loading = hasDefaults && defaultsQuery.isPending;
+  const error =
+    searchError ??
+    (defaultsQuery.error
+      ? "Failed to fetch users: " + getErrorMessage(defaultsQuery.error)
+      : null);
+  useQueryErrorToast(defaultsQuery.error, "Failed to fetch users");
 
-      try {
-        let data, error;
-
-        if (field === "id") {
-          ({ data, error } = await getUsersByIds(defaultUsers));
-        } else if (field === "login") {
-          ({ data, error } = await getUsersByLogins(defaultUsers));
-        } else {
-          throw new ServerError("Invalid field for user search", "InvalidFieldForUserSearch");
-        }
-
-        if (error) {
-          throw new ServerError(error, "GetDefaultUsersError");
-        }
-        setSearchResults(data);
-      } catch (error) {
-        setError("Failed to fetch users: " + getErrorMessage(error));
-        toast.error("Failed to fetch users", {
-          description: getErrorMessage(error),
-        });
-      } finally {
-        setLoading(false);
-      }
+  const searchResults = useMemo(() => {
+    const merged = [...(defaultsQuery.data ?? [])];
+    for (const user of searched) {
+      if (!merged.some((u) => u.id === user.id)) merged.push(user);
     }
-
-    getDefaultUsers();
-  }, []);
+    return merged;
+  }, [defaultsQuery.data, searched]);
 
   async function search(query?: string) {
     if (!query?.trim()) {
@@ -61,7 +64,7 @@ export function useSearchUsers({
     }
 
     setSearching(true);
-    setError(null);
+    setSearchError(null);
 
     try {
       const { data, error } = await searchUser(query);
@@ -70,14 +73,11 @@ export function useSearchUsers({
       }
       if (!data) return;
 
-      setSearchResults((prev) => {
-        if (prev.some((user) => user.id === data.id)) {
-          return prev;
-        }
-        return [...prev, data];
-      });
+      setSearched((prev) =>
+        prev.some((user) => user.id === data.id) ? prev : [...prev, data],
+      );
     } catch (error) {
-      setError("Failed to search users: " + getErrorMessage(error));
+      setSearchError("Failed to search users: " + getErrorMessage(error));
       toast.error("Failed to search users", {
         description: getErrorMessage(error),
       });

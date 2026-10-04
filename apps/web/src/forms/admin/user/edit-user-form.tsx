@@ -1,19 +1,20 @@
 "use client";
-import type { RoleMinimal } from "@/services/database/roles";
-import { getRolesMinimal } from "@/lib/api-client/database";
 import { updateUser } from "@/actions/database/users";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { Users } from "@gcp/db";
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
+import { getRolesMinimal } from "@/lib/api-client/database";
+import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { getErrorMessage, getList, permissions } from "@/lib/utils";
+import { ServerError } from "@/types/responses";
+import { Users } from "@gcp/db";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconClipboardPlus, IconDeviceFloppy } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { EditUserSchema, EditUserSchemaType } from "./edit-user-schema";
-import { ServerError } from "@/types/responses";
 
 export default function EditUserForm({
   user,
@@ -22,31 +23,16 @@ export default function EditUserForm({
   user: Users;
   callback?: () => void;
 }) {
-  const [roles, setRoles] = useState<RoleMinimal[]>([]);
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchRoles() {
-      try {
-        const { data, error } = await getRolesMinimal();
-        if (error) {
-          throw new ServerError(error, "GetRolesMinimalError");
-        }
-        setRoles(data);
-      } catch (error) {
-        setError("Failed to get roles: " + getErrorMessage(error));
-        toast.error("Failed to fetch roles", {
-          description: getErrorMessage(error),
-        });
-      }
-
-      setLoading(false);
-    }
-
-    fetchRoles();
-  }, []);
+  const rolesQuery = useQuery({
+    queryKey: queryKeys.rolesMinimal,
+    queryFn: () => unwrap(getRolesMinimal(), "GetRolesMinimalError"),
+  });
+  const roles = rolesQuery.data ?? [];
+  const loading = rolesQuery.isPending;
+  const error = rolesQuery.error
+    ? "Failed to get roles: " + getErrorMessage(rolesQuery.error)
+    : null;
+  useQueryErrorToast(rolesQuery.error, "Failed to fetch roles");
 
   const form = useForm<EditUserSchemaType>({
     resolver: zodResolver(EditUserSchema),

@@ -1,17 +1,19 @@
 "use client";
 
 import { setServerPlugin } from "@/actions/gbx/server-plugin";
-import { getServerPlugin } from "@/lib/api-client/gbx";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
+import { getServerPlugin } from "@/lib/api-client/gbx";
+import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { getErrorMessage } from "@/lib/utils";
 import { ServerPlugin } from "@/types/gbx/server-plugin";
 import { ServerError } from "@/types/responses";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconCancel, IconDeviceFloppy } from "@tabler/icons-react";
-import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import {
@@ -28,17 +30,18 @@ export default function ServerPluginsForm({
   defaultServerPlugin: ServerPlugin;
   scripts: string[];
 }) {
-  const [serverPlugin, setServerPluginState] =
-    useState<ServerPlugin>(defaultServerPlugin);
+  // Starts from what the page loaded; saving or resetting asks the server again
+  const pluginQuery = useQuery({
+    queryKey: queryKeys.serverPlugin(serverId),
+    queryFn: () => unwrap(getServerPlugin(serverId), "GetServerPluginError"),
+    initialData: defaultServerPlugin,
+    staleTime: Infinity,
+  });
+  const serverPlugin = pluginQuery.data;
 
   const refreshServerPlugin = async () => {
-    try {
-      const { data, error } = await getServerPlugin(serverId);
-      if (error) {
-        throw new ServerError(error, "GetServerPluginError");
-      }
-      setServerPluginState(data);
-    } catch (error) {
+    const { error } = await pluginQuery.refetch();
+    if (error) {
       toast.error("Failed to refresh server plugin", {
         description: getErrorMessage(error),
       });

@@ -1,18 +1,17 @@
 "use client";
-import { getHetznerLocations } from "@/lib/api-client/hetzner";
-import { getAllNetworks } from "@/lib/api-client/hetzner";
-import { getServerTypes } from "@/lib/api-client/hetzner";
-import { getAllDatabases } from "@/lib/api-client/hetzner";
 import AdvancedServerSetupForm from "@/forms/admin/hetzner/setup-steps/advanced/server-setup-form";
 import SimpleServerSetupForm from "@/forms/admin/hetzner/setup-steps/simple/server-setup-form";
+import {
+  useHetznerDatabases,
+  useHetznerLocations,
+  useHetznerNetworks,
+  useHetznerServerTypes,
+  useHetznerSshKeys,
+} from "@/hooks/use-hetzner-queries";
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
 import { getErrorMessage } from "@/lib/utils";
-import { HetznerLocation } from "@/types/api/hetzner/locations";
-import { HetznerNetwork } from "@/types/api/hetzner/networks";
-import { HetznerServer, HetznerServerType } from "@/types/api/hetzner/servers";
-import { HetznerSSHKey } from "@/types/api/hetzner/ssh-keys";
 import { IconX } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
 import { Card } from "../../ui/card";
 import {
   Select,
@@ -22,7 +21,6 @@ import {
   SelectValue,
 } from "../../ui/select";
 import { DefaultModalProps } from "../default-props";
-import { getSSHKeys } from "@/lib/api-client/hetzner";
 
 type Mode = "simple" | "advanced";
 
@@ -31,115 +29,47 @@ export default function AddServerSetupModal({
   onSubmit,
   data,
 }: DefaultModalProps<string>) {
-  const [databases, setDatabases] = useState<HetznerServer[]>([]);
-  const [networks, setNetworks] = useState<HetznerNetwork[]>([]);
-  const [locations, setLocations] = useState<HetznerLocation[]>([]);
-  const [serverTypes, setServerTypes] = useState<HetznerServerType[]>([]);
-  const [sshKeys, setSshKeys] = useState<HetznerSSHKey[]>([]);
+  const projectId = data ?? "";
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const databasesQuery = useHetznerDatabases(projectId);
+  const locationsQuery = useHetznerLocations(projectId);
+  const serverTypesQuery = useHetznerServerTypes(projectId);
+  const networksQuery = useHetznerNetworks(projectId);
+  const sshKeysQuery = useHetznerSshKeys(projectId);
 
-  useEffect(() => {
-    async function fetch() {
-      if (!data) return;
-      setLoading(true);
+  const databases = databasesQuery.data ?? [];
+  const locations = locationsQuery.data ?? [];
+  const serverTypes = serverTypesQuery.data ?? [];
+  const networks = networksQuery.data ?? [];
+  const sshKeys = sshKeysQuery.data ?? [];
 
-      const [
-        databasesResult,
-        locationsResult,
-        serverTypesResult,
-        networksResult,
-        sshKeysResult,
-      ] = await Promise.allSettled([
-        getAllDatabases(data),
-        getHetznerLocations(data),
-        getServerTypes(data),
-        getAllNetworks(data),
-        getSSHKeys(data),
-      ]);
+  const loading = [
+    databasesQuery,
+    locationsQuery,
+    serverTypesQuery,
+    networksQuery,
+    sshKeysQuery,
+  ].some((q) => q.isPending);
 
-      // Handle databases
-      if (databasesResult.status === "fulfilled") {
-        const { data, error } = databasesResult.value;
-        if (!error) {
-          setDatabases(data);
-        } else {
-          toast.error("Failed to fetch existing databases", {
-            description: error,
-          });
-        }
-      } else {
-        toast.error("Failed to fetch existing databases", {
-          description: getErrorMessage(databasesResult.reason),
-        });
-      }
+  // A missing database list only hides the "use existing database" choice, the rest is required
+  const failure = [
+    ["locations", locationsQuery.error],
+    ["server types", serverTypesQuery.error],
+    ["networks", networksQuery.error],
+    ["SSH keys", sshKeysQuery.error],
+  ].find(([, e]) => e);
+  const error = failure
+    ? `Failed to get ${failure[0]}: ${getErrorMessage(failure[1])}`
+    : null;
 
-      // Handle locations
-      if (locationsResult.status === "fulfilled") {
-        const { data, error } = locationsResult.value;
-        if (!error) {
-          setLocations(data);
-        } else {
-          toast.error("Failed to fetch locations", { description: error });
-          setError("Failed to get locations: " + error);
-        }
-      } else {
-        toast.error("Failed to fetch locations", {
-          description: getErrorMessage(locationsResult.reason),
-        });
-      }
-
-      // Handle server types
-      if (serverTypesResult.status === "fulfilled") {
-        const { data, error } = serverTypesResult.value;
-        if (!error) {
-          setServerTypes(data);
-        } else {
-          toast.error("Failed to fetch server types", { description: error });
-          setError("Failed to get server types: " + error);
-        }
-      } else {
-        toast.error("Failed to fetch server types", {
-          description: getErrorMessage(serverTypesResult.reason),
-        });
-      }
-
-      // Handle networks
-      if (networksResult.status === "fulfilled") {
-        const { data, error } = networksResult.value;
-        if (!error) {
-          setNetworks(data);
-        } else {
-          toast.error("Failed to fetch networks", { description: error });
-          setError("Failed to get networks: " + error);
-        }
-      } else {
-        toast.error("Failed to fetch networks", {
-          description: getErrorMessage(networksResult.reason),
-        });
-      }
-
-      // Handle SSH keys
-      if (sshKeysResult.status === "fulfilled") {
-        const { data, error } = sshKeysResult.value;
-        if (!error) {
-          setSshKeys(data);
-        } else {
-          toast.error("Failed to fetch SSH keys", { description: error });
-          setError("Failed to get SSH keys: " + error);
-        }
-      } else {
-        toast.error("Failed to fetch SSH keys", {
-          description: getErrorMessage(sshKeysResult.reason),
-        });
-      }
-
-      setLoading(false);
-    }
-
-    fetch();
-  }, []);
+  useQueryErrorToast(
+    databasesQuery.error,
+    "Failed to fetch existing databases",
+  );
+  useQueryErrorToast(locationsQuery.error, "Failed to fetch locations");
+  useQueryErrorToast(serverTypesQuery.error, "Failed to fetch server types");
+  useQueryErrorToast(networksQuery.error, "Failed to fetch networks");
+  useQueryErrorToast(sshKeysQuery.error, "Failed to fetch SSH keys");
 
   const [mode, setMode] = useState<Mode>("simple");
 

@@ -1,20 +1,22 @@
 "use client";
 
 import { addMapToJukebox, clearJukebox, setJukebox } from "@/actions/gbx/map";
-import { getJukebox } from "@/lib/api-client/gbx";
 import { createColumns as createJukeboxColumns } from "@/app/(gocontroller)/server/[id]/maps/jukebox-columns";
 import { createColumns as createMapColumns } from "@/app/(gocontroller)/server/[id]/maps/server-maps-columns";
-import { Maps } from "@gcp/db";
+import { getJukebox } from "@/lib/api-client/gbx";
+import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { getErrorMessage } from "@/lib/utils";
 import { JukeboxMap } from "@/types/map";
+import { ServerError } from "@/types/responses";
+import { Maps } from "@gcp/db";
 import { IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { DndList } from "../dnd/dnd-list";
 import DndListHeaders from "../dnd/dnd-list-headers";
 import { DataTable } from "../table/data-table";
 import { Button } from "../ui/button";
-import { ServerError } from "@/types/responses";
 
 interface JukeboxProps {
   serverId: string;
@@ -29,18 +31,22 @@ export default function Jukebox({ serverId, jukebox, maps }: JukeboxProps) {
   const [jukeboxOrder, setJukeboxOrder] =
     useState<JukeboxMap[]>(defaultJukebox);
 
+  // The server pops the first entry when its map starts, so poll for that
+  const { data: serverJukebox } = useQuery({
+    queryKey: queryKeys.jukebox(serverId),
+    queryFn: () => unwrap(getJukebox(serverId), "GetJukeboxError"),
+    refetchInterval: 10000,
+    enabled: !!serverId,
+  });
+
   useEffect(() => {
-    const intervalIndex = setInterval(async () => {
-      const { data: jukebox } = await getJukebox(serverId);
-
-      if (jukebox[0]?.id !== jukeboxOrder[0]?.id) {
-        setJukeboxOrder(jukebox);
-        setDefaultJukebox(jukebox);
-      }
-    }, 10000);
-
-    return () => clearInterval(intervalIndex);
-  }, [jukeboxOrder, serverId]);
+    if (serverJukebox && serverJukebox[0]?.id !== jukeboxOrder[0]?.id) {
+      setJukeboxOrder(serverJukebox);
+      setDefaultJukebox(serverJukebox);
+    }
+    // Only a new answer from the server may replace what the user is editing
+     
+  }, [serverJukebox]);
 
   async function saveJukebox() {
     try {
