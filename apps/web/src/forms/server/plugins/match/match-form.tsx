@@ -1,9 +1,6 @@
 "use client";
 
 import { updateServerPlugin } from "@/actions/database/server-plugins";
-import type { UserMinimal } from "@/services/database/users";
-import { getScripts } from "@/lib/api-client/filemanager";
-import { getLocalMaps } from "@/lib/api-client/gbx";
 import FormElement from "@/components/form/form-element";
 import Modal from "@/components/modals/modal";
 import SelectFolderModal from "@/components/modals/plugins/plugins/select-folder-modal";
@@ -11,12 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Form, FormDescription, FormLabel } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
 import { useSearchUsers } from "@/hooks/use-search-users";
+import { getScripts } from "@/lib/api-client/filemanager";
+import { getLocalMaps } from "@/lib/api-client/gbx";
+import { queryKeys, unwrap } from "@/lib/api-client/query";
 import {
   getErrorMessage,
   pickAndBanToString,
   stringToPickAndBan,
 } from "@/lib/utils";
+import type { UserMinimal } from "@/services/database/users";
 import { LocalMapInfo } from "@/types/map";
 import { MatchPluginConfig } from "@/types/plugins/match";
 import { ServerError } from "@/types/responses";
@@ -30,9 +32,10 @@ import {
   IconUpload,
   IconX,
 } from "@tabler/icons-react";
+import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import Papa from "papaparse";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Control, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { MatchPluginSchema, MatchPluginSchemaType } from "./match-schema";
@@ -54,50 +57,26 @@ export default function MatchForm({
 
   const [selectFolderModalOpen, setSelectFolderModalOpen] = useState(false);
 
-  const [loadingScripts, setLoadingScripts] = useState(true);
-  const [scripts, setScripts] = useState<string[]>([]);
+  const scriptsQuery = useQuery({
+    queryKey: queryKeys.scripts(serverId),
+    queryFn: () => unwrap(getScripts(serverId), "GetScriptsError"),
+  });
+  const scripts = scriptsQuery.data ?? [];
+  const loadingScripts = scriptsQuery.isPending;
+  useQueryErrorToast(scriptsQuery.error, "Failed to load scripts");
 
-  const [loadingLocalMaps, setLoadingLocalMaps] = useState(true);
-  const [localMaps, setLocalMaps] = useState<LocalMapInfo[]>([]);
+  const localMapsQuery = useQuery({
+    queryKey: queryKeys.localMaps(serverId),
+    queryFn: () => unwrap(getLocalMaps(serverId), "GetLocalMapsError"),
+  });
+  const localMaps = useMemo(
+    () => localMapsQuery.data ?? [],
+    [localMapsQuery.data],
+  );
+  const loadingLocalMaps = localMapsQuery.isPending;
+  useQueryErrorToast(localMapsQuery.error, "Failed to load local maps");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    async function fetchScripts() {
-      try {
-        const { data, error } = await getScripts(serverId);
-        if (error) {
-          throw new ServerError(error, "GetScriptsError");
-        }
-        setScripts(data);
-      } catch (error) {
-        toast.error("Failed to load scripts", {
-          description: getErrorMessage(error),
-        });
-      } finally {
-        setLoadingScripts(false);
-      }
-    }
-
-    async function fetchLocalMaps() {
-      try {
-        const { data, error } = await getLocalMaps(serverId);
-        if (error) {
-          throw new ServerError(error, "GetLocalMapsError");
-        }
-        setLocalMaps(data);
-      } catch (error) {
-        toast.error("Failed to load local maps", {
-          description: getErrorMessage(error),
-        });
-      } finally {
-        setLoadingLocalMaps(false);
-      }
-    }
-
-    fetchScripts();
-    fetchLocalMaps();
-  }, [serverId]);
 
   const localFolders = useMemo(() => {
     const folders: Record<string, LocalMapInfo[]> = {};

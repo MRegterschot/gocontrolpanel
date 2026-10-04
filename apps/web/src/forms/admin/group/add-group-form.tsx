@@ -1,29 +1,25 @@
 "use client";
 import { createGroup } from "@/actions/database/groups";
-import type { ServerMinimal } from "@/services/database/servers";
-import { getServersMinimal } from "@/lib/api-client/database";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form, FormLabel } from "@/components/ui/form";
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
 import { useSearchUsers } from "@/hooks/use-search-users";
-import { GroupRole } from "@gcp/db";
+import { getServersMinimal } from "@/lib/api-client/database";
+import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { getErrorMessage } from "@/lib/utils";
+import { ServerError } from "@/types/responses";
+import { GroupRole } from "@gcp/db";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
+import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AddGroupSchema, AddGroupSchemaType } from "./add-group-schema";
-import { ServerError } from "@/types/responses";
 
 export default function AddGroupForm({ callback }: { callback?: () => void }) {
   const { data: session } = useSession();
-
-  const [servers, setServers] = useState<ServerMinimal[]>([]);
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const {
     search,
@@ -34,26 +30,18 @@ export default function AddGroupForm({ callback }: { callback?: () => void }) {
     defaultUsers: session ? [session.user.id] : [],
   });
 
-  useEffect(() => {
-    async function fetch() {
-      try {
-        const { data, error } = await getServersMinimal();
-        if (error) {
-          throw new ServerError(error, "GetServersMinimalError");
-        }
-        setServers(data);
-      } catch (error) {
-        setError("Failed to get servers: " + getErrorMessage(error));
-        toast.error("Failed to fetch servers", {
-          description: getErrorMessage(error),
-        });
-      }
-
-      setLoading(false);
-    }
-
-    fetch();
-  }, []);
+  const serversQuery = useQuery({
+    queryKey: queryKeys.serversMinimal,
+    queryFn: () => unwrap(getServersMinimal(), "GetServersMinimalError"),
+    // Offers every server to pick from, so a server added a moment ago must show up
+    gcTime: 0,
+  });
+  const servers = serversQuery.data ?? [];
+  const loading = serversQuery.isPending;
+  const error = serversQuery.error
+    ? "Failed to get servers: " + getErrorMessage(serversQuery.error)
+    : null;
+  useQueryErrorToast(serversQuery.error, "Failed to fetch servers");
 
   const form = useForm<AddGroupSchemaType>({
     resolver: zodResolver(AddGroupSchema),

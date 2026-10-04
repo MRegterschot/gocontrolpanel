@@ -1,21 +1,20 @@
 "use client";
 
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
 import { getMapByUid } from "@/lib/api-client/database";
-import { Maps } from "@gcp/db";
-import { cn, formatTime, getErrorMessage } from "@/lib/utils";
+import { queryKeys, unwrap } from "@/lib/api-client/query";
+import { cn, formatTime } from "@/lib/utils";
 import {
   IconPhoto,
   IconScript,
   IconStopwatch,
   IconUser,
 } from "@tabler/icons-react";
+import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
 import { parseTmTags } from "tmtags";
 import { Card } from "../ui/card";
 import LiveActions from "./live-actions";
-import { ServerError } from "@/types/responses";
 
 interface MapInfoProps {
   serverId: string;
@@ -36,28 +35,15 @@ export default function MapInfo({
   isWarmUp,
   canActions,
 }: MapInfoProps) {
-  const [mapInfo, setMapInfo] = useState<Maps | null>(null);
-
-  useEffect(() => {
-    if (!map) return;
-
-    const fetchData = async () => {
-      try {
-        const { data, error } = await getMapByUid(map);
-        if (error) {
-          throw new ServerError(error, "GetMapByUidError");
-        }
-
-        setMapInfo(data);
-      } catch (error) {
-        toast.error("Error fetching map info", {
-          description: getErrorMessage(error),
-        });
-      }
-    };
-
-    fetchData();
-  }, [map]);
+  const query = useQuery({
+    queryKey: queryKeys.map(map ?? ""),
+    queryFn: () => unwrap(getMapByUid(map!), "GetMapByUidError"),
+    enabled: !!map,
+    // A map's data doesn't change while it is being played
+    staleTime: 5 * 60 * 1000,
+  });
+  useQueryErrorToast(query.error, "Error fetching map info");
+  const mapInfo = query.data;
 
   if (!mapInfo) {
     return (

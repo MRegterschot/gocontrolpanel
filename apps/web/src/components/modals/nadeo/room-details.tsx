@@ -1,10 +1,13 @@
 "use client";
 import { addRoomToServer, downloadRoom } from "@/actions/nadeo/clubs";
-import { getClubRoomWithNamesAndMaps } from "@/lib/api-client/nadeo";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
+import { getClubRoomWithNamesAndMaps } from "@/lib/api-client/nadeo";
+import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { getErrorMessage } from "@/lib/utils";
-import { ClubActivity, ClubRoomWithNamesAndMaps } from "@/types/api/nadeo";
+import { ClubActivity } from "@/types/api/nadeo";
+import { ServerError } from "@/types/responses";
 import {
   IconCheck,
   IconDownload,
@@ -12,14 +15,14 @@ import {
   IconPhoto,
   IconX,
 } from "@tabler/icons-react";
+import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { parseTmTags } from "tmtags";
 import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
 import ActivityMapCard from "./activity-map-card";
-import { ServerError } from "@/types/responses";
 
 export default function RoomDetailsModal({
   closeModal,
@@ -29,12 +32,23 @@ export default function RoomDetailsModal({
   serverId: string;
   fmHealth: boolean;
 }>) {
-  const [clubRoom, setClubRoom] = useState<ClubRoomWithNamesAndMaps | null>(
-    null,
-  );
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const roomQuery = useQuery({
+    queryKey: queryKeys.club(
+      data?.activity.clubId ?? 0,
+      "room",
+      data?.activity.id ?? 0,
+    ),
+    queryFn: () =>
+      unwrap(
+        getClubRoomWithNamesAndMaps(data!.activity.clubId, data!.activity.id),
+        "GetClubRoomError",
+      ),
+    enabled: !!data,
+  });
+  const clubRoom = roomQuery.data ?? null;
+  const loading = roomQuery.isPending && !!data;
+  const error = roomQuery.error ? getErrorMessage(roomQuery.error) : null;
+  useQueryErrorToast(roomQuery.error, "Failed to fetch club room");
 
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -113,39 +127,6 @@ export default function RoomDetailsModal({
       setIsDownloading(false);
     }
   };
-
-  const getClubRoom = async () => {
-    if (!data) return;
-
-    try {
-      setLoading(true);
-
-      const { data: clubRoomRes, error: getClubRoomError } =
-        await getClubRoomWithNamesAndMaps(
-          data.activity.clubId,
-          data.activity.id,
-        );
-      if (getClubRoomError) {
-        throw new ServerError(getClubRoomError, "GetClubRoomError");
-      }
-
-      setClubRoom(clubRoomRes);
-      setError(null);
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(getErrorMessage(error));
-        toast.error("Failed to fetch club room", {
-          description: getErrorMessage(error),
-        });
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    getClubRoom();
-  }, [data]);
 
   const stopPropagation = (e: React.MouseEvent) => {
     e.stopPropagation();

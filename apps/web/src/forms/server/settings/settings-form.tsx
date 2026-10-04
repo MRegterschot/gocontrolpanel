@@ -1,33 +1,40 @@
 "use client";
 import { saveServerSettings } from "@/actions/gbx/server";
-import { getServerSettings } from "@/lib/api-client/gbx";
 import FormElement from "@/components/form/form-element";
 import FormElementSkeleton from "@/components/skeletons/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
+import { getServerSettings } from "@/lib/api-client/gbx";
+import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { getErrorMessage } from "@/lib/utils";
+import { ServerError } from "@/types/responses";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconDeviceFloppy } from "@tabler/icons-react";
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import {
   ServerSettingsSchema,
   ServerSettingsSchemaType,
 } from "./settings-schema";
-import { ServerError } from "@/types/responses";
 
 export default function SettingsForm({ serverId }: { serverId: string }) {
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: settings, error: loadError } = useQuery({
+    queryKey: queryKeys.settings(serverId),
+    queryFn: () =>
+      unwrap(getServerSettings(serverId), "GetServerSettingsError"),
+    // The form edits this copy, so every visit starts from what the server has now
+    gcTime: 0,
+  });
+  const isLoading = !settings;
 
   const form = useForm<ServerSettingsSchemaType>({
     resolver: zodResolver(ServerSettingsSchema),
-    defaultValues: async () => {
-      const { data: settings } = await getServerSettings(serverId);
-      setIsLoading(false);
-      return settings;
-    },
+    values: settings,
   });
+
+  useQueryErrorToast(loadError, "Failed to load settings");
 
   async function onSubmit(values: ServerSettingsSchemaType) {
     try {

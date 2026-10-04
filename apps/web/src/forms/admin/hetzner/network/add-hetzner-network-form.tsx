@@ -1,22 +1,22 @@
 "use client";
 
-import { getHetznerLocations } from "@/lib/api-client/hetzner";
 import { createHetznerNetwork } from "@/actions/hetzner/networks";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form, FormLabel, FormMessage } from "@/components/ui/form";
+import { useHetznerLocations } from "@/hooks/use-hetzner-queries";
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
 import { getErrorMessage } from "@/lib/utils";
-import { HetznerLocation } from "@/types/api/hetzner/locations";
+import { ServerError } from "@/types/responses";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import {
   AddHetznerNetworkSchema,
   AddHetznerNetworkSchemaType,
 } from "./add-hetzner-network-schema";
-import { ServerError } from "@/types/responses";
 
 export default function AddHetznerNetworkForm({
   projectId,
@@ -25,41 +25,28 @@ export default function AddHetznerNetworkForm({
   projectId: string;
   callback: () => void;
 }) {
-  const [locations, setLocations] = useState<HetznerLocation[]>([]);
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetch() {
-      try {
-        const { data, error } = await getHetznerLocations(projectId);
-        if (error) {
-          throw new ServerError(error, "GetHetznerLocationsError");
-        }
-        // Remove duplicates based on network_zone
-        const uniqueLocations = Array.from(
-          new Map(data.map((loc) => [loc.network_zone, loc])),
-        )
-          .sort((a, b) => a[1].network_zone.localeCompare(b[1].network_zone))
-          .map(([, loc]) => loc);
-        setLocations(uniqueLocations);
-      } catch (err) {
-        setError("Failed to get locations: " + getErrorMessage(err));
-        toast.error("Failed to fetch locations", {
-          description: getErrorMessage(err),
-        });
-      }
-
-      setLoading(false);
-    }
-
-    fetch();
-  }, []);
-
   const form = useForm<AddHetznerNetworkSchemaType>({
     resolver: zodResolver(AddHetznerNetworkSchema),
   });
+
+  const locationsQuery = useHetznerLocations(projectId);
+  // One entry per network zone
+  const locations = useMemo(
+    () =>
+      Array.from(
+        new Map(
+          (locationsQuery.data ?? []).map((loc) => [loc.network_zone, loc]),
+        ),
+      )
+        .sort((a, b) => a[1].network_zone.localeCompare(b[1].network_zone))
+        .map(([, loc]) => loc),
+    [locationsQuery.data],
+  );
+  const loading = locationsQuery.isPending;
+  const error = locationsQuery.error
+    ? "Failed to get locations: " + getErrorMessage(locationsQuery.error)
+    : null;
+  useQueryErrorToast(locationsQuery.error, "Failed to fetch locations");
 
   const { control } = form;
   const {

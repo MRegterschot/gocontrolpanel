@@ -1,27 +1,30 @@
 "use client";
-import { addCampaignToServer, downloadCampaign } from "@/actions/nadeo/campaigns";
-import { getClubCampaignWithMaps } from "@/lib/api-client/nadeo";
+import {
+  addCampaignToServer,
+  downloadCampaign,
+} from "@/actions/nadeo/campaigns";
 import PlaylistMapCard from "@/components/nadeo/playlist-map-card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
+import { getClubCampaignWithMaps } from "@/lib/api-client/nadeo";
+import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { getErrorMessage } from "@/lib/utils";
-import {
-  ClubActivity,
-  ClubCampaignWithNamesAndPlaylistMaps,
-} from "@/types/api/nadeo";
+import { ClubActivity } from "@/types/api/nadeo";
+import { ServerError } from "@/types/responses";
 import {
   IconDownload,
   IconMapPlus,
   IconPhoto,
   IconX,
 } from "@tabler/icons-react";
+import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { parseTmTags } from "tmtags";
 import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
-import { ServerError } from "@/types/responses";
 
 export default function CampaignDetailsModal({
   closeModal,
@@ -31,11 +34,28 @@ export default function CampaignDetailsModal({
   serverId: string;
   fmHealth: boolean;
 }>) {
-  const [clubCampaign, setClubCampaign] =
-    useState<ClubCampaignWithNamesAndPlaylistMaps | null>(null);
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const campaignQuery = useQuery({
+    queryKey: queryKeys.club(
+      data?.activity.clubId ?? 0,
+      "campaign",
+      data?.activity.campaignId ?? 0,
+    ),
+    queryFn: () =>
+      unwrap(
+        getClubCampaignWithMaps(
+          data!.activity.clubId,
+          data!.activity.campaignId,
+        ),
+        "GetClubCampaignError",
+      ),
+    enabled: !!data,
+  });
+  const clubCampaign = campaignQuery.data ?? null;
+  const loading = campaignQuery.isPending && !!data;
+  const error = campaignQuery.error
+    ? getErrorMessage(campaignQuery.error)
+    : null;
+  useQueryErrorToast(campaignQuery.error, "Failed to fetch club campaign");
 
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -120,39 +140,6 @@ export default function CampaignDetailsModal({
       setIsDownloading(false);
     }
   };
-
-  const getClubCampaign = async () => {
-    if (!data) return;
-
-    try {
-      setLoading(true);
-
-      const { data: clubCampaignRes, error: getClubCampaignError } =
-        await getClubCampaignWithMaps(
-          data.activity.clubId,
-          data.activity.campaignId,
-        );
-      if (getClubCampaignError) {
-        throw new ServerError(getClubCampaignError, "GetClubCampaignError");
-      }
-
-      setClubCampaign(clubCampaignRes);
-      setError(null);
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(getErrorMessage(error));
-        toast.error("Failed to fetch club campaign", {
-          description: getErrorMessage(error),
-        });
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    getClubCampaign();
-  }, [data]);
 
   const stopPropagation = (e: React.MouseEvent) => {
     e.stopPropagation();

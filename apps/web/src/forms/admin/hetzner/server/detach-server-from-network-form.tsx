@@ -1,22 +1,22 @@
 "use client";
 
-import { getAllNetworks } from "@/lib/api-client/hetzner";
 import { detachHetznerServerFromNetwork } from "@/actions/hetzner/servers";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
+import { useHetznerNetworks } from "@/hooks/use-hetzner-queries";
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
 import { getErrorMessage } from "@/lib/utils";
-import { HetznerNetwork } from "@/types/api/hetzner/networks";
+import { ServerError } from "@/types/responses";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconDeviceFloppy } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import {
   DetachServerFromNetworkSchema,
   DetachServerFromNetworkSchemaType,
 } from "./detach-server-from-network-schema";
-import { ServerError } from "@/types/responses";
 
 export default function DetachServerFromNetworkForm({
   projectId,
@@ -27,46 +27,23 @@ export default function DetachServerFromNetworkForm({
   serverId: number;
   callback?: () => void;
 }) {
-  const [networks, setNetworks] = useState<HetznerNetwork[]>([]);
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetch() {
-      setLoading(true);
-
-      const [networksResult] = await Promise.allSettled([
-        getAllNetworks(projectId),
-      ]);
-
-      // Handle networks
-      if (networksResult.status === "fulfilled") {
-        const { data, error } = networksResult.value;
-        if (!error) {
-          const filteredNetworks = data.filter((network) =>
-            network.servers.includes(serverId),
-          );
-          setNetworks(filteredNetworks);
-        } else {
-          toast.error("Failed to fetch networks", { description: error });
-          setError("Failed to get networks: " + error);
-        }
-      } else {
-        toast.error("Failed to fetch networks", {
-          description: getErrorMessage(networksResult.reason),
-        });
-      }
-
-      setLoading(false);
-    }
-
-    fetch();
-  }, []);
-
   const form = useForm<DetachServerFromNetworkSchemaType>({
     resolver: zodResolver(DetachServerFromNetworkSchema),
   });
+
+  const networksQuery = useHetznerNetworks(projectId);
+  const networks = useMemo(
+    () =>
+      (networksQuery.data ?? []).filter((network) =>
+        network.servers.includes(serverId),
+      ),
+    [networksQuery.data, serverId],
+  );
+  const loading = networksQuery.isPending;
+  const error = networksQuery.error
+    ? "Failed to get networks: " + getErrorMessage(networksQuery.error)
+    : null;
+  useQueryErrorToast(networksQuery.error, "Failed to fetch networks");
 
   async function onSubmit(values: DetachServerFromNetworkSchemaType) {
     try {

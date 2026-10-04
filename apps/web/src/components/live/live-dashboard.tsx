@@ -1,18 +1,19 @@
 "use client";
-import { getPlayerList } from "@/lib/api-client/gbx";
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
 import useWebSocket from "@/hooks/use-websocket";
-import { getErrorMessage, hasPermissionSync } from "@/lib/utils";
+import { getPlayerList } from "@/lib/api-client/gbx";
+import { queryKeys, unwrap } from "@/lib/api-client/query";
+import { hasPermissionSync } from "@/lib/utils";
 import { routePermissions } from "@/routes";
 import {
   DetailedPlayerChat,
   LiveInfo,
-  PlayerInfo,
   SPlayerInfo,
   wsPaths,
 } from "@gcp/shared";
+import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
 import { Card } from "../ui/card";
 import KnockoutScores from "./knockout-scores";
 import LiveChat from "./live-chat";
@@ -23,7 +24,6 @@ import Rankings from "./rankings";
 import RoundScores from "./round-scores";
 import TeamScores from "./team-scores";
 import TimeAttackScores from "./time-attack-scores";
-import { ServerError } from "@/types/responses";
 
 export default function LiveDashboard({
   serverId,
@@ -36,7 +36,6 @@ export default function LiveDashboard({
 }) {
   const { data: session } = useSession();
 
-  const [playerList, setPlayerList] = useState<PlayerInfo[]>([]);
   const [liveInfo, setLiveInfo] = useState<LiveInfo | null>(null);
   const [mapInfo, setMapInfo] = useState<{
     map: string;
@@ -221,27 +220,20 @@ export default function LiveDashboard({
     onMessage: handleMessage,
   });
 
+  const hasPlayers = !!liveInfo?.players;
+  const playersQuery = useQuery({
+    queryKey: queryKeys.players(serverId),
+    queryFn: () => unwrap(getPlayerList(serverId), "GetPlayerListError"),
+    enabled: hasPlayers,
+  });
+  useQueryErrorToast(playersQuery.error, "Error fetching player list");
+  const playerList = playersQuery.data ?? [];
+
+  // The live socket sends a new players object whenever someone joins, leaves or changes
+  const { refetch: refetchPlayers } = playersQuery;
   useEffect(() => {
-    if (!liveInfo?.players) {
-      return;
-    }
-
-    const fetchData = async () => {
-      try {
-        const { data, error } = await getPlayerList(serverId);
-        if (error) {
-          throw new ServerError(error, "GetPlayerListError");
-        }
-
-        setPlayerList(data);
-      } catch (error) {
-        toast.error("Error fetching player list", {
-          description: getErrorMessage(error),
-        });
-      }
-    };
-
-    fetchData();
+    if (hasPlayers) refetchPlayers();
+     
   }, [liveInfo?.players]);
 
   if (!liveInfo) {
@@ -268,9 +260,9 @@ export default function LiveDashboard({
                 roundsLimit={liveInfo.roundsLimit}
                 mapLimit={liveInfo.mapLimit}
                 nbWinners={liveInfo.nbWinners}
-              serverId={serverId}
-              teams={liveInfo.teams}
-              type={liveInfo.type}
+                serverId={serverId}
+                teams={liveInfo.teams}
+                type={liveInfo.type}
               />
             )}
 

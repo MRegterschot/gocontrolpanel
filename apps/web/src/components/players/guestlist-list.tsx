@@ -1,35 +1,26 @@
 "use client";
 
-import { getGuestlist } from "@/lib/api-client/gbx";
 import { createColumns } from "@/app/(gocontroller)/server/[id]/players/guestlist-columns";
 import GuestlistForm from "@/forms/server/players/guestlist-form";
-import { getErrorMessage } from "@/lib/utils";
-import { PlayerInfo } from "@gcp/shared";
-import { useState } from "react";
-import { toast } from "sonner";
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
+import { getGuestlist } from "@/lib/api-client/gbx";
+import { queryKeys, unwrap } from "@/lib/api-client/query";
+import { useQuery } from "@tanstack/react-query";
 import { DataTable } from "../table/data-table";
-import { ServerError } from "@/types/responses";
 
 interface GuestlistListProps {
   serverId: string;
 }
 
 export default function GuestlistList({ serverId }: GuestlistListProps) {
-  const [guestlist, setGuestlist] = useState<PlayerInfo[]>([]);
+  const query = useQuery({
+    queryKey: queryKeys.guestlist(serverId),
+    queryFn: () => unwrap(getGuestlist(serverId), "GetGuestlistError"),
+  });
+  useQueryErrorToast(query.error, "Error fetching guest list");
 
   const refetch = async () => {
-    try {
-      const { data, error } = await getGuestlist(serverId);
-      if (error) {
-        throw new ServerError(error, "GetGuestlistError");
-      }
-
-      setGuestlist(data);
-    } catch (error) {
-      toast.error("Error fetching guest list", {
-        description: getErrorMessage(error),
-      });
-    }
+    await query.refetch();
   };
 
   const columns = createColumns(serverId, refetch);
@@ -37,7 +28,7 @@ export default function GuestlistList({ serverId }: GuestlistListProps) {
   return (
     <DataTable
       columns={columns}
-      data={guestlist}
+      data={query.data ?? []}
       pagination
       actions={<GuestlistForm serverId={serverId} refetch={refetch} />}
     />

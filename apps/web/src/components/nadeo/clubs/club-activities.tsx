@@ -1,11 +1,10 @@
 "use client";
 
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
 import { getClubActivitiesList } from "@/lib/api-client/nadeo";
+import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { getErrorMessage } from "@/lib/utils";
-import { ClubActivity } from "@/types/api/nadeo";
-import { ServerError } from "@/types/responses";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { Button } from "../../ui/button";
 import ActivityCard from "./activity-card";
 
@@ -18,44 +17,28 @@ export default function ClubActivities({
   fmHealth: boolean;
   clubId: number;
 }) {
-  const [activities, setActivities] = useState<ClubActivity[] | null>(null);
-
-  const [hasMore, setHasMore] = useState(true);
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const loadActivities = async () => {
-    if (loading || !hasMore) return;
-
-    try {
-      setLoading(true);
-
-      const { data, error } = await getClubActivitiesList(
-        clubId,
-        activities?.length ?? 0,
-      );
-      if (error) {
-        throw new ServerError(error, "GetClubActivitiesListError");
-      }
-
-      const newActivities = [...(activities || []), ...data.activityList];
-
-      setActivities(newActivities);
-      setHasMore(data.itemCount > newActivities.length);
-    } catch (err) {
-      setError("Failed to get activities: " + getErrorMessage(err));
-      toast.error("Failed to get activities", {
-        description: getErrorMessage(err),
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadActivities();
-  }, [clubId]);
+  const query = useInfiniteQuery({
+    queryKey: queryKeys.club(clubId, "activities"),
+    queryFn: ({ pageParam }) =>
+      unwrap(
+        getClubActivitiesList(clubId, pageParam),
+        "GetClubActivitiesListError",
+      ),
+    initialPageParam: 0,
+    // The offset of the next page is what has been loaded so far
+    getNextPageParam: (last, pages) => {
+      const loaded = pages.reduce((n, p) => n + p.activityList.length, 0);
+      return last.itemCount > loaded ? loaded : undefined;
+    },
+  });
+  const activities = query.data?.pages.flatMap((p) => p.activityList) ?? null;
+  const hasMore = query.hasNextPage;
+  const loading = query.isFetching;
+  const error = query.error
+    ? "Failed to get activities: " + getErrorMessage(query.error)
+    : null;
+  useQueryErrorToast(query.error, "Failed to get activities");
+  const loadActivities = () => query.fetchNextPage();
 
   return (
     <div className="flex flex-col gap-4">
@@ -78,7 +61,7 @@ export default function ClubActivities({
             <Button
               variant={"outline"}
               className="max-w-32 mx-auto bg-background!"
-              onClick={() => loadActivities()}
+              onClick={loadActivities}
               disabled={loading}
             >
               Load More

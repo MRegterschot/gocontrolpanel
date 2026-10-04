@@ -1,8 +1,9 @@
 import { fetchPaginated } from "@/lib/api-client/http";
+import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { logger } from "@/lib/logger";
-import { ServerError } from "@/types/responses";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { PaginationState } from "@tanstack/react-table";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect } from "react";
 
 interface PaginationAPIHook<TData> {
   data: TData[];
@@ -20,58 +21,36 @@ export const usePaginationAPI = <TData>(
   },
   filter: string = "",
 ): PaginationAPIHook<TData> => {
-  const [data, setData] = useState<TData[]>([]);
-  const [totalCount, setTotalCount] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(true);
-  const inFlight = useRef<AbortController | null>(null);
-
-  const fetchDataFromAPI = useCallback(async () => {
-    // A slow answer for an older page must not overwrite a newer one
-    inFlight.current?.abort();
-    const controller = new AbortController();
-    inFlight.current = controller;
-
-    setLoading(true);
-    try {
-      const { data: page, error } = await fetchPaginated<TData>(
-        endpoint,
-        pagination,
-        sorting,
-        filter,
-        controller.signal,
-      );
-
-      if (error) {
-        throw new ServerError(error, "FetchDataFromAPIError");
-      }
-
-      setData(page.data);
-      setTotalCount(page.totalCount);
-    } catch (error) {
-      if (controller.signal.aborted) return;
-
-      const meta = {
-        type: "hook",
-        module: "usePaginationAPI",
-        function: "fetchDataFromAPI",
-      };
-      logger.error({ meta, error }, "Error fetching data");
-    } finally {
-      if (!controller.signal.aborted) setLoading(false);
-    }
-  }, [
-    endpoint,
-    pagination.pageIndex,
-    pagination.pageSize,
-    sorting.field,
-    sorting.order,
-    filter,
-  ]);
+  const query = useQuery({
+    queryKey: queryKeys.paginated(endpoint, pagination, sorting, filter),
+    // The signal cancels the request when the page, sort or filter changes under it
+    queryFn: ({ signal }) =>
+      unwrap(
+        fetchPaginated<TData>(endpoint, pagination, sorting, filter, signal),
+        "FetchDataFromAPIError",
+      ),
+    // Keep showing the old page while the next one loads, instead of an empty table
+    placeholderData: keepPreviousData,
+  });
 
   useEffect(() => {
-    fetchDataFromAPI();
-    return () => inFlight.current?.abort();
-  }, [fetchDataFromAPI]);
+    if (!query.error) return;
+    const meta = {
+      type: "hook",
+      module: "usePaginationAPI",
+      function: "queryFn",
+    };
+    logger.error({ meta, error: query.error }, "Error fetching data");
+  }, [query.error]);
 
-  return { data, totalCount, loading, refetch: fetchDataFromAPI };
+  const refetch = useCallback(async () => {
+    await query.refetch();
+  }, [query.refetch]);
+
+  return {
+    data: query.data?.data ?? [],
+    totalCount: query.data?.totalCount ?? 0,
+    loading: query.isFetching,
+    refetch,
+  };
 };

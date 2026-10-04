@@ -1,11 +1,13 @@
-import { getHetznerServerMetrics } from "@/lib/api-client/hetzner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
+import { getHetznerServerMetrics } from "@/lib/api-client/hetzner";
+import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { capitalize, formatBytes, getErrorMessage } from "@/lib/utils";
 import { HetznerServerMetrics } from "@/types/api/hetzner/servers";
 import { IconX } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { toast } from "sonner";
 import { Card } from "../../ui/card";
 import {
   ChartConfig,
@@ -24,7 +26,6 @@ import {
 } from "../../ui/select";
 import { ToggleGroup, ToggleGroupItem } from "../../ui/toggle-group";
 import { DefaultModalProps } from "../default-props";
-import { ServerError } from "@/types/responses";
 
 type MetricsData = {
   timestamp: number;
@@ -39,12 +40,6 @@ export default function HetznerServerMetricsModal({
   serverId: number;
 }>) {
   const isMobile = useIsMobile();
-
-  const [error, setError] = useState<string | null>(null);
-
-  const [cpuMetrics, setCpuMetrics] = useState<MetricsData[]>([]);
-  const [diskMetrics, setDiskMetrics] = useState<MetricsData[]>([]);
-  const [networkMetrics, setNetworkMetrics] = useState<MetricsData[]>([]);
 
   const [timeRange, setTimeRange] = useState<number>(30);
 
@@ -98,9 +93,11 @@ export default function HetznerServerMetricsModal({
       });
     }
 
-    setCpuMetrics(Object.values(newCpuMetrics));
-    setDiskMetrics(Object.values(newDiskMetrics));
-    setNetworkMetrics(Object.values(newNetworkMetrics));
+    return {
+      cpu: Object.values(newCpuMetrics),
+      disk: Object.values(newDiskMetrics),
+      network: Object.values(newNetworkMetrics),
+    };
   }
 
   function formatTimestamp(timestamp: number): string {
@@ -117,33 +114,35 @@ export default function HetznerServerMetricsModal({
     });
   }
 
-  const fetchMetrics = async () => {
-    if (!data) return;
-
-    const start = new Date();
-    start.setDate(start.getDate() - timeRange);
-
-    try {
-      const { data: metrics, error } = await getHetznerServerMetrics(
-        data.projectId,
-        data.serverId,
-        start,
+  const metricsQuery = useQuery({
+    queryKey: queryKeys.hetzner(
+      data?.projectId ?? "",
+      `metrics-${data?.serverId}-${timeRange}`,
+    ),
+    queryFn: () => {
+      const start = new Date();
+      start.setDate(start.getDate() - timeRange);
+      return unwrap(
+        getHetznerServerMetrics(data!.projectId, data!.serverId, start),
+        "GetHetznerServerMetricsError",
       );
-      if (error) {
-        throw new ServerError(error, "GetHetznerServerMetricsError");
-      }
-      formatMetrics(metrics);
-    } catch (error) {
-      setError("Failed to get metrics: " + getErrorMessage(error));
-      toast.error("Failed to fetch metrics", {
-        description: getErrorMessage(error),
-      });
-    }
-  };
+    },
+    enabled: !!data,
+    gcTime: 0,
+  });
 
-  useEffect(() => {
-    fetchMetrics();
-  }, [data, timeRange]);
+  const formatted = useMemo(
+    () => (metricsQuery.data ? formatMetrics(metricsQuery.data) : null),
+    [metricsQuery.data],
+  );
+  const cpuMetrics = formatted?.cpu ?? [];
+  const diskMetrics = formatted?.disk ?? [];
+  const networkMetrics = formatted?.network ?? [];
+
+  const error = metricsQuery.error
+    ? "Failed to get metrics: " + getErrorMessage(metricsQuery.error)
+    : null;
+  useQueryErrorToast(metricsQuery.error, "Failed to fetch metrics");
 
   if (!data) return null;
 

@@ -1,21 +1,22 @@
 "use client";
 import { updateGroup } from "@/actions/database/groups";
-import type { GroupsWithUsersWithServers } from "@/services/database/groups";
-import type { ServerMinimal } from "@/services/database/servers";
-import { getServersMinimal } from "@/lib/api-client/database";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form, FormLabel } from "@/components/ui/form";
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
 import { useSearchUsers } from "@/hooks/use-search-users";
-import { GroupRole } from "@gcp/db";
+import { getServersMinimal } from "@/lib/api-client/database";
+import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { getErrorMessage } from "@/lib/utils";
+import type { GroupsWithUsersWithServers } from "@/services/database/groups";
+import { ServerError } from "@/types/responses";
+import { GroupRole } from "@gcp/db";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconDeviceFloppy, IconPlus, IconTrash } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { EditGroupSchema, EditGroupSchemaType } from "./edit-group-schema";
-import { ServerError } from "@/types/responses";
 
 export default function EditGroupForm({
   group,
@@ -24,11 +25,6 @@ export default function EditGroupForm({
   group: GroupsWithUsersWithServers;
   callback?: () => void;
 }) {
-  const [servers, setServers] = useState<ServerMinimal[]>([]);
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const {
     search,
     searchResults,
@@ -38,26 +34,18 @@ export default function EditGroupForm({
     defaultUsers: group.groupMembers.map((user) => user.userId),
   });
 
-  useEffect(() => {
-    async function fetch() {
-      try {
-        const { data, error } = await getServersMinimal();
-        if (error) {
-          throw new ServerError(error, "GetServersMinimalError");
-        }
-        setServers(data);
-      } catch (error) {
-        setError("Failed to get servers: " + getErrorMessage(error));
-        toast.error("Failed to fetch servers", {
-          description: getErrorMessage(error),
-        });
-      }
-
-      setLoading(false);
-    }
-
-    fetch();
-  }, []);
+  const serversQuery = useQuery({
+    queryKey: queryKeys.serversMinimal,
+    queryFn: () => unwrap(getServersMinimal(), "GetServersMinimalError"),
+    // Offers every server to pick from, so a server added a moment ago must show up
+    gcTime: 0,
+  });
+  const servers = serversQuery.data ?? [];
+  const loading = serversQuery.isPending;
+  const error = serversQuery.error
+    ? "Failed to get servers: " + getErrorMessage(serversQuery.error)
+    : null;
+  useQueryErrorToast(serversQuery.error, "Failed to fetch servers");
 
   const form = useForm<EditGroupSchemaType>({
     resolver: zodResolver(EditGroupSchema),

@@ -1,44 +1,35 @@
 "use client";
 
 import { cleanBanList } from "@/actions/gbx/player";
-import { getBanList } from "@/lib/api-client/gbx";
 import { createColumns } from "@/app/(gocontroller)/server/[id]/players/banlist-columns";
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
+import { getBanList } from "@/lib/api-client/gbx";
+import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { getErrorMessage } from "@/lib/utils";
-import { PlayerInfo } from "@gcp/shared";
+import { ServerError } from "@/types/responses";
 import { IconTrash } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { toast } from "sonner";
 import ConfirmModal from "../modals/confirm-modal";
 import { DataTable } from "../table/data-table";
 import { Button } from "../ui/button";
-import { ServerError } from "@/types/responses";
 
 interface BanlistListProps {
   serverId: string;
 }
 
 export default function BanlistList({ serverId }: BanlistListProps) {
-  const [banlist, setBanlist] = useState<PlayerInfo[]>([]);
-
   const [confirmClearBanlist, setConfirmClearBanlist] = useState(false);
 
-  useEffect(() => {
-    refetch();
-  }, [serverId]);
+  const query = useQuery({
+    queryKey: queryKeys.banlist(serverId),
+    queryFn: () => unwrap(getBanList(serverId), "GetBanListError"),
+  });
+  useQueryErrorToast(query.error, "Error fetching banlist");
 
   const refetch = async () => {
-    try {
-      const { data, error } = await getBanList(serverId);
-      if (error) {
-        throw new ServerError(error, "GetBanListError");
-      }
-
-      setBanlist(data);
-    } catch (error) {
-      toast.error("Error fetching banlist", {
-        description: getErrorMessage(error),
-      });
-    }
+    await query.refetch();
   };
 
   const handleClearBanlist = async () => {
@@ -63,7 +54,7 @@ export default function BanlistList({ serverId }: BanlistListProps) {
     <>
       <DataTable
         columns={columns}
-        data={banlist}
+        data={query.data ?? []}
         actions={
           <Button
             variant="destructive"
