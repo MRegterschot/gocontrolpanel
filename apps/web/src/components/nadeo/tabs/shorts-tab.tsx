@@ -1,5 +1,5 @@
-import { getCampaignWithMaps } from "@/actions/nadeo/campaigns";
-import { getAllWeeklyShorts } from "@/actions/nadeo/shorts";
+import { getCampaignWithMaps } from "@/services/nadeo/campaigns";
+import { getAllWeeklyShorts } from "@/services/nadeo/shorts";
 import OfficialCampaignMaps from "../official-campaign-maps";
 import OfficialCampaigns from "../official-campaigns";
 

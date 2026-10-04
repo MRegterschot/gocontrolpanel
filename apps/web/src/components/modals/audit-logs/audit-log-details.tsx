@@ -1,4 +1,4 @@
-import { AuditLogsWithUsers } from "@/actions/database/audit-logs";
+import type { AuditLogsWithUsers } from "@/services/database/audit-logs";
 import { IconX } from "@tabler/icons-react";
 import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";

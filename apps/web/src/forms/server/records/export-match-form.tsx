@@ -1,9 +1,7 @@
 "use client";
 
-import {
-  exportMatchToCSV,
-  MatchesWithMapAndRecords,
-} from "@/actions/database/matches";
+import type { MatchesWithMapAndRecords } from "@/services/database/matches";
+import { exportMatchToCSV } from "@/lib/api-client/database";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";

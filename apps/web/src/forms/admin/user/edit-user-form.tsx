@@ -1,5 +1,6 @@
 "use client";
-import { getRolesMinimal, RoleMinimal } from "@/actions/database/roles";
+import type { RoleMinimal } from "@/services/database/roles";
+import { getRolesMinimal } from "@/lib/api-client/database";
 import { updateUser } from "@/actions/database/users";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";

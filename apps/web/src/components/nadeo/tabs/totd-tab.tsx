@@ -1,4 +1,4 @@
-import { getTotdMonth } from "@/actions/nadeo/totd";
+import { getTotdMonth } from "@/services/nadeo/totd";
 import TotdMonths from "../totd-months";
 
 export default async function TotdTab({

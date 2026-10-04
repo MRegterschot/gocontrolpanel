@@ -1,5 +1,5 @@
 "use client";
-import { HetznerProjectsWithUsers } from "@/actions/database/hetzner-projects";
+import type { HetznerProjectsWithUsers } from "@/services/database/hetzner-projects";
 import EditProjectForm from "@/forms/admin/hetzner/edit-project-form";
 import { IconX } from "@tabler/icons-react";
 import { Card } from "../../ui/card";

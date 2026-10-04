@@ -1,9 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client";
-import {
-  deleteGroup,
-  GroupsWithUsersWithServers,
-} from "@/actions/database/groups";
+import { deleteGroup } from "@/actions/database/groups";
+import type { GroupsWithUsersWithServers } from "@/services/database/groups";
 import BooleanDisplay from "@/components/boolean-display";
 import ConfirmModal from "@/components/modals/confirm-modal";
 import EditGroupModal from "@/components/modals/groups/edit-group";

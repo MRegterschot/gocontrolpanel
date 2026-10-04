@@ -1,4 +1,4 @@
-import { getChatHistory, getServerPlayerInfo } from "@/actions/gbx/advanced";
+import { getChatHistory, getServerPlayerInfo } from "@/services/gbx/advanced";
 import LiveDashboard from "@/components/live/live-dashboard";
 import ServerUnavailable from "@/components/servers/server-unavailable";
 

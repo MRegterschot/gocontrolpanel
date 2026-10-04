@@ -1,6 +1,6 @@
 "use client";
 
-import { exportRecords } from "@/actions/database/records";
+import { exportRecords } from "@/lib/api-client/database";
 import { Button } from "@/components/ui/button";
 import { getErrorMessage } from "@/lib/utils";
 import { ServerError } from "@/types/responses";

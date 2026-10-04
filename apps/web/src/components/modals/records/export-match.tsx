@@ -1,4 +1,4 @@
-import { MatchesWithMapAndRecords } from "@/actions/database/matches";
+import type { MatchesWithMapAndRecords } from "@/services/database/matches";
 import ExportMatchForm from "@/forms/server/records/export-match-form";
 import { IconX } from "@tabler/icons-react";
 import { Card } from "../../ui/card";

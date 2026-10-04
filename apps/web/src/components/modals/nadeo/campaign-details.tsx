@@ -1,9 +1,6 @@
 "use client";
-import {
-  addCampaignToServer,
-  downloadCampaign,
-} from "@/actions/nadeo/campaigns";
-import { getClubCampaignWithMaps } from "@/actions/nadeo/clubs";
+import { addCampaignToServer, downloadCampaign } from "@/actions/nadeo/campaigns";
+import { getClubCampaignWithMaps } from "@/lib/api-client/nadeo";
 import PlaylistMapCard from "@/components/nadeo/playlist-map-card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";

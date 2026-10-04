@@ -1,8 +1,8 @@
-import { getPlugins } from "@/actions/database/plugins";
-import { getServerPlugins } from "@/actions/database/server-plugins";
-import { getServerChatConfig } from "@/actions/database/servers";
-import { getPluginScripts } from "@/actions/filemanager";
-import { getServerPlugin } from "@/actions/gbx/server-plugin";
+import { getPlugins } from "@/services/database/plugins";
+import { getServerPlugins } from "@/services/database/server-plugins";
+import { getServerChatConfig } from "@/services/database/servers";
+import { getPluginScripts } from "@/services/filemanager";
+import { getServerPlugin } from "@/services/gbx/server-plugin";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChatConfigForm from "@/forms/server/plugins/chatconfig-form";

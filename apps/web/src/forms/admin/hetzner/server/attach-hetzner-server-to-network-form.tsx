@@ -1,6 +1,6 @@
 "use client";
 
-import { getAllNetworks } from "@/actions/hetzner/networks";
+import { getAllNetworks } from "@/lib/api-client/hetzner";
 import { attachHetznerServerToNetwork } from "@/actions/hetzner/servers";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";

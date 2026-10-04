@@ -1,6 +1,7 @@
 "use client";
 
-import { getServerPlugin, setServerPlugin } from "@/actions/gbx/server-plugin";
+import { setServerPlugin } from "@/actions/gbx/server-plugin";
+import { getServerPlugin } from "@/lib/api-client/gbx";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";

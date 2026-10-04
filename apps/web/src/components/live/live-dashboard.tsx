@@ -1,5 +1,5 @@
 "use client";
-import { getPlayerList } from "@/actions/gbx/player";
+import { getPlayerList } from "@/lib/api-client/gbx";
 import useWebSocket from "@/hooks/use-websocket";
 import { getErrorMessage, hasPermissionSync } from "@/lib/utils";
 import { routePermissions } from "@/routes";

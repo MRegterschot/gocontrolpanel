@@ -22,13 +22,7 @@ import {
   getDBHetznerServer,
 } from "../database/server-only/hetzner-servers";
 import { createHetznerNetwork } from "./networks";
-import {
-  attachHetznerServerToNetwork,
-  createHetznerDatabase,
-  dediTemplate,
-  tmServerTemplate,
-  updateHetznerServer,
-} from "./servers";
+import { attachHetznerServerToNetwork, createHetznerDatabase, dediTemplate, tmServerTemplate, updateHetznerServer } from "./servers";
 import {
   createHetznerSSHKey,
   getApiToken,

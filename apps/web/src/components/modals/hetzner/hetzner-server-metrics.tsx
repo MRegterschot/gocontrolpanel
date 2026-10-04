@@ -1,4 +1,4 @@
-import { getHetznerServerMetrics } from "@/actions/hetzner/servers";
+import { getHetznerServerMetrics } from "@/lib/api-client/hetzner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { capitalize, formatBytes, getErrorMessage } from "@/lib/utils";
 import { HetznerServerMetrics } from "@/types/api/hetzner/servers";

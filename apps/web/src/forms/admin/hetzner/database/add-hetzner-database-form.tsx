@@ -1,7 +1,7 @@
 "use client";
 
-import { getHetznerLocations } from "@/actions/hetzner/locations";
-import { getServerTypes } from "@/actions/hetzner/server-types";
+import { getHetznerLocations } from "@/lib/api-client/hetzner";
+import { getServerTypes } from "@/lib/api-client/hetzner";
 import { createHetznerDatabase } from "@/actions/hetzner/servers";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";

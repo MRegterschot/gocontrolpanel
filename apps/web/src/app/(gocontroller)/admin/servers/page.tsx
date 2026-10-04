@@ -1,5 +1,4 @@
-import { getServersPaginated } from "@/actions/database/servers";
-import { getRecentlyCreatedHetznerServers } from "@/actions/hetzner/servers";
+import { getRecentlyCreatedHetznerServers } from "@/services/hetzner/servers";
 import { PaginationTable } from "@/components/table/pagination-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { hasPermission } from "@/lib/auth";
@@ -45,7 +44,7 @@ export default async function AdminServersPage() {
           <TabsContent value="servers">
             <PaginationTable
               createColumns={createColumns}
-              fetchData={getServersPaginated}
+              endpoint="/api/servers"
               actions={createActions}
               actionsAllowed={canCreate}
               actionsArgs={{ recentlyCreatedServers }}
@@ -60,7 +59,7 @@ export default async function AdminServersPage() {
       ) : (
         <PaginationTable
           createColumns={createColumns}
-          fetchData={getServersPaginated}
+          endpoint="/api/servers"
           actions={createActions}
           actionsAllowed={canCreate}
           actionsArgs={{ recentlyCreatedServers }}

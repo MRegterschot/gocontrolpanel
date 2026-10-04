@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  connectFakePlayer,
-  disconnectFakePlayer,
-} from "@/actions/gbx/advanced";
+import { connectFakePlayer, disconnectFakePlayer } from "@/actions/gbx/advanced";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Copy } from "@/components/ui/copy";

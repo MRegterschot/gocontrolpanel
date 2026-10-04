@@ -1,6 +1,6 @@
 "use client";
 
-import { getHetznerLocations } from "@/actions/hetzner/locations";
+import { getHetznerLocations } from "@/lib/api-client/hetzner";
 import { createHetznerVolume } from "@/actions/hetzner/volumes";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";

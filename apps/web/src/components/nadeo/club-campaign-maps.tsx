@@ -1,8 +1,5 @@
 "use client";
-import {
-  addCampaignToServer,
-  downloadCampaign,
-} from "@/actions/nadeo/campaigns";
+import { addCampaignToServer, downloadCampaign } from "@/actions/nadeo/campaigns";
 import { getErrorMessage } from "@/lib/utils";
 import { ClubCampaignWithNamesAndPlaylistMaps } from "@/types/api/nadeo";
 import { IconDownload, IconMapPlus, IconPhoto } from "@tabler/icons-react";

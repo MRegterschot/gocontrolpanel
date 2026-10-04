@@ -1,8 +1,8 @@
 "use client";
-import { getHetznerLocations } from "@/actions/hetzner/locations";
-import { getAllNetworks } from "@/actions/hetzner/networks";
-import { getServerTypes } from "@/actions/hetzner/server-types";
-import { getAllDatabases } from "@/actions/hetzner/servers";
+import { getHetznerLocations } from "@/lib/api-client/hetzner";
+import { getAllNetworks } from "@/lib/api-client/hetzner";
+import { getServerTypes } from "@/lib/api-client/hetzner";
+import { getAllDatabases } from "@/lib/api-client/hetzner";
 import AdvancedServerSetupForm from "@/forms/admin/hetzner/setup-steps/advanced/server-setup-form";
 import SimpleServerSetupForm from "@/forms/admin/hetzner/setup-steps/simple/server-setup-form";
 import { getErrorMessage } from "@/lib/utils";
@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "../../ui/select";
 import { DefaultModalProps } from "../default-props";
-import { getSSHKeys } from "@/actions/hetzner/ssh-keys";
+import { getSSHKeys } from "@/lib/api-client/hetzner";
 
 type Mode = "simple" | "advanced";
 

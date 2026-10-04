@@ -1,5 +1,6 @@
 "use client";
-import { getServerSettings, saveServerSettings } from "@/actions/gbx/server";
+import { saveServerSettings } from "@/actions/gbx/server";
+import { getServerSettings } from "@/lib/api-client/gbx";
 import FormElement from "@/components/form/form-element";
 import FormElementSkeleton from "@/components/skeletons/form-element";
 import { Button } from "@/components/ui/button";

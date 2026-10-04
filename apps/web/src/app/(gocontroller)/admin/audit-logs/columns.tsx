@@ -1,10 +1,8 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
-import {
-  AuditLogsWithUsers,
-  deleteAuditLogById,
-} from "@/actions/database/audit-logs";
+import { deleteAuditLogById } from "@/actions/database/audit-logs";
+import type { AuditLogsWithUsers } from "@/services/database/audit-logs";
 import BooleanDisplay from "@/components/boolean-display";
 import AuditLogDetailsModal from "@/components/modals/audit-logs/audit-log-details";
 import ConfirmModal from "@/components/modals/confirm-modal";

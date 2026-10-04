@@ -1,6 +1,6 @@
 "use client";
 
-import { getMapByUid } from "@/actions/database/maps";
+import { getMapByUid } from "@/lib/api-client/database";
 import { Maps } from "@gcp/db";
 import { cn, formatTime, getErrorMessage } from "@/lib/utils";
 import {

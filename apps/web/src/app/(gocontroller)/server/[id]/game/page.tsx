@@ -1,12 +1,7 @@
-import { getMapList } from "@/actions/database/maps";
-import { getMatchSettings, getScripts } from "@/actions/filemanager";
-import {
-  getModeScriptInfo,
-  getModeScriptSettings,
-  getScriptName,
-  getShowOpponents,
-} from "@/actions/gbx/game";
-import { getCurrentMapIndex } from "@/actions/gbx/map";
+import { getMapList } from "@/services/database/maps";
+import { getMatchSettings, getScripts } from "@/services/filemanager";
+import { getModeScriptInfo, getModeScriptSettings, getScriptName, getShowOpponents } from "@/services/gbx/game";
+import { getCurrentMapIndex } from "@/services/gbx/map";
 import MapCarousel from "@/components/maps/map-carousel";
 import ServerUnavailable from "@/components/servers/server-unavailable";
 import { Card } from "@/components/ui/card";

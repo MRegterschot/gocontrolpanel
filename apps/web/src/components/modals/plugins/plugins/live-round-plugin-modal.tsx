@@ -1,6 +1,6 @@
 "use client";
 
-import { exportServerPluginConfig } from "@/actions/database/server-plugins";
+import { exportServerPluginConfig } from "@/lib/api-client/database";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import LiveRoundForm from "@/forms/server/plugins/live-round/live-round-form";

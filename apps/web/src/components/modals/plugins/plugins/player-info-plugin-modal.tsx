@@ -1,6 +1,6 @@
 "use client";
 
-import { exportServerPluginConfig } from "@/actions/database/server-plugins";
+import { exportServerPluginConfig } from "@/lib/api-client/database";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import PlayerInfoForm from "@/forms/server/plugins/player-info/player-info-form";

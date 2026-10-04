@@ -1,5 +1,5 @@
 "use client";
-import { ServersWithUsers } from "@/actions/database/servers";
+import type { ServersWithUsers } from "@/services/database/servers";
 import EditServerForm from "@/forms/admin/server/edit-server-form";
 import { IconX } from "@tabler/icons-react";
 import { Card } from "../../ui/card";

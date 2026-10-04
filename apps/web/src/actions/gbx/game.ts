@@ -1,9 +1,9 @@
 "use server";
+
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getLogger } from "@/lib/logger";
 import { gbxService, getGbxClient } from "@/lib/gbx-service";
 import { getErrorMessage } from "@/lib/utils";
-import { ModeScriptInfo } from "@/types/gbx";
 import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
 
@@ -63,26 +63,6 @@ export async function setShowOpponents(
   );
 }
 
-export async function getShowOpponents(serverId: string): Promise<
-  ServerResponse<{
-    CurrentValue: number;
-    NextValue: number;
-  }>
-> {
-  return doServerActionWithAuth(
-    [
-      `servers:${serverId}:moderator`,
-      `servers:${serverId}:admin`,
-      `group:servers:${serverId}:moderator`,
-      `group:servers:${serverId}:admin`,
-    ],
-    async () => {
-      const client = getGbxClient(serverId);
-      return await client.call("GetForceShowAllOpponents");
-    },
-  );
-}
-
 export async function setScriptName(
   serverId: string,
   script: string,
@@ -103,26 +83,6 @@ export async function setScriptName(
         "server.game.script.edit",
         script,
       );
-    },
-  );
-}
-
-export async function getScriptName(serverId: string): Promise<
-  ServerResponse<{
-    CurrentValue: string;
-    NextValue: string;
-  }>
-> {
-  return doServerActionWithAuth(
-    [
-      `servers:${serverId}:moderator`,
-      `servers:${serverId}:admin`,
-      `group:servers:${serverId}:moderator`,
-      `group:servers:${serverId}:admin`,
-    ],
-    async () => {
-      const client = getGbxClient(serverId);
-      return await client.call("GetScriptName");
     },
   );
 }
@@ -219,42 +179,6 @@ export async function insertPlaylist(
         "server.game.playlist.insert",
         filename,
       );
-    },
-  );
-}
-
-export async function getModeScriptInfo(
-  serverId: string,
-): Promise<ServerResponse<ModeScriptInfo>> {
-  return doServerActionWithAuth(
-    [
-      `servers:${serverId}:moderator`,
-      `servers:${serverId}:admin`,
-      `group:servers:${serverId}:moderator`,
-      `group:servers:${serverId}:admin`,
-    ],
-    async () => {
-      const client = getGbxClient(serverId);
-      return await client.call("GetModeScriptInfo");
-    },
-  );
-}
-
-export async function getModeScriptSettings(serverId: string): Promise<
-  ServerResponse<{
-    [key: string]: string | number | boolean;
-  }>
-> {
-  return doServerActionWithAuth(
-    [
-      `servers:${serverId}:moderator`,
-      `servers:${serverId}:admin`,
-      `group:servers:${serverId}:moderator`,
-      `group:servers:${serverId}:admin`,
-    ],
-    async () => {
-      const client = getGbxClient(serverId);
-      return await client.call("GetModeScriptSettings");
     },
   );
 }

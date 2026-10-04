@@ -1,11 +1,7 @@
 "use client";
 
-import {
-  addMapToJukebox,
-  clearJukebox,
-  getJukebox,
-  setJukebox,
-} from "@/actions/gbx/map";
+import { addMapToJukebox, clearJukebox, setJukebox } from "@/actions/gbx/map";
+import { getJukebox } from "@/lib/api-client/gbx";
 import { createColumns as createJukeboxColumns } from "@/app/(gocontroller)/server/[id]/maps/jukebox-columns";
 import { createColumns as createMapColumns } from "@/app/(gocontroller)/server/[id]/maps/server-maps-columns";
 import { Maps } from "@gcp/db";

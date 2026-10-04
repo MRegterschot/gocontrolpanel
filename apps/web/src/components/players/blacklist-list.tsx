@@ -1,6 +1,6 @@
 "use client";
 
-import { getBlacklist } from "@/actions/gbx/player";
+import { getBlacklist } from "@/lib/api-client/gbx";
 import { createColumns } from "@/app/(gocontroller)/server/[id]/players/blacklist-columns";
 import BlacklistForm from "@/forms/server/players/blacklist-form";
 import { getErrorMessage } from "@/lib/utils";

@@ -2,21 +2,8 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getGbxClient } from "@/lib/gbx-service";
-import { ServerPlugin } from "@/types/gbx/server-plugin";
 import { ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
-
-export async function getServerPlugin(
-  serverId: string,
-): Promise<ServerResponse<ServerPlugin>> {
-  return doServerActionWithAuth(
-    [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
-    async () => {
-      const client = getGbxClient(serverId);
-      return await client.call("GetServerPlugin");
-    },
-  );
-}
 
 export async function setServerPlugin(
   serverId: string,
@@ -35,18 +22,6 @@ export async function setServerPlugin(
         "server.plugin.serverPlugin.set",
         { name, settings, forceReload },
       );
-    },
-  );
-}
-
-export async function getServerPluginVariables(
-  serverId: string,
-): Promise<ServerResponse<Record<string, string | number | boolean>>> {
-  return doServerActionWithAuth(
-    [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
-    async () => {
-      const client = getGbxClient(serverId);
-      return await client.call("GetServerPluginVariables");
     },
   );
 }

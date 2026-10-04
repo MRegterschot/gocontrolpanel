@@ -1,6 +1,6 @@
 "use client";
 
-import { searchMaps } from "@/actions/tmx/maps";
+import { searchMaps } from "@/lib/api-client/tmx";
 import { getErrorMessage } from "@/lib/utils";
 import { TMXMap } from "@/types/api/tmx";
 import { IconDice3, IconSearch } from "@tabler/icons-react";
