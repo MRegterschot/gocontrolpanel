@@ -2,12 +2,33 @@ import LandingPage from "@/components/landing/landing-page";
 import SigningIn from "@/components/landing/signing-in";
 import { auth } from "@/lib/auth";
 import { safeCallbackUrl } from "@/lib/callback-url";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE } from "@/lib/site";
 import { getPublicStats } from "@/services/stats";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
-  title: "GoControlPanel · Trackmania server management",
+  title: { absolute: SITE_TITLE },
+  description: SITE_DESCRIPTION,
+  // One canonical URL for the ?callbackUrl, ?error and ?signingIn variants
+  alternates: { canonical: "/login" },
+  openGraph: {
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    url: "/login",
+    siteName: SITE_NAME,
+    locale: "en_US",
+    type: "website",
+    // Page-level openGraph replaces the layout's, which drops the file-based image
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1000,
+        height: 1000,
+        alt: `${SITE_NAME} logo`,
+      },
+    ],
+  },
 };
 
 export default async function LoginPage({
