@@ -50,6 +50,8 @@ To test against a real dedicated server (isolated Docker stack, seed script, `ws
 
 ## Adding a plugin
 
+The full guide, with the lifecycle, the whole context API, widgets and testing, is in [docs/plugin-sdk.md](../../docs/plugin-sdk.md).
+
 Write a definition and register it in `src/core/plugins/builtin/index.ts`. The `id` must match a row in the `plugins` table.
 
 ```ts

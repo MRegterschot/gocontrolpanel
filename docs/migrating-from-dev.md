@@ -76,7 +76,7 @@ Copy the Nadeo values from the `gocontrolpanel` service. Everything else in the 
 
 > **Images.** The release workflow publishes `gocontrolpanel-gbx-service` (and the `-postgres` variant) next to the web image, with the same `latest`/`beta`/version tags. Set the repository variable `DOCKER_GBX_IMAGE_NAME` to use another image name.
 
-If you started from one of the stacks in [`docker/`](../docker) (PyPlanet, EvoSC, ManiaControl, MiniControl), those compose files do not contain `gbx-service` yet. Add the block above to them and point `DATABASE_URL`/`REDIS_URI` at the same hosts the `gocontrolpanel` service uses.
+If you started from one of the stacks in [`docker/`](../docker) (PyPlanet, EvoSC, ManiaControl, MiniControl), compare your file with the one in that folder: they now contain `gbx-service` and the new `gocontrolpanel` variables. Add them to your own file and point `DATABASE_URL`/`REDIS_URI` at the same hosts the `gocontrolpanel` service uses.
 
 ### 3. Open port 3100 to browsers
 
