@@ -8,6 +8,7 @@ import {
 } from "@/actions/database/server-only/auth";
 import { UserGroup } from "@/types/auth";
 import { ServerError } from "@/types/responses";
+import { GroupRole } from "@gcp/db";
 import {
   GetServerSidePropsContext,
   NextApiRequest,
@@ -19,7 +20,6 @@ import slugid from "slugid";
 import { getWebIdentities } from "./api/nadeo";
 import config from "./config";
 import { logger } from "./logger";
-import { GroupRole } from "@gcp/db";
 import { reportException } from "./sentry/report";
 import { getList, hasPermissionSync } from "./utils";
 
@@ -251,6 +251,11 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
     maxAge: 1 * 86400, // 1 day,
     updateAge: 6 * 3600, // 6 hours
+  },
+  // A failed OAuth round trip lands back on the landing page with ?error=, not on NextAuth's own page
+  pages: {
+    signIn: "/login",
+    error: "/login",
   },
 };
 

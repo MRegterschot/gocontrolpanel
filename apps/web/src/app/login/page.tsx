@@ -1,31 +1,43 @@
-"use client";
-import { LoginForm } from "@/forms/login-form";
-import { routes } from "@/routes";
-import { signIn, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import LandingPage from "@/components/landing/landing-page";
+import SigningIn from "@/components/landing/signing-in";
+import { auth } from "@/lib/auth";
+import { safeCallbackUrl } from "@/lib/callback-url";
+import { getPublicStats } from "@/services/stats";
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
-const LoginPage = () => {
-  const { status } = useSession();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (status === "authenticated") {
-      router.push(routes.dashboard);
-    }
-  }, [status, router]);
-
-  const handleLogin = () => {
-    signIn("nadeo");
-  };
-
-  return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
-      <div className="w-full max-w-sm">
-        <LoginForm handleLogin={handleLogin} />
-      </div>
-    </div>
-  );
+export const metadata: Metadata = {
+  title: "GoControlPanel · Trackmania server management",
 };
 
-export default LoginPage;
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const callbackUrl = safeCallbackUrl(params.callbackUrl);
+  const signingIn = params.signingIn === "1";
+  const error = typeof params.error === "string" ? params.error : undefined;
+
+  const session = await auth();
+  if (session) {
+    // Straight back from Nadeo: show that we're signing in while the panel loads,
+    // instead of flashing the landing page
+    if (signingIn) {
+      return <SigningIn redirectTo={callbackUrl} />;
+    }
+    redirect(callbackUrl);
+  }
+
+  const stats = await getPublicStats();
+
+  return (
+    <LandingPage
+      stats={stats}
+      callbackUrl={callbackUrl}
+      // Back from Nadeo without a session means the sign in didn't go through
+      error={error ?? (signingIn ? "SessionMissing" : undefined)}
+    />
+  );
+}
