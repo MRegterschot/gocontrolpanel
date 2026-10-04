@@ -8,12 +8,17 @@ Release notes of GoControlPanel, newest first. The entries are the descriptions 
 
 - **Split into two containers.** The GBX connections, in-game plugins, manialinks and live WebSockets moved out of the web app into a separate `gbx-service` container. The web app no longer connects to dedicated servers itself. This needs two new secrets (`GBX_SERVICE_TOKEN`, `WS_TICKET_SECRET`) and port `3100` reachable from the browser. The database schema is unchanged. See the [migration guide](docs/migrating-from-dev.md).
 - Release images are published for both the web app and the GBX service, each with a MariaDB/MySQL and a `-postgres` flavour.
-- The repository is a Bun workspaces monorepo (`apps/web`, `apps/gbx-service`, `packages/db`, `packages/shared`).
+- The repository is a Bun workspaces monorepo (`apps/web`, `apps/gbx-service`, `packages/db`, `packages/shared`, `packages/plugin-sdk`).
+- New database tables for plugin packages and plugin storage, applied by the migrations on start.
 - The web app reads through GET API routes and TanStack Query. Server Actions are kept for writes.
-- Built-in plugins use the new [plugin SDK](docs/plugin-sdk.md).
+- Built-in plugins use a new internal plugin API, see [built-in plugins](docs/builtin-plugins.md).
 
 ### New Features
 
+- **Plugin marketplace.** Browse a central plugin marketplace from any panel, self-hosted ones included, and install plugins per server after accepting what they may do. Update, roll back, turn off, configure and uninstall them on the server's Plugins page. Plugins run sandboxed (QuickJS in WebAssembly) in the GBX service. One that breaks its time, memory or rate limits is turned off, and its admins are notified. See [plugin marketplace](docs/plugin-marketplace.md).
+- **Private plugins.** Users with the new `plugins:upload` permission can upload plugin packages and install them on servers they are an admin of.
+- **Plugin SDK.** Types and a `tmcp-plugin` command line tool to create, build, check and package plugins, with an example plugin. See [plugin SDK](docs/plugin-sdk.md).
+- **Takedowns.** Versions withdrawn from the marketplace are turned off on every server within 30 minutes.
 - Landing page for signed-out visitors with live totals, the feature set and the in-game plugins, and a loading state after signing in.
 - Search engine metadata for the landing page: canonical URL, Open Graph tags, structured data, `robots.txt` and `sitemap.xml`.
 

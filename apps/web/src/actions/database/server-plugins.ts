@@ -3,7 +3,7 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { gbxService, publishServerEvent } from "@/lib/gbx-service";
-import { ServerResponse } from "@/types/responses";
+import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "./server-only/audit-logs";
 
 export async function updateServerPlugins(
@@ -17,6 +17,14 @@ export async function updateServerPlugins(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
       const db = getClient();
+      // Built-ins only; the others go through the actions in actions/plugins.ts
+      const builtins = await db.plugins.count({
+        where: { id: { in: plugins.map((p) => p.pluginId) }, source: "builtin" },
+      });
+      if (builtins !== new Set(plugins.map((p) => p.pluginId)).size) {
+        throw new ServerError("Unknown built-in plugin", "PluginNotFound");
+      }
+
       const pluginUpdates = plugins.map((p) =>
         db.serverPlugins.upsert({
           where: {
@@ -59,6 +67,11 @@ export async function updateServerPlugin(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
       const db = getClient();
+
+      const plugin = await db.plugins.findUnique({ where: { id: pluginId } });
+      if (plugin?.source !== "builtin") {
+        throw new ServerError("Unknown built-in plugin", "PluginNotFound");
+      }
 
       // Check if plugin exists for server
       const existingPlugin = await db.serverPlugins.findUnique({

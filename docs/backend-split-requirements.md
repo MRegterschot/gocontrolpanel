@@ -233,6 +233,8 @@ Found while porting and testing the GBX service. All are fixed in `apps/gbx-serv
 
 ## 12. Future: plugin marketplace
 
+> **Implemented** with a GitHub-hosted registry, a QuickJS sandbox and native built-ins. See [plugin-marketplace.md](./plugin-marketplace.md#coverage-of-the-requirements) for what each requirement became.
+
 **Not in scope for the split**, but the split must not block it. The goal: servers stop shipping with every plugin built in. Admins install plugins per server. Users can write their own plugins, upload them privately to their own servers, or submit them to a public marketplace for review.
 
 ### 12a. Constraints for the split itself

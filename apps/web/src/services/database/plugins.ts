@@ -10,9 +10,11 @@ export async function getPlugins(): Promise<ServerResponse<Plugins[]>> {
     async () => {
       const db = getClient();
 
+      // Marketplace and uploaded plugins have their own section on the Plugins page
       return await db.plugins.findMany({
         where: {
           deletedAt: null,
+          source: "builtin",
         },
       });
     },

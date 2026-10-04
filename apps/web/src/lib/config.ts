@@ -1,4 +1,5 @@
 import { Config } from "@/types/config";
+import { DEFAULT_MARKETPLACE_INDEX_URL } from "@gcp/shared";
 import "dotenv/config";
 
 const config: Config = {
@@ -32,6 +33,9 @@ const config: Config = {
     WS_URL: process.env.GBX_SERVICE_WS_URL || "ws://localhost:3100",
     TOKEN: process.env.GBX_SERVICE_TOKEN || "",
     WS_TICKET_SECRET: process.env.WS_TICKET_SECRET || "",
+  },
+  MARKETPLACE: {
+    INDEX_URL: process.env.MARKETPLACE_INDEX_URL ?? DEFAULT_MARKETPLACE_INDEX_URL,
   },
 };
 

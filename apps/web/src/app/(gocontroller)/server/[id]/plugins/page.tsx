@@ -1,8 +1,14 @@
+import InstalledPlugins from "@/components/plugins/installed-plugins";
 import { getPlugins } from "@/services/database/plugins";
 import { getServerPlugins } from "@/services/database/server-plugins";
 import { getServerChatConfig } from "@/services/database/servers";
 import { getPluginScripts } from "@/services/filemanager";
 import { getServerPlugin } from "@/services/gbx/server-plugin";
+import {
+  getInstalledPlugins,
+  getServerPluginsContext,
+  getUploadedPlugins,
+} from "@/services/plugins";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChatConfigForm from "@/forms/server/plugins/chatconfig-form";
@@ -33,6 +39,12 @@ export default async function ServerPluginsPage({
   const { data: serverPlugin } = await getServerPlugin(id);
   const { data: scripts } = await getPluginScripts(id);
 
+  const [{ data: installed }, { data: uploads }, { data: context }] = await Promise.all([
+    getInstalledPlugins(id),
+    getUploadedPlugins(),
+    getServerPluginsContext(id),
+  ]);
+
   return (
     <div className="flex flex-col gap-6 h-full">
       <div className="flex flex-col gap-1">
@@ -55,6 +67,16 @@ export default async function ServerPluginsPage({
               serverId={id}
               plugins={plugins}
               serverPlugins={serverPlugins}
+            />
+          </Card>
+
+          <Card className="p-6">
+            <InstalledPlugins
+              serverId={id}
+              serverName={context?.serverName ?? "this server"}
+              plugins={installed ?? []}
+              uploads={uploads ?? []}
+              marketplaceEnabled={context?.marketplaceEnabled ?? false}
             />
           </Card>
         </TabsContent>

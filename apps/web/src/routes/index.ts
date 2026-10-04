@@ -25,6 +25,10 @@ export const routes = {
     hetznerServers: "/admin/hetzner/:id",
     auditLogs: "/admin/audit-logs",
   },
+  plugins: {
+    index: "/plugins",
+    detail: "/plugins/:slug",
+  },
   login: "/login",
 };
 
@@ -42,6 +46,11 @@ export const connectionRoutes = [
 ];
 
 export const routePermissions = {
+  plugins: {
+    // Browsing and installing: anyone who administers a server, plus uploaders
+    view: ["servers::admin", "group:servers::admin", "plugins:upload"],
+    upload: ["plugins:upload"],
+  },
   servers: {
     settings: ["servers:id:admin", "group:servers:id:admin"],
     game: {
@@ -411,6 +420,26 @@ export const breadCrumbs: {
       },
       {
         label: "Audit Logs",
+      },
+    ],
+  },
+  {
+    path: routes.plugins.index,
+    breadCrumbs: [
+      {
+        label: "Plugins",
+      },
+    ],
+  },
+  {
+    path: routes.plugins.detail,
+    breadCrumbs: [
+      {
+        label: "Plugins",
+        path: routes.plugins.index,
+      },
+      {
+        label: "Plugin",
       },
     ],
   },

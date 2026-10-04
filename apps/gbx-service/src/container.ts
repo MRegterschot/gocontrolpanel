@@ -3,6 +3,8 @@ import pino from "pino";
 import type { Config } from "./config";
 import { TemplateRenderer } from "./core/manialink/template-renderer";
 import { builtinPlugins } from "./core/plugins/builtin";
+import { MarketplaceWatcher } from "./core/plugins/marketplace-watcher";
+import { PackageLoader } from "./core/plugins/sandbox/package-loader";
 import { systemClock } from "./core/ports";
 import { ServerRegistry } from "./core/server/server-registry";
 import { ServerRuntime, type RuntimeDependencies } from "./core/server/server-runtime";
@@ -11,21 +13,27 @@ import {
   PrismaMatchRepository,
   PrismaNotificationRepository,
   PrismaPlayerRepository,
+  PrismaPluginCatalogRepository,
+  PrismaPluginPackageRepository,
+  PrismaPluginStorageRepository,
   PrismaRecordRepository,
   PrismaServerRepository,
 } from "./infra/db/prisma-repositories";
 import { HttpEcmClient } from "./infra/ecm/ecm-client";
 import { EvotmGbxSession } from "./infra/gbx/evotm-session";
+import { HttpsPluginClient } from "./infra/http/plugin-http-client";
+import { HttpMarketplaceIndexSource } from "./infra/marketplace/index-source";
 import { NadeoClient } from "./infra/nadeo/nadeo-client";
 import { RedisCache } from "./infra/redis/cache";
 import { RedisJukeboxStore } from "./infra/redis/jukebox-store";
 import { RedisRateLimiter } from "./infra/redis/rate-limiter";
 import { createRedis } from "./infra/redis/redis";
+import { loadSandboxAssets } from "./infra/sandbox-assets";
 import { loadTemplateSources } from "./infra/templates";
 import { TicketVerifier } from "./http/ws/ticket-verifier";
 
 // Composition root: the only place that picks concrete implementations
-export function createContainer(config: Config) {
+export async function createContainer(config: Config) {
   const log = pino({ level: config.LOG_LEVEL });
   const db = createPrismaClient({ datasourceUrl: config.DATABASE_URL });
   const redis = createRedis(config.REDIS_URI, log, "commands");
@@ -48,12 +56,21 @@ export function createContainer(config: Config) {
     log: log.child({ module: "nadeo" }),
   });
 
+  // Marketplace and uploaded plugins run in QuickJS sandboxes
+  const packages = new PackageLoader(new PrismaPluginPackageRepository(db), {
+    assets: await loadSandboxAssets(config.templatesDir),
+    storage: new PrismaPluginStorageRepository(db),
+    http: new HttpsPluginClient(),
+    clock: systemClock,
+  });
+
   const runtimeDeps: RuntimeDependencies = {
     log,
     clock: systemClock,
     sessionFactory: () => new EvotmGbxSession(log.child({ module: "gbx" })),
     renderer: new TemplateRenderer(loadTemplateSources(config.templatesDir)),
     plugins: builtinPlugins,
+    packages,
     servers,
     players,
     users: players,
@@ -74,12 +91,31 @@ export function createContainer(config: Config) {
     enabledServerIds: config.GBX_SERVICE_ENABLED_SERVERS,
   });
 
+  const marketplace =
+    config.MARKETPLACE_INDEX_URL && config.MARKETPLACE_CHECK_MINUTES > 0
+      ? new MarketplaceWatcher({
+          source: new HttpMarketplaceIndexSource(
+            config.MARKETPLACE_INDEX_URL,
+            log.child({ module: "marketplace" }),
+          ),
+          catalog: new PrismaPluginCatalogRepository(db),
+          disable: async (install, reason) => {
+            await registry.find(install.serverId)?.disablePlugin(install.pluginId, install.name, reason);
+          },
+          clock: systemClock,
+          log: log.child({ module: "marketplace" }),
+          intervalMs: config.MARKETPLACE_CHECK_MINUTES * 60_000,
+        })
+      : null;
+
   return {
     log,
     registry,
+    marketplace,
     tickets: new TicketVerifier(config.WS_TICKET_SECRET, systemClock),
     subscriber,
     async close() {
+      marketplace?.stop();
       await registry.shutdown();
       subscriber.disconnect();
       redis.disconnect();
@@ -88,4 +124,4 @@ export function createContainer(config: Config) {
   };
 }
 
-export type Container = ReturnType<typeof createContainer>;
+export type Container = Awaited<ReturnType<typeof createContainer>>;

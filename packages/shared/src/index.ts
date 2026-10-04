@@ -1,5 +1,6 @@
 export * from "./internal-api";
 export * from "./permissions";
+export * from "./plugins";
 export * from "./server-events";
 export * from "./types/gbx";
 export * from "./types/live";

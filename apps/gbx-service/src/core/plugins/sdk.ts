@@ -36,6 +36,12 @@ export interface PluginUi {
   window(options: WindowOptions): Window;
   addAction(button: ActionButton): void;
   removeAction(name: string): void;
+  // Pages rendered elsewhere (sandboxed plugins render their own XML); destroyed on unload
+  page: {
+    display(id: string, xml: string, login?: string): void;
+    hide(id: string, login?: string): void;
+    destroy(id: string, login?: string): void;
+  };
 }
 
 // Everything a plugin may use. Registrations are scoped to the plugin and undone on unload.
@@ -80,6 +86,8 @@ export interface PluginContext<Config = unknown> {
     forPlayers(mapUid: string, logins: string[]): Promise<LocalRecord[]>;
   };
   notifyAdmins(message: string, description?: string): Promise<NotificationDto[]>;
+  // Turns the plugin off for this server and tells its admins why
+  disable(reason: string): Promise<void>;
   server: {
     // Raw script change without the configured chat announcement
     setScriptName(script: string): Promise<void>;

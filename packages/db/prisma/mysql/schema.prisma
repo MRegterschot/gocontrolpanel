@@ -53,6 +53,7 @@ model Users {
   hetznerProjectUsers HetznerProjectUser[]
   userServers         UserServers[]
   records             Records[]
+  ownedPlugins        Plugins[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -175,16 +176,17 @@ model Servers {
   connectMessage    String?
   disconnectMessage String?
 
-  scriptNameChangeMessage     String?
-  matchSettingsLoadedMessage  String?
-  scriptSettingsSavedMessage  String?
-  mapListChangeMessage        String?
+  scriptNameChangeMessage    String?
+  matchSettingsLoadedMessage String?
+  scriptSettingsSavedMessage String?
+  mapListChangeMessage       String?
 
   enableHelpCommand Boolean @default(true)
 
   groupServers  GroupServers[]
   userServers   UserServers[]
   serverPlugins ServerPlugins[]
+  pluginStorage PluginStorage[]
   matches       Matches[]
   records       Records[]
 
@@ -240,31 +242,98 @@ model Roles {
 }
 
 model Plugins {
-  id          String  @id @default(uuid())
-  name        String  @unique
-  description String?
+  id          String       @id @default(uuid())
+  // Plugin id for built-ins, the package slug for marketplace and uploaded plugins
+  name        String       @unique
+  description String?      @db.Text
+  source      PluginSource @default(builtin)
+  displayName String?
+  author      String?
+  // Private uploads belong to the user who uploaded them
+  ownerId     String?
 
+  owner         Users?           @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  versions      PluginVersions[]
   serverPlugins ServerPlugins[]
+  storage       PluginStorage[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   @@index([deletedAt])
+  @@index([ownerId])
   @@map("plugins")
 }
 
+enum PluginSource {
+  builtin
+  marketplace
+  upload
+}
+
+// One stored package of a marketplace or uploaded plugin
+model PluginVersions {
+  id           String  @id @default(uuid())
+  pluginId     String
+  version      String
+  sdk          Int
+  sha256       String
+  size         Int
+  manifest     Json
+  package      Bytes
+  yanked       Boolean @default(false)
+  yankReason   String? @db.Text
+  uploadedById String?
+
+  plugin        Plugins         @relation(fields: [pluginId], references: [id], onDelete: Cascade)
+  serverPlugins ServerPlugins[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([pluginId, version])
+  @@map("plugin_versions")
+}
+
 model ServerPlugins {
+  serverId            String
+  pluginId            String
+  enabled             Boolean
+  config              Json?
+  // Installed version of a marketplace or uploaded plugin; null for built-ins
+  versionId           String?
+  // Capabilities the admin consented to when installing or updating
+  grantedCapabilities Json?
+  installedById       String?
+  installedAt         DateTime?
+
+  server  Servers         @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  plugin  Plugins         @relation(fields: [pluginId], references: [id], onDelete: Cascade)
+  version PluginVersions? @relation(fields: [versionId], references: [id], onDelete: Restrict)
+
+  @@id([serverId, pluginId])
+  @@index([versionId])
+  @@map("server_plugins")
+}
+
+// Key-value data a sandboxed plugin keeps per server
+model PluginStorage {
   serverId String
   pluginId String
-  enabled  Boolean
-  config   Json?
+  key      String
+  value    Json
+  // Size of the JSON value in bytes, for the per-plugin quota
+  size     Int
 
   server Servers @relation(fields: [serverId], references: [id], onDelete: Cascade)
   plugin Plugins @relation(fields: [pluginId], references: [id], onDelete: Cascade)
 
-  @@id([serverId, pluginId])
-  @@map("server_plugins")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([serverId, pluginId, key])
+  @@map("plugin_storage")
 }
 
 model Notifications {

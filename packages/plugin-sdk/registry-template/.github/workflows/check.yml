@@ -1,0 +1,27 @@
+name: Check plugins
+
+on:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The registry is checked with the same validator panels use
+      - uses: actions/checkout@v4
+        with:
+          repository: MRegterschot/gocontrolpanel
+          ref: ${{ vars.GOCONTROLPANEL_REF || 'master' }}
+          path: .gocontrolpanel
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install the plugin SDK
+        working-directory: .gocontrolpanel
+        run: bun install --frozen-lockfile
+
+      - name: Check every plugin and version
+        working-directory: .gocontrolpanel
+        run: bun packages/plugin-sdk/src/cli/main.ts registry --registry "$GITHUB_WORKSPACE" --check

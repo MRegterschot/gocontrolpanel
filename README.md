@@ -19,6 +19,7 @@ A Dockerized management panel for dedicated Trackmania servers. Works both stand
     - [Live Match](#live-match)
     - [Records and Matches](#records-and-matches)
     - [Plugin Management](#plugin-management)
+    - [Plugin Marketplace](#plugin-marketplace)
     - [Trackmania Exchange](#trackmania-exchange)
     - [Files Management](#files-management)
     - [User Management](#user-management)
@@ -36,7 +37,7 @@ A Dockerized management panel for dedicated Trackmania servers. Works both stand
   - [Upgrading](#upgrading)
   - [Troubleshooting](#troubleshooting)
   - [Changelog](#changelog)
-  - [Plugin SDK](#plugin-sdk)
+  - [Plugins and the marketplace](#plugins-and-the-marketplace)
   - [Contributing](#contributing)
   - [License](#license)
 
@@ -93,6 +94,10 @@ Manage the server plugins and chat settings of the server.
 
 ![Plugins Page](https://i.imgur.com/5LAxOpO.png "Plugins Page")
 ![Chat Message Editor Page](https://i.imgur.com/NpvWT3K.png "Chat Message Editor Page")
+
+#### Plugin Marketplace
+
+Browse the plugin marketplace and install plugins on your servers, or upload your own privately. Plugins run in a sandbox with only the permissions you accept when you install them. Updates, rolling back to an older version and settings are all on the server's Plugins page. See [Plugins and the marketplace](#plugins-and-the-marketplace).
 
 #### Trackmania Exchange
 
@@ -206,6 +211,7 @@ Make sure to update or add the environment variables for the services in your `d
   - **NADEO Configuration**: Make sure to update `NADEO_CLIENT_ID`, `NADEO_CLIENT_SECRET`, `NADEO_REDIRECT_URI`, `NADEO_SERVER_LOGIN`, `NADEO_SERVER_PASSWORD` and `NADEO_CONTACT` with your valid NADEO API credentials. Nadeo API credentials can be obtained from the [Nadeo API manager](https://api.trackmania.com/manager). The server login and password can be obtained from the [Dedicated Server Manager](https://www.trackmania.com/player/dedicated-servers).
   - `HETZNER_KEY`: If you are using the Hetzner Cloud API, set this environment variable so that your API tokens are encrypted before being stored in the database. This can be any random string, e.g., `myhetznerkey`.
   - **GBX service connection**: `GBX_SERVICE_URL` is the address of the `gbx-service` container (`http://gbx-service:3100`). `GBX_SERVICE_WS_URL` is the address the browser uses to open the live WebSockets, so it must be reachable from your users (for example `ws://<your-host>:3100`, or `wss://...` behind HTTPS). `GBX_SERVICE_TOKEN` and `WS_TICKET_SECRET` are secrets of at least 32 characters (`openssl rand -base64 32`) and must be identical in both containers. The panel refuses to start without them.
+  - `MARKETPLACE_INDEX_URL` (optional): The plugin marketplace the panel browses. Defaults to the official marketplace; set it to an empty value to turn browsing off. Uploading private plugins works either way.
   - `LOG_LEVEL`: Set the log level for GoControlPanel. Supported values are `trace`, `debug`, `info`, `warn`, `error` and `fatal`. The default is `info`.
   - `PLAUSIBLE_API_HOST`: Set the Plausible API host for analytics, e.g., `analytics.mywebsite.com`. This is optional and can be left empty if you do not want to use Plausible analytics.
   - **Sentry Configuration (Optional)**: GoControlPanel can send errors, performance traces, session replays and logs to Sentry. No Sentry configuration is required unless you want to enable telemetry.
@@ -233,6 +239,7 @@ Make sure to update or add the environment variables for the services in your `d
   - `NADEO_SERVER_LOGIN`, `NADEO_SERVER_PASSWORD`, `NADEO_CONTACT`, `NADEO_CLIENT_ID`, `NADEO_CLIENT_SECRET`: The same values as the `gocontrolpanel` container.
   - `GBX_SERVICE_ENABLED_SERVERS` (optional): Comma-separated server ids this instance manages. Empty manages every server in the database.
   - `LOG_LEVEL`, `SENTRY_DSN`, `SENTRY_ENVIRONMENT` (optional): Logging and error reporting of the service.
+  - `MARKETPLACE_INDEX_URL`, `MARKETPLACE_CHECK_MINUTES` (optional): The plugin marketplace the service checks for withdrawn plugin versions, and how often (default every 30 minutes). Empty URL turns the check off.
 
 - **Dedicated Server Environment Variables**:
   - `TM_MASTERSERVER_LOGIN`: Login for the dedicated server (same as `NADEO_SERVER_LOGIN` in GoControlPanel).
@@ -377,6 +384,7 @@ Make sure to update or add the environment variables for the added services in y
   - **NADEO Configuration**: Make sure to update `NADEO_CLIENT_ID`, `NADEO_CLIENT_SECRET`, `NADEO_REDIRECT_URI`, `NADEO_SERVER_LOGIN`, `NADEO_SERVER_PASSWORD` and `NADEO_CONTACT` with your valid NADEO API credentials. Nadeo API credentials can be obtained from the [Nadeo API manager](https://api.trackmania.com/manager). The server login and password can be found in your existing stack configuration under the `dedicated` or `trackmania` service.
   - `HETZNER_KEY`: If you are using the Hetzner Cloud API, set this environment variable so that your API tokens are encrypted before being stored in the database. This can be any random string, e.g., `myhetznerkey`.
   - **GBX service connection**: `GBX_SERVICE_URL` is the address of the `gbx-service` container (`http://gbx-service:3100`). `GBX_SERVICE_WS_URL` is the address the browser uses to open the live WebSockets, so it must be reachable from your users (for example `ws://<your-host>:3100`, or `wss://...` behind HTTPS). `GBX_SERVICE_TOKEN` and `WS_TICKET_SECRET` are secrets of at least 32 characters (`openssl rand -base64 32`) and must be identical in both containers. The panel refuses to start without them.
+  - `MARKETPLACE_INDEX_URL` (optional): The plugin marketplace the panel browses. Defaults to the official marketplace; set it to an empty value to turn browsing off. Uploading private plugins works either way.
   - `LOG_LEVEL`: Set the log level for GoControlPanel. Supported values are `trace`, `debug`, `info`, `warn`, `error` and `fatal`. The default is `info`.
   - `PLAUSIBLE_API_HOST`: Set the Plausible API host for analytics, e.g., `analytics.mywebsite.com`. This is optional and can be left empty if you do not want to use Plausible analytics.
   - **Sentry Configuration (Optional)**: GoControlPanel can send errors, performance traces, session replays and logs to Sentry. No Sentry configuration is required unless you want to enable telemetry.
@@ -445,6 +453,7 @@ The **GoControlPanel** supports a permission system that allows you to manage us
 - hetzner:servers:delete
 - audit-logs:view
 - audit-logs:delete
+- plugins:upload
 
 ---
 
@@ -494,9 +503,14 @@ The release notes of every version are in [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
-## Plugin SDK
+## Plugins and the marketplace
 
-The in-game widgets, windows and chat commands are plugins. How they work and how to write your own is described in the [plugin SDK guide](docs/plugin-sdk.md).
+Admins of a server can install plugins from the marketplace on the **Plugins** page, or upload their own (with the `plugins:upload` permission). Plugins run sandboxed in the GBX service, and a plugin that misbehaves is turned off and its admins are notified.
+
+- `MARKETPLACE_INDEX_URL` on **both** containers selects the marketplace. The default is the official one; leave it empty to turn browsing off.
+- [Plugin marketplace](docs/plugin-marketplace.md): how it works, running your own registry, withdrawing plugins, and the security model.
+- [Plugin SDK](docs/plugin-sdk.md): writing, testing and publishing a plugin.
+- [Built-in plugins](docs/builtin-plugins.md): the plugins that ship with GoControlPanel.
 
 ---
 

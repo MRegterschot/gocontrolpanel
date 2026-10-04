@@ -21,10 +21,23 @@ export interface ServerRecord {
 
 export interface ServerPluginRecord {
   pluginId: string;
-  // Stable plugin name, e.g. "live-ranking"
+  // Stable plugin name, e.g. "live-ranking", or the package slug
   name: string;
   enabled: boolean;
   config: unknown;
+  // Installed package of a marketplace or uploaded plugin; absent for built-ins
+  package?: InstalledPackageRef | null;
+}
+
+export interface InstalledPackageRef {
+  versionId: string;
+  version: string;
+  sha256: string;
+  source: "marketplace" | "upload";
+  // What the admin consented to; the sandbox grants nothing beyond this
+  grantedCapabilities: string[];
+  // Withdrawn from the marketplace; never loaded
+  yanked?: boolean;
 }
 
 export interface ServerRepository {
@@ -33,6 +46,67 @@ export interface ServerRepository {
   findById(serverId: string): Promise<ServerRecord | null>;
   findPlugins(serverId: string): Promise<ServerPluginRecord[]>;
   updatePluginConfig(serverId: string, pluginId: string, config: unknown): Promise<void>;
+  setPluginEnabled(serverId: string, pluginId: string, enabled: boolean): Promise<void>;
+}
+
+export interface PluginPackageRepository {
+  // The stored zip of an installed version
+  loadPackage(versionId: string): Promise<Uint8Array | null>;
+}
+
+export interface PluginYank {
+  slug: string;
+  version: string;
+  reason: string | null;
+}
+
+export interface YankedInstall {
+  serverId: string;
+  pluginId: string;
+  name: string;
+  version: string;
+  reason: string | null;
+}
+
+export interface PluginCatalogRepository {
+  // Marks the versions yanked, turns off every server plugin running one and returns those
+  applyYanks(yanks: PluginYank[]): Promise<YankedInstall[]>;
+}
+
+export interface PluginStorageUsage {
+  keys: number;
+  bytes: number;
+}
+
+// Key-value data of sandboxed plugins, per server
+export interface PluginStorageRepository {
+  get(serverId: string, pluginId: string, key: string): Promise<unknown>;
+  set(serverId: string, pluginId: string, key: string, value: unknown, size: number): Promise<void>;
+  delete(serverId: string, pluginId: string, key: string): Promise<void>;
+  keys(serverId: string, pluginId: string, prefix: string, limit: number): Promise<string[]>;
+  usage(serverId: string, pluginId: string): Promise<PluginStorageUsage>;
+  // Size of one stored value, 0 when absent
+  sizeOf(serverId: string, pluginId: string, key: string): Promise<number>;
+}
+
+export interface PluginHttpRequest {
+  url: string;
+  method: string;
+  headers: Record<string, string>;
+  body?: string;
+  timeoutMs: number;
+  maxResponseBytes: number;
+}
+
+export interface PluginHttpResponse {
+  status: number;
+  headers: Record<string, string>;
+  body: string;
+}
+
+// Outbound HTTPS for plugins with an http:<host> capability; refuses private addresses
+export interface PluginHttpClient {
+  fetch(request: PluginHttpRequest): Promise<PluginHttpResponse>;
 }
 
 export interface PlayerRepository {

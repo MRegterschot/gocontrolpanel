@@ -1,300 +1,304 @@
 # Plugin SDK
 
-Everything you see in game next to the panel, such as the map info card, the live ranking, the pick and ban widget and the `/help` command, is a plugin that runs inside the [GBX service](../apps/gbx-service/README.md). This guide explains how plugins work and how to write one.
+Plugins add widgets, windows, chat commands and automation to Trackmania servers managed by GoControlPanel. A plugin is a small package: a manifest, one JavaScript bundle and its manialink templates. Admins install it per server from the [marketplace](./plugin-marketplace.md), or upload it privately to their own panel. It runs in a sandbox and can only do what the admin allowed when they installed it.
 
-> **Status.** Plugins are compiled into the GBX service. There is no way yet to load a plugin from outside the repository, so writing a plugin means sending a pull request or running a fork. The SDK is the surface the built-in plugins are written against, and it can still change before third-party plugins are supported (a marketplace is outlined in [backend-split-requirements.md](./backend-split-requirements.md#12-future-plugin-marketplace)). In particular, `ctx.gbx` currently gives full access to the dedicated server.
+This guide is for plugin authors. For how panels run and review plugins, see [plugin-marketplace.md](./plugin-marketplace.md). For the plugins that ship with GoControlPanel, see [builtin-plugins.md](./builtin-plugins.md).
 
-## How it works
+## Quick start
 
-A plugin is a `PluginDefinition` created with `definePlugin()`. For every server, the `PluginHost` keeps the set of running plugins in line with two things:
+```bash
+tmcp-plugin init my-plugin   # tmcp-plugin.json, src/index.ts, a widget template and a README
+cd my-plugin
+tmcp-plugin pack             # builds and checks dist/my-plugin-0.1.0.zip
+```
 
-- the `server_plugins` row of that server: the plugin must be **enabled** (the toggle on the server's Plugins page);
-- the current **game mode**: the plugin's `gamemodes` list must be empty or contain the mode (`timeattack`, `rounds`, `reversecup`, `cup`, `tmwc`, `tmwt`, `teams`, `knockout`).
+Upload the zip on **Plugins → Uploaded**, then install it on one of your servers. It's private to you until you [publish it](#publishing-to-the-marketplace).
 
-When both match, the host calls `create(ctx)`, then `start()` on the instance it returned. When either stops matching, or the server disconnects, it calls `stop()` and removes everything the plugin registered. A config change calls `onConfigUpdate()`. Mode changes, config changes and reloads are queued, so a plugin never sees two lifecycle calls at once.
+> **The SDK is not on npm yet.** Until it is, run the CLI from a clone of this repository, for example `bun packages/plugin-sdk/src/cli/main.ts init ~/my-plugin`. The other commands work the same way. For editor types, install it from the clone: `npm install --save-dev ../gocontrolpanel/packages/plugin-sdk`. The build doesn't need it installed.
 
-A plugin that throws while loading is logged and skipped, and the other plugins keep running. Failing command and action handlers are logged and never reach the player.
+| Command | What it does |
+|---|---|
+| `tmcp-plugin init <dir>` | Creates a plugin project. `--slug` and `--name` override the defaults taken from the folder name. |
+| `tmcp-plugin build [dir]` | Bundles `src/index.ts` (or `.js`) into `dist/<entry>`. `--minify` is available, but reviewers prefer readable bundles. |
+| `tmcp-plugin pack [dir]` | Builds, zips and validates the package exactly as a panel will. It prints the sha256 and the registry entry you need to publish. |
+| `tmcp-plugin validate <file.zip>` | Checks an existing package and prints its manifest and capabilities. |
+| `tmcp-plugin registry` | Builds the marketplace site from a registry repository (used by the registry's CI). |
 
-Plugins run per server: each server gets its own instance, its own `ctx` and its own config.
+## Project layout
 
-## Anatomy of a plugin
+```
+my-plugin/
+├─ tmcp-plugin.json        manifest
+├─ src/index.ts           the plugin; bundled into one script
+├─ templates/             manialink templates, e.g. templates/widgets/main.hbs
+├─ README.md              shown on the plugin's marketplace page
+├─ CHANGELOG.md           optional
+├─ LICENSE                optional
+└─ icon.png               optional, at most 256 KB
+```
+
+A package may be at most 5 MB, unpack to at most 10 MB and hold at most 500 files. The bundle may be 2 MB, each template 256 KB, and docs 200 KB each. The names `manialink`, `widget`, `window` and `scripts/hide` are reserved for the layouts every plugin can extend.
+
+## The manifest
+
+`tmcp-plugin.json`:
+
+```json
+{
+  "slug": "hello",
+  "name": "Hello",
+  "version": "1.0.0",
+  "sdk": 1,
+  "description": "Greets players when they join.",
+  "author": "Your name",
+  "license": "MIT",
+  "repository": "https://github.com/you/hello",
+  "commands": ["hello"],
+  "capabilities": ["ui", "chat:send", "storage"],
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "greeting": { "type": "string", "title": "Greeting", "default": "Welcome", "maxLength": 100 }
+    }
+  },
+  "helpText": "/hello - the server says hi"
+}
+```
+
+| Field | Rules |
+|---|---|
+| `slug` | 3-40 characters: lowercase letters, digits and dashes, starting with a letter. It identifies the plugin and prefixes its widget ids and actions. Built-in plugin names and a few others (`help`, `plugins`, `server`, ...) are reserved. |
+| `name`, `description`, `author` | At most 60, 300 and 100 characters. |
+| `version` | A [semantic version](https://semver.org): `1.2.3`, or `1.2.3-beta.1` for a pre-release. |
+| `sdk` | The plugin SDK version the plugin targets. Currently `1`. Panels refuse plugins for a newer SDK than they run. |
+| `license`, `repository`, `homepage` | Optional. The links must be `https://`. |
+| `entry` | Path of the bundle inside the package. Default `index.js`. |
+| `gamemodes` | Modes the plugin runs in: `timeattack`, `rounds`, `reversecup`, `cup`, `tmwc`, `tmwt`, `teams`, `knockout`. Leave it out to run in every mode. |
+| `commands` | Chat commands the plugin may register, without the slash. At most 20. `help` belongs to the panel. |
+| `capabilities` | What the plugin may do. See [Capabilities](#capabilities). |
+| `configSchema` | The plugin's settings form. See [Settings](#settings). |
+| `helpText` | Shown by `/help <slug>`. At most 1000 characters. |
+
+## Writing the plugin
 
 ```ts
-export const myPlugin = definePlugin({
-  id: "my-plugin",                    // must equal plugins.name in the database
-  gamemodes: ["timeattack"],          // optional, empty or omitted means every mode
-  helpText: "/mycommand - does a thing", // shown by /help my-plugin
-  configSchema: z.object({ ... }),    // optional, validates server_plugins.config
-  create: (ctx) => new MyPlugin(ctx), // register commands, events and actions here
+import { definePlugin, type Widget } from "@tmcontrolpanel/plugin-sdk";
+
+interface Config {
+  greeting: string;
+}
+
+export default definePlugin<Config>({
+  create(ctx) {
+    ctx.command("hello", (_args, login) => ctx.chat.sendTo(login, ctx.config().greeting));
+    ctx.on("playerConnect", (player) => ctx.chat.sendTo(player.login, ctx.config().greeting));
+
+    return {
+      start() {
+        // Show widgets and load state here
+      },
+      onConfigUpdate() {
+        // The admin saved new settings; ctx.config() already returns them
+      },
+      stop() {
+        // Only for your own cleanup
+      },
+    };
+  },
 });
 ```
 
-`create(ctx)` returns a `PluginInstance`, all hooks optional:
+`create(ctx)` runs when the plugin loads on a server. Register commands, events and actions there, and return the hooks you need. A plugin is loaded when it is installed and turned on for the server and the current game mode matches `gamemodes`. It is unloaded when either stops being true, the server disconnects or another version is installed. Everything registered through `ctx` is removed on unload: event handlers, commands, actions, timers, widgets and buttons. Every server runs its own copy with its own settings and storage.
 
-| Hook | When |
-|---|---|
-| `start()` | Once after `create`. Display widgets and load the initial state here. May be async. |
-| `stop()` | Before the context is torn down. Only needed for your own cleanup. |
-| `onConfigUpdate()` | The stored config of this server changed. `ctx.config()` already returns the new value. |
-
-Register commands, events and actions in the constructor (or `create`) and display widgets in `start()`. You never have to unregister anything: everything registered through `ctx` is removed when the plugin unloads.
+Callbacks may be `async`. A callback that throws or rejects is logged with the plugin's id and never reaches the player.
 
 ## The context
 
-`ctx` is the only thing a plugin should use. Don't import service internals.
-
-| Member | What it does |
-|---|---|
-| `pluginId`, `serverId`, `serverName()` | Identity of the plugin and of the server it runs on. |
-| `log` | A pino logger already tagged with the plugin id. |
-| `config()` | The validated config, or `null` when nothing is stored. |
-| `saveConfig(config)` | Writes a new config to the database. `ctx.config()` returns the new value right away. |
-| `on(event, handler)` | Subscribe to a server event. See [Events](#events). |
-| `command(name, handler)` | Handle `/name arg1 arg2`. See [Chat commands](#chat-commands). |
-| `action(pattern, handler)` | Handle a manialink button. Returns a function that removes it early. See [Widgets and windows](#widgets-and-windows). |
-| `setTimeout(fn, ms)` | Like `setTimeout`, cancelled automatically on unload. Returns a cancel function. |
-| `sleep(ms)` | Promise that resolves after `ms`. |
-| `ui.widget(options)` | Create a widget shown to everyone (or one player). |
-| `ui.window(options)` | Create a closable window for one player. |
-| `ui.addAction(button)` / `ui.removeAction(name)` | Add an entry to the shared button bar in the top-left corner of the screen. |
-| `chat.send(message)` / `chat.sendTo(login, message)` | Chat message to everyone or to one player. |
-| `live` | Read-only view of the live state: `liveInfo` (mode, round, points, scores), `activePlayers`, `activeMapUid`, `roundNumber`, `isReverseCup`, `findActivePlayer(login)`. |
-| `players.get(login)` | The active player, or the player fetched from the server. |
-| `maps.findByUid(uid)` / `maps.findByFileNames(names)` | Maps from the database. |
-| `mapList` | The server's map list. |
-| `records.local(mapUid)` / `records.forPlayers(mapUid, logins)` | Records stored by this panel. |
-| `nadeo` | World record and account name lookups. |
-| `ecm` | eCircuitMania client. |
-| `notifyAdmins(message, description?)` | Notification to every admin of this server, shown in the panel. |
-| `server.setScriptName(script)` / `server.setPaused(paused)` | Change the mode script without the chat announcement, pause or unpause the match. |
-| `gbx` | Raw dedicated server access: `call(method, ...params)`, `callScript(method, ...params)`, `multicall(calls)` and `send(method, ...params)` (fire and forget). |
-
-### Events
-
-`ctx.on(event, handler)` is typed from `ServerEventMap` in [`server-events.ts`](../apps/gbx-service/src/core/server/server-events.ts), where every event and its arguments are listed. The ones plugins use most:
-
-| Event | Arguments | Fires when |
+| Member | Capability | What it does |
 |---|---|---|
-| `playerConnect`, `playerDisconnect` | `player` / `login` | A player joins or leaves. |
-| `playerChat` | `chat` | A player writes in chat. |
-| `beginMap`, `endMap` | `mapUid` | A map starts or ends. |
-| `beginRound`, `endRound` | `round` / `scores` | A round starts or ends. |
-| `checkpoint`, `finish`, `giveUp` | `waypoint` / `event` | A player passes a checkpoint, finishes or gives up. |
-| `live-checkpoint`, `live-finish`, `live-giveUp` | `round` | The same, after the live state has been updated. Use these to render the live state. |
-| `scores`, `playerUpdated`, `teamUpdated` | `scores` / `round` / `team` | Points changed. |
-| `warmUpStart`, `warmUpEnd` | `liveInfo` | Warm up changes. |
-| `modeChange` | `type` | The game mode changed. |
+| `pluginId`, `serverId`, `serverName()` | | Identity of the plugin and of the server. |
+| `log.debug/info/warn/error(message, data?)` | | Writes to the GBX service log, tagged with the plugin id. |
+| `config()` / `saveConfig(config)` | | The settings with defaults filled in. `saveConfig` is validated against `configSchema`. |
+| `on(event, handler)` | | Server events. See [Events](#events). |
+| `command(name, handler)` | | A chat command from the manifest. The handler gets `(args, login)`. |
+| `action(name, handler)` | | A manialink button. See [Widgets](#widgets-and-windows). |
+| `setTimeout(fn, ms)`, `setInterval(fn, ms)`, `sleep(ms)` | | Timers that are cleared on unload. Both return a cancel function. Intervals run at most every 100 ms. |
+| `live.liveInfo`, `live.activePlayers`, `live.activeMapUid`, `live.roundNumber`, `live.findActivePlayer(login)` | | Read-only live state of the server. |
+| `players.get(login)` | | A player, from the live state or the server. |
+| `ui.widget(options)`, `ui.window(options)`, `ui.addButton(button)`, `ui.removeButton(name)` | `ui` | Widgets, windows and the shared button bar. |
+| `chat.send(message)`, `chat.sendTo(login, message)` | `chat:send` | Chat messages. |
+| `storage.get/set/delete/keys` | `storage` | JSON values kept per server. |
+| `records.local(mapUid)`, `records.forPlayers(mapUid, logins)` | `records:read` | Records stored by the panel. |
+| `maps.findByUid(uid)`, `maps.findByFileNames(names)` | `maps:read` | Maps stored by the panel. |
+| `nadeo.worldRecord`, `nadeo.personalBests`, `nadeo.accountNames` | `nadeo:read` | Nadeo leaderboards and names, through the panel's Nadeo account. |
+| `notifyAdmins(message, description?)` | `notifications` | A notification for the server's admins in the panel. |
+| `server.setPaused(paused)`, `server.setScriptName(script)` | `mode:control` | Pause the match, change the mode script. |
+| `gbx.call(method, ...params)`, `gbx.callScript(method, ...params)` | per method | Dedicated server calls. See [Server calls](#server-calls). |
+| `http.fetch(url, request?)` | `http:<host>` | HTTPS requests. See [Web requests](#web-requests). |
 
-Handlers can be async. A handler that throws doesn't stop other handlers.
+Calling something behind a capability the plugin didn't declare, or that the admin didn't grant, throws a `CapabilityError`. Going over a rate limit throws a `RateLimitError`.
 
-### Chat commands
+## Capabilities
 
-```ts
-ctx.command("hello", (args, login) => ctx.chat.sendTo(login, `Hi ${login}`));
+Admins see these when they install the plugin, and an update that adds one needs their consent again.
+
+| Capability | Risk | Unlocks |
+|---|---|---|
+| `ui` | medium | Widgets, windows and buttons. Their ManiaScript runs in the players' game and can open links. |
+| `chat:send` | low | `ctx.chat`. |
+| `storage` | low | `ctx.storage`. |
+| `records:read` | low | `ctx.records`. |
+| `maps:read` | low | `ctx.maps`, and the `GetMapList` and `GetMapInfo` calls. |
+| `maps:write` | medium | Changing the map list and skipping, restarting or jumping to maps. |
+| `players:moderate` | high | Kicking, banning, forcing spectator, and editing the black list, guest list and ignore list. |
+| `mode:control` | high | `ctx.server`, mode script settings, and mode script events that change the match. |
+| `notifications` | low | `ctx.notifyAdmins`. |
+| `nadeo:read` | low | `ctx.nadeo`. |
+| `http:<host>` | medium | HTTPS requests to that host. `http:*.example.com` covers every subdomain. At most 10 hosts; IP addresses are not allowed. |
+
+Ask only for what the plugin needs. Reviewers turn down plugins that ask for more, and admins are less likely to install them.
+
+## Events
+
+`ctx.on(name, handler)` takes the events of `PluginEvents` in the SDK's types, with typed payloads:
+
+- **Players:** `playerConnect`, `playerConnectInfo`, `playerDisconnect`, `playerDisconnectInfo`, `playerInfo`, `playerInfoChanged`, `playerList`, `playerChat`.
+- **Maps and rounds:** `beginMap`, `endMap`, `startMap`, `beginMatch`, `startRound`, `beginRound`, `endRound`, `live-endRound`, `scores`.
+- **Driving:** `checkpoint`, `live-checkpoint`, `finish`, `live-finish`, `personalBest`, `giveUp`, `live-giveUp`, `startLine`, `skipOutro`.
+- **Mode:** `warmUpStart`, `warmUpEnd`, `warmUpStartRound`, `updatedSettings`, `elimination`, `modeChange`, `playerUpdated`, `teamUpdated`.
+- **Connection:** `connect`, `disconnect`.
+
+The `live-*` events fire after the live state was updated, so use those to render it. Answers to other plugins' manialinks are not available. Use `ctx.action` for your own.
+
+## Widgets and windows
+
+A widget is a manialink page rendered from one of the package's templates. Templates are Handlebars, rendered inside the sandbox, and can extend these layouts:
+
+- `widget`: a positioned frame with a script loop. Fill the blocks `widget` (the elements), `globals`, `script`, `main`, `events` and `loop`. Set `hideWhileDriving` to slide it away while the player drives.
+- `window`: a centred window with a title bar and a close button. Fill `window`, `globals`, `script`, `main`, `events` and `loop`.
+- `manialink`: a bare page; fill `content`.
+
+```hbs
+{{#extend "widget"}}
+{{#content "widget"}}
+<frame pos="0 0">
+  <quad pos="0 0" size="50 8" bgcolor="222" opacity="0.85" />
+  <label pos="2 -4" size="38 6" text="{{ data.text }}" valign="center" textsize="1.5" textcolor="FFF" />
+  <label pos="45 -4" size="8 6" text="Hi" halign="center" valign="center" action="{{action "wave"}}" />
+</frame>
+{{/content}}
+{{/extend}}
 ```
-
-The name is matched case-insensitively and without the slash, `args` are the words after it. Several plugins can handle the same command and all of them run. `/help` lists the available plugins and `/help <plugin>` prints the plugin's `helpText`. Admins can turn the help command off on the server's settings page.
-
-### Config
-
-Plugin config is stored as JSON in `server_plugins.config` and edited on the panel's Plugins page. Declare a zod `configSchema` and the host validates and parses (defaults included) the stored value before `ctx.config()` returns it. A config that doesn't match is logged and used as it is, so an older stored value never turns a plugin off. Treat every field as possibly missing.
-
-The plugin config page of the panel has one form per plugin (`apps/web/src/forms/server/plugins` and `apps/web/src/components/modals/plugins/plugins`). A plugin with config therefore needs a form in the web app too, and its stored shape should stay in sync with the schema in the service. The shared config schemas of the built-in plugins live in [`packages/shared/src/types/plugins.ts`](../packages/shared/src/types/plugins.ts).
-
-### Widgets and windows
-
-A widget is a Manialink page (the XML UI format of the game) that the service renders from a Handlebars template and sends to the players.
 
 ```ts
 const widget = ctx.ui.widget({
-  id: "my-widget",                      // unique per server
-  template: "widgets/my-plugin/my-widget", // path below templates/, without .hbs
-  position: { x: 100, y: 85 },
+  id: "greeting",               // letters, digits, - and _
+  template: "widgets/greeting", // templates/widgets/greeting.hbs
+  withUpdate: false,            // see below
+  position: { x: -158, y: 60 },
   hideWhileDriving: true,
-  data: { ... },                        // available as `data` in the template
+  login: undefined,             // set it to show the widget to one player only
 });
+widget.setData({ text: "Hello" });
+widget.display();
 
-widget.display();                       // show to everyone
-widget.setData({ ... });                // change the data
-widget.update();                        // push only the data, see below
-widget.hide();
+ctx.action("wave", (answer) => ctx.chat.sendTo(answer.login, "Hi!"));
 ```
 
-- **Main page and update page.** By default a widget is a pair: `my-widget` holds the layout and the ManiaScript loop, and `my-widget-update` (template `<template>-update`) only carries data. `update()` sends the data page, so the main page keeps its client-side state and animations. Pass `withUpdate: false` for a static widget. The update page writes the data to a variable the main page's loop reads; copy the pattern of [`map-info`](../apps/gbx-service/templates/widgets/map-info).
-- **Per player.** Pass `login` to show a widget to one player only.
-- **Windows.** `ctx.ui.window({ id, template, login, title, onClose })` creates a window for a single player with a close button already wired up. Templates live in `templates/windows/`.
-- **Buttons.** A manialink element with `action="some-name"` calls the handler registered with `ctx.action("some-name", (answer, params) => ...)`. `answer.Login` is the player who clicked. A pattern with placeholders, like `"match-pick-{uid}"`, passes the matched part as `params.uid`. Action names are global to the server, so prefix them with your plugin id.
-- **Button bar.** `ctx.ui.addAction({ name, icon, action })` adds an entry to the shared button bar in the top-left corner. The bar is removed again when the last entry goes.
-- **Templates.** Every `.hbs` file in `apps/gbx-service/templates/` is loaded at startup and named by its path, for example `widgets/map-info/map-info`. Extend the `widget` layout and fill the blocks `widget`, `globals`, `script`, `main`, `events` and `loop`, or extend `manialink` for a raw page. Available helpers: `default`, `eq`, `bool`, `boolToNum`, `length`, `jsonLength`, `range`, `add`, `subtract`, `multiply`, `divide`. Pass larger values as JSON strings and parse them with `fromjson` in ManiaScript, as the built-in widgets do.
+- **Ids and actions are prefixed** with the plugin's slug: the page id is `plg.<slug>.<id>` and actions are `<slug>:<name>`. Use `{{action "name"}}` in templates (`{{action "pick-" uid}}` joins its arguments) and `ctx.action("name", ...)` in code. In ManiaScript, `{{actionPrefix}}` gives the prefix. A pattern like `ctx.action("pick-{uid}", ...)` passes the matched part as `params.uid`. Anyone can send any action from their game client, so check `answer.login` before doing something privileged.
+- **Update pages.** By default a widget is a pair of pages, like the built-ins: `<template>` holds the layout and script, and `<template>-update` carries only data. `widget.update()` sends the data page, so the main page keeps its client-side state. With `withUpdate: false` there's a single page, and `display()` re-renders it.
+- **Windows** belong to one player: `ctx.ui.window({ id, template, login, title, onClose })`. The close button and `window.close()` remove the window and call `onClose`.
+- **The button bar** in the top-left corner: `ctx.ui.addButton({ name, icon, action })`, where `icon` is a text glyph or, with `type: "image"`, an image URL.
+- **Rules for pages.** A rendered page must be one `<manialink>` element with the page's own id, at most 128 KB. Pages that break this are refused with an error. Template helpers: `default`, `eq`, `bool`, `boolToNum`, `length`, `jsonLength`, `range`, `add`, `subtract`, `multiply`, `divide`, `action`, `actionPrefix`.
 
-## Registering a plugin
+## Settings
 
-1. **Write the plugin** in `apps/gbx-service/src/core/plugins/builtin/<name>.ts` and add it to the list in `builtin/index.ts`. The order is the order widgets are layered in.
-2. **Add the templates** to `apps/gbx-service/templates/`.
-3. **Add a database row** so the plugin shows up and can be enabled. Create one migration per database flavour (`bun run migrate:create` with `DB=mysql`, then again with `DB=postgres`) and insert the plugin. `name` must equal the plugin `id`:
+`configSchema` describes the settings form admins fill in on the server's Plugins page. It is a small subset of JSON Schema: an object whose `properties` are at most 50 fields.
 
-   ```sql
-   -- MySQL / MariaDB
-   INSERT INTO plugins (id, name, description, updatedAt)
-   VALUES (UUID(), 'hello', 'Greets players and shows a greeting widget.', NOW());
-   ```
+| Field type | Keywords |
+|---|---|
+| `string` | `title`, `description`, `default`, `enum` (a dropdown), `minLength`, `maxLength`, `multiline` (a text area), `secret` |
+| `number`, `integer` | `title`, `description`, `default`, `minimum`, `maximum` |
+| `boolean` | `title`, `description`, `default` |
+| `array` | `title`, `description`, `default`, `minItems`, `maxItems`, `items`: `{ "type": "string", "enum"?, "maxLength"? }` or `{ "type": "number" \| "integer", "minimum"?, "maximum"? }` |
 
-   ```sql
-   -- PostgreSQL
-   CREATE EXTENSION IF NOT EXISTS pgcrypto;
+`required` lists the fields that must have a value. `pattern` is not supported, because the regex would run on the panel.
 
-   INSERT INTO plugins (id, name, description, "updatedAt")
-   VALUES (gen_random_uuid(), 'hello', 'Greets players and shows a greeting widget.', NOW());
-   ```
+`secret` fields (API keys) are write-only: the panel never shows a saved value, a field left empty keeps it, and config exports leave it out.
 
-4. **Add a toggle to the panel.** Add `"hello": z.boolean().optional()` to `PluginsSchema` in `apps/web/src/forms/server/plugins/plugins-schema.ts`, and a switch for it in `plugins-form.tsx` next to the others. If the plugin has config, add a form and modal there as well.
+`ctx.config()` returns the settings with the defaults filled in. When an update changes the schema, stored values that no longer fit fall back to their default, field by field. Without a `configSchema` the plugin has no settings form, and `ctx.config()` returns `{}` unless the plugin saved something itself.
 
-The service reads the `plugins` and `server_plugins` tables, so after the migration an admin can enable the plugin on a server's Plugins page. **Reload plugins** on that page, or the config save, applies it without a restart.
+## Storage
 
-## Example: a greeting plugin
+`ctx.storage` keeps JSON values per server. Each server holds at most 1000 keys and 1 MB for a plugin, with up to 64 KB per value. Keys are 1-128 printable characters without spaces, and `keys(prefix)` lists them. The data is deleted when the plugin is uninstalled from the server.
 
-A plugin with config, a chat command, two events and a widget. The config is validated with zod, `onConfigUpdate()` refreshes the widget when an admin changes the greeting, and nothing needs cleaning up when the plugin unloads.
+## Server calls
 
-`apps/gbx-service/src/core/plugins/builtin/hello.ts`
+`ctx.gbx.call(method, ...params)` reaches the dedicated server directly, limited per capability:
 
-```ts
-import { z } from "zod";
-import { definePlugin, type PluginContext, type PluginInstance } from "../sdk";
+- **Always:** `GetCurrentMapInfo`, `GetNextMapInfo`, `GetCurrentMapIndex`, `GetNextMapIndex`, `GetPlayerList`, `GetPlayerInfo`, `GetModeScriptInfo`, `GetModeScriptSettings`, `GetScriptName`, `GetServerName`, `GetServerComment`, `GetVersion`, `GetMaxPlayers`, `GetMaxSpectators`.
+- **`maps:read`:** `GetMapList`, `GetMapInfo`.
+- **`maps:write`:** `NextMap`, `RestartMap`, `JumpToMapIndex`, `JumpToMapIdent`, `SetNextMapIndex`, `SetNextMapIdent`, `AddMap`, `AddMapList`, `InsertMap`, `InsertMapList`, `RemoveMap`, `RemoveMapList`, `ChooseNextMap`, `ChooseNextMapList`.
+- **`players:moderate`:** `Kick`, `Ban`, `UnBan`, `BanAndBlackList`, `BlackList`, `UnBlackList`, `ForceSpectator`, `ForceSpectatorTarget`, `SpectatorReleasePlayerSlot`, `ForcePlayerTeam`, `AddGuest`, `RemoveGuest`, `Ignore`, `UnIgnore`, `GetBanList`, `GetBlackList`, `GetGuestList`, `GetIgnoreList`.
+- **`mode:control`:** `SetModeScriptSettings`, `SetScriptName`.
 
-const configSchema = z.object({ greeting: z.string().default("Hi") });
-type HelloConfig = z.infer<typeof configSchema>;
+`ctx.gbx.callScript(method, ...params)` triggers mode script events (`TriggerModeScriptEventArray`). The state reads (`Trackmania.GetScores`, `Trackmania.WarmUp.GetStatus`, `Maniaplanet.WarmUp.GetStatus`, `Maniaplanet.Pause.GetStatus`, `Trackmania.GetPointsRepartition`, `Maniaplanet.Mode.GetUseTeams`) are always allowed; everything else needs `mode:control`.
 
-class HelloPlugin implements PluginInstance {
-  private readonly widget;
+Manialink and chat methods are never available here: use `ctx.ui` and `ctx.chat`. Methods that return passwords or IP addresses aren't available at all.
 
-  constructor(private readonly ctx: PluginContext<HelloConfig>) {
-    this.widget = ctx.ui.widget({
-      id: "hello-widget",
-      template: "widgets/hello/hello",
-      position: { x: -158, y: 60 },
-      hideWhileDriving: true,
-    });
+## Web requests
 
-    ctx.command("hello", (_args, login) => this.greet(login));
-    ctx.on("playerConnect", (player) => this.greet(player.login));
-    ctx.on("beginMap", () => this.refresh());
-  }
+`ctx.http.fetch(url, { method, headers, body, timeoutMs })` needs an `http:<host>` capability for the URL's host, and:
 
-  start() {
-    this.widget.display();
-    this.refresh();
-  }
+- only `https://` on the default port, without credentials in the URL;
+- never to a private, loopback or link-local address, wherever the name points;
+- no redirects are followed;
+- bodies up to 256 KB, answers up to 1 MB, 10 seconds by default and 30 at most;
+- `Host`, `Connection` and other hop-by-hop headers can't be set.
 
-  onConfigUpdate() {
-    this.refresh();
-  }
+The answer is `{ status, headers, body, json() }`.
 
-  private greeting() {
-    return this.ctx.config()?.greeting ?? "Hi";
-  }
+## Limits
 
-  private async greet(login: string) {
-    const player = await this.ctx.players.get(login);
-    await this.ctx.chat.sendTo(login, `${this.greeting()} ${player.nickName}!`);
-  }
+Every plugin runs in its own QuickJS interpreter inside a WebAssembly instance, without Node.js, network or file access, and without the service's environment variables.
 
-  private refresh() {
-    this.widget.setData({ greetingJson: JSON.stringify({ text: this.greeting() }) });
-    this.widget.update();
-  }
-}
+| Limit | Value | When it's crossed |
+|---|---|---|
+| Memory | 32 MB | turned off |
+| Loading (evaluating the bundle and `create`) | 2 s | turned off |
+| One callback, timer or promise continuation | 100 ms | turned off |
+| CPU per minute, all callbacks together | 6 s | turned off |
+| `start()` and `stop()` finishing their async work | 10 s | load fails / logged |
+| Uncaught errors | 100 per minute | turned off |
+| Rate limit rejections | 300 per minute | turned off |
+| Server calls | 20 per second, bursts of 50 | `RateLimitError` |
+| Chat messages | 2 per second, bursts of 10 | `RateLimitError` |
+| Widget updates | 40 per second, bursts of 100 | `RateLimitError` |
+| Storage writes | 10 per second, bursts of 50 | `RateLimitError` |
+| Web and Nadeo requests | 1 per second, bursts of 10 | `RateLimitError` |
+| Admin notifications | 1 per minute, bursts of 3 | `RateLimitError` |
+| Timers / handlers / widgets / calls in flight | 100 / 1000 / 200 / 100 | `LimitError` |
 
-export const helloPlugin = definePlugin({
-  id: "hello",
-  gamemodes: ["timeattack", "rounds"],
-  helpText: "/hello - the server says hi",
-  configSchema,
-  create: (ctx) => new HelloPlugin(ctx),
-});
-```
+A plugin that is turned off stays off on that server until an admin turns it back on. The admins get a notification saying why.
 
-`apps/gbx-service/templates/widgets/hello/hello.hbs`
+## Testing your plugin
 
-```handlebars
-{{#extend "widget"}}
-{{#content "widget"}}
-<quad pos="0 0" size="40 8" bgcolor="222" opacity="0.8"/>
-<label id="greeting" pos="20 -4" z-index="1" size="38 6" text="" halign="center" valign="center" textsize="2" textcolor="FFF"/>
-{{/content}}
+- Unit-test the plugin's own logic with any test runner. `definePlugin` only registers the plugin when it runs inside a panel.
+- Try it on a test server. Upload the zip on **Plugins → Uploaded**, install it on a server you're an admin of, and watch the GBX service log: everything the plugin logs carries its `pluginId`.
+- To work on GoControlPanel itself, `apps/gbx-service/test/plugins/sandbox.test.ts` runs packaged plugins against a fake dedicated server, and the [real-server test plan](./real-server-testing.md) covers a real one.
 
-{{#content "globals"}}
-#Struct Greeting {
-  Text text;
-}
-{{/content}}
+## Publishing to the marketplace
 
-{{#content "main"}}
-declare Greeting HelloGreeting for This;
-declare Integer LastHelloUpdate for This = -1;
-declare Integer lastUpdate = -1;
-{{/content}}
+The marketplace is a GitHub repository. Its pull requests are the review:
 
-{{#content "loop"}}
-if (LastHelloUpdate != lastUpdate) {
-  lastUpdate = LastHelloUpdate;
-  (Page.MainFrame.GetFirstChild("greeting") as CMlLabel).SetText(HelloGreeting.text);
-}
-{{/content}}
-{{/extend}}
-```
+1. Run `tmcp-plugin pack`, and attach the zip to a release of your plugin's repository.
+2. Open a pull request on the registry that adds `plugins/<slug>/versions/<version>.json` with the `url`, `sha256` and `publishedAt` printed by `pack`, plus an optional `changelog`.
+3. The registry's CI downloads the package, checks its sha256 and validates it the same way a panel does. A maintainer reviews the code and the capabilities.
 
-`apps/gbx-service/templates/widgets/hello/hello-update.hbs`
+Once merged, the version shows up in every panel within minutes. See the registry's README for the review checklist.
 
-```handlebars
-{{#extend "manialink"}}
-{{#content "content"}}
-<script>
-<!--
-#Struct Greeting {
-  Text text;
-}
+**Updates** are new versions with a higher version number. Admins choose when to update, and an update that asks for more capabilities needs their consent again. A version can't be changed after it is published; publish a new one instead.
 
-main(){
-  declare Greeting HelloGreeting for This;
-  declare Integer LastHelloUpdate for This;
-  declare Text greetingJson = """{{{ default data.greetingJson '{}' }}}""";
+## Example
 
-  HelloGreeting.fromjson(greetingJson);
-  LastHelloUpdate = GameTime;
-}
--->
-</script>
-{{/content}}
-{{/extend}}
-```
-
-## Testing
-
-`apps/gbx-service/test/fakes/harness.ts` builds a real server runtime on top of a scriptable fake dedicated server and in-memory repositories. A plugin test is "emit a callback, assert what was sent":
-
-```ts
-import { expect, it } from "vitest";
-import { helloPlugin } from "../../src/core/plugins/builtin/hello";
-import { createHarness, player, pluginRecord } from "../fakes/harness";
-
-it("greets", async () => {
-  const h = await createHarness({
-    plugins: [helloPlugin],
-    scriptName: "Trackmania/TM_TimeAttack_Online.Script.txt",
-    players: [player("p1")],
-    server: { plugins: [pluginRecord("hello", { greeting: "Yo" })] },
-  });
-  expect(h.session.widgetJson("hello-widget-update", "greetingJson")).toEqual({ text: "Yo" });
-  await h.chat("p1", "/hello");
-  expect(h.session.callsTo("ChatSendServerMessageToLogin").at(-1)?.params).toEqual(["Yo Nick p1!", "p1"]);
-});
-```
-
-Useful harness pieces: `h.chat(login, text)` writes in chat, `h.click(login, action)` presses a manialink button, `h.script(method, payload)` emits a mode script callback, `h.session.callsTo(method)` lists the calls made to the dedicated server and `h.session.widgetJson(id, key)` reads the data a widget was sent. The built-in plugin tests in `apps/gbx-service/test/plugins/` show the same pattern for every kind of plugin.
-
-```bash
-bun run --filter @gcp/gbx-service test
-bun run --filter @gcp/gbx-service typecheck
-```
-
-To see a plugin in a real game client, use the isolated stack in [real-server-testing.md](./real-server-testing.md) (after `bun run e2e:migrate` the seed script can enable your plugin, see `E2E_PLUGINS`).
+[`packages/plugin-sdk/examples/hello`](../packages/plugin-sdk/examples/hello) is a complete plugin. It greets players when they join, counts the greetings per player in storage, and shows a widget with a button. It uses settings, a command, an event, an action, a widget and storage.

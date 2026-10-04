@@ -1,0 +1,9 @@
+{{#extend "widget"}}
+{{#content "widget"}}
+<frame pos="0 0">
+  <quad pos="0 0" z-index="0" size="50 8" bgcolor="222" opacity="0.85" />
+  <label pos="2 -4" z-index="1" size="38 6" text="{{ data.text }}" valign="center" textsize="1.5" textcolor="FFF" />
+  <label pos="45 -4" z-index="1" size="8 6" text="Hi" halign="center" valign="center" textsize="1.5" textcolor="FFF" action="{{action "wave"}}" focusareacolor1="0000" focusareacolor2="FFF3" />
+</frame>
+{{/content}}
+{{/extend}}
