@@ -1,17 +1,30 @@
+"use client";
+
 import clsx from "clsx";
-import { Search } from "lucide-react";
+import { Check, LoaderCircle, Search } from "lucide-react";
 import React from "react";
 import { Input } from "./input";
-import { Popover, PopoverAnchor, PopoverContent } from "./popover"; // Don't use PopoverTrigger
+import { Popover, PopoverAnchor, PopoverContent } from "./popover";
 
-interface SearchInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface SearchResult {
+  label: string;
+  value: string;
+}
+
+export type SearchHandler = (
+  query?: string,
+) => void | Promise<SearchResult[] | void>;
+
+interface SearchInputProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "onChange"
+> {
   value?: string;
   defaultValue?: string;
-  onSearch?: (query?: string) => void;
+  onSearch?: SearchHandler;
   onValueChange: (value: string) => void;
-  searchResults: { label: string; value: string }[];
+  searchResults: SearchResult[];
   loading?: boolean;
-  className?: string;
 }
 
 export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
@@ -25,101 +38,292 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
       loading = false,
       className,
       placeholder,
+      disabled,
+      onKeyDown,
+      autoFocus,
       ...props
     },
     ref,
   ) => {
-    const isControlled = value !== undefined;
-    const [rawInput, setRawInput] = React.useState(defaultValue);
-    const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
+    const [internalValue, setInternalValue] = React.useState(defaultValue);
+    const selectedValue = value ?? internalValue;
+    const [query, setQuery] = React.useState("");
+    const [results, setResults] = React.useState<SearchResult[] | null>(null);
+    const [completedQuery, setCompletedQuery] = React.useState<string | null>(
+      null,
+    );
+    const [searching, setSearching] = React.useState(false);
+    const [failed, setFailed] = React.useState(false);
+    const [open, setOpen] = React.useState(false);
+    const [activeIndex, setActiveIndex] = React.useState(0);
+    const [focusInput, setFocusInput] = React.useState(false);
+    const selected = React.useRef<SearchResult | null>(null);
+    const changeButton = React.useRef<HTMLButtonElement>(null);
+    const searchHandler = React.useRef(onSearch);
+    const currentQuery = React.useRef(query);
+    const request = React.useRef(0);
+    const debounce = React.useRef<ReturnType<typeof setTimeout> | undefined>(
+      undefined,
+    );
+    const listId = React.useId();
+    const hintId = React.useId();
+    searchHandler.current = onSearch;
 
-    const selectedLabel = React.useMemo(() => {
-      if (!isControlled) return undefined;
-      const match = searchResults.find((r) => r.value === value);
-      return match?.label ?? value;
-    }, [value, searchResults]);
+    const selectedLabel =
+      searchResults.find((result) => result.value === selectedValue)?.label ??
+      (selected.current?.value === selectedValue
+        ? selected.current.label
+        : selectedValue);
+    const visibleResults =
+      completedQuery === query
+        ? (results ??
+          searchResults.filter((result) =>
+            [result.label, result.value].some((text) =>
+              text.toLowerCase().includes(query.trim().toLowerCase()),
+            ),
+          ))
+        : [];
+    const pending =
+      searching || (results === null && loading) || completedQuery !== query;
 
-    const displayValue = isControlled ? selectedLabel : rawInput;
-
-    const handleEnterKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleSearch();
+    const search = React.useCallback(async (text: string) => {
+      clearTimeout(debounce.current);
+      if (!text.trim()) return;
+      const id = ++request.current;
+      setSearching(true);
+      setFailed(false);
+      try {
+        const found = await searchHandler.current?.(text.trim());
+        if (id !== request.current || text !== currentQuery.current) return;
+        setResults(found ?? null);
+        setCompletedQuery(text);
+        setActiveIndex(0);
+      } catch {
+        if (id !== request.current || text !== currentQuery.current) return;
+        setResults([]);
+        setCompletedQuery(text);
+        setFailed(true);
+      } finally {
+        if (id === request.current) setSearching(false);
       }
-    };
+    }, []);
 
-    const handleSearch = () => {
-      onSearch?.(isControlled ? value : rawInput);
-      setIsPopoverOpen(true);
-    };
+    React.useEffect(() => {
+      if (selectedValue || disabled || !query.trim()) return;
+      debounce.current = setTimeout(() => void search(query), 400);
+      return () => clearTimeout(debounce.current);
+    }, [query, selectedValue, disabled, search]);
 
-    const handleSelect = (item: { label: string; value: string }) => {
-      setIsPopoverOpen(false);
-      if (!isControlled) {
-        setRawInput(item.label);
-      }
-      onValueChange?.(item.value);
-    };
+    React.useEffect(
+      () => () => {
+        ++request.current;
+        clearTimeout(debounce.current);
+      },
+      [],
+    );
+
+    function changeValue(next: string) {
+      setInternalValue(next);
+      onValueChange(next);
+    }
+
+    function select(result: SearchResult) {
+      ++request.current;
+      clearTimeout(debounce.current);
+      selected.current = result;
+      setSearching(false);
+      setOpen(false);
+      setQuery("");
+      currentQuery.current = "";
+      changeValue(result.value);
+      requestAnimationFrame(() => changeButton.current?.focus());
+    }
+
+    function edit(text: string) {
+      ++request.current;
+      currentQuery.current = text;
+      setQuery(text);
+      setResults(null);
+      setCompletedQuery(null);
+      setSearching(false);
+      setFailed(false);
+      setActiveIndex(0);
+      setOpen(!!text.trim());
+      // Only a clicked/keyboard-selected search result may become the form value.
+      if (selectedValue) changeValue("");
+    }
+
+    if (selectedValue) {
+      return (
+        <div
+          className={clsx(
+            "flex min-w-0 w-full items-center gap-2 rounded-md border border-input bg-accent/40 px-3 py-1 text-sm",
+            className,
+          )}
+        >
+          <Check
+            className="size-4 shrink-0 text-green-600"
+            aria-hidden="true"
+          />
+          <span className="min-w-0 flex-1 truncate" title={selectedLabel}>
+            {selectedLabel}
+          </span>
+          <span className="text-xs text-muted-foreground">Selected</span>
+          <button
+            ref={changeButton}
+            type="button"
+            disabled={disabled}
+            aria-label={`Change selected user ${selectedLabel}`}
+            className="rounded px-2 py-1 text-xs hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50"
+            onClick={() => {
+              setFocusInput(true);
+              edit(selectedLabel ?? "");
+            }}
+          >
+            Change
+          </button>
+        </div>
+      );
+    }
 
     return (
-      <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-        <PopoverAnchor asChild>
-          <div className="relative w-full">
-            <Input
-              ref={ref}
-              value={displayValue}
-              onChange={(e) => {
-                if (!isControlled) {
-                  setRawInput(e.target.value);
+      <div className="min-w-0 w-full">
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverAnchor asChild>
+            <div className="relative w-full">
+              <Input
+                {...props}
+                ref={ref}
+                value={query}
+                disabled={disabled}
+                autoFocus={autoFocus || focusInput}
+                type="text"
+                role="combobox"
+                autoComplete="off"
+                aria-autocomplete="list"
+                aria-expanded={open}
+                aria-controls={
+                  open && !pending && visibleResults.length ? listId : undefined
                 }
-                onValueChange(e.target.value);
-              }}
-              type="text"
-              onKeyDown={handleEnterKey}
-              placeholder={placeholder || "Search..."}
-              className={clsx("w-full pr-10 text-sm", className)}
-              {...props}
-            />
-            <Search
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400"
-              size={18}
-              onClick={handleSearch}
-              role="button"
-            />
-          </div>
-        </PopoverAnchor>
-
-        <PopoverContent align="start" className="w-auto p-1 z-[9999]">
-          {loading ? (
-            <div className="p-2 text-sm px-2 py-1 ">Searching...</div>
-          ) : (isControlled ? !value : !rawInput) ||
-            searchResults.filter((r) =>
-              r.label
-                .toLowerCase()
-                .includes((isControlled ? value : rawInput).toLowerCase()),
-            ).length === 0 ? (
-            <div className="p-2 text-sm px-2 py-1 ">No results found</div>
-          ) : (
-            searchResults
-              .filter((r) =>
-                r.label
-                  .toLowerCase()
-                  .includes((isControlled ? value : rawInput).toLowerCase()),
-              )
-              .map((result) => (
-                <div
-                  key={result.value}
-                  onClick={() => handleSelect(result)}
-                  className="cursor-pointer px-2 py-1 text-sm hover:bg-accent"
-                >
-                  {result.label}
-                </div>
-              ))
-          )}
-        </PopoverContent>
-      </Popover>
+                aria-activedescendant={
+                  open && !pending && visibleResults[activeIndex]
+                    ? `${listId}-${activeIndex}`
+                    : undefined
+                }
+                aria-describedby={[props["aria-describedby"], hintId]
+                  .filter(Boolean)
+                  .join(" ")}
+                placeholder={placeholder || "Search by name or login..."}
+                className={clsx("w-full pr-10 text-sm", className)}
+                onChange={(event) => edit(event.target.value)}
+                onFocus={() => {
+                  if (query.trim()) setOpen(true);
+                }}
+                onKeyDown={(event) => {
+                  onKeyDown?.(event);
+                  if (event.defaultPrevented) return;
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    if (open && !pending && visibleResults[activeIndex])
+                      select(visibleResults[activeIndex]);
+                    else if (!searching && query.trim()) {
+                      setOpen(true);
+                      void search(query);
+                    }
+                  } else if (
+                    event.key === "ArrowDown" ||
+                    event.key === "ArrowUp"
+                  ) {
+                    event.preventDefault();
+                    setOpen(!!query.trim());
+                    if (visibleResults.length)
+                      setActiveIndex(
+                        (index) =>
+                          (index +
+                            (event.key === "ArrowDown" ? 1 : -1) +
+                            visibleResults.length) %
+                          visibleResults.length,
+                      );
+                  } else if (event.key === "Escape") {
+                    event.preventDefault();
+                    setOpen(false);
+                  }
+                }}
+              />
+              <button
+                type="button"
+                aria-label="Search users"
+                disabled={disabled || searching || !query.trim()}
+                className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-1.5 text-muted-foreground hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  setOpen(true);
+                  void search(query);
+                }}
+              >
+                {searching ? (
+                  <LoaderCircle className="size-4 animate-spin" />
+                ) : (
+                  <Search className="size-4" />
+                )}
+              </button>
+            </div>
+          </PopoverAnchor>
+          <PopoverContent
+            align="start"
+            className="z-[9999] w-[var(--radix-popover-trigger-width)] min-w-64 p-1"
+            onOpenAutoFocus={(event) => event.preventDefault()}
+            onCloseAutoFocus={(event) => event.preventDefault()}
+          >
+            {pending ? (
+              <div role="status" className="p-2 text-sm text-muted-foreground">
+                Searching...
+              </div>
+            ) : failed ? (
+              <div role="status" className="p-2 text-sm">
+                Search failed. Try again.
+              </div>
+            ) : !visibleResults.length ? (
+              <div role="status" className="p-2 text-sm text-muted-foreground">
+                No users found. Check the name or login.
+              </div>
+            ) : (
+              <div role="listbox" id={listId} aria-label="User search results">
+                {visibleResults.map((result, index) => (
+                  <button
+                    key={result.value}
+                    id={`${listId}-${index}`}
+                    role="option"
+                    aria-selected={index === activeIndex}
+                    type="button"
+                    className={clsx(
+                      "flex w-full items-center justify-between gap-3 rounded px-2 py-2 text-left text-sm hover:bg-accent",
+                      index === activeIndex && "bg-accent",
+                    )}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => select(result)}
+                  >
+                    <span>{result.label}</span>
+                    <span className="text-xs text-muted-foreground">
+                      Select
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </PopoverContent>
+        </Popover>
+        <p
+          id={hintId}
+          className="mt-1 text-xs text-muted-foreground"
+          role="status"
+        >
+          {query
+            ? "No user selected yet. Choose a search result."
+            : "Type a name, then choose a search result."}
+        </p>
+      </div>
     );
   },
 );
-
 SearchInput.displayName = "SearchInput";

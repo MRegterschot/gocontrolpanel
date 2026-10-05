@@ -10,6 +10,7 @@ import {
   FormLabel,
   FormMessage,
 } from "../ui/form";
+import type { SearchHandler } from "../ui/search-input";
 import RenderInput from "./render-input";
 
 interface FormElementProps<TControl> {
@@ -33,7 +34,7 @@ interface FormElementProps<TControl> {
   step?: number;
   min?: number;
   max?: number;
-  onSearch?: (query?: string) => void;
+  onSearch?: SearchHandler;
   onClear?: () => void;
   className?: string;
   rootClassName?: string;
@@ -127,7 +128,7 @@ export default function FormElement<TControl>({
                 placeholder={placeholder}
                 options={options}
                 defaultValues={defaultValues}
-                isDisabled={isDisabled || isLoading}
+                isDisabled={isDisabled || (type !== "search" && isLoading)}
                 isLoading={isLoading}
                 step={step}
                 min={min}

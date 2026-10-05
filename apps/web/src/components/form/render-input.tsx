@@ -15,7 +15,7 @@ import { Checkbox } from "../ui/checkbox";
 import { FilterInput } from "../ui/filter-input";
 import { Input } from "../ui/input";
 import { MultiSelect } from "../ui/multi-select";
-import { SearchInput } from "../ui/search-input";
+import { SearchInput, type SearchHandler } from "../ui/search-input";
 import {
   Select,
   SelectContent,
@@ -46,7 +46,7 @@ interface RenderInputProps<TControl extends FieldValues> {
   min?: number;
   max?: number;
   error?: FieldError | Merge<FieldError, FieldErrorsImpl<any>>;
-  onSearch?: (query?: string) => void;
+  onSearch?: SearchHandler;
   className?: string;
 }
 
@@ -202,6 +202,12 @@ export default function RenderInput<TControl extends FieldValues>({
     case "search":
       return (
         <SearchInput
+          ref={field.ref}
+          name={field.name}
+          onBlur={field.onBlur}
+          disabled={isDisabled}
+          autoFocus={autoFocus}
+          aria-invalid={!!error}
           onSearch={onSearch}
           value={field.value}
           onValueChange={field.onChange}

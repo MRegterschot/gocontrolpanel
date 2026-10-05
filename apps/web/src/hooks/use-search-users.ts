@@ -23,7 +23,7 @@ export function useSearchUsers({
 }: UseSearchUsersProps) {
   // What the user searched for, on top of the users the form started with
   const [searched, setSearched] = useState<UserMinimal[]>([]);
-  const [searching, setSearching] = useState(true);
+  const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
   const hasDefaults = !!defaultUsers && defaultUsers.length > 0;
@@ -60,7 +60,7 @@ export function useSearchUsers({
   async function search(query?: string) {
     if (!query?.trim()) {
       setSearching(false);
-      return;
+      return [];
     }
 
     setSearching(true);
@@ -71,16 +71,18 @@ export function useSearchUsers({
       if (error) {
         throw new ServerError(error, "SearchUserError");
       }
-      if (!data) return;
+      if (!data) return [];
 
       setSearched((prev) =>
         prev.some((user) => user.id === data.id) ? prev : [...prev, data],
       );
+      return [{ label: data.nickName, value: data[field] }];
     } catch (error) {
       setSearchError("Failed to search users: " + getErrorMessage(error));
       toast.error("Failed to search users", {
         description: getErrorMessage(error),
       });
+      throw error;
     } finally {
       setSearching(false);
     }

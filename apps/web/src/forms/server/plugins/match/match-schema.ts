@@ -20,7 +20,7 @@ export const MatchPluginSchema = z.object({
   admins: z
     .array(
       z.object({
-        login: z.string(),
+        login: z.string().min(1, "Search for a user and select a result"),
       }),
     )
     .optional(),
@@ -42,14 +42,20 @@ export const MatchPluginSchema = z.object({
           z.object({
             seed: z.number(),
             name: z.string().optional(),
-            players: z.array(z.object({ login: z.string() })),
+            players: z.array(
+              z.object({
+                login: z
+                  .string()
+                  .min(1, "Search for a user and select a result"),
+              }),
+            ),
           }),
         )
         .optional(),
       players: z
         .array(
           z.object({
-            login: z.string(),
+            login: z.string().min(1, "Search for a user and select a result"),
             seed: z.number(),
           }),
         )

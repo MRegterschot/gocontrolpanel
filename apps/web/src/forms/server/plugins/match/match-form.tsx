@@ -824,7 +824,7 @@ function TeamFields({
 }: {
   control: Control<MatchPluginSchemaType>;
   teamIndex: number;
-  search: (query?: string) => Promise<void>;
+  search: ReturnType<typeof useSearchUsers>["search"];
   searchResults: UserMinimal[];
   searching: boolean;
 }) {
