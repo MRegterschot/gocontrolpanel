@@ -1,5 +1,5 @@
 import { formatTime } from "@/lib/utils";
-import { PlayerRound, Team } from "@gcp/shared";
+import { PlayerRound, Team } from "@tmcp/shared";
 import {
   IconFlag2,
   IconHash,

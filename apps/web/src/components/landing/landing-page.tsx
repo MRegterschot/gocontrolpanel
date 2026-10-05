@@ -1,3 +1,4 @@
+import { BrandMark } from "@/components/brand-mark";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,7 +12,6 @@ import {
   IconBrandGithub,
   IconBroadcast,
   IconCloud,
-  IconDeviceGamepad2,
   IconFolders,
   IconHistory,
   IconMap,
@@ -175,10 +175,8 @@ export default function LandingPage({
       <header className="absolute inset-x-0 top-0 z-20">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <a href="#" className="flex items-center gap-2 text-white">
-            <span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <IconDeviceGamepad2 className="size-5" />
-            </span>
-            <span className="text-lg font-bold">GoControlPanel</span>
+            <BrandMark className="size-9 shrink-0" />
+            <span className="text-lg font-bold">TMControlPanel</span>
           </a>
           <nav
             aria-label="Main"
@@ -201,7 +199,7 @@ export default function LandingPage({
               target="_blank"
               rel="noreferrer"
               className="rounded-md p-2 hover:text-white"
-              aria-label="GoControlPanel on GitHub"
+              aria-label="TMControlPanel on GitHub"
             >
               <IconBrandGithub className="size-5" />
             </a>
@@ -245,7 +243,7 @@ export default function LandingPage({
                 <span className="text-primary">from one panel</span>
               </h1>
               <p className="max-w-2xl text-lg text-white/80">
-                GoControlPanel manages your dedicated servers from the browser:
+                TMControlPanel manages your dedicated servers from the browser:
                 live matches, maps, players, plugins and files, for one server
                 or a whole league, together with your team.
               </p>
@@ -285,7 +283,7 @@ export default function LandingPage({
         {/* Stats */}
         {stats && (
           <section
-            aria-label="GoControlPanel in numbers"
+            aria-label="TMControlPanel in numbers"
             className="relative z-10 -mt-16"
           >
             <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -375,7 +373,7 @@ export default function LandingPage({
             </h2>
             <p className="text-muted-foreground">
               Sign in to see the servers you have access to. Running your own?
-              GoControlPanel ships as a Docker image that sits next to your
+              TMControlPanel ships as a Docker image that sits next to your
               dedicated server, standalone or alongside PyPlanet and EvoSC.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row">
@@ -396,7 +394,7 @@ export default function LandingPage({
       <footer className="border-t">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:px-6">
           <span>
-            GoControlPanel · MIT licensed · Not affiliated with Ubisoft Nadeo
+            TMControlPanel · MIT licensed · Not affiliated with Ubisoft Nadeo
           </span>
           <div className="flex items-center gap-4">
             <a

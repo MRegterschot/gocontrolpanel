@@ -2,7 +2,7 @@
 
 import { sendChatMessage } from "@/actions/gbx/advanced";
 import { getErrorMessage } from "@/lib/utils";
-import { DetailedPlayerChat, SPlayerInfo } from "@gcp/shared";
+import { DetailedPlayerChat, SPlayerInfo } from "@tmcp/shared";
 import { IconSend } from "@tabler/icons-react";
 import { useState } from "react";
 import { toast } from "sonner";

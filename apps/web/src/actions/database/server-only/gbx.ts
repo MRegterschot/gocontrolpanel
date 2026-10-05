@@ -1,6 +1,6 @@
 import { getMapsInfo } from "@/lib/api/nadeo";
 import { getClient } from "@/lib/dbclient";
-import { Maps, Prisma } from "@gcp/db";
+import { Maps, Prisma } from "@tmcp/db";
 import "server-only";
 
 const serversPluginsSchema = Prisma.validator<Prisma.ServerPluginsInclude>()({

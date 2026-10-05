@@ -1,6 +1,6 @@
 "use client";
 
-import { Team } from "@gcp/shared";
+import { Team } from "@tmcp/shared";
 import { MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 import SetTeamMapPointsModal from "../modals/live/teams/set-team-map-points-modal";

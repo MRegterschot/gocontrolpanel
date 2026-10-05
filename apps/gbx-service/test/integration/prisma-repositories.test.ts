@@ -1,6 +1,6 @@
-import { createPrismaClient, type DbClient } from "@gcp/db";
+import { createPrismaClient, type DbClient } from "@tmcp/db";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { createPluginPackage, readPluginPackage } from "@gcp/shared/plugin-package";
+import { createPluginPackage, readPluginPackage } from "@tmcp/shared/plugin-package";
 import {
   PrismaFirstPartyRepository,
   PrismaMapRepository,
@@ -363,7 +363,7 @@ describe.skipIf(!url)("Prisma repositories", () => {
         version: "1.0.0",
         sdk: 1,
         description: "Shows the current map.",
-        author: "GoControlPanel",
+        author: "TMControlPanel",
         capabilities: ["ui", "maps:read"],
       }),
       "index.js": "globalThis.__tmcpRegister({ create() { return {}; } });",

@@ -1,4 +1,4 @@
-import type { Scores, Waypoint } from "@gcp/shared";
+import type { Scores, Waypoint } from "@tmcp/shared";
 import { describe, expect, it, vi } from "vitest";
 import { createHarness, MAP_B, player, serverRecord } from "../fakes/harness";
 
@@ -226,7 +226,7 @@ describe("rounds and scores", () => {
     const h = await createHarness({ players: [player("p1")] });
     await h.script(
       "Trackmania.Scores",
-      scores("", [{ login: "p1", accountid: "acc-1", matchpoints: 20, name: "P1" }], "gocontrolpanel"),
+      scores("", [{ login: "p1", accountid: "acc-1", matchpoints: 20, name: "P1" }], "tmcontrolpanel"),
     );
     expect(h.runtime.state.getPlayerRound("p1")).toMatchObject({ accountId: "acc-1", matchPoints: 20, connected: true });
     expect(h.runtime.state.liveInfo.activeRound.players.p1.accountId).toBe("acc-1");
@@ -235,7 +235,7 @@ describe("rounds and scores", () => {
   it("undoes the round count when a pause toggles mid-match", async () => {
     const h = await createHarness();
     h.runtime.state.roundNumber = 3;
-    await h.script("Maniaplanet.Pause.Status", { responseid: "gocontrolpanel", available: true, active: true });
+    await h.script("Maniaplanet.Pause.Status", { responseid: "tmcontrolpanel", available: true, active: true });
     expect(h.runtime.state.roundNumber).toBe(2);
     expect(h.runtime.state.liveInfo).toMatchObject({ isPaused: true, pauseAvailable: true });
 

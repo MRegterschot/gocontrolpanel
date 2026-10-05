@@ -1,4 +1,4 @@
-import type { PlayerInfo, SPlayerInfo } from "@gcp/shared";
+import type { PlayerInfo, SPlayerInfo } from "@tmcp/shared";
 import { AppError } from "../errors";
 import type { GbxConnection } from "../gbx/connection";
 

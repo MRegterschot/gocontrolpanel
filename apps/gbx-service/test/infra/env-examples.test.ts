@@ -46,6 +46,6 @@ describe("env examples", () => {
   it("uses the credentials of the dev database containers", () => {
     expect(root.DB).toBe("mysql");
     expect(web.DB).toBe("mysql");
-    expect(root.DATABASE_URL).toBe("mysql://root:root@localhost:3306/gocontrolpanel");
+    expect(root.DATABASE_URL).toBe("mysql://root:root@localhost:3306/tmcontrolpanel");
   });
 });

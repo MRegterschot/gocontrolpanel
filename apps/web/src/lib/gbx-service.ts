@@ -9,7 +9,7 @@ import {
   type MapsChangeResult,
   type PointsBody,
   type ServerLifecycleEvent,
-} from "@gcp/shared";
+} from "@tmcp/shared";
 import "server-only";
 import config from "./config";
 import { logger } from "./logger";

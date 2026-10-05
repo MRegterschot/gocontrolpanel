@@ -1,4 +1,4 @@
-import type { GameModeType, PluginConfig, PluginConfigSchema } from "@gcp/shared";
+import type { GameModeType, PluginConfig, PluginConfigSchema } from "@tmcp/shared";
 
 // What the plugin pages show; plain JSON so server components can hand it to client ones
 
@@ -72,7 +72,7 @@ export interface VersionChoice {
 export interface InstalledPlugin {
   pluginId: string;
   slug: string;
-  // Ships with GoControlPanel; configured with the panel's own forms
+  // Ships with TMControlPanel; configured with the panel's own forms
   firstParty: boolean;
   name: string;
   description: string | null;
@@ -101,7 +101,7 @@ export interface AvailablePlugin {
   name: string;
   description: string | null;
   source: PluginSourceKind;
-  // Ships with GoControlPanel
+  // Ships with TMControlPanel
   firstParty: boolean;
   // Newest first, withdrawn ones left out
   versions: { id: string; version: string; capabilities: string[] }[];

@@ -14,7 +14,7 @@ import { routePermissions } from "@/routes";
 import { storedManifest } from "@/services/plugins";
 import type { UploadResult } from "@/types/plugins/catalog";
 import { ServerError, ServerResponse } from "@/types/responses";
-import type { Prisma } from "@gcp/db";
+import type { Prisma } from "@tmcp/db";
 import {
   findVersion,
   isFirstPartySlug,
@@ -23,12 +23,12 @@ import {
   PLUGIN_SDK_VERSION,
   validatePluginConfig,
   type PluginConfig,
-} from "@gcp/shared";
+} from "@tmcp/shared";
 import {
   PACKAGE_LIMITS,
   PluginPackageError,
   readPluginPackage,
-} from "@gcp/shared/plugin-package";
+} from "@tmcp/shared/plugin-package";
 import type { Session } from "next-auth";
 import { z } from "zod";
 
@@ -111,7 +111,7 @@ async function ensureMarketplaceVersion(slug: string, version: string): Promise<
   }
   if (!isVersionCompatible(entry)) {
     throw new ServerError(
-      `${slug} ${version} needs a newer version of GoControlPanel`,
+      `${slug} ${version} needs a newer version of TMControlPanel`,
       "PluginIncompatible",
     );
   }
@@ -402,7 +402,7 @@ export async function uploadPluginPackage(formData: FormData): Promise<ServerRes
     const { manifest } = pkg;
     if (isFirstPartySlug(manifest.slug)) {
       throw new ServerError(
-        `"${manifest.slug}" is a plugin that ships with GoControlPanel; change the slug`,
+        `"${manifest.slug}" is a plugin that ships with TMControlPanel; change the slug`,
         "PluginNameTaken",
       );
     }

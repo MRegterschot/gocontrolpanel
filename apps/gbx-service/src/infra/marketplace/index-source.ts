@@ -1,4 +1,4 @@
-import { parseMarketplaceIndex, type MarketplaceIndex } from "@gcp/shared";
+import { parseMarketplaceIndex, type MarketplaceIndex } from "@tmcp/shared";
 import type { Logger } from "../../core/logger";
 import type { MarketplaceIndexSource } from "../../core/plugins/marketplace-watcher";
 

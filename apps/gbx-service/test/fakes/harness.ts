@@ -1,5 +1,5 @@
-import type { SMapInfo, SPlayerInfo } from "@gcp/shared";
-import { readPluginPackage } from "@gcp/shared/plugin-package";
+import type { SMapInfo, SPlayerInfo } from "@tmcp/shared";
+import { readPluginPackage } from "@tmcp/shared/plugin-package";
 import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -67,7 +67,7 @@ const firstParty = new Map<string, Promise<Uint8Array>>();
 export function firstPartyPackage(slug: string): Promise<Uint8Array> {
   let bytes = firstParty.get(slug);
   if (!bytes) {
-    const outDir = mkdtempSync(join(tmpdir(), `gcp-${slug}-`));
+    const outDir = mkdtempSync(join(tmpdir(), `tmcp-${slug}-`));
     bytes = packPlugin(join(PLUGINS_DIR, slug), { outDir }).then((result) => {
       rmSync(outDir, { recursive: true, force: true });
       return result.bytes;

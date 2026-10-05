@@ -1,4 +1,4 @@
-import { redisKeys, type JukeboxEntry } from "@gcp/shared";
+import { redisKeys, type JukeboxEntry } from "@tmcp/shared";
 import type { Redis } from "ioredis";
 import type { JukeboxStore } from "../../core/ports";
 

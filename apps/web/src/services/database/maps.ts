@@ -10,8 +10,8 @@ import {
   ServerError,
   ServerResponse,
 } from "@/types/responses";
-import { Maps, Prisma } from "@gcp/db";
-import { MapInfoMinimal, SMapInfo } from "@gcp/shared";
+import { Maps, Prisma } from "@tmcp/db";
+import { MapInfoMinimal, SMapInfo } from "@tmcp/shared";
 import { PaginationState } from "@tanstack/react-table";
 import "server-only";
 

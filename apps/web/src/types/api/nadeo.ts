@@ -1,4 +1,4 @@
-import { Maps } from "@gcp/db";
+import { Maps } from "@tmcp/db";
 
 export interface NadeoTokens {
   accessToken: string;

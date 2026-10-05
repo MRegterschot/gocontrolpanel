@@ -3,7 +3,7 @@ import { getClient } from "@/lib/dbclient";
 import { decryptHetznerToken } from "@/lib/hetzner";
 import { getList, hasPermissionSync } from "@/lib/utils";
 import { PaginationResponse, ServerResponse } from "@/types/responses";
-import { Prisma } from "@gcp/db";
+import { Prisma } from "@tmcp/db";
 import { PaginationState } from "@tanstack/react-table";
 import "server-only";
 

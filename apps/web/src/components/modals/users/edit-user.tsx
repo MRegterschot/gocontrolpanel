@@ -3,7 +3,7 @@
 import { ModalContent } from "@/components/modals/modal";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EditUserForm from "@/forms/admin/user/edit-user-form";
-import { Users } from "@gcp/db";
+import { Users } from "@tmcp/db";
 import { DefaultModalProps } from "../default-props";
 
 export default function EditUserModal({

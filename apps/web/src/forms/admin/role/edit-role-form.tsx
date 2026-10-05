@@ -3,7 +3,7 @@ import { updateRole } from "@/actions/database/roles";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { Roles } from "@gcp/db";
+import { Roles } from "@tmcp/db";
 import { getErrorMessage, getList, permissions } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconDeviceFloppy } from "@tabler/icons-react";

@@ -12,16 +12,16 @@ jobs:
       # The registry is checked with the same validator panels use
       - uses: actions/checkout@v4
         with:
-          repository: MRegterschot/gocontrolpanel
-          ref: ${{ vars.GOCONTROLPANEL_REF || 'master' }}
-          path: .gocontrolpanel
+          repository: MRegterschot/tmcontrolpanel
+          ref: ${{ vars.TMCONTROLPANEL_REF || 'master' }}
+          path: .tmcontrolpanel
 
       - uses: oven-sh/setup-bun@v2
 
       - name: Install the plugin SDK
-        working-directory: .gocontrolpanel
+        working-directory: .tmcontrolpanel
         run: bun install --frozen-lockfile
 
       - name: Check every plugin and version
-        working-directory: .gocontrolpanel
+        working-directory: .tmcontrolpanel
         run: bun packages/plugin-sdk/src/cli/main.ts registry --registry "$GITHUB_WORKSPACE" --check

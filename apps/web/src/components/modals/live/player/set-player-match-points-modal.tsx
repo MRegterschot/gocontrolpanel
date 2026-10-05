@@ -3,7 +3,7 @@
 import { ModalContent } from "@/components/modals/modal";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import SetPlayerMatchPointsForm from "@/forms/server/live/player/set-player-match-points-form";
-import { PlayerRound } from "@gcp/shared";
+import { PlayerRound } from "@tmcp/shared";
 import { DefaultModalProps } from "../../default-props";
 
 export default function SetPlayerMatchPointsModal({

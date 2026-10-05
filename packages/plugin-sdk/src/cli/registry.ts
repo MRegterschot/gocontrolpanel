@@ -10,8 +10,8 @@ import {
   type MarketplaceIndex,
   type MarketplacePlugin,
   type MarketplaceVersion,
-} from "@gcp/shared";
-import { PluginPackageError, readPluginPackage, sha256Hex, type PluginPackage } from "@gcp/shared/plugin-package";
+} from "@tmcp/shared";
+import { PluginPackageError, readPluginPackage, sha256Hex, type PluginPackage } from "@tmcp/shared/plugin-package";
 import { z } from "zod";
 
 // Builds the marketplace site from a registry repository:
@@ -284,13 +284,13 @@ function indexPage(index: MarketplaceIndex): string {
       return `<li><strong>${escapeHtml(plugin.name)}</strong> ${escapeHtml(latest.version)} by ${escapeHtml(plugin.author)}<br>${escapeHtml(plugin.description)}</li>`;
     })
     .join("\n");
-  const title = escapeHtml(index.name ?? "GoControlPanel plugins");
+  const title = escapeHtml(index.name ?? "TMControlPanel plugins");
   return `<!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title}</title></head>
 <body style="font-family: system-ui, sans-serif; max-width: 48rem; margin: 2rem auto; padding: 0 1rem">
 <h1>${title}</h1>
-<p>Plugins for <a href="https://github.com/MRegterschot/gocontrolpanel">GoControlPanel</a>. Install them from the Plugins page of your panel. Panels read <a href="index.json">index.json</a>.</p>
+<p>Plugins for <a href="https://github.com/MRegterschot/tmcontrolpanel">TMControlPanel</a>. Install them from the Plugins page of your panel. Panels read <a href="index.json">index.json</a>.</p>
 <ul>
 ${rows}
 </ul>

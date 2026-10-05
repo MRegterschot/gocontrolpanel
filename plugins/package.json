@@ -1,5 +1,5 @@
 {
-  "name": "@gcp/first-party-plugins",
+  "name": "@tmcp/first-party-plugins",
   "version": "0.0.0",
   "private": true,
   "type": "module",

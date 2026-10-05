@@ -1,6 +1,6 @@
 // Creates the e2e server row, an admin user and plugin rows in the e2e database
-import { createPrismaClient } from "@gcp/db";
-import { compareVersions, isFirstPartySlug } from "@gcp/shared";
+import { createPrismaClient } from "@tmcp/db";
+import { compareVersions, isFirstPartySlug } from "@tmcp/shared";
 
 const env = process.env;
 const serverId = env.E2E_SERVER_ID ?? "e2e-server";
@@ -20,7 +20,7 @@ async function main() {
     },
     create: {
       id: serverId,
-      name: "GCP e2e",
+      name: "TMCP e2e",
       description: "Real server test target",
       host: env.E2E_GBX_HOST ?? "127.0.0.1",
       port: Number(env.E2E_GBX_PORT ?? 5010),
@@ -48,7 +48,7 @@ async function main() {
     await db.groups.upsert({
       where: { id: groupId },
       update: { deletedAt: null },
-      create: { id: groupId, name: "GCP e2e", description: "Real server test group" },
+      create: { id: groupId, name: "TMCP e2e", description: "Real server test group" },
     });
     await db.groupServers.upsert({
       where: { groupId_serverId: { groupId, serverId } },

@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
-import { MANIFEST_FILE, parseManifest, type PluginManifest } from "@gcp/shared";
+import { MANIFEST_FILE, parseManifest, type PluginManifest } from "@tmcp/shared";
 
 // A plugin project on disk: tmcp-plugin.json, src/index.(ts|js), templates/ and docs
 

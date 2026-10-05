@@ -1,4 +1,4 @@
-import { createPrismaClient } from "@gcp/db";
+import { createPrismaClient } from "@tmcp/db";
 import pino from "pino";
 import type { Config } from "./config";
 import { TemplateRenderer } from "./core/manialink/template-renderer";

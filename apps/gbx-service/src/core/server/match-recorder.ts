@@ -1,4 +1,4 @@
-import type { Scores, Waypoint } from "@gcp/shared";
+import type { Scores, Waypoint } from "@tmcp/shared";
 import type { GbxConnection } from "../gbx/connection";
 import type { LiveState } from "../live/live-state";
 import type { Logger } from "../logger";

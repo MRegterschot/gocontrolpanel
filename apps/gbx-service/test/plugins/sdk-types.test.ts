@@ -1,6 +1,6 @@
 import type * as Sdk from "@tmcontrolpanel/plugin-sdk";
-import type * as Shared from "@gcp/shared";
-import { PLUGIN_EVENT_NAMES, type PluginEventName } from "@gcp/shared";
+import type * as Shared from "@tmcp/shared";
+import { PLUGIN_EVENT_NAMES, type PluginEventName } from "@tmcp/shared";
 import { describe, expect, it } from "vitest";
 import type { ServerEventMap } from "../../src/core/server/server-events";
 

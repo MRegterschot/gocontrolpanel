@@ -1,4 +1,4 @@
-import { signWsTicket, sessionClaimsSchema, type SessionClaims } from "@gcp/shared";
+import { signWsTicket, sessionClaimsSchema, type SessionClaims } from "@tmcp/shared";
 import type { FastifyInstance } from "fastify";
 import { ServerRegistry } from "../../src/core/server/server-registry";
 import { buildApp } from "../../src/http/app";

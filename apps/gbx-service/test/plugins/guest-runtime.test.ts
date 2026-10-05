@@ -29,11 +29,11 @@ describe("guest runtime", () => {
     try {
       vm.evaluate(
         `globalThis.Handlebars = { create() { return { registerHelper() {}, registerPartial() {}, compile() { return () => ""; } }; } };
-         globalThis.__gcpLayouts = () => ({});`,
+         globalThis.__tmcpLayouts = () => ({});`,
         "stubs.js",
         1000,
       );
-      vm.evaluate(guestRuntimeScript(fn), "gcp-runtime.js", 1000);
+      vm.evaluate(guestRuntimeScript(fn), "tmcp-runtime.js", 1000);
       expect(() => vm.callBridge("create", [], 1000)).toThrow(GuestError);
       expect(() => vm.callBridge("create", [], 1000)).toThrow(/never called definePlugin/);
     } finally {

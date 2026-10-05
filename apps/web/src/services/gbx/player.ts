@@ -2,7 +2,7 @@ import { doServerActionWithAuth } from "@/lib/actions";
 import { callEach } from "@/lib/gbx-batch";
 import { getGbxClient, type GbxClient } from "@/lib/gbx-service";
 import { ServerResponse } from "@/types/responses";
-import { PlayerInfo } from "@gcp/shared";
+import { PlayerInfo } from "@tmcp/shared";
 import "server-only";
 
 // One round trip for the whole list; a player the server no longer knows is shown by login only

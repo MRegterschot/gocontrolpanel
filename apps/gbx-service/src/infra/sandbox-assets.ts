@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
-import { BASE_TEMPLATES } from "@gcp/shared/plugin-package";
+import { BASE_TEMPLATES } from "@tmcp/shared/plugin-package";
 import type { SandboxAssets } from "../core/plugins/sandbox/sandboxed-plugin";
 import { precompileTemplates } from "../core/plugins/sandbox/templates";
 import { loadTemplateSources } from "./templates";

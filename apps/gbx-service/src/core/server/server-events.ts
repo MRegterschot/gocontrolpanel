@@ -10,7 +10,7 @@ import type {
   Team,
   Waypoint,
   WaypointEvent,
-} from "@gcp/shared";
+} from "@tmcp/shared";
 
 // Events emitted by one server runtime. Plugins and WS channels subscribe to these.
 export type ServerEventMap = {

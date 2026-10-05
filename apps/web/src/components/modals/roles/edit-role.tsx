@@ -3,7 +3,7 @@
 import { ModalContent } from "@/components/modals/modal";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EditRoleForm from "@/forms/admin/role/edit-role-form";
-import { Roles } from "@gcp/db";
+import { Roles } from "@tmcp/db";
 import { DefaultModalProps } from "../default-props";
 
 export default function EditRoleModal({

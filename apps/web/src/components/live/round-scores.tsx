@@ -1,5 +1,5 @@
 import { cn, formatTime } from "@/lib/utils";
-import { LiveInfo, PlayerRound } from "@gcp/shared";
+import { LiveInfo, PlayerRound } from "@tmcp/shared";
 import {
   IconFlag2,
   IconHash,

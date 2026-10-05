@@ -4,7 +4,7 @@ import { updateServerChatConfig } from "@/actions/database/servers";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { Servers } from "@gcp/db";
+import { Servers } from "@tmcp/db";
 import {
   formatMessage as formatChatMessage,
   formatTemplate,

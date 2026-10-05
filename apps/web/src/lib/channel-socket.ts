@@ -22,7 +22,7 @@ export interface ChannelLogger {
 }
 
 export interface ChannelSocketOptions {
-  // Channel path on the GBX service, see wsPaths in @gcp/shared
+  // Channel path on the GBX service, see wsPaths in @tmcp/shared
   path: string;
   fetchTicket: () => Promise<Ticket>;
   createSocket: (url: string) => SocketLike;

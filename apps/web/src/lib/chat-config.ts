@@ -1,4 +1,4 @@
-import type { ChatConfig, ChatConfigResult } from "@gcp/shared";
+import type { ChatConfig, ChatConfigResult } from "@tmcp/shared";
 
 export interface ChatConfigDeps<T> {
   // Database write

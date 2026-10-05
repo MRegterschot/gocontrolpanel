@@ -9,23 +9,23 @@ cp .env.example .env     # the root .env is read from any folder; apps/gbx-servi
 bun run dev:gbx            # from the repo root, or `bun run dev` inside apps/gbx-service
 ```
 
-The service needs the same database and Redis as the web app. Migrations are owned by the web app/`@gcp/db` (`bun run deploy`).
+The service needs the same database and Redis as the web app. Migrations are owned by the web app/`@tmcp/db` (`bun run deploy`).
 
 While the web app still opens its own GBX connections (until phase 4), set `GBX_SERVICE_ENABLED_SERVERS` to a test server's id. Otherwise both will control the same dedicated servers.
 
 ## Testing
 
 ```bash
-bun run --filter @gcp/gbx-service test          # unit + component + HTTP/WS tests, no infrastructure needed
-bun run --filter @gcp/gbx-service typecheck
+bun run --filter @tmcp/gbx-service test          # unit + component + HTTP/WS tests, no infrastructure needed
+bun run --filter @tmcp/gbx-service typecheck
 
 # Prisma/Redis adapters against real databases
-docker compose -p gcp-gbx-test -f apps/gbx-service/docker-compose.test.yml up -d
-DB=postgres DATABASE_URL=postgresql://gcp:gcp@localhost:55432/gcp_test bun run deploy
-INTEGRATION_DATABASE_URL=postgresql://gcp:gcp@localhost:55432/gcp_test \
+docker compose -p tmcp-gbx-test -f apps/gbx-service/docker-compose.test.yml up -d
+DB=postgres DATABASE_URL=postgresql://tmcp:tmcp@localhost:55432/tmcp_test bun run deploy
+INTEGRATION_DATABASE_URL=postgresql://tmcp:tmcp@localhost:55432/tmcp_test \
 INTEGRATION_REDIS_URL=redis://localhost:56379 \
-  bun run --filter @gcp/gbx-service test:integration
-docker compose -p gcp-gbx-test -f apps/gbx-service/docker-compose.test.yml down -v
+  bun run --filter @tmcp/gbx-service test:integration
+docker compose -p tmcp-gbx-test -f apps/gbx-service/docker-compose.test.yml down -v
 DB=mysql bun run generate   # `deploy` regenerated the client for Postgres; switch back if you develop on MySQL
 ```
 
@@ -55,4 +55,4 @@ Plugins are packages: the first-party ones, plugins installed from the [marketpl
 
 ## Plugins
 
-Every plugin is a package, including the ones that ship with GoControlPanel. Those are built from [`plugins/`](../../plugins) into `first-party/`, and `installFirstPartyPlugins` stores them on every start, before any server connects, moving installs from before the marketplace onto them. See [docs/first-party-plugins.md](../../docs/first-party-plugins.md) for working on them and [docs/plugin-sdk.md](../../docs/plugin-sdk.md) for the API.
+Every plugin is a package, including the ones that ship with TMControlPanel. Those are built from [`plugins/`](../../plugins) into `first-party/`, and `installFirstPartyPlugins` stores them on every start, before any server connects, moving installs from before the marketplace onto them. See [docs/first-party-plugins.md](../../docs/first-party-plugins.md) for working on them and [docs/plugin-sdk.md](../../docs/plugin-sdk.md) for the API.

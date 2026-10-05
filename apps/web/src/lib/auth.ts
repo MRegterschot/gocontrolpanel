@@ -8,7 +8,7 @@ import {
 } from "@/actions/database/server-only/auth";
 import { UserGroup } from "@/types/auth";
 import { ServerError } from "@/types/responses";
-import { GroupRole } from "@gcp/db";
+import { GroupRole } from "@tmcp/db";
 import {
   GetServerSidePropsContext,
   NextApiRequest,

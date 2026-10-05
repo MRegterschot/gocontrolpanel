@@ -1,4 +1,4 @@
-import { verifyWsTicket, type SessionClaims } from "@gcp/shared";
+import { verifyWsTicket, type SessionClaims } from "@tmcp/shared";
 import type { Clock } from "../../core/ports";
 
 // Verifies WS tickets and rejects a ticket that was already used (they travel in URLs)

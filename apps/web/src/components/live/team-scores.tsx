@@ -1,5 +1,5 @@
 import { cn, formatTime } from "@/lib/utils";
-import { LiveInfo } from "@gcp/shared";
+import { LiveInfo } from "@tmcp/shared";
 import { Badge } from "../ui/badge";
 import { Separator } from "../ui/separator";
 import { Table, TableBody, TableCell, TableRow } from "../ui/table";

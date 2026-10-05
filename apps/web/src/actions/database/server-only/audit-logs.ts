@@ -1,5 +1,5 @@
 import { getClient } from "@/lib/dbclient";
-import { Prisma } from "@gcp/db";
+import { Prisma } from "@tmcp/db";
 import "server-only";
 
 export async function logAudit(

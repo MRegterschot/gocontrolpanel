@@ -1,7 +1,7 @@
 {
   "name": "@tmcontrolpanel/plugin-sdk",
   "version": "0.1.0",
-  "description": "Types and command line tools for GoControlPanel plugins",
+  "description": "Types and command line tools for TMControlPanel plugins",
   "license": "MIT",
   "private": true,
   "type": "module",
@@ -26,7 +26,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@gcp/shared": "workspace:*",
+    "@tmcp/shared": "workspace:*",
     "@types/node": "^20",
     "tsup": "^8.5.1",
     "tsx": "^4.20.3",

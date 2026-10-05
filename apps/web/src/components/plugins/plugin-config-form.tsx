@@ -18,7 +18,7 @@ import {
   type ConfigField,
   type PluginConfig,
   type PluginConfigSchema,
-} from "@gcp/shared";
+} from "@tmcp/shared";
 import { IconDeviceFloppy, IconX } from "@tabler/icons-react";
 import { useState } from "react";
 

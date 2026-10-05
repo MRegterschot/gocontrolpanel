@@ -1,4 +1,4 @@
-import type { ScoresPlayer } from "@gcp/shared";
+import type { ScoresPlayer } from "@tmcp/shared";
 import { describe, expect, it } from "vitest";
 import {
   getSpectatorStatus,

@@ -2,7 +2,7 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
-import { Users } from "@gcp/db";
+import { Users } from "@tmcp/db";
 import { getList } from "@/lib/utils";
 import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "./server-only/audit-logs";

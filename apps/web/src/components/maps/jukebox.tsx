@@ -1,14 +1,14 @@
 "use client";
 
 import { addMapToJukebox, clearJukebox, setJukebox } from "@/actions/gbx/map";
-import { createColumns as createJukeboxColumns } from "@/app/(gocontroller)/server/[id]/maps/jukebox-columns";
-import { createColumns as createMapColumns } from "@/app/(gocontroller)/server/[id]/maps/server-maps-columns";
+import { createColumns as createJukeboxColumns } from "@/app/(tmcontrolpanel)/server/[id]/maps/jukebox-columns";
+import { createColumns as createMapColumns } from "@/app/(tmcontrolpanel)/server/[id]/maps/server-maps-columns";
 import { getJukebox } from "@/lib/api-client/gbx";
 import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { getErrorMessage } from "@/lib/utils";
 import { JukeboxMap } from "@/types/map";
 import { ServerError } from "@/types/responses";
-import { Maps } from "@gcp/db";
+import { Maps } from "@tmcp/db";
 import { IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";

@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { Maps } from "@gcp/db";
+import { Maps } from "@tmcp/db";
 import { cn } from "@/lib/utils";
 import { IconPhoto, IconUser } from "@tabler/icons-react";
 import Image from "next/image";

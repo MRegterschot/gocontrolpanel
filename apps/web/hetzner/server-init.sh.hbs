@@ -6,15 +6,15 @@ apt update
 apt install -y docker.io docker-compose-v2 curl unzip dnsutils
 
 cd /root
-curl -sSLf -o gcp.zip https://github.com/MRegterschot/gocontrolpanel/archive/refs/heads/master.zip
-unzip gcp.zip
-cd gocontrolpanel-master/hetzner
+curl -sSLf -o tmcp.zip https://github.com/MRegterschot/tmcontrolpanel/archive/refs/heads/master.zip
+unzip tmcp.zip
+cd tmcontrolpanel-master/hetzner
 
-STACK_DIR="/root/gocontrolpanel-master/hetzner/{{{stack_name}}}"
+STACK_DIR="/root/tmcontrolpanel-master/hetzner/{{{stack_name}}}"
 ENV_FILE="$STACK_DIR/.env"
 mkdir -p "$(dirname "$ENV_FILE")"
 
-COMPOSE_DIR="/root/gocontrolpanel-master/hetzner/{{{server_controller.type}}}"
+COMPOSE_DIR="/root/tmcontrolpanel-master/hetzner/{{{server_controller.type}}}"
 COMPOSE_FILES="-f $COMPOSE_DIR/docker-compose.yml"
 
 TM_SYSTEM_FORCE_IP_ADDRESS=$(dig +short myip.opendns.com @resolver1.opendns.com)
@@ -56,7 +56,7 @@ EOF
 {{#if db.local}}
 sed -i "s/^DB_HOST=.*/DB_HOST={{{db.type}}}/" "$ENV_FILE"
 
-COMPOSE_FILES="$COMPOSE_FILES -f /root/gocontrolpanel-master/hetzner/docker-configs/docker-compose.{{{db.type}}}.yml"
+COMPOSE_FILES="$COMPOSE_FILES -f /root/tmcontrolpanel-master/hetzner/docker-configs/docker-compose.{{{db.type}}}.yml"
 {{/if}}
 {{/if}}
 

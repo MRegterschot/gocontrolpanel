@@ -4,9 +4,9 @@
   "version": "1.0.0",
   "sdk": 1,
   "description": "A widget and admin command to notify a server admin. The command is '/admin <message>'.",
-  "author": "GoControlPanel",
+  "author": "TMControlPanel",
   "license": "MIT",
-  "repository": "https://github.com/MRegterschot/gocontrolpanel",
+  "repository": "https://github.com/MRegterschot/tmcontrolpanel",
   "commands": [
     "admin"
   ],

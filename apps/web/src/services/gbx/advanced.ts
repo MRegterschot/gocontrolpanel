@@ -1,7 +1,7 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getGbxClient } from "@/lib/gbx-service";
 import { ServerResponse } from "@/types/responses";
-import { SPlayerInfo } from "@gcp/shared";
+import { SPlayerInfo } from "@tmcp/shared";
 import "server-only";
 
 export async function getJoinLink(

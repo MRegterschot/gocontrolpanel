@@ -2,4 +2,4 @@
 
 A widget that shows the time attack leaderboard for the current map.
 
-A first-party GoControlPanel plugin. Permissions: `ui`.
+A first-party TMControlPanel plugin. Permissions: `ui`.

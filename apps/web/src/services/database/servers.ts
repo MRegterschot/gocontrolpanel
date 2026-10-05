@@ -6,7 +6,7 @@ import {
   ServerError,
   ServerResponse,
 } from "@/types/responses";
-import { Prisma, Servers } from "@gcp/db";
+import { Prisma, Servers } from "@tmcp/db";
 import { PaginationState } from "@tanstack/react-table";
 import "server-only";
 

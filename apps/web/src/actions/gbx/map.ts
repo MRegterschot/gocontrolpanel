@@ -3,7 +3,7 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { gbxService, getGbxClient } from "@/lib/gbx-service";
 import { getLogger } from "@/lib/logger";
-import { Maps, Prisma } from "@gcp/db";
+import { Maps, Prisma } from "@tmcp/db";
 import { getKeyJukebox, getRedisClient } from "@/lib/redis";
 import { getErrorMessage } from "@/lib/utils";
 import { JukeboxMap } from "@/types/map";

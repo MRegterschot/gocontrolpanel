@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     "Trackmania dedicated server",
     "server controller",
     "server administration",
-    "GoControlPanel",
+    "TMControlPanel",
   ],
   authors: [
     {
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   creator: "Marijn Regterschot",
   category: "games",
   icons: {
-    icon: "/favicon.ico",
+    icon: [{ url: "/branding/icon.svg", type: "image/svg+xml", sizes: "any" }],
     shortcut: "/favicon.ico",
     apple: "/apple-icon.png",
   },
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
     creator: "@MRegterschot",

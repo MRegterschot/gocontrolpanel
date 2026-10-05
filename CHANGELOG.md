@@ -1,6 +1,6 @@
 # Changelog
 
-Release notes of GoControlPanel, newest first. The entries are the descriptions of the [GitHub releases](https://github.com/MRegterschot/gocontrolpanel/releases).
+Release notes of TMControlPanel, newest first. The entries are the descriptions of the [GitHub releases](https://github.com/MRegterschot/tmcontrolpanel/releases).
 
 ## [Unreleased]
 
@@ -67,7 +67,7 @@ Release notes of GoControlPanel, newest first. The entries are the descriptions 
 
 ### New Features
 
-- Added Sentry support for more detailed telemetry. This is disabled by default, check the [documentation](https://github.com/MRegterschot/gocontrolpanel#2-modify-the-configuration) to enable and configure it.
+- Added Sentry support for more detailed telemetry. This is disabled by default, check the [documentation](https://github.com/MRegterschot/tmcontrolpanel#2-modify-the-configuration) to enable and configure it.
 
 ### Changes
 
@@ -321,7 +321,7 @@ Release notes of GoControlPanel, newest first. The entries are the descriptions 
 
 - Added TMX map randomizer.
 - Added `recording` and `editors` fields to eCircuitMania plugin.
-- Added GoControlPanel server UI!
+- Added TMControlPanel server UI!
   - Map Info widget
   - Records Info widget
   - Time Attack Leaderboard widget
@@ -516,41 +516,41 @@ Release notes of GoControlPanel, newest first. The entries are the descriptions 
 
 - Updated setup documentation using the new Docker image
 
-[Unreleased]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.12.0-beta...HEAD
-[0.12.0-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.11.3-beta...v0.12.0-beta
-[0.11.3-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.11.2-beta...v0.11.3-beta
-[0.11.2-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.11.1-beta...v0.11.2-beta
-[0.11.1-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.11.0-beta...v0.11.1-beta
-[0.11.0-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.10.0-beta...v0.11.0-beta
-[0.10.0-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.9.1-beta...v0.10.0-beta
-[0.9.1-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.9.0-beta...v0.9.1-beta
-[0.9.0-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.8.1-beta...v0.9.0-beta
-[0.8.1-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.8.0-beta...v0.8.1-beta
-[0.8.0-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.7.8-beta...v0.8.0-beta
-[0.7.8-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.7.7-beta...v0.7.8-beta
-[0.7.7-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.7.6-beta...v0.7.7-beta
-[0.7.6-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.7.5-beta...v0.7.6-beta
-[0.7.5-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.7.4-beta...v0.7.5-beta
-[0.7.4-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.7.3-beta...v0.7.4-beta
-[0.7.3-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.7.2-beta...v0.7.3-beta
-[0.7.2-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.7.1-beta...v0.7.2-beta
-[0.7.1-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.7.0-beta...v0.7.1-beta
-[0.7.0-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.6.3-beta...v0.7.0-beta
-[0.6.3-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.6.2-beta...v0.6.3-beta
-[0.6.2-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.6.1-beta...v0.6.2-beta
-[0.6.1-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.6.0-beta...v0.6.1-beta
-[0.6.0-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.5.0-beta...v0.6.0-beta
-[0.5.0-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.4.0-beta...v0.5.0-beta
-[0.4.0-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.3.1-beta...v0.4.0-beta
-[0.3.1-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.3.0-beta...v0.3.1-beta
-[0.3.0-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.2.1-beta...v0.3.0-beta
-[0.2.1-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.2.0-beta...v0.2.1-beta
-[0.2.0-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.1.0-beta...v0.2.0-beta
-[0.1.0-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.0.7-beta...v0.1.0-beta
-[0.0.7-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.0.6-beta...v0.0.7-beta
-[0.0.6-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.0.5-beta...v0.0.6-beta
-[0.0.5-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.0.4-beta...v0.0.5-beta
-[0.0.4-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.0.3-beta...v0.0.4-beta
-[0.0.3-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.0.2-beta...v0.0.3-beta
-[0.0.2-beta]: https://github.com/MRegterschot/gocontrolpanel/compare/v0.0.1-beta...v0.0.2-beta
-[0.0.1-beta]: https://github.com/MRegterschot/gocontrolpanel/releases/tag/v0.0.1-beta
+[Unreleased]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.12.0-beta...HEAD
+[0.12.0-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.11.3-beta...v0.12.0-beta
+[0.11.3-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.11.2-beta...v0.11.3-beta
+[0.11.2-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.11.1-beta...v0.11.2-beta
+[0.11.1-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.11.0-beta...v0.11.1-beta
+[0.11.0-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.10.0-beta...v0.11.0-beta
+[0.10.0-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.9.1-beta...v0.10.0-beta
+[0.9.1-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.9.0-beta...v0.9.1-beta
+[0.9.0-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.8.1-beta...v0.9.0-beta
+[0.8.1-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.8.0-beta...v0.8.1-beta
+[0.8.0-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.7.8-beta...v0.8.0-beta
+[0.7.8-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.7.7-beta...v0.7.8-beta
+[0.7.7-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.7.6-beta...v0.7.7-beta
+[0.7.6-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.7.5-beta...v0.7.6-beta
+[0.7.5-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.7.4-beta...v0.7.5-beta
+[0.7.4-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.7.3-beta...v0.7.4-beta
+[0.7.3-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.7.2-beta...v0.7.3-beta
+[0.7.2-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.7.1-beta...v0.7.2-beta
+[0.7.1-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.7.0-beta...v0.7.1-beta
+[0.7.0-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.6.3-beta...v0.7.0-beta
+[0.6.3-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.6.2-beta...v0.6.3-beta
+[0.6.2-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.6.1-beta...v0.6.2-beta
+[0.6.1-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.6.0-beta...v0.6.1-beta
+[0.6.0-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.5.0-beta...v0.6.0-beta
+[0.5.0-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.4.0-beta...v0.5.0-beta
+[0.4.0-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.3.1-beta...v0.4.0-beta
+[0.3.1-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.3.0-beta...v0.3.1-beta
+[0.3.0-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.2.1-beta...v0.3.0-beta
+[0.2.1-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.2.0-beta...v0.2.1-beta
+[0.2.0-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.1.0-beta...v0.2.0-beta
+[0.1.0-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.0.7-beta...v0.1.0-beta
+[0.0.7-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.0.6-beta...v0.0.7-beta
+[0.0.6-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.0.5-beta...v0.0.6-beta
+[0.0.5-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.0.4-beta...v0.0.5-beta
+[0.0.4-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.0.3-beta...v0.0.4-beta
+[0.0.3-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.0.2-beta...v0.0.3-beta
+[0.0.2-beta]: https://github.com/MRegterschot/tmcontrolpanel/compare/v0.0.1-beta...v0.0.2-beta
+[0.0.1-beta]: https://github.com/MRegterschot/tmcontrolpanel/releases/tag/v0.0.1-beta

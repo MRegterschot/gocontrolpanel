@@ -1,4 +1,4 @@
-import type { GameModeType } from "@gcp/shared";
+import type { GameModeType } from "@tmcp/shared";
 import type { HelpProvider } from "../chat/command-router";
 import type { Logger } from "../logger";
 import type { ServerPluginRecord } from "../ports";

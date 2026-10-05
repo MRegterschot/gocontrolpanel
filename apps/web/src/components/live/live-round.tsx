@@ -1,5 +1,5 @@
 import { cn, formatTime } from "@/lib/utils";
-import { ActiveRound, PlayerInfo } from "@gcp/shared";
+import { ActiveRound, PlayerInfo } from "@tmcp/shared";
 import { IconFlag, IconHash, IconPennant, IconX } from "@tabler/icons-react";
 import { Badge } from "../ui/badge";
 import { Card } from "../ui/card";

@@ -58,7 +58,7 @@ export async function restartTrackmaniaServer(
         throw new ServerError("SSH private key not found for the server", "SSHPrivateKeyNotFound");
       }
 
-      const script = `~/gocontrolpanel-master/hetzner/stack-${tmServerNumber}/restart.sh`;
+      const script = `~/tmcontrolpanel-master/hetzner/stack-${tmServerNumber}/restart.sh`;
 
       const sshConn = await connectToSSHServer(
         hetznerServer.public_net.ipv4?.ip || "",
@@ -132,7 +132,7 @@ export async function stopTrackmaniaServer(
         throw new ServerError("SSH private key not found for the server", "SSHPrivateKeyNotFound");
       }
 
-      const script = `~/gocontrolpanel-master/hetzner/stack-${tmServerNumber}/down.sh`;
+      const script = `~/tmcontrolpanel-master/hetzner/stack-${tmServerNumber}/down.sh`;
 
       const sshConn = await connectToSSHServer(
         hetznerServer.public_net.ipv4?.ip || "",

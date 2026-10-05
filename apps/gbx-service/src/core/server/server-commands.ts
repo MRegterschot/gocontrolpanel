@@ -1,4 +1,4 @@
-import type { ChatConfig, ChatConfigResult, MapsChangeResult, PointsBody } from "@gcp/shared";
+import type { ChatConfig, ChatConfigResult, MapsChangeResult, PointsBody } from "@tmcp/shared";
 import { stripTmTags } from "tmtags";
 import type { ChatService } from "../chat/chat-service";
 import { AppError, errorMessage } from "../errors";

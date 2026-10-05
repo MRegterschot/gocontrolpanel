@@ -1,4 +1,4 @@
-import type { MarketplaceIndex } from "@gcp/shared";
+import type { MarketplaceIndex } from "@tmcp/shared";
 import type { Logger } from "../logger";
 import type { Clock, PluginCatalogRepository, PluginYank, YankedInstall } from "../ports";
 

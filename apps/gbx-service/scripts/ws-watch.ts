@@ -1,6 +1,6 @@
 // Prints a live WebSocket channel of a locally running GBX service.
 // Usage: ws-watch <servers|clients|notifications|live|map|players> [serverId] [--user <id>] [--full]
-import { signWsTicket, sessionClaimsSchema } from "@gcp/shared";
+import { signWsTicket, sessionClaimsSchema } from "@tmcp/shared";
 import WebSocket from "ws";
 
 const args = process.argv.slice(2);
@@ -26,8 +26,8 @@ const claims = sessionClaimsSchema.parse({
   id: userId,
   admin: true,
   permissions: ["servers:clients:view"],
-  servers: [{ id: serverId, name: "GCP e2e", role: "Admin" }],
-  groups: [{ id: "e2e", name: "e2e", role: "Admin", servers: [{ id: serverId, name: "GCP e2e" }] }],
+  servers: [{ id: serverId, name: "TMCP e2e", role: "Admin" }],
+  groups: [{ id: "e2e", name: "e2e", role: "Admin", servers: [{ id: serverId, name: "TMCP e2e" }] }],
 });
 
 function summarize(type: string, data: any): string {

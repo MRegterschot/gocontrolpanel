@@ -1,5 +1,5 @@
 import { ServerError } from "@/types/responses";
-import type { ApiErrorBody } from "@gcp/shared";
+import type { ApiErrorBody } from "@tmcp/shared";
 
 // Without a limit a stalled service holds a request for undici's default of 300 s
 export const DEFAULT_TIMEOUT_MS = 30_000;

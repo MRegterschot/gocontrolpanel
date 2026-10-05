@@ -5,8 +5,8 @@ import { getNotifications } from "@/lib/api-client/database";
 import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { logger } from "@/lib/logger";
 import { ServerError } from "@/types/responses";
-import { Notifications } from "@gcp/db";
-import { wsPaths } from "@gcp/shared";
+import { Notifications } from "@tmcp/db";
+import { wsPaths } from "@tmcp/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React, {
   createContext,

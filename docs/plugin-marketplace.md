@@ -30,7 +30,7 @@ Every panel, self-hosted ones included, can browse a central plugin marketplace 
 
 1. Create a public repository named `tmcontrolpanel-plugins` from the contents of `packages/plugin-sdk/registry-template`. The template includes the example `hello` plugin as its first entry.
 2. In the repository settings, set **Pages → Source** to **GitHub Actions**.
-3. Optionally set the repository variable `GOCONTROLPANEL_REF` to the GoControlPanel branch whose validator the workflows use (default `master`).
+3. Optionally set the repository variable `TMCONTROLPANEL_REF` to the TMControlPanel branch whose validator the workflows use (default `master`).
 4. Push to `main`. *Publish marketplace* builds the site, and panels read it at `https://<owner>.github.io/tmcontrolpanel-plugins/index.json`.
 
 `DEFAULT_MARKETPLACE_INDEX_URL` in `packages/shared/src/plugins/marketplace-index.ts` points at `https://mregterschot.github.io/tmcontrolpanel-plugins/index.json`. Change it if the registry lives elsewhere.

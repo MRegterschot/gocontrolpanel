@@ -22,19 +22,19 @@ jobs:
 
       - uses: actions/checkout@v4
         with:
-          repository: MRegterschot/gocontrolpanel
-          ref: ${{ vars.GOCONTROLPANEL_REF || 'master' }}
-          path: .gocontrolpanel
+          repository: MRegterschot/tmcontrolpanel
+          ref: ${{ vars.TMCONTROLPANEL_REF || 'master' }}
+          path: .tmcontrolpanel
 
       - uses: oven-sh/setup-bun@v2
 
       - name: Install the plugin SDK
-        working-directory: .gocontrolpanel
+        working-directory: .tmcontrolpanel
         run: bun install --frozen-lockfile
 
       # index.json plus a copy of every package, README and icon
       - name: Build the site
-        working-directory: .gocontrolpanel
+        working-directory: .tmcontrolpanel
         run: bun packages/plugin-sdk/src/cli/main.ts registry --registry "$GITHUB_WORKSPACE" --out "$GITHUB_WORKSPACE/_site"
 
       - uses: actions/upload-pages-artifact@v3

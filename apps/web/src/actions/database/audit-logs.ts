@@ -3,7 +3,7 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { logger } from "@/lib/logger";
-import { Prisma } from "@gcp/db";
+import { Prisma } from "@tmcp/db";
 import { ServerError, ServerResponse } from "@/types/responses";
 
 export async function deleteAuditLogById(id: string): Promise<ServerResponse> {

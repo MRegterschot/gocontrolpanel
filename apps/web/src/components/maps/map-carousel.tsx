@@ -2,8 +2,8 @@
 
 import { nextMap } from "@/actions/gbx/game";
 import useWebSocket from "@/hooks/use-websocket";
-import { wsPaths } from "@gcp/shared";
-import { Maps } from "@gcp/db";
+import { wsPaths } from "@tmcp/shared";
+import { Maps } from "@tmcp/db";
 import { cn, getErrorMessage, hasPermissionSync } from "@/lib/utils";
 import { routePermissions } from "@/routes";
 import {

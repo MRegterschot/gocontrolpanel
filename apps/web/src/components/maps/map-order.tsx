@@ -1,8 +1,8 @@
 "use client";
 import { getMapList } from "@/lib/api-client/database";
 import { removeMapList, reorderMapList } from "@/actions/gbx/map";
-import { createColumns } from "@/app/(gocontroller)/server/[id]/maps/map-order-columns";
-import { Maps } from "@gcp/db";
+import { createColumns } from "@/app/(tmcontrolpanel)/server/[id]/maps/map-order-columns";
+import { Maps } from "@tmcp/db";
 import { getDivergingList, getErrorMessage } from "@/lib/utils";
 import { ServerError } from "@/types/responses";
 import {

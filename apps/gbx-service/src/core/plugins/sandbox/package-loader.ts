@@ -1,5 +1,5 @@
-import { PLUGIN_SDK_VERSION } from "@gcp/shared";
-import { readPluginPackage, type PluginPackage } from "@gcp/shared/plugin-package";
+import { PLUGIN_SDK_VERSION } from "@tmcp/shared";
+import { readPluginPackage, type PluginPackage } from "@tmcp/shared/plugin-package";
 import type { PluginPackageRepository, ServerPluginRecord } from "../../ports";
 import type { PluginDefinition } from "../sdk";
 import { sandboxedDefinition, type SandboxDependencies } from "./sandboxed-plugin";

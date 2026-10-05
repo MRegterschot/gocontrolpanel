@@ -12,9 +12,9 @@ import type {
   WarmUpStatus,
   Waypoint,
   WaypointEvent,
-} from "@gcp/shared";
+} from "@tmcp/shared";
 
-// Typed view of the server callbacks GoControlPanel reacts to
+// Typed view of the server callbacks TMControlPanel reacts to
 export type GameEvent =
   | { type: "playerConnect"; login: string }
   | { type: "playerDisconnect"; login: string }

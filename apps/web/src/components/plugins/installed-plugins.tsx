@@ -33,7 +33,7 @@ import { generatePath, getErrorMessage } from "@/lib/utils";
 import { routes } from "@/routes";
 import type { AvailablePlugin, InstalledPlugin } from "@/types/plugins/catalog";
 import { ServerError } from "@/types/responses";
-import type { PluginConfig } from "@gcp/shared";
+import type { PluginConfig } from "@tmcp/shared";
 import {
   IconAlertTriangle,
   IconArrowUp,

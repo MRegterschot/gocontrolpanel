@@ -3,7 +3,7 @@ import {
   HetznerProjectRole,
   Servers,
   UserServerRole,
-} from "@gcp/db";
+} from "@tmcp/db";
 
 export type MinimalServer = Omit<
   Servers,

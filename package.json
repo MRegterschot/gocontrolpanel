@@ -1,5 +1,5 @@
 {
-  "name": "gocontrolpanel",
+  "name": "tmcontrolpanel",
   "version": "0.12.0-beta",
   "private": true,
   "workspaces": [
@@ -8,8 +8,8 @@
     "plugins"
   ],
   "scripts": {
-    "dev": "bun run --filter @gcp/web dev",
-    "dev:gbx": "bun run --filter @gcp/gbx-service dev",
+    "dev": "bun run --filter @tmcp/web dev",
+    "dev:gbx": "bun run --filter @tmcp/gbx-service dev",
     "setup": "bun install && bun run deploy",
     "infra:up": "docker compose --env-file .env -f dev/docker-compose.yml up -d --wait redis mariadb",
     "infra:up:postgres": "docker compose --env-file .env -f dev/docker-compose.yml up -d --wait redis postgres",
@@ -18,11 +18,11 @@
     "build": "bun --env-file=.env run --filter '*' build",
     "test": "bun --env-file=.env run --filter '*' test",
     "typecheck": "bun --env-file=.env run --filter '*' typecheck",
-    "generate": "bun --env-file=.env run --filter @gcp/db generate",
-    "migrate": "bun --env-file=.env run --filter @gcp/db migrate",
-    "migrate:create": "bun --env-file=.env run --filter @gcp/db migrate:create",
-    "deploy": "bun --env-file=.env run --filter @gcp/db deploy",
-    "reset": "bun --env-file=.env run --filter @gcp/db reset",
+    "generate": "bun --env-file=.env run --filter @tmcp/db generate",
+    "migrate": "bun --env-file=.env run --filter @tmcp/db migrate",
+    "migrate:create": "bun --env-file=.env run --filter @tmcp/db migrate:create",
+    "deploy": "bun --env-file=.env run --filter @tmcp/db deploy",
+    "reset": "bun --env-file=.env run --filter @tmcp/db reset",
     "pretty": "prettier --write \"**/*.{ts,tsx,json,css}\""
   },
   "overrides": {

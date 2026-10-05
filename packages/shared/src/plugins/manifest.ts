@@ -8,7 +8,7 @@ import { isValidVersion } from "./version";
 
 export const MANIFEST_FILE = "tmcp-plugin.json";
 
-// The plugins of GoControlPanel itself, published in the marketplace and preinstalled.
+// The plugins of TMControlPanel itself, published in the marketplace and preinstalled.
 // Private uploads can't use these names.
 export const FIRST_PARTY_PLUGIN_NAMES = [
   "ta-leaderboard",
@@ -25,8 +25,6 @@ export const FIRST_PARTY_PLUGIN_NAMES = [
 
 const RESERVED_SLUGS = new Set<string>([
   "help",
-  "gcp",
-  "gocontrolpanel",
   "tmcp",
   "tmcontrolpanel",
   "plugin",

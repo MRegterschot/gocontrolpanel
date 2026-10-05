@@ -2,7 +2,7 @@ import {
   decodeServerLifecycleEvent,
   SERVER_EVENTS_CHANNEL,
   type ServerLifecycleEvent,
-} from "@gcp/shared";
+} from "@tmcp/shared";
 import type { Redis } from "ioredis";
 import type { Logger } from "../../core/logger";
 

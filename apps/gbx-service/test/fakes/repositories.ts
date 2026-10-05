@@ -1,4 +1,4 @@
-import type { JukeboxEntry, NotificationDto, PlayerInfo } from "@gcp/shared";
+import type { JukeboxEntry, NotificationDto, PlayerInfo } from "@tmcp/shared";
 import type {
   JukeboxStore,
   LeaderboardEntry,

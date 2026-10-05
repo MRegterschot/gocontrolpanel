@@ -2,7 +2,7 @@ import { doServerActionWithAuth } from "@/lib/actions";
 import { getAccountNames, searchAccountNames } from "@/lib/api/nadeo";
 import { getClient } from "@/lib/dbclient";
 import { PaginationResponse, ServerResponse } from "@/types/responses";
-import { Prisma, Users } from "@gcp/db";
+import { Prisma, Users } from "@tmcp/db";
 import { PaginationState } from "@tanstack/react-table";
 import "server-only";
 import slugid from "slugid";

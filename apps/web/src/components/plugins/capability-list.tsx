@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { describeCapability, type CapabilityRisk } from "@gcp/shared";
+import { describeCapability, type CapabilityRisk } from "@tmcp/shared";
 import {
   IconAlertTriangle,
   IconInfoCircle,
