@@ -143,10 +143,40 @@ export const pluginConfigSchemaSchema = boundedSchema
         type: z.literal("object"),
         properties: properties(),
         required: z.array(text(64)).max(MAX_PROPERTIES).optional(),
+        tabs: z
+          .array(
+            z
+              .object({
+                id: z.string().regex(/^[A-Za-z][A-Za-z0-9_-]{0,63}$/),
+                title: text(80).min(1),
+                properties: z.array(text(64)).min(1).max(MAX_PROPERTIES),
+              })
+              .strict(),
+          )
+          .min(1)
+          .max(10)
+          .optional(),
       })
       .strict(),
   )
   .superRefine((schema, ctx) => {
+    if (schema.tabs) {
+      const ids = schema.tabs.map((tab) => tab.id);
+      const keys = schema.tabs.flatMap((tab) => tab.properties);
+      if (
+        new Set(ids).size !== ids.length ||
+        new Set(keys).size !== keys.length ||
+        keys.some((key) => !(key in schema.properties)) ||
+        Object.keys(schema.properties).some((key) => !keys.includes(key))
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["tabs"],
+          message:
+            "Tabs must have unique IDs and include each property exactly once",
+        });
+      }
+    }
     function visit(
       field: ConfigField,
       path: (string | number)[],
@@ -494,6 +524,7 @@ export function mergeSecrets(
 // Older panels only understand scalar fields and scalar arrays. Keep richer
 // packages out of their registry choices instead of offering unusable updates.
 export function configSchemaNeedsSdk2(schema: PluginConfigSchema): boolean {
+  if (schema.tabs) return true;
   function rich(field: ConfigField): boolean {
     if (field.visibleWhen) return true;
     if (field.type === "object") return true;

@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
 import { useSearchUsers } from "@/hooks/use-search-users";
 import { getScripts } from "@/lib/api-client/filemanager";
@@ -24,6 +25,7 @@ import {
   type PluginConfig,
   type PluginConfigSchema,
 } from "@gcp/shared";
+import { Root as Tabs } from "@radix-ui/react-tabs";
 import {
   IconDeviceFloppy,
   IconDownload,
@@ -121,6 +123,7 @@ export function PluginConfigForm({
   onExport?: () => Promise<void>;
 }) {
   const { data: session } = useSession();
+  const [activeTab, setActiveTab] = useState(schema.tabs?.[0]?.id);
   const id = useId();
   const rowIds = useRef<Record<string, string[]>>({});
   const [values, setValues] = useState<PluginConfig>(
@@ -165,6 +168,9 @@ export function PluginConfigForm({
     event.preventDefault();
     const check = validatePluginConfig(validationSchema, values);
     if (!check.success) {
+      const property = check.issues[0]?.path.split(".")[0];
+      const tab = schema.tabs?.find((tab) => tab.properties.includes(property));
+      if (tab) setActiveTab(tab.id);
       setErrors(
         Object.fromEntries(
           check.issues.map((issue) => [issue.path, issue.message]),
@@ -211,20 +217,24 @@ export function PluginConfigForm({
     field: ObjectField,
     value: PluginConfig,
     path: string[],
+    rowAction?: React.ReactNode,
   ) {
-    return Object.entries(field.properties).map(([key, child]) => {
-      if (
-        child.visibleWhen &&
-        value[child.visibleWhen.property] !== child.visibleWhen.equals
+    return Object.entries(field.properties)
+      .filter(
+        ([, child]) =>
+          !child.visibleWhen ||
+          value[child.visibleWhen.property] === child.visibleWhen.equals,
       )
-        return null;
-      return renderField(
-        child,
-        value[key],
-        [...path, key],
-        field.required?.includes(key),
-      );
-    });
+      .map(([key, child], index) => {
+        return renderField(
+          child,
+          value[key],
+          [...path, key],
+          field.required?.includes(key),
+          undefined,
+          index === 0 ? rowAction : undefined,
+        );
+      });
   }
 
   function renderField(
@@ -233,6 +243,7 @@ export function PluginConfigForm({
     path: string[],
     required = false,
     stableKey?: string,
+    rowAction?: React.ReactNode,
   ): React.ReactNode {
     const key = path.join(".");
     const inputId = `${id}-${key}`;
@@ -242,8 +253,8 @@ export function PluginConfigForm({
     let control: React.ReactNode;
     if (field.type === "object") {
       control = (
-        <div className="flex flex-col gap-4 rounded-md border p-3">
-          {renderObject(field, (value as PluginConfig) ?? {}, path)}
+        <div className="flex w-full min-w-0 flex-col gap-4">
+          {renderObject(field, (value as PluginConfig) ?? {}, path, rowAction)}
         </div>
       );
     } else if (field.type === "array") {
@@ -259,28 +270,26 @@ export function PluginConfigForm({
       control = rows ? (
         <div className="flex flex-col gap-3">
           {items.map((item, index) => (
-            <div key={keys[index]} className="flex items-start gap-2">
-              <div className="min-w-0 flex-1">
-                {renderField(
-                  field.items,
-                  item,
-                  [...path, String(index)],
-                  true,
-                  keys[index],
-                )}
-              </div>
-              <Button
-                type="button"
-                variant="destructive"
-                size="icon"
-                aria-label={`Remove ${label} item ${index + 1}`}
-                onClick={() => {
-                  keys.splice(index, 1);
-                  update(items.filter((_, i) => i !== index));
-                }}
-              >
-                <IconTrash />
-              </Button>
+            <div key={keys[index]} className="min-w-0 w-full">
+              {renderField(
+                field.items,
+                item,
+                [...path, String(index)],
+                true,
+                keys[index],
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  aria-label={`Remove ${label} item ${index + 1}`}
+                  onClick={() => {
+                    keys.splice(index, 1);
+                    update(items.filter((_, i) => i !== index));
+                  }}
+                >
+                  <IconTrash />
+                </Button>,
+              )}
             </div>
           ))}
           <Button
@@ -610,9 +619,19 @@ export function PluginConfigForm({
     return (
       <div
         key={stableKey ?? path.at(-1)}
-        className="flex min-w-0 flex-col gap-1.5"
+        role={
+          field.type === "object" || field.type === "array"
+            ? "group"
+            : undefined
+        }
+        aria-label={
+          field.type === "object" || field.type === "array" ? label : undefined
+        }
+        className="flex w-full min-w-0 flex-col gap-1.5"
       >
         {field.type !== "boolean" &&
+          field.type !== "object" &&
+          field.type !== "array" &&
           (field.title || !/^\d+$/.test(path.at(-1)!)) && (
             <Label htmlFor={inputId}>
               {label}
@@ -626,7 +645,14 @@ export function PluginConfigForm({
         {field.description && (
           <p className="text-xs text-muted-foreground">{field.description}</p>
         )}
-        {control}
+        {rowAction && field.type !== "object" ? (
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">{control}</div>
+            {rowAction}
+          </div>
+        ) : (
+          control
+        )}
         {error && (
           <p role="alert" className="text-xs text-destructive">
             {error}
@@ -638,7 +664,41 @@ export function PluginConfigForm({
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-4">
-      {renderObject(schema, values, [])}
+      {schema.tabs ? (
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="flex flex-col gap-4"
+        >
+          <TabsList className="w-full" aria-label="Plugin settings sections">
+            {schema.tabs.map((tab) => (
+              <TabsTrigger key={tab.id} value={tab.id}>
+                {tab.title}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {schema.tabs.map((tab) => (
+            <TabsContent
+              key={tab.id}
+              value={tab.id}
+              className="flex flex-col gap-4"
+            >
+              {renderObject(
+                {
+                  ...schema,
+                  properties: Object.fromEntries(
+                    tab.properties.map((key) => [key, schema.properties[key]]),
+                  ),
+                },
+                values,
+                [],
+              )}
+            </TabsContent>
+          ))}
+        </Tabs>
+      ) : (
+        renderObject(schema, values, [])
+      )}
       <div className="flex flex-wrap justify-between gap-2">
         <Button type="button" variant="outline" onClick={onClose}>
           <IconX />

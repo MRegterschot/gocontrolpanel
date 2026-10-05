@@ -114,6 +114,27 @@ describe("nested registry config forms", () => {
       }).success,
     ).toBe(false);
   });
+  it("validates tab assignments", () => {
+    const form = {
+      type: "object",
+      properties: { general: { type: "string" }, lobby: { type: "string" } },
+      tabs: [
+        { id: "general", title: "General", properties: ["general"] },
+        { id: "lobby", title: "Lobby", properties: ["lobby"] },
+      ],
+    };
+    expect(pluginConfigSchemaSchema.safeParse(form).success).toBe(true);
+    for (const tabs of [
+      form.tabs.slice(0, 1),
+      [...form.tabs, form.tabs[0]],
+      [{ ...form.tabs[0], properties: ["general", "missing"] }, form.tabs[1]],
+      [{ ...form.tabs[0], properties: ["general", "lobby"] }, form.tabs[1]],
+    ]) {
+      expect(
+        pluginConfigSchemaSchema.safeParse({ ...form, tabs }).success,
+      ).toBe(false);
+    }
+  });
   it("requires SDK 2 for rich forms while retaining SDK 1 scalar forms", () => {
     const base = {
       slug: "example",

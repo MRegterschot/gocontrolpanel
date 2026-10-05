@@ -114,7 +114,7 @@ function ConfigDialog({
           Configure
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{plugin.name} settings</DialogTitle>
           <DialogDescription>

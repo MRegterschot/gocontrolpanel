@@ -223,6 +223,11 @@ ctx.action("wave", (answer) => ctx.chat.sendTo(answer.login, "Hi!"));
 | `array` | `title`, `description`, `default`, `minItems`, `maxItems`, `items` (any supported field), `addLabel`, `defaultFrom`, `csv` |
 | `object` | `title`, `description`, `properties`, `required` |
 
+The root schema can optionally declare `tabs`, each with an `id`, `title`, and
+`properties` list of root field names. Tabs must have unique IDs and assign every
+root property exactly once. Switching tabs preserves edited values; saving validates
+all tabs and opens the first tab with an error. Without `tabs`, fields render together.
+
 SDK 2 adds nested objects and lists (at most five nested fields and 500 list items),
 with the same validation in the panel and runtime. Fields can declare
 `visibleWhen: { "property": "type", "equals": "team" }` relative to their containing
