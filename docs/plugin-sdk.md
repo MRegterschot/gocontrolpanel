@@ -70,7 +70,7 @@ A package may be at most 5 MB, unpack to at most 10 MB and hold at most 500 file
 | `slug` | 3-40 characters: lowercase letters, digits and dashes, starting with a letter. It identifies the plugin and prefixes its widget ids and actions. The names of the [first-party plugins](./first-party-plugins.md) and a few others (`help`, `plugins`, `server`, ...) are reserved. |
 | `name`, `description`, `author` | At most 60, 300 and 100 characters. |
 | `version` | A [semantic version](https://semver.org): `1.2.3`, or `1.2.3-beta.1` for a pre-release. |
-| `sdk` | The plugin SDK version the plugin targets. Currently `1`. Panels refuse plugins for a newer SDK than they run. |
+| `sdk` | The plugin SDK version the plugin targets. Currently `2` (SDK 1 packages remain supported). Panels refuse plugins for a newer SDK than they run. |
 | `license`, `repository`, `homepage` | Optional. The links must be `https://`. |
 | `entry` | Path of the bundle inside the package. Default `index.js`. |
 | `gamemodes` | Modes the plugin runs in: `timeattack`, `rounds`, `reversecup`, `cup`, `tmwc`, `tmwt`, `teams`, `knockout`. Leave it out to run in every mode. |
@@ -220,11 +220,40 @@ ctx.action("wave", (answer) => ctx.chat.sendTo(answer.login, "Hi!"));
 | `string` | `title`, `description`, `default`, `enum` (a dropdown), `minLength`, `maxLength`, `multiline` (a text area), `secret` |
 | `number`, `integer` | `title`, `description`, `default`, `minimum`, `maximum` |
 | `boolean` | `title`, `description`, `default` |
-| `array` | `title`, `description`, `default`, `minItems`, `maxItems`, `items`: `{ "type": "string", "enum"?, "maxLength"? }` or `{ "type": "number" \| "integer", "minimum"?, "maximum"? }` |
+| `array` | `title`, `description`, `default`, `minItems`, `maxItems`, `items` (any supported field), `addLabel`, `defaultFrom`, `csv` |
+| `object` | `title`, `description`, `properties`, `required` |
+
+SDK 2 adds nested objects and lists (at most five nested fields and 500 list items),
+with the same validation in the panel and runtime. Fields can declare
+`visibleWhen: { "property": "type", "equals": "team" }` relative to their containing
+object. This controls visibility; hidden saved values are still validated and retained.
+
+String `widget` values provide `user` (search and explicit login selection), `map`
+(server map selector), `script` (server script selector), or `order` (pick/ban/random
+steps stored as `p:1,b:2,r`). An order can set `maxItemsFrom: "maps"` to limit steps
+against a root list. `format: "underscore-pair"` validates exactly one underscore.
+These are fixed panel controls, not executable code from plugins.
+
+Arrays with `addLabel` render repeatable rows with a full-width Add button.
+A user-login list can set `defaultFrom: "current-user"` to initially include the
+current admin when no stored value/default exists. Object lists can declare a CSV
+mapping, for example:
+
+```json
+"csv": {
+  "columns": { "name": "Team" },
+  "lists": { "players": ["Player Login 1", "Player Login 2"] },
+  "seed": "seed"
+}
+```
+
+`columns` maps config properties to CSV column headers, `lists` collects nonempty
+columns into a list property, and `seed` fills that property with the row number
+starting at 1. Imported JSON and CSV are validated before replacing the form values.
 
 `required` lists the fields that must have a value. `pattern` is not supported, because the regex would run on the panel.
 
-`secret` fields (API keys) are write-only: the panel never shows a saved value, a field left empty keeps it, and config exports leave it out.
+`secret` fields are top-level strings (API keys) are write-only: the panel never shows a saved value, a field left empty keeps it, and config exports leave it out.
 
 `ctx.config()` returns the settings with the defaults filled in. When an update changes the schema, stored values that no longer fit fall back to their default, field by field. Without a `configSchema` the plugin has no settings form, and `ctx.config()` returns `{}` unless the plugin saved something itself.
 

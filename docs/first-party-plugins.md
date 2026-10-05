@@ -38,7 +38,19 @@ uploads and existing packages continue to work. `FIRST_PARTY_PLUGINS_DIR` is no 
 
 ## Settings
 
-First-party plugins don't declare a `configSchema`. The panel keeps its own forms for them (`apps/web/src/forms/server/plugins` and `apps/web/src/components/modals/plugins/plugins`). The Plugins page opens them from **Configure** through [`first-party-settings.tsx`](../apps/web/src/components/plugins/first-party-settings.tsx). A plugin with settings therefore needs a form there too, and the plugin has to accept whatever older forms stored. `normalizeConfig` in the match plugin is an example.
+The configurable first-party plugins declare their settings forms in `configSchema`
+inside their registry-owned `tmcp-plugin.json`. The installed version's manifest
+controls labels, defaults, validation, nested player/team lists, user and map/script
+selectors, conditional fields, CSV import mappings, and pick-and-ban steps. The panel
+keeps one generic form renderer; it has no per-plugin forms or modal lookup table.
+JSON import/export uses the stored configuration format. API keys marked `secret`
+are masked in the panel and omitted from exports.
+
+These forms ship in version `1.1.0` of `ecm`, `live-round`, `records-info`,
+`player-info`, and `match`, targeting SDK 2. Deploy the SDK 2 panel/service before
+publishing these registry versions. Existing installs remain pinned: update them
+through the Plugins UI to get the registry-owned forms. Existing config and enabled
+state are retained when updating; no automatic upgrade changes an installed version.
 
 ## Changing and publishing a plugin
 
@@ -49,6 +61,5 @@ immutable archives and descriptors; `bun run check` verifies source checksums an
 runs the tests. A merged registry PR publishes updates through GitHub Pages without
 rebuilding the panel image.
 
-Reserved first-party slugs and their custom settings forms remain in the panel;
-adding a new first-party plugin may therefore also need changes to
-`FIRST_PARTY_PLUGIN_NAMES` and the panel's settings UI.
+Reserved first-party slugs remain in `FIRST_PARTY_PLUGIN_NAMES`. Form changes only
+need a new registry package version; supported fields render without panel changes.

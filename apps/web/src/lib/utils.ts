@@ -1,7 +1,5 @@
 import { TBreadcrumb } from "@/components/shell/breadcrumbs";
-import { MatchPluginPickAndBanOrder } from "@/forms/server/plugins/match/match-schema";
 import { routes } from "@/routes";
-import { ServerError } from "@/types/responses";
 import { clsx, type ClassValue } from "clsx";
 import { Session } from "next-auth";
 import { JWT } from "next-auth/jwt";
@@ -409,37 +407,4 @@ export function weekDayNumberToName(dayNum: number): string {
 
   // dayNum should be 0–6
   return days[dayNum] || "Invalid day";
-}
-
-/**
- * Converts a pick and ban configuration to a string.
- * The format is: "b:1,b:2,p:2,p:1,r,r,r"
- */
-export function pickAndBanToString(
-  pickAndBan: MatchPluginPickAndBanOrder,
-): string {
-  return pickAndBan
-    .map((item) => {
-      if (item.action === "pick") return `p:${item.seed}`;
-      if (item.action === "ban") return `b:${item.seed}`;
-      if (item.action === "random") return "r";
-      return "";
-    })
-    .join(",");
-}
-
-/**
- * Converts a string to a pick and ban configuration.
- * The format is: "b:1,b:2,p:2,p:1,r,r,r"
- */
-export function stringToPickAndBan(str?: string): MatchPluginPickAndBanOrder {
-  if (!str) return [];
-
-  return str.split(",").map((item) => {
-    const [action, seed] = item.split(":");
-    if (action === "p") return { action: "pick", seed: parseInt(seed) };
-    if (action === "b") return { action: "ban", seed: parseInt(seed) };
-    if (action === "r") return { action: "random" };
-    throw new ServerError(`Invalid pick and ban item: ${item}`, "InvalidPickAndBanItemError");
-  });
 }

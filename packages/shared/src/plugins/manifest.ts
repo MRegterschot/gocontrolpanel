@@ -1,7 +1,10 @@
 import { z } from "zod";
 import { GAME_MODE_TYPES } from "../types/live";
 import { isCapability, isHttpCapability } from "./capabilities";
-import { pluginConfigSchemaSchema } from "./config-schema";
+import {
+  configSchemaNeedsSdk2,
+  pluginConfigSchemaSchema,
+} from "./config-schema";
 import { isValidVersion } from "./version";
 
 // The manifest every plugin package carries as tmcp-plugin.json
@@ -37,7 +40,16 @@ const RESERVED_SLUGS = new Set<string>([
 ]);
 
 export const PLUGIN_SLUG = /^[a-z][a-z0-9-]{1,38}[a-z0-9]$/;
-export const NATIVE_COMMANDS = ["help", "version", "uptime", "status", "plugins", "ping", "sysinfo", "diagnostics"] as const;
+export const NATIVE_COMMANDS = [
+  "help",
+  "version",
+  "uptime",
+  "status",
+  "plugins",
+  "ping",
+  "sysinfo",
+  "diagnostics",
+] as const;
 
 export const PLUGIN_COMMAND = /^[a-z0-9][a-z0-9_-]{0,31}$/;
 
@@ -61,11 +73,16 @@ export const pluginManifestSchema = z
   .object({
     slug: z
       .string()
-      .regex(PLUGIN_SLUG, "3-40 characters: lowercase letters, digits and dashes")
+      .regex(
+        PLUGIN_SLUG,
+        "3-40 characters: lowercase letters, digits and dashes",
+      )
       .refine((slug) => !slug.includes("--"), "No double dashes")
       .refine((slug) => !isReservedSlug(slug), "This name is reserved"),
     name: z.string().trim().min(1).max(60),
-    version: z.string().refine(isValidVersion, "Must be a semantic version like 1.2.3"),
+    version: z
+      .string()
+      .refine(isValidVersion, "Must be a semantic version like 1.2.3"),
     sdk: z.number().int().min(1),
     description: z.string().trim().min(1).max(300),
     author: z.string().trim().min(1).max(100),
@@ -75,7 +92,10 @@ export const pluginManifestSchema = z
     entry: z
       .string()
       .regex(/^[A-Za-z0-9_\-/.]+\.js$/, "Must be a .js file in the package")
-      .refine((path) => !path.split("/").includes(".."), "Must stay inside the package")
+      .refine(
+        (path) => !path.split("/").includes(".."),
+        "Must stay inside the package",
+      )
       .default("index.js"),
     gamemodes: z
       .array(z.enum(GAME_MODE_TYPES))
@@ -88,7 +108,7 @@ export const pluginManifestSchema = z
           .string()
           .regex(PLUGIN_COMMAND, "Lowercase letters, digits, - and _")
           .refine(
-            (command) => !NATIVE_COMMANDS.some(name => name === command),
+            (command) => !NATIVE_COMMANDS.some((name) => name === command),
             "This command belongs to the panel",
           ),
       )
@@ -107,12 +127,27 @@ export const pluginManifestSchema = z
     configSchema: pluginConfigSchemaSchema.optional(),
     helpText: z.string().max(1000).optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((manifest, ctx) => {
+    if (
+      manifest.sdk < 2 &&
+      manifest.configSchema &&
+      configSchemaNeedsSdk2(manifest.configSchema)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["sdk"],
+        message: "Rich config forms require SDK 2",
+      });
+    }
+  });
 
 export type PluginManifest = z.infer<typeof pluginManifestSchema>;
 export type PluginManifestInput = z.input<typeof pluginManifestSchema>;
 
-export function parseManifest(raw: unknown):
+export function parseManifest(
+  raw: unknown,
+):
   | { success: true; manifest: PluginManifest }
   | { success: false; issues: string[] } {
   const result = pluginManifestSchema.safeParse(raw);

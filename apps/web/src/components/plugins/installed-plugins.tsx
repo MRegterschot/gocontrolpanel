@@ -29,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { exportServerPluginConfig } from "@/lib/api-client/database";
 import { generatePath, getErrorMessage } from "@/lib/utils";
 import { routes } from "@/routes";
 import type { AvailablePlugin, InstalledPlugin } from "@/types/plugins/catalog";
@@ -49,25 +50,59 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CapabilityBadges } from "./capability-list";
-import { FirstPartySettings } from "./first-party-settings";
 import { InstallDialog } from "./install-dialog";
 import { PluginConfigForm } from "./plugin-config-form";
 
-function ConfigDialog({ serverId, plugin }: { serverId: string; plugin: InstalledPlugin }) {
+function ConfigDialog({
+  serverId,
+  plugin,
+}: {
+  serverId: string;
+  plugin: InstalledPlugin;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   if (!plugin.configSchema) return null;
 
   async function save(config: PluginConfig, cleared: string[]) {
     try {
-      const { error } = await saveServerPluginConfig(serverId, plugin.pluginId, config, cleared);
+      const { error } = await saveServerPluginConfig(
+        serverId,
+        plugin.pluginId,
+        config,
+        cleared,
+      );
       if (error) throw new ServerError(error, "SavePluginConfigError");
       toast.success("Settings saved");
       router.refresh();
       return true;
     } catch (error) {
-      toast.error("Failed to save the settings", { description: getErrorMessage(error) });
+      toast.error("Failed to save the settings", {
+        description: getErrorMessage(error),
+      });
       return false;
+    }
+  }
+
+  async function exportConfig() {
+    try {
+      const { data, error } = await exportServerPluginConfig(
+        serverId,
+        plugin.pluginId,
+      );
+      if (error) throw new ServerError(error, "ExportPluginConfigError");
+      const url = URL.createObjectURL(
+        new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }),
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${plugin.slug}-config-${serverId}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error("Failed to export plugin config", {
+        description: getErrorMessage(error),
+      });
     }
   }
 
@@ -82,10 +117,14 @@ function ConfigDialog({ serverId, plugin }: { serverId: string; plugin: Installe
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{plugin.name} settings</DialogTitle>
-          <DialogDescription>Applied right away, no restart needed.</DialogDescription>
+          <DialogDescription>
+            Applied right away, no restart needed.
+          </DialogDescription>
         </DialogHeader>
         {open && (
           <PluginConfigForm
+            serverId={serverId}
+            onExport={exportConfig}
             schema={plugin.configSchema}
             config={plugin.config}
             setSecrets={plugin.setSecrets}
@@ -98,8 +137,7 @@ function ConfigDialog({ serverId, plugin }: { serverId: string; plugin: Installe
   );
 }
 
-function sourceLabel(plugin: { source: string; firstParty: boolean }): string {
-  if (plugin.firstParty) return "Built in";
+function sourceLabel(plugin: { source: string }): string {
   return plugin.source === "marketplace" ? "Marketplace" : "Private";
 }
 
@@ -126,7 +164,11 @@ function InstalledPluginCard({
     version: v.version,
     capabilities: v.capabilities,
     disabled: v.yanked,
-    note: v.yanked ? "withdrawn" : v.version === plugin.version ? "installed" : undefined,
+    note: v.yanked
+      ? "withdrawn"
+      : v.version === plugin.version
+        ? "installed"
+        : undefined,
   }));
   const switchVersion = (_: string, version: string, accepted: string[]) =>
     changeServerPluginVersion(serverId, plugin.pluginId, version, accepted);
@@ -134,7 +176,11 @@ function InstalledPluginCard({
   async function toggle(enabled: boolean) {
     setBusy(true);
     try {
-      const { error } = await setServerPluginEnabled(serverId, plugin.pluginId, enabled);
+      const { error } = await setServerPluginEnabled(
+        serverId,
+        plugin.pluginId,
+        enabled,
+      );
       if (error) throw new ServerError(error, "TogglePluginError");
       toast.success(`${plugin.name} ${enabled ? "turned on" : "turned off"}`);
       router.refresh();
@@ -154,7 +200,9 @@ function InstalledPluginCard({
       toast.success(`${plugin.name} uninstalled`);
       router.refresh();
     } catch (error) {
-      toast.error(`Failed to uninstall ${plugin.name}`, { description: getErrorMessage(error) });
+      toast.error(`Failed to uninstall ${plugin.name}`, {
+        description: getErrorMessage(error),
+      });
     } finally {
       setConfirmUninstall(false);
     }
@@ -175,7 +223,9 @@ function InstalledPluginCard({
             <div className="flex flex-wrap items-center gap-2">
               {plugin.source === "marketplace" && !plugin.firstParty ? (
                 <Link
-                  href={generatePath(routes.plugins.detail, { slug: plugin.slug })}
+                  href={generatePath(routes.plugins.detail, {
+                    slug: plugin.slug,
+                  })}
                   className="font-semibold hover:underline"
                 >
                   {plugin.name}
@@ -185,10 +235,14 @@ function InstalledPluginCard({
               )}
               <Badge variant="outline">{plugin.version}</Badge>
               <Badge variant="secondary">{sourceLabel(plugin)}</Badge>
-              {plugin.update && !plugin.yanked && <Badge>Update: {plugin.update.version}</Badge>}
+              {plugin.update && !plugin.yanked && (
+                <Badge>Update: {plugin.update.version}</Badge>
+              )}
             </div>
             {plugin.description && (
-              <p className="text-sm text-muted-foreground">{plugin.description}</p>
+              <p className="text-sm text-muted-foreground">
+                {plugin.description}
+              </p>
             )}
             {plugin.commands.length > 0 && (
               <span className="text-xs text-muted-foreground">
@@ -215,7 +269,6 @@ function InstalledPluginCard({
             />
           )}
           <ConfigDialog serverId={serverId} plugin={plugin} />
-          <FirstPartySettings serverId={serverId} plugin={plugin} />
           {versions.length > 1 && (
             <InstallDialog
               name={plugin.name}
@@ -223,7 +276,11 @@ function InstalledPluginCard({
               versions={versions}
               install={switchVersion}
               trigger={
-                <Button variant="outline" collapse="sm" title="Switch to another version">
+                <Button
+                  variant="outline"
+                  collapse="sm"
+                  title="Switch to another version"
+                >
                   <IconHistory />
                   Versions
                 </Button>
@@ -246,8 +303,8 @@ function InstalledPluginCard({
           <IconAlertTriangle className="size-4 shrink-0 text-destructive" />
           <span>
             Version {plugin.version} was withdrawn from the marketplace
-            {plugin.yankReason ? `: ${plugin.yankReason}` : ""}. It stays off until you install
-            another version.
+            {plugin.yankReason ? `: ${plugin.yankReason}` : ""}. It stays off
+            until you install another version.
           </span>
         </div>
       )}
@@ -298,7 +355,10 @@ function InstallAvailable({
           {available.map((option) => (
             <SelectItem key={option.pluginId} value={option.pluginId}>
               {option.name}
-              <span className="text-muted-foreground"> · {sourceLabel(option)}</span>
+              <span className="text-muted-foreground">
+                {" "}
+                · {sourceLabel(option)}
+              </span>
             </SelectItem>
           ))}
         </SelectContent>
@@ -308,7 +368,10 @@ function InstallAvailable({
           key={plugin.pluginId}
           name={plugin.name}
           targets={[{ id: serverId, name: serverName, installedVersion: null }]}
-          versions={plugin.versions.map((v) => ({ version: v.version, capabilities: v.capabilities }))}
+          versions={plugin.versions.map((v) => ({
+            version: v.version,
+            capabilities: v.capabilities,
+          }))}
           install={(_, version, accepted) => install(version, accepted)}
           trigger={
             <Button variant="outline">
@@ -332,7 +395,9 @@ function ReloadButton({ serverId }: { serverId: string }) {
       if (error) throw new ServerError(error, "ReloadServerPluginsError");
       toast.success("Plugins reloaded successfully");
     } catch (error) {
-      toast.error("Failed to reload plugins", { description: getErrorMessage(error) });
+      toast.error("Failed to reload plugins", {
+        description: getErrorMessage(error),
+      });
     } finally {
       setBusy(false);
     }
@@ -346,7 +411,7 @@ function ReloadButton({ serverId }: { serverId: string }) {
   );
 }
 
-// Every plugin on one server: built in, from the marketplace or uploaded
+// Every plugin on one server: from the marketplace or uploaded
 export default function InstalledPlugins({
   serverId,
   serverName,
@@ -361,21 +426,27 @@ export default function InstalledPlugins({
   marketplaceEnabled: boolean;
 }) {
   return (
-    <section aria-labelledby="installed-plugins-title" className="flex flex-col gap-4">
+    <section
+      aria-labelledby="installed-plugins-title"
+      className="flex flex-col gap-4"
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex flex-col gap-1">
           <h2 id="installed-plugins-title" className="text-lg font-semibold">
             Plugins
           </h2>
           <p className="text-sm text-muted-foreground">
-            They run in a sandbox with only the permissions you accepted. A plugin that misbehaves
-            is turned off and the admins are notified.
+            They run in a sandbox with only the permissions you accepted. A
+            plugin that misbehaves is turned off and the admins are notified.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <ReloadButton serverId={serverId} />
           {marketplaceEnabled && (
-            <Link href={routes.plugins.index} className={buttonVariants({ variant: "outline" })}>
+            <Link
+              href={routes.plugins.index}
+              className={buttonVariants({ variant: "outline" })}
+            >
               <IconBuildingStore />
               Browse marketplace
             </Link>
@@ -384,11 +455,17 @@ export default function InstalledPlugins({
       </div>
 
       {available.length > 0 && (
-        <InstallAvailable serverId={serverId} serverName={serverName} available={available} />
+        <InstallAvailable
+          serverId={serverId}
+          serverName={serverName}
+          available={available}
+        />
       )}
 
       {plugins.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No plugins on this server yet.</p>
+        <p className="text-sm text-muted-foreground">
+          No plugins on this server yet.
+        </p>
       ) : (
         plugins.map((plugin) => (
           <InstalledPluginCard

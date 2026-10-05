@@ -2,7 +2,7 @@
 // install time and enforced by the GBX service at runtime.
 
 // Major version of the plugin API this panel runs. A plugin built for a newer one is refused.
-export const PLUGIN_SDK_VERSION = 1;
+export const PLUGIN_SDK_VERSION = 2;
 
 export const STATIC_CAPABILITIES = [
   "ui",
@@ -75,7 +75,8 @@ export const CAPABILITY_INFO: Record<StaticCapability, CapabilityInfo> = {
   },
   notifications: {
     label: "Notify admins",
-    description: "Send notifications to the admins of this server in the panel.",
+    description:
+      "Send notifications to the admins of this server in the panel.",
     risk: "low",
   },
   "nadeo:read": {
@@ -90,7 +91,9 @@ export const CAPABILITY_INFO: Record<StaticCapability, CapabilityInfo> = {
 // must start with a letter, which keeps IP addresses out.
 const HOST_LABEL = "[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?";
 const TOP_LABEL = "[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?";
-const HTTP_CAPABILITY = new RegExp(`^http:(\\*\\.)?(${HOST_LABEL}\\.)+${TOP_LABEL}$`);
+const HTTP_CAPABILITY = new RegExp(
+  `^http:(\\*\\.)?(${HOST_LABEL}\\.)+${TOP_LABEL}$`,
+);
 
 export function isHttpCapability(value: string): value is HttpCapability {
   return HTTP_CAPABILITY.test(value) && value.length <= 260;
@@ -128,7 +131,10 @@ export function httpHosts(capabilities: readonly string[]): string[] {
 }
 
 // True when one of the http capabilities covers the host
-export function isHostAllowed(host: string, capabilities: readonly string[]): boolean {
+export function isHostAllowed(
+  host: string,
+  capabilities: readonly string[],
+): boolean {
   const target = host.toLowerCase();
   return httpHosts(capabilities).some((pattern) =>
     pattern.startsWith("*.")

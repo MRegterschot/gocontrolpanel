@@ -4,7 +4,6 @@ export * from "./plugins";
 export * from "./server-events";
 export * from "./types/gbx";
 export * from "./types/live";
-export * from "./types/plugins";
 export * from "./types/server";
 export * from "./ws/channels";
 export * from "./ws/ticket";

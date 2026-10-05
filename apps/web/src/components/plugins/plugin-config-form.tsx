@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SearchInput } from "@/components/ui/search-input";
 import {
   Select,
   SelectContent,
@@ -11,208 +12,666 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
+import { useSearchUsers } from "@/hooks/use-search-users";
+import { getScripts } from "@/lib/api-client/filemanager";
+import { getLocalMaps } from "@/lib/api-client/gbx";
+import { queryKeys, unwrap } from "@/lib/api-client/query";
+import { getErrorMessage } from "@/lib/utils";
 import {
-  defaultPluginConfig,
   validatePluginConfig,
   type ConfigField,
   type PluginConfig,
   type PluginConfigSchema,
 } from "@gcp/shared";
-import { IconDeviceFloppy, IconX } from "@tabler/icons-react";
-import { useState } from "react";
+import {
+  IconDeviceFloppy,
+  IconDownload,
+  IconPlus,
+  IconTrash,
+  IconX,
+} from "@tabler/icons-react";
+import { useQuery } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import Papa from "papaparse";
+import { useId, useRef, useState } from "react";
+import { toast } from "sonner";
 
-// Form values are strings and booleans; the schema turns them back into config values
-type FormValue = string | boolean;
+type ObjectField = Extract<ConfigField, { type: "object" }>;
 
-function toFormValue(field: ConfigField, value: unknown): FormValue {
-  if (field.type === "boolean") return value === true;
-  if (field.type === "array") return Array.isArray(value) ? value.join("\n") : "";
-  return value === undefined || value === null ? "" : String(value);
-}
-
-function fromFormValue(field: ConfigField, value: FormValue): unknown {
-  switch (field.type) {
-    case "boolean":
-      return value === true;
-    case "number":
-    case "integer":
-      return value === "" ? undefined : Number(value);
-    case "array": {
-      const items = String(value)
-        .split("\n")
-        .map((item) => item.trim())
-        .filter(Boolean);
-      return field.items.type === "string" ? items : items.map(Number);
-    }
-    default:
-      return value === "" ? undefined : value;
+function initialValue(
+  field: ConfigField,
+  value: unknown,
+  login?: string,
+): unknown {
+  if (field.type === "object") {
+    const raw =
+      value && typeof value === "object" ? (value as PluginConfig) : {};
+    return Object.fromEntries(
+      Object.entries(field.properties).map(([key, child]) => [
+        key,
+        initialValue(child, raw[key], login),
+      ]),
+    );
   }
+  if (field.type === "array") {
+    const items = Array.isArray(value)
+      ? value
+      : (field.default ??
+        (field.defaultFrom === "current-user" && login ? [login] : []));
+    return items.map((item) => initialValue(field.items, item, login));
+  }
+  return value ?? field.default ?? (field.type === "boolean" ? false : "");
 }
 
-// A form generated from the plugin's config schema (PM-7)
+function hasWidget(field: ConfigField, widget: string): boolean {
+  if (field.type === "object")
+    return Object.values(field.properties).some((child) =>
+      hasWidget(child, widget),
+    );
+  if (field.type === "array") return hasWidget(field.items, widget);
+  return field.type === "string" && field.widget === widget;
+}
+
+function UserField({
+  value,
+  onChange,
+  id,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  id: string;
+}) {
+  const { search, searchResults, loading } = useSearchUsers({
+    defaultUsers: value ? [value] : [],
+    field: "login",
+  });
+  return (
+    <SearchInput
+      id={id}
+      value={value}
+      onValueChange={onChange}
+      onSearch={search}
+      loading={loading}
+      searchResults={searchResults.map((user) => ({
+        label: user.nickName,
+        value: user.login,
+      }))}
+    />
+  );
+}
+
+// The same renderer handles registry and private plugins. Labels, lists, selectors,
+// defaults and conditions are declared by the installed package, never by slug.
 export function PluginConfigForm({
   schema,
   config,
   setSecrets,
+  serverId,
   onSave,
   onClose,
+  onExport,
 }: {
   schema: PluginConfigSchema;
   config: PluginConfig;
   setSecrets: string[];
+  serverId?: string;
   onSave: (config: PluginConfig, clearedSecrets: string[]) => Promise<boolean>;
   onClose: () => void;
+  onExport?: () => Promise<void>;
 }) {
-  const fields = Object.entries(schema.properties);
-  const [values, setValues] = useState<Record<string, FormValue>>(() => {
-    const merged = { ...defaultPluginConfig(schema), ...config };
-    return Object.fromEntries(
-      fields.map(([key, field]) => [key, toFormValue(field, merged[key])]),
-    );
-  });
+  const { data: session } = useSession();
+  const id = useId();
+  const rowIds = useRef<Record<string, string[]>>({});
+  const [values, setValues] = useState<PluginConfig>(
+    () => initialValue(schema, config, session?.user.login) as PluginConfig,
+  );
   const [cleared, setCleared] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const mapsQuery = useQuery({
+    queryKey: queryKeys.localMaps(serverId ?? ""),
+    queryFn: () => unwrap(getLocalMaps(serverId!), "GetLocalMapsError"),
+    enabled: !!serverId && hasWidget(schema, "map"),
+  });
+  const scriptsQuery = useQuery({
+    queryKey: queryKeys.scripts(serverId ?? ""),
+    queryFn: () => unwrap(getScripts(serverId!), "GetScriptsError"),
+    enabled: !!serverId && hasWidget(schema, "script"),
+  });
+  useQueryErrorToast(mapsQuery.error, "Failed to load local maps");
+  useQueryErrorToast(scriptsQuery.error, "Failed to load scripts");
+  const maps = mapsQuery.data ?? [];
+  const scripts = scriptsQuery.data ?? [];
 
-  const set = (key: string, value: FormValue) =>
-    setValues((current) => ({ ...current, [key]: value }));
+  function set(path: string[], value: unknown) {
+    setValues((current) => {
+      const next = structuredClone(current);
+      let parent: any = next;
+      for (const key of path.slice(0, -1)) parent = parent[key];
+      parent[path.at(-1)!] = value;
+      return next;
+    });
+    setErrors({});
+  }
 
+  const validationSchema = {
+    ...schema,
+    required: (schema.required ?? []).filter(
+      (key) => !(setSecrets.includes(key) && !cleared.includes(key)),
+    ),
+  };
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    const next: PluginConfig = {};
-    for (const [key, field] of fields) {
-      const value = fromFormValue(field, values[key]);
-      if (value !== undefined) next[key] = value;
-    }
-
-    // Secrets left empty keep their stored value, so they don't count as missing
-    const check = validatePluginConfig(
-      {
-        ...schema,
-        required: (schema.required ?? []).filter(
-          (key) => !(setSecrets.includes(key) && !cleared.includes(key)),
-        ),
-      },
-      next,
-    );
+    const check = validatePluginConfig(validationSchema, values);
     if (!check.success) {
-      setErrors(Object.fromEntries(check.issues.map((i) => [i.path, i.message])));
+      setErrors(
+        Object.fromEntries(
+          check.issues.map((issue) => [issue.path, issue.message]),
+        ),
+      );
       return;
     }
     setErrors({});
     setSaving(true);
-    const saved = await onSave(check.data, cleared);
-    setSaving(false);
-    if (saved) onClose();
+    try {
+      if (await onSave(check.data, cleared)) onClose();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function importConfig(file?: File) {
+    if (!file) return;
+    try {
+      const check = validatePluginConfig(
+        validationSchema,
+        JSON.parse(await file.text()),
+      );
+      if (!check.success)
+        throw new Error(
+          check.issues
+            .map((issue) => `${issue.path}: ${issue.message}`)
+            .join("; "),
+        );
+      rowIds.current = {};
+      setValues(
+        initialValue(schema, check.data, session?.user.login) as PluginConfig,
+      );
+      setErrors({});
+      toast.success("Config imported successfully");
+    } catch (error) {
+      toast.error("Failed to import config", {
+        description: getErrorMessage(error),
+      });
+    }
+  }
+
+  function renderObject(
+    field: ObjectField,
+    value: PluginConfig,
+    path: string[],
+  ) {
+    return Object.entries(field.properties).map(([key, child]) => {
+      if (
+        child.visibleWhen &&
+        value[child.visibleWhen.property] !== child.visibleWhen.equals
+      )
+        return null;
+      return renderField(
+        child,
+        value[key],
+        [...path, key],
+        field.required?.includes(key),
+      );
+    });
+  }
+
+  function renderField(
+    field: ConfigField,
+    value: unknown,
+    path: string[],
+    required = false,
+    stableKey?: string,
+  ): React.ReactNode {
+    const key = path.join(".");
+    const inputId = `${id}-${key}`;
+    const label = field.title ?? path.at(-1)!;
+    const error = errors[key];
+    const update = (next: unknown) => set(path, next);
+    let control: React.ReactNode;
+    if (field.type === "object") {
+      control = (
+        <div className="flex flex-col gap-4 rounded-md border p-3">
+          {renderObject(field, (value as PluginConfig) ?? {}, path)}
+        </div>
+      );
+    } else if (field.type === "array") {
+      const items = Array.isArray(value) ? value : [];
+      const keys = (rowIds.current[key] ??= []);
+      while (keys.length < items.length) keys.push(crypto.randomUUID());
+      keys.length = items.length;
+      const rows =
+        !!field.addLabel ||
+        field.items.type === "object" ||
+        field.items.type === "array" ||
+        (field.items.type === "string" && !!field.items.widget);
+      control = rows ? (
+        <div className="flex flex-col gap-3">
+          {items.map((item, index) => (
+            <div key={keys[index]} className="flex items-start gap-2">
+              <div className="min-w-0 flex-1">
+                {renderField(
+                  field.items,
+                  item,
+                  [...path, String(index)],
+                  true,
+                  keys[index],
+                )}
+              </div>
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                aria-label={`Remove ${label} item ${index + 1}`}
+                onClick={() => {
+                  keys.splice(index, 1);
+                  update(items.filter((_, i) => i !== index));
+                }}
+              >
+                <IconTrash />
+              </Button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={items.length >= (field.maxItems ?? 500)}
+            onClick={() => {
+              const next = initialValue(field.items, undefined) as any;
+              if (
+                field.items.type === "object" &&
+                "seed" in field.items.properties &&
+                next.seed === ""
+              )
+                next.seed = items.length + 1;
+              update([...items, next]);
+            }}
+          >
+            <IconPlus />
+            {field.addLabel ?? "Add Item"}
+          </Button>
+          {field.items.type === "string" && field.items.widget === "map" && (
+            <Select
+              value=""
+              onValueChange={(folder) =>
+                update(
+                  maps
+                    .filter(
+                      (map) =>
+                        (map.FileName.substring(
+                          0,
+                          map.FileName.lastIndexOf("/"),
+                        ) || "root") === folder,
+                    )
+                    .map((map) => map.FileName),
+                )
+              }
+            >
+              <SelectTrigger className="w-full" aria-label="Select Folder">
+                <SelectValue placeholder="Select Folder" />
+              </SelectTrigger>
+              <SelectContent>
+                {[
+                  ...new Set(
+                    maps.map(
+                      (map) =>
+                        map.FileName.substring(
+                          0,
+                          map.FileName.lastIndexOf("/"),
+                        ) || "root",
+                    ),
+                  ),
+                ].map((folder) => (
+                  <SelectItem key={folder} value={folder}>
+                    {folder}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {field.csv && (
+            <label className="flex cursor-pointer justify-center rounded-md border px-3 py-2 text-sm">
+              Import CSV
+              <input
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (!file) return;
+                  Papa.parse<Record<string, string>>(file, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: (result) => {
+                      if (result.errors.length) {
+                        toast.error("Failed to import CSV", {
+                          description: result.errors[0].message,
+                        });
+                        return;
+                      }
+                      const imported = result.data.map((row, index) => ({
+                        ...Object.fromEntries(
+                          Object.entries(field.csv!.columns).map(
+                            ([property, column]) => [
+                              property,
+                              row[column]?.trim() ?? "",
+                            ],
+                          ),
+                        ),
+                        ...Object.fromEntries(
+                          Object.entries(field.csv!.lists ?? {}).map(
+                            ([property, columns]) => [
+                              property,
+                              columns
+                                .map((column) => row[column]?.trim())
+                                .filter(Boolean),
+                            ],
+                          ),
+                        ),
+                        ...(field.csv!.seed
+                          ? { [field.csv!.seed]: index + 1 }
+                          : {}),
+                      }));
+                      const check = validatePluginConfig(
+                        { type: "object", properties: { list: field } },
+                        { list: imported },
+                      );
+                      if (!check.success) {
+                        toast.error("Failed to import CSV", {
+                          description: check.issues
+                            .map((issue) => issue.message)
+                            .join("; "),
+                        });
+                        return;
+                      }
+                      update(check.data.list);
+                    },
+                  });
+                  event.target.value = "";
+                }}
+              />
+            </label>
+          )}
+        </div>
+      ) : (
+        <textarea
+          id={inputId}
+          rows={4}
+          className="w-full rounded-md border px-3 py-2 text-sm"
+          placeholder="One per line"
+          value={items.join("\n")}
+          onChange={(event) =>
+            update(
+              event.target.value
+                .split("\n")
+                .map((item) => item.trim())
+                .filter(Boolean)
+                .map((item) =>
+                  field.items.type === "string" ? item : Number(item),
+                ),
+            )
+          }
+        />
+      );
+    } else if (field.type === "boolean") {
+      control = (
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id={inputId}
+            checked={value === true}
+            onCheckedChange={(checked) => update(checked === true)}
+          />
+          <Label htmlFor={inputId}>{label}</Label>
+        </div>
+      );
+    } else if (field.type === "string" && field.widget === "user") {
+      control = (
+        <UserField id={inputId} value={String(value ?? "")} onChange={update} />
+      );
+    } else if (field.type === "string" && field.widget === "order") {
+      const steps = String(value ?? "")
+        .split(",")
+        .filter(Boolean);
+      const limit = field.maxItemsFrom
+        ?.split(".")
+        .reduce<any>((parent, part) => parent?.[part], values);
+      control = (
+        <div className="flex flex-col gap-2">
+          {steps.map((step, index) => {
+            const [action, seed] = step.split(":");
+            const changeStep = (next: string) =>
+              update(
+                steps.map((old, i) => (i === index ? next : old)).join(","),
+              );
+            return (
+              <div key={index} className="flex gap-2">
+                <Select
+                  value={action}
+                  onValueChange={(next) =>
+                    changeStep(next === "r" ? "r" : `${next}:${seed ?? 1}`)
+                  }
+                >
+                  <SelectTrigger
+                    className="flex-1"
+                    aria-label={`Step ${index + 1} action`}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="p">Pick</SelectItem>
+                    <SelectItem value="b">Ban</SelectItem>
+                    <SelectItem value="r">Random</SelectItem>
+                  </SelectContent>
+                </Select>
+                {action !== "r" && (
+                  <Input
+                    aria-label={`Step ${index + 1} seed`}
+                    className="w-20"
+                    type="number"
+                    min={1}
+                    value={seed ?? 1}
+                    onChange={(event) =>
+                      changeStep(`${action}:${event.target.value}`)
+                    }
+                  />
+                )}
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  aria-label={`Remove step ${index + 1}`}
+                  onClick={() =>
+                    update(steps.filter((_, i) => i !== index).join(","))
+                  }
+                >
+                  <IconTrash />
+                </Button>
+              </div>
+            );
+          })}
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={
+              field.maxItemsFrom
+                ? steps.length >= (Array.isArray(limit) ? limit.length : 0)
+                : false
+            }
+            onClick={() => update([...steps, "p:1"].join(","))}
+          >
+            <IconPlus />
+            Add Step
+          </Button>
+        </div>
+      );
+    } else if (
+      field.type === "string" &&
+      (field.enum || field.widget === "map" || field.widget === "script")
+    ) {
+      const options =
+        field.enum?.map((option) => ({ label: option, value: option })) ??
+        (field.widget === "map"
+          ? maps.map((map) => ({ label: map.Name, value: map.FileName }))
+          : scripts.map((script) => ({ label: script, value: script })));
+      if (value && !options.some((option) => option.value === value))
+        options.push({ label: String(value), value: String(value) });
+      control = (
+        <div className="flex gap-2">
+          <Select value={String(value ?? "")} onValueChange={update}>
+            <SelectTrigger id={inputId} className="w-full">
+              <SelectValue placeholder="Choose..." />
+            </SelectTrigger>
+            <SelectContent>
+              {options
+                .filter((option) => option.value)
+                .map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+          {!required && (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              aria-label={`Clear ${label}`}
+              onClick={() => update("")}
+            >
+              <IconX />
+            </Button>
+          )}
+        </div>
+      );
+    } else if (field.type === "string" && field.multiline) {
+      control = (
+        <textarea
+          id={inputId}
+          rows={3}
+          className="w-full rounded-md border px-3 py-2 text-sm"
+          value={String(value ?? "")}
+          onChange={(event) => update(event.target.value)}
+        />
+      );
+    } else {
+      const secret = field.type === "string" && field.secret;
+      control = (
+        <div className="flex gap-2">
+          <Input
+            id={inputId}
+            aria-invalid={!!error}
+            type={
+              secret ? "password" : field.type === "string" ? "text" : "number"
+            }
+            autoComplete={secret ? "off" : undefined}
+            step={field.type === "integer" ? 1 : "any"}
+            min={"minimum" in field ? field.minimum : undefined}
+            max={"maximum" in field ? field.maximum : undefined}
+            placeholder={
+              secret && setSecrets.includes(key) && !cleared.includes(key)
+                ? "Saved. Type to replace it"
+                : undefined
+            }
+            value={String(value ?? "")}
+            onChange={(event) =>
+              update(
+                field.type === "string" || event.target.value === ""
+                  ? event.target.value
+                  : Number(event.target.value),
+              )
+            }
+          />
+          {secret && setSecrets.includes(key) && !cleared.includes(key) && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCleared((current) => [...current, key])}
+            >
+              Clear
+            </Button>
+          )}
+        </div>
+      );
+    }
+    return (
+      <div
+        key={stableKey ?? path.at(-1)}
+        className="flex min-w-0 flex-col gap-1.5"
+      >
+        {field.type !== "boolean" &&
+          (field.title || !/^\d+$/.test(path.at(-1)!)) && (
+            <Label htmlFor={inputId}>
+              {label}
+              {required && (
+                <span className="text-xs text-muted-foreground">
+                  (Required)
+                </span>
+              )}
+            </Label>
+          )}
+        {field.description && (
+          <p className="text-xs text-muted-foreground">{field.description}</p>
+        )}
+        {control}
+        {error && (
+          <p role="alert" className="text-xs text-destructive">
+            {error}
+          </p>
+        )}
+      </div>
+    );
   }
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-4">
-      {fields.map(([key, field]) => {
-        const error = errors[key];
-        const label = field.title ?? key;
-        const required = schema.required?.includes(key);
-        const id = `config-${key}`;
-
-        return (
-          <div key={key} className="flex flex-col gap-1.5">
-            {field.type === "boolean" ? (
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id={id}
-                  checked={values[key] === true}
-                  onCheckedChange={(checked) => set(key, checked === true)}
-                />
-                <Label htmlFor={id}>{label}</Label>
-              </div>
-            ) : (
-              <Label htmlFor={id} data-error={!!error}>
-                {label}
-                {required && (
-                  <span className="text-xs text-muted-foreground">(Required)</span>
-                )}
-              </Label>
-            )}
-            {field.description && (
-              <p className="text-xs text-muted-foreground">{field.description}</p>
-            )}
-
-            {field.type === "string" && field.enum ? (
-              <Select value={String(values[key] ?? "")} onValueChange={(v) => set(key, v)}>
-                <SelectTrigger id={id} className="w-full">
-                  <SelectValue placeholder="Choose..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {field.enum.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : field.type === "string" && field.secret ? (
-              <div className="flex gap-2">
-                <Input
-                  id={id}
-                  type="password"
-                  autoComplete="off"
-                  placeholder={
-                    setSecrets.includes(key) && !cleared.includes(key)
-                      ? "Saved. Type to replace it"
-                      : ""
-                  }
-                  value={String(values[key] ?? "")}
-                  onChange={(e) => set(key, e.target.value)}
-                />
-                {setSecrets.includes(key) && !cleared.includes(key) && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setCleared((c) => [...c, key])}
-                  >
-                    Clear
-                  </Button>
-                )}
-              </div>
-            ) : (field.type === "string" && field.multiline) || field.type === "array" ? (
-              <textarea
-                id={id}
-                rows={field.type === "array" ? 4 : 3}
-                placeholder={field.type === "array" ? "One per line" : undefined}
-                className={cn(
-                  "border-input dark:bg-input/30 min-h-16 w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-                  error && "border-destructive",
-                )}
-                value={String(values[key] ?? "")}
-                onChange={(e) => set(key, e.target.value)}
-              />
-            ) : field.type !== "boolean" ? (
-              <Input
-                id={id}
-                type={field.type === "number" || field.type === "integer" ? "number" : "text"}
-                step={field.type === "integer" ? 1 : "any"}
-                min={"minimum" in field ? field.minimum : undefined}
-                max={"maximum" in field ? field.maximum : undefined}
-                value={String(values[key] ?? "")}
-                onChange={(e) => set(key, e.target.value)}
-              />
-            ) : null}
-
-            {error && <p className="text-xs text-destructive">{error}</p>}
-          </div>
-        );
-      })}
-
-      <div className="flex justify-between">
+      {renderObject(schema, values, [])}
+      <div className="flex flex-wrap justify-between gap-2">
         <Button type="button" variant="outline" onClick={onClose}>
           <IconX />
           Close
         </Button>
-        <Button type="submit" disabled={saving}>
-          <IconDeviceFloppy />
-          Save
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {onExport && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void onExport()}
+            >
+              <IconDownload />
+              Export Config
+            </Button>
+          )}
+          <label className="flex cursor-pointer items-center rounded-md border px-3 py-2 text-sm">
+            Import Config
+            <input
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={(event) => {
+                void importConfig(event.target.files?.[0]);
+                event.target.value = "";
+              }}
+            />
+          </label>
+          <Button type="submit" disabled={saving}>
+            <IconDeviceFloppy />
+            Save
+          </Button>
+        </div>
       </div>
     </form>
   );
