@@ -261,6 +261,7 @@ function InstalledPluginCard({
         title={`Uninstall ${plugin.name}?`}
         description="This removes the plugin from this server, together with its settings and the data it stored."
         confirmText="Uninstall"
+        confirmIcon={<IconTrash />}
         cancelText="Cancel"
       />
     </Card>

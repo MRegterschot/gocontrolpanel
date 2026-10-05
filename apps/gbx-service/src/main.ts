@@ -36,7 +36,7 @@ async function main() {
     log,
   );
 
-  // Ships with the image; moves installs from before the marketplace onto the packages
+  // Registry packages move installs from before the marketplace onto packaged plugins
   await container.installFirstPartyPlugins();
 
   // Flag withdrawn plugin versions before the servers load their plugins, without holding up

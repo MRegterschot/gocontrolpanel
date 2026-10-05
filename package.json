@@ -4,8 +4,7 @@
   "private": true,
   "workspaces": [
     "apps/*",
-    "packages/*",
-    "plugins"
+    "packages/*"
   ],
   "scripts": {
     "dev": "bun run --filter @gcp/web dev",

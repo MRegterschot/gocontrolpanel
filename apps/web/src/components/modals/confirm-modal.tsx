@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { IconCancel, IconCheck } from "@tabler/icons-react";
+import { ReactNode } from "react";
 import { Button } from "../ui/button";
 
 interface ConfirmModalProps {
@@ -18,6 +19,7 @@ interface ConfirmModalProps {
   title: string;
   description: string;
   confirmText: string;
+  confirmIcon?: ReactNode;
   cancelText: string;
   variant?:
     | "destructive"
@@ -35,6 +37,7 @@ export default function ConfirmModal({
   title,
   description,
   confirmText,
+  confirmIcon = <IconCheck />,
   cancelText,
   variant = "destructive",
 }: ConfirmModalProps) {
@@ -62,7 +65,7 @@ export default function ConfirmModal({
               onClose();
             }}
           >
-            <IconCheck />
+            {confirmIcon}
             {confirmText}
           </Button>
         </DialogFooter>

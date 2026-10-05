@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun run --cwd ../../plugins build && tsx watch --env-file-if-exists=../../.env --env-file-if-exists=.env src/main.ts | pino-pretty",
-    "build": "tsup && bun run --cwd ../../plugins build",
+    "dev": "tsx watch --env-file-if-exists=../../.env --env-file-if-exists=.env src/main.ts | pino-pretty",
+    "build": "tsup",
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

@@ -198,6 +198,7 @@ export default function AddServerForm({
           <Button
             type="button"
             variant="outline"
+            className="w-full"
             onClick={() => append({ userId: "", role: UserServerRole.Member })}
           >
             <IconPlus />

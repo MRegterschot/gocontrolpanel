@@ -113,9 +113,9 @@ export async function createContainer(config: Config) {
     log,
     registry,
     marketplace,
-    installFirstPartyPlugins: () =>
+    installFirstPartyPlugins: async () =>
       installFirstPartyPlugins(
-        loadFirstPartyPackages(config.firstPartyDir, log),
+        await loadFirstPartyPackages(config.MARKETPLACE_INDEX_URL, log),
         new PrismaFirstPartyRepository(db),
         log.child({ module: "first-party" }),
       ),

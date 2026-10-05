@@ -173,7 +173,7 @@ export default function ECMForm({
           <Button
             type="button"
             variant="outline"
-            className="w-fit"
+            className="w-full"
             onClick={() => append({ login: "" })}
           >
             <IconPlus />

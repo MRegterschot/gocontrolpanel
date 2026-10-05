@@ -10,7 +10,6 @@ COPY apps/gbx-service/package.json ./apps/gbx-service/
 COPY packages/db/package.json ./packages/db/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/plugin-sdk/package.json ./packages/plugin-sdk/
-COPY plugins/package.json ./plugins/
 RUN curl -fsSL https://bun.sh/install | bash \
   && /root/.bun/bin/bun install --frozen-lockfile
 
@@ -45,8 +44,6 @@ COPY --from=prod-deps /prod/node_modules ./node_modules
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/apps/gbx-service/dist ./dist
 COPY --from=builder /app/apps/gbx-service/templates ./templates
-# First-party plugin packages (plugins/), installed on start
-COPY --from=builder /app/apps/gbx-service/first-party ./first-party
 
 USER gbx
 ENV PORT=3100

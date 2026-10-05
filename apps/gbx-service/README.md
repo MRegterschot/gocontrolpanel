@@ -55,4 +55,4 @@ Plugins are packages: the first-party ones, plugins installed from the [marketpl
 
 ## Plugins
 
-Every plugin is a package, including the ones that ship with GoControlPanel. Those are built from [`plugins/`](../../plugins) into `first-party/`, and `installFirstPartyPlugins` stores them on every start, before any server connects, moving installs from before the marketplace onto them. See [docs/first-party-plugins.md](../../docs/first-party-plugins.md) for working on them and [docs/plugin-sdk.md](../../docs/plugin-sdk.md) for the API.
+Every plugin is a package. First-party sources, templates, tests, and immutable archives live in the [registry](https://github.com/MRegterschot/tmcontrolpanel-plugins). The service imports validated packages from `MARKETPLACE_INDEX_URL` on startup before any server connects, moving installs from before the marketplace onto them while preserving settings. Existing database packages still run if the registry is unavailable. See [docs/first-party-plugins.md](../../docs/first-party-plugins.md) for working on them and [docs/plugin-sdk.md](../../docs/plugin-sdk.md) for the API.

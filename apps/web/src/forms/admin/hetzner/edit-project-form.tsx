@@ -175,6 +175,7 @@ export default function EditProjectForm({
         <Button
           type="button"
           variant="outline"
+          className="w-full"
           onClick={() => {
             const currentUsers = form.getValues("hetznerProjectUsers") || [];
             form.setValue("hetznerProjectUsers", [

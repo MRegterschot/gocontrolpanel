@@ -510,7 +510,7 @@ Admins of a server can install plugins from the marketplace on the **Plugins** p
 - `MARKETPLACE_INDEX_URL` on **both** containers selects the marketplace. The default is the official one; leave it empty to turn browsing off.
 - [Plugin marketplace](docs/plugin-marketplace.md): how it works, running your own registry, withdrawing plugins, and the security model.
 - [Plugin SDK](docs/plugin-sdk.md): writing, testing and publishing a plugin.
-- [First-party plugins](docs/first-party-plugins.md): the plugins that ship with GoControlPanel.
+- [First-party plugins](docs/first-party-plugins.md): the first-party plugins published in the registry.
 
 ---
 

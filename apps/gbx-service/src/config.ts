@@ -39,11 +39,9 @@ const envSchema = z.object({
   SENTRY_DSN: z.string().optional(),
   SENTRY_ENVIRONMENT: z.string().optional(),
   TEMPLATES_DIR: z.string().optional(),
-  // Packages of the first-party plugins, installed on start
-  FIRST_PARTY_PLUGINS_DIR: z.string().optional(),
 });
 
-export type Config = z.infer<typeof envSchema> & { templatesDir: string; firstPartyDir: string };
+export type Config = z.infer<typeof envSchema> & { templatesDir: string };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const result = envSchema.safeParse(env);
@@ -61,9 +59,5 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     // Resolves to apps/gbx-service/templates from both src/ (tsx) and dist/ (bundle)
     templatesDir:
       result.data.TEMPLATES_DIR ?? fileURLToPath(new URL("../templates", import.meta.url)),
-    // apps/gbx-service/first-party, from both src/ and dist/
-    firstPartyDir:
-      result.data.FIRST_PARTY_PLUGINS_DIR ??
-      fileURLToPath(new URL("../first-party", import.meta.url)),
   };
 }

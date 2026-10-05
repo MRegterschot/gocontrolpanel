@@ -1,17 +1,30 @@
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { PluginHost, type ScopedContext } from "../../src/core/plugins/plugin-host";
-import { definePlugin, type PluginContext, type PluginDefinition } from "../../src/core/plugins/sdk";
-import { silentLogger } from "../fakes/logger";
+import {
+  PluginHost,
+  type ScopedContext,
+} from "../../src/core/plugins/plugin-host";
+import {
+  definePlugin,
+  type PluginContext,
+  type PluginDefinition,
+} from "../../src/core/plugins/sdk";
 import { createHarness, pluginRecord } from "../fakes/harness";
+import { silentLogger } from "../fakes/logger";
 
 function stubContextFactory() {
   const disposed: string[] = [];
   const configs = new Map<string, unknown>();
-  const factory = (definition: PluginDefinition<unknown>, record: { config: unknown }): ScopedContext => {
+  const factory = (
+    definition: PluginDefinition<unknown>,
+    record: { config: unknown },
+  ): ScopedContext => {
     configs.set(definition.id, record.config);
     return {
-      ctx: { pluginId: definition.id, config: () => configs.get(definition.id) } as PluginContext<unknown>,
+      ctx: {
+        pluginId: definition.id,
+        config: () => configs.get(definition.id),
+      } as PluginContext<unknown>,
       setConfig: (config) => configs.set(definition.id, config),
       dispose: async () => {
         disposed.push(definition.id);
@@ -27,14 +40,25 @@ describe("PluginHost", () => {
     const host = new PluginHost(
       [
         definePlugin({ id: "any", create: () => ({ start }) }),
-        definePlugin({ id: "ta", gamemodes: ["timeattack"], create: () => ({}) }),
+        definePlugin({
+          id: "ta",
+          gamemodes: ["timeattack"],
+          create: () => ({}),
+        }),
         definePlugin({ id: "off", create: () => ({}) }),
       ],
       stubContextFactory().factory,
       silentLogger,
     );
 
-    await host.sync([pluginRecord("any"), pluginRecord("ta"), pluginRecord("off", null, false)], "rounds");
+    await host.sync(
+      [
+        pluginRecord("any"),
+        pluginRecord("ta"),
+        pluginRecord("off", null, false),
+      ],
+      "rounds",
+    );
 
     expect(host.loadedIds()).toEqual(["any"]);
     expect(start).toHaveBeenCalledTimes(1);
@@ -44,8 +68,16 @@ describe("PluginHost", () => {
     const stub = stubContextFactory();
     const host = new PluginHost(
       [
-        definePlugin({ id: "ta", gamemodes: ["timeattack"], create: () => ({}) }),
-        definePlugin({ id: "rounds", gamemodes: ["rounds"], create: () => ({}) }),
+        definePlugin({
+          id: "ta",
+          gamemodes: ["timeattack"],
+          create: () => ({}),
+        }),
+        definePlugin({
+          id: "rounds",
+          gamemodes: ["rounds"],
+          create: () => ({}),
+        }),
       ],
       stub.factory,
       silentLogger,
@@ -103,7 +135,11 @@ describe("PluginHost", () => {
 
   it("reload restarts every running plugin", async () => {
     const create = vi.fn(() => ({}));
-    const host = new PluginHost([definePlugin({ id: "p", create })], stubContextFactory().factory, silentLogger);
+    const host = new PluginHost(
+      [definePlugin({ id: "p", create })],
+      stubContextFactory().factory,
+      silentLogger,
+    );
     await host.sync([pluginRecord("p")], "rounds");
     await host.reload([pluginRecord("p")], "rounds");
     expect(create).toHaveBeenCalledTimes(2);
@@ -111,7 +147,10 @@ describe("PluginHost", () => {
 
   it("serves help texts", () => {
     const host = new PluginHost(
-      [definePlugin({ id: "p", helpText: "use /p", create: () => ({}) }), definePlugin({ id: "q", create: () => ({}) })],
+      [
+        definePlugin({ id: "p", helpText: "use /p", create: () => ({}) }),
+        definePlugin({ id: "q", create: () => ({}) }),
+      ],
       stubContextFactory().factory,
       silentLogger,
     );
@@ -132,14 +171,26 @@ describe("plugin context scoping", () => {
         ctx.command("hi", (_, login) => seen.push(`command:${login}`));
         ctx.action("click", (a) => seen.push(`action:${a.Login}`));
         ctx.setTimeout(() => seen.push("timer"), 1000);
-        const widget = ctx.ui.widget({ id: "scoped-widget", template: "widgets/map-info/map-info" });
+        const widget = ctx.ui.widget({
+          id: "scoped-widget",
+          template: "test-widget",
+        });
         return { start: () => widget.display() };
       },
     });
-    const h = await createHarness({ plugins: [plugin], server: { plugins: [pluginRecord("scoped")] } });
+    const h = await createHarness({
+      plugins: [plugin],
+      server: { plugins: [pluginRecord("scoped")] },
+      templates: {
+        "test-widget": '<manialink id="{{id}}"/>',
+        "test-widget-update": '<manialink id="{{id}}"/>',
+      },
+    });
     expect(h.runtime.manialinks.displayedIds()).toContain("scoped-widget");
 
-    h.servers.servers.get("server-1")!.plugins = [pluginRecord("scoped", null, false)];
+    h.servers.servers.get("server-1")!.plugins = [
+      pluginRecord("scoped", null, false),
+    ];
     await h.runtime.refreshPlugins();
 
     await h.callback("ManiaPlanet.PlayerConnect", ["p1", false]);
@@ -161,10 +212,15 @@ describe("plugin context scoping", () => {
         return {};
       },
     });
-    const h = await createHarness({ plugins: [plugin], server: { plugins: [pluginRecord("typed", {})] } });
+    const h = await createHarness({
+      plugins: [plugin],
+      server: { plugins: [pluginRecord("typed", {})] },
+    });
     expect(seen).toEqual([{ rows: 8 }]);
 
-    h.servers.servers.get("server-1")!.plugins = [pluginRecord("typed", { rows: "many" })];
+    h.servers.servers.get("server-1")!.plugins = [
+      pluginRecord("typed", { rows: "many" }),
+    ];
     await h.runtime.refreshPlugins();
     await h.runtime.reloadPlugins();
     expect(seen.at(-1)).toEqual({ rows: "many" });
@@ -179,10 +235,17 @@ describe("plugin context scoping", () => {
         return {};
       },
     });
-    const h = await createHarness({ plugins: [plugin], server: { plugins: [pluginRecord("saver", {})] } });
+    const h = await createHarness({
+      plugins: [plugin],
+      server: { plugins: [pluginRecord("saver", {})] },
+    });
     await save!({ apiKey: "a_b" });
     expect(h.servers.configUpdates).toEqual([
-      { serverId: "server-1", pluginId: "plugin-saver", config: { apiKey: "a_b" } },
+      {
+        serverId: "server-1",
+        pluginId: "plugin-saver",
+        config: { apiKey: "a_b" },
+      },
     ]);
   });
 });

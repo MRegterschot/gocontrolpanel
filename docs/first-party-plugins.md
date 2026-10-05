@@ -1,6 +1,6 @@
 # First-party plugins
 
-The plugins that ship with GoControlPanel are ordinary [plugin SDK](./plugin-sdk.md) packages. They run in the same sandbox as marketplace plugins, with only the capabilities they declare. This guide is for contributors who change them or add one.
+The first-party plugins available to GoControlPanel are ordinary [plugin SDK](./plugin-sdk.md) packages. They run in the same sandbox as marketplace plugins, with only the capabilities they declare. This guide is for contributors who change them or add one.
 
 | Plugin | What it does | Capabilities |
 |---|---|---|
@@ -17,49 +17,38 @@ The plugins that ship with GoControlPanel are ordinary [plugin SDK](./plugin-sdk
 
 ## Where they live
 
-Each plugin is a folder in [`plugins/`](../plugins), laid out like any SDK project: `tmcp-plugin.json`, `src/index.ts`, `templates/` and a `README.md`. The `plugins/` workspace builds them all:
-
-```bash
-bun run --filter @gcp/first-party-plugins build      # packs every plugin into apps/gbx-service/first-party
-bun run --filter @gcp/first-party-plugins typecheck
-```
-
-The GBX service's `dev` and `build` scripts run that build, and the Docker image ships the zips in `first-party/` (`FIRST_PARTY_PLUGINS_DIR` overrides the folder).
-
-Their slugs are reserved for them: `tmcp-plugin init` and private uploads refuse those names. The marketplace registry accepts them, so the same packages can be published there.
+Plugin source, templates, behavior tests, immutable package archives, and version
+metadata live in the [plugin registry repository](https://github.com/MRegterschot/tmcontrolpanel-plugins).
+This panel repository keeps the SDK, generic sandbox/runtime tests, and management UI.
+The GBX image no longer builds or ships first-party packages.
 
 ## How a panel gets them
 
-On every start, before any server connects, the service installs the packages it ships with:
+On startup the GBX service reads `MARKETPLACE_INDEX_URL` (the official registry by
+default), selects the newest non-withdrawn version of each first-party plugin, and
+downloads it from the index's origin. It validates the checksum and manifest before
+storing it as a marketplace package. Existing built-in installs are migrated with
+their settings and on/off state preserved. Existing packaged installs keep their
+pinned version; admins accept updates and additional permissions in the Plugins UI.
 
-1. Each package is stored as a plugin version, like a marketplace download. Versions it already has are left alone.
-2. Servers that ran the old built-in plugin (from before plugins were packages) are moved onto the package. They keep their on/off state and settings, and get the package's capabilities granted. Old rows that were never turned on or configured are removed.
-3. An uploaded plugin that already took the name is skipped, with a warning in the log.
-
-After that the first-party plugins behave like marketplace plugins. Admins install, turn on and off, and uninstall them per server on the server's Plugins page, under **Install**. When a newer service ships a newer version, the Plugins page offers it as an update. If the new version asks for more capabilities, the admin has to accept them again. Uninstalling a first-party plugin keeps the package, so it stays available on the panel.
+If the registry is unavailable, packages already stored in the database still run.
+New installations need registry access to obtain first-party packages. An empty
+`MARKETPLACE_INDEX_URL` disables startup imports and marketplace browsing; private
+uploads and existing packages continue to work. `FIRST_PARTY_PLUGINS_DIR` is no longer used.
 
 ## Settings
 
 First-party plugins don't declare a `configSchema`. The panel keeps its own forms for them (`apps/web/src/forms/server/plugins` and `apps/web/src/components/modals/plugins/plugins`). The Plugins page opens them from **Configure** through [`first-party-settings.tsx`](../apps/web/src/components/plugins/first-party-settings.tsx). A plugin with settings therefore needs a form there too, and the plugin has to accept whatever older forms stored. `normalizeConfig` in the match plugin is an example.
 
-## Changing a plugin
+## Changing and publishing a plugin
 
-1. Edit the plugin in `plugins/<slug>` and **raise `version`** in its `tmcp-plugin.json`. Panels that already store a version keep their copy of it, so a change under the same version number never reaches them.
-2. If it needs more access, add the capability. Admins will be asked to accept it when they update.
-3. Run the tests. `apps/gbx-service/test/plugins/widget-plugins.test.ts` and `match-plugin.test.ts` load the packages into the real sandbox through the test harness:
+Work in the registry repository's `plugins/<slug>` directory and increase the
+manifest version for every change. Its README describes SDK setup, typechecking,
+sandbox tests, packaging, and publication. `bun run build --publish` writes new
+immutable archives and descriptors; `bun run check` verifies source checksums and
+runs the tests. A merged registry PR publishes updates through GitHub Pages without
+rebuilding the panel image.
 
-   ```ts
-   const h = await createHarness({
-     players: [player("p1")],
-     packages: [{ bytes: await firstPartyPackage("map-info"), config: {} }],
-   });
-   expect(h.session.widgetJson("plg.map-info.map-info-widget-update", "mapJson")).toEqual({ name: "Map A", author: "Author" });
-   ```
-
-   Page ids are prefixed with `plg.<slug>.` and actions with `<slug>:`, as for every sandboxed plugin.
-
-To add a plugin, create the folder (copying an existing one is quickest), add its slug to `FIRST_PARTY_PLUGIN_NAMES` in [`packages/shared/src/plugins/manifest.ts`](../packages/shared/src/plugins/manifest.ts), and add a form to the panel if it has settings.
-
-## Publishing to the marketplace
-
-The [registry](https://github.com/MRegterschot/tmcontrolpanel-plugins) lists the first-party plugins too, so panels that read the marketplace see updates there. Publish the zips from the same build that the image ships. Packing is deterministic, but a panel refuses a marketplace copy whose checksum differs from the version it already stores. See [plugin-sdk.md](./plugin-sdk.md#publishing-to-the-marketplace) for the registry steps.
+Reserved first-party slugs and their custom settings forms remain in the panel;
+adding a new first-party plugin may therefore also need changes to
+`FIRST_PARTY_PLUGIN_NAMES` and the panel's settings UI.

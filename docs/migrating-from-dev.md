@@ -172,7 +172,7 @@ Never run both at once. Restore the dump only if you made schema changes of your
 - **Server passwords** are no longer sent to the browser or written to the audit log. Nothing to do on your side.
 - **Errors at startup are stricter.** The web app exits with a list of missing values when `GBX_SERVICE_TOKEN` or `WS_TICKET_SECRET` is missing or too short, and the service exits on invalid config. Read the container logs first when a container will not stay up.
 - **Reconnects.** The browser reconnects to the live sockets with a growing delay. Close code 4404 (server not managed yet) is retried about five times, which covers a newly created server the service has not registered yet.
-- **Built-in plugins** were ported to a new plugin SDK. Custom changes you made to `src/plugins/**`, `src/lib/manialink/**` or the manager classes on `dev` do not carry over and must be ported to `apps/gbx-service` (plugins in `src/core/plugins`, templates in `templates/`).
+- **Built-in plugins** were ported to a new plugin SDK. Custom changes you made to `src/plugins/**`, `src/lib/manialink/**` or the manager classes on `dev` do not carry over and must be ported to SDK packages in the [plugin registry](https://github.com/MRegterschot/tmcontrolpanel-plugins). The SDK and sandbox runtime remain in `apps/gbx-service` and `packages/plugin-sdk`.
 
 ## For developers and forks
 

@@ -2,7 +2,7 @@
 
 Plugins add widgets, windows, chat commands and automation to Trackmania servers managed by GoControlPanel. A plugin is a small package: a manifest, one JavaScript bundle and its manialink templates. Admins install it per server from the [marketplace](./plugin-marketplace.md), or upload it privately to their own panel. It runs in a sandbox and can only do what the admin allowed when they installed it.
 
-This guide is for plugin authors. For how panels run and review plugins, see [plugin-marketplace.md](./plugin-marketplace.md). The plugins that ship with GoControlPanel are written with this SDK too; see [first-party-plugins.md](./first-party-plugins.md).
+This guide is for plugin authors. For how panels run and review plugins, see [plugin-marketplace.md](./plugin-marketplace.md). The first-party plugins published in the registry are written with this SDK too; see [first-party-plugins.md](./first-party-plugins.md).
 
 ## Quick start
 

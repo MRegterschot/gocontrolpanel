@@ -23,7 +23,12 @@ async function countAll(): Promise<PublicStats> {
     db.servers.count({ where: { deletedAt: null } }),
     db.users.count(),
     db.maps.count({ where: { deletedAt: null } }),
-    db.matches.count({ where: { deletedAt: null } }),
+    db.matches.count({
+      where: {
+        deletedAt: null,
+        records: { some: { deletedAt: null } },
+      },
+    }),
     db.records.count({ where: { deletedAt: null } }),
   ]);
   return { servers, players, maps, matches, records };

@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { ActionRouter } from "../../src/core/manialink/action-router";
 import { ActionGroup } from "../../src/core/manialink/components/action-group";
@@ -5,16 +6,30 @@ import { Manialink } from "../../src/core/manialink/components/manialink";
 import { Window } from "../../src/core/manialink/components/window";
 import { ManialinkService } from "../../src/core/manialink/manialink-service";
 import { TemplateRenderer } from "../../src/core/manialink/template-renderer";
+import { loadTemplateSources } from "../../src/infra/templates";
 import { flush } from "../fakes/clock";
 import { FakeGbxSession } from "../fakes/fake-gbx";
 import { testRenderer } from "../fakes/harness";
 import { silentLogger } from "../fakes/logger";
+const TEMPLATES_DIR = fileURLToPath(
+  new URL("../../templates", import.meta.url),
+);
+
+const TEMPLATES_DIR = fileURLToPath(
+  new URL("../../templates", import.meta.url),
+);
 
 function setup() {
   const gbx = new FakeGbxSession();
   const manialinks = new ManialinkService(gbx, silentLogger);
   const actions = new ActionRouter(silentLogger);
-  return { gbx, manialinks, actions, deps: { renderer: testRenderer(), manialinks, actions } };
+  const renderer = new TemplateRenderer({
+    widget: '<manialink id="{{id}}"/>',
+    "widget-update": '<manialink id="{{id}}">{{{data.mapJson}}}</manialink>',
+    window: '<manialink id="{{id}}"/>',
+    ...loadTemplateSources(TEMPLATES_DIR),
+  });
+  return { gbx, manialinks, actions, deps: { renderer, manialinks, actions } };
 }
 
 describe("TemplateRenderer", () => {
@@ -24,11 +39,15 @@ describe("TemplateRenderer", () => {
       part: "<p>{{ add 1 2 }}</p>",
       page: '{{#extend "base"}}{{#content "body"}}{{> part}}{{bool flag}}{{/content}}{{/extend}}',
     });
-    expect(renderer.render("page", { id: "x", flag: true })).toBe('<root id="x"><p>3</p>True</root>');
+    expect(renderer.render("page", { id: "x", flag: true })).toBe(
+      '<root id="x"><p>3</p>True</root>',
+    );
   });
 
   it("throws on unknown templates", () => {
-    expect(() => new TemplateRenderer({}).render("nope", {})).toThrow(/Unknown manialink template/);
+    expect(() => new TemplateRenderer({}).render("nope", {})).toThrow(
+      /Unknown manialink template/,
+    );
   });
 
   // Snapshots guard the output of every shipped template against accidental changes
@@ -52,21 +71,27 @@ describe("TemplateRenderer", () => {
 describe("ManialinkService", () => {
   it("hides then shows a public page and remembers it", () => {
     const { gbx, manialinks } = setup();
-    manialinks.display("w", "<manialink id=\"w\">x</manialink>");
+    manialinks.display("w", '<manialink id="w">x</manialink>');
 
-    expect(gbx.sent.map((s) => s.method)).toEqual(["SendDisplayManialinkPage", "SendDisplayManialinkPage"]);
+    expect(gbx.sent.map((s) => s.method)).toEqual([
+      "SendDisplayManialinkPage",
+      "SendDisplayManialinkPage",
+    ]);
     expect(manialinks.displayedIds()).toEqual(["w"]);
   });
 
   it("re-displays public and personal pages to a reconnecting player", async () => {
     const { gbx, manialinks } = setup();
-    manialinks.display("public", "<manialink id=\"public\"/>");
-    manialinks.display("mine", "<manialink id=\"mine\"/>", "abc");
-    manialinks.display("theirs", "<manialink id=\"theirs\"/>", "other");
+    manialinks.display("public", '<manialink id="public"/>');
+    manialinks.display("mine", '<manialink id="mine"/>', "abc");
+    manialinks.display("theirs", '<manialink id="theirs"/>', "other");
 
     await manialinks.onPlayerConnect("abc");
     const calls = gbx.multicalls.at(-1)!;
-    expect(calls.map((c) => c[2])).toEqual(['<manialink id="public"/>', '<manialink id="mine"/>']);
+    expect(calls.map((c) => c[2])).toEqual([
+      '<manialink id="public"/>',
+      '<manialink id="mine"/>',
+    ]);
   });
 
   it("forgets personal pages of disconnected players", () => {
@@ -95,7 +120,10 @@ describe("ManialinkService", () => {
 describe("components", () => {
   it("pairs a widget with its update page", () => {
     const { gbx, deps } = setup();
-    const widget = new Manialink(deps, { id: "map-info-widget", template: "widgets/map-info/map-info" });
+    const widget = new Manialink(deps, {
+      id: "map-info-widget",
+      template: "widget",
+    });
     widget.setData({ mapJson: JSON.stringify({ name: "A", author: "B" }) });
     widget.display();
 
@@ -118,7 +146,7 @@ describe("components", () => {
     const make = (login: string) =>
       new Window(deps, {
         id: "ecm-window",
-        template: "windows/ecm/ecm-window",
+        template: "window",
         login,
         title: "ECM",
         onClose: () => closed.push(login),
@@ -126,7 +154,12 @@ describe("components", () => {
     make("a");
     make("b");
 
-    await actions.dispatch({ PlayerUid: 1, Login: "a", Answer: "close-window-ecm-window", Entries: [] });
+    await actions.dispatch({
+      PlayerUid: 1,
+      Login: "a",
+      Answer: "close-window-ecm-window",
+      Entries: [],
+    });
     await flush();
     expect(closed).toEqual(["a"]);
   });

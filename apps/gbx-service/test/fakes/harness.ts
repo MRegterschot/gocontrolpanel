@@ -1,14 +1,10 @@
 import type { SMapInfo, SPlayerInfo } from "@gcp/shared";
 import { readPluginPackage } from "@gcp/shared/plugin-package";
-import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { packPlugin } from "@tmcontrolpanel/plugin-sdk/cli";
 import { TemplateRenderer } from "../../src/core/manialink/template-renderer";
+import type { SandboxLimits } from "../../src/core/plugins/sandbox/limits";
 import { PackageLoader } from "../../src/core/plugins/sandbox/package-loader";
 import type { SandboxAssets } from "../../src/core/plugins/sandbox/sandboxed-plugin";
-import type { SandboxLimits } from "../../src/core/plugins/sandbox/limits";
 import type { PluginDefinition } from "../../src/core/plugins/sdk";
 import type { ServerPluginRecord, ServerRecord } from "../../src/core/ports";
 import { ServerRuntime } from "../../src/core/server/server-runtime";
@@ -34,47 +30,19 @@ import {
 let renderer: TemplateRenderer | null = null;
 let assets: Promise<SandboxAssets> | null = null;
 
-const TEMPLATES_DIR = fileURLToPath(new URL("../../templates", import.meta.url));
+const TEMPLATES_DIR = fileURLToPath(
+  new URL("../../templates", import.meta.url),
+);
 
 export function testSandboxAssets(): Promise<SandboxAssets> {
   assets ??= loadSandboxAssets(TEMPLATES_DIR);
   return assets;
 }
 
-const PLUGINS_DIR = fileURLToPath(new URL("../../../../plugins", import.meta.url));
-const FIRST_PARTY = readdirSync(PLUGINS_DIR, { withFileTypes: true })
-  .filter((entry) => entry.isDirectory() && existsSync(join(PLUGINS_DIR, entry.name, "tmcp-plugin.json")))
-  .map((entry) => entry.name);
-
-// The service's layouts plus every first-party plugin's templates, as the sandbox sees them
+// Shared runtime layouts only; plugin templates are owned by their packages.
 export function testRenderer(): TemplateRenderer {
-  renderer ??= new TemplateRenderer({
-    ...loadTemplateSources(TEMPLATES_DIR),
-    ...Object.assign(
-      {},
-      ...FIRST_PARTY.map((name) => {
-        const dir = join(PLUGINS_DIR, name, "templates");
-        return existsSync(dir) ? loadTemplateSources(dir) : {};
-      }),
-    ),
-  });
+  renderer ??= new TemplateRenderer(loadTemplateSources(TEMPLATES_DIR));
   return renderer;
-}
-
-const firstParty = new Map<string, Promise<Uint8Array>>();
-
-// A first-party plugin from plugins/, built once per test run
-export function firstPartyPackage(slug: string): Promise<Uint8Array> {
-  let bytes = firstParty.get(slug);
-  if (!bytes) {
-    const outDir = mkdtempSync(join(tmpdir(), `gcp-${slug}-`));
-    bytes = packPlugin(join(PLUGINS_DIR, slug), { outDir }).then((result) => {
-      rmSync(outDir, { recursive: true, force: true });
-      return result.bytes;
-    });
-    firstParty.set(slug, bytes);
-  }
-  return bytes;
 }
 
 export const MAP_A: SMapInfo = {
@@ -97,11 +65,19 @@ export const MAP_A: SMapInfo = {
   MapStyle: "",
 };
 
-export const MAP_B: SMapInfo = { ...MAP_A, UId: "map-b-uid", Name: "$f00Map B", FileName: "Campaigns/MapB.Map.Gbx" };
+export const MAP_B: SMapInfo = {
+  ...MAP_A,
+  UId: "map-b-uid",
+  Name: "$f00Map B",
+  FileName: "Campaigns/MapB.Map.Gbx",
+};
 
 export const SERVER_ID = "server-1";
 
-export function player(login: string, overrides: Partial<SPlayerInfo> = {}): SPlayerInfo {
+export function player(
+  login: string,
+  overrides: Partial<SPlayerInfo> = {},
+): SPlayerInfo {
   return {
     Login: login,
     NickName: `Nick ${login}`,
@@ -114,7 +90,9 @@ export function player(login: string, overrides: Partial<SPlayerInfo> = {}): SPl
   };
 }
 
-export function serverRecord(overrides: Partial<ServerRecord> = {}): ServerRecord {
+export function serverRecord(
+  overrides: Partial<ServerRecord> = {},
+): ServerRecord {
   return {
     id: SERVER_ID,
     name: "Test Server",
@@ -138,7 +116,11 @@ export function serverRecord(overrides: Partial<ServerRecord> = {}): ServerRecor
   };
 }
 
-export function pluginRecord(name: string, config: unknown = null, enabled = true): ServerPluginRecord {
+export function pluginRecord(
+  name: string,
+  config: unknown = null,
+  enabled = true,
+): ServerPluginRecord {
   return { pluginId: `plugin-${name}`, name, enabled, config };
 }
 
@@ -154,7 +136,8 @@ export interface PackageInstall {
 // The server_plugins row of an installed package, as the repository returns it
 export function packageRecord(install: PackageInstall): ServerPluginRecord {
   const pkg = readPluginPackage(install.bytes);
-  const versionId = install.versionId ?? `version-${pkg.manifest.slug}-${pkg.manifest.version}`;
+  const versionId =
+    install.versionId ?? `version-${pkg.manifest.slug}-${pkg.manifest.version}`;
   return {
     pluginId: `plugin-${pkg.manifest.slug}`,
     name: pkg.manifest.slug,
@@ -182,13 +165,16 @@ export interface HarnessOptions {
   // Installed marketplace/uploaded plugins, run in the sandbox
   packages?: PackageInstall[];
   sandboxLimits?: SandboxLimits;
+  templates?: Record<string, string>;
 }
 
 export type Harness = Awaited<ReturnType<typeof createHarness>>;
 
 export async function createHarness(options: HarnessOptions = {}) {
   const clock = new FakeClock();
-  const servers = new InMemoryServerRepository().add(serverRecord(options.server));
+  const servers = new InMemoryServerRepository().add(
+    serverRecord(options.server),
+  );
   const players = new InMemoryPlayerRepository();
   const maps = new InMemoryMapRepository();
   const matches = new InMemoryMatchRepository();
@@ -231,12 +217,21 @@ export async function createHarness(options: HarnessOptions = {}) {
     const session = new FakeGbxSession({
       GetCurrentMapInfo: () => world.currentMap,
       GetPlayerList: () => world.players,
-      GetMainServerPlayerInfo: { Login: "server-login", NickName: "Server", PlayerId: 0 },
-      GetPlayerInfo: (login: string) => world.players.find((p) => p.Login === login) ?? player(login),
-      GetScriptName: () => ({ CurrentValue: world.scriptName, NextValue: world.scriptName }),
+      GetMainServerPlayerInfo: {
+        Login: "server-login",
+        NickName: "Server",
+        PlayerId: 0,
+      },
+      GetPlayerInfo: (login: string) =>
+        world.players.find((p) => p.Login === login) ?? player(login),
+      GetScriptName: () => ({
+        CurrentValue: world.scriptName,
+        NextValue: world.scriptName,
+      }),
       GetModeScriptSettings: () => world.scriptSettings,
       GetMapList: () => world.mapList,
-      GetMapInfo: (fileName: string) => world.mapList.find((m) => m.FileName === fileName),
+      GetMapInfo: (fileName: string) =>
+        world.mapList.find((m) => m.FileName === fileName),
       GetCurrentRanking: () => world.players,
       AddMapList: (fileNames: string[]) => fileNames.length,
       RemoveMapList: (fileNames: string[]) => fileNames.length,
@@ -250,7 +245,12 @@ export async function createHarness(options: HarnessOptions = {}) {
     log: silentLogger,
     clock,
     sessionFactory: newSession,
-    renderer: testRenderer(),
+    renderer: options.templates
+      ? new TemplateRenderer({
+          ...loadTemplateSources(TEMPLATES_DIR),
+          ...options.templates,
+        })
+      : testRenderer(),
     plugins: options.plugins ?? [],
     packages,
     servers,
@@ -300,11 +300,24 @@ export async function createHarness(options: HarnessOptions = {}) {
       await flush();
     },
     async chat(login: string, text: string) {
-      sessions[sessions.length - 1].emit("ManiaPlanet.PlayerChat", [1, login, text, false, 0]);
+      sessions[sessions.length - 1].emit("ManiaPlanet.PlayerChat", [
+        1,
+        login,
+        text,
+        false,
+        0,
+      ]);
       await flush();
     },
-    async click(login: string, answer: string, entries: { Name: string; Value: string }[] = []) {
-      sessions[sessions.length - 1].emit("ManiaPlanet.PlayerManialinkPageAnswer", [1, login, answer, entries]);
+    async click(
+      login: string,
+      answer: string,
+      entries: { Name: string; Value: string }[] = [],
+    ) {
+      sessions[sessions.length - 1].emit(
+        "ManiaPlanet.PlayerManialinkPageAnswer",
+        [1, login, answer, entries],
+      );
       await flush();
     },
   };
