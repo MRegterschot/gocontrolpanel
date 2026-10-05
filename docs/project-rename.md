@@ -75,6 +75,12 @@ configuration. They were not performed by editing the repository.
    become invalid; refresh/reconnect browser sessions after deployment. Existing
    durable Redis keys such as the jukebox are unchanged. Restart the service to
    redraw game widgets under the new manialink prefix.
+   The root Compose configuration waits for the web server to listen before
+   starting GBX, because the web entrypoint applies migrations first. Custom
+   deployment configurations must also complete migrations before starting GBX.
+   A `P2022` error for `plugins.source` indicates that the marketplace schema
+   is missing from the connected database. Apply the migrations from the matching
+   web image to that database, then restart GBX to retry first-party installation.
 6. Reinstall dependencies with `bun install --frozen-lockfile`, regenerate Prisma
    with `DB=mysql bun run generate` (or `DB=postgres`), and rebuild deployed apps
    and plugin bundles. Clear/rebuild ignored Next build caches if they reference
