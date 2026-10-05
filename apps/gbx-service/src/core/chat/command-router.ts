@@ -1,4 +1,9 @@
+import {
+  name as appName,
+  version as appVersion,
+} from "../../../../../package.json";
 import type { Logger } from "../logger";
+import { SYSTEM_COMMAND_HELP } from "./system-commands";
 
 export type CommandHandler = (args: string[], login: string) => unknown;
 
@@ -26,6 +31,10 @@ export class CommandRouter {
     private readonly log: Logger,
     private readonly reply: (login: string, message: string) => Promise<void>,
     private readonly help: () => { enabled: boolean; provider: HelpProvider },
+    private readonly systemCommand?: (
+      name: string,
+      login: string,
+    ) => Promise<boolean>,
   ) {}
 
   register(name: string, handler: CommandHandler): () => void {
@@ -44,9 +53,18 @@ export class CommandRouter {
     const command = parseCommand(text);
     if (!command) return false;
 
+    // Native commands work without plugins and cannot be overridden by one.
+    if (command.name === "version") {
+      await this.reply(login, `${appName} v${appVersion}`);
+      return true;
+    }
+
     if (command.name === "help") {
       await this.handleHelp(command.args, login);
+      return true;
     }
+
+    if (await this.systemCommand?.(command.name, login)) return true;
 
     // Handlers run concurrently; one slow or failing handler never blocks the others
     await Promise.all(
@@ -71,9 +89,17 @@ export class CommandRouter {
 
     const text =
       args.length === 0
-        ? "To get help for a specific plugin, use /help <plugin>. Available plugins: " +
+        ? "Native commands: /version, " +
+          Object.keys(SYSTEM_COMMAND_HELP)
+            .map((name) => `/${name}`)
+            .join(", ") +
+          ". To get help for a specific plugin, use /help <plugin>. Available plugins: " +
           provider.pluginNames().join(", ")
-        : provider.helpText(args[0]);
+        : args[0].toLowerCase() === "version"
+          ? "/version: shows the control panel app version."
+          : Object.hasOwn(SYSTEM_COMMAND_HELP, args[0].toLowerCase())
+            ? `/${args[0].toLowerCase()}: ${SYSTEM_COMMAND_HELP[args[0].toLowerCase()]}.`
+            : provider.helpText(args[0]);
 
     await this.reply(login, text);
   }

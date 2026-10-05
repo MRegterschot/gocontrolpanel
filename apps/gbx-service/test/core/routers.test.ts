@@ -1,9 +1,25 @@
 import { describe, expect, it, vi } from "vitest";
-import { CommandRouter, parseCommand } from "../../src/core/chat/command-router";
-import { ActionRouter, compileActionPattern } from "../../src/core/manialink/action-router";
+import {
+  name as appName,
+  version as appVersion,
+} from "../../../../package.json";
+import {
+  CommandRouter,
+  parseCommand,
+} from "../../src/core/chat/command-router";
+import {
+  ActionRouter,
+  compileActionPattern,
+} from "../../src/core/manialink/action-router";
+import { createHarness, player } from "../fakes/harness";
 import { silentLogger } from "../fakes/logger";
 
-const answer = (Answer: string, Login = "abc") => ({ PlayerUid: 1, Login, Answer, Entries: [] });
+const answer = (Answer: string, Login = "abc") => ({
+  PlayerUid: 1,
+  Login,
+  Answer,
+  Entries: [],
+});
 
 describe("ActionRouter", () => {
   it("compiles patterns with escaped literals", () => {
@@ -24,7 +40,9 @@ describe("ActionRouter", () => {
     await router.dispatch(answer("match-pickban-action-xyz"));
 
     expect(exact).toHaveBeenCalledTimes(1);
-    expect(pattern).toHaveBeenCalledWith(answer("match-pickban-action-xyz"), { uid: "xyz" });
+    expect(pattern).toHaveBeenCalledWith(answer("match-pickban-action-xyz"), {
+      uid: "xyz",
+    });
   });
 
   it("stops calling a handler after unregistering", async () => {
@@ -55,12 +73,19 @@ describe("CommandRouter", () => {
   };
 
   it("parses commands case-insensitively", () => {
-    expect(parseCommand("/PickBan a b")).toEqual({ name: "pickban", args: ["a", "b"] });
+    expect(parseCommand("/PickBan a b")).toEqual({
+      name: "pickban",
+      args: ["a", "b"],
+    });
     expect(parseCommand("hello")).toBeNull();
   });
 
   it("dispatches to registered handlers", async () => {
-    const router = new CommandRouter(silentLogger, async () => {}, () => ({ enabled: true, provider: helpProvider }));
+    const router = new CommandRouter(
+      silentLogger,
+      async () => {},
+      () => ({ enabled: true, provider: helpProvider }),
+    );
     const handler = vi.fn();
     router.register("admin", handler);
 
@@ -69,16 +94,56 @@ describe("CommandRouter", () => {
     expect(await router.dispatch("not a command", "abc")).toBe(false);
   });
 
+  it("answers /version privately without plugins, even when help is disabled", async () => {
+    const h = await createHarness({
+      server: { enableHelpCommand: false },
+      players: [player("abc")],
+    });
+    await h.chat("abc", "/VERSION");
+    expect(h.session.calls).toContainEqual({
+      method: "ChatSendServerMessageToLogin",
+      params: [`${appName} v${appVersion}`, "abc"],
+    });
+    expect(
+      h.session.calls.filter((call) => call.method === "ChatSendServerMessage"),
+    ).toEqual([]);
+  });
+
+  it("does not dispatch /version to a plugin handler", async () => {
+    const reply = vi.fn(async () => {});
+    const router = new CommandRouter(silentLogger, reply, () => ({
+      enabled: true,
+      provider: helpProvider,
+    }));
+    const handler = vi.fn();
+    router.register("version", handler);
+    expect(await router.dispatch("/version", "abc")).toBe(true);
+    expect(reply).toHaveBeenCalledOnce();
+    expect(handler).not.toHaveBeenCalled();
+  });
+
   it("answers /help when enabled", async () => {
     const reply = vi.fn(async () => {});
     let enabled = true;
-    const router = new CommandRouter(silentLogger, reply, () => ({ enabled, provider: helpProvider }));
+    const router = new CommandRouter(silentLogger, reply, () => ({
+      enabled,
+      provider: helpProvider,
+    }));
 
     await router.dispatch("/help", "abc");
-    expect(reply).toHaveBeenLastCalledWith("abc", expect.stringContaining("match, ecm"));
+    expect(reply).toHaveBeenLastCalledWith(
+      "abc",
+      expect.stringContaining("match, ecm"),
+    );
 
     await router.dispatch("/help ecm", "abc");
     expect(reply).toHaveBeenLastCalledWith("abc", "help for ecm");
+
+    await router.dispatch("/help version", "abc");
+    expect(reply).toHaveBeenLastCalledWith(
+      "abc",
+      "/version: shows the control panel app version.",
+    );
 
     enabled = false;
     reply.mockClear();

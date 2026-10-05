@@ -484,6 +484,28 @@ For example, to view the logs of the **GoControlPanel** service:
 docker compose logs gocontrolpanel
 ```
 
+Players can type `/version` in game to receive the control panel app version in a
+private chat reply. This native command works without plugins, even when `/help`
+is disabled. The version comes from the root `package.json` and is bundled into
+the GBX service build. `/help version` describes the command when help is enabled.
+
+Other native commands also reply privately and work without plugins:
+
+| Command | Information | Access |
+| --- | --- | --- |
+| `/uptime` | Service uptime and duration of the current server connection | Everyone |
+| `/status` | Connection state, game mode, drivers and spectators | Everyone |
+| `/plugins` | Installed versions and disabled/running/not-running state | Everyone |
+| `/ping` | Dedicated server XML-RPC round-trip time (not gameplay latency) | Everyone |
+| `/sysinfo` | Node version, platform, process memory, CPU count and host CPU load | Server admins |
+| `/diagnostics` | Database, Redis and GBX connectivity checked separately | Server admins |
+
+Global panel admins, direct server Admins, and Admins of groups containing the
+server can use the restricted commands. Probes and permission checks time out
+after three seconds. Error details remain in service logs. `/help <command>`
+describes each command when help is enabled. These native command names are
+reserved and cannot be claimed by plugins.
+
 Everything that talks to a dedicated server (connection errors, plugins, chat commands, match recording) is logged by the **GBX service**:
 
 ```bash

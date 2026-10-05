@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  NATIVE_COMMANDS,
   addedCapabilities,
   coercePluginConfig,
   compareVersions,
@@ -73,11 +74,11 @@ describe("manifest", () => {
     expect(result.manifest.gamemodes).toEqual([]);
   });
 
-  it("rejects reserved names, /help and unknown capabilities", () => {
+  it.each(NATIVE_COMMANDS)("rejects reserved names, /%s and unknown capabilities", (command) => {
     const result = parseManifest({
       ...validManifest,
       slug: "server",
-      commands: ["help"],
+      commands: [command],
       capabilities: ["root"],
     });
     expect(result.success).toBe(false);

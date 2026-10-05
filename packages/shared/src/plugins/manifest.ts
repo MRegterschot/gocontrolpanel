@@ -37,6 +37,8 @@ const RESERVED_SLUGS = new Set<string>([
 ]);
 
 export const PLUGIN_SLUG = /^[a-z][a-z0-9-]{1,38}[a-z0-9]$/;
+export const NATIVE_COMMANDS = ["help", "version", "uptime", "status", "plugins", "ping", "sysinfo", "diagnostics"] as const;
+
 export const PLUGIN_COMMAND = /^[a-z0-9][a-z0-9_-]{0,31}$/;
 
 export function isReservedSlug(slug: string): boolean {
@@ -85,7 +87,10 @@ export const pluginManifestSchema = z
         z
           .string()
           .regex(PLUGIN_COMMAND, "Lowercase letters, digits, - and _")
-          .refine((command) => command !== "help", "/help belongs to the panel"),
+          .refine(
+            (command) => !NATIVE_COMMANDS.some(name => name === command),
+            "This command belongs to the panel",
+          ),
       )
       .max(20)
       .refine(unique, "Duplicate command")

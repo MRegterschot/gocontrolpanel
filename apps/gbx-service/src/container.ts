@@ -20,6 +20,7 @@ import {
   PrismaRecordRepository,
   PrismaServerRepository,
 } from "./infra/db/prisma-repositories";
+import { PrismaSystemCommandServices } from "./infra/db/system-command-services";
 import { EvotmGbxSession } from "./infra/gbx/evotm-session";
 import { loadFirstPartyPackages } from "./infra/first-party-packages";
 import { HttpsPluginClient } from "./infra/http/plugin-http-client";
@@ -83,6 +84,7 @@ export async function createContainer(config: Config) {
     jukebox: new RedisJukeboxStore(redis),
     mapMetadata: nadeo,
     nadeo,
+    systemCommands: new PrismaSystemCommandServices(db, redis),
   };
 
   const registry = new ServerRegistry({

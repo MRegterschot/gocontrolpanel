@@ -1,5 +1,6 @@
 import type { LiveSnapshot, ServerClient } from "@gcp/shared";
 import { ChatService } from "../chat/chat-service";
+import { SystemCommands, type SystemCommandServices } from "../chat/system-commands";
 import { CommandRouter } from "../chat/command-router";
 import { AppError, errorMessage } from "../errors";
 import { TypedEventBus } from "../events";
@@ -64,6 +65,7 @@ export interface RuntimeDependencies {
   maxRetries?: number;
   initialConnectWindowMs?: number;
   slowRetryDelayMs?: number;
+  systemCommands?: SystemCommandServices;
 }
 
 const API_VERSION = "2023-04-24";
@@ -89,6 +91,7 @@ export class ServerRuntime {
   private readonly supervisor: ConnectionSupervisor;
   private session: GbxSession | null = null;
   private connected = false;
+  private connectedAt: number | null = null;
   private name: string | null = null;
   // Details of the last connection attempt, whether or not it succeeded
   private attemptedTarget: ConnectionTarget | null = null;
@@ -135,10 +138,20 @@ export class ServerRuntime {
     });
     this.commands = new ServerCommands({ gbx, state, bus, chat, mapList, log });
 
+    const systemCommands = new SystemCommands({
+      serverId, state, gbx, clock, log,
+      reply: (login, message) => chat.sendTo(login, message),
+      connected: () => this.connected,
+      connectedAt: () => this.connectedAt,
+      loadedPlugins: () => this.plugins.loadedIds(),
+      services: deps.systemCommands,
+    });
+
     const commandRouter = new CommandRouter(
       log,
       (login, message) => chat.sendTo(login, message),
       () => ({ enabled: state.enableHelpCommand, provider: this.plugins }),
+      (name, login) => systemCommands.dispatch(name, login),
     );
 
     this.plugins = new PluginHost(
@@ -370,6 +383,7 @@ export class ServerRuntime {
     }
 
     this.connected = true;
+    this.connectedAt = this.deps.clock.now();
     this.log.info({ name: server.name }, "Connected to GBX server");
     this.events.emit("connect");
 
@@ -416,6 +430,7 @@ export class ServerRuntime {
 
     if (!this.connected) return;
     this.connected = false;
+    this.connectedAt = null;
     this.log.info("Disconnected from GBX server");
 
     await this.plugins.unloadAll();
@@ -432,6 +447,7 @@ export class ServerRuntime {
       // Unload first so widgets are removed while the session can still send
       await this.plugins.unloadAll();
       this.connected = false;
+      this.connectedAt = null;
       this.events.emit("disconnect");
     }
 

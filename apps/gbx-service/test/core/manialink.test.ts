@@ -11,9 +11,7 @@ import { flush } from "../fakes/clock";
 import { FakeGbxSession } from "../fakes/fake-gbx";
 import { testRenderer } from "../fakes/harness";
 import { silentLogger } from "../fakes/logger";
-const TEMPLATES_DIR = fileURLToPath(
-  new URL("../../templates", import.meta.url),
-);
+
 
 const TEMPLATES_DIR = fileURLToPath(
   new URL("../../templates", import.meta.url),

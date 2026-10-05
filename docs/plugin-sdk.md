@@ -74,7 +74,7 @@ A package may be at most 5 MB, unpack to at most 10 MB and hold at most 500 file
 | `license`, `repository`, `homepage` | Optional. The links must be `https://`. |
 | `entry` | Path of the bundle inside the package. Default `index.js`. |
 | `gamemodes` | Modes the plugin runs in: `timeattack`, `rounds`, `reversecup`, `cup`, `tmwc`, `tmwt`, `teams`, `knockout`. Leave it out to run in every mode. |
-| `commands` | Chat commands the plugin may register, without the slash. At most 20. `help` belongs to the panel. |
+| `commands` | Chat commands the plugin may register, without the slash. At most 20. `help`, `version`, `uptime`, `status`, `plugins`, `ping`, `sysinfo`, and `diagnostics` belong to the panel. |
 | `capabilities` | What the plugin may do. See [Capabilities](#capabilities). |
 | `configSchema` | The plugin's settings form. See [Settings](#settings). |
 | `helpText` | Shown by `/help <slug>`. At most 1000 characters. |

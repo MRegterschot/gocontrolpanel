@@ -3,6 +3,7 @@ import { readPluginPackage } from "@gcp/shared/plugin-package";
 import { fileURLToPath } from "node:url";
 import { TemplateRenderer } from "../../src/core/manialink/template-renderer";
 import type { SandboxLimits } from "../../src/core/plugins/sandbox/limits";
+import type { SystemCommandServices } from "../../src/core/chat/system-commands";
 import { PackageLoader } from "../../src/core/plugins/sandbox/package-loader";
 import type { SandboxAssets } from "../../src/core/plugins/sandbox/sandboxed-plugin";
 import type { PluginDefinition } from "../../src/core/plugins/sdk";
@@ -166,6 +167,7 @@ export interface HarnessOptions {
   packages?: PackageInstall[];
   sandboxLimits?: SandboxLimits;
   templates?: Record<string, string>;
+  systemCommands?: SystemCommandServices;
 }
 
 export type Harness = Awaited<ReturnType<typeof createHarness>>;
@@ -263,6 +265,7 @@ export async function createHarness(options: HarnessOptions = {}) {
     jukebox,
     mapMetadata: nadeo,
     nadeo,
+    systemCommands: options.systemCommands,
   });
 
   if (options.connect !== false) {
