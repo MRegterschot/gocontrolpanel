@@ -1,3 +1,4 @@
+import { Card } from "../ui/card";
 import { DndListColumn } from "./dnd-list";
 import DndListHeader from "./dnd-list-header";
 
@@ -9,12 +10,12 @@ export default function DndListHeaders<TData extends { id: string | number }>({
   columns,
 }: DndListHeadersProps<TData>) {
   return (
-    <div className="flex items-center p-2 gap-1 border rounded-xl">
+    <Card className="flex flex-row items-center p-2 gap-1">
       {columns
         .filter((c) => c.visibility !== false)
         .map((column) => (
           <DndListHeader column={column} key={column.id} />
         ))}
-    </div>
+    </Card>
   );
 }

@@ -1,6 +1,7 @@
 import { addMappackToServer, downloadMappack } from "@/actions/tmx/mappacks";
 import { cn, getErrorMessage } from "@/lib/utils";
 import { TMXMappack } from "@/types/api/tmx";
+import { ServerError } from "@/types/responses";
 import {
   IconDownload,
   IconMap,
@@ -16,7 +17,6 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { Separator } from "../ui/separator";
-import { ServerError } from "@/types/responses";
 
 export default function TMXMappackCard({
   serverId,
@@ -103,10 +103,10 @@ export default function TMXMappackCard({
             src={`https://trackmania.exchange/mappackthumb/${mappack.MappackId}`}
             fill
             alt={mappack.Name}
-            className="static! rounded-t-lg h-40! object-cover"
+            className="static! rounded-t-xl h-40! object-cover"
           />
         ) : (
-          <div className="w-full h-40 rounded-t-lg flex items-center justify-center">
+          <div className="w-full h-40 rounded-t-xl flex items-center justify-center">
             <IconPhoto className="text-gray-500" size={48} />
           </div>
         )}

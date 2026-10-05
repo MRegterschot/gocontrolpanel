@@ -1,8 +1,10 @@
 "use client";
 
-import clsx from "clsx";
+import { cn } from "@/lib/utils";
 import { Check, LoaderCircle, Search } from "lucide-react";
 import React from "react";
+import { Button } from "./button";
+import { formControlVariants } from "./form-control";
 import { Input } from "./input";
 import { Popover, PopoverAnchor, PopoverContent } from "./popover";
 
@@ -156,8 +158,9 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
     if (selectedValue) {
       return (
         <div
-          className={clsx(
-            "flex min-w-0 w-full items-center gap-2 rounded-md border border-input bg-accent/40 px-3 py-1 text-sm",
+          className={cn(
+            formControlVariants(),
+            "flex min-w-0 w-full items-center gap-2 bg-accent/40 py-0",
             className,
           )}
         >
@@ -169,19 +172,21 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
             {selectedLabel}
           </span>
           <span className="text-xs text-muted-foreground">Selected</span>
-          <button
+          <Button
             ref={changeButton}
             type="button"
             disabled={disabled}
             aria-label={`Change selected user ${selectedLabel}`}
-            className="rounded px-2 py-1 text-xs hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50"
+            variant="ghost"
+            size="sm"
+            className="px-2 text-xs"
             onClick={() => {
               setFocusInput(true);
               edit(selectedLabel ?? "");
             }}
           >
             Change
-          </button>
+          </Button>
         </div>
       );
     }
@@ -214,7 +219,7 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
                   .filter(Boolean)
                   .join(" ")}
                 placeholder={placeholder || "Search by name or login..."}
-                className={clsx("w-full pr-10 text-sm", className)}
+                className={cn("w-full pr-10 text-sm", className)}
                 onChange={(event) => edit(event.target.value)}
                 onFocus={() => {
                   if (query.trim()) setOpen(true);
@@ -250,11 +255,13 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
                   }
                 }}
               />
-              <button
+              <Button
                 type="button"
                 aria-label="Search users"
                 disabled={disabled || searching || !query.trim()}
-                className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-1.5 text-muted-foreground hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50"
+                variant="ghost"
+                size="icon-sm"
+                className="absolute right-0.5 top-1/2 -translate-y-1/2 text-muted-foreground"
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => {
                   setOpen(true);
@@ -266,7 +273,7 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
                 ) : (
                   <Search className="size-4" />
                 )}
-              </button>
+              </Button>
             </div>
           </PopoverAnchor>
           <PopoverContent
@@ -290,14 +297,15 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
             ) : (
               <div role="listbox" id={listId} aria-label="User search results">
                 {visibleResults.map((result, index) => (
-                  <button
+                  <Button
                     key={result.value}
                     id={`${listId}-${index}`}
                     role="option"
                     aria-selected={index === activeIndex}
                     type="button"
-                    className={clsx(
-                      "flex w-full items-center justify-between gap-3 rounded px-2 py-2 text-left text-sm hover:bg-accent",
+                    variant="ghost"
+                    className={cn(
+                      "w-full justify-between gap-3 px-2 text-left font-normal",
                       index === activeIndex && "bg-accent",
                     )}
                     onMouseDown={(event) => event.preventDefault()}
@@ -307,7 +315,7 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
                     <span className="text-xs text-muted-foreground">
                       Select
                     </span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}

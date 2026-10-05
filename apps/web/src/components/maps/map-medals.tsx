@@ -13,7 +13,7 @@ interface MapMedalsProps {
 
 export default function MapMedals({ medals }: MapMedalsProps) {
   return (
-    <Card className="flex flex-1 p-2 flex-row items-center rounded-sm dark:bg-black/40 border-none justify-around">
+    <Card className="flex flex-1 p-2 flex-row items-center justify-around">
       <div className="flex flex-col items-center">
         <IconMedal className="text-green-700" size={24} />
         <TimeDisplay time={medals.authorTime} className="text-sm" />

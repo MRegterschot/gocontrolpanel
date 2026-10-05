@@ -1,7 +1,8 @@
 import { nextMap, restartMap } from "@/actions/gbx/game";
 import { jumpToMap } from "@/actions/gbx/map";
-import { Maps } from "@gcp/db";
 import { cn, getErrorMessage } from "@/lib/utils";
+import { ServerError } from "@/types/responses";
+import { Maps } from "@gcp/db";
 import {
   IconBounceRight,
   IconPhoto,
@@ -16,7 +17,6 @@ import { parseTmTags, stripTmTags } from "tmtags";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
-import { ServerError } from "@/types/responses";
 
 interface CarouselMapCardProps {
   map: Maps;
@@ -131,8 +131,8 @@ export default function CarouselMapCard({
             fill
             alt={map.name}
             className={cn(
-              "static! rounded-t-lg h-40! object-cover",
-              !canMapActions && "rounded-b-lg",
+              "static! rounded-t-xl h-40! object-cover",
+              !canMapActions && "rounded-b-xl",
             )}
             loading={
               isCurrent ||
@@ -146,8 +146,8 @@ export default function CarouselMapCard({
         ) : (
           <div
             className={cn(
-              "w-full h-40 rounded-t-lg flex items-center justify-center",
-              !canMapActions && "rounded-b-lg",
+              "w-full h-40 rounded-t-xl flex items-center justify-center",
+              !canMapActions && "rounded-b-xl",
             )}
           >
             <IconPhoto className="text-gray-500" size={48} />
@@ -156,7 +156,7 @@ export default function CarouselMapCard({
         <div
           className={cn(
             "flex items-center space-x-2 justify-between absolute bottom-0 left-0 right-0 bg-white/20 p-2 backdrop-blur-sm dark:bg-black/40 text-white",
-            !canMapActions && "rounded-b-lg",
+            !canMapActions && "rounded-b-xl",
             !map.thumbnailUrl &&
               "bg-linear-to-t from-black/60 via-black/40 to-transparent",
           )}

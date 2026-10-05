@@ -33,7 +33,7 @@ export default function DndListRow<TData>({
       ref={setNodeRef}
       style={style}
       key={id}
-      className="flex flex-row items-center p-2 gap-1 bg-background"
+      className="flex flex-row items-center p-2 gap-1"
     >
       {columns.map((column) => (
         <div

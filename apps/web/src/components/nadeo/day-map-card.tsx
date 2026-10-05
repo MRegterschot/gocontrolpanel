@@ -2,6 +2,7 @@
 import { addMapToServer, downloadMapFromUrl } from "@/actions/nadeo/maps";
 import { cn, getErrorMessage, weekDayNumberToName } from "@/lib/utils";
 import { DayWithMap } from "@/types/api/nadeo";
+import { ServerError } from "@/types/responses";
 import {
   IconDownload,
   IconMapPlus,
@@ -17,7 +18,6 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { Separator } from "../ui/separator";
-import { ServerError } from "@/types/responses";
 
 export default function DayMapCard({
   serverId,
@@ -112,10 +112,10 @@ export default function DayMapCard({
             src={day.map.thumbnailUrl}
             fill
             alt={day.map.name}
-            className="static! rounded-t-lg h-40! object-cover"
+            className="static! rounded-t-xl h-40! object-cover"
           />
         ) : (
-          <div className="w-full h-40 rounded-t-lg flex items-center justify-center">
+          <div className="w-full h-40 rounded-t-xl flex items-center justify-center">
             <IconPhoto className="text-gray-500" size={48} />
           </div>
         )}

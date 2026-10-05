@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
@@ -53,10 +54,14 @@ export default function NavAdminGroups() {
       >
         <SidebarGroupLabel asChild>
           <CollapsibleTrigger asChild>
-            <button className="flex w-full items-center gap-2 text-left">
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full justify-start gap-2 text-left text-xs font-normal"
+            >
               <span>{group.name}</span>
               <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-            </button>
+            </Button>
           </CollapsibleTrigger>
         </SidebarGroupLabel>
         <CollapsibleContent>

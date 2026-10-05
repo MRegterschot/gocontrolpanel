@@ -350,15 +350,14 @@ export default function LandingPage({
 
             <ul className="grid gap-3 sm:grid-cols-2">
               {plugins.map((plugin) => (
-                <li
-                  key={plugin.name}
-                  className="flex flex-col gap-1 rounded-lg border bg-background p-4"
-                >
-                  <span className="font-medium">{plugin.name}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {plugin.description}
-                  </span>
-                </li>
+                <Card asChild key={plugin.name} className="gap-1 p-4">
+                  <li>
+                    <span className="font-medium">{plugin.name}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {plugin.description}
+                    </span>
+                  </li>
+                </Card>
               ))}
             </ul>
           </div>

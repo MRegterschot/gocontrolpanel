@@ -23,6 +23,7 @@ import { usePaginationAPI } from "@/hooks/use-pagination-api";
 import { useSorting } from "@/hooks/use-sorting";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
+import { Card } from "../ui/card";
 import { Input } from "../ui/input";
 
 interface PaginationTableProps<TData, TValue, TArgs, TActionArgs> {
@@ -127,7 +128,7 @@ export function PaginationTable<TData, TValue, TArgs, TActionArgs>({
         </div>
       )}
 
-      <div className="rounded-md border flex-1 overflow-x-auto">
+      <Card className="flex-1 overflow-hidden">
         <Table>
           <TableHeader className="table-fixed">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -193,7 +194,7 @@ export function PaginationTable<TData, TValue, TArgs, TActionArgs>({
             )}
           </TableBody>
         </Table>
-      </div>
+      </Card>
 
       <div>
         <DataTablePagination table={table} />

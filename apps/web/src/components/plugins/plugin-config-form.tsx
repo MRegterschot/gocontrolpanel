@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { FileUploadButton } from "@/components/ui/file-upload-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SearchInput } from "@/components/ui/search-input";
@@ -13,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
 import { useSearchUsers } from "@/hooks/use-search-users";
 import { getScripts } from "@/lib/api-client/filemanager";
@@ -351,74 +353,72 @@ export function PluginConfigForm({
             </Select>
           )}
           {field.csv && (
-            <label className="flex cursor-pointer justify-center rounded-md border px-3 py-2 text-sm">
+            <FileUploadButton
+              className="w-full"
+              accept=".csv"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                Papa.parse<Record<string, string>>(file, {
+                  header: true,
+                  skipEmptyLines: true,
+                  complete: (result) => {
+                    if (result.errors.length) {
+                      toast.error("Failed to import CSV", {
+                        description: result.errors[0].message,
+                      });
+                      return;
+                    }
+                    const imported = result.data.map((row, index) => ({
+                      ...Object.fromEntries(
+                        Object.entries(field.csv!.columns).map(
+                          ([property, column]) => [
+                            property,
+                            row[column]?.trim() ?? "",
+                          ],
+                        ),
+                      ),
+                      ...Object.fromEntries(
+                        Object.entries(field.csv!.lists ?? {}).map(
+                          ([property, columns]) => [
+                            property,
+                            columns
+                              .map((column) => row[column]?.trim())
+                              .filter(Boolean),
+                          ],
+                        ),
+                      ),
+                      ...(field.csv!.seed
+                        ? { [field.csv!.seed]: index + 1 }
+                        : {}),
+                    }));
+                    const check = validatePluginConfig(
+                      { type: "object", properties: { list: field } },
+                      { list: imported },
+                    );
+                    if (!check.success) {
+                      toast.error("Failed to import CSV", {
+                        description: check.issues
+                          .map((issue) => issue.message)
+                          .join("; "),
+                      });
+                      return;
+                    }
+                    update(check.data.list);
+                  },
+                });
+                event.target.value = "";
+              }}
+            >
               Import CSV
-              <input
-                type="file"
-                accept=".csv"
-                className="hidden"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (!file) return;
-                  Papa.parse<Record<string, string>>(file, {
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: (result) => {
-                      if (result.errors.length) {
-                        toast.error("Failed to import CSV", {
-                          description: result.errors[0].message,
-                        });
-                        return;
-                      }
-                      const imported = result.data.map((row, index) => ({
-                        ...Object.fromEntries(
-                          Object.entries(field.csv!.columns).map(
-                            ([property, column]) => [
-                              property,
-                              row[column]?.trim() ?? "",
-                            ],
-                          ),
-                        ),
-                        ...Object.fromEntries(
-                          Object.entries(field.csv!.lists ?? {}).map(
-                            ([property, columns]) => [
-                              property,
-                              columns
-                                .map((column) => row[column]?.trim())
-                                .filter(Boolean),
-                            ],
-                          ),
-                        ),
-                        ...(field.csv!.seed
-                          ? { [field.csv!.seed]: index + 1 }
-                          : {}),
-                      }));
-                      const check = validatePluginConfig(
-                        { type: "object", properties: { list: field } },
-                        { list: imported },
-                      );
-                      if (!check.success) {
-                        toast.error("Failed to import CSV", {
-                          description: check.issues
-                            .map((issue) => issue.message)
-                            .join("; "),
-                        });
-                        return;
-                      }
-                      update(check.data.list);
-                    },
-                  });
-                  event.target.value = "";
-                }}
-              />
-            </label>
+            </FileUploadButton>
           )}
         </div>
       ) : (
-        <textarea
+        <Textarea
           id={inputId}
           rows={4}
-          className="w-full rounded-md border px-3 py-2 text-sm"
+          aria-invalid={!!error}
           placeholder="One per line"
           value={items.join("\n")}
           onChange={(event) =>
@@ -568,10 +568,10 @@ export function PluginConfigForm({
       );
     } else if (field.type === "string" && field.multiline) {
       control = (
-        <textarea
+        <Textarea
           id={inputId}
           rows={3}
-          className="w-full rounded-md border px-3 py-2 text-sm"
+          aria-invalid={!!error}
           value={String(value ?? "")}
           onChange={(event) => update(event.target.value)}
         />
@@ -715,18 +715,15 @@ export function PluginConfigForm({
               Export Config
             </Button>
           )}
-          <label className="flex cursor-pointer items-center rounded-md border px-3 py-2 text-sm">
+          <FileUploadButton
+            accept=".json"
+            onChange={(event) => {
+              void importConfig(event.target.files?.[0]);
+              event.target.value = "";
+            }}
+          >
             Import Config
-            <input
-              type="file"
-              accept=".json"
-              className="hidden"
-              onChange={(event) => {
-                void importConfig(event.target.files?.[0]);
-                event.target.value = "";
-              }}
-            />
-          </label>
+          </FileUploadButton>
           <Button type="submit" disabled={saving}>
             <IconDeviceFloppy />
             Save

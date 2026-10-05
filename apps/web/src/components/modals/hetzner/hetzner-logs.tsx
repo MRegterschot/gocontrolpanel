@@ -80,14 +80,10 @@ export default function HetznerLogsModal({
             >
               <SelectValue placeholder="dedicated" />
             </SelectTrigger>
-            <SelectContent className="rounded-xl z-9999">
-              <SelectItem value="dedicated" className="rounded-lg">
-                Dedicated server
-              </SelectItem>
-              <SelectItem value="filemanager" className="rounded-lg">
-                Filemanager
-              </SelectItem>
-              <SelectItem value="servercontroller" className="rounded-lg">
+            <SelectContent className="z-9999">
+              <SelectItem value="dedicated">Dedicated server</SelectItem>
+              <SelectItem value="filemanager">Filemanager</SelectItem>
+              <SelectItem value="servercontroller">
                 Server controller
               </SelectItem>
             </SelectContent>

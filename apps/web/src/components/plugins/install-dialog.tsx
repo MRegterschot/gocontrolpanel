@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -157,10 +158,10 @@ export function InstallDialog({
             </div>
 
             {choice && (
-              <div className="flex flex-col gap-2 rounded-md border p-3">
+              <Card className="gap-2 p-3">
                 <span className="text-sm font-medium">This version can</span>
                 <CapabilityList capabilities={choice.capabilities} highlight={added} />
-              </div>
+              </Card>
             )}
 
             {choice && !same && (

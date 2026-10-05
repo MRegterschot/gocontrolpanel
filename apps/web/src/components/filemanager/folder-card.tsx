@@ -1,4 +1,5 @@
 "use client";
+import { Card } from "@/components/ui/card";
 import { cn, formatTimeToAgo, generatePath } from "@/lib/utils";
 import { routes } from "@/routes";
 import { FileEntry } from "@/types/filemanager";
@@ -26,9 +27,9 @@ export default function FolderCard({
   };
 
   return (
-    <div
+    <Card
       className={cn(
-        "flex w-full p-2 gap-2 border rounded-lg items-center cursor-pointer select-none",
+        "flex w-full flex-row p-2 gap-2 items-center cursor-pointer select-none transition-colors hover:bg-accent/50",
         active && "border-primary",
       )}
       onDoubleClick={handleDoubleClick}
@@ -43,6 +44,6 @@ export default function FolderCard({
             : "No last modified date"}
         </p>
       </div>
-    </div>
+    </Card>
   );
 }

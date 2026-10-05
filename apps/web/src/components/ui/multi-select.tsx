@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { formControlVariants } from "./form-control";
 
 /**
  * Variants for the multi-select component to handle different styles.
@@ -51,7 +52,8 @@ const multiSelectVariants = cva(
  * Props for MultiSelect component
  */
 interface MultiSelectProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+  extends
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof multiSelectVariants> {
   /**
    * An array of option objects to be displayed in the multi-select component.
@@ -211,9 +213,12 @@ export const MultiSelect = React.forwardRef<
           <Button
             ref={ref}
             {...props}
+            variant="outline"
+            type="button"
             onClick={handleTogglePopover}
             className={cn(
-              "flex w-full p-1 rounded-md border border-input min-h-10 h-auto items-center justify-between bg-input/30 hover:bg-input/30 [&_svg]:pointer-events-auto",
+              formControlVariants({ size: "auto" }),
+              "flex w-full h-auto items-center justify-between whitespace-normal font-normal hover:bg-accent dark:hover:bg-input/50 [&_svg]:pointer-events-auto",
               className,
             )}
           >
@@ -233,7 +238,6 @@ export const MultiSelect = React.forwardRef<
                           isAnimating ? "animate-bounce" : "",
                           multiSelectVariants({ variant }),
                           !isRemovable && "opacity-50 cursor-not-allowed",
-                          "bg-input/30"
                         )}
                         style={{ animationDuration: `${animation}s` }}
                       >

@@ -151,10 +151,10 @@ export default function RoomDetailsModal({
                   src={clubRoom.mediaUrl}
                   fill
                   alt={clubRoom.name}
-                  className="static! rounded-lg max-w-92 object-cover"
+                  className="static! rounded-xl max-w-92 object-cover"
                 />
               ) : (
-                <div className="w-full rounded-lg flex items-center justify-center max-w-92">
+                <div className="w-full rounded-xl flex items-center justify-center max-w-92">
                   <IconPhoto className="text-gray-500" size={48} />
                 </div>
               )}

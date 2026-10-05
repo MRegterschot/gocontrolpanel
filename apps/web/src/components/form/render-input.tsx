@@ -106,8 +106,11 @@ export default function RenderInput<TControl extends FieldValues>({
           />
           <Button
             type="button"
-            variant={null}
-            className="absolute right-0 top-1/2 -translate-y-1/2"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            disabled={isDisabled || isLoading}
+            className="absolute right-0.5 top-1/2 -translate-y-1/2 text-muted-foreground"
             onClick={() => {
               setShowPassword((prev) => !prev);
             }}
@@ -123,7 +126,7 @@ export default function RenderInput<TControl extends FieldValues>({
           defaultValue={`${field.value}`}
           disabled={isDisabled || isLoading}
         >
-          <SelectTrigger className={className}>
+          <SelectTrigger className={cn("w-full", className)}>
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>
           <SelectContent className="z-9999 max-w-[95vw]">
@@ -197,6 +200,9 @@ export default function RenderInput<TControl extends FieldValues>({
           placeholder={placeholder}
           animation={2}
           maxCount={max || 3}
+          disabled={isDisabled || isLoading}
+          aria-invalid={!!error}
+          className={className}
         />
       );
     case "search":

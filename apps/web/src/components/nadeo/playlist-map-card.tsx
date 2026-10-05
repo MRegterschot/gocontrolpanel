@@ -2,6 +2,7 @@
 import { addMapToServer, downloadMapFromUrl } from "@/actions/nadeo/maps";
 import { cn, getErrorMessage } from "@/lib/utils";
 import { PlaylistWithMap } from "@/types/api/nadeo";
+import { ServerError } from "@/types/responses";
 import {
   IconDownload,
   IconMapPlus,
@@ -16,7 +17,6 @@ import MapMedals from "../maps/map-medals";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { Separator } from "../ui/separator";
-import { ServerError } from "@/types/responses";
 
 export default function PlaylistMapCard({
   serverId,
@@ -111,10 +111,10 @@ export default function PlaylistMapCard({
             src={playlist.map.thumbnailUrl}
             fill
             alt={playlist.map.name}
-            className="static! rounded-t-lg h-40! object-cover"
+            className="static! rounded-t-xl h-40! object-cover"
           />
         ) : (
-          <div className="w-full h-40 rounded-t-lg flex items-center justify-center">
+          <div className="w-full h-40 rounded-t-xl flex items-center justify-center">
             <IconPhoto className="text-gray-500" size={48} />
           </div>
         )}

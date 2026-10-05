@@ -42,10 +42,10 @@ export default function MapRecordsModal({
                 src={data.thumbnailUrl}
                 fill
                 alt={data.name}
-                className="static! rounded-t-lg h-40! object-cover"
+                className="static! rounded-t-xl h-40! object-cover"
               />
             ) : (
-              <div className="w-full h-40 rounded-t-lg flex items-center justify-center">
+              <div className="w-full h-40 rounded-t-xl flex items-center justify-center">
                 <IconPhoto className="text-gray-500" size={48} />
               </div>
             )}

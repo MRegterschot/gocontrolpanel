@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import clsx from "clsx";
 import { useState } from "react";
+import { Card } from "../ui/card";
 import { Input } from "../ui/input";
 import { DataTablePagination } from "./data-table-pagination";
 
@@ -99,7 +100,7 @@ export function DataTable<TData, TValue>({
         </div>
       )}
 
-      <div className={clsx("rounded-md border flex-1", className)}>
+      <Card className={clsx("flex-1 overflow-hidden", className)}>
         <Table>
           <TableHeader className="table-fixed border-b">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -171,7 +172,7 @@ export function DataTable<TData, TValue>({
             )}
           </TableBody>
         </Table>
-      </div>
+      </Card>
 
       {pagination && <DataTablePagination table={table} />}
     </div>

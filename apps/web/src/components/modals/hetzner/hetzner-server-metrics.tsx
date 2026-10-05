@@ -202,16 +202,10 @@ export default function HetznerServerMetricsModal({
             >
               <SelectValue placeholder="Last month" />
             </SelectTrigger>
-            <SelectContent className="rounded-xl z-9999">
-              <SelectItem value="30" className="rounded-lg">
-                Last month
-              </SelectItem>
-              <SelectItem value="7" className="rounded-lg">
-                Last week
-              </SelectItem>
-              <SelectItem value="1" className="rounded-lg">
-                Last day
-              </SelectItem>
+            <SelectContent className="z-9999">
+              <SelectItem value="30">Last month</SelectItem>
+              <SelectItem value="7">Last week</SelectItem>
+              <SelectItem value="1">Last day</SelectItem>
             </SelectContent>
           </Select>
         </div>

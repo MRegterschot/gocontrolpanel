@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import React from "react";
+import { Button } from "./button";
 import { Input } from "./input";
 import { Popover, PopoverAnchor, PopoverContent } from "./popover"; // Don't use PopoverTrigger
 
@@ -85,13 +86,15 @@ export const FilterInput = React.forwardRef<HTMLInputElement, FilterInputProps>(
                   .includes((isControlled ? value : rawInput).toLowerCase()),
               )
               .map((result) => (
-                <div
+                <Button
                   key={result.value}
+                  type="button"
+                  variant="ghost"
                   onClick={() => handleSelect(result)}
-                  className="cursor-pointer px-2 py-1 text-sm hover:bg-accent"
+                  className="w-full justify-start px-2 font-normal"
                 >
                   {result.label}
-                </div>
+                </Button>
               ))
           )}
         </PopoverContent>

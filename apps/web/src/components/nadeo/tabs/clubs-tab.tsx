@@ -1,8 +1,8 @@
-import { getClub, getClubMembersCount } from "@/services/nadeo/clubs";
 import ClubActivities from "@/components/nadeo/clubs/club-activities";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { getClub, getClubMembersCount } from "@/services/nadeo/clubs";
 import {
   IconArrowLeft,
   IconPhoto,
@@ -59,10 +59,10 @@ export default async function ClubsTab({
                   src={club.iconUrl}
                   fill
                   alt={club.name}
-                  className="static! rounded-lg max-w-92 object-cover"
+                  className="static! rounded-xl max-w-92 object-cover"
                 />
               ) : (
-                <div className="w-full rounded-lg flex items-center justify-center max-w-92">
+                <div className="w-full rounded-xl flex items-center justify-center max-w-92">
                   <IconPhoto className="text-gray-500" size={48} />
                 </div>
               )}

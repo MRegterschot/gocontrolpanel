@@ -1,7 +1,11 @@
 "use client";
-import { addCampaignToServer, downloadCampaign } from "@/actions/nadeo/campaigns";
+import {
+  addCampaignToServer,
+  downloadCampaign,
+} from "@/actions/nadeo/campaigns";
 import { getErrorMessage } from "@/lib/utils";
 import { ClubCampaignWithNamesAndPlaylistMaps } from "@/types/api/nadeo";
+import { ServerError } from "@/types/responses";
 import { IconDownload, IconMapPlus, IconPhoto } from "@tabler/icons-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -11,7 +15,6 @@ import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { Separator } from "../ui/separator";
 import PlaylistMapCard from "./playlist-map-card";
-import { ServerError } from "@/types/responses";
 
 export default function ClubCampaignMaps({
   serverId,
@@ -116,10 +119,10 @@ export default function ClubCampaignMaps({
               src={clubCampaign.mediaUrl}
               fill
               alt={clubCampaign.name}
-              className="static! rounded-lg max-w-92 object-cover"
+              className="static! rounded-xl max-w-92 object-cover"
             />
           ) : (
-            <div className="w-full rounded-lg flex items-center justify-center max-w-92">
+            <div className="w-full rounded-xl flex items-center justify-center max-w-92">
               <IconPhoto className="text-gray-500" size={48} />
             </div>
           )}

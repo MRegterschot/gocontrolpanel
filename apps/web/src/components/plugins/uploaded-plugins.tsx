@@ -159,7 +159,7 @@ function UploadedPluginCard({ plugin, servers }: { plugin: UploadedPlugin; serve
         </div>
       </div>
 
-      <div className="flex flex-col divide-y rounded-md border">
+      <Card className="divide-y overflow-hidden">
         {plugin.versions.map((version) => (
           <div key={version.id} className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-1">
@@ -189,7 +189,7 @@ function UploadedPluginCard({ plugin, servers }: { plugin: UploadedPlugin; serve
             </Button>
           </div>
         ))}
-      </div>
+      </Card>
 
       {plugin.installedOn.length > 0 && (
         <div className="flex flex-wrap gap-1">
