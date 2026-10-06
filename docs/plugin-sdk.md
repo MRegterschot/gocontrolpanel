@@ -70,7 +70,7 @@ A package may be at most 5 MB, unpack to at most 10 MB and hold at most 500 file
 | `slug` | 3-40 characters: lowercase letters, digits and dashes, starting with a letter. It identifies the plugin and prefixes its widget ids and actions. The names of the [first-party plugins](./first-party-plugins.md) and a few others (`help`, `plugins`, `server`, ...) are reserved. |
 | `name`, `description`, `author` | At most 60, 300 and 100 characters. |
 | `version` | A [semantic version](https://semver.org): `1.2.3`, or `1.2.3-beta.1` for a pre-release. |
-| `sdk` | The plugin SDK version the plugin targets. Currently `2` (SDK 1 packages remain supported). Panels refuse plugins for a newer SDK than they run. |
+| `sdk` | The plugin SDK version the plugin targets. Currently `3` (SDK 1 and 2 packages remain supported). SDK 3 adds [plugin events](#plugin-events). Panels refuse plugins for a newer SDK than they run. |
 | `license`, `repository`, `homepage` | Optional. The links must be `https://`. |
 | `entry` | Path of the bundle inside the package. Default `index.js`. |
 | `gamemodes` | Modes the plugin runs in: `timeattack`, `rounds`, `reversecup`, `cup`, `tmwc`, `tmwt`, `teams`, `knockout`. Leave it out to run in every mode. |
@@ -193,7 +193,7 @@ ctx.on("records:*", (payload, source) => ctx.log.debug(source.name, payload));
 - Events are not stored. A plugin that loads later, or is turned off, misses what was emitted before. Treat payloads from other plugins like any other input.
 - The service sees every event as `pluginEvent` on the server's event bus, with `{ plugin, name, payload }`. They are not sent to the panel.
 
-No capability is needed to emit or to listen. Document the events your plugin emits and their payloads in its README, since other plugins depend on them.
+No capability is needed to emit or to listen. Panels older than SDK 3 have no `ctx.emit`: declare `"sdk": 3` if your plugin needs it, or call `ctx.emit?.(...)` to keep running there. Document the events your plugin emits and their payloads in its README, since other plugins depend on them.
 
 ## Widgets and windows
 
