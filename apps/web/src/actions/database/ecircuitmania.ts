@@ -12,9 +12,7 @@ import { z } from "zod";
 import { logAudit } from "./server-only/audit-logs";
 
 const permissions = (serverId: string) => [
-  `servers:${serverId}:moderator`,
   `servers:${serverId}:admin`,
-  `group:servers:${serverId}:moderator`,
   `group:servers:${serverId}:admin`,
 ];
 
@@ -32,12 +30,11 @@ async function savedApiKey(serverId: string): Promise<string> {
     : "";
 }
 
-export async function getEcmKeyStatus(
+export async function getEcmApiKey(
   serverId: string,
-): Promise<ServerResponse<boolean>> {
-  return doServerActionWithAuth(
-    permissions(serverId),
-    async () => !!(await savedApiKey(serverId)),
+): Promise<ServerResponse<string>> {
+  return doServerActionWithAuth(permissions(serverId), async () =>
+    savedApiKey(serverId),
   );
 }
 

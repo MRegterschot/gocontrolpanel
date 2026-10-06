@@ -13,7 +13,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatTime, hasPermissionSync } from "@/lib/utils";
-import { routePermissions } from "@/routes";
 import type { MatchesWithMapAndRecords } from "@/services/database/matches";
 import {
   IconPhoto,
@@ -40,7 +39,7 @@ export default function MatchDetailsModal({
   if (!data) return null;
   const canSend = hasPermissionSync(
     session,
-    routePermissions.servers.records.actions,
+    ["servers:id:admin", "group:servers:id:admin"],
     data.serverId,
   );
   const records = [...data.records].sort(

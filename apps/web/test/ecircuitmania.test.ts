@@ -35,7 +35,7 @@ vi.mock("@/actions/database/server-only/audit-logs", () => ({
 }));
 
 import {
-  getEcmKeyStatus,
+  getEcmApiKey,
   sendRecordsToEcm,
 } from "@/actions/database/ecircuitmania";
 
@@ -99,9 +99,7 @@ describe("sending recorded rounds to ECM", () => {
       },
     });
     expect(mocks.auth).toHaveBeenCalledWith([
-      "servers:server:moderator",
       "servers:server:admin",
-      "group:servers:server:moderator",
       "group:servers:server:admin",
     ]);
     expect(JSON.stringify(mocks.audit.mock.calls)).not.toContain("token");
@@ -119,10 +117,14 @@ describe("sending recorded rounds to ECM", () => {
     });
   });
 
-  it("returns only saved key availability", async () => {
-    expect(await getEcmKeyStatus("server")).toEqual({ data: true });
+  it("returns the current plugin key for admins", async () => {
+    expect(await getEcmApiKey("server")).toEqual({ data: "saved_token" });
+    expect(mocks.auth).toHaveBeenCalledWith([
+      "servers:server:admin",
+      "group:servers:server:admin",
+    ]);
     mocks.plugin.mockResolvedValue(null);
-    expect(await getEcmKeyStatus("server")).toEqual({ data: false });
+    expect(await getEcmApiKey("server")).toEqual({ data: "" });
   });
 
   it.each([
