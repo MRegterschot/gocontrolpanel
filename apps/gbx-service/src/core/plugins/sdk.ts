@@ -65,6 +65,8 @@ export interface PluginContext<Config = unknown> {
     event: K,
     handler: (...args: ServerEventMap[K]) => unknown,
   ): void;
+  // Emits "<pluginId>:<name>" to other plugins and the service ("pluginEvent" on the bus)
+  emit(name: string, payload?: unknown): void;
   command(name: string, handler: CommandHandler): void;
   action(pattern: string, handler: ActionHandler): () => void;
   // Cancelled automatically on unload

@@ -6,6 +6,7 @@ import type {
   PlayerInfo,
   PlayerManialinkPageAnswer,
   PlayerRound,
+  PluginCustomEvent,
   Scores,
   Team,
   Waypoint,
@@ -58,6 +59,8 @@ export type ServerEventMap = {
   playerUpdated: [round: PlayerRound];
   teamUpdated: [team: Team];
   adminCommand: [notifications: NotificationDto[]];
+  // Emitted by a plugin with ctx.emit(); delivered after the emitting call returns
+  pluginEvent: [event: PluginCustomEvent];
 };
 
 export type ServerEventName = keyof ServerEventMap;
