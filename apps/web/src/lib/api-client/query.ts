@@ -24,6 +24,8 @@ export const queryKeys = {
   localMaps: (serverId: string) => ["servers", serverId, "local-maps"] as const,
   scripts: (serverId: string) => ["servers", serverId, "scripts"] as const,
   settings: (serverId: string) => ["servers", serverId, "settings"] as const,
+  pluginManialinks: (serverId: string, pluginId: string) =>
+    ["servers", serverId, "plugins", pluginId, "manialinks"] as const,
   serverPlugin: (serverId: string) =>
     ["servers", serverId, "server-plugin"] as const,
   ecmApiKey: (serverId: string) =>

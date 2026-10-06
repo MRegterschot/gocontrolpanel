@@ -7,6 +7,7 @@ import {
   type ChatConfigResult,
   type GbxCallBody,
   type MapsChangeResult,
+  type PluginManialinkSnapshot,
   type PointsBody,
   type ServerLifecycleEvent,
 } from "@gcp/shared";
@@ -15,8 +16,12 @@ import config from "./config";
 import { logger } from "./logger";
 import { getRedisClient } from "./redis";
 import { reportException } from "./sentry/report";
+import {
+  LONG_TIMEOUT_MS,
+  serviceRequest,
+  type HttpMethod,
+} from "./service-request";
 import { getErrorMessage } from "./utils";
-import { LONG_TIMEOUT_MS, serviceRequest, type HttpMethod } from "./service-request";
 
 // Client for the internal API of the GBX service, which owns all dedicated server connections
 
@@ -59,10 +64,20 @@ export function getGbxClient(serverId: string): GbxClient {
 
 // Commands that also update live state, plugins or chat announcements in the service
 export const gbxService = {
+  pluginManialinks: (serverId: string, pluginId: string) =>
+    request<PluginManialinkSnapshot>(
+      "GET",
+      internalPaths.pluginManialinks(serverId, pluginId),
+    ),
   reconnect: (serverId: string) =>
-    request<{ connected: boolean }>("POST", internalPaths.reconnect(serverId), undefined, {
-      timeoutMs: LONG_TIMEOUT_MS,
-    }),
+    request<{ connected: boolean }>(
+      "POST",
+      internalPaths.reconnect(serverId),
+      undefined,
+      {
+        timeoutMs: LONG_TIMEOUT_MS,
+      },
+    ),
   stopReconnect: (serverId: string) =>
     request<null>("POST", internalPaths.stopReconnect(serverId)),
   disconnect: (serverId: string) =>
@@ -77,7 +92,11 @@ export const gbxService = {
   sendChat: (serverId: string, message: string, login?: string) =>
     request<null>("POST", internalPaths.chat(serverId), { message, login }),
   applyChatConfig: (serverId: string, chatConfig: ChatConfig) =>
-    request<ChatConfigResult>("PUT", internalPaths.chatConfig(serverId), chatConfig),
+    request<ChatConfigResult>(
+      "PUT",
+      internalPaths.chatConfig(serverId),
+      chatConfig,
+    ),
 
   setScriptName: (serverId: string, script: string) =>
     request<null>("POST", internalPaths.script(serverId), { script }),
@@ -91,7 +110,8 @@ export const gbxService = {
   setScriptSettings: (
     serverId: string,
     settings: Record<string, string | number | boolean>,
-  ) => request<null>("PUT", internalPaths.scriptSettings(serverId), { settings }),
+  ) =>
+    request<null>("PUT", internalPaths.scriptSettings(serverId), { settings }),
   setPaused: (serverId: string, paused: boolean) =>
     request<null>("POST", internalPaths.pause(serverId), { paused }),
 
@@ -155,16 +175,26 @@ export async function publishServerEvent(event: ServerLifecycleEvent) {
       name: "redis",
       send: async (e) => {
         const redis = await getRedisClient();
-        await redis.publish(SERVER_EVENTS_CHANNEL, encodeServerLifecycleEvent(e));
+        await redis.publish(
+          SERVER_EVENTS_CHANNEL,
+          encodeServerLifecycleEvent(e),
+        );
       },
     },
   ]);
 
   if (failures.length === 0) return;
 
-  const meta = { type: "gbx", module: "gbx-service", function: "publishServerEvent" };
+  const meta = {
+    type: "gbx",
+    module: "gbx-service",
+    function: "publishServerEvent",
+  };
   // Errors don't serialize inside nested objects, so log their messages
-  const reasons = failures.map((f) => ({ transport: f.transport, error: getErrorMessage(f.error) }));
+  const reasons = failures.map((f) => ({
+    transport: f.transport,
+    error: getErrorMessage(f.error),
+  }));
   if (deliveredBy) {
     logger.warn(
       { meta, event, deliveredBy, failures: reasons },

@@ -1,10 +1,28 @@
-import { MANIALINK_STYLE_ELEMENTS, type PluginAppearance } from "./appearance";
+import {
+  MANIALINK_STYLE_ATTRIBUTES,
+  MANIALINK_STYLE_ELEMENTS,
+  type PluginAppearance,
+} from "./appearance";
 
 export interface ManialinkElement {
   path: string;
   parentPath: string | null;
   tag: string;
   attributes: Record<string, string>;
+}
+export interface ManialinkPageSnapshot {
+  id: string;
+  page: string;
+  login?: string;
+  visible: boolean;
+  elements: ManialinkElement[];
+  truncated: boolean;
+}
+export interface PluginManialinkSnapshot {
+  running: boolean;
+  pages: ManialinkPageSnapshot[];
+  truncated: boolean;
+  capturedAt: string;
 }
 
 function escapeAttribute(value: string): string {
@@ -138,6 +156,8 @@ export function matchingAppearanceAttributes(
     if (rule.page && rule.page !== page && `${rule.page}-update` !== page)
       continue;
     if (rule.element !== "*" && rule.element !== element.tag) continue;
+    if (rule.path && (rule.path !== element.path || rule.page !== page))
+      continue;
     if (rule.id && rule.id !== element.attributes.id) continue;
     if (
       rule.className &&
@@ -186,4 +206,60 @@ export function applyManialinkAppearance(
       (_, close: string) => attributes + close,
     );
   });
+}
+
+// Send only presentation data to the browser: never scripts, actions, URLs, entry values or XML.
+export function inspectManialink(
+  xml: string,
+  limit = 1000,
+): { elements: ManialinkElement[]; truncated: boolean } {
+  const elements: ManialinkElement[] = [];
+  const parents = new Map<string, string | null>();
+  const definitions = new Set<string>();
+  let truncated = false;
+  mapTags(xml, (tag, path, parentPath) => {
+    const parsed = parseTag(tag);
+    if (!parsed) return tag;
+    if (
+      parsed.name === "framemodel" ||
+      (parentPath && definitions.has(parentPath))
+    ) {
+      definitions.add(path);
+      return tag;
+    }
+    const visual = (MANIALINK_STYLE_ELEMENTS as readonly string[]).includes(
+      parsed.name,
+    );
+    const visualParent = parentPath ? (parents.get(parentPath) ?? null) : null;
+    parents.set(path, visual ? path : visualParent);
+    if (!visual) return tag;
+    if (elements.length >= limit) {
+      truncated = true;
+      return tag;
+    }
+    const attributes: Record<string, string> = {};
+    for (const name of [
+      ...MANIALINK_STYLE_ATTRIBUTES,
+      "id",
+      "class",
+      "text",
+      "color",
+    ]) {
+      if (name === "text" && parsed.name !== "label") continue;
+      if (parsed.attributes[name] !== undefined)
+        attributes[name] = parsed.attributes[name].slice(
+          0,
+          name === "text" ? 300 : 128,
+        );
+    }
+    if (parsed.attributes.image) attributes.hasImage = "1";
+    elements.push({
+      path,
+      parentPath: visualParent,
+      tag: parsed.name,
+      attributes,
+    });
+    return tag;
+  });
+  return { elements, truncated };
 }

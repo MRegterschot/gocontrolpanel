@@ -51,6 +51,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { CapabilityBadges } from "./capability-list";
 import { InstallDialog } from "./install-dialog";
+import { PluginAppearanceDialog } from "./plugin-appearance-dialog";
 import { PluginConfigForm } from "./plugin-config-form";
 import { ServerAppearanceDialog } from "./server-appearance-dialog";
 
@@ -146,10 +147,12 @@ function InstalledPluginCard({
   serverId,
   serverName,
   plugin,
+  serverAppearance,
 }: {
   serverId: string;
   serverName: string;
   plugin: InstalledPlugin;
+  serverAppearance: ServerAppearance;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -270,6 +273,13 @@ function InstalledPluginCard({
             />
           )}
           <ConfigDialog serverId={serverId} plugin={plugin} />
+          {plugin.capabilities.includes("ui") && (
+            <PluginAppearanceDialog
+              serverId={serverId}
+              plugin={plugin}
+              serverAppearance={serverAppearance}
+            />
+          )}
           {versions.length > 1 && (
             <InstallDialog
               name={plugin.name}
@@ -477,6 +487,7 @@ export default function InstalledPlugins({
             serverId={serverId}
             serverName={serverName}
             plugin={plugin}
+            serverAppearance={appearance}
           />
         ))
       )}

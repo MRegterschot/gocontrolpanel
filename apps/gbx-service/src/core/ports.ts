@@ -26,7 +26,9 @@ export interface ServerPluginRecord {
   name: string;
   enabled: boolean;
   config: unknown;
-  // Theme and rules for every plugin on the server, owned by the server admin
+  // Presentation overrides owned by the server admin, not the plugin
+  appearance?: unknown;
+  // Theme and rules for every plugin on the server, applied before the plugin's own
   serverAppearance?: unknown;
   // Installed package of a marketplace or uploaded plugin; absent for built-ins
   package?: InstalledPackageRef | null;

@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { LiveInfo } from "./types/live";
-import { ChatConfig, chatConfigSchema, PlayerInfo, ServerClient } from "./types/server";
+import {
+  ChatConfig,
+  chatConfigSchema,
+  PlayerInfo,
+  ServerClient,
+} from "./types/server";
 
 // Contract for web -> GBX service calls. All routes require `Authorization: Bearer <service token>`.
 
@@ -42,6 +47,8 @@ export const internalPaths = {
   stopReconnect: (id: string) => `/internal/servers/${id}/stop-reconnect`,
   disconnect: (id: string) => `/internal/servers/${id}/disconnect`,
   resendManialinks: (id: string) => `/internal/servers/${id}/manialinks/resend`,
+  pluginManialinks: (id: string, pluginId: string) =>
+    `/internal/servers/${encodeURIComponent(id)}/plugins/${encodeURIComponent(pluginId)}/manialinks`,
   reloadPlugins: (id: string) => `/internal/servers/${id}/plugins/reload`,
   gbxCall: (id: string) => `/internal/servers/${id}/gbx/call`,
   gbxMulticall: (id: string) => `/internal/servers/${id}/gbx/multicall`,
@@ -90,7 +97,9 @@ export interface ChatConfigResult {
 }
 
 export const scriptNameBodySchema = z.object({ script: z.string().min(1) });
-export const matchSettingsBodySchema = z.object({ filename: z.string().min(1) });
+export const matchSettingsBodySchema = z.object({
+  filename: z.string().min(1),
+});
 export const scriptSettingsBodySchema = z.object({
   settings: z.record(z.union([z.string(), z.number(), z.boolean()])),
 });

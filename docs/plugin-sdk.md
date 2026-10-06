@@ -213,7 +213,7 @@ ctx.action("wave", (answer) => ctx.chat.sendTo(answer.login, "Hi!"));
 
 ## Admin appearance overrides
 
-Server admins can set a [server-wide appearance](plugin-appearance.md) for all plugins: a theme (font, text color, spacing and standard window colors) and rules that override presentation attributes, independently of plugin configuration. Prefer `ctx.ui.window()`, use stable element IDs/classes so rules can target them, and avoid hard-coding a font on every label unless the design depends on it. ManiaScript can still change overridden attributes later.
+Server admins can customize rendered plugin pages through the [Appearance editor](plugin-appearance.md), independently of plugin configuration. Use stable element IDs/classes to make targeted styling easier. Overrides affect rendered attributes; ManiaScript can still change those attributes later. Admins can also set a server-wide theme (font, text color, spacing and standard window colors) that applies to all plugins, so prefer `ctx.ui.window()` and avoid hard-coding a font on every label unless the design depends on it.
 
 ## Settings
 

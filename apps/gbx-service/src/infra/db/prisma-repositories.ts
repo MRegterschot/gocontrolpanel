@@ -81,6 +81,7 @@ function toPluginRecord(sp: ServerPluginRow): ServerPluginRecord {
     name: sp.plugin.name,
     enabled: sp.enabled,
     config: sp.config,
+    appearance: sp.appearance,
     serverAppearance: sp.server.pluginAppearance,
     package:
       sp.version && source !== "builtin"

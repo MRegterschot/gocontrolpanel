@@ -1,4 +1,9 @@
-import { effectiveAppearance, readServerAppearance } from "@gcp/shared";
+import {
+  effectiveAppearance,
+  inspectManialink,
+  readPluginAppearance,
+  readServerAppearance,
+} from "@gcp/shared";
 import type { ChatService } from "../chat/chat-service";
 import type { CommandRouter } from "../chat/command-router";
 import { CleanupStack, TypedEventBus } from "../events";
@@ -85,9 +90,15 @@ export function createPluginContext(
     string,
     { id: string; xml: string; login?: string; visible: boolean }
   >();
-  const resolveAppearance = (server: unknown) =>
-    effectiveAppearance(readServerAppearance(server));
-  let appearance = resolveAppearance(record.serverAppearance);
+  const resolveAppearance = (plugin: unknown, server: unknown) =>
+    effectiveAppearance(
+      readServerAppearance(server),
+      readPluginAppearance(plugin),
+    );
+  let appearance = resolveAppearance(
+    record.appearance,
+    record.serverAppearance,
+  );
   const styled = (id: string, xml: string) => {
     const page = id.startsWith(`plg.${record.name}.`)
       ? id.slice(`plg.${record.name}.`.length)
@@ -243,8 +254,33 @@ export function createPluginContext(
     setConfig(next) {
       config = parseConfig(definition, next, log);
     },
-    setAppearance(server) {
-      appearance = resolveAppearance(server);
+    inspectManialinks() {
+      const result = [];
+      let remaining = 1000;
+      let truncated = false;
+      for (const page of rawPages.values()) {
+        if (result.length >= 24 || remaining <= 0) {
+          truncated = true;
+          break;
+        }
+        const inspected = inspectManialink(page.xml, remaining);
+        if (inspected.elements.length === 0) continue;
+        remaining -= inspected.elements.length;
+        truncated ||= inspected.truncated;
+        result.push({
+          id: page.id,
+          page: page.id.startsWith(`plg.${record.name}.`)
+            ? page.id.slice(`plg.${record.name}.`.length)
+            : page.id,
+          login: page.login,
+          visible: page.visible,
+          ...inspected,
+        });
+      }
+      return { pages: result, truncated };
+    },
+    setAppearance(plugin, server) {
+      appearance = resolveAppearance(plugin, server);
       // Redraw visible pages without restarting plugin logic or resurrecting closed windows.
       for (const page of rawPages.values()) {
         services.manialinks.replace(

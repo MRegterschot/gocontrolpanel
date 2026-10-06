@@ -93,7 +93,7 @@ describe("sandboxed plugins", () => {
     expect(stored(h, "greetings:p1", "hello")).toBe(2);
   });
 
-  it("updates server appearance without restarting plugins and keeps it on later renders", async () => {
+  it("updates appearance without restarting the plugin and preserves overrides on later renders", async () => {
     const bytes = testPackage(
       `
       let count = 0;
@@ -112,8 +112,7 @@ describe("sandboxed plugins", () => {
       players: [player("p1")],
     });
     await h.chat("p1", "/tick");
-    record(h, "test-plugin").serverAppearance = {
-      theme: {},
+    record(h, "test-plugin").appearance = {
       rules: [
         {
           page: "board",
@@ -138,7 +137,7 @@ describe("sandboxed plugins", () => {
     expect(h.session.lastManialink("plg.test-plugin.board")).toContain(
       'textsize="3"',
     );
-    record(h, "test-plugin").serverAppearance = null;
+    record(h, "test-plugin").appearance = { rules: [] };
     await h.runtime.refreshPlugins();
     expect(h.session.lastManialink("plg.test-plugin.board")).toContain(
       'textsize="1"',
@@ -173,8 +172,7 @@ describe("sandboxed plugins", () => {
     );
     await h.chat("p1", "/hide");
     const sent = h.session.sent.length;
-    record(h, "test-plugin").serverAppearance = {
-      theme: {},
+    record(h, "test-plugin").appearance = {
       rules: [
         {
           page: "",
@@ -189,9 +187,67 @@ describe("sandboxed plugins", () => {
     expect(h.session.sent.length).toBe(sent);
     await h.chat("p1", "/destroy");
     const destroyed = h.session.sent.length;
-    record(h, "test-plugin").serverAppearance = null;
+    record(h, "test-plugin").appearance = { rules: [] };
     await h.runtime.refreshPlugins();
     expect(h.session.sent.length).toBe(destroyed);
+  });
+
+  it("inspects the plugin's original pages for the appearance editor", async () => {
+    const h = await createHarness({
+      packages: [
+        {
+          bytes: testPackage(
+            `
+      const widget = ctx.ui.widget({ id: "board", template: "board", withUpdate: false });
+      ctx.command("hide", () => widget.hide());
+      return { start() { widget.display(); } };
+    `,
+            { capabilities: ["ui"], commands: ["hide"] },
+            {
+              board:
+                '<manialink id="{{id}}"><label text="Hi" textsize="1" action="secret"/></manialink>',
+            },
+          ),
+        },
+      ],
+      players: [player("p1")],
+    });
+    const plugin = record(h, "test-plugin");
+    plugin.appearance = {
+      rules: [
+        {
+          page: "",
+          element: "label",
+          id: "",
+          className: "",
+          attributes: { textsize: "3" },
+        },
+      ],
+    };
+    await h.runtime.refreshPlugins();
+    await h.chat("p1", "/hide");
+
+    const snapshot = h.runtime.plugins.inspectManialinks(plugin.pluginId);
+    expect(snapshot.running).toBe(true);
+    expect(snapshot.pages).toEqual([
+      expect.objectContaining({
+        id: "plg.test-plugin.board",
+        page: "board",
+        visible: false,
+        elements: [
+          {
+            path: "0.0",
+            parentPath: null,
+            tag: "label",
+            attributes: { textsize: "1", text: "Hi" },
+          },
+        ],
+      }),
+    ]);
+    expect(h.runtime.plugins.inspectManialinks("missing")).toMatchObject({
+      running: false,
+      pages: [],
+    });
   });
 
   it("applies config changes and the config schema defaults", async () => {
@@ -465,7 +521,7 @@ describe("sandboxed plugins", () => {
     expect(stored(h, "closed")).toBe(true);
   });
 
-  it("applies the server theme to standard windows, with server rules on top", async () => {
+  it("applies the server theme to standard windows beneath plugin overrides", async () => {
     const h = await createHarness({
       packages: [
         {
@@ -490,6 +546,9 @@ describe("sandboxed plugins", () => {
         windowTitleBarColor: "036",
         windowBackgroundColor: "EEE",
       },
+      rules: [],
+    };
+    plugin.appearance = {
       rules: [
         {
           page: "",

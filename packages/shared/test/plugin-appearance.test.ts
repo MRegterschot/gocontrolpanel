@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   effectiveAppearance,
   pluginAppearanceSchema,
+  readPluginAppearance,
   readServerAppearance,
   serverAppearanceSchema,
   themeRules,
@@ -31,6 +32,7 @@ describe("plugin appearance validation", () => {
         ],
       }).success,
     ).toBe(true);
+    expect(readPluginAppearance(null)).toEqual({ rules: [] });
     expect(pluginAppearanceSchema.parse({ rules: [] })).toEqual({ rules: [] });
   });
   it.each([
@@ -106,6 +108,7 @@ describe("server appearance", () => {
     expect(parse({ theme: { textColor: "red" }, rules: [] })).toBe(false);
     expect(parse({ theme: { lineSpacing: "abc" }, rules: [] })).toBe(false);
     expect(parse({ theme: { other: "1" }, rules: [] })).toBe(false);
+    // Paths only identify elements within one plugin page
     expect(
       parse({
         theme: {},
@@ -115,15 +118,19 @@ describe("server appearance", () => {
     expect(readServerAppearance("garbage")).toEqual({ theme: {}, rules: [] });
   });
 
-  it("applies the theme in a fixed order, then server rules", () => {
-    const rules = effectiveAppearance({
-      theme: { windowTitleColor: "DDD", font: "Oswald", textColor: "" },
-      rules: [label({ textsize: "2" })],
-    }).rules;
+  it("applies the theme, then server rules, then plugin rules", () => {
+    const rules = effectiveAppearance(
+      {
+        theme: { windowTitleColor: "DDD", font: "Oswald", textColor: "" },
+        rules: [label({ textsize: "2" })],
+      },
+      { rules: [label({ textfont: "GameFontBlack" })] },
+    ).rules;
     expect(rules).toEqual([
       label({ textfont: "Oswald" }),
       { ...label({ textcolor: "DDD" }), className: "window-title" },
       label({ textsize: "2" }),
+      label({ textfont: "GameFontBlack" }),
     ]);
     expect(themeRules({})).toEqual([]);
   });

@@ -107,6 +107,12 @@ const appearanceRuleSchema = z
       .max(100)
       .regex(/^[a-zA-Z0-9_-]*$/),
     element: z.enum(MANIALINK_STYLE_ELEMENTS),
+    // Structural path for elements without a unique ID, selected from a runtime snapshot.
+    path: z
+      .string()
+      .max(200)
+      .regex(/^\d+(?:\.\d+)*$/)
+      .optional(),
     id: z.string().max(128),
     className: z.string().max(128).regex(/^\S*$/, "Use one class name"),
     attributes: z
@@ -134,6 +140,11 @@ export const pluginAppearanceSchema = z
   .strict();
 export type PluginAppearance = z.infer<typeof pluginAppearanceSchema>;
 export type PluginAppearanceRule = PluginAppearance["rules"][number];
+
+export function readPluginAppearance(raw: unknown): PluginAppearance {
+  const result = pluginAppearanceSchema.safeParse(raw);
+  return result.success ? result.data : { rules: [] };
+}
 
 // Server-wide theme options, applied in this order as rules before any other rule.
 // The window classes are set by the SDK window template.
@@ -198,7 +209,8 @@ export const serverAppearanceSchema = z
             });
         }
       }),
-    rules: z.array(appearanceRuleSchema).max(50),
+    // Paths only identify elements within one plugin's page
+    rules: z.array(appearanceRuleSchema.omit({ path: true })).max(50),
   })
   .strict();
 export type ServerAppearance = z.infer<typeof serverAppearanceSchema>;
@@ -227,9 +239,12 @@ export function themeRules(
   });
 }
 
-// Theme options first, so the server's own rules win for the same property
+// Server theme first, then server rules, then the plugin's own overrides win.
 export function effectiveAppearance(
   server: ServerAppearance,
+  plugin: PluginAppearance,
 ): PluginAppearance {
-  return { rules: [...themeRules(server.theme), ...server.rules] };
+  return {
+    rules: [...themeRules(server.theme), ...server.rules, ...plugin.rules],
+  };
 }
