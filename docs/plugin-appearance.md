@@ -40,4 +40,4 @@ Saving redraws currently open pages without restarting the plugin's server-side 
 
 ## Deployment
 
-Apply the `20261006120000_plugin_appearance` migration, which adds the `servers.pluginAppearance` column, using the normal deployment process before running the updated panel and GBX service. Matching migrations are included for MySQL/MariaDB and PostgreSQL.
+Apply the `20261006140000_server_plugin_appearance` migration, which adds the `servers.pluginAppearance` column, using the normal deployment process before running the updated panel and GBX service. Matching migrations are included for MySQL/MariaDB and PostgreSQL.
