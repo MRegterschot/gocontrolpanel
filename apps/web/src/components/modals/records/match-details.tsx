@@ -52,6 +52,15 @@ export default function MatchDetailsModal({
   const selectedRecords = records.filter((record) =>
     selectedIds.has(record.id),
   );
+  const selectionRound = selectedRecords[0]?.round;
+  const selectedRound =
+    selectionRound != null &&
+    records.every(
+      (record) =>
+        selectedIds.has(record.id) === (record.round === selectionRound),
+    )
+      ? String(selectionRound)
+      : "";
   const rounds = [
     ...new Set(
       records
@@ -121,7 +130,7 @@ export default function MatchDetailsModal({
                 <div className="flex w-full items-center justify-between gap-3">
                   {rounds.length > 0 && (
                     <Select
-                      value=""
+                      value={selectedRound}
                       onValueChange={(round) =>
                         setSelectedIds(
                           new Set(
@@ -138,7 +147,13 @@ export default function MatchDetailsModal({
                         aria-label="Select a round"
                         className="w-auto"
                       >
-                        <SelectValue placeholder="Select a round" />
+                        <SelectValue
+                          placeholder={
+                            selectedRecords.length
+                              ? "Custom selection"
+                              : "Select a round"
+                          }
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         {rounds.map((round) => (
