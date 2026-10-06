@@ -4,7 +4,11 @@ import { ModalContent } from "@/components/modals/modal";
 import { DataTable } from "@/components/table/data-table";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -114,7 +118,7 @@ export default function MatchDetailsModal({
             data={records}
             actions={
               canSend && (
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex w-full items-center justify-between gap-3">
                   {rounds.length > 0 && (
                     <Select
                       value=""
@@ -148,19 +152,6 @@ export default function MatchDetailsModal({
                   <span className="text-sm text-muted-foreground">
                     {selectedRecords.length} selected
                   </span>
-                  <Button
-                    variant="outline"
-                    disabled={!selectedRecords.length}
-                    onClick={() => setSelectedIds(new Set())}
-                  >
-                    Clear
-                  </Button>
-                  <Button
-                    disabled={!selectedRecords.length}
-                    onClick={() => setIsSendOpen(true)}
-                  >
-                    Send to eCircuitMania
-                  </Button>
                 </div>
               )
             }
@@ -216,6 +207,17 @@ export default function MatchDetailsModal({
           </div>
         </Card>
       </div>
+      {canSend && (
+        <DialogFooter>
+          <Button
+            disabled={!selectedRecords.length}
+            onClick={() => setIsSendOpen(true)}
+          >
+            Send to eCircuitMania
+          </Button>
+        </DialogFooter>
+      )}
+
       <Modal isOpen={isSendOpen} setIsOpen={setIsSendOpen}>
         <SendEcmModal
           serverId={data.serverId}
