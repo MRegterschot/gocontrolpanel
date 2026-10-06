@@ -1,7 +1,8 @@
 // Semantic versions (MAJOR.MINOR.PATCH with an optional pre-release) for plugin packages
 
-const SEMVER =
-  /^(0|[1-9]\d{0,8})\.(0|[1-9]\d{0,8})\.(0|[1-9]\d{0,8})(?:-((?:0|[1-9]\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*))?$/;
+const CORE_VERSION = /^(0|[1-9]\d{0,8})\.(0|[1-9]\d{0,8})\.(0|[1-9]\d{0,8})$/;
+const PRERELEASE_IDENTIFIER = /^[0-9A-Za-z-]+$/;
+const NUMERIC_IDENTIFIER = /^\d+$/;
 
 export interface ParsedVersion {
   major: number;
@@ -12,13 +13,27 @@ export interface ParsedVersion {
 
 export function parseVersion(version: string): ParsedVersion | null {
   if (version.length > 64) return null;
-  const match = SEMVER.exec(version);
-  if (!match) return null;
+  const separator = version.indexOf("-");
+  const core = separator === -1 ? version : version.slice(0, separator);
+  const prerelease =
+    separator === -1 ? [] : version.slice(separator + 1).split(".");
+  const match = CORE_VERSION.exec(core);
+  if (
+    !match ||
+    prerelease.some(
+      (identifier) =>
+        !PRERELEASE_IDENTIFIER.test(identifier) ||
+        (NUMERIC_IDENTIFIER.test(identifier) &&
+          identifier.length > 1 &&
+          identifier.startsWith("0")),
+    )
+  )
+    return null;
   return {
     major: Number(match[1]),
     minor: Number(match[2]),
     patch: Number(match[3]),
-    prerelease: match[4] ? match[4].split(".") : [],
+    prerelease,
   };
 }
 
@@ -49,7 +64,11 @@ export function compareVersions(a: string, b: string): number {
   if (pa.prerelease.length === 0 || pb.prerelease.length === 0) {
     return pb.prerelease.length - pa.prerelease.length;
   }
-  for (let i = 0; i < Math.max(pa.prerelease.length, pb.prerelease.length); i++) {
+  for (
+    let i = 0;
+    i < Math.max(pa.prerelease.length, pb.prerelease.length);
+    i++
+  ) {
     if (pa.prerelease[i] === undefined) return -1;
     if (pb.prerelease[i] === undefined) return 1;
     const diff = compareIdentifiers(pa.prerelease[i], pb.prerelease[i]);

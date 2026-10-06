@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import WebSocket from "ws";
+import { TicketVerifier } from "../../src/http/ws/ticket-verifier";
 import { flush } from "../fakes/clock";
 import { player } from "../fakes/harness";
 import { createApp, ticketFor } from "./app-fixture";
@@ -63,6 +64,85 @@ function connect(url: string, headers: Record<string, string> = {}): Connection 
 }
 
 const viewer = { servers: [{ id: "server-1", name: "Test Server", role: "Member" as const }] };
+
+describe("ws connection rate limiting", () => {
+  it("limits all channels before ticket verification and rejects upgrades with HTTP 429", async () => {
+    const { app, base } = await setup();
+    const verify = vi.spyOn(TicketVerifier.prototype, "verify");
+    try {
+      expect(
+        await connect(`${base}/ws/live/server-1?ticket=garbage`).closed,
+      ).toBe(4401);
+      expect(verify).toHaveBeenCalledTimes(1);
+      for (let attempt = 1; attempt < 120; attempt++) {
+        const url = attempt % 2 === 0 ? "/ws/servers" : "/ws/live/server-1";
+        expect(
+          (await app.inject({ method: "GET", url, remoteAddress: "127.0.0.1" }))
+            .statusCode,
+        ).not.toBe(429);
+      }
+      const denied = await app.inject({
+        method: "GET",
+        url: "/ws/map/server-1",
+        remoteAddress: "127.0.0.1",
+        headers: { "x-forwarded-for": "192.0.2.1" },
+      });
+      expect(denied.statusCode).toBe(429);
+      expect(Number(denied.headers["retry-after"])).toBeGreaterThan(0);
+      const status = await new Promise<number>((resolve, reject) => {
+        const socket = new WebSocket(`${base}/ws/servers?ticket=garbage`);
+        socket.once("error", reject);
+        socket.once("unexpected-response", (_request, response) => {
+          resolve(response.statusCode!);
+          response.resume();
+          socket.terminate();
+        });
+      });
+      expect(status).toBe(429);
+      expect(verify).toHaveBeenCalledTimes(1);
+      expect(
+        (
+          await app.inject({
+            method: "GET",
+            url: "/ws/servers",
+            remoteAddress: "192.0.2.1",
+          })
+        ).statusCode,
+      ).not.toBe(429);
+      expect(
+        (
+          await app.inject({
+            method: "GET",
+            url: "/health",
+            remoteAddress: "127.0.0.1",
+          })
+        ).statusCode,
+      ).toBe(200);
+    } finally {
+      verify.mockRestore();
+    }
+  });
+
+  it("allows new attempts after the rate limit window expires", async () => {
+    const { app } = await setup();
+    let now = Date.now();
+    const clock = vi.spyOn(Date, "now").mockImplementation(() => now);
+    try {
+      for (let attempt = 0; attempt < 120; attempt++) {
+        await app.inject({ method: "GET", url: "/ws/servers" });
+      }
+      expect(
+        (await app.inject({ method: "GET", url: "/ws/servers" })).statusCode,
+      ).toBe(429);
+      now += 60001;
+      expect(
+        (await app.inject({ method: "GET", url: "/ws/servers" })).statusCode,
+      ).not.toBe(429);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+});
 
 describe("ws authentication", () => {
   it("closes without a ticket", async () => {
