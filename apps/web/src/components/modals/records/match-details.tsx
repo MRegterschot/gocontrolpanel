@@ -1,7 +1,19 @@
+"use client";
+
 import { ModalContent } from "@/components/modals/modal";
 import { DataTable } from "@/components/table/data-table";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { formatTime } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { formatTime, hasPermissionSync } from "@/lib/utils";
+import { routePermissions } from "@/routes";
 import type { MatchesWithMapAndRecords } from "@/services/database/matches";
 import {
   IconPhoto,
@@ -9,21 +21,86 @@ import {
   IconStopwatch,
   IconUser,
 } from "@tabler/icons-react";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
+import { useState } from "react";
 import { parseTmTags } from "tmtags";
 import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
+import Modal from "../modal";
 import { createColumns } from "./match-details-columns";
+import SendEcmModal from "./send-ecm";
 
 export default function MatchDetailsModal({
   data,
 }: DefaultModalProps<MatchesWithMapAndRecords>) {
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isSendOpen, setIsSendOpen] = useState(false);
+  const { data: session } = useSession();
   if (!data) return null;
+  const canSend = hasPermissionSync(
+    session,
+    routePermissions.servers.records.actions,
+    data.serverId,
+  );
+  const records = [...data.records].sort(
+    (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+  );
+  const selectedRecords = records.filter((record) =>
+    selectedIds.has(record.id),
+  );
+  const rounds = [
+    ...new Set(
+      records
+        .map((record) => record.round)
+        .filter((round): round is number => round !== null),
+    ),
+  ].sort((a, b) => a - b);
 
   const columns = createColumns(
     data.records.some((record) => record.round),
     data.records.some((record) => record.points),
   );
+
+  if (canSend) {
+    columns.unshift({
+      id: "select",
+      size: 40,
+      header: () => (
+        <Checkbox
+          aria-label="Select all records"
+          checked={
+            selectedRecords.length === records.length && records.length > 0
+              ? true
+              : selectedRecords.length > 0
+                ? "indeterminate"
+                : false
+          }
+          onCheckedChange={(checked) =>
+            setSelectedIds(
+              checked === true
+                ? new Set(records.map((record) => record.id))
+                : new Set(),
+            )
+          }
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          aria-label={`Select record for ${row.original.user?.nickName || row.original.login || "player"}, round ${row.original.round ?? "unknown"}`}
+          checked={selectedIds.has(row.original.id)}
+          onCheckedChange={(checked) =>
+            setSelectedIds((previous) => {
+              const next = new Set(previous);
+              if (checked === true) next.add(row.original.id);
+              else next.delete(row.original.id);
+              return next;
+            })
+          }
+        />
+      ),
+    });
+  }
 
   return (
     <ModalContent className="max-w-[min(64rem,calc(100vw-2rem))]">
@@ -32,16 +109,68 @@ export default function MatchDetailsModal({
       </DialogHeader>
 
       <div className="flex flex-col-reverse sm:flex-row gap-4 flex-1 min-h-0 max-w-full">
-        <DataTable
-          columns={columns}
-          data={data.records.sort(
-            (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
-          )}
-          pagination
-          className="overflow-y-auto flex-none"
-        />
+        <div className="flex-1 min-w-0">
+          <DataTable
+            columns={columns}
+            data={records}
+            actions={
+              canSend && (
+                <div className="flex flex-wrap items-center gap-2">
+                  {rounds.length > 0 && (
+                    <Select
+                      value=""
+                      onValueChange={(round) =>
+                        setSelectedIds(
+                          new Set(
+                            records
+                              .filter(
+                                (record) => record.round === Number(round),
+                              )
+                              .map((record) => record.id),
+                          ),
+                        )
+                      }
+                    >
+                      <SelectTrigger
+                        aria-label="Select a round"
+                        className="w-auto"
+                      >
+                        <SelectValue placeholder="Select a round" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {rounds.map((round) => (
+                          <SelectItem key={round} value={String(round)}>
+                            Round {round}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <span className="text-sm text-muted-foreground">
+                    {selectedRecords.length} selected
+                  </span>
+                  <Button
+                    variant="outline"
+                    disabled={!selectedRecords.length}
+                    onClick={() => setSelectedIds(new Set())}
+                  >
+                    Clear
+                  </Button>
+                  <Button
+                    disabled={!selectedRecords.length}
+                    onClick={() => setIsSendOpen(true)}
+                  >
+                    Send to eCircuitMania
+                  </Button>
+                </div>
+              )
+            }
+            pagination
+            className="overflow-y-auto flex-none"
+          />
+        </div>
 
-        <Card className="flex h-min flex-col">
+        <Card className="flex h-min flex-col sm:w-64 shrink-0">
           <div className="relative">
             {data.map.thumbnailUrl ? (
               <Image
@@ -88,6 +217,13 @@ export default function MatchDetailsModal({
           </div>
         </Card>
       </div>
+      <Modal isOpen={isSendOpen} setIsOpen={setIsSendOpen}>
+        <SendEcmModal
+          serverId={data.serverId}
+          matchId={data.id}
+          records={selectedRecords}
+        />
+      </Modal>
     </ModalContent>
   );
 }
