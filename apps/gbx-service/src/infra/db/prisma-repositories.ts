@@ -1,5 +1,5 @@
-import type { NotificationDto, PlayerInfo, PluginManifest } from "@gcp/shared";
 import type { DbClient, Maps, Notifications, Prisma } from "@gcp/db";
+import type { NotificationDto, PlayerInfo, PluginManifest } from "@gcp/shared";
 import type {
   FirstPartyInstall,
   FirstPartyRepository,
@@ -67,9 +67,12 @@ function metadataFields(metadata: MapMetadata | null) {
 const serverPluginInclude = {
   plugin: { select: { name: true, source: true } },
   version: { select: { id: true, version: true, sha256: true, yanked: true } },
+  server: { select: { pluginAppearance: true } },
 } satisfies Prisma.ServerPluginsInclude;
 
-type ServerPluginRow = Prisma.ServerPluginsGetPayload<{ include: typeof serverPluginInclude }>;
+type ServerPluginRow = Prisma.ServerPluginsGetPayload<{
+  include: typeof serverPluginInclude;
+}>;
 
 function toPluginRecord(sp: ServerPluginRow): ServerPluginRecord {
   const source = sp.plugin.source;
@@ -78,6 +81,7 @@ function toPluginRecord(sp: ServerPluginRow): ServerPluginRecord {
     name: sp.plugin.name,
     enabled: sp.enabled,
     config: sp.config,
+    serverAppearance: sp.server.pluginAppearance,
     package:
       sp.version && source !== "builtin"
         ? {
@@ -86,7 +90,9 @@ function toPluginRecord(sp: ServerPluginRow): ServerPluginRecord {
             sha256: sp.version.sha256,
             source,
             grantedCapabilities: Array.isArray(sp.grantedCapabilities)
-              ? sp.grantedCapabilities.filter((c): c is string => typeof c === "string")
+              ? sp.grantedCapabilities.filter(
+                  (c): c is string => typeof c === "string",
+                )
               : [],
             yanked: sp.version.yanked,
           }
@@ -142,15 +148,26 @@ export class PrismaServerRepository implements ServerRepository {
     return rows.map(toPluginRecord);
   }
 
-  async updatePluginConfig(serverId: string, pluginId: string, config: unknown): Promise<void> {
+  async updatePluginConfig(
+    serverId: string,
+    pluginId: string,
+    config: unknown,
+  ): Promise<void> {
     await this.db.serverPlugins.update({
       where: { serverId_pluginId: { serverId, pluginId } },
       data: { config: config as never },
     });
   }
 
-  async setPluginEnabled(serverId: string, pluginId: string, enabled: boolean): Promise<void> {
-    await this.db.serverPlugins.updateMany({ where: { serverId, pluginId }, data: { enabled } });
+  async setPluginEnabled(
+    serverId: string,
+    pluginId: string,
+    enabled: boolean,
+  ): Promise<void> {
+    await this.db.serverPlugins.updateMany({
+      where: { serverId, pluginId },
+      data: { enabled },
+    });
   }
 }
 
@@ -173,7 +190,10 @@ export class PrismaPluginCatalogRepository implements PluginCatalogRepository {
     const affected: YankedInstall[] = [];
     for (const yank of yanks) {
       const version = await this.db.pluginVersions.findFirst({
-        where: { version: yank.version, plugin: { name: yank.slug, source: "marketplace" } },
+        where: {
+          version: yank.version,
+          plugin: { name: yank.slug, source: "marketplace" },
+        },
         select: { id: true, yanked: true },
       });
       if (!version) continue;
@@ -195,7 +215,12 @@ export class PrismaPluginCatalogRepository implements PluginCatalogRepository {
         });
       }
       for (const sp of running) {
-        affected.push({ ...sp, name: yank.slug, version: yank.version, reason: yank.reason });
+        affected.push({
+          ...sp,
+          name: yank.slug,
+          version: yank.version,
+          reason: yank.reason,
+        });
       }
     }
     return affected;
@@ -213,7 +238,13 @@ export class PrismaPluginStorageRepository implements PluginStorageRepository {
     return row ? row.value : null;
   }
 
-  async set(serverId: string, pluginId: string, key: string, value: unknown, size: number) {
+  async set(
+    serverId: string,
+    pluginId: string,
+    key: string,
+    value: unknown,
+    size: number,
+  ) {
     const json = value as Prisma.InputJsonValue;
     await this.db.pluginStorage.upsert({
       where: { serverId_pluginId_key: { serverId, pluginId, key } },
@@ -223,12 +254,23 @@ export class PrismaPluginStorageRepository implements PluginStorageRepository {
   }
 
   async delete(serverId: string, pluginId: string, key: string): Promise<void> {
-    await this.db.pluginStorage.deleteMany({ where: { serverId, pluginId, key } });
+    await this.db.pluginStorage.deleteMany({
+      where: { serverId, pluginId, key },
+    });
   }
 
-  async keys(serverId: string, pluginId: string, prefix: string, limit: number): Promise<string[]> {
+  async keys(
+    serverId: string,
+    pluginId: string,
+    prefix: string,
+    limit: number,
+  ): Promise<string[]> {
     const rows = await this.db.pluginStorage.findMany({
-      where: { serverId, pluginId, ...(prefix ? { key: { startsWith: prefix } } : {}) },
+      where: {
+        serverId,
+        pluginId,
+        ...(prefix ? { key: { startsWith: prefix } } : {}),
+      },
       select: { key: true },
       orderBy: { key: "asc" },
       take: limit,
@@ -245,7 +287,11 @@ export class PrismaPluginStorageRepository implements PluginStorageRepository {
     return { keys: result._count._all, bytes: result._sum.size ?? 0 };
   }
 
-  async sizeOf(serverId: string, pluginId: string, key: string): Promise<number> {
+  async sizeOf(
+    serverId: string,
+    pluginId: string,
+    key: string,
+  ): Promise<number> {
     const row = await this.db.pluginStorage.findUnique({
       where: { serverId_pluginId_key: { serverId, pluginId, key } },
       select: { size: true },
@@ -254,7 +300,9 @@ export class PrismaPluginStorageRepository implements PluginStorageRepository {
   }
 }
 
-export class PrismaPlayerRepository implements PlayerRepository, UserRepository {
+export class PrismaPlayerRepository
+  implements PlayerRepository, UserRepository
+{
   constructor(private readonly db: DbClient) {}
 
   async upsertMany(players: PlayerInfo[]): Promise<void> {
@@ -269,17 +317,25 @@ export class PrismaPlayerRepository implements PlayerRepository, UserRepository 
     const created = players.filter((p) => !nickByLogin.has(p.login));
     if (created.length > 0) {
       await this.db.users.createMany({
-        data: created.map((p) => ({ login: p.login, nickName: p.nickName, path: "" })),
+        data: created.map((p) => ({
+          login: p.login,
+          nickName: p.nickName,
+          path: "",
+        })),
         skipDuplicates: true,
       });
     }
 
     const renamed = players.filter(
-      (p) => nickByLogin.has(p.login) && nickByLogin.get(p.login) !== p.nickName,
+      (p) =>
+        nickByLogin.has(p.login) && nickByLogin.get(p.login) !== p.nickName,
     );
     await Promise.all(
       renamed.map((p) =>
-        this.db.users.update({ where: { login: p.login }, data: { nickName: p.nickName } }),
+        this.db.users.update({
+          where: { login: p.login },
+          data: { nickName: p.nickName },
+        }),
       ),
     );
   }
@@ -305,7 +361,9 @@ export class PrismaMapRepository implements MapRepository {
   constructor(private readonly db: DbClient) {}
 
   async findByUid(uid: string): Promise<MapRecord | null> {
-    const map = await this.db.maps.findFirst({ where: { uid, deletedAt: null } });
+    const map = await this.db.maps.findFirst({
+      where: { uid, deletedAt: null },
+    });
     return map ? toMapRecord(map) : null;
   }
 
@@ -317,11 +375,16 @@ export class PrismaMapRepository implements MapRepository {
   }
 
   async create(map: NewMap, metadata: MapMetadata | null): Promise<MapRecord> {
-    const row = await this.db.maps.create({ data: { ...map, ...metadataFields(metadata) } });
+    const row = await this.db.maps.create({
+      data: { ...map, ...metadataFields(metadata) },
+    });
     return toMapRecord(row);
   }
 
-  async updateMetadata(mapId: string, metadata: MapMetadata | null): Promise<MapRecord> {
+  async updateMetadata(
+    mapId: string,
+    metadata: MapMetadata | null,
+  ): Promise<MapRecord> {
     const row = await this.db.maps.update({
       where: { id: mapId },
       data: metadata ? metadataFields(metadata) : { uploadCheck: new Date() },
@@ -334,7 +397,10 @@ export class PrismaMatchRepository implements MatchRepository {
   constructor(private readonly db: DbClient) {}
 
   async create(input: { serverId: string; mapId: string; mode: string }) {
-    const match = await this.db.matches.create({ data: input, select: { id: true } });
+    const match = await this.db.matches.create({
+      data: input,
+      select: { id: true },
+    });
     return match;
   }
 }
@@ -383,15 +449,27 @@ export class PrismaRecordRepository implements RecordRepository {
     });
   }
 
-  async findLocalRecord(serverId: string, mapUid: string): Promise<LocalRecord | null> {
+  async findLocalRecord(
+    serverId: string,
+    mapUid: string,
+  ): Promise<LocalRecord | null> {
     const serverIds = await this.sharedServerIds(serverId);
     const record = await this.db.records.findFirst({
-      where: { serverId: { in: serverIds }, mapUid, deletedAt: null, time: { gt: 0 } },
+      where: {
+        serverId: { in: serverIds },
+        mapUid,
+        deletedAt: null,
+        time: { gt: 0 },
+      },
       orderBy: [{ time: "asc" }, { createdAt: "asc" }],
       include: { user: { select: { nickName: true } } },
     });
     return record
-      ? { login: record.login, time: record.time, nickName: record.user?.nickName ?? null }
+      ? {
+          login: record.login,
+          time: record.time,
+          nickName: record.user?.nickName ?? null,
+        }
       : null;
   }
 
@@ -426,7 +504,9 @@ export class PrismaRecordRepository implements RecordRepository {
       where: { groupServers: { some: { serverId } }, shareRecords: true },
       include: { groupServers: { select: { serverId: true } } },
     });
-    const ids = groups.flatMap((group) => group.groupServers.map((gs) => gs.serverId));
+    const ids = groups.flatMap((group) =>
+      group.groupServers.map((gs) => gs.serverId),
+    );
     return [...new Set([serverId, ...ids])];
   }
 }
@@ -443,7 +523,9 @@ export class PrismaNotificationRepository implements NotificationRepository {
     const admins = await this.db.users.findMany({
       where: {
         OR: [
-          { userServers: { some: { serverId: input.serverId, role: "Admin" } } },
+          {
+            userServers: { some: { serverId: input.serverId, role: "Admin" } },
+          },
           {
             groupMembers: {
               some: {
@@ -478,7 +560,11 @@ export class PrismaNotificationRepository implements NotificationRepository {
 export class PrismaFirstPartyRepository implements FirstPartyRepository {
   constructor(private readonly db: DbClient) {}
 
-  async install(manifest: PluginManifest, sha256: string, bytes: Uint8Array): Promise<FirstPartyInstall> {
+  async install(
+    manifest: PluginManifest,
+    sha256: string,
+    bytes: Uint8Array,
+  ): Promise<FirstPartyInstall> {
     const result: FirstPartyInstall = {
       slug: manifest.slug,
       version: manifest.version,
@@ -494,7 +580,9 @@ export class PrismaFirstPartyRepository implements FirstPartyRepository {
         author: manifest.author,
       };
 
-      let plugin = await tx.plugins.findUnique({ where: { name: manifest.slug } });
+      let plugin = await tx.plugins.findUnique({
+        where: { name: manifest.slug },
+      });
       if (plugin?.source === "upload") {
         return { ...result, skipped: "an uploaded plugin uses this name" };
       }
@@ -510,7 +598,9 @@ export class PrismaFirstPartyRepository implements FirstPartyRepository {
       }
 
       let version = await tx.pluginVersions.findUnique({
-        where: { pluginId_version: { pluginId: plugin.id, version: manifest.version } },
+        where: {
+          pluginId_version: { pluginId: plugin.id, version: manifest.version },
+        },
         select: { id: true },
       });
       if (!version) {
@@ -535,7 +625,9 @@ export class PrismaFirstPartyRepository implements FirstPartyRepository {
         select: { serverId: true, enabled: true, config: true },
       });
       for (const row of legacy) {
-        const key = { serverId_pluginId: { serverId: row.serverId, pluginId: plugin.id } };
+        const key = {
+          serverId_pluginId: { serverId: row.serverId, pluginId: plugin.id },
+        };
         // The old plugins form saved a row for every plugin; untouched ones aren't installs
         if (!row.enabled && row.config === null) {
           await tx.serverPlugins.delete({ where: key });

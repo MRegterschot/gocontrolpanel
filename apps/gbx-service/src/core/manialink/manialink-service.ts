@@ -31,6 +31,23 @@ export class ManialinkService {
     this.log.trace({ manialinkId: id, login }, "Displayed manialink");
   }
 
+  // Refresh cached XML for hidden pages without making them visible.
+  replace(
+    id: string,
+    xml: string,
+    login: string | undefined,
+    visible: boolean,
+  ): void {
+    if (visible) {
+      this.display(id, xml, login);
+      return;
+    }
+    if (login) {
+      if (this.playerPages.get(login)?.has(id))
+        this.playerPages.get(login)!.set(id, xml);
+    } else if (this.publicPages.has(id)) this.publicPages.set(id, xml);
+  }
+
   hide(id: string, login?: string): void {
     const xml = emptyManialink(id);
     if (login) {
@@ -85,7 +102,11 @@ export class ManialinkService {
 
   // Exposed for tests and diagnostics
   displayedIds(login?: string): string[] {
-    return [...(login ? (this.playerPages.get(login)?.keys() ?? []) : this.publicPages.keys())];
+    return [
+      ...(login
+        ? (this.playerPages.get(login)?.keys() ?? [])
+        : this.publicPages.keys()),
+    ];
   }
 
   private pagesFor(login: string): Map<string, string> {

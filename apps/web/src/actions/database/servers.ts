@@ -39,6 +39,7 @@ export async function createServer(
     | "scriptSettingsSavedMessage"
     | "mapListChangeMessage"
     | "enableHelpCommand"
+    | "pluginAppearance"
     | "createdAt"
     | "updatedAt"
     | "deletedAt"
@@ -109,6 +110,7 @@ export async function updateServer(
       | "matchSettingsLoadedMessage"
       | "scriptSettingsSavedMessage"
       | "mapListChangeMessage"
+      | "pluginAppearance"
       | "createdAt"
       | "updatedAt"
     >

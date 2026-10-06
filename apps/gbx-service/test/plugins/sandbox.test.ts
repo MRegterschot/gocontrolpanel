@@ -1,14 +1,22 @@
-import { packPlugin } from "@tmcontrolpanel/plugin-sdk/cli";
 import { createPluginPackage } from "@gcp/shared/plugin-package";
+import { packPlugin } from "@tmcontrolpanel/plugin-sdk/cli";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { DEFAULT_SANDBOX_LIMITS } from "../../src/core/plugins/sandbox/limits";
-import { createHarness, packageRecord, player, SERVER_ID, type Harness } from "../fakes/harness";
+import {
+  createHarness,
+  packageRecord,
+  player,
+  SERVER_ID,
+  type Harness,
+} from "../fakes/harness";
 
-const EXAMPLE = fileURLToPath(new URL("../../../../packages/plugin-sdk/examples/hello", import.meta.url));
+const EXAMPLE = fileURLToPath(
+  new URL("../../../../packages/plugin-sdk/examples/hello", import.meta.url),
+);
 
 let outDir: string;
 let hello: Uint8Array;
@@ -39,7 +47,10 @@ function testPackage(
     }),
     "index.js": `globalThis.__tmcpRegister({ create(ctx) { ${code} } });`,
     ...Object.fromEntries(
-      Object.entries(templates).map(([name, source]) => [`templates/${name}.hbs`, source]),
+      Object.entries(templates).map(([name, source]) => [
+        `templates/${name}.hbs`,
+        source,
+      ]),
     ),
   });
 }
@@ -57,7 +68,10 @@ const WIDGET = `{{#extend "widget"}}{{#content "widget"}}<label text="{{ data.te
 
 describe("sandboxed plugins", () => {
   it("runs the example plugin end to end", async () => {
-    const h = await createHarness({ packages: [{ bytes: hello }], players: [player("p1")] });
+    const h = await createHarness({
+      packages: [{ bytes: hello }],
+      players: [player("p1")],
+    });
     expect(h.runtime.plugins.loadedIds()).toContain("hello");
 
     const xml = h.session.lastManialink("plg.hello.greeting");
@@ -70,11 +84,114 @@ describe("sandboxed plugins", () => {
 
     await h.click("p1", "hello:wave");
     expect(lastChatTo(h)).toEqual(["Welcome Nick p1! (greeting #2)", "p1"]);
-    expect(h.session.lastManialink("plg.hello.greeting")).toContain("Welcome! 2 greetings so far");
+    expect(h.session.lastManialink("plg.hello.greeting")).toContain(
+      "Welcome! 2 greetings so far",
+    );
 
     // Without the prefix the action belongs to nobody
     await h.click("p1", "wave");
     expect(stored(h, "greetings:p1", "hello")).toBe(2);
+  });
+
+  it("updates server appearance without restarting plugins and keeps it on later renders", async () => {
+    const bytes = testPackage(
+      `
+      let count = 0;
+      const widget = ctx.ui.widget({ id: "board", template: "board", withUpdate: false });
+      ctx.command("tick", () => { widget.setData({ count: ++count }); widget.display(); });
+      return { start() { widget.setData({ count }); widget.display(); } };
+    `,
+      { capabilities: ["ui"], commands: ["tick"] },
+      {
+        board:
+          '{{#extend "widget"}}{{#content "widget"}}<label text="{{data.count}}" textsize="1"/>{{/content}}{{/extend}}',
+      },
+    );
+    const h = await createHarness({
+      packages: [{ bytes }],
+      players: [player("p1")],
+    });
+    await h.chat("p1", "/tick");
+    record(h, "test-plugin").serverAppearance = {
+      theme: {},
+      rules: [
+        {
+          page: "board",
+          element: "label",
+          id: "",
+          className: "",
+          attributes: { textsize: "3" },
+        },
+      ],
+    };
+    await h.runtime.refreshPlugins();
+    expect(h.session.lastManialink("plg.test-plugin.board")).toContain(
+      'textsize="3"',
+    );
+    expect(h.session.lastManialink("plg.test-plugin.board")).toContain(
+      'text="1"',
+    );
+    await h.chat("p1", "/tick");
+    expect(h.session.lastManialink("plg.test-plugin.board")).toContain(
+      'text="2"',
+    );
+    expect(h.session.lastManialink("plg.test-plugin.board")).toContain(
+      'textsize="3"',
+    );
+    record(h, "test-plugin").serverAppearance = null;
+    await h.runtime.refreshPlugins();
+    expect(h.session.lastManialink("plg.test-plugin.board")).toContain(
+      'textsize="1"',
+    );
+    expect(h.session.lastManialink("plg.test-plugin.board")).toContain(
+      'text="2"',
+    );
+  });
+
+  it("does not reopen hidden or destroyed pages when appearance changes", async () => {
+    const h = await createHarness({
+      packages: [
+        {
+          bytes: testPackage(
+            `
+      const widget = ctx.ui.widget({ id: "board", template: "board", withUpdate: false });
+      ctx.command("hide", () => widget.hide());
+      ctx.command("destroy", () => widget.destroy());
+      return { start() { widget.display(); } };
+    `,
+            { capabilities: ["ui"], commands: ["hide", "destroy"] },
+            {
+              board: '<manialink id="{{id}}"><label textsize="1"/></manialink>',
+            },
+          ),
+        },
+      ],
+      players: [player("p1")],
+    });
+    expect(h.runtime.manialinks.displayedIds()).toContain(
+      "plg.test-plugin.board",
+    );
+    await h.chat("p1", "/hide");
+    const sent = h.session.sent.length;
+    record(h, "test-plugin").serverAppearance = {
+      theme: {},
+      rules: [
+        {
+          page: "",
+          element: "label",
+          id: "",
+          className: "",
+          attributes: { textsize: "3" },
+        },
+      ],
+    };
+    await h.runtime.refreshPlugins();
+    expect(h.session.sent.length).toBe(sent);
+    await h.chat("p1", "/destroy");
+    const destroyed = h.session.sent.length;
+    record(h, "test-plugin").serverAppearance = null;
+    await h.runtime.refreshPlugins();
+    expect(h.session.sent.length).toBe(destroyed);
   });
 
   it("applies config changes and the config schema defaults", async () => {
@@ -82,18 +199,25 @@ describe("sandboxed plugins", () => {
       packages: [{ bytes: hello, config: { greeting: "Hoi" } }],
       players: [player("p1")],
     });
-    expect(h.session.lastManialink("plg.hello.greeting")).toContain("Hoi! 0 greetings");
+    expect(h.session.lastManialink("plg.hello.greeting")).toContain(
+      "Hoi! 0 greetings",
+    );
 
     record(h, "hello").config = { greeting: "Moin", showWidget: false };
     await h.runtime.refreshPlugins();
-    expect(h.runtime.manialinks.displayedIds()).not.toContain("plg.hello.greeting");
+    expect(h.runtime.manialinks.displayedIds()).not.toContain(
+      "plg.hello.greeting",
+    );
 
     await h.chat("p1", "/hello");
     expect(lastChatTo(h)).toEqual(["Moin Nick p1! (greeting #1)", "p1"]);
   });
 
   it("answers /help with the manifest help text", async () => {
-    const h = await createHarness({ packages: [{ bytes: hello }], players: [player("p1")] });
+    const h = await createHarness({
+      packages: [{ bytes: hello }],
+      players: [player("p1")],
+    });
     await h.chat("p1", "/help hello");
     expect(lastChatTo(h)).toEqual([
       "/hello - the server says hi and tells you how often it did",
@@ -134,10 +258,16 @@ describe("sandboxed plugins", () => {
       ],
     });
     expect(stored(h, "map")).toBe("map-a-uid");
-    expect(stored(h, "raw-page")).toBe("CapabilityError: The plugin may not call SendDisplayManialinkPage");
-    expect(stored(h, "kick")).toBe("CapabilityError: The plugin may not call Kick");
+    expect(stored(h, "raw-page")).toBe(
+      "CapabilityError: The plugin may not call SendDisplayManialinkPage",
+    );
+    expect(stored(h, "kick")).toBe(
+      "CapabilityError: The plugin may not call Kick",
+    );
     expect(stored(h, "script-read")).toBe(null);
-    expect(stored(h, "script-write")).toMatch(/needs the "mode:control" capability/);
+    expect(stored(h, "script-write")).toMatch(
+      /needs the "mode:control" capability/,
+    );
     expect(h.session.callsTo("Kick")).toHaveLength(0);
   });
 
@@ -163,8 +293,12 @@ describe("sandboxed plugins", () => {
         },
       ],
     });
-    expect(stored(h, "spoof")).toBe('The manialink id must be "plg.test-plugin.spoof"');
-    expect(stored(h, "nested")).toBe("A page must contain exactly one <manialink> element");
+    expect(stored(h, "spoof")).toBe(
+      'The manialink id must be "plg.test-plugin.spoof"',
+    );
+    expect(stored(h, "nested")).toBe(
+      "A page must contain exactly one <manialink> element",
+    );
     expect(stored(h, "fine")).toBe("shown");
     expect(h.session.sentManialinkIds()).not.toContain("map-info-widget");
     expect(h.session.sentManialinkIds()).toContain("plg.test-plugin.fine");
@@ -172,7 +306,14 @@ describe("sandboxed plugins", () => {
 
   it("turns off a plugin that hangs and tells the admins", async () => {
     const h = await createHarness({
-      packages: [{ bytes: testPackage(`ctx.command("spin", () => { for (;;) {} }); return {};`, { commands: ["spin"] }) }],
+      packages: [
+        {
+          bytes: testPackage(
+            `ctx.command("spin", () => { for (;;) {} }); return {};`,
+            { commands: ["spin"] },
+          ),
+        },
+      ],
       players: [player("p1")],
     });
     expect(h.runtime.plugins.loadedIds()).toContain("test-plugin");
@@ -182,13 +323,22 @@ describe("sandboxed plugins", () => {
 
     expect(record(h, "test-plugin").enabled).toBe(false);
     expect(h.runtime.plugins.loadedIds()).not.toContain("test-plugin");
-    expect(h.notifications.created.map((n) => [n.type, n.description])).toEqual([
-      ["pluginDisabled", "The plugin ran longer than its time limit (command /spin)"],
-    ]);
+    expect(h.notifications.created.map((n) => [n.type, n.description])).toEqual(
+      [
+        [
+          "pluginDisabled",
+          "The plugin ran longer than its time limit (command /spin)",
+        ],
+      ],
+    );
   });
 
   it("turns off a plugin that hangs while loading or runs out of memory", async () => {
-    const limits = { ...DEFAULT_SANDBOX_LIMITS, loadMs: 50, memoryBytes: 8 * 1024 * 1024 };
+    const limits = {
+      ...DEFAULT_SANDBOX_LIMITS,
+      loadMs: 50,
+      memoryBytes: 8 * 1024 * 1024,
+    };
     const hang = await createHarness({
       packages: [{ bytes: testPackage(`for (;;) {}`) }],
       sandboxLimits: limits,
@@ -197,17 +347,32 @@ describe("sandboxed plugins", () => {
     expect(record(hang, "test-plugin").enabled).toBe(false);
 
     const hog = await createHarness({
-      packages: [{ bytes: testPackage(`const a = []; for (;;) a.push({ n: a.length, s: "x" + a.length }); return {};`) }],
+      packages: [
+        {
+          bytes: testPackage(
+            `const a = []; for (;;) a.push({ n: a.length, s: "x" + a.length }); return {};`,
+          ),
+        },
+      ],
       sandboxLimits: { ...limits, loadMs: 5000 },
     });
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(record(hog, "test-plugin").enabled).toBe(false);
-    expect(hog.notifications.created[0]?.description).toMatch(/more memory than its limit/);
+    expect(hog.notifications.created[0]?.description).toMatch(
+      /more memory than its limit/,
+    );
   });
 
   it("turns off a plugin that keeps throwing", async () => {
     const h = await createHarness({
-      packages: [{ bytes: testPackage(`ctx.command("boom", () => { throw new Error("nope"); }); return {};`, { commands: ["boom"] }) }],
+      packages: [
+        {
+          bytes: testPackage(
+            `ctx.command("boom", () => { throw new Error("nope"); }); return {};`,
+            { commands: ["boom"] },
+          ),
+        },
+      ],
       players: [player("p1")],
       sandboxLimits: { ...DEFAULT_SANDBOX_LIMITS, errorsPerMinute: 3 },
     });
@@ -216,7 +381,9 @@ describe("sandboxed plugins", () => {
     await h.chat("p1", "/boom");
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(record(h, "test-plugin").enabled).toBe(false);
-    expect(h.notifications.created[0]?.description).toMatch(/kept failing \(command \/boom: nope\)/);
+    expect(h.notifications.created[0]?.description).toMatch(
+      /kept failing \(command \/boom: nope\)/,
+    );
   });
 
   it("only registers manifest commands and plugin events", async () => {
@@ -233,8 +400,12 @@ describe("sandboxed plugins", () => {
         },
       ],
     });
-    expect(stored(h, "command")).toBe("/admin is not one of the commands in the manifest");
-    expect(stored(h, "answers")).toBe('Unknown event "playerManialinkPageAnswer"');
+    expect(stored(h, "command")).toBe(
+      "/admin is not one of the commands in the manifest",
+    );
+    expect(stored(h, "answers")).toBe(
+      'Unknown event "playerManialinkPageAnswer"',
+    );
     expect(stored(h, "finish")).toBe("ok");
   });
 
@@ -269,20 +440,82 @@ describe("sandboxed plugins", () => {
                  onClose: () => ctx.storage.set("closed", true) }).display();
              } };`,
             { capabilities: ["ui", "storage"] },
-            { win: `{{#extend "window"}}{{#content "window"}}<label text="{{ title }}"/>{{/content}}{{/extend}}`, "win-update": `{{#extend "manialink"}}{{/extend}}` },
+            {
+              win: `{{#extend "window"}}{{#content "window"}}<label text="{{ title }}"/>{{/content}}{{/extend}}`,
+              "win-update": `{{#extend "manialink"}}{{/extend}}`,
+            },
           ),
         },
       ],
       players: [player("p1"), player("p2")],
     });
-    expect(h.runtime.manialinks.displayedIds("p1")).toContain("plg.test-plugin.win");
+    expect(h.runtime.manialinks.displayedIds("p1")).toContain(
+      "plg.test-plugin.win",
+    );
 
     await h.click("p2", "close-window-plg.test-plugin.win");
-    expect(h.runtime.manialinks.displayedIds("p1")).toContain("plg.test-plugin.win");
+    expect(h.runtime.manialinks.displayedIds("p1")).toContain(
+      "plg.test-plugin.win",
+    );
 
     await h.click("p1", "close-window-plg.test-plugin.win");
-    expect(h.runtime.manialinks.displayedIds("p1")).not.toContain("plg.test-plugin.win");
+    expect(h.runtime.manialinks.displayedIds("p1")).not.toContain(
+      "plg.test-plugin.win",
+    );
     expect(stored(h, "closed")).toBe(true);
+  });
+
+  it("applies the server theme to standard windows, with server rules on top", async () => {
+    const h = await createHarness({
+      packages: [
+        {
+          bytes: testPackage(
+            `const win = ctx.ui.window({ id: "win", template: "win", login: "p1", title: "Hi" });
+             ctx.command("open", () => win.display());
+             return { start() { win.display(); } };`,
+            { capabilities: ["ui"], commands: ["open"] },
+            {
+              win: `{{#extend "window"}}{{#content "window"}}<label text="Body"/>{{/content}}{{/extend}}`,
+              "win-update": `{{#extend "manialink"}}{{/extend}}`,
+            },
+          ),
+        },
+      ],
+      players: [player("p1")],
+    });
+    const plugin = record(h, "test-plugin");
+    plugin.serverAppearance = {
+      theme: {
+        font: "Oswald",
+        windowTitleBarColor: "036",
+        windowBackgroundColor: "EEE",
+      },
+      rules: [
+        {
+          page: "",
+          element: "label",
+          id: "",
+          className: "window-title",
+          attributes: { textfont: "GameFontBlack" },
+        },
+      ],
+    };
+    await h.runtime.refreshPlugins();
+    const xml = h.session.lastManialink("plg.test-plugin.win")!;
+    expect(xml).toMatch(/<quad class="window-titlebar"[^>]*bgcolor="036"/);
+    expect(xml).toMatch(/<quad class="window-body"[^>]*bgcolor="EEE"/);
+    expect(xml).toMatch(
+      /<label class="window-title"[^>]*textfont="GameFontBlack"/,
+    );
+    expect(xml).toMatch(/<label text="Body" textfont="Oswald"/);
+
+    // Later renders keep the theme; clearing it restores the template
+    plugin.serverAppearance = null;
+    await h.runtime.refreshPlugins();
+    await h.chat("p1", "/open");
+    expect(h.session.lastManialink("plg.test-plugin.win")).toMatch(
+      /<quad class="window-titlebar"[^>]*bgcolor="222"/,
+    );
   });
 
   it("enforces storage limits and lists keys", async () => {
@@ -338,15 +571,22 @@ describe("sandboxed plugins", () => {
       body: "hi",
       headers: { "x-key": "k" },
     });
-    expect(stored(h, "other")).toBe('The plugin did not declare "http:evil.example.com"');
+    expect(stored(h, "other")).toBe(
+      'The plugin did not declare "http:evil.example.com"',
+    );
     expect(stored(h, "plain")).toBe("Only https:// URLs are allowed");
     expect(stored(h, "port")).toBe("Only the default HTTPS port is allowed");
     expect(stored(h, "header")).toBe("Header Host is not allowed");
   });
 
   it("reloads a plugin when another version is installed", async () => {
-    const v1 = testPackage(`return { start: () => ctx.storage.set("version", 1) };`);
-    const v2 = testPackage(`return { start: () => ctx.storage.set("version", 2) };`, { version: "2.0.0" });
+    const v1 = testPackage(
+      `return { start: () => ctx.storage.set("version", 1) };`,
+    );
+    const v2 = testPackage(
+      `return { start: () => ctx.storage.set("version", 2) };`,
+      { version: "2.0.0" },
+    );
     const h = await createHarness({ packages: [{ bytes: v1 }] });
     expect(stored(h, "version")).toBe(1);
 
@@ -360,7 +600,15 @@ describe("sandboxed plugins", () => {
 
   it("doesn't load a package whose templates don't compile", async () => {
     const h = await createHarness({
-      packages: [{ bytes: testPackage(`return {};`, {}, { broken: "{{#if open}}never closed" }) }],
+      packages: [
+        {
+          bytes: testPackage(
+            `return {};`,
+            {},
+            { broken: "{{#if open}}never closed" },
+          ),
+        },
+      ],
     });
     expect(h.runtime.plugins.loadedIds()).toEqual([]);
   });
@@ -368,7 +616,10 @@ describe("sandboxed plugins", () => {
   it("refuses a stored package that doesn't match its checksum", async () => {
     const h = await createHarness({ packages: [{ bytes: hello }] });
     const tampered = testPackage(`return {};`, { slug: "hello" });
-    h.pluginPackages.packages.set(record(h, "hello").package!.versionId, tampered);
+    h.pluginPackages.packages.set(
+      record(h, "hello").package!.versionId,
+      tampered,
+    );
     record(h, "hello").package!.grantedCapabilities = ["ui"];
     await h.runtime.reloadPlugins();
     // The cached copy of the original package is still what runs
