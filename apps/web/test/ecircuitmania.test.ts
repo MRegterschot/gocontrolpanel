@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   audit: vi.fn(),
   auth: vi.fn(),
 }));
+vi.mock("server-only", () => ({}));
 vi.mock("@/lib/actions", () => ({
   doServerActionWithAuth: async (
     roles: string[],
@@ -34,10 +35,8 @@ vi.mock("@/actions/database/server-only/audit-logs", () => ({
   logAudit: mocks.audit,
 }));
 
-import {
-  getEcmApiKey,
-  sendRecordsToEcm,
-} from "@/actions/database/ecircuitmania";
+import { sendRecordsToEcm } from "@/actions/database/ecircuitmania";
+import { getEcmApiKey } from "@/services/database/ecircuitmania";
 
 const loginA = slugid.encode("00000000-0000-4000-8000-000000000001");
 const loginB = slugid.encode("00000000-0000-4000-8000-000000000002");

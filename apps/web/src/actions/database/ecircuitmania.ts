@@ -4,6 +4,7 @@ import { SendEcmRecordsSchema } from "@/forms/server/records/send-ecm-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { axiosECM } from "@/lib/axios/ecircuitmania";
 import { getClient } from "@/lib/dbclient";
+import { savedEcmApiKey } from "@/services/database/ecircuitmania";
 import { ECMRoundEndArgs } from "@/types/api/ecircuitmania";
 import { ServerError, ServerResponse } from "@/types/responses";
 import { isAxiosError } from "axios";
@@ -16,28 +17,6 @@ const permissions = (serverId: string) => [
   `group:servers:${serverId}:admin`,
 ];
 
-async function savedApiKey(serverId: string): Promise<string> {
-  const plugin = await getClient().serverPlugins.findFirst({
-    where: { serverId, plugin: { name: "ecm", deletedAt: null } },
-    select: { config: true },
-  });
-  const config = plugin?.config;
-  return config &&
-    typeof config === "object" &&
-    !Array.isArray(config) &&
-    typeof config.apiKey === "string"
-    ? config.apiKey.trim()
-    : "";
-}
-
-export async function getEcmApiKey(
-  serverId: string,
-): Promise<ServerResponse<string>> {
-  return doServerActionWithAuth(permissions(serverId), async () =>
-    savedApiKey(serverId),
-  );
-}
-
 export async function sendRecordsToEcm(
   serverId: string,
   matchId: string,
@@ -45,7 +24,7 @@ export async function sendRecordsToEcm(
 ): Promise<ServerResponse<void>> {
   return doServerActionWithAuth(permissions(serverId), async (session) => {
     const values = SendEcmRecordsSchema.parse(input);
-    const key = values.apiKey || (await savedApiKey(serverId));
+    const key = values.apiKey || (await savedEcmApiKey(serverId));
     if (!/^[^_\s]+_[^_\s]+$/.test(key)) {
       throw new ServerError(
         "Enter a valid ECM API key or configure one in the ECM plugin",

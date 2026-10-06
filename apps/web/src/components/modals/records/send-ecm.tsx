@@ -1,18 +1,16 @@
 "use client";
 
-import {
-  getEcmApiKey,
-  sendRecordsToEcm,
-} from "@/actions/database/ecircuitmania";
+import { sendRecordsToEcm } from "@/actions/database/ecircuitmania";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { SendEcmSchema } from "@/forms/server/records/send-ecm-schema";
+import { useEcmApiKey } from "@/hooks/use-ecm-api-key";
 import { getErrorMessage } from "@/lib/utils";
 import type { RecordsWithUser } from "@/services/database/matches";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -29,8 +27,7 @@ export default function SendEcmModal({
   records: RecordsWithUser[];
   closeModal?: () => void;
 }) {
-  const [isKeyLoading, setIsKeyLoading] = useState(true);
-  const [keyError, setKeyError] = useState<string>();
+  const keyQuery = useEcmApiKey(serverId);
   const form = useForm<z.infer<typeof SendEcmSchema>>({
     resolver: zodResolver(SendEcmSchema),
     defaultValues: {
@@ -40,24 +37,10 @@ export default function SendEcmModal({
   });
 
   useEffect(() => {
-    let active = true;
-    getEcmApiKey(serverId)
-      .then(({ data, error }) => {
-        if (!active) return;
-        if (error) setKeyError(error);
-        else form.setValue("apiKey", data);
-        setIsKeyLoading(false);
-      })
-      .catch((error) => {
-        if (active) {
-          setKeyError(getErrorMessage(error));
-          setIsKeyLoading(false);
-        }
-      });
-    return () => {
-      active = false;
-    };
-  }, [serverId, form]);
+    if (keyQuery.data !== undefined && !form.getFieldState("apiKey").isDirty) {
+      form.setValue("apiKey", keyQuery.data);
+    }
+  }, [keyQuery.data, form]);
 
   async function onSubmit(values: z.infer<typeof SendEcmSchema>) {
     if (!values.apiKey) {
@@ -99,11 +82,11 @@ export default function SendEcmModal({
             type="text"
             placeholder="matchId_token"
             description="Defaults to the current ECM plugin API key. Changes apply to this send only."
-            isDisabled={form.formState.isSubmitting || isKeyLoading}
+            isDisabled={form.formState.isSubmitting || keyQuery.isPending}
           />
-          {keyError && (
+          {keyQuery.error && (
             <p role="alert" className="text-sm text-destructive">
-              Could not check the saved key: {keyError}
+              Could not check the saved key: {getErrorMessage(keyQuery.error)}
             </p>
           )}
           <FormElement
@@ -117,7 +100,7 @@ export default function SendEcmModal({
           <Button
             type="submit"
             className="self-end"
-            disabled={form.formState.isSubmitting || isKeyLoading}
+            disabled={form.formState.isSubmitting || keyQuery.isPending}
           >
             {form.formState.isSubmitting
               ? "Sending..."
