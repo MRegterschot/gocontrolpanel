@@ -1,3 +1,4 @@
+import type * as Ecircuitmania from "@/services/database/ecircuitmania";
 import type * as Maps from "@/services/database/maps";
 import type * as Matches from "@/services/database/matches";
 import type * as Notifications from "@/services/database/notifications";
@@ -76,3 +77,9 @@ export const exportServerPluginConfig = (
     undefined,
     dates,
   );
+
+export const getEcmApiKey = (
+  serverId: string,
+  signal?: AbortSignal,
+): ReturnType<typeof Ecircuitmania.getEcmApiKey> =>
+  apiGet(`${server(serverId)}/ecm/api-key`, undefined, { signal });

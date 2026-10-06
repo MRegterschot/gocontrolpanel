@@ -10,6 +10,7 @@ import {
   maskSecrets,
   mergeSecrets,
   parseManifest,
+  parseVersion,
   pluginConfigSchemaSchema,
   validatePluginConfig,
   type PluginConfigSchema,
@@ -57,6 +58,38 @@ describe("capabilities", () => {
 });
 
 describe("versions", () => {
+  it.each([
+    "0.0.0",
+    "1.2.3-0",
+    "1.2.3-alpha.1",
+    "1.2.3-01a",
+    "1.2.3--.--",
+    "999999999.0.0",
+  ])("accepts valid version %s", (version) =>
+    expect(parseVersion(version)).not.toBeNull(),
+  );
+  it.each([
+    "01.2.3",
+    "1.2.3-01",
+    "1.2.3-",
+    "1.2.3-a..b",
+    "1.2.3-a_1",
+    "1.2.3+build",
+    "1000000000.0.0",
+    "1.2.3-" + "a".repeat(59),
+    "0.0.0-0." + "--.".repeat(17),
+  ])("rejects invalid version %s", (version) =>
+    expect(parseVersion(version)).toBeNull(),
+  );
+  it("parses hyphens inside prerelease identifiers", () => {
+    expect(parseVersion("1.2.3-alpha-beta.0")).toEqual({
+      major: 1,
+      minor: 2,
+      patch: 3,
+      prerelease: ["alpha-beta", "0"],
+    });
+  });
+
   it("orders releases and pre-releases", () => {
     const sorted = ["1.0.0", "1.0.0-beta.2", "0.9.9", "1.0.0-alpha", "1.10.0", "1.2.0"].sort(
       compareVersions,

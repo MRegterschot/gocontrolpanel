@@ -26,6 +26,8 @@ export const queryKeys = {
   settings: (serverId: string) => ["servers", serverId, "settings"] as const,
   serverPlugin: (serverId: string) =>
     ["servers", serverId, "server-plugin"] as const,
+  ecmApiKey: (serverId: string) =>
+    ["servers", serverId, "ecm", "api-key"] as const,
   map: (uid: string) => ["maps", uid] as const,
   notifications: ["notifications"] as const,
   rolesMinimal: ["roles", "minimal"] as const,

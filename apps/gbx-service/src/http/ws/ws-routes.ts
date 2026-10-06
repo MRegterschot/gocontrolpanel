@@ -1,3 +1,4 @@
+import rateLimit from "@fastify/rate-limit";
 import type { FastifyInstance } from "fastify";
 import type { WebSocket } from "ws";
 import type { ServerRegistry } from "../../core/server/server-registry";
@@ -27,6 +28,9 @@ function keepAlive(socket: WebSocket, intervalMs: number): () => void {
 }
 
 export async function wsRoutes(app: FastifyInstance, opts: WsRouteOptions) {
+  // Limit connection attempts across all channels before upgrades and ticket verification.
+  // Registration stays inside this scope so health and internal routes are unaffected.
+  await app.register(rateLimit, { max: 120, timeWindow: "1 minute", hook: "onRequest" });
   const register = (channel: ChannelDefinition) => {
     app.get(channel.path, { websocket: true }, async (socket, request) => {
       const close = (code: number, reason: string) => {
