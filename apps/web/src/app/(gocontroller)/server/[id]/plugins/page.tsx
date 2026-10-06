@@ -1,4 +1,10 @@
 import InstalledPlugins from "@/components/plugins/installed-plugins";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ChatConfigForm from "@/forms/server/plugins/chatconfig-form";
+import ServerPluginsForm from "@/forms/server/plugins/server-plugins-form";
+import { hasPermission } from "@/lib/auth";
+import { routePermissions, routes } from "@/routes";
 import { getServerChatConfig } from "@/services/database/servers";
 import { getPluginScripts } from "@/services/filemanager";
 import { getServerPlugin } from "@/services/gbx/server-plugin";
@@ -7,12 +13,6 @@ import {
   getInstalledPlugins,
   getServerPluginsContext,
 } from "@/services/plugins";
-import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ChatConfigForm from "@/forms/server/plugins/chatconfig-form";
-import ServerPluginsForm from "@/forms/server/plugins/server-plugins-form";
-import { hasPermission } from "@/lib/auth";
-import { routePermissions, routes } from "@/routes";
 import { redirect } from "next/navigation";
 
 export default async function ServerPluginsPage({
@@ -33,11 +33,12 @@ export default async function ServerPluginsPage({
   const { data: serverPlugin } = await getServerPlugin(id);
   const { data: scripts } = await getPluginScripts(id);
 
-  const [{ data: installed }, { data: available }, { data: context }] = await Promise.all([
-    getInstalledPlugins(id),
-    getAvailablePlugins(id),
-    getServerPluginsContext(id),
-  ]);
+  const [{ data: installed }, { data: available }, { data: context }] =
+    await Promise.all([
+      getInstalledPlugins(id),
+      getAvailablePlugins(id),
+      getServerPluginsContext(id),
+    ]);
 
   return (
     <div className="flex flex-col gap-6 h-full">
@@ -63,6 +64,7 @@ export default async function ServerPluginsPage({
               plugins={installed ?? []}
               available={available ?? []}
               marketplaceEnabled={context?.marketplaceEnabled ?? false}
+              appearance={context?.appearance ?? { theme: {}, rules: [] }}
             />
           </Card>
         </TabsContent>

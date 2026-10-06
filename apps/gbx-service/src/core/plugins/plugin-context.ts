@@ -1,3 +1,4 @@
+import { effectiveAppearance, readServerAppearance } from "@gcp/shared";
 import type { ChatService } from "../chat/chat-service";
 import type { CommandRouter } from "../chat/command-router";
 import { CleanupStack, TypedEventBus } from "../events";
@@ -5,8 +6,12 @@ import type { GbxConnection } from "../gbx/connection";
 import type { LiveState } from "../live/live-state";
 import type { Logger } from "../logger";
 import type { ActionRouter } from "../manialink/action-router";
+import { applyManialinkAppearance } from "../manialink/appearance";
 import type { ActionGroup } from "../manialink/components/action-group";
-import { Manialink, type ManialinkDeps } from "../manialink/components/manialink";
+import {
+  Manialink,
+  type ManialinkDeps,
+} from "../manialink/components/manialink";
 import { Window } from "../manialink/components/window";
 import type { ManialinkService } from "../manialink/manialink-service";
 import type {
@@ -61,7 +66,10 @@ function parseConfig(
   if (result.success) return result.data;
 
   // Keep running on the raw value so a config written by an older form never disables a plugin
-  log.warn({ issues: result.error.issues }, "Plugin config does not match its schema");
+  log.warn(
+    { issues: result.error.issues },
+    "Plugin config does not match its schema",
+  );
   return raw ?? null;
 }
 
@@ -73,8 +81,38 @@ export function createPluginContext(
   const cleanup = new CleanupStack();
   const log = services.log.child({ pluginId: definition.id });
   const pages = new Set<string>();
+  const rawPages = new Map<
+    string,
+    { id: string; xml: string; login?: string; visible: boolean }
+  >();
+  const resolveAppearance = (server: unknown) =>
+    effectiveAppearance(readServerAppearance(server));
+  let appearance = resolveAppearance(record.serverAppearance);
+  const styled = (id: string, xml: string) => {
+    const page = id.startsWith(`plg.${record.name}.`)
+      ? id.slice(`plg.${record.name}.`.length)
+      : id;
+    const result = applyManialinkAppearance(xml, page, appearance);
+    if (Buffer.byteLength(result, "utf8") <= 128 * 1024) return result;
+    log.warn(
+      { manialinkId: id },
+      "Appearance exceeds the page size limit; using original page",
+    );
+    return xml;
+  };
   const pageKey = (id: string, login?: string) => `${login ?? ""}\u0000${id}`;
   let config = parseConfig(definition, record.config, log);
+
+  cleanup.add(
+    services.bus.on("playerDisconnect", (login) => {
+      for (const [key, page] of rawPages) {
+        if (page.login === login) {
+          rawPages.delete(key);
+          pages.delete(key);
+        }
+      }
+    }),
+  );
 
   const ctx: PluginContext<unknown> = {
     pluginId: definition.id,
@@ -90,9 +128,15 @@ export function createPluginContext(
     serverName: services.serverName,
 
     async saveConfig(next) {
-      await services.servers.updatePluginConfig(services.serverId, record.pluginId, next);
+      await services.servers.updatePluginConfig(
+        services.serverId,
+        record.pluginId,
+        next,
+      );
       config = next;
-      const stored = services.state.plugins.find((p) => p.pluginId === record.pluginId);
+      const stored = services.state.plugins.find(
+        (p) => p.pluginId === record.pluginId,
+      );
       if (stored) stored.config = next;
     },
 
@@ -138,15 +182,20 @@ export function createPluginContext(
           if (!pages.has(pageKey(id, login))) {
             pages.add(pageKey(id, login));
             cleanup.add(() => {
-              if (pages.delete(pageKey(id, login))) services.manialinks.destroy(id, login);
+              if (pages.delete(pageKey(id, login)))
+                services.manialinks.destroy(id, login);
             });
           }
-          services.manialinks.display(id, xml, login);
+          rawPages.set(pageKey(id, login), { id, xml, login, visible: true });
+          services.manialinks.display(id, styled(id, xml), login);
         },
         hide(id, login) {
+          const raw = rawPages.get(pageKey(id, login));
+          if (raw) raw.visible = false;
           services.manialinks.hide(id, login);
         },
         destroy(id, login) {
+          rawPages.delete(pageKey(id, login));
           pages.delete(pageKey(id, login));
           services.manialinks.destroy(id, login);
         },
@@ -160,14 +209,17 @@ export function createPluginContext(
     },
     maps: {
       findByUid: (uid) => services.catalog.findByUid(uid),
-      findByFileNames: (fileNames) => services.catalog.findByFileNames(fileNames),
+      findByFileNames: (fileNames) =>
+        services.catalog.findByFileNames(fileNames),
     },
     records: {
-      local: (mapUid) => services.records.findLocalRecord(services.serverId, mapUid),
+      local: (mapUid) =>
+        services.records.findLocalRecord(services.serverId, mapUid),
       forPlayers: (mapUid, logins) =>
         services.records.findPlayerRecords(services.serverId, mapUid, logins),
     },
-    disable: (reason) => services.disablePlugin(record.pluginId, definition.id, reason),
+    disable: (reason) =>
+      services.disablePlugin(record.pluginId, definition.id, reason),
     async notifyAdmins(message, description) {
       const notifications = await services.notifications.createForServerAdmins({
         serverId: services.serverId,
@@ -190,6 +242,18 @@ export function createPluginContext(
     ctx,
     setConfig(next) {
       config = parseConfig(definition, next, log);
+    },
+    setAppearance(server) {
+      appearance = resolveAppearance(server);
+      // Redraw visible pages without restarting plugin logic or resurrecting closed windows.
+      for (const page of rawPages.values()) {
+        services.manialinks.replace(
+          page.id,
+          styled(page.id, page.xml),
+          page.login,
+          page.visible,
+        );
+      }
     },
     dispose: () => cleanup.dispose(),
   };

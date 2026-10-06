@@ -34,7 +34,7 @@ import { generatePath, getErrorMessage } from "@/lib/utils";
 import { routes } from "@/routes";
 import type { AvailablePlugin, InstalledPlugin } from "@/types/plugins/catalog";
 import { ServerError } from "@/types/responses";
-import type { PluginConfig } from "@gcp/shared";
+import type { PluginConfig, ServerAppearance } from "@gcp/shared";
 import {
   IconAlertTriangle,
   IconArrowUp,
@@ -52,6 +52,7 @@ import { toast } from "sonner";
 import { CapabilityBadges } from "./capability-list";
 import { InstallDialog } from "./install-dialog";
 import { PluginConfigForm } from "./plugin-config-form";
+import { ServerAppearanceDialog } from "./server-appearance-dialog";
 
 function ConfigDialog({
   serverId,
@@ -418,12 +419,14 @@ export default function InstalledPlugins({
   plugins,
   available,
   marketplaceEnabled,
+  appearance,
 }: {
   serverId: string;
   serverName: string;
   plugins: InstalledPlugin[];
   available: AvailablePlugin[];
   marketplaceEnabled: boolean;
+  appearance: ServerAppearance;
 }) {
   return (
     <section
@@ -442,6 +445,7 @@ export default function InstalledPlugins({
         </div>
         <div className="flex flex-wrap gap-2">
           <ReloadButton serverId={serverId} />
+          <ServerAppearanceDialog serverId={serverId} appearance={appearance} />
           {marketplaceEnabled && (
             <Link
               href={routes.plugins.index}

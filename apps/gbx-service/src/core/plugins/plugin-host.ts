@@ -7,6 +7,7 @@ import type { PluginContext, PluginDefinition, PluginInstance } from "./sdk";
 export interface ScopedContext {
   ctx: PluginContext<unknown>;
   setConfig(config: unknown): void;
+  setAppearance?(serverAppearance: unknown): void;
   dispose(): Promise<void>;
 }
 
@@ -25,6 +26,7 @@ interface LoadedPlugin {
   instance: PluginInstance;
   scope: ScopedContext;
   configJson: string;
+  appearanceJson: string;
   // Changes when another version is installed or the granted capabilities change
   key: string;
 }
@@ -60,12 +62,16 @@ export class PluginHost implements HelpProvider {
   }
 
   pluginNames(): string[] {
-    const installed = [...this.loaded.keys()].filter((name) => !this.definitions.has(name));
+    const installed = [...this.loaded.keys()].filter(
+      (name) => !this.definitions.has(name),
+    );
     return [...this.definitions.keys(), ...installed.sort()];
   }
 
   helpText(pluginName: string): string {
-    const definition = this.definitions.get(pluginName) ?? this.loaded.get(pluginName)?.definition;
+    const definition =
+      this.definitions.get(pluginName) ??
+      this.loaded.get(pluginName)?.definition;
     if (!definition) return "Plugin not found.";
     return definition.helpText ?? DEFAULT_HELP;
   }
@@ -83,7 +89,10 @@ export class PluginHost implements HelpProvider {
   }
 
   // Full restart of every plugin that should be running
-  reload(records: ServerPluginRecord[], mode: GameModeType | ""): Promise<void> {
+  reload(
+    records: ServerPluginRecord[],
+    mode: GameModeType | "",
+  ): Promise<void> {
     return this.enqueue(async () => {
       await this.unloadEverything();
       await this.reconcile(records, mode, false);
@@ -100,7 +109,10 @@ export class PluginHost implements HelpProvider {
     return run;
   }
 
-  private runsInMode(definition: PluginDefinition<unknown>, mode: GameModeType | ""): boolean {
+  private runsInMode(
+    definition: PluginDefinition<unknown>,
+    mode: GameModeType | "",
+  ): boolean {
     const gamemodes = definition.gamemodes ?? [];
     return gamemodes.length === 0 || (mode !== "" && gamemodes.includes(mode));
   }
@@ -113,7 +125,9 @@ export class PluginHost implements HelpProvider {
     const desired = new Map<string, DesiredPlugin>();
 
     for (const definition of this.definitions.values()) {
-      const record = records.find((r) => r.name === definition.id && !r.package);
+      const record = records.find(
+        (r) => r.name === definition.id && !r.package,
+      );
       if (record?.enabled && this.runsInMode(definition, mode)) {
         desired.set(definition.id, { definition, record, key: BUILTIN_KEY });
       }
@@ -132,7 +146,10 @@ export class PluginHost implements HelpProvider {
         try {
           definition = await this.resolvePackage(record);
         } catch (error) {
-          this.log.error({ err: error, pluginId: record.name }, "Failed to read plugin package");
+          this.log.error(
+            { err: error, pluginId: record.name },
+            "Failed to read plugin package",
+          );
           continue;
         }
       }
@@ -166,7 +183,11 @@ export class PluginHost implements HelpProvider {
     }
   }
 
-  private async load({ definition, record, key }: DesiredPlugin): Promise<void> {
+  private async load({
+    definition,
+    record,
+    key,
+  }: DesiredPlugin): Promise<void> {
     const scope = this.createContext(definition, record);
     try {
       const instance = definition.create(scope.ctx);
@@ -175,6 +196,7 @@ export class PluginHost implements HelpProvider {
         instance,
         scope,
         configJson: JSON.stringify(record.config ?? null),
+        appearanceJson: JSON.stringify(record.serverAppearance ?? null),
         key,
       });
       await instance.start?.();
@@ -183,7 +205,10 @@ export class PluginHost implements HelpProvider {
         "Loaded plugin",
       );
     } catch (error) {
-      this.log.error({ err: error, pluginId: definition.id }, "Failed to load plugin");
+      this.log.error(
+        { err: error, pluginId: definition.id },
+        "Failed to load plugin",
+      );
       this.loaded.delete(definition.id);
       await this.safeDispose(definition.id, scope);
     }
@@ -209,7 +234,15 @@ export class PluginHost implements HelpProvider {
     }
   }
 
-  private async updateConfig(plugin: LoadedPlugin, record: ServerPluginRecord): Promise<void> {
+  private async updateConfig(
+    plugin: LoadedPlugin,
+    record: ServerPluginRecord,
+  ): Promise<void> {
+    const appearanceJson = JSON.stringify(record.serverAppearance ?? null);
+    if (appearanceJson !== plugin.appearanceJson) {
+      plugin.scope.setAppearance?.(record.serverAppearance);
+      plugin.appearanceJson = appearanceJson;
+    }
     const configJson = JSON.stringify(record.config ?? null);
     if (configJson === plugin.configJson) return;
 

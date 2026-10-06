@@ -211,6 +211,10 @@ ctx.action("wave", (answer) => ctx.chat.sendTo(answer.login, "Hi!"));
 - **The button bar** in the top-left corner: `ctx.ui.addButton({ name, icon, action })`, where `icon` is a text glyph or, with `type: "image"`, an image URL.
 - **Rules for pages.** A rendered page must be one `<manialink>` element with the page's own id, at most 128 KB. Pages that break this are refused with an error. Template helpers: `default`, `eq`, `bool`, `boolToNum`, `length`, `jsonLength`, `range`, `add`, `subtract`, `multiply`, `divide`, `action`, `actionPrefix`.
 
+## Admin appearance overrides
+
+Server admins can set a [server-wide appearance](plugin-appearance.md) for all plugins: a theme (font, text color, spacing and standard window colors) and rules that override presentation attributes, independently of plugin configuration. Prefer `ctx.ui.window()`, use stable element IDs/classes so rules can target them, and avoid hard-coding a font on every label unless the design depends on it. ManiaScript can still change overridden attributes later.
+
 ## Settings
 
 `configSchema` describes the settings form admins fill in on the server's Plugins page. It is a small subset of JSON Schema: an object whose `properties` are at most 50 fields.

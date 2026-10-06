@@ -183,6 +183,9 @@ model Servers {
 
   enableHelpCommand Boolean @default(true)
 
+  // Theme and rules applied to the Manialinks of every plugin on this server
+  pluginAppearance Json?
+
   groupServers  GroupServers[]
   userServers   UserServers[]
   serverPlugins ServerPlugins[]
