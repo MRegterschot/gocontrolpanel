@@ -26,7 +26,7 @@ import {
 } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { parseTmTags } from "tmtags";
 import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
@@ -40,14 +40,18 @@ export default function MatchDetailsModal({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isSendOpen, setIsSendOpen] = useState(false);
   const { data: session } = useSession();
+  const records = useMemo(
+    () =>
+      [...(data?.records ?? [])].sort(
+        (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+      ),
+    [data?.records],
+  );
   if (!data) return null;
   const canSend = hasPermissionSync(
     session,
     ["servers:id:admin", "group:servers:id:admin"],
     data.serverId,
-  );
-  const records = [...data.records].sort(
-    (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
   );
   const selectedRecords = records.filter((record) =>
     selectedIds.has(record.id),
