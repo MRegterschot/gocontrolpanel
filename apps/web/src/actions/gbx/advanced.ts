@@ -1,0 +1,80 @@
+"use server";
+
+import { doServerActionWithAuth } from "@/lib/actions";
+import { gbxService, getGbxClient } from "@/lib/gbx-service";
+import { ServerResponse } from "@/types/responses";
+import { logAudit } from "../database/server-only/audit-logs";
+
+export async function connectFakePlayer(
+  serverId: string,
+): Promise<ServerResponse<string>> {
+  return doServerActionWithAuth(
+    [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
+    async (session) => {
+      const client = getGbxClient(serverId);
+      const login = await client.call("ConnectFakePlayer");
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.advanced.fakeplayer.connect",
+      );
+      return login;
+    },
+  );
+}
+
+export async function disconnectFakePlayer(
+  serverId: string,
+  login: string,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
+    async (session) => {
+      const client = getGbxClient(serverId);
+      await client.call("DisconnectFakePlayer", login);
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.advanced.fakeplayer.disconnect",
+        login,
+      );
+    },
+  );
+}
+
+export async function sendChatMessage(
+  serverId: string,
+  message: string,
+  login?: string,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      // Get the user's role for the given server
+      const role =
+        session.user.servers.find((s) => s.id === serverId)?.role === "Admin" ||
+        session.user.groups
+          .filter((g) => g.servers.some((s) => s.id === serverId))
+          .some((g) => g.role === "Admin")
+          ? "Admin"
+          : "Moderator";
+
+      const roleColor = role === "Admin" ? "D00" : "FC0";
+      const fullMessage = `$z[$${roleColor}${role}$z] ${session.user.displayName}: ${message.trim()}`;
+
+      await gbxService.sendChat(serverId, fullMessage, login);
+
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.live.chat.send",
+        message,
+      );
+    },
+  );
+}

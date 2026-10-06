@@ -21,7 +21,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.bun/install/cache
-          key: bun-${{ runner.os }}-${{ hashFiles('bun.lockb') }}
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
           restore-keys: |
             bun-${{ runner.os }}-
 
@@ -39,10 +39,10 @@ jobs:
       - name: Cache Next.js build cache
         uses: actions/cache@v4
         with:
-          path: .next/cache
+          path: apps/web/.next/cache
           key: nextjs-${{ matrix.db }}-${{ runner.os }}-${{ hashFiles('**/*.[jt]s', '**/*.json', 'next.config.js') }}
           restore-keys: |
             nextjs-${{ matrix.db }}-${{ runner.os }}-
 
-      - name: Build project for ${{ matrix.db }}
-        run: bun run build
+      - name: Build web for ${{ matrix.db }}
+        run: bun run --filter @gcp/web build

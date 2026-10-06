@@ -31,20 +31,29 @@ jobs:
           echo "RELEASE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
           echo "IS_PRERELEASE=${{ github.event.release.prerelease }}" >> $GITHUB_ENV
 
-      - name: Build and tag image
+      - name: Build and tag images
         run: |
-          IMAGE=${{ secrets.DOCKER_USERNAME }}/${{ vars.DOCKER_IMAGE_NAME }}${{ matrix.db.suffix }}
-          docker build -t $IMAGE:${{ env.RELEASE_TAG }} . --build-arg DB_TYPE=${{ matrix.db.name }}
+          GBX_IMAGE_NAME=${{ vars.DOCKER_GBX_IMAGE_NAME || 'gocontrolpanel-gbx-service' }}
 
-          if [ "${{ env.IS_PRERELEASE }}" = "true" ]; then
-            docker tag $IMAGE:${{ env.RELEASE_TAG }} $IMAGE:beta
-            docker push $IMAGE:beta
-          else
-            docker tag $IMAGE:${{ env.RELEASE_TAG }} $IMAGE:latest
-            docker push $IMAGE:latest
-          fi
+          # <dockerfile>=<image name>
+          for target in \
+            "apps/web/Dockerfile=${{ vars.DOCKER_IMAGE_NAME }}" \
+            "apps/gbx-service/Dockerfile=$GBX_IMAGE_NAME"; do
+            DOCKERFILE=${target%%=*}
+            IMAGE=${{ secrets.DOCKER_USERNAME }}/${target#*=}${{ matrix.db.suffix }}
 
-          docker push $IMAGE:${{ env.RELEASE_TAG }}
+            docker build -f $DOCKERFILE -t $IMAGE:${{ env.RELEASE_TAG }} . --build-arg DB_TYPE=${{ matrix.db.name }}
+
+            if [ "${{ env.IS_PRERELEASE }}" = "true" ]; then
+              docker tag $IMAGE:${{ env.RELEASE_TAG }} $IMAGE:beta
+              docker push $IMAGE:beta
+            else
+              docker tag $IMAGE:${{ env.RELEASE_TAG }} $IMAGE:latest
+              docker push $IMAGE:latest
+            fi
+
+            docker push $IMAGE:${{ env.RELEASE_TAG }}
+          done
 
   send-discord:
     needs: build-and-push

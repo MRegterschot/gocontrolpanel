@@ -1,0 +1,123 @@
+"use client";
+
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
+import { getMapByUid } from "@/lib/api-client/database";
+import { queryKeys, unwrap } from "@/lib/api-client/query";
+import { cn, formatTime } from "@/lib/utils";
+import {
+  IconPhoto,
+  IconScript,
+  IconStopwatch,
+  IconUser,
+} from "@tabler/icons-react";
+import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
+import { parseTmTags } from "tmtags";
+import { Card } from "../ui/card";
+import LiveActions from "./live-actions";
+
+interface MapInfoProps {
+  serverId: string;
+  map?: string;
+  mode?: string;
+  pauseAvailable: boolean;
+  isPaused: boolean;
+  isWarmUp: boolean;
+  canActions: boolean;
+}
+
+export default function MapInfo({
+  serverId,
+  map,
+  mode,
+  pauseAvailable,
+  isPaused,
+  isWarmUp,
+  canActions,
+}: MapInfoProps) {
+  const query = useQuery({
+    queryKey: queryKeys.map(map ?? ""),
+    queryFn: () => unwrap(getMapByUid(map!), "GetMapByUidError"),
+    enabled: !!map,
+    // A map's data doesn't change while it is being played
+    staleTime: 5 * 60 * 1000,
+  });
+  useQueryErrorToast(query.error, "Error fetching map info");
+  const mapInfo = query.data;
+
+  if (!mapInfo) {
+    return (
+      <Card className="flex flex-col flex-1">
+        <div className="w-full h-40 rounded-t-xl flex items-center justify-center">
+          <IconPhoto className="text-gray-500" size={48} />
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="flex h-min flex-col">
+      <div className="relative">
+        {mapInfo.thumbnailUrl ? (
+          <Image
+            src={mapInfo.thumbnailUrl}
+            fill
+            alt={mapInfo.name}
+            className="static! rounded-t-xl h-40! object-cover"
+          />
+        ) : (
+          <div className="w-full h-40 rounded-t-xl flex items-center justify-center">
+            <IconPhoto className="text-gray-500" size={48} />
+          </div>
+        )}
+        <div
+          className={cn(
+            "flex items-center space-x-2 justify-between absolute bottom-0 left-0 right-0 bg-white/20 p-2 backdrop-blur-sm dark:bg-black/40 text-white",
+            !mapInfo.thumbnailUrl &&
+              "bg-gradient-to-t from-black/60 via-black/40 to-transparent",
+          )}
+        >
+          <h3
+            className="truncate text-lg font-semibold text-white"
+            dangerouslySetInnerHTML={{ __html: parseTmTags(mapInfo.name) }}
+          ></h3>
+
+          <div className="flex items-center gap-2">
+            <IconUser size={20} />
+            <span
+              className="text-sm truncate"
+              dangerouslySetInnerHTML={{
+                __html: parseTmTags(mapInfo.authorNickname),
+              }}
+            ></span>
+          </div>
+        </div>
+      </div>
+      <div className="p-3 flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <span className="flex items-center gap-2 font-bold text-sm">
+            <IconScript size={20} /> Mode:
+          </span>
+          <span className="text-sm truncate">{mode}</span>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <span className="flex items-center gap-2 font-bold text-sm">
+            <IconStopwatch size={20} /> Author Time:
+          </span>
+          <span className="text-sm">{formatTime(mapInfo.authorTime)}</span>
+        </div>
+
+        {canActions && (
+          <>
+            <LiveActions
+              serverId={serverId}
+              pauseAvailable={pauseAvailable}
+              isPaused={isPaused}
+              isWarmUp={isWarmUp}
+            />
+          </>
+        )}
+      </div>
+    </Card>
+  );
+}

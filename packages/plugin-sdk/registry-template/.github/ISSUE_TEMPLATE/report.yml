@@ -1,0 +1,30 @@
+name: Report a plugin
+description: A plugin is broken, misbehaves or does something it shouldn't
+title: "Report: "
+labels: [report]
+body:
+  - type: input
+    id: plugin
+    attributes:
+      label: Plugin and version
+      placeholder: hello 1.2.0
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What is wrong?
+      options:
+        - It is malicious or abuses its capabilities
+        - It breaks servers or the panel
+        - It doesn't work
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: What happened, and how to see it. For security problems, leave the details out and ask a maintainer for a private channel.
+    validations:
+      required: true

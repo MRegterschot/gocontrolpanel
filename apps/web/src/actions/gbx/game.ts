@@ -1,0 +1,274 @@
+"use server";
+
+import { doServerActionWithAuth } from "@/lib/actions";
+import { getLogger } from "@/lib/logger";
+import { gbxService, getGbxClient } from "@/lib/gbx-service";
+import { getErrorMessage } from "@/lib/utils";
+import { ServerError, ServerResponse } from "@/types/responses";
+import { logAudit } from "../database/server-only/audit-logs";
+
+export async function restartMap(serverId: string): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      const client = getGbxClient(serverId);
+      await client.call("RestartMap");
+      await logAudit(session.user.id, serverId, "server.game.map.restart");
+    },
+  );
+}
+
+export async function nextMap(serverId: string): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      const client = getGbxClient(serverId);
+      await client.call("NextMap");
+      await logAudit(session.user.id, serverId, "server.game.map.next");
+    },
+  );
+}
+
+export async function setShowOpponents(
+  serverId: string,
+  count: number,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      const client = getGbxClient(serverId);
+      await client.call("SetForceShowAllOpponents", count);
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.game.showopponents.edit",
+        count,
+      );
+    },
+  );
+}
+
+export async function setScriptName(
+  serverId: string,
+  script: string,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      await gbxService.setScriptName(serverId, script);
+
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.game.script.edit",
+        script,
+      );
+    },
+  );
+}
+
+export async function loadMatchSettings(
+  serverId: string,
+  filename: string,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      await gbxService.loadMatchSettings(serverId, filename);
+
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.game.matchsettings.load",
+        filename,
+      );
+    },
+  );
+}
+
+export async function appendPlaylist(
+  serverId: string,
+  filename: string,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      const client = getGbxClient(serverId);
+      await client.call("AppendPlaylistFromMatchSettings", filename);
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.game.playlist.append",
+        filename,
+      );
+    },
+  );
+}
+
+export async function saveMatchSettings(
+  serverId: string,
+  filename: string,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      const client = getGbxClient(serverId);
+      await client.call("SaveMatchSettings", filename);
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.game.matchsettings.save",
+        filename,
+      );
+    },
+  );
+}
+
+export async function insertPlaylist(
+  serverId: string,
+  filename: string,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      const client = getGbxClient(serverId);
+      await client.call("InsertPlaylistFromMatchSettings", filename);
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.game.playlist.insert",
+        filename,
+      );
+    },
+  );
+}
+
+export async function setModeScriptSettings(
+  serverId: string,
+  settings: {
+    [key: string]: string | number | boolean;
+  },
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      await gbxService.setScriptSettings(serverId, settings);
+
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.game.scriptsettings.edit",
+        settings,
+      );
+    },
+  );
+}
+
+export async function triggerModeScriptEventArray(
+  serverId: string,
+  method: string,
+  params: string[],
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      const client = getGbxClient(serverId);
+      await client.call("TriggerModeScriptEventArray", method, params);
+      await logAudit(session.user.id, serverId, "server.live.scriptevent", {
+        method,
+        params,
+      });
+    },
+  );
+}
+
+export async function pauseMatch(
+  serverId: string,
+  pause: boolean,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      const meta = {
+        type: "gbx",
+        module: "game",
+        function: "pauseMatch",
+      };
+      const log = getLogger(serverId);
+      let error: string | undefined;
+      try {
+        await gbxService.setPaused(serverId, pause);
+      } catch (e) {
+        error = getErrorMessage(e);
+      }
+
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.live.pause",
+        pause,
+        error,
+      );
+
+      if (error) {
+        log.error({ meta, error, pause }, "Failed to pause match");
+        throw new ServerError(error, "PauseMatchError");
+      }
+    },
+  );
+}

@@ -1,0 +1,209 @@
+"use client";
+import { createGroup } from "@/actions/database/groups";
+import FormElement from "@/components/form/form-element";
+import { Button } from "@/components/ui/button";
+import { Form, FormLabel } from "@/components/ui/form";
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
+import { useSearchUsers } from "@/hooks/use-search-users";
+import { getServersMinimal } from "@/lib/api-client/database";
+import { queryKeys, unwrap } from "@/lib/api-client/query";
+import { getErrorMessage } from "@/lib/utils";
+import { ServerError } from "@/types/responses";
+import { GroupRole } from "@gcp/db";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { IconPlus, IconTrash } from "@tabler/icons-react";
+import { useQuery } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import { useFieldArray, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { AddGroupSchema, AddGroupSchemaType } from "./add-group-schema";
+
+export default function AddGroupForm({ callback }: { callback?: () => void }) {
+  const { data: session } = useSession();
+
+  const {
+    search,
+    searchResults,
+    searching,
+    loading: searchLoading,
+  } = useSearchUsers({
+    defaultUsers: session ? [session.user.id] : [],
+  });
+
+  const serversQuery = useQuery({
+    queryKey: queryKeys.serversMinimal,
+    queryFn: () => unwrap(getServersMinimal(), "GetServersMinimalError"),
+    // Offers every server to pick from, so a server added a moment ago must show up
+    gcTime: 0,
+  });
+  const servers = serversQuery.data ?? [];
+  const loading = serversQuery.isPending;
+  const error = serversQuery.error
+    ? "Failed to get servers: " + getErrorMessage(serversQuery.error)
+    : null;
+  useQueryErrorToast(serversQuery.error, "Failed to fetch servers");
+
+  const form = useForm<AddGroupSchemaType>({
+    resolver: zodResolver(AddGroupSchema),
+    defaultValues: {
+      public: false,
+      shareRecords: false,
+      groupMembers: [{ userId: session?.user.id, role: GroupRole.Admin }],
+    },
+  });
+
+  const { control } = form;
+  const {
+    fields: memberFields,
+    append,
+    remove,
+  } = useFieldArray({
+    control,
+    name: "groupMembers",
+  });
+
+  async function onSubmit(values: AddGroupSchemaType) {
+    try {
+      const { error } = await createGroup({
+        ...values,
+        description: values.description || "",
+        groupServers:
+          values.groupServers?.map((id) => ({
+            serverId: id,
+          })) || [],
+        groupMembers:
+          values.groupMembers?.map((user) => ({
+            userId: user.userId,
+            role: user.role as GroupRole,
+            order: 0,
+            serversOrder: "",
+          })) || [],
+      });
+      if (error) {
+        throw new ServerError(error, "CreateGroupError");
+      }
+      toast.success("Group successfully created");
+      if (callback) {
+        callback();
+      }
+    } catch (error) {
+      toast.error("Failed to create group", {
+        description: getErrorMessage(error),
+      });
+    }
+  }
+
+  if (loading || searchLoading) {
+    return <span className="text-muted-foreground">Loading...</span>;
+  }
+
+  if (error) {
+    return <span>{error}</span>;
+  }
+
+  return (
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="flex flex-col gap-4"
+      >
+        <FormElement
+          name="name"
+          label="Group Name"
+          placeholder="Enter group name"
+          isRequired
+        />
+
+        <FormElement
+          name="description"
+          label="Description"
+          placeholder="Enter group description"
+        />
+
+        <FormElement
+          name="public"
+          label="Public Group"
+          type="checkbox"
+          description="Makes group visible to all users"
+        />
+
+        <FormElement
+          name="shareRecords"
+          label="Share Records"
+          type="checkbox"
+          description="Share local records across servers in this group"
+        />
+
+        <FormElement
+          name="groupServers"
+          label="Servers"
+          placeholder="Select servers"
+          options={servers.map((server) => ({
+            label: server.name,
+            value: server.id,
+          }))}
+          type="multi-select"
+        />
+
+        {/* Users with roles */}
+        <div className="flex flex-col gap-2">
+          <FormLabel className="text-sm">Members</FormLabel>
+          {memberFields.map((field, index) => (
+            <div key={field.id} className="flex gap-2">
+              <div className="flex-1">
+                <FormElement
+                  name={`groupMembers.${index}.userId`}
+                  className="w-full"
+                  placeholder="Search user..."
+                  onSearch={search}
+                  options={searchResults.map((u) => ({
+                    label: u.nickName,
+                    value: u.id,
+                  }))}
+                  isLoading={searching}
+                  type="search"
+                />
+              </div>
+              <FormElement
+                name={`groupMembers.${index}.role`}
+                className="w-24 sm:w-30"
+                placeholder="Select role"
+                options={Object.values(GroupRole).map((role) => ({
+                  label: role,
+                  value: role,
+                }))}
+                type="select"
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size={"icon"}
+                onClick={() => remove(index)}
+              >
+                <IconTrash />
+                <span className="sr-only ">Remove Member</span>
+              </Button>
+            </div>
+          ))}
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => append({ userId: "", role: GroupRole.Member })}
+          >
+            <IconPlus />
+            Add Member
+          </Button>
+        </div>
+        <Button
+          type="submit"
+          className="w-full mt-4"
+          disabled={form.formState.isSubmitting}
+        >
+          <IconPlus />
+          Add Group
+        </Button>
+      </form>
+    </Form>
+  );
+}

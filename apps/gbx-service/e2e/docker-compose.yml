@@ -1,0 +1,42 @@
+# Isolated stack for testing the GBX service against a real dedicated server.
+# Uses its own ports and volumes so it never touches a running GoControlPanel setup.
+name: gcp-e2e
+
+services:
+  dedicated:
+    image: evoesports/trackmania:latest
+    restart: unless-stopped
+    ports:
+      - ${E2E_GAME_PORT:-2350}:2350/udp
+      - ${E2E_GAME_PORT:-2350}:2350/tcp
+      - ${E2E_GBX_PORT:-5010}:5000/tcp
+    environment:
+      TM_MASTERSERVER_LOGIN: ${TM_MASTERSERVER_LOGIN:?Set TM_MASTERSERVER_LOGIN in e2e/.env}
+      TM_MASTERSERVER_PASSWORD: ${TM_MASTERSERVER_PASSWORD:?Set TM_MASTERSERVER_PASSWORD in e2e/.env}
+      TM_SYSTEM_XMLRPC_ALLOWREMOTE: "True"
+      TM_AUTHORIZATION_SUPERADMIN_PASSWORD: ${E2E_GBX_PASSWORD:-SuperAdmin}
+      TM_SERVER_NAME: GCP e2e
+    volumes:
+      - userdata:/server/UserData
+
+  # MariaDB matches the default image flavour, so the locally generated Prisma client works as is
+  db:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: gcp
+      MARIADB_USER: gcp
+      MARIADB_PASSWORD: gcp
+      MARIADB_DATABASE: gcp_e2e
+    ports:
+      - "53307:3306"
+    volumes:
+      - db:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "56380:6379"
+
+volumes:
+  userdata:
+  db:

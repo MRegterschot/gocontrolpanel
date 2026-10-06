@@ -1,0 +1,190 @@
+"use server";
+
+import { doServerActionWithAuth } from "@/lib/actions";
+import { downloadTMXMap, searchTMXMaps } from "@/lib/api/tmx";
+import { getLogger } from "@/lib/logger";
+import { getFileManager } from "@/lib/managers/file-manager";
+import { ServerError, ServerResponse } from "@/types/responses";
+import { logAudit } from "../database/server-only/audit-logs";
+import { uploadFiles } from "../filemanager";
+import { addMap } from "../gbx/map";
+
+export async function downloadMappack(
+  serverId: string,
+  mappackId: number,
+  mappackName: string,
+): Promise<ServerResponse<string[]>> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      const meta = {
+        type: "tmx",
+        module: "mappacks",
+        function: "downloadMappack",
+      };
+      const log = getLogger(serverId);
+      const fileManager = await getFileManager(serverId);
+      if (!fileManager?.health) {
+        await logAudit(
+          session.user.id,
+          serverId,
+          "server.tmx.mappack.download",
+          { mappackId, mappackName },
+          "File manager is not healthy",
+        );
+        throw new ServerError("File manager is not healthy", "FileManagerNotHealthy");
+      }
+
+      const mappackSearch = await searchTMXMaps(
+        { mappackid: mappackId.toString() },
+        100,
+      );
+
+      if (mappackSearch.Results.length === 0) {
+        await logAudit(
+          session.user.id,
+          serverId,
+          "server.tmx.mappack.download",
+          { mappackId, mappackName },
+          "Found no downloadable maps in mappack",
+        );
+        throw new ServerError("Found no downloadable maps in mappack", "NoDownloadableMapsInMappack");
+      }
+
+      if (mappackSearch.More) {
+        await logAudit(
+          session.user.id,
+          serverId,
+          "server.tmx.mappack.download",
+          { mappackId, mappackName },
+          "Cannot download mappack with more than 100 maps",
+        );
+        throw new ServerError("Cannot download mappack with more than 100 maps", "MappackTooLarge");
+      }
+
+      const downloadResults = await Promise.allSettled(
+        mappackSearch.Results.map((map) =>
+          downloadTMXMap(map.MapId, mappackId),
+        ),
+      );
+
+      const formData = new FormData();
+      let errors = 0;
+
+      downloadResults.forEach((result, index) => {
+        if (result.status === "fulfilled") {
+          const file = result.value;
+          formData.append("files", file);
+          formData.append(
+            "paths[]",
+            `/UserData/Maps/Downloaded/${mappackName}`,
+          );
+        } else {
+          errors++;
+          log.error({ meta, error: result, index }, "Failed to download map");
+        }
+      });
+
+      const { error } = await uploadFiles(serverId, formData);
+      if (error) {
+        await logAudit(
+          session.user.id,
+          serverId,
+          "server.tmx.mappack.download",
+          { mappackId, mappackName },
+          error,
+        );
+        throw new ServerError(error, "UploadFilesError");
+      }
+
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.tmx.mappack.download",
+        { mappackId, mappackName },
+        errors > 0 ? `Failed to download ${errors} maps` : undefined,
+      );
+
+      if (errors > 0) {
+        log.error({ meta, errors }, "Failed to download some maps");
+        throw new ServerError(`Failed to download ${errors} maps`, "DownloadMapsError");
+      }
+
+      return downloadResults
+        .map((result) =>
+          result.status === "fulfilled" ? result.value.name : "",
+        )
+        .filter((r) => r !== "");
+    },
+  );
+}
+
+export async function addMappackToServer(
+  serverId: string,
+  mappackId: number,
+  mappackName: string,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async (session) => {
+      const meta = {
+        type: "tmx",
+        module: "mappacks",
+        function: "addMappackToServer",
+      };
+      const log = getLogger(serverId);
+      const { data: fileNames, error } = await downloadMappack(
+        serverId,
+        mappackId,
+        mappackName,
+      );
+      if (error) {
+        await logAudit(
+          session.user.id,
+          serverId,
+          "server.tmx.mappack.add",
+          { mappackId, mappackName },
+          error,
+        );
+        throw new ServerError(error, "DownloadMappackError");
+      }
+
+      const addMapPromises = fileNames.map((fileName) =>
+        addMap(serverId, `Downloaded/${mappackName}/${fileName}`),
+      );
+
+      const addMapResults = await Promise.allSettled(addMapPromises);
+
+      let errors: number = 0;
+      addMapResults.forEach((result, index) => {
+        if (result.status === "rejected") {
+          errors++;
+          log.error({ meta, error: result, index }, "Failed to add map");
+        }
+      });
+
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.tmx.mappack.add",
+        { mappackId, mappackName },
+        errors > 0 ? `Failed to add ${errors} maps` : undefined,
+      );
+
+      if (errors > 0) {
+        log.error({ meta, errors }, "Failed to add some maps");
+        throw new ServerError(`Failed to add ${errors} maps`, "AddMapsError");
+      }
+    },
+  );
+}
