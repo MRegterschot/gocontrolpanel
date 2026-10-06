@@ -44,9 +44,7 @@ controls labels, defaults, validation, nested player/team lists, user and map/sc
 selectors, conditional fields, CSV import mappings, and pick-and-ban steps. The panel
 keeps one generic form renderer; it has no per-plugin forms or modal lookup table.
 JSON import/export uses the stored configuration format. API keys marked `secret`
-are masked in the panel and omitted from exports. ECM version `1.1.1` makes its
-API key a normal visible, editable field that is included in config exports.
-Update existing ECM installs to that version to use the new field behavior.
+are masked in the panel and omitted from exports.
 
 These forms ship in version `1.1.0` of `ecm`, `live-round`, `records-info`,
 `player-info`, and `match`, targeting SDK 2. Deploy the SDK 2 panel/service before

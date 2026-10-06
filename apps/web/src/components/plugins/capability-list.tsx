@@ -1,10 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import {
-  describeCapability,
-  isHttpCapability,
-  type CapabilityRisk,
-} from "@gcp/shared";
+import { describeCapability, type CapabilityRisk } from "@gcp/shared";
 import {
   IconAlertTriangle,
   IconInfoCircle,
@@ -82,20 +78,18 @@ export function CapabilityList({
 export function CapabilityBadges({ capabilities }: { capabilities: string[] }) {
   return (
     <div className="flex flex-wrap gap-1">
-      {capabilities
-        .filter((capability) => !isHttpCapability(capability))
-        .map((capability) => {
-          const info = describeCapability(capability);
-          return (
-            <Badge
-              key={capability}
-              variant={info.risk === "high" ? "destructive" : "outline"}
-              title={info.description}
-            >
-              {info.label}
-            </Badge>
-          );
-        })}
+      {capabilities.map((capability) => {
+        const info = describeCapability(capability);
+        return (
+          <Badge
+            key={capability}
+            variant={info.risk === "high" ? "destructive" : "outline"}
+            title={info.description}
+          >
+            {info.label}
+          </Badge>
+        );
+      })}
     </div>
   );
 }
