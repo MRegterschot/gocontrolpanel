@@ -227,6 +227,9 @@ export function guestRuntime(global: any): void {
     on(event: string, fn: (...args: any[]) => unknown) {
       call("on", event, handler(`event ${event}`, fn));
     },
+    emit(name: string, payload?: unknown) {
+      call("emit", name, payload === undefined ? null : payload);
+    },
     command(name: string, fn: (...args: any[]) => unknown) {
       call("command", name, handler(`command /${name}`, fn));
     },

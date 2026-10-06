@@ -119,7 +119,8 @@ Callbacks may be `async`. A callback that throws or rejects is logged with the p
 | `pluginId`, `serverId`, `serverName()` | | Identity of the plugin and of the server. |
 | `log.debug/info/warn/error(message, data?)` | | Writes to the GBX service log, tagged with the plugin id. |
 | `config()` / `saveConfig(config)` | | The settings with defaults filled in. `saveConfig` is validated against `configSchema`. |
-| `on(event, handler)` | | Server events. See [Events](#events). |
+| `on(event, handler)` | | Server events and other plugins' events. See [Events](#events). |
+| `emit(name, payload?)` | | An event of your own for other plugins. See [Plugin events](#plugin-events). |
 | `command(name, handler)` | | A chat command from the manifest. The handler gets `(args, login)`. |
 | `action(name, handler)` | | A manialink button. See [Widgets](#widgets-and-windows). |
 | `setTimeout(fn, ms)`, `setInterval(fn, ms)`, `sleep(ms)` | | Timers that are cleared on unload. Both return a cancel function. Intervals run at most every 100 ms. |
@@ -169,6 +170,30 @@ Ask only for what the plugin needs. Reviewers turn down plugins that ask for mor
 - **Connection:** `connect`, `disconnect`.
 
 The `live-*` events fire after the live state was updated, so use those to render it. Answers to other plugins' manialinks are not available. Use `ctx.action` for your own.
+
+### Plugin events
+
+Plugins can talk to each other through events. `ctx.emit(name, payload)` sends an event under your own slug, and other plugins listen with `"<slug>:<name>"`:
+
+```ts
+// In the plugin "records"
+ctx.emit("newRecord", { login, time });
+
+// In any other plugin
+ctx.on<{ login: string; time: number }>("records:newRecord", (record, source) => {
+  ctx.log.info(`${source.plugin} reported ${record.login}`);
+});
+// Every event of the "records" plugin
+ctx.on("records:*", (payload, source) => ctx.log.debug(source.name, payload));
+```
+
+- Names use 1-64 letters, digits, `-`, `_` and `.`. The slug comes from the host, so a plugin cannot emit as another one.
+- The payload is copied as JSON and may be at most 64 KB. Every listener gets its own copy.
+- Listeners run after the call to `emit` returns, never inside it. Emitting is limited to bursts of 50 and 20 per second.
+- Events are not stored. A plugin that loads later, or is turned off, misses what was emitted before. Treat payloads from other plugins like any other input.
+- The service sees every event as `pluginEvent` on the server's event bus, with `{ plugin, name, payload }`. They are not sent to the panel.
+
+No capability is needed to emit or to listen. Document the events your plugin emits and their payloads in its README, since other plugins depend on them.
 
 ## Widgets and windows
 

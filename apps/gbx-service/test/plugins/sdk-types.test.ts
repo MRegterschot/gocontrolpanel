@@ -26,6 +26,16 @@ const events: [
   Same<Pick<ServerEventMap, PluginEventName>, Sdk.PluginEvents>,
 ] = [true, true];
 
+// Both on() overloads infer their handler arguments
+export function customEventTypes(ctx: Sdk.PluginContext) {
+  ctx.on<{ login: string }>("records:newRecord", (record, source) => {
+    const login: string = record.login;
+    const plugin: string = source.plugin;
+    return [login, plugin];
+  });
+  ctx.on("finish", (waypoint) => waypoint.login);
+}
+
 describe("plugin SDK types", () => {
   it("match the service's types", () => {
     expect([...gameTypes, ...events].every(Boolean)).toBe(true);

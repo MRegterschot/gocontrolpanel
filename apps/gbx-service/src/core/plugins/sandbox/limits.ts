@@ -57,6 +57,7 @@ export const RATE_LIMITS = {
   http: { burst: 10, perSecond: 1 },
   nadeo: { burst: 10, perSecond: 1 },
   notify: { burst: 3, perSecond: 1 / 60 },
+  events: { burst: 50, perSecond: 20 },
 } satisfies Record<string, RateLimit>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

@@ -1,7 +1,11 @@
 import {
   coercePluginConfig,
+  CUSTOM_EVENT_NAME,
   isHostAllowed,
   isPluginEvent,
+  matchesCustomEvent,
+  MAX_CUSTOM_EVENT_BYTES,
+  parseCustomEventKey,
   validatePluginConfig,
   type PlayerManialinkPageAnswer,
   type PluginConfig,
@@ -442,14 +446,34 @@ export class SandboxedPlugin implements PluginInstance {
     serverName: () => this.ctx.serverName(),
 
     on: (event: unknown, id: unknown) => {
-      if (typeof event !== "string" || !isPluginEvent(event)) {
-        throw invalid(`Unknown event "${String(event)}"`);
-      }
-      this.addHandler();
       const handlerId = Number(id);
-      this.ctx.on(event, (...args: unknown[]) =>
-        this.dispatch(handlerId, args, `event ${event}`),
-      );
+      if (typeof event === "string" && isPluginEvent(event)) {
+        this.addHandler();
+        this.ctx.on(event, (...args: unknown[]) =>
+          this.dispatch(handlerId, args, `event ${event}`),
+        );
+        return;
+      }
+      const custom = typeof event === "string" ? parseCustomEventKey(event) : null;
+      if (!custom) throw invalid(`Unknown event "${String(event)}"`);
+      this.addHandler();
+      this.ctx.on("pluginEvent", (emitted) => {
+        if (matchesCustomEvent(custom, emitted)) {
+          const source = { plugin: emitted.plugin, name: emitted.name };
+          this.dispatch(handlerId, [emitted.payload, source], `event ${event}`);
+        }
+      });
+    },
+
+    emit: (name: unknown, payload: unknown) => {
+      if (typeof name !== "string" || !CUSTOM_EVENT_NAME.test(name)) {
+        throw invalid("Event names use 1-64 letters, digits, - _ and .");
+      }
+      if (jsonSize(payload) > MAX_CUSTOM_EVENT_BYTES) {
+        throw invalid(`Event payloads may be at most ${MAX_CUSTOM_EVENT_BYTES / 1024} KB`);
+      }
+      this.limit("events");
+      this.ctx.emit(name, payload);
     },
 
     command: (name: unknown, id: unknown) => {
