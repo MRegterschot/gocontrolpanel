@@ -21,8 +21,10 @@ import {
   isVersionCompatible,
   mergeSecrets,
   PLUGIN_SDK_VERSION,
+  pluginAppearanceSchema,
   serverAppearanceSchema,
   validatePluginConfig,
+  type PluginAppearance,
   type PluginConfig,
   type ServerAppearance,
 } from "@gcp/shared";
@@ -453,6 +455,38 @@ export async function saveServerPluginConfig(
       // Which settings changed, not their values: some of them are secrets
       keys: Object.keys(result.data),
     });
+  });
+}
+
+export async function saveServerPluginAppearance(
+  serverId: string,
+  pluginId: string,
+  appearance: PluginAppearance,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(serverAdmin(serverId), async (session) => {
+    const args = parse(
+      z.object({ pluginId: id, appearance: pluginAppearanceSchema }),
+      { pluginId, appearance },
+    );
+    const row = await installedRow(serverId, args.pluginId);
+    const manifest = storedManifest(row.version?.manifest);
+    if (!manifest?.capabilities.includes("ui")) {
+      throw new ServerError("This plugin has no Manialink UI", "PluginHasNoUI");
+    }
+    await getClient().serverPlugins.update({
+      where: { serverId_pluginId: { serverId, pluginId: args.pluginId } },
+      data: { appearance: args.appearance as Prisma.InputJsonValue },
+    });
+    await publishServerEvent({ type: "server.plugins.updated", serverId });
+    await logAudit(
+      session.user.id,
+      serverId,
+      "server.plugins.appearance.edit",
+      {
+        slug: row.plugin.name,
+        rules: args.appearance.rules.length,
+      },
+    );
   });
 }
 

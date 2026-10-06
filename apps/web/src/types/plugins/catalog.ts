@@ -1,4 +1,9 @@
-import type { GameModeType, PluginConfig, PluginConfigSchema } from "@gcp/shared";
+import type {
+  GameModeType,
+  PluginAppearance,
+  PluginConfig,
+  PluginConfigSchema,
+} from "@gcp/shared";
 
 // What the plugin pages show; plain JSON so server components can hand it to client ones
 
@@ -32,7 +37,11 @@ export interface CatalogPlugin {
 export interface ServerInstallState {
   id: string;
   name: string;
-  installed: { version: string; enabled: boolean; source: PluginSourceKind } | null;
+  installed: {
+    version: string;
+    enabled: boolean;
+    source: PluginSourceKind;
+  } | null;
 }
 
 export interface CatalogPluginDetail extends CatalogPlugin {
@@ -89,6 +98,7 @@ export interface InstalledPlugin {
   configSchema: PluginConfigSchema | null;
   // Secrets are left out; setSecrets says which ones have a value
   config: PluginConfig;
+  appearance: PluginAppearance;
   setSecrets: string[];
   update: VersionChoice | null;
   versions: VersionChoice[];

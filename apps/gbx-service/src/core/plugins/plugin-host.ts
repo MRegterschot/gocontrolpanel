@@ -1,4 +1,4 @@
-import type { GameModeType } from "@gcp/shared";
+import type { GameModeType, PluginManialinkSnapshot } from "@gcp/shared";
 import type { HelpProvider } from "../chat/command-router";
 import type { Logger } from "../logger";
 import type { ServerPluginRecord } from "../ports";
@@ -7,7 +7,8 @@ import type { PluginContext, PluginDefinition, PluginInstance } from "./sdk";
 export interface ScopedContext {
   ctx: PluginContext<unknown>;
   setConfig(config: unknown): void;
-  setAppearance?(serverAppearance: unknown): void;
+  setAppearance?(appearance: unknown, serverAppearance: unknown): void;
+  inspectManialinks?(): Pick<PluginManialinkSnapshot, "pages" | "truncated">;
   dispose(): Promise<void>;
 }
 
@@ -21,7 +22,12 @@ export type PackageResolver = (
   record: ServerPluginRecord,
 ) => Promise<PluginDefinition<unknown> | null>;
 
+// Plugin overrides and the server theme both change how pages are styled
+const appearanceKey = (record: ServerPluginRecord) =>
+  JSON.stringify([record.appearance ?? null, record.serverAppearance ?? null]);
+
 interface LoadedPlugin {
+  pluginId: string;
   definition: PluginDefinition<unknown>;
   instance: PluginInstance;
   scope: ScopedContext;
@@ -74,6 +80,20 @@ export class PluginHost implements HelpProvider {
       this.loaded.get(pluginName)?.definition;
     if (!definition) return "Plugin not found.";
     return definition.helpText ?? DEFAULT_HELP;
+  }
+
+  inspectManialinks(pluginId: string): PluginManialinkSnapshot {
+    const plugin = [...this.loaded.values()].find(
+      (plugin) => plugin.pluginId === pluginId,
+    );
+    return {
+      running: !!plugin,
+      capturedAt: new Date().toISOString(),
+      ...(plugin?.scope.inspectManialinks?.() ?? {
+        pages: [],
+        truncated: false,
+      }),
+    };
   }
 
   loadedIds(): string[] {
@@ -192,11 +212,12 @@ export class PluginHost implements HelpProvider {
     try {
       const instance = definition.create(scope.ctx);
       this.loaded.set(definition.id, {
+        pluginId: record.pluginId,
         definition,
         instance,
         scope,
         configJson: JSON.stringify(record.config ?? null),
-        appearanceJson: JSON.stringify(record.serverAppearance ?? null),
+        appearanceJson: appearanceKey(record),
         key,
       });
       await instance.start?.();
@@ -238,9 +259,9 @@ export class PluginHost implements HelpProvider {
     plugin: LoadedPlugin,
     record: ServerPluginRecord,
   ): Promise<void> {
-    const appearanceJson = JSON.stringify(record.serverAppearance ?? null);
+    const appearanceJson = appearanceKey(record);
     if (appearanceJson !== plugin.appearanceJson) {
-      plugin.scope.setAppearance?.(record.serverAppearance);
+      plugin.scope.setAppearance?.(record.appearance, record.serverAppearance);
       plugin.appearanceJson = appearanceJson;
     }
     const configJson = JSON.stringify(record.config ?? null);

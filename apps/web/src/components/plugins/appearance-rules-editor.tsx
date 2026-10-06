@@ -58,7 +58,7 @@ const hints: Partial<Record<ManialinkStyleAttribute, string>> = {
   keepratio: "Inactive, Clip or Fit",
 };
 
-// Ordered appearance rules of the surrounding form
+// Ordered appearance rules of the surrounding form, shared by plugin and server appearance
 export function AppearanceRulesEditor({
   description,
   empty,
@@ -87,7 +87,10 @@ export function AppearanceRulesEditor({
           aria-label={`Appearance rule ${index + 1}`}
         >
           <div className="flex items-center justify-between gap-2">
-            <h3 className="font-medium">Rule {index + 1}</h3>
+            <h3 className="font-medium">
+              Rule {index + 1}
+              {rule.path ? " · selected element" : ""}
+            </h3>
             <div className="flex gap-1">
               <Button
                 type="button"

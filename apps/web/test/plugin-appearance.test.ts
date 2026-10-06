@@ -1,7 +1,9 @@
-import type { ServerAppearance } from "@gcp/shared";
+import type { PluginAppearance, ServerAppearance } from "@gcp/shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  find: vi.fn(),
+  update: vi.fn(),
   updateServers: vi.fn(),
   auth: vi.fn(),
   publish: vi.fn(),
@@ -25,6 +27,7 @@ vi.mock("@/lib/actions", () => ({
 }));
 vi.mock("@/lib/dbclient", () => ({
   getClient: () => ({
+    serverPlugins: { findUnique: mocks.find, update: mocks.update },
     servers: { updateMany: mocks.updateServers },
   }),
 }));
@@ -41,11 +44,110 @@ vi.mock("@/services/plugins", () => ({
   storedManifest: (manifest: unknown) => manifest,
 }));
 
-import { saveServerAppearance } from "@/actions/plugins";
+import {
+  saveServerAppearance,
+  saveServerPluginAppearance,
+} from "@/actions/plugins";
 
+const appearance: PluginAppearance = {
+  rules: [
+    {
+      page: "",
+      element: "label",
+      id: "",
+      className: "",
+      attributes: { textsize: "2" },
+    },
+  ],
+};
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.allowed = true;
+  mocks.find.mockResolvedValue({
+    plugin: { name: "hello", source: "upload" },
+    version: { manifest: { capabilities: ["ui"] } },
+  });
+});
+
+describe("saving plugin appearance", () => {
+  it("requires server admin access and scopes both the read and write to the server", async () => {
+    expect(
+      await saveServerPluginAppearance("server-a", "plugin", appearance),
+    ).toEqual({ data: undefined });
+    expect(mocks.auth).toHaveBeenCalledWith([
+      "servers:server-a:admin",
+      "group:servers:server-a:admin",
+    ]);
+    expect(mocks.find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          serverId_pluginId: { serverId: "server-a", pluginId: "plugin" },
+        },
+      }),
+    );
+    expect(mocks.update).toHaveBeenCalledWith({
+      where: {
+        serverId_pluginId: { serverId: "server-a", pluginId: "plugin" },
+      },
+      data: { appearance },
+    });
+    expect(mocks.publish).toHaveBeenCalledWith({
+      type: "server.plugins.updated",
+      serverId: "server-a",
+    });
+    expect(mocks.audit).toHaveBeenCalledWith(
+      "admin",
+      "server-a",
+      "server.plugins.appearance.edit",
+      { slug: "hello", rules: 1 },
+    );
+  });
+  it("does not read or write for an unauthorized caller", async () => {
+    mocks.allowed = false;
+    expect(
+      (await saveServerPluginAppearance("server-a", "plugin", appearance))
+        .error,
+    ).toBe("Unauthorized");
+    expect(mocks.find).not.toHaveBeenCalled();
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+  it("rejects plugins not installed on the requested server", async () => {
+    mocks.find.mockResolvedValue(null);
+    expect(
+      (await saveServerPluginAppearance("server-b", "plugin", appearance))
+        .error,
+    ).toContain("not installed");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+  it("validates attributes again on the server", async () => {
+    const invalid = {
+      rules: [{ ...appearance.rules[0], attributes: { action: "quit" } }],
+    } as unknown as PluginAppearance;
+    expect(
+      (await saveServerPluginAppearance("server-a", "plugin", invalid)).error,
+    ).toBe("Invalid request");
+    expect(mocks.update).not.toHaveBeenCalled();
+    expect(mocks.publish).not.toHaveBeenCalled();
+  });
+  it("rejects non-UI plugins and allows resetting styles", async () => {
+    expect(
+      (await saveServerPluginAppearance("server-a", "plugin", { rules: [] }))
+        .error,
+    ).toBeUndefined();
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { appearance: { rules: [] } } }),
+    );
+    mocks.update.mockClear();
+    mocks.find.mockResolvedValue({
+      plugin: { name: "hello", source: "upload" },
+      version: { manifest: { capabilities: [] } },
+    });
+    expect(
+      (await saveServerPluginAppearance("server-a", "plugin", appearance))
+        .error,
+    ).toContain("no Manialink UI");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
 });
 
 describe("saving server-wide plugin appearance", () => {

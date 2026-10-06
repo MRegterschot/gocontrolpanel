@@ -140,7 +140,8 @@ function ServerAppearanceForm({
       <DialogHeader>
         <DialogTitle>Plugin appearance for all plugins</DialogTitle>
         <DialogDescription>
-          Applies to every plugin with a Manialink UI on this server.
+          Applies to every plugin with a Manialink UI on this server. A plugin’s
+          own appearance settings take precedence.
         </DialogDescription>
       </DialogHeader>
       <Form {...form}>
