@@ -1,14 +1,16 @@
 "use server";
 
 import { doServerActionWithAuth } from "@/lib/actions";
+import { actorFromSession } from "@/lib/actor";
 import { gbxService, getGbxClient } from "@/lib/gbx-service";
 import { getLogger } from "@/lib/logger";
-import { Maps, Prisma } from "@gcp/db";
 import { getKeyJukebox, getRedisClient } from "@/lib/redis";
 import { getErrorMessage } from "@/lib/utils";
 import { JukeboxMap } from "@/types/map";
 import { ServerResponse } from "@/types/responses";
+import { Maps, Prisma } from "@gcp/db";
 import { logAudit } from "../database/server-only/audit-logs";
+import { addMapToJukeboxAs, clearJukeboxAs } from "./server-only/map";
 
 export async function setJukebox(
   serverId: string,
@@ -46,12 +48,7 @@ export async function clearJukebox(serverId: string): Promise<ServerResponse> {
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const redis = await getRedisClient();
-      const key = getKeyJukebox(serverId);
-      await redis.del(key);
-      await logAudit(session.user.id, serverId, "server.maps.jukebox.clear");
-    },
+    (session) => clearJukeboxAs(actorFromSession(session), serverId),
   );
 }
 
@@ -66,27 +63,7 @@ export async function addMapToJukebox(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const redis = await getRedisClient();
-      const newMap: JukeboxMap = {
-        ...map,
-        QueuedAt: new Date(),
-        QueuedBy: session.user.login,
-        QueuedByDisplayName: session.user.displayName,
-      };
-
-      const key = getKeyJukebox(serverId);
-      await redis.rpush(key, JSON.stringify(newMap));
-
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.maps.jukebox.add",
-        JSON.parse(JSON.stringify(newMap)),
-      );
-
-      return newMap;
-    },
+    (session) => addMapToJukeboxAs(actorFromSession(session), serverId, map),
   );
 }
 
