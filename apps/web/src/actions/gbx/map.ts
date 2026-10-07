@@ -2,15 +2,21 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { actorFromSession } from "@/lib/actor";
-import { gbxService, getGbxClient } from "@/lib/gbx-service";
+import { gbxService } from "@/lib/gbx-service";
 import { getLogger } from "@/lib/logger";
 import { getKeyJukebox, getRedisClient } from "@/lib/redis";
 import { getErrorMessage } from "@/lib/utils";
 import { JukeboxMap } from "@/types/map";
 import { ServerResponse } from "@/types/responses";
-import { Maps, Prisma } from "@gcp/db";
+import { Maps } from "@gcp/db";
 import { logAudit } from "../database/server-only/audit-logs";
-import { addMapToJukeboxAs, clearJukeboxAs } from "./server-only/map";
+import {
+  addMapAs,
+  addMapToJukeboxAs,
+  auditMapListChange,
+  clearJukeboxAs,
+  jumpToMapIndexAs,
+} from "./server-only/map";
 
 export async function setJukebox(
   serverId: string,
@@ -114,30 +120,8 @@ export async function jumpToMap(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("JumpToMapIndex", index);
-      await logAudit(session.user.id, serverId, "server.game.map.jump", index);
-    },
+    (session) => jumpToMapIndexAs(actorFromSession(session), serverId, index),
   );
-}
-
-// Records a map list change in the audit log, with the error when the service rejected it
-async function auditMapListChange<T>(
-  userId: string,
-  serverId: string,
-  action: string,
-  data: Prisma.InputJsonValue,
-  change: () => Promise<T>,
-): Promise<T> {
-  try {
-    const result = await change();
-    await logAudit(userId, serverId, action, data);
-    return result;
-  } catch (error) {
-    await logAudit(userId, serverId, action, data, getErrorMessage(error));
-    throw error;
-  }
 }
 
 export async function addMap(
@@ -151,15 +135,7 @@ export async function addMap(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      await auditMapListChange(
-        session.user.id,
-        serverId,
-        "server.maps.maplist.add",
-        filename,
-        () => gbxService.addMaps(serverId, [filename]),
-      );
-    },
+    (session) => addMapAs(actorFromSession(session), serverId, filename),
   );
 }
 

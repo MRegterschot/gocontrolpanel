@@ -8,9 +8,11 @@
     "start": "cp -r .next/static .next/standalone/apps/web/.next/static && cp -r public .next/standalone/apps/web/public && cp -r hetzner .next/standalone/apps/web/hetzner/ && node .next/standalone/apps/web/server.js | pino-pretty",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "codriver": "bun --env-file=../../.env --preload ./scripts/server-only-stub.ts ./scripts/codriver.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.132.0",
     "@codemirror/lang-cpp": "^6.0.2",
     "@codemirror/lang-xml": "^6.1.0",
     "@dnd-kit/core": "^6.3.1",

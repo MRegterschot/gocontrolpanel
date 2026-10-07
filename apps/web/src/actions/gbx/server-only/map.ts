@@ -1,7 +1,9 @@
 import { type Actor, requirePermission } from "@/lib/actor";
+import { gbxService, getGbxClient } from "@/lib/gbx-service";
 import { getKeyJukebox, getRedisClient } from "@/lib/redis";
+import { getErrorMessage } from "@/lib/utils";
 import { JukeboxMap } from "@/types/map";
-import { Maps } from "@gcp/db";
+import { Maps, Prisma } from "@gcp/db";
 import { serverPermissions } from "@gcp/shared";
 import "server-only";
 import { logAudit } from "../../database/server-only/audit-logs";
@@ -44,4 +46,50 @@ export async function clearJukeboxAs(
   const redis = await getRedisClient();
   await redis.del(getKeyJukebox(serverId));
   await logAudit(actor.userId, serverId, "server.maps.jukebox.clear");
+}
+
+// Records a map list change in the audit log, with the error when the service rejected it
+export async function auditMapListChange<T>(
+  userId: string | null,
+  serverId: string,
+  action: string,
+  data: Prisma.InputJsonValue,
+  change: () => Promise<T>,
+): Promise<T> {
+  try {
+    const result = await change();
+    await logAudit(userId, serverId, action, data);
+    return result;
+  } catch (error) {
+    await logAudit(userId, serverId, action, data, getErrorMessage(error));
+    throw error;
+  }
+}
+
+export async function jumpToMapIndexAs(
+  actor: Actor,
+  serverId: string,
+  index: number,
+): Promise<void> {
+  requirePermission(actor, serverPermissions.moderator, serverId);
+
+  const client = getGbxClient(serverId);
+  await client.call("JumpToMapIndex", index);
+  await logAudit(actor.userId, serverId, "server.game.map.jump", index);
+}
+
+export async function addMapAs(
+  actor: Actor,
+  serverId: string,
+  filename: string,
+): Promise<void> {
+  requirePermission(actor, serverPermissions.moderator, serverId);
+
+  await auditMapListChange(
+    actor.userId,
+    serverId,
+    "server.maps.maplist.add",
+    filename,
+    () => gbxService.addMaps(serverId, [filename]),
+  );
 }

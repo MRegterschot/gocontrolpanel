@@ -1,9 +1,9 @@
 import { TMXMappackSearch, TMXMapSearch } from "@/types/api/tmx";
+import { ServerError } from "@/types/responses";
 import "server-only";
 import config from "../config";
 import { logger } from "../logger";
 import { withRateLimit } from "../ratelimiter";
-import { ServerError } from "@/types/responses";
 import { reportException } from "../sentry/report";
 
 const TMX_URL = "https://trackmania.exchange";
@@ -111,7 +111,10 @@ export async function downloadTMXMap(
         "Failed to download map",
       );
 
-      throw new ServerError(`Failed to download map: ${res.statusText}`, "TMXDownloadError");
+      throw new ServerError(
+        `Failed to download map: ${res.statusText}`,
+        "TMXDownloadError",
+      );
     }
 
     const arrayBuffer = await res.arrayBuffer();
@@ -122,10 +125,31 @@ export async function downloadTMXMap(
     reportException(err, meta);
     if ((err as any).name === "AbortError") {
       logger.error({ meta, mapId, mappackId }, "Download for map timed out");
-      throw new ServerError(`Download for map ${mapId} timed out`, "TMXDownloadTimeoutError");
+      throw new ServerError(
+        `Download for map ${mapId} timed out`,
+        "TMXDownloadTimeoutError",
+      );
     }
     throw err;
   }
+}
+
+export interface TMXMetaTag {
+  ID: number;
+  Name: string;
+}
+
+let tagCache: { tags: TMXMetaTag[]; expires: number } | null = null;
+
+// TMX map tags, cached for a day since they rarely change
+export async function getTMXTags(): Promise<TMXMetaTag[]> {
+  if (tagCache && tagCache.expires > Date.now()) return tagCache.tags;
+  const tags = await doRequest<TMXMetaTag[]>(
+    `${TMX_URL}/api/meta/tags`,
+    "tmx:tags",
+  );
+  tagCache = { tags, expires: Date.now() + 86_400_000 };
+  return tags;
 }
 
 async function doRequest<T>(url: string, key: string): Promise<T> {
@@ -159,7 +183,10 @@ async function doRequest<T>(url: string, key: string): Promise<T> {
         },
         "Failed to fetch data from TMX API",
       );
-      throw new ServerError(`Failed to fetch data: ${res.statusText}`, "TMXRequestError");
+      throw new ServerError(
+        `Failed to fetch data: ${res.statusText}`,
+        "TMXRequestError",
+      );
     }
 
     return res.json();
