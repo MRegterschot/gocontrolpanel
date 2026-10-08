@@ -35,7 +35,7 @@ export default function PanelAccessCheckCard() {
   const result = check.data;
 
   return (
-    <Card>
+    <Card className="gap-6 py-6">
       <CardHeader>
         <CardTitle>Check access</CardTitle>
       </CardHeader>

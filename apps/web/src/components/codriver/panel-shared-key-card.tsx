@@ -11,7 +11,7 @@ export default function PanelSharedKeyCard({
   const hint = overview.settings.sharedKeyHint;
 
   return (
-    <Card>
+    <Card className="gap-6 py-6">
       <CardHeader>
         <CardTitle>Shared API key</CardTitle>
       </CardHeader>

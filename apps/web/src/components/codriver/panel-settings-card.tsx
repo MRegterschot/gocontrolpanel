@@ -9,7 +9,7 @@ export default function PanelSettingsCard({
   overview: CodriverPanelOverview;
 }) {
   return (
-    <Card>
+    <Card className="gap-6 py-6">
       <CardHeader>
         <CardTitle>Settings</CardTitle>
       </CardHeader>

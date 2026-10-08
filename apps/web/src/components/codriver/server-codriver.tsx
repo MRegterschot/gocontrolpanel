@@ -78,7 +78,7 @@ export default function ServerCodriver({ serverId }: { serverId: string }) {
 
   if (!overview.available) {
     return (
-      <Card>
+      <Card className="gap-6 py-6">
         <CardHeader>
           <CardTitle>Codriver is not available</CardTitle>
           <CardDescription>
@@ -95,7 +95,7 @@ export default function ServerCodriver({ serverId }: { serverId: string }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <Card>
+      <Card className="gap-6 py-6">
         <CardHeader>
           <CardTitle>Settings</CardTitle>
         </CardHeader>
@@ -109,7 +109,7 @@ export default function ServerCodriver({ serverId }: { serverId: string }) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="gap-6 py-6">
         <CardHeader>
           <CardTitle>API key</CardTitle>
           <CardDescription>
@@ -137,7 +137,7 @@ export default function ServerCodriver({ serverId }: { serverId: string }) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="gap-6 py-6">
         <CardHeader>
           <CardTitle>Spend this month</CardTitle>
         </CardHeader>
@@ -159,7 +159,7 @@ export default function ServerCodriver({ serverId }: { serverId: string }) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="gap-6 py-6">
         <CardHeader>
           <CardTitle>Test a request</CardTitle>
           <CardDescription>
@@ -172,7 +172,7 @@ export default function ServerCodriver({ serverId }: { serverId: string }) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="gap-6 py-6">
         <CardHeader>
           <CardTitle>History</CardTitle>
         </CardHeader>

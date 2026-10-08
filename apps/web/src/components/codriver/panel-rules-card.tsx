@@ -152,7 +152,7 @@ export default function PanelRulesCard({
   );
 
   return (
-    <Card>
+    <Card className="gap-6 py-6">
       <CardHeader>
         <CardTitle>Access rules</CardTitle>
       </CardHeader>
