@@ -15,7 +15,12 @@ import {
   type ServerSettingsView,
   resolveAccess,
 } from "@/lib/codriver/access";
-import { costMicros, isSpent, monthStart } from "@/lib/codriver/usage";
+import {
+  costMicros,
+  isSpent,
+  monthStart,
+  pruneCutoff,
+} from "@/lib/codriver/usage";
 import {
   canStoreSecrets,
   decryptSecret,
@@ -272,6 +277,12 @@ describe("usage", () => {
     const budget = { scope: "shared-global" as const, limitCents: 1 };
     expect(isSpent({ budget, spentMicros: 9_999 })).toBe(false);
     expect(isSpent({ budget, spentMicros: 10_000 })).toBe(true);
+  });
+
+  it("never prunes this month's requests", () => {
+    const now = new Date("2026-10-20T12:00:00Z");
+    expect(pruneCutoff(7, now).toISOString()).toBe("2026-10-01T00:00:00.000Z");
+    expect(pruneCutoff(90, now).toISOString()).toBe("2026-07-22T12:00:00.000Z");
   });
 
   it("counts months in UTC", () => {

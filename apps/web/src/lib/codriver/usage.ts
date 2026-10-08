@@ -137,13 +137,18 @@ export async function recordRequest(record: RequestRecord): Promise<number> {
   return cost;
 }
 
-// Removes history older than the operator's retention; cheap enough to run now and then
+// Removes history older than the operator's retention, but never this month's: budgets add up
+// this month's requests, so pruning them would hand the spend back
+export function pruneCutoff(retentionDays: number, now = new Date()): Date {
+  const byRetention = new Date(now.getTime() - retentionDays * 86_400_000);
+  const month = monthStart(now);
+  return byRetention < month ? byRetention : month;
+}
+
 export async function pruneRequests(retentionDays: number): Promise<void> {
   try {
     await getClient().codriverRequests.deleteMany({
-      where: {
-        createdAt: { lt: new Date(Date.now() - retentionDays * 86_400_000) },
-      },
+      where: { createdAt: { lt: pruneCutoff(retentionDays) } },
     });
   } catch (error) {
     getLogger("codriver").warn({ error }, "Pruning Codriver history failed");
