@@ -34,10 +34,12 @@ const config: Config = {
     TOKEN: process.env.GBX_SERVICE_TOKEN || "",
     WS_TICKET_SECRET: process.env.WS_TICKET_SECRET || "",
   },
+  // Encrypts API keys stored in the database
+  SECRETS_KEY: process.env.SECRETS_KEY || "",
   CODRIVER: {
     // Shared with the GBX service, which forwards /co chat commands; empty turns Codriver off
     INTERNAL_TOKEN: process.env.PANEL_INTERNAL_TOKEN || "",
-    // Panel-wide Anthropic key until the operator settings store one
+    // Development fallback for the shared key when the operator has not stored one
     API_KEY: process.env.ANTHROPIC_API_KEY || "",
   },
   MARKETPLACE: {

@@ -23,7 +23,8 @@ services:
       GBX_SERVICE_TOKEN: # Same value as the GBX service, at least 32 characters
       WS_TICKET_SECRET: # Same value as the GBX service, at least 32 characters
       PANEL_INTERNAL_TOKEN: # Optional, for Codriver: same value as the GBX service, at least 32 characters
-      ANTHROPIC_API_KEY: # Optional, turns on the Codriver AI assistant
+      SECRETS_KEY: # Optional, for Codriver: encrypts stored API keys, at least 32 characters
+      ANTHROPIC_API_KEY: # Optional, fallback Codriver key while none is stored in the panel
       LOG_LEVEL: info
     depends_on:
       - db

@@ -83,3 +83,31 @@ export function createAnthropicModel(apiKey: string): CodriverModel {
     },
   };
 }
+
+// Checks a key before it is stored. A model lookup is free and proves the key can use Codriver.
+export async function verifyApiKey(
+  apiKey: string,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const client = new Anthropic({ apiKey, timeout: 10_000, maxRetries: 0 });
+  try {
+    await client.models.retrieve(CODRIVER_MODELS.haiku);
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Anthropic.AuthenticationError) {
+      return { ok: false, reason: "The API key was rejected." };
+    }
+    if (
+      error instanceof Anthropic.PermissionDeniedError ||
+      error instanceof Anthropic.NotFoundError
+    ) {
+      return {
+        ok: false,
+        reason: "The API key can't use the Codriver models.",
+      };
+    }
+    return {
+      ok: false,
+      reason: "The key could not be checked, try again later.",
+    };
+  }
+}

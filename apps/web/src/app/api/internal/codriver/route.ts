@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Server not found" }, { status: 404 });
   }
 
-  const reply = await handleCodriverMessage(body.data);
+  const reply = await handleCodriverMessage({ ...body.data, source: "game" });
   return NextResponse.json(
     { data: { reply } },
     { headers: { "Cache-Control": "no-store" } },

@@ -10,6 +10,9 @@ const mocks = vi.hoisted(() => ({
   cooldown: vi.fn(),
   findServer: vi.fn(),
   handle: vi.fn(),
+  accessInput: vi.fn(),
+  budgetStates: vi.fn(),
+  record: vi.fn(),
 }));
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/config", () => ({ default: mocks.config }));
@@ -26,6 +29,15 @@ vi.mock("@/lib/dbclient", () => ({
 vi.mock("@/lib/codriver/runner", () => ({
   runCodriver: mocks.runCodriver,
   executeCalls: mocks.executeCalls,
+}));
+vi.mock("@/lib/codriver/settings", () => ({
+  loadAccessInput: mocks.accessInput,
+}));
+vi.mock("@/lib/codriver/usage", () => ({
+  budgetStates: mocks.budgetStates,
+  isSpent: (state: { spent: boolean }) => state.spent,
+  recordRequest: mocks.record,
+  pruneRequests: vi.fn(),
 }));
 vi.mock("@/lib/codriver/pending", () => ({
   savePending: async (s: string, l: string, calls: unknown) => {
@@ -55,15 +67,56 @@ const moderator = {
     servers: [{ id: serverId, name: "A", role: "Moderator" }],
   }),
 };
-const deps = { createModel: () => ({ plan: vi.fn() }) };
+const deps = {
+  createModel: () => ({ plan: vi.fn() }),
+  now: () => 0,
+  random: () => 1,
+};
 const ask = (text: string) =>
-  handleCodriverMessage({ serverId, login: "abc", text }, deps);
+  handleCodriverMessage({ serverId, login: "abc", text, source: "game" }, deps);
+
+// Allowed with the shared key; the rules themselves are covered in codriver-access.test.ts
+function accessInput(overrides = {}) {
+  return {
+    panel: {
+      enabled: true,
+      sharedApiKey: "shared",
+      sharedKeyModels: ["haiku", "sonnet"],
+      sharedMonthlyBudgetCents: null,
+      allowServerKeys: false,
+      userMode: "everyone",
+    },
+    serverRule: {
+      effect: "allow",
+      useSharedKey: true,
+      sharedMonthlyBudgetCents: 500,
+    },
+    groupRules: [],
+    userRule: null,
+    server: {
+      enabled: true,
+      apiKey: null,
+      model: "haiku",
+      escalation: true,
+      monthlyBudgetCents: null,
+      guestAccess: "off",
+      memberAccess: false,
+      cooldownSeconds: 3,
+    },
+    role: "moderator",
+    envApiKey: "",
+    retentionDays: 90,
+    ...overrides,
+  };
+}
 
 beforeEach(() => {
   mocks.config.CODRIVER.API_KEY = "key";
   mocks.pending.clear();
   mocks.actorForLogin.mockResolvedValue(moderator);
   mocks.cooldown.mockResolvedValue(true);
+  mocks.accessInput.mockImplementation(async () => accessInput());
+  mocks.budgetStates.mockResolvedValue([{ spent: false }]);
   mocks.runCodriver.mockResolvedValue({
     status: "done",
     reply: "Skipping.",
@@ -79,16 +132,59 @@ beforeEach(() => {
 });
 
 describe("handleCodriverMessage", () => {
-  it("is off without an API key", async () => {
-    mocks.config.CODRIVER.API_KEY = "";
-    expect(await ask("skip")).toContain("not set up");
+  it("replies with the access layer's reason when refused", async () => {
+    mocks.accessInput.mockResolvedValue(accessInput({ panel: null }));
+    expect(await ask("skip")).toBe("Codriver is not enabled on this panel.");
     expect(mocks.runCodriver).not.toHaveBeenCalled();
+    expect(mocks.record).not.toHaveBeenCalled();
   });
 
-  it("refuses players without a panel role on the server", async () => {
+  it("looks up a guest's access as a guest", async () => {
     mocks.actorForLogin.mockResolvedValue(guestActor("abc"));
-    expect(await ask("status")).toContain("don't have access");
+    await ask("status");
+    expect(mocks.accessInput).toHaveBeenCalledWith(
+      serverId,
+      expect.anything(),
+      "guest",
+    );
+  });
+
+  it("records each request with its key and usage", async () => {
+    const usage = [
+      {
+        model: "claude-haiku-5-5",
+        inputTokens: 1,
+        outputTokens: 1,
+        cacheReadTokens: 0,
+      },
+    ];
+    mocks.runCodriver.mockResolvedValue({
+      status: "done",
+      reply: "Queued.",
+      calls: [],
+      usage,
+      fastPath: false,
+    });
+    await ask("play a snow map");
+    expect(mocks.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "done",
+        keySource: "shared",
+        usage,
+        source: "game",
+      }),
+    );
+  });
+
+  it("stops model requests when a budget is spent but keeps exact commands", async () => {
+    mocks.budgetStates.mockResolvedValue([{ spent: true }]);
+    expect(await ask("play a snow map")).toContain("budget");
     expect(mocks.runCodriver).not.toHaveBeenCalled();
+    expect(mocks.record).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "over_budget" }),
+    );
+
+    expect(await ask("skip")).toBe("Skipping.");
   });
 
   it("runs requests and returns the reply", async () => {
@@ -210,6 +306,6 @@ describe("POST /api/internal/codriver", () => {
     const response = await post({ ...body, role: "admin" }, `Bearer ${token}`);
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ data: { reply: "Skipping." } });
-    expect(mocks.handle).toHaveBeenCalledWith(body);
+    expect(mocks.handle).toHaveBeenCalledWith({ ...body, source: "game" });
   });
 });
