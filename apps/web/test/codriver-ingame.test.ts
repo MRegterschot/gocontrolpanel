@@ -13,6 +13,8 @@ const mocks = vi.hoisted(() => ({
   accessInput: vi.fn(),
   budgetStates: vi.fn(),
   record: vi.fn(),
+  budgetAlert: vi.fn(),
+  keyAlert: vi.fn(),
 }));
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/config", () => ({ default: mocks.config }));
@@ -38,6 +40,10 @@ vi.mock("@/lib/codriver/usage", () => ({
   isSpent: (state: { spent: boolean }) => state.spent,
   recordRequest: mocks.record,
   pruneRequests: vi.fn(),
+}));
+vi.mock("@/lib/codriver/alerts", () => ({
+  notifyBudgetCrossings: mocks.budgetAlert,
+  notifyKeyRejected: mocks.keyAlert,
 }));
 vi.mock("@/lib/codriver/pending", () => ({
   savePending: async (s: string, l: string, calls: unknown) => {
@@ -247,6 +253,28 @@ describe("handleCodriverMessage", () => {
     expect(await ask("skip")).toContain("One moment");
     expect(mocks.runCodriver).not.toHaveBeenCalled();
     expect(await ask("no")).toBe("Nothing to cancel.");
+  });
+
+  it("reports budget crossings with the request's cost", async () => {
+    const states = [{ spent: false }];
+    mocks.budgetStates.mockResolvedValue(states);
+    mocks.record.mockResolvedValue(1234);
+    await ask("play a snow map");
+    expect(mocks.budgetAlert).toHaveBeenCalledWith(serverId, states, 1234);
+  });
+
+  it("tells admins when the key is rejected", async () => {
+    const { default: Anthropic } = await import("@anthropic-ai/sdk");
+    mocks.runCodriver.mockRejectedValue(
+      new Anthropic.AuthenticationError(
+        401,
+        undefined,
+        "invalid x-api-key",
+        new Headers(),
+      ),
+    );
+    expect(await ask("cup mode")).toBe("Codriver is unavailable right now.");
+    expect(mocks.keyAlert).toHaveBeenCalledWith(serverId, "shared");
   });
 
   it("hides internal errors from the player", async () => {

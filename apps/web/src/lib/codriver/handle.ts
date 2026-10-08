@@ -1,7 +1,9 @@
 import { actorForLogin } from "@/lib/actor";
 import { getLogger } from "@/lib/logger";
+import Anthropic from "@anthropic-ai/sdk";
 import "server-only";
 import { resolveAccess } from "./access";
+import { notifyBudgetCrossings, notifyKeyRejected } from "./alerts";
 import { parseFastPath } from "./fast-path";
 import { type CodriverModel, createAnthropicModel } from "./model";
 import {
@@ -14,7 +16,13 @@ import { resolveRole } from "./roles";
 import { executeCalls, runCodriver } from "./runner";
 import { loadAccessInput } from "./settings";
 import { normalize } from "./text";
-import { budgetStates, isSpent, pruneRequests, recordRequest } from "./usage";
+import {
+  type BudgetState,
+  budgetStates,
+  isSpent,
+  pruneRequests,
+  recordRequest,
+} from "./usage";
 
 const confirmWords = new Set(["yes", "y", "confirm", "ok", "do it"]);
 const cancelWords = new Set(["no", "n", "cancel", "stop"]);
@@ -95,28 +103,36 @@ export async function handleCodriverMessage(
     await clearPending(serverId, login);
 
     // Exact commands cost nothing, so they keep working when a budget is spent
+    let budgets: BudgetState[] = [];
     if (!parseFastPath(message.text)) {
-      const spent = (await budgetStates(serverId, access.budgets)).find(
-        isSpent,
-      );
-      if (spent) {
+      budgets = await budgetStates(serverId, access.budgets);
+      if (budgets.some(isSpent)) {
         await record("over_budget", []);
         return "Codriver has used its budget for this month.";
       }
     }
 
-    const outcome = await runCodriver(
-      { serverId, actor, text: message.text },
-      {
-        model: deps.createModel(access.apiKey),
-        primaryModel: access.primaryModel,
-        escalationModel: access.escalationModel,
-      },
-    );
+    let outcome;
+    try {
+      outcome = await runCodriver(
+        { serverId, actor, text: message.text },
+        {
+          model: deps.createModel(access.apiKey),
+          primaryModel: access.primaryModel,
+          escalationModel: access.escalationModel,
+        },
+      );
+    } catch (error) {
+      if (error instanceof Anthropic.AuthenticationError) {
+        await notifyKeyRejected(serverId, access.keySource);
+      }
+      throw error;
+    }
     if (outcome.status === "needs_confirmation") {
       await savePending(serverId, login, outcome.calls);
     }
-    await record(outcome.status, outcome.calls, outcome.usage);
+    const cost = await record(outcome.status, outcome.calls, outcome.usage);
+    await notifyBudgetCrossings(serverId, budgets, cost);
 
     // About one request in a hundred also clears old history
     if (deps.random() < 0.01) await pruneRequests(input.retentionDays);
