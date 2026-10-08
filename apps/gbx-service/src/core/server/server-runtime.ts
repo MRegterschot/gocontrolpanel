@@ -1,6 +1,7 @@
 import type { LiveSnapshot, ServerClient } from "@gcp/shared";
 import { ChatService } from "../chat/chat-service";
 import { SystemCommands, type SystemCommandServices } from "../chat/system-commands";
+import { CodriverCommand, type CodriverClient } from "../chat/codriver-command";
 import { CommandRouter } from "../chat/command-router";
 import { AppError, errorMessage } from "../errors";
 import { TypedEventBus } from "../events";
@@ -66,6 +67,8 @@ export interface RuntimeDependencies {
   initialConnectWindowMs?: number;
   slowRetryDelayMs?: number;
   systemCommands?: SystemCommandServices;
+  // Forwards /co to the panel; without it /co says Codriver is not set up
+  codriver?: CodriverClient;
 }
 
 const API_VERSION = "2023-04-24";
@@ -147,11 +150,18 @@ export class ServerRuntime {
       services: deps.systemCommands,
     });
 
+    const codriver = new CodriverCommand({
+      serverId, log,
+      client: deps.codriver ?? null,
+      reply: (login, message) => chat.sendTo(login, message),
+    });
+
     const commandRouter = new CommandRouter(
       log,
       (login, message) => chat.sendTo(login, message),
       () => ({ enabled: state.enableHelpCommand, provider: this.plugins }),
-      (name, login) => systemCommands.dispatch(name, login),
+      async (name, login, args) =>
+        (await codriver.dispatch(name, args, login)) || systemCommands.dispatch(name, login),
     );
 
     this.plugins = new PluginHost(

@@ -34,8 +34,15 @@ const config: Config = {
     TOKEN: process.env.GBX_SERVICE_TOKEN || "",
     WS_TICKET_SECRET: process.env.WS_TICKET_SECRET || "",
   },
+  CODRIVER: {
+    // Shared with the GBX service, which forwards /co chat commands; empty turns Codriver off
+    INTERNAL_TOKEN: process.env.PANEL_INTERNAL_TOKEN || "",
+    // Panel-wide Anthropic key until the operator settings store one
+    API_KEY: process.env.ANTHROPIC_API_KEY || "",
+  },
   MARKETPLACE: {
-    INDEX_URL: process.env.MARKETPLACE_INDEX_URL ?? DEFAULT_MARKETPLACE_INDEX_URL,
+    INDEX_URL:
+      process.env.MARKETPLACE_INDEX_URL ?? DEFAULT_MARKETPLACE_INDEX_URL,
   },
 };
 

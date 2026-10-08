@@ -20,7 +20,13 @@ describe("env examples", () => {
     expect(() => loadConfig(env)).not.toThrow();
   });
 
-  it.each(["DATABASE_URL", "REDIS_URI", "GBX_SERVICE_TOKEN", "WS_TICKET_SECRET"])(
+  it.each([
+    "DATABASE_URL",
+    "REDIS_URI",
+    "GBX_SERVICE_TOKEN",
+    "WS_TICKET_SECRET",
+    "PANEL_INTERNAL_TOKEN",
+  ])(
     "%s is the same in every example",
     (key) => {
       expect(root[key], key).toBeTruthy();

@@ -34,6 +34,7 @@ export class CommandRouter {
     private readonly systemCommand?: (
       name: string,
       login: string,
+      args: string[],
     ) => Promise<boolean>,
   ) {}
 
@@ -64,7 +65,8 @@ export class CommandRouter {
       return true;
     }
 
-    if (await this.systemCommand?.(command.name, login)) return true;
+    if (await this.systemCommand?.(command.name, login, command.args))
+      return true;
 
     // Handlers run concurrently; one slow or failing handler never blocks the others
     await Promise.all(

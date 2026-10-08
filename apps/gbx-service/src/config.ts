@@ -39,6 +39,17 @@ const envSchema = z.object({
   SENTRY_DSN: z.string().optional(),
   SENTRY_ENVIRONMENT: z.string().optional(),
   TEMPLATES_DIR: z.string().optional(),
+  // Codriver: where the service reaches the panel, and the token both share; empty turns /co off
+  PANEL_INTERNAL_URL: z.union([z.literal(""), z.string().url()]).default(""),
+  PANEL_INTERNAL_TOKEN: z.string().default(""),
+}).superRefine((env, ctx) => {
+  if (env.PANEL_INTERNAL_URL && env.PANEL_INTERNAL_TOKEN.length < MIN_SECRET_LENGTH) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["PANEL_INTERNAL_TOKEN"],
+      message: `PANEL_INTERNAL_TOKEN must be at least ${MIN_SECRET_LENGTH} characters when PANEL_INTERNAL_URL is set`,
+    });
+  }
 });
 
 export type Config = z.infer<typeof envSchema> & { templatesDir: string };

@@ -22,6 +22,8 @@ services:
       GBX_SERVICE_WS_URL: ws://localhost:3100 # Must be reachable from the browser
       GBX_SERVICE_TOKEN: # Same value as the GBX service, at least 32 characters
       WS_TICKET_SECRET: # Same value as the GBX service, at least 32 characters
+      PANEL_INTERNAL_TOKEN: # Optional, for Codriver: same value as the GBX service, at least 32 characters
+      ANTHROPIC_API_KEY: # Optional, turns on the Codriver AI assistant
       LOG_LEVEL: info
     depends_on:
       - db
@@ -39,6 +41,8 @@ services:
       GBX_SERVICE_TOKEN: # Same value as the web app, at least 32 characters
       WS_TICKET_SECRET: # Same value as the web app, at least 32 characters
       WS_ALLOWED_ORIGINS: http://localhost:3000
+      PANEL_INTERNAL_URL: http://gocontrolpanel:3000 # Optional, for Codriver /co commands
+      PANEL_INTERNAL_TOKEN: # Same value as the web app, at least 32 characters
       NADEO_SERVER_LOGIN: 
       NADEO_SERVER_PASSWORD: 
       NADEO_CONTACT: GoControlPanel / <your contact info>

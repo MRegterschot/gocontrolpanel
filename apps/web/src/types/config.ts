@@ -24,6 +24,10 @@ export interface Config {
     TOKEN: string;
     WS_TICKET_SECRET: string;
   };
+  CODRIVER: {
+    INTERNAL_TOKEN: string;
+    API_KEY: string;
+  };
   MARKETPLACE: {
     // Empty turns browsing the marketplace off; uploading plugins keeps working
     INDEX_URL: string;
