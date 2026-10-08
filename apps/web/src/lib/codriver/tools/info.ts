@@ -134,11 +134,11 @@ const examples: { role: "guest" | "moderator" | "admin"; text: string }[] = [
   { role: "guest", text: "/co status, /co who has the record?" },
   {
     role: "moderator",
-    text: "/co play the map Winter 05, /co skip, /co points limit 100",
+    text: "/co skip, /co points limit 100, /co kick Bob, /co list plugins",
   },
   {
     role: "admin",
-    text: "/co play a random snowcar map, /co cup mode with 100 points",
+    text: "/co cup mode with 100 points, /co enable live round, /co ban Bob",
   },
 ];
 

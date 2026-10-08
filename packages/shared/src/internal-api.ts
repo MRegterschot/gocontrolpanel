@@ -1,6 +1,12 @@
 import { z } from "zod";
+import { CUSTOM_EVENT_NAME } from "./plugins/events";
 import { LiveInfo } from "./types/live";
-import { ChatConfig, chatConfigSchema, PlayerInfo, ServerClient } from "./types/server";
+import {
+  ChatConfig,
+  chatConfigSchema,
+  PlayerInfo,
+  ServerClient,
+} from "./types/server";
 
 // Contract for web -> GBX service calls. All routes require `Authorization: Bearer <service token>`.
 
@@ -59,6 +65,7 @@ export const internalPaths = {
   teamPoints: (id: string, teamId: number) =>
     `/internal/servers/${id}/teams/${teamId}/points`,
   serverEvents: "/internal/server-events",
+  pluginEvent: (id: string) => `/internal/servers/${id}/plugin-events`,
 } as const;
 
 const xmlRpcValue: z.ZodType<unknown> = z.unknown();
@@ -90,7 +97,9 @@ export interface ChatConfigResult {
 }
 
 export const scriptNameBodySchema = z.object({ script: z.string().min(1) });
-export const matchSettingsBodySchema = z.object({ filename: z.string().min(1) });
+export const matchSettingsBodySchema = z.object({
+  filename: z.string().min(1),
+});
 export const scriptSettingsBodySchema = z.object({
   settings: z.record(z.union([z.string(), z.number(), z.boolean()])),
 });
@@ -115,3 +124,12 @@ export interface LiveSnapshot {
 }
 
 export type ServerStatus = ServerClient;
+
+// Events from parts of the panel that are not plugins, delivered to plugins as "<source>:<name>".
+// Each source is a slug no plugin may use.
+export const pluginEventBodySchema = z.object({
+  source: z.enum(["codriver"]),
+  name: z.string().regex(CUSTOM_EVENT_NAME),
+  payload: z.unknown(),
+});
+export type PluginEventBody = z.infer<typeof pluginEventBodySchema>;

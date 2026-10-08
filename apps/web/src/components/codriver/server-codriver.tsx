@@ -128,10 +128,11 @@ export default function ServerCodriver({ serverId }: { serverId: string }) {
                 : "Ask a panel admin to set a shared key."}
             </p>
           )}
-          {overview.allowServerKeys && (
+          {(overview.allowServerKeys || settings.keyHint) && (
             <ServerCodriverKeyForm
               serverId={serverId}
               keyHint={settings.keyHint}
+              canAdd={overview.allowServerKeys}
             />
           )}
         </CardContent>

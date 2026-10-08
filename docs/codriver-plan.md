@@ -1,6 +1,6 @@
 # Codriver: AI server assistant plan
 
-Status: plan; not implemented. Replaces the earlier `ai-assistant-proposal.md`.
+Status: phases 0–4 implemented; phase 5 and later integrations remain planned. Replaces the earlier `ai-assistant-proposal.md`.
 
 **Codriver** is a natural-language assistant for GoControlPanel servers. In rally the co-driver reads the notes and the driver acts; here the player says what they want and Codriver turns it into panel operations. In game it answers to `/co <request>` (alias `/ai`); in the panel it is a chat box on the server page.
 
@@ -315,6 +315,14 @@ Each phase is its own branch, stacked on the previous one.
 | 4     | `feat/codriver-admin-tools`  | Player, plugin, server and chat tools with confirmations; `codriver:action` event                                                                        |
 | 5     | `feat/codriver-panel`        | Panel chat box, usage view, history table, eval script and dataset                                                                                       |
 | Later |                              | Manialink confirm buttons, map requests queue, plugin-contributed tools, MCP adapter                                                                     |
+
+### Phase 4 implementation notes
+
+Player, plugin, server settings and announcement tools share the panel's actor-authorized operations and audit logs. Kick and spectator tools allow moderators; bans, guest lists, points, plugins and server settings require admins in Codriver. All targeted player operations enforce the caller's server rank, including panel admin precedence.
+
+Confirmation stores exact player logins and installed plugin IDs. If the target disappears, the caller must ask again. Plugin configuration validates scalar, non-secret fields against the installed manifest; passwords and plugin secrets cannot be changed through Codriver.
+
+Successful mutations emit `codriver:action` with `{tool, args, login}` through the GBX service's existing custom plugin event bus. Read operations and unchanged plugin toggles emit no event. Delivery failures are logged without failing the completed action; `codriver`, `/co` and `/ai` are reserved from plugins.
 
 ## 19. Decisions
 

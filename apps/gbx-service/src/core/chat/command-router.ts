@@ -36,6 +36,8 @@ export class CommandRouter {
       login: string,
       args: string[],
     ) => Promise<boolean>,
+    // Native commands that are only there when configured, such as Codriver's /co
+    private readonly extraHelp: () => Record<string, string> = () => ({}),
   ) {}
 
   register(name: string, handler: CommandHandler): () => void {
@@ -89,18 +91,19 @@ export class CommandRouter {
     const { enabled, provider } = this.help();
     if (!enabled) return;
 
+    const native = { ...SYSTEM_COMMAND_HELP, ...this.extraHelp() };
     const text =
       args.length === 0
         ? "Native commands: /version, " +
-          Object.keys(SYSTEM_COMMAND_HELP)
+          Object.keys(native)
             .map((name) => `/${name}`)
             .join(", ") +
           ". To get help for a specific plugin, use /help <plugin>. Available plugins: " +
           provider.pluginNames().join(", ")
         : args[0].toLowerCase() === "version"
           ? "/version: shows the control panel app version."
-          : Object.hasOwn(SYSTEM_COMMAND_HELP, args[0].toLowerCase())
-            ? `/${args[0].toLowerCase()}: ${SYSTEM_COMMAND_HELP[args[0].toLowerCase()]}.`
+          : Object.hasOwn(native, args[0].toLowerCase())
+            ? `/${args[0].toLowerCase()}: ${native[args[0].toLowerCase()]}.`
             : provider.helpText(args[0]);
 
     await this.reply(login, text);

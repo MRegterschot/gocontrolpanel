@@ -1,6 +1,7 @@
 import type { Actor } from "@/lib/actor";
 import { getLogger } from "@/lib/logger";
 import "server-only";
+import { emitAction } from "./events";
 import { parseFastPath } from "./fast-path";
 import type { CodriverModel, ModelPlan, ModelUsage } from "./model";
 import { modeKey, modeSettings } from "./modes";
@@ -192,16 +193,51 @@ export async function runCodriver(
     calls = result.calls;
   }
 
+  try {
+    calls = await Promise.all(
+      calls.map(async (call) => {
+        const tool = tools.find((t) => t.name === call.tool)!;
+        const input = tool.input.parse(call.input);
+        return {
+          tool: call.tool,
+          input: tool.input.parse((await tool.prepare?.(ctx, input)) ?? input),
+        };
+      }),
+    );
+  } catch (error) {
+    if (error instanceof CodriverError)
+      return outcome("unclear", error.message, [], !!fast);
+    log.error({ error }, "Codriver preparation failed");
+    return outcome(
+      "failed",
+      "Something went wrong, check the panel logs.",
+      [],
+      !!fast,
+    );
+  }
+
   if (options.dryRun) {
     return outcome("planned", describeCalls(calls), calls, !!fast);
   }
 
   // Confirmation is asked for the whole request when any call needs it
   const prompts: string[] = [];
-  for (const call of calls) {
-    const tool = tools.find((t) => t.name === call.tool)!;
-    const prompt = await tool.confirm?.(ctx, call.input);
-    if (prompt) prompts.push(prompt);
+  try {
+    for (const call of calls) {
+      const tool = tools.find((t) => t.name === call.tool)!;
+      const prompt = await tool.confirm?.(ctx, call.input);
+      if (prompt) prompts.push(prompt);
+    }
+  } catch (error) {
+    if (error instanceof CodriverError)
+      return outcome("unclear", error.message, [], !!fast);
+    log.error({ error }, "Codriver confirmation failed");
+    return outcome(
+      "failed",
+      "Something went wrong, check the panel logs.",
+      [],
+      !!fast,
+    );
   }
   if (prompts.length > 0) {
     return outcome(
@@ -242,8 +278,11 @@ export async function executeCalls(
       };
     }
     try {
-      const result = await tool.run(ctx, tool.input.parse(call.input));
+      const input = tool.input.parse(call.input);
+      const result = await tool.run(ctx, input);
       replies.push(result.reply);
+      if (tool.category !== "info" && result.changed !== false)
+        await emitAction(ctx, call.tool, input);
     } catch (error) {
       if (error instanceof CodriverError) {
         replies.push(error.message);

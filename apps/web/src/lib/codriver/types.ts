@@ -15,7 +15,13 @@ export function hasRole(role: CodriverRole, minimum: CodriverRole): boolean {
 }
 
 // Keyword routing sends the model only the categories a request touches
-export type ToolCategory = "info" | "maps" | "mode";
+export type ToolCategory =
+  | "info"
+  | "maps"
+  | "mode"
+  | "players"
+  | "plugins"
+  | "server";
 
 export interface ToolContext {
   serverId: string;
@@ -27,6 +33,8 @@ export interface ToolContext {
 export interface ToolResult {
   // Shown to the caller; templated, never model-written
   reply: string;
+  // False for a successful operation that did not change anything
+  changed?: boolean;
 }
 
 export interface CodriverTool<S extends z.ZodType = z.ZodType> {
@@ -36,6 +44,8 @@ export interface CodriverTool<S extends z.ZodType = z.ZodType> {
   category: ToolCategory;
   minRole: CodriverRole;
   input: S;
+  // Resolve fuzzy targets before confirmation; stored calls keep that exact identity
+  prepare?: (ctx: ToolContext, input: z.output<S>) => Promise<z.output<S>>;
   // Disruptive calls are shown to the caller first and run after they confirm
   confirm?: (
     ctx: ToolContext,

@@ -20,8 +20,26 @@ const commands: Record<string, PlannedCall> = {
   "clear queue": { tool: "clear_jukebox", input: {} },
   status: { tool: "get_server_state", input: {} },
   settings: { tool: "get_mode_settings", input: {} },
+  plugins: { tool: "list_plugins", input: {} },
+  "list plugins": { tool: "list_plugins", input: {} },
+  "reload plugins": { tool: "reload_plugins", input: {} },
 };
 
+// "enable live round", "turn off the live ranking plugin"
+const pluginToggle =
+  /^(enable|disable|turn on|turn off|switch on|switch off) (.+)$/;
+
 export function parseFastPath(text: string): PlannedCall | null {
-  return commands[normalize(text)] ?? null;
+  const normalized = normalize(text);
+  const exact = commands[normalized];
+  if (exact) return exact;
+
+  const toggle = pluginToggle.exec(normalized);
+  if (toggle) {
+    return {
+      tool: "set_plugin_enabled",
+      input: { plugin: toggle[2], enabled: !/disable|off/.test(toggle[1]) },
+    };
+  }
+  return null;
 }

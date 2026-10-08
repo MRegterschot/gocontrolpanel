@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  CODRIVER_HELP,
   CodriverCommand,
   type CodriverClient,
 } from "../../src/core/chat/codriver-command";
@@ -130,5 +131,39 @@ describe("CodriverCommand", () => {
 
     await router.dispatch("/co cup mode please", "abc");
     expect(ask).toHaveBeenCalledWith("server-a", "abc", "cup mode please");
+  });
+});
+
+describe("/help", () => {
+  it("lists /co only when Codriver is set up", async () => {
+    const reply = vi.fn(async () => {});
+    const provider = { pluginNames: () => [], helpText: () => "" };
+    const withCodriver = new CommandRouter(
+      silentLogger,
+      reply,
+      () => ({ enabled: true, provider }),
+      undefined,
+      () => CODRIVER_HELP,
+    );
+    await withCodriver.dispatch("/help", "abc");
+    expect(reply).toHaveBeenLastCalledWith(
+      "abc",
+      expect.stringContaining("/co"),
+    );
+    await withCodriver.dispatch("/help co", "abc");
+    expect(reply).toHaveBeenLastCalledWith(
+      "abc",
+      expect.stringContaining("asks Codriver"),
+    );
+
+    const without = new CommandRouter(silentLogger, reply, () => ({
+      enabled: true,
+      provider,
+    }));
+    await without.dispatch("/help", "abc");
+    expect(reply).toHaveBeenLastCalledWith(
+      "abc",
+      expect.not.stringContaining("/co"),
+    );
   });
 });

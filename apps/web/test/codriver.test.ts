@@ -3,6 +3,7 @@ import { z } from "zod/v4";
 
 const mocks = vi.hoisted(() => ({
   liveState: vi.fn(),
+  emitAction: vi.fn(),
   warn: vi.fn(),
   error: vi.fn(),
 }));
@@ -15,6 +16,7 @@ vi.mock("@/lib/logger", () => ({
 }));
 vi.mock("@/lib/codriver/registry", () => ({ codriverTools: [] }));
 vi.mock("@/lib/codriver/state", () => ({ getLiveState: mocks.liveState }));
+vi.mock("@/lib/codriver/events", () => ({ emitAction: mocks.emitAction }));
 
 import { guestActor, type Actor } from "@/lib/actor";
 import { parseFastPath } from "@/lib/codriver/fast-path";
@@ -174,13 +176,35 @@ describe("modes", () => {
 describe("routing and fast path", () => {
   it("routes by keywords and falls back to every category", () => {
     expect(routeCategories("play a random snowcar map")).toEqual(["maps"]);
-    expect(routeCategories("cup mode with 100 points")).toEqual(["mode"]);
-    expect(routeCategories("hello there")).toEqual(["info", "maps", "mode"]);
+    expect(routeCategories("cup mode with 100 points")).toEqual([
+      "mode",
+      "players",
+    ]);
+    expect(routeCategories("kick bob")).toEqual(["players"]);
+    expect(routeCategories("enable the live ranking plugin")).toEqual([
+      "plugins",
+    ]);
+    expect(routeCategories("hello there")).toEqual([
+      "maps",
+      "mode",
+      "players",
+      "plugins",
+      "server",
+      "info",
+    ]);
   });
 
   it("matches exact commands only", () => {
     expect(parseFastPath("Skip!")).toEqual({ tool: "skip_map", input: {} });
     expect(parseFastPath("skip this map please")).toBeNull();
+    expect(parseFastPath("Enable the Live Round plugin")).toEqual({
+      tool: "set_plugin_enabled",
+      input: { plugin: "the live round plugin", enabled: true },
+    });
+    expect(parseFastPath("turn off live ranking")).toEqual({
+      tool: "set_plugin_enabled",
+      input: { plugin: "live ranking", enabled: false },
+    });
   });
 
   it("keeps request text from closing the request tag", () => {

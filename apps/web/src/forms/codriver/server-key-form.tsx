@@ -14,9 +14,12 @@ import { toast } from "sonner";
 export default function ServerCodriverKeyForm({
   serverId,
   keyHint,
+  canAdd = true,
 }: {
   serverId: string;
   keyHint: string | null;
+  // False when the operator no longer allows server keys: a stored key can only be removed
+  canAdd?: boolean;
 }) {
   const queryClient = useQueryClient();
   const [value, setValue] = useState("");
@@ -50,6 +53,12 @@ export default function ServerCodriverKeyForm({
           Stored key: <span className="font-mono">{keyHint}</span>
         </p>
       )}
+      {!canAdd && keyHint && (
+        <p className="text-sm text-muted-foreground">
+          This panel no longer allows server keys, so the stored key is not
+          used.
+        </p>
+      )}
       <form
         className="flex flex-wrap gap-2"
         onSubmit={(e) => {
@@ -57,19 +66,25 @@ export default function ServerCodriverKeyForm({
           void write(value.trim());
         }}
       >
-        <Input
-          type="password"
-          autoComplete="off"
-          aria-label="Anthropic API key"
-          placeholder={keyHint ? "Replace the stored key" : "Anthropic API key"}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          className="max-w-md flex-1"
-        />
-        <Button type="submit" disabled={busy || value.trim().length < 20}>
-          <IconDeviceFloppy />
-          Save
-        </Button>
+        {canAdd && (
+          <Input
+            type="password"
+            autoComplete="off"
+            aria-label="Anthropic API key"
+            placeholder={
+              keyHint ? "Replace the stored key" : "Anthropic API key"
+            }
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            className="max-w-md flex-1"
+          />
+        )}
+        {canAdd && (
+          <Button type="submit" disabled={busy || value.trim().length < 20}>
+            <IconDeviceFloppy />
+            Save
+          </Button>
+        )}
         {keyHint && (
           <Button
             type="button"

@@ -2,6 +2,10 @@ import type { Logger } from "../logger";
 
 export const CODRIVER_COMMANDS: ReadonlySet<string> = new Set(["co", "ai"]);
 
+export const CODRIVER_HELP: Record<string, string> = {
+  co: "asks Codriver, the AI assistant, e.g. /co play a random snow map (also /ai)",
+};
+
 // Asks the panel, which runs Codriver; returns the reply for the player
 export interface CodriverClient {
   ask(serverId: string, login: string, text: string): Promise<string>;
