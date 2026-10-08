@@ -28,6 +28,11 @@ export const queryKeys = {
     ["servers", serverId, "server-plugin"] as const,
   ecmApiKey: (serverId: string) =>
     ["servers", serverId, "ecm", "api-key"] as const,
+  codriverServer: (serverId: string) =>
+    ["servers", serverId, "codriver"] as const,
+  codriverPanel: ["codriver", "panel"] as const,
+  codriverAccess: (serverId: string, login: string) =>
+    ["codriver", "access", serverId, login] as const,
   map: (uid: string) => ["maps", uid] as const,
   notifications: ["notifications"] as const,
   rolesMinimal: ["roles", "minimal"] as const,

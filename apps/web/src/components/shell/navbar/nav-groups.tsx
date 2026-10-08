@@ -35,6 +35,7 @@ import {
   IconDeviceGamepad,
   IconFileDescription,
   IconMap,
+  IconRobot,
   IconServer,
   IconServerOff,
   IconSettings,
@@ -193,6 +194,19 @@ export function getServerGroup(
           server.id,
         ),
         needsConnection: connectionRoutes.includes(routes.servers.advanced),
+      },
+      {
+        name: "Codriver",
+        url: generatePath(routes.servers.codriver, {
+          id: server.id,
+        }),
+        icon: IconRobot,
+        auth: hasPermissionSync(
+          session,
+          routePermissions.servers.codriver,
+          server.id,
+        ),
+        needsConnection: false,
       },
     ],
   };
