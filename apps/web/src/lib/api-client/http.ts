@@ -83,10 +83,12 @@ export function fetchPaginated<T>(
   sorting: Sorting,
   filter: string,
   signal?: AbortSignal,
+  query: Record<string, string> = {},
 ): Promise<ServerResponse<PaginationResponse<T>>> {
   return apiGet(
     endpoint,
     {
+      ...query,
       pageIndex: pagination.pageIndex,
       pageSize: pagination.pageSize,
       sortField: sorting.field,

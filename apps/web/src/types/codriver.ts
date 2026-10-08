@@ -72,6 +72,9 @@ export interface CodriverServerOverview {
 
 export interface CodriverRequestRow {
   id: string;
+  serverId: string;
+  serverName: string;
+  modelCalls: number | null;
   login: string;
   userName: string | null;
   source: "game" | "panel" | "cli";
@@ -83,4 +86,44 @@ export interface CodriverRequestRow {
   costMicros: number;
   latencyMs: number;
   createdAt: Date;
+}
+
+export const codriverStatuses = [
+  "done",
+  "needs_confirmation",
+  "planned",
+  "unclear",
+  "denied",
+  "failed",
+  "over_budget",
+] as const;
+export type CodriverRequestStatus = (typeof codriverStatuses)[number];
+export interface CodriverChatReply {
+  confirmationId?: string;
+  status: CodriverRequestStatus | "cooldown";
+  reply: string;
+}
+export interface CodriverChatAccess {
+  allowed: boolean;
+  reason: string | null;
+}
+export interface CodriverUsageBucket {
+  id: string;
+  name: string;
+  requests: number;
+  costMicros: number;
+}
+export interface CodriverUsage {
+  month: string;
+  requests: number;
+  costMicros: number;
+  failed: number;
+  modelRequests: number;
+  escalated: number;
+  untrackedModelRequests: number;
+  daily: { date: string; requests: number; costMicros: number }[];
+  tools: { name: string; requests: number }[];
+  byKey: CodriverUsageBucket[];
+  byServer: CodriverUsageBucket[];
+  byGroup: CodriverUsageBucket[];
 }

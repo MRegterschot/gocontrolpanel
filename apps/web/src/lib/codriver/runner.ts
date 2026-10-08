@@ -36,6 +36,8 @@ export interface CodriverOptions {
   escalationModel: string | null;
   // Plan without running anything
   dryRun?: boolean;
+  // Evaluation supplies fixtures without connecting to a dedicated server
+  getState?: typeof getLiveState;
   // Overrides the registry, for tests
   tools?: CodriverTool[];
 }
@@ -125,7 +127,15 @@ export async function runCodriver(
         true,
       );
     }
-    calls = [fast];
+    const parsed = tool.input.safeParse(fast.input);
+    if (!parsed.success)
+      return outcome(
+        "unclear",
+        "That request has invalid arguments. Try a shorter request.",
+        [],
+        true,
+      );
+    calls = [{ tool: fast.tool, input: parsed.data }];
   } else {
     const categories = routeCategories(text);
     const offered = new Map(
@@ -139,7 +149,7 @@ export async function runCodriver(
 
     let state;
     try {
-      state = await getLiveState(request.serverId);
+      state = await (options.getState ?? getLiveState)(request.serverId);
     } catch (error) {
       if (error instanceof CodriverError)
         return outcome("failed", error.message);
@@ -169,6 +179,12 @@ export async function runCodriver(
         tools: apiTools,
       });
       usage.push(plan.usage);
+      if (plan.stopReason === "refusal" || plan.stopReason === "max_tokens") {
+        return outcome(
+          "failed",
+          "Codriver could not produce a complete plan. Try a shorter request.",
+        );
+      }
       lastText = plan.text;
       result = validate(plan, offered);
       if ("calls" in result) break;
@@ -193,6 +209,10 @@ export async function runCodriver(
     calls = result.calls;
   }
 
+  if (options.dryRun) {
+    return outcome("planned", describeCalls(calls), calls, !!fast);
+  }
+
   try {
     calls = await Promise.all(
       calls.map(async (call) => {
@@ -214,10 +234,6 @@ export async function runCodriver(
       [],
       !!fast,
     );
-  }
-
-  if (options.dryRun) {
-    return outcome("planned", describeCalls(calls), calls, !!fast);
   }
 
   // Confirmation is asked for the whole request when any call needs it

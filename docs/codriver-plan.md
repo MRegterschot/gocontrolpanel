@@ -1,6 +1,6 @@
 # Codriver: AI server assistant plan
 
-Status: phases 0–4 implemented; phase 5 and later integrations remain planned. Replaces the earlier `ai-assistant-proposal.md`.
+Status: phases 0–5 implemented; live-server verification and paid model evaluation remain manual. Later integrations remain planned. Replaces the earlier `ai-assistant-proposal.md`.
 
 **Codriver** is a natural-language assistant for GoControlPanel servers. In rally the co-driver reads the notes and the driver acts; here the player says what they want and Codriver turns it into panel operations. In game it answers to `/co <request>` (alias `/ai`); in the panel it is a chat box on the server page.
 
@@ -323,6 +323,31 @@ Player, plugin, server settings and announcement tools share the panel's actor-a
 Confirmation stores exact player logins and installed plugin IDs. If the target disappears, the caller must ask again. Plugin configuration validates scalar, non-secret fields against the installed manifest; passwords and plugin secrets cannot be changed through Codriver.
 
 Successful mutations emit `codriver:action` with `{tool, args, login}` through the GBX service's existing custom plugin event bus. Read operations and unchanged plugin toggles emit no event. Delivery failures are logged without failing the completed action; `codriver`, `/co` and `/ai` are reserved from plugins.
+
+### Phase 5 implementation notes
+
+The server Codriver page has Chat, Usage, History and Settings tabs. Server members can open chat; the same operator access rules, member switch, roles, cooldown and budgets apply as in game. Settings, usage and history remain server-admin-only. Panel admins have aggregate usage and history tabs under Admin → Codriver.
+
+Panel chat resolves the signed-in caller's current roles for every request, including confirmations. Confirmations expire after 60 seconds and are scoped to server, player and source, so panel confirmation buttons cannot execute an in-game request. Each button also carries a request ID; a stale browser tab cannot confirm a replacement request. Conversation messages live in the current browser tab; durable request records appear in admin history.
+
+Usage shows the current UTC month, requests per day, top tools, key spend, failure rate and escalation rate. Operator breakdowns include servers and current server-group membership; overlapping groups are deliberately not additive. The `modelCalls` migration is supplied for MySQL and PostgreSQL. Existing rows stay null and are excluded from escalation-rate calculations. Deploy the migration with the normal database deployment before using the new usage queries.
+
+History supports status, player-login and free-text filters. “Export draft” downloads a request for manual evaluation review; fill in the original role and server state, correct the expected result and remove private text before adding it to the dataset. No request is automatically added or sent to a model by exporting it.
+
+The evaluation dataset contains 62 English cases covering exact commands, slang, typos, multiple operations, missing targets, permissions and injection attempts. Validate locally without model calls:
+
+```sh
+bun run --filter @gcp/web codriver:eval --validate-only
+```
+
+Run paid evaluations manually with `ANTHROPIC_API_KEY` set:
+
+```sh
+bun run --filter @gcp/web codriver:eval --model haiku --effort low --output /tmp/codriver-haiku.json
+bun run --filter @gcp/web codriver:eval --model sonnet --effort medium --output /tmp/codriver-sonnet.json
+```
+
+Use `--filter <case-id-substring>` for a subset or `--cases <file>` for a reviewed dataset. The harness uses the real tool schemas, routing, role checks and planner with fixed server-state fixtures. It never prepares targets or executes operations. Tool calls are graded in order with normalized arguments; no-tool refusals and clarifications are checked without an LLM judge. Refusals and clarifications both use the planner's `unclear` status, so their exact wording is not graded. Accuracy, estimated cost, mean/p95 latency and the number of fast-path cases are reported; output files include per-case results. A failed case produces a nonzero exit status. Paid accuracy and latency results are needed before changing the default model.
 
 ## 19. Decisions
 

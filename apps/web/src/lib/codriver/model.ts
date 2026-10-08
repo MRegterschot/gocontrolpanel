@@ -33,7 +33,10 @@ export interface CodriverModel {
   plan(request: PlanRequest): Promise<ModelPlan>;
 }
 
-export function createAnthropicModel(apiKey: string): CodriverModel {
+export function createAnthropicModel(
+  apiKey: string,
+  effort: "low" | "medium" = "low",
+): CodriverModel {
   const client = new Anthropic({ apiKey, timeout: 15_000, maxRetries: 1 });
 
   return {
@@ -42,7 +45,7 @@ export function createAnthropicModel(apiKey: string): CodriverModel {
         model,
         // Thinking counts towards this; low effort keeps it short
         max_tokens: 1024,
-        output_config: { effort: "low" },
+        output_config: { effort },
         system,
         tools,
         tool_choice: { type: "auto" },

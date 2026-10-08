@@ -1,6 +1,5 @@
 "use client";
 
-import { PaginationTable } from "@/components/table/pagination-table";
 import {
   Card,
   CardContent,
@@ -14,9 +13,9 @@ import ServerCodriverKeyForm from "@/forms/codriver/server-key-form";
 import ServerCodriverSettingsForm from "@/forms/codriver/server-settings-form";
 import ServerCodriverTestForm from "@/forms/codriver/server-test-form";
 import { useCodriverServerOverview } from "@/hooks/use-codriver";
-import { codriverRequestsPath } from "@/lib/api-client/codriver";
+
 import { getErrorMessage } from "@/lib/utils";
-import { createServerRequestColumns } from "./server-requests-columns";
+import CodriverUsageCard from "./usage-card";
 
 const dollars = (micros: number) => `$${(micros / 1_000_000).toFixed(2)}`;
 const centsToDollars = (cents: number) => `$${(cents / 100).toFixed(2)}`;
@@ -50,7 +49,13 @@ function SpendRow({
   );
 }
 
-export default function ServerCodriver({ serverId }: { serverId: string }) {
+export default function ServerCodriver({
+  serverId,
+  usage = false,
+}: {
+  serverId: string;
+  usage?: boolean;
+}) {
   const {
     data: overview,
     error,
@@ -76,7 +81,7 @@ export default function ServerCodriver({ serverId }: { serverId: string }) {
     );
   }
 
-  if (!overview.available) {
+  if (!overview.available && !usage) {
     return (
       <Card className="gap-6 py-6">
         <CardHeader>
@@ -92,6 +97,34 @@ export default function ServerCodriver({ serverId }: { serverId: string }) {
 
   const { settings } = overview;
   const ownKey = overview.allowServerKeys && !!settings.keyHint;
+
+  if (usage)
+    return (
+      <div className="flex flex-col gap-6">
+        <Card className="gap-6 py-6">
+          <CardHeader>
+            <CardTitle>Spend this month</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            {overview.allowServerKeys && (
+              <SpendRow
+                label="Own key"
+                spentMicros={overview.spentMicrosThisMonth.serverKey}
+                limitCents={settings.monthlyBudgetCents}
+                noLimitText="No limit"
+              />
+            )}
+            <SpendRow
+              label="Shared key"
+              spentMicros={overview.spentMicrosThisMonth.shared}
+              limitCents={overview.sharedCapCents}
+              noLimitText="No limit"
+            />
+          </CardContent>
+        </Card>
+        <CodriverUsageCard serverId={serverId} />
+      </div>
+    );
 
   return (
     <div className="flex flex-col gap-6">
@@ -140,28 +173,6 @@ export default function ServerCodriver({ serverId }: { serverId: string }) {
 
       <Card className="gap-6 py-6">
         <CardHeader>
-          <CardTitle>Spend this month</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          {overview.allowServerKeys && (
-            <SpendRow
-              label="Own key"
-              spentMicros={overview.spentMicrosThisMonth.serverKey}
-              limitCents={settings.monthlyBudgetCents}
-              noLimitText="No limit"
-            />
-          )}
-          <SpendRow
-            label="Shared key"
-            spentMicros={overview.spentMicrosThisMonth.shared}
-            limitCents={overview.sharedCapCents}
-            noLimitText="No limit"
-          />
-        </CardContent>
-      </Card>
-
-      <Card className="gap-6 py-6">
-        <CardHeader>
           <CardTitle>Test a request</CardTitle>
           <CardDescription>
             Plans the request without running it. The model call still counts
@@ -170,19 +181,6 @@ export default function ServerCodriver({ serverId }: { serverId: string }) {
         </CardHeader>
         <CardContent>
           <ServerCodriverTestForm serverId={serverId} />
-        </CardContent>
-      </Card>
-
-      <Card className="gap-6 py-6">
-        <CardHeader>
-          <CardTitle>History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <PaginationTable
-            createColumns={createServerRequestColumns}
-            endpoint={codriverRequestsPath(serverId)}
-            filter
-          />
         </CardContent>
       </Card>
     </div>

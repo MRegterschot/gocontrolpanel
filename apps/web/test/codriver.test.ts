@@ -257,6 +257,31 @@ describe("runCodriver", () => {
     expect(model.plan).not.toHaveBeenCalled();
   });
 
+  it("validates fast-path input even when only planning", async () => {
+    const toggle = defineTool({
+      name: "set_plugin_enabled",
+      description: "Toggle",
+      category: "plugins",
+      minRole: "admin",
+      input: z.strictObject({
+        plugin: z.string().max(60),
+        enabled: z.boolean(),
+      }),
+      run,
+    });
+    const result = await runCodriver(
+      {
+        serverId,
+        actor: actorWithRole("Admin"),
+        text: `enable ${"a".repeat(61)}`,
+      },
+      options(fakeModel(), { tools: [toggle], dryRun: true }),
+    );
+    expect(result.status).toBe("unclear");
+    expect(result.calls).toEqual([]);
+    expect(run).not.toHaveBeenCalled();
+  });
+
   it("runs a valid planned call and offers only allowed tools of the routed category", async () => {
     const model = fakeModel(
       plan([{ name: "set_points", input: { points: 100 } }]),
@@ -382,6 +407,20 @@ describe("runCodriver", () => {
     expect(executed.status).toBe("denied");
     expect(run).not.toHaveBeenCalled();
   });
+
+  it.each(["refusal", "max_tokens"])(
+    "does not grade a %s response as a usable clarification",
+    async (stopReason) => {
+      const model = fakeModel({ ...plan([], "Partial response"), stopReason });
+      const result = await runCodriver(
+        { serverId, actor: actorWithRole("Admin"), text: "cup mode" },
+        options(model),
+      );
+      expect(result.status).toBe("failed");
+      expect(result.usage).toHaveLength(1);
+      expect(run).not.toHaveBeenCalled();
+    },
+  );
 
   it("rejects more than three calls", async () => {
     const call = { name: "set_points", input: { points: 1 } };

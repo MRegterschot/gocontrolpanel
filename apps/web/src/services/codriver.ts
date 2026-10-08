@@ -1,6 +1,11 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { actorForLogin } from "@/lib/actor";
 import { availability, resolveAccess } from "@/lib/codriver/access";
+import {
+  codriverChatPermissions,
+  panelChatActor,
+  requireActiveServer,
+} from "@/lib/codriver/panel-access";
 import { resolveRole } from "@/lib/codriver/roles";
 import {
   loadAccessInput,
@@ -14,8 +19,10 @@ import { getClient } from "@/lib/dbclient";
 import { canStoreSecrets, secretHint } from "@/lib/secrets";
 import type {
   CodriverAccessCheck,
+  CodriverChatAccess,
   CodriverPanelOverview,
   CodriverRequestRow,
+  CodriverRequestStatus,
   CodriverRuleRow,
   CodriverServerOverview,
 } from "@/types/codriver";
@@ -189,47 +196,111 @@ export async function getCodriverRequestsPaginated(
   pagination: PaginationState,
   sorting: { field: string; order: "asc" | "desc" },
   filter: string,
-  fetchArgs?: { serverId: string },
+  fetchArgs?: {
+    serverId: string;
+    status?: CodriverRequestStatus;
+    login?: string;
+  },
 ): Promise<ServerResponse<PaginationResponse<CodriverRequestRow>>> {
   const serverId = fetchArgs?.serverId ?? "";
   return doServerActionWithAuth(serverAdminPermissions(serverId), async () => {
-    const db = getClient();
-    const where: Prisma.CodriverRequestsWhereInput = { serverId };
-    if (filter) {
-      where.OR = [
-        { login: { contains: filter } },
-        { text: { contains: filter } },
-      ];
-    }
-    const [rows, totalCount] = await Promise.all([
-      db.codriverRequests.findMany({
-        where,
-        orderBy: {
+    await requireActiveServer(serverId);
+    return readRequests(pagination, sorting, filter, fetchArgs);
+  });
+}
+
+export async function getCodriverPanelRequestsPaginated(
+  pagination: PaginationState,
+  sorting: { field: string; order: "asc" | "desc" },
+  filter: string,
+  filters?: { status?: CodriverRequestStatus; login?: string },
+): Promise<ServerResponse<PaginationResponse<CodriverRequestRow>>> {
+  return doServerActionWithAuth([], async (session) => {
+    requirePanelAdmin(session);
+    return readRequests(pagination, sorting, filter, filters);
+  });
+}
+
+async function readRequests(
+  pagination: PaginationState,
+  sorting: { field: string; order: "asc" | "desc" },
+  filter: string,
+  filters?: {
+    serverId?: string;
+    status?: CodriverRequestStatus;
+    login?: string;
+  },
+): Promise<PaginationResponse<CodriverRequestRow>> {
+  const db = getClient();
+  const where: Prisma.CodriverRequestsWhereInput = {
+    server: { deletedAt: null },
+    ...(filters?.serverId ? { serverId: filters.serverId } : {}),
+    ...(filters?.status ? { status: filters.status } : {}),
+  };
+  if (filters?.login) where.login = { contains: filters.login };
+  if (filter) {
+    where.OR = [
+      { login: { contains: filter } },
+      { text: { contains: filter } },
+    ];
+  }
+  const [rows, totalCount] = await Promise.all([
+    db.codriverRequests.findMany({
+      where,
+      orderBy: [
+        {
           [sortable.has(sorting.field) ? sorting.field : "createdAt"]:
             sorting.order,
         },
-        skip: pagination.pageIndex * pagination.pageSize,
-        take: pagination.pageSize,
-        include: { user: { select: { nickName: true } } },
-      }),
-      db.codriverRequests.count({ where }),
-    ]);
-    return {
-      totalCount,
-      data: rows.map((row) => ({
-        id: row.id,
-        login: row.login,
-        userName: row.user?.nickName ?? null,
-        source: row.source,
-        text: row.text,
-        toolCalls: row.toolCalls,
-        status: row.status,
-        keySource: row.keySource,
-        model: row.model,
-        costMicros: row.costMicros,
-        latencyMs: row.latencyMs,
-        createdAt: row.createdAt,
-      })),
-    };
-  });
+        { id: "desc" },
+      ],
+      skip: pagination.pageIndex * pagination.pageSize,
+      take: pagination.pageSize,
+      include: {
+        user: { select: { nickName: true } },
+        server: { select: { name: true } },
+      },
+    }),
+    db.codriverRequests.count({ where }),
+  ]);
+  return {
+    totalCount,
+    data: rows.map((row) => ({
+      id: row.id,
+      serverId: row.serverId,
+      serverName: row.server.name,
+      modelCalls: row.modelCalls,
+      login: row.login,
+      userName: row.user?.nickName ?? null,
+      source: row.source,
+      text: row.text,
+      toolCalls: row.toolCalls,
+      status: row.status,
+      keySource: row.keySource,
+      model: row.model,
+      costMicros: row.costMicros,
+      latencyMs: row.latencyMs,
+      createdAt: row.createdAt,
+    })),
+  };
+}
+
+export async function getCodriverChatAccess(
+  serverId: string,
+): Promise<ServerResponse<CodriverChatAccess>> {
+  return doServerActionWithAuth(
+    codriverChatPermissions.map((permission) =>
+      permission.replace(":id:", `:${serverId}:`),
+    ),
+    async (session) => {
+      const actor = await panelChatActor(session, serverId);
+      const decision = resolveAccess(
+        await loadAccessInput(serverId, actor, resolveRole(actor, serverId)),
+      );
+      return {
+        allowed: decision.allowed,
+        reason: decision.allowed ? null : decision.reason,
+      };
+    },
+  );
 }

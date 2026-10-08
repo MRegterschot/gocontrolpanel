@@ -9,7 +9,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "codriver": "bun --env-file=../../.env --preload ./scripts/server-only-stub.ts ./scripts/codriver.ts"
+    "codriver": "bun --env-file=../../.env --preload ./scripts/server-only-stub.ts ./scripts/codriver.ts",
+    "codriver:eval": "bun --env-file=../../.env --preload ./scripts/server-only-stub.ts ./scripts/codriver-eval.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.132.0",

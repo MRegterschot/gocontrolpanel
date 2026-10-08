@@ -30,6 +30,10 @@ export const queryKeys = {
     ["servers", serverId, "ecm", "api-key"] as const,
   codriverServer: (serverId: string) =>
     ["servers", serverId, "codriver"] as const,
+  codriverChat: (serverId: string) =>
+    ["servers", serverId, "codriver", "chat"] as const,
+  codriverUsage: (serverId?: string) =>
+    ["codriver", "usage", serverId ?? "panel"] as const,
   codriverPanel: ["codriver", "panel"] as const,
   codriverAccess: (serverId: string, login: string) =>
     ["codriver", "access", serverId, login] as const,
@@ -47,5 +51,6 @@ export const queryKeys = {
     pagination: { pageIndex: number; pageSize: number },
     sorting: { field: string; order: string },
     filter: string,
-  ) => ["paginated", endpoint, pagination, sorting, filter] as const,
+    query: Record<string, string> = {},
+  ) => ["paginated", endpoint, pagination, sorting, filter, query] as const,
 };

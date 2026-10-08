@@ -23,5 +23,21 @@ export const getCodriverServerOverview = (
   apiGet(`${server(serverId)}/codriver`, undefined, { signal });
 
 // Endpoint for usePaginationAPI
-export const codriverRequestsPath = (serverId: string) =>
-  `${server(serverId)}/codriver/requests`;
+export const codriverRequestsPath = (serverId?: string) =>
+  serverId ? `${server(serverId)}/codriver/requests` : "/api/codriver/requests";
+
+export const getCodriverChatAccess = (
+  serverId: string,
+  signal?: AbortSignal,
+): ReturnType<typeof Codriver.getCodriverChatAccess> =>
+  apiGet(`${server(serverId)}/codriver/chat`, undefined, { signal });
+
+export const getCodriverUsage = (
+  serverId?: string,
+  signal?: AbortSignal,
+): ReturnType<typeof import("@/services/codriver-usage").getCodriverUsage> =>
+  apiGet(
+    serverId ? `${server(serverId)}/codriver/usage` : "/api/codriver/usage",
+    undefined,
+    { signal },
+  );

@@ -118,7 +118,14 @@ export const routePermissions = {
       ],
     },
     advanced: ["servers:id:admin", "group:servers:id:admin"],
-    codriver: ["servers:id:admin", "group:servers:id:admin"],
+    codriver: [
+      "servers:id:member",
+      "servers:id:moderator",
+      "servers:id:admin",
+      "group:servers:id:member",
+      "group:servers:id:moderator",
+      "group:servers:id:admin",
+    ],
   },
   admin: {
     users: {

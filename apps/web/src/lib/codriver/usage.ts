@@ -118,6 +118,7 @@ export async function recordRequest(record: RequestRecord): Promise<number> {
       status: record.status,
       keySource: record.keySource,
       model: last?.model ?? null,
+      modelCalls: record.usage.length,
       inputTokens: record.usage.reduce(
         (sum, call) => sum + call.inputTokens,
         0,

@@ -4,7 +4,12 @@ import { logAudit } from "@/actions/database/server-only/audit-logs";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { actorFromSession } from "@/lib/actor";
 import { availability, resolveAccess } from "@/lib/codriver/access";
+import { handleCodriverRequest } from "@/lib/codriver/handle";
 import { createAnthropicModel, verifyApiKey } from "@/lib/codriver/model";
+import {
+  codriverChatPermissions,
+  panelChatActor,
+} from "@/lib/codriver/panel-access";
 import { resolveRole } from "@/lib/codriver/roles";
 import { runCodriver } from "@/lib/codriver/runner";
 import {
@@ -17,6 +22,7 @@ import { recordRequest } from "@/lib/codriver/usage";
 import { getClient } from "@/lib/dbclient";
 import { encryptSecret } from "@/lib/secrets";
 import { requirePanelAdmin, serverAdminPermissions } from "@/services/codriver";
+import type { CodriverChatReply } from "@/types/codriver";
 import { ServerError, ServerResponse } from "@/types/responses";
 import { z } from "zod";
 
@@ -297,6 +303,40 @@ export async function testCodriverRequest(
         latencyMs: Date.now() - started,
       });
       return { status: outcome.status, reply: outcome.reply };
+    },
+  );
+}
+
+export async function sendCodriverMessage(
+  serverId: string,
+  text: string,
+  confirmationId?: string,
+): Promise<ServerResponse<CodriverChatReply>> {
+  return doServerActionWithAuth(
+    codriverChatPermissions.map((permission) =>
+      permission.replace(":id:", `:${serverId}:`),
+    ),
+    async (session) => {
+      const request = parse(z.string().trim().min(1).max(300), text);
+      const actor = await panelChatActor(session, serverId);
+      const result = await handleCodriverRequest(
+        {
+          serverId,
+          login: actor.login,
+          text: request,
+          source: "panel",
+          confirmationId: parse(z.string().uuid().optional(), confirmationId),
+        },
+        undefined,
+        actor,
+      );
+      return {
+        ...result,
+        reply: result.reply.replace(
+          " Reply /co yes or /co no.",
+          " Confirm or cancel below.",
+        ),
+      };
     },
   );
 }

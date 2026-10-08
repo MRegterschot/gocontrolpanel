@@ -46,21 +46,35 @@ vi.mock("@/lib/codriver/alerts", () => ({
   notifyKeyRejected: mocks.keyAlert,
 }));
 vi.mock("@/lib/codriver/pending", () => ({
-  savePending: async (s: string, l: string, calls: unknown) => {
-    mocks.pending.set(`${s}:${l}`, JSON.stringify(calls));
+  savePending: async (s: string, l: string, calls: unknown, source: string) => {
+    const id = crypto.randomUUID();
+    mocks.pending.set(`${source}:${s}:${l}`, JSON.stringify({ id, calls }));
+    return id;
   },
-  takePending: async (s: string, l: string) => {
-    const value = mocks.pending.get(`${s}:${l}`);
-    mocks.pending.delete(`${s}:${l}`);
-    return value ? JSON.parse(value) : null;
+  takePending: async (
+    s: string,
+    l: string,
+    source: string,
+    expectedId?: string,
+  ) => {
+    const key = `${source}:${s}:${l}`;
+    const value = mocks.pending.get(key);
+    if (!value) return null;
+    const pending = JSON.parse(value);
+    if (expectedId && pending.id !== expectedId) return null;
+    mocks.pending.delete(key);
+    return pending.calls;
   },
-  clearPending: async (s: string, l: string) =>
-    mocks.pending.delete(`${s}:${l}`),
+  clearPending: async (s: string, l: string, source: string) =>
+    mocks.pending.delete(`${source}:${s}:${l}`),
   takeCooldown: mocks.cooldown,
 }));
 
 import { guestActor } from "@/lib/actor";
-import { handleCodriverMessage } from "@/lib/codriver/handle";
+import {
+  handleCodriverMessage,
+  handleCodriverRequest,
+} from "@/lib/codriver/handle";
 
 const serverId = "server-a";
 const moderator = {
@@ -219,6 +233,63 @@ describe("handleCodriverMessage", () => {
     );
     // Taken once: a second yes has nothing left to run
     expect(await ask("yes")).toBe("Nothing to confirm.");
+  });
+
+  it("keeps panel and game confirmations separate", async () => {
+    mocks.runCodriver.mockResolvedValue({
+      status: "needs_confirmation",
+      reply: "Skip?",
+      calls: [{ tool: "skip_map", input: {} }],
+      usage: [],
+      fastPath: true,
+    });
+    await ask("skip");
+    const panel = await handleCodriverRequest(
+      {
+        serverId,
+        login: "abc",
+        text: "yes",
+        source: "panel",
+        confirmationId: crypto.randomUUID(),
+      },
+      deps,
+      moderator,
+    );
+    expect(panel).toEqual({ status: "unclear", reply: "Nothing to confirm." });
+    expect(mocks.executeCalls).not.toHaveBeenCalled();
+    expect(await ask("yes")).toBe("Skipping.");
+  });
+
+  it("does not confirm a different request opened in another panel tab", async () => {
+    mocks.runCodriver.mockResolvedValue({
+      status: "needs_confirmation",
+      reply: "Skip?",
+      calls: [{ tool: "skip_map", input: {} }],
+      usage: [],
+      fastPath: true,
+    });
+    const message = {
+      serverId,
+      login: "abc",
+      text: "skip",
+      source: "panel" as const,
+    };
+    const first = await handleCodriverRequest(message, deps, moderator);
+    const second = await handleCodriverRequest(message, deps, moderator);
+    const stale = await handleCodriverRequest(
+      { ...message, text: "yes", confirmationId: first.confirmationId },
+      deps,
+      moderator,
+    );
+    expect(stale.status).toBe("unclear");
+    expect(mocks.executeCalls).not.toHaveBeenCalled();
+    const current = await handleCodriverRequest(
+      { ...message, text: "yes", confirmationId: second.confirmationId },
+      deps,
+      moderator,
+    );
+    expect(current.status).toBe("done");
+    expect(mocks.executeCalls).toHaveBeenCalledTimes(1);
   });
 
   it("cancels a pending question", async () => {

@@ -2,8 +2,10 @@
 
 import {
   checkCodriverAccess,
+  getCodriverChatAccess,
   getCodriverPanelOverview,
   getCodriverServerOverview,
+  getCodriverUsage,
 } from "@/lib/api-client/codriver";
 import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { useQuery } from "@tanstack/react-query";
@@ -37,4 +39,18 @@ export const useCodriverAccessCheck = (serverId: string, login: string) =>
       ),
     enabled: !!serverId && !!login,
     staleTime: 0,
+  });
+
+export const useCodriverChatAccess = (serverId: string) =>
+  useQuery({
+    queryKey: queryKeys.codriverChat(serverId),
+    queryFn: ({ signal }) => unwrap(getCodriverChatAccess(serverId, signal)),
+    enabled: !!serverId,
+    staleTime: 0,
+  });
+export const useCodriverUsage = (serverId?: string) =>
+  useQuery({
+    queryKey: queryKeys.codriverUsage(serverId),
+    queryFn: ({ signal }) => unwrap(getCodriverUsage(serverId, signal)),
+    staleTime: 30_000,
   });
