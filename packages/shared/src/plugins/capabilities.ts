@@ -2,7 +2,7 @@
 // install time and enforced by the GBX service at runtime.
 
 // Major version of the plugin API this panel runs. A plugin built for a newer one is refused.
-export const PLUGIN_SDK_VERSION = 2;
+export const PLUGIN_SDK_VERSION = 3;
 
 export const STATIC_CAPABILITIES = [
   "ui",

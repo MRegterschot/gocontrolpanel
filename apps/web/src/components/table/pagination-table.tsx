@@ -33,6 +33,7 @@ interface PaginationTableProps<TData, TValue, TArgs, TActionArgs> {
   ) => ColumnDef<TData, TValue>[];
   // The GET route that serves the pages, e.g. /api/roles
   endpoint: string;
+  queryFilters?: Record<string, string>;
   args?: TArgs;
   pageSize?: number;
   filter?: boolean;
@@ -45,6 +46,7 @@ interface PaginationTableProps<TData, TValue, TArgs, TActionArgs> {
 export function PaginationTable<TData, TValue, TArgs, TActionArgs>({
   createColumns,
   endpoint,
+  queryFilters = {},
   args = {} as TArgs,
   pageSize = 10,
   filter = false,
@@ -62,11 +64,12 @@ export function PaginationTable<TData, TValue, TArgs, TActionArgs>({
   const [searchInput, setSearchInput] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
 
-  const { data, totalCount, loading, refetch } = usePaginationAPI<TData>(
+  const { data, totalCount, loading, error, refetch } = usePaginationAPI<TData>(
     endpoint,
     pagination,
     { field, order },
     globalFilter,
+    queryFilters,
   );
 
   useEffect(() => {
@@ -128,6 +131,11 @@ export function PaginationTable<TData, TValue, TArgs, TActionArgs>({
         </div>
       )}
 
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          Failed to load results: {error.message}
+        </p>
+      )}
       <Card className="flex-1 overflow-hidden">
         <Table>
           <TableHeader className="table-fixed">

@@ -5,8 +5,18 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import type { PluginCustomEvent } from "@gcp/shared";
 import { DEFAULT_SANDBOX_LIMITS } from "../../src/core/plugins/sandbox/limits";
-import { createHarness, packageRecord, player, SERVER_ID, type Harness } from "../fakes/harness";
+import { definePlugin, type PluginContext } from "../../src/core/plugins/sdk";
+import { flush } from "../fakes/clock";
+import {
+  createHarness,
+  packageRecord,
+  player,
+  pluginRecord,
+  SERVER_ID,
+  type Harness,
+} from "../fakes/harness";
 
 const EXAMPLE = fileURLToPath(new URL("../../../../packages/plugin-sdk/examples/hello", import.meta.url));
 
@@ -236,6 +246,75 @@ describe("sandboxed plugins", () => {
     expect(stored(h, "command")).toBe("/admin is not one of the commands in the manifest");
     expect(stored(h, "answers")).toBe('Unknown event "playerManialinkPageAnswer"');
     expect(stored(h, "finish")).toBe("ok");
+  });
+
+  it("delivers plugin events to other plugins and the service", async () => {
+    const emitter = testPackage(
+      `ctx.command("score", (args, login) => ctx.emit("point", { login, points: Number(args[0]) }));
+       ctx.on("probe:hello", (payload) => ctx.storage.set("from-probe", payload));
+       return {};`,
+      { slug: "scorer", commands: ["score"] },
+    );
+    const listener = testPackage(
+      `let all = 0;
+       ctx.on("scorer:point", (payload, source) => ctx.storage.set("point", { payload, source }));
+       ctx.on("scorer:*", () => ctx.storage.set("all", ++all));
+       ctx.on("other:point", () => ctx.storage.set("other", true));
+       return {};`,
+      { slug: "listener" },
+    );
+    let probeCtx: PluginContext | undefined;
+    const probe = definePlugin({
+      id: "probe",
+      create: (ctx) => {
+        probeCtx = ctx;
+        return {};
+      },
+    });
+    const seen: PluginCustomEvent[] = [];
+    const h = await createHarness({
+      plugins: [probe],
+      server: { plugins: [pluginRecord("probe")] },
+      packages: [{ bytes: emitter }, { bytes: listener }],
+      players: [player("p1")],
+    });
+    h.runtime.events.on("pluginEvent", (event) => void seen.push(event));
+
+    await h.chat("p1", "/score 3");
+    await flush();
+    expect(stored(h, "point", "listener")).toEqual({
+      payload: { login: "p1", points: 3 },
+      source: { plugin: "scorer", name: "point" },
+    });
+    expect(stored(h, "all", "listener")).toBe(1);
+    expect(stored(h, "other", "listener")).toBeUndefined();
+    expect(seen).toEqual([{ plugin: "scorer", name: "point", payload: { login: "p1", points: 3 } }]);
+
+    // Service code emits the same way
+    probeCtx!.emit("hello", "hi");
+    await flush();
+    expect(stored(h, "from-probe", "scorer")).toBe("hi");
+  });
+
+  it("validates emitted events", async () => {
+    const h = await createHarness({
+      packages: [
+        {
+          bytes: testPackage(`
+            const attempt = (key, fn) => { try { fn(); return ctx.storage.set(key, "ok"); } catch (error) { return ctx.storage.set(key, error.message); } };
+            return { async start() {
+              await attempt("name", () => ctx.emit("no spaces"));
+              await attempt("size", () => ctx.emit("big", "x".repeat(70 * 1024)));
+              await attempt("key", () => ctx.on("not-a-key", () => {}));
+              await attempt("ok", () => ctx.emit("fine", [1, 2]));
+            } };`),
+        },
+      ],
+    });
+    expect(stored(h, "name")).toBe("Event names use 1-64 letters, digits, - _ and .");
+    expect(stored(h, "size")).toBe("Event payloads may be at most 64 KB");
+    expect(stored(h, "key")).toBe('Unknown event "not-a-key"');
+    expect(stored(h, "ok")).toBe("ok");
   });
 
   it("runs timers on the service clock and stops them on unload", async () => {

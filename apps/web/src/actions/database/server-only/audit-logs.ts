@@ -3,7 +3,8 @@ import { Prisma } from "@gcp/db";
 import "server-only";
 
 export async function logAudit(
-  userId: string,
+  // null for a player without a panel account
+  userId: string | null,
   targetId: string,
   action: string,
   details?: Prisma.InputJsonValue,

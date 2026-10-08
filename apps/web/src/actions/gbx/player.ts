@@ -1,9 +1,26 @@
 "use server";
 
 import { doServerActionWithAuth } from "@/lib/actions";
-import { gbxService, getGbxClient } from "@/lib/gbx-service";
+import { actorFromSession } from "@/lib/actor";
+import { getGbxClient } from "@/lib/gbx-service";
 import { ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
+import {
+  addGuestAs,
+  banPlayerAs,
+  blacklistPlayerAs,
+  forceSpectatorAs,
+  kickPlayerAs,
+  removeGuestAs,
+  setPlayerMapPointsAs,
+  setPlayerMatchPointsAs,
+  setPlayerRoundPointsAs,
+  setTeamMapPointsAs,
+  setTeamMatchPointsAs,
+  setTeamRoundPointsAs,
+  unbanPlayerAs,
+  unblacklistPlayerAs,
+} from "./server-only/player";
 
 export async function banPlayer(
   serverId: string,
@@ -17,14 +34,8 @@ export async function banPlayer(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("Ban", login, reason);
-      await logAudit(session.user.id, serverId, "server.players.banlist.add", {
-        login,
-        reason,
-      });
-    },
+    (session) =>
+      banPlayerAs(actorFromSession(session), serverId, login, reason),
   );
 }
 
@@ -39,16 +50,7 @@ export async function unbanPlayer(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("UnBan", login);
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.players.banlist.remove",
-        login,
-      );
-    },
+    (session) => unbanPlayerAs(actorFromSession(session), serverId, login),
   );
 }
 
@@ -79,16 +81,7 @@ export async function blacklistPlayer(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("BlackList", login);
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.players.blacklist.add",
-        login,
-      );
-    },
+    (session) => blacklistPlayerAs(actorFromSession(session), serverId, login),
   );
 }
 
@@ -103,16 +96,8 @@ export async function unblacklistPlayer(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("UnBlackList", login);
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.players.blacklist.remove",
-        login,
-      );
-    },
+    (session) =>
+      unblacklistPlayerAs(actorFromSession(session), serverId, login),
   );
 }
 
@@ -197,16 +182,7 @@ export async function addGuest(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("AddGuest", login);
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.players.guestlist.add",
-        login,
-      );
-    },
+    (session) => addGuestAs(actorFromSession(session), serverId, login),
   );
 }
 
@@ -221,16 +197,7 @@ export async function removeGuest(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("RemoveGuest", login);
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.players.guestlist.remove",
-        login,
-      );
-    },
+    (session) => removeGuestAs(actorFromSession(session), serverId, login),
   );
 }
 
@@ -316,14 +283,8 @@ export async function kickPlayer(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("Kick", login, reason);
-      await logAudit(session.user.id, serverId, "server.players.kick", {
-        login,
-        reason,
-      });
-    },
+    (session) =>
+      kickPlayerAs(actorFromSession(session), serverId, login, reason),
   );
 }
 
@@ -340,16 +301,8 @@ export async function forceSpectator(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("ForceSpectator", login, status);
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.players.spectator.set",
-        { login, status },
-      );
-    },
+    (session) =>
+      forceSpectatorAs(actorFromSession(session), serverId, login, status),
   );
 }
 
@@ -365,16 +318,13 @@ export async function setPlayerRoundPoints(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      await gbxService.setPlayerPoints(serverId, login, "round", points);
-
-      await logAudit(
-        session.user.id,
+    (session) =>
+      setPlayerRoundPointsAs(
+        actorFromSession(session),
         serverId,
-        "server.players.roundpoints.set",
-        { login, points },
-      );
-    },
+        login,
+        points,
+      ),
   );
 }
 
@@ -390,16 +340,8 @@ export async function setPlayerMapPoints(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      await gbxService.setPlayerPoints(serverId, login, "map", points);
-
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.players.mappoints.set",
-        { login, points },
-      );
-    },
+    (session) =>
+      setPlayerMapPointsAs(actorFromSession(session), serverId, login, points),
   );
 }
 
@@ -415,16 +357,13 @@ export async function setPlayerMatchPoints(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      await gbxService.setPlayerPoints(serverId, login, "match", points);
-
-      await logAudit(
-        session.user.id,
+    (session) =>
+      setPlayerMatchPointsAs(
+        actorFromSession(session),
         serverId,
-        "server.players.matchpoints.set",
-        { login, points },
-      );
-    },
+        login,
+        points,
+      ),
   );
 }
 
@@ -440,16 +379,8 @@ export async function setTeamRoundPoints(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      await gbxService.setTeamPoints(serverId, teamId, "round", points);
-
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.players.team.roundpoints.set",
-        { teamId, points },
-      );
-    },
+    (session) =>
+      setTeamRoundPointsAs(actorFromSession(session), serverId, teamId, points),
   );
 }
 
@@ -465,16 +396,8 @@ export async function setTeamMapPoints(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      await gbxService.setTeamPoints(serverId, teamId, "map", points);
-
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.players.team.mappoints.set",
-        { teamId, points },
-      );
-    },
+    (session) =>
+      setTeamMapPointsAs(actorFromSession(session), serverId, teamId, points),
   );
 }
 
@@ -490,15 +413,7 @@ export async function setTeamMatchPoints(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      await gbxService.setTeamPoints(serverId, teamId, "match", points);
-
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.players.team.matchpoints.set",
-        { teamId, points },
-      );
-    },
+    (session) =>
+      setTeamMatchPointsAs(actorFromSession(session), serverId, teamId, points),
   );
 }

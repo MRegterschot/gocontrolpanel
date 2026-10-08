@@ -55,6 +55,15 @@ export interface PluginEvents {
 
 export type PluginEventName = keyof PluginEvents;
 
+// Another plugin's event: "<slug>:<name>", or "<slug>:*" for all of them
+export type CustomEventKey = `${string}:${string}`;
+
+export interface CustomEventSource {
+  // Slug of the plugin that emitted it
+  plugin: string;
+  name: string;
+}
+
 export interface Vector2 {
   x: number;
   y: number;
@@ -174,6 +183,13 @@ export interface PluginContext<Config = Record<string, unknown>> {
   serverName(): string | null;
 
   on<K extends PluginEventName>(event: K, handler: (...args: PluginEvents[K]) => unknown): void;
+  on<T = unknown>(
+    event: CustomEventKey,
+    handler: (payload: T, source: CustomEventSource) => unknown,
+  ): void;
+  // Sends "<your slug>:<name>" to every listener on this server, after the current call returns.
+  // The payload is copied as JSON, at most 64 KB.
+  emit(name: string, payload?: unknown): void;
   // Only commands listed in the manifest
   command(name: string, handler: CommandHandler): void;
   // Handles a manialink action; "pick-{uid}" passes the matched part as params.uid.

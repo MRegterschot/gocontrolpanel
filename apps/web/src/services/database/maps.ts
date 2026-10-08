@@ -1,8 +1,8 @@
 import { checkAndUpdateMapsInfoIfNeeded } from "@/actions/database/server-only/gbx";
+import { createMissingMaps } from "@/actions/database/server-only/maps";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getAccountNames, getMapsInfo } from "@/lib/api/nadeo";
 import { getClient } from "@/lib/dbclient";
-import { callEach } from "@/lib/gbx-batch";
 import { getGbxClient } from "@/lib/gbx-service";
 import { getLogger, logger } from "@/lib/logger";
 import {
@@ -11,7 +11,7 @@ import {
   ServerResponse,
 } from "@/types/responses";
 import { Maps, Prisma } from "@gcp/db";
-import { MapInfoMinimal, SMapInfo } from "@gcp/shared";
+import { MapInfoMinimal } from "@gcp/shared";
 import { PaginationState } from "@tanstack/react-table";
 import "server-only";
 
@@ -139,64 +139,7 @@ export async function getMapList(
       );
 
       if (missingMaps.length > 0) {
-        const BATCH_SIZE = 200;
-        const now = new Date();
-        const newMaps: Maps[] = [];
-
-        const apiMapsInfo: NonNullable<
-          Awaited<ReturnType<typeof getMapsInfo>>["data"]
-        > = [];
-        for (let i = 0; i < missingMaps.length; i += BATCH_SIZE) {
-          const batch = missingMaps
-            .slice(i, i + BATCH_SIZE)
-            .map((map) => map.UId);
-          const { data } = await getMapsInfo(batch);
-          if (data) apiMapsInfo.push(...data);
-        }
-
-        const mapInfos = await callEach<SMapInfo>(
-          client,
-          "GetMapInfo",
-          missingMaps.map((map) => [map.FileName]),
-        );
-
-        missingMaps.forEach((map, i) => {
-          const mapInfo = mapInfos[i];
-          if (!mapInfo) {
-            log.error({ meta, map }, "Failed to get map info");
-            return;
-          }
-
-          if (newMaps.some((m) => m.uid === mapInfo.UId)) {
-            log.warn({ meta, mapInfo }, "Duplicate map UID found");
-            return;
-          }
-
-          const mapInfoFromApi = apiMapsInfo.find((m) => m.mapUid === map.UId);
-          newMaps.push({
-            id: crypto.randomUUID(),
-            name: mapInfo.Name || "Unknown",
-            uid: mapInfo.UId,
-            fileName: mapInfo.FileName || "",
-            author: mapInfo.Author || "",
-            authorNickname: mapInfo.AuthorNickname || "",
-            authorTime: mapInfo.AuthorTime || 0,
-            goldTime: mapInfo.GoldTime || 0,
-            silverTime: mapInfo.SilverTime || 0,
-            bronzeTime: mapInfo.BronzeTime || 0,
-            submitter: mapInfoFromApi?.submitter || null,
-            timestamp: mapInfoFromApi?.timestamp || null,
-            fileUrl: mapInfoFromApi?.fileUrl || null,
-            thumbnailUrl: mapInfoFromApi?.thumbnailUrl || null,
-            uploadCheck: now,
-            createdAt: now,
-            updatedAt: now,
-            deletedAt: null,
-          });
-        });
-
-        await db.maps.createMany({ data: newMaps });
-        existingMaps.push(...newMaps);
+        existingMaps.push(...(await createMissingMaps(serverId, missingMaps)));
       }
 
       const orderedMaps = allMapList

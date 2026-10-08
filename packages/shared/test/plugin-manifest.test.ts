@@ -28,6 +28,16 @@ export const validManifest = {
 };
 
 describe("capabilities", () => {
+  it("reserves Codriver's event namespace and chat commands", () => {
+    expect(parseManifest({ ...validManifest, slug: "codriver" }).success).toBe(
+      false,
+    );
+    for (const command of ["co", "ai"]) {
+      expect(
+        parseManifest({ ...validManifest, commands: [command] }).success,
+      ).toBe(false);
+    }
+  });
   it("knows static and http capabilities", () => {
     expect(isCapability("ui")).toBe(true);
     expect(isCapability("http:api.example.com")).toBe(true);
@@ -53,7 +63,9 @@ describe("capabilities", () => {
 
   it("lists what an update adds", () => {
     expect(addedCapabilities(["ui"], ["ui", "storage"])).toEqual(["storage"]);
-    expect(describeCapability("http:a.b.c").label).toBe("Web requests to a.b.c");
+    expect(describeCapability("http:a.b.c").label).toBe(
+      "Web requests to a.b.c",
+    );
   });
 });
 
@@ -91,10 +103,22 @@ describe("versions", () => {
   });
 
   it("orders releases and pre-releases", () => {
-    const sorted = ["1.0.0", "1.0.0-beta.2", "0.9.9", "1.0.0-alpha", "1.10.0", "1.2.0"].sort(
-      compareVersions,
-    );
-    expect(sorted).toEqual(["0.9.9", "1.0.0-alpha", "1.0.0-beta.2", "1.0.0", "1.2.0", "1.10.0"]);
+    const sorted = [
+      "1.0.0",
+      "1.0.0-beta.2",
+      "0.9.9",
+      "1.0.0-alpha",
+      "1.10.0",
+      "1.2.0",
+    ].sort(compareVersions);
+    expect(sorted).toEqual([
+      "0.9.9",
+      "1.0.0-alpha",
+      "1.0.0-beta.2",
+      "1.0.0",
+      "1.2.0",
+      "1.10.0",
+    ]);
   });
 });
 
@@ -107,35 +131,53 @@ describe("manifest", () => {
     expect(result.manifest.gamemodes).toEqual([]);
   });
 
-  it.each(NATIVE_COMMANDS)("rejects reserved names, /%s and unknown capabilities", (command) => {
-    const result = parseManifest({
-      ...validManifest,
-      slug: "server",
-      commands: [command],
-      capabilities: ["root"],
-    });
-    expect(result.success).toBe(false);
-    if (result.success) return;
-    expect(result.issues.join("\n")).toMatch(/slug: This name is reserved/);
-    expect(result.issues.join("\n")).toMatch(/commands.0/);
-    expect(result.issues.join("\n")).toMatch(/capabilities.0: Unknown capability/);
-  });
+  it.each(NATIVE_COMMANDS)(
+    "rejects reserved names, /%s and unknown capabilities",
+    (command) => {
+      const result = parseManifest({
+        ...validManifest,
+        slug: "server",
+        commands: [command],
+        capabilities: ["root"],
+      });
+      expect(result.success).toBe(false);
+      if (result.success) return;
+      expect(result.issues.join("\n")).toMatch(/slug: This name is reserved/);
+      expect(result.issues.join("\n")).toMatch(/commands.0/);
+      expect(result.issues.join("\n")).toMatch(
+        /capabilities.0: Unknown capability/,
+      );
+    },
+  );
 
   it("accepts first-party names, which the marketplace publishes", () => {
-    expect(parseManifest({ ...validManifest, slug: "match" }).success).toBe(true);
+    expect(parseManifest({ ...validManifest, slug: "match" }).success).toBe(
+      true,
+    );
   });
 
   it("rejects unknown keys and entries outside the package", () => {
-    expect(parseManifest({ ...validManifest, main: "x.js" }).success).toBe(false);
-    expect(parseManifest({ ...validManifest, entry: "../x.js" }).success).toBe(false);
-    expect(parseManifest({ ...validManifest, version: "1.0" }).success).toBe(false);
+    expect(parseManifest({ ...validManifest, main: "x.js" }).success).toBe(
+      false,
+    );
+    expect(parseManifest({ ...validManifest, entry: "../x.js" }).success).toBe(
+      false,
+    );
+    expect(parseManifest({ ...validManifest, version: "1.0" }).success).toBe(
+      false,
+    );
   });
 });
 
 const schema: PluginConfigSchema = pluginConfigSchemaSchema.parse({
   type: "object",
   properties: {
-    greeting: { type: "string", title: "Greeting", default: "Hi", maxLength: 20 },
+    greeting: {
+      type: "string",
+      title: "Greeting",
+      default: "Hi",
+      maxLength: 20,
+    },
     rows: { type: "integer", minimum: 1, maximum: 10, default: 5 },
     show: { type: "boolean", default: true },
     mode: { type: "string", enum: ["a", "b"] },
@@ -173,14 +215,21 @@ describe("config schema", () => {
       success: true,
       data: { greeting: "Hi", rows: 3, show: true },
     });
-    const bad = validatePluginConfig(schema, { rows: 11, mode: "c", admins: ["a", "b", "c", "d"] });
+    const bad = validatePluginConfig(schema, {
+      rows: 11,
+      mode: "c",
+      admins: ["a", "b", "c", "d"],
+    });
     expect(bad.success).toBe(false);
     if (bad.success) return;
     expect(bad.issues.map((i) => i.path)).toEqual(["rows", "mode", "admins"]);
   });
 
   it("falls back field by field on load", () => {
-    const { data, issues } = coercePluginConfig(schema, { rows: "many", greeting: "Yo" });
+    const { data, issues } = coercePluginConfig(schema, {
+      rows: "many",
+      greeting: "Yo",
+    });
     expect(data).toEqual({ greeting: "Yo", rows: 5, show: true });
     expect(issues).toEqual([{ path: "rows", message: "Must be a number" }]);
   });
@@ -190,11 +239,21 @@ describe("config schema", () => {
       config: { greeting: "Hi" },
       setSecrets: ["apiKey"],
     });
-    expect(mergeSecrets(schema, { apiKey: "s3cret" }, { greeting: "Hi", apiKey: "" })).toEqual({
+    expect(
+      mergeSecrets(
+        schema,
+        { apiKey: "s3cret" },
+        { greeting: "Hi", apiKey: "" },
+      ),
+    ).toEqual({
       greeting: "Hi",
       apiKey: "s3cret",
     });
-    expect(mergeSecrets(schema, { apiKey: "s3cret" }, { greeting: "Hi" }, ["apiKey"])).toEqual({
+    expect(
+      mergeSecrets(schema, { apiKey: "s3cret" }, { greeting: "Hi" }, [
+        "apiKey",
+      ]),
+    ).toEqual({
       greeting: "Hi",
     });
   });

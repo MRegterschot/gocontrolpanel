@@ -1,4 +1,4 @@
-import { IconX } from "@tabler/icons-react";
+import { IconInfoCircle, IconX } from "@tabler/icons-react";
 import clsx from "clsx";
 import { Path, useFormContext } from "react-hook-form";
 import { Button } from "../ui/button";
@@ -11,12 +11,15 @@ import {
   FormMessage,
 } from "../ui/form";
 import type { SearchHandler } from "../ui/search-input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import RenderInput from "./render-input";
 
 interface FormElementProps<TControl> {
   name: Path<TControl>;
   label?: string;
   description?: string;
+  // Extra explanation behind an info icon next to the label
+  tooltip?: string;
   placeholder?: string;
   type?: string;
   options?: {
@@ -45,6 +48,7 @@ export default function FormElement<TControl>({
   name,
   label,
   description,
+  tooltip,
   placeholder,
   type = "text",
   options,
@@ -105,6 +109,22 @@ export default function FormElement<TControl>({
                   data-error={!!error}
                 >
                   {label}{" "}
+                  {tooltip && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label={`About ${label}`}
+                          className="mx-1 text-muted-foreground hover:text-foreground"
+                        >
+                          <IconInfoCircle size={14} />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-64">
+                        {tooltip}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
                   {isRequired && (
                     <span
                       data-error={!!error}

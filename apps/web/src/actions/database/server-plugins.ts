@@ -1,8 +1,10 @@
 "use server";
 
+import { reloadServerPluginsAs } from "@/actions/server-only/plugins";
 import { doServerActionWithAuth } from "@/lib/actions";
+import { actorFromSession } from "@/lib/actor";
 import { getClient } from "@/lib/dbclient";
-import { gbxService, publishServerEvent } from "@/lib/gbx-service";
+import { publishServerEvent } from "@/lib/gbx-service";
 import { ServerError, ServerResponse } from "@/types/responses";
 import type { Prisma } from "@gcp/db";
 import { isFirstPartySlug } from "@gcp/shared";
@@ -22,14 +24,20 @@ export async function updateServerPlugin(
 
       const row = await db.serverPlugins.findUnique({
         where: { serverId_pluginId: { serverId, pluginId } },
-        select: { versionId: true, plugin: { select: { name: true, source: true } } },
+        select: {
+          versionId: true,
+          plugin: { select: { name: true, source: true } },
+        },
       });
       if (
         !row?.versionId ||
         row.plugin.source !== "marketplace" ||
         !isFirstPartySlug(row.plugin.name)
       ) {
-        throw new ServerError("The plugin is not installed on this server", "PluginNotFound");
+        throw new ServerError(
+          "The plugin is not installed on this server",
+          "PluginNotFound",
+        );
       }
 
       await db.serverPlugins.update({
@@ -52,8 +60,6 @@ export async function reloadServerPlugins(
 ): Promise<ServerResponse> {
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
-    async () => {
-      await gbxService.reloadPlugins(serverId);
-    },
+    (session) => reloadServerPluginsAs(actorFromSession(session), serverId),
   );
 }
