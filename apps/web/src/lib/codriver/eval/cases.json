@@ -865,7 +865,7 @@
       "kind": "calls",
       "calls": [
         {
-          "tool": "queue_tmx_map",
+          "tool": "add_tmx_map",
           "input": {
             "vehicle": "CarSnow",
             "pick": "random"
@@ -887,7 +887,7 @@
       "kind": "calls",
       "calls": [
         {
-          "tool": "queue_tmx_map",
+          "tool": "add_tmx_map",
           "input": {
             "vehicle": "CarRally"
           }
@@ -908,7 +908,7 @@
       "kind": "calls",
       "calls": [
         {
-          "tool": "queue_tmx_map",
+          "tool": "add_tmx_map",
           "input": {
             "tags": ["RPG"],
             "pick": "random"
@@ -930,7 +930,7 @@
       "kind": "calls",
       "calls": [
         {
-          "tool": "queue_tmx_map",
+          "tool": "add_tmx_map",
           "input": {
             "vehicle": "CarDesert"
           }

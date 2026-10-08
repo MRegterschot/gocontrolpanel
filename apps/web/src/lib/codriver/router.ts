@@ -34,6 +34,22 @@ const keywords: Record<ToolCategory, string[]> = {
     "random",
     "awarded",
     "newest",
+    "weekly",
+    "short",
+    "shorts",
+    "totd",
+    "royal",
+    "campaign",
+    "campaigns",
+    "seasonal",
+    "season",
+    "club",
+    "clubs",
+    "mappack",
+    "mappacks",
+    "pack",
+    "attack",
+    "gamemode",
   ],
   mode: [
     "mode",
@@ -131,12 +147,46 @@ const keywords: Record<ToolCategory, string[]> = {
   ],
 };
 
-// Categories whose keywords appear in the text; all of them when none do
-export function routeCategories(text: string): ToolCategory[] {
+const allCategories = Object.keys(keywords) as ToolCategory[];
+// Requests without a keyword most often ask about maps or the mode, or just chat
+const fallbackCategories: ToolCategory[] = ["maps", "mode", "info"];
+
+export interface Route {
+  categories: ToolCategory[];
+  // True when no keyword matched, so the categories are a guess
+  fallback: boolean;
+}
+
+export const everyCategory = allCategories;
+
+// Keywords of `category` that no other category uses, found in the text. They show the
+// player really asked about that area, unlike words such as "points" that fit several.
+export function exclusiveKeywordHits(
+  text: string,
+  category: ToolCategory,
+): string[] {
   const words = new Set(normalize(text).split(" "));
-  const hits = (Object.keys(keywords) as ToolCategory[]).filter((category) =>
+  return keywords[category].filter(
+    (word) =>
+      words.has(word) &&
+      !allCategories.some(
+        (other) => other !== category && keywords[other].includes(word),
+      ),
+  );
+}
+
+export function routeRequest(text: string): Route {
+  const words = new Set(normalize(text).split(" "));
+  const hits = allCategories.filter((category) =>
     keywords[category].some((word) => words.has(word)),
   );
   if (text.includes("?") && !hits.includes("info")) hits.push("info");
-  return hits.length > 0 ? hits : (Object.keys(keywords) as ToolCategory[]);
+  return hits.length > 0
+    ? { categories: hits, fallback: false }
+    : { categories: fallbackCategories, fallback: true };
+}
+
+// Categories whose keywords appear in the text, or the likeliest ones when none do
+export function routeCategories(text: string): ToolCategory[] {
+  return routeRequest(text).categories;
 }

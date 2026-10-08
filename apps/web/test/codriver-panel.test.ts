@@ -24,7 +24,7 @@ vi.mock("@/lib/auth", () => ({
 }));
 vi.mock("@/lib/logger", () => ({
   logger: { error: vi.fn() },
-  getLogger: () => ({ error: vi.fn(), warn: vi.fn() }),
+  getLogger: () => ({ info: vi.fn(), error: vi.fn(), warn: vi.fn() }),
 }));
 vi.mock("@/lib/sentry/report", () => ({ reportException: vi.fn() }));
 vi.mock("@/lib/actor", async (original) => ({
@@ -149,7 +149,11 @@ describe("history and usage isolation", () => {
       server: { deletedAt: null },
       status: "failed",
       login: { contains: "bob" },
-      OR: [{ login: { contains: "map" } }, { text: { contains: "map" } }],
+      OR: [
+        { login: { contains: "map" } },
+        { text: { contains: "map" } },
+        { feedback: { contains: "map" } },
+      ],
     };
     expect(mocks.requests).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/logger", () => ({
   logger: { error: vi.fn() },
-  getLogger: () => ({ warn: vi.fn(), error: vi.fn() }),
+  getLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
 }));
 vi.mock("@/lib/dbclient", () => ({
   getClient: () => {
@@ -79,19 +79,17 @@ describe("evaluation grading", () => {
   it("plans against fixtures without preparing or running player operations", async () => {
     const test = dataset.find((test) => test.id === "players-kick")!;
     const model = {
-      plan: vi
-        .fn()
-        .mockResolvedValue({
-          calls: [{ name: "kick_player", input: { player: "Bob" } }],
-          text: "",
-          stopReason: "tool_use",
-          usage: {
-            model: "claude-haiku-5-5",
-            inputTokens: 100,
-            outputTokens: 10,
-            cacheReadTokens: 0,
-          },
-        }),
+      plan: vi.fn().mockResolvedValue({
+        calls: [{ name: "kick_player", input: { player: "Bob" } }],
+        text: "",
+        stopReason: "tool_use",
+        usage: {
+          model: "claude-haiku-5-5",
+          inputTokens: 100,
+          outputTokens: 10,
+          cacheReadTokens: 0,
+        },
+      }),
     };
     const result = await evaluateCase(test, model, "claude-haiku-5-5");
     expect(result.passed).toBe(true);

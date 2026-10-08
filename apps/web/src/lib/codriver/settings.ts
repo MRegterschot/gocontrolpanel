@@ -76,6 +76,7 @@ export async function loadServerSettings(
     guestAccess: row.guestAccess,
     memberAccess: row.memberAccess,
     cooldownSeconds: row.cooldownSeconds,
+    memoryTurns: row.memoryTurns,
   };
 }
 

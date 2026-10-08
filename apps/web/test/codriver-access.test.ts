@@ -55,6 +55,7 @@ const server: ServerSettingsView = {
   guestAccess: "off",
   memberAccess: false,
   cooldownSeconds: 3,
+  memoryTurns: 6,
 };
 
 function input(overrides: Partial<AccessInput> = {}): AccessInput {

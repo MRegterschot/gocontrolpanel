@@ -506,6 +506,7 @@ model CodriverSettings {
   guestAccess        CodriverGuestAccess @default(off)
   memberAccess       Boolean             @default(false)
   cooldownSeconds    Int                 @default(3)
+  memoryTurns        Int                 @default(6)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -532,6 +533,9 @@ model CodriverRequests {
   cacheReadTokens Int                   @default(0)
   costMicros      Int                   @default(0)
   latencyMs       Int                   @default(0)
+  reply           String?               @db.LongText
+  feedback        String?               @db.LongText
+  feedbackAt      DateTime?
   createdAt       DateTime              @default(now())
 
   @@index([serverId, createdAt])

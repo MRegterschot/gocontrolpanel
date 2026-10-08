@@ -52,16 +52,6 @@ export const setMode = defineTool({
     mode: z.enum(modeKeys),
     settings: settingsInput.optional(),
   }),
-  confirm(_ctx, input) {
-    const script = scriptForMode(input.mode)!;
-    const settings = input.settings?.length
-      ? resolveSettings(script, input.settings)
-      : {};
-    const extra = Object.keys(settings).length
-      ? ` with ${describe(settings)}`
-      : "";
-    return `Switch to ${input.mode}${extra}? This restarts the map.`;
-  },
   async run(ctx, input) {
     const script = scriptForMode(input.mode)!;
     // Validated before anything changes on the server

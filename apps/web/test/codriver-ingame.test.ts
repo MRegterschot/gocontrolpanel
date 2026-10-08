@@ -7,6 +7,8 @@ const mocks = vi.hoisted(() => ({
   runCodriver: vi.fn(),
   executeCalls: vi.fn(),
   pending: new Map<string, string>(),
+  saveFeedback: vi.fn(),
+  turns: [] as { request: string; reply: string }[],
   cooldown: vi.fn(),
   findServer: vi.fn(),
   handle: vi.fn(),
@@ -44,6 +46,20 @@ vi.mock("@/lib/codriver/usage", () => ({
 vi.mock("@/lib/codriver/alerts", () => ({
   notifyBudgetCrossings: mocks.budgetAlert,
   notifyKeyRejected: mocks.keyAlert,
+}));
+vi.mock("@/lib/codriver/conversation", () => ({
+  loadTurns: async (_s: string, _l: string, _src: string, limit: number) =>
+    limit > 0 ? mocks.turns.slice(-limit) : [],
+  appendTurn: async (
+    _s: string,
+    _l: string,
+    _src: string,
+    turn: { request: string; reply: string },
+  ) => void mocks.turns.push(turn),
+}));
+vi.mock("@/lib/codriver/feedback", async (original) => ({
+  ...(await original<typeof import("@/lib/codriver/feedback")>()),
+  saveFeedback: mocks.saveFeedback,
 }));
 vi.mock("@/lib/codriver/pending", () => ({
   savePending: async (s: string, l: string, calls: unknown, source: string) => {
@@ -122,6 +138,7 @@ function accessInput(overrides = {}) {
       guestAccess: "off",
       memberAccess: false,
       cooldownSeconds: 3,
+      memoryTurns: 6,
     },
     role: "moderator",
     envApiKey: "",
@@ -133,6 +150,7 @@ function accessInput(overrides = {}) {
 beforeEach(() => {
   mocks.config.CODRIVER.API_KEY = "key";
   mocks.pending.clear();
+  mocks.turns.length = 0;
   mocks.actorForLogin.mockResolvedValue(moderator);
   mocks.cooldown.mockResolvedValue(true);
   mocks.accessInput.mockImplementation(async () => accessInput());
@@ -210,8 +228,53 @@ describe("handleCodriverMessage", () => {
   it("runs requests and returns the reply", async () => {
     expect(await ask("skip")).toBe("Skipping.");
     expect(mocks.runCodriver).toHaveBeenCalledWith(
-      { serverId, actor: moderator, text: "skip" },
+      { serverId, actor: moderator, text: "skip", history: [] },
       expect.objectContaining({ primaryModel: "claude-haiku-5-5" }),
+    );
+  });
+
+  it("saves /feedback on the previous request without running Codriver", async () => {
+    mocks.saveFeedback.mockResolvedValue({
+      saved: true,
+      reply: "Thanks, I added your feedback.",
+    });
+    expect(await ask("/feedback wrong map")).toBe(
+      "Thanks, I added your feedback.",
+    );
+    expect(mocks.saveFeedback).toHaveBeenCalledWith({
+      serverId,
+      login: "abc",
+      source: "game",
+      text: "wrong map",
+    });
+    expect(mocks.runCodriver).not.toHaveBeenCalled();
+    expect(mocks.record).not.toHaveBeenCalled();
+    expect(mocks.cooldown).not.toHaveBeenCalled();
+  });
+
+  it("remembers earlier turns and hands them to the next request", async () => {
+    await ask("skip");
+    await ask("and again");
+    expect(mocks.runCodriver).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        history: [{ request: "skip", reply: "Skipping." }],
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("keeps no memory when the server turned it off", async () => {
+    const base = accessInput();
+    mocks.accessInput.mockResolvedValue({
+      ...base,
+      server: { ...base.server, memoryTurns: 0 },
+    });
+    await ask("skip");
+    await ask("and again");
+    expect(mocks.turns).toHaveLength(0);
+    expect(mocks.runCodriver).toHaveBeenLastCalledWith(
+      expect.objectContaining({ history: [] }),
+      expect.anything(),
     );
   });
 

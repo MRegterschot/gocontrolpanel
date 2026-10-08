@@ -1,3 +1,4 @@
+export * from "./codriver-stream";
 export * from "./internal-api";
 export * from "./permissions";
 export * from "./plugins";

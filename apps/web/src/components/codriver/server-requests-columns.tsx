@@ -1,9 +1,19 @@
 "use client";
 
+import Modal from "@/components/modals/modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { CodriverRequestRow } from "@/types/codriver";
 import { ColumnDef } from "@tanstack/react-table";
+import { MoreHorizontal } from "lucide-react";
+import { useState } from "react";
+import RequestDetailsModal from "./request-details-modal";
 
 export function toolNames(toolCalls: unknown): string[] {
   if (!Array.isArray(toolCalls)) return [];
@@ -12,6 +22,33 @@ export function toolNames(toolCalls: unknown): string[] {
       c && typeof c === "object" && "tool" in c ? String(c.tool) : "",
     )
     .filter(Boolean);
+}
+
+function RequestActions({ row }: { row: CodriverRequestRow }) {
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
+  return (
+    <div className="flex justify-end">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" aria-label="Request actions">
+            <MoreHorizontal />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setDetailsOpen(true)}>
+            View details
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => exportDraft(row)}>
+            Export draft
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <Modal isOpen={detailsOpen} setIsOpen={setDetailsOpen}>
+        <RequestDetailsModal data={row} />
+      </Modal>
+    </div>
+  );
 }
 
 export const createServerRequestColumns = (
@@ -53,6 +90,18 @@ export const createServerRequestColumns = (
   { accessorKey: "keySource", header: "Key" },
   { accessorKey: "model", header: "Model" },
   {
+    id: "feedback",
+    header: "Feedback",
+    cell: ({ row }) =>
+      row.original.feedback ? (
+        <span title={row.original.feedback} className="block truncate max-w-48">
+          {row.original.feedback}
+        </span>
+      ) : (
+        "-"
+      ),
+  },
+  {
     id: "cost",
     header: "Cost",
     cell: ({ row }) => `$${(row.original.costMicros / 1_000_000).toFixed(4)}`,
@@ -63,17 +112,9 @@ export const createServerRequestColumns = (
     cell: ({ row }) => `${row.original.latencyMs} ms`,
   },
   {
-    id: "export",
-    header: "Evaluation",
-    cell: ({ row }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => exportDraft(row.original)}
-      >
-        Export draft
-      </Button>
-    ),
+    id: "actions",
+    header: () => <span className="sr-only">Actions</span>,
+    cell: ({ row }) => <RequestActions row={row.original} />,
   },
 ];
 

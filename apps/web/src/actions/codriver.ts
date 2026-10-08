@@ -4,12 +4,13 @@ import { logAudit } from "@/actions/database/server-only/audit-logs";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { actorFromSession } from "@/lib/actor";
 import { availability, resolveAccess } from "@/lib/codriver/access";
-import { handleCodriverRequest } from "@/lib/codriver/handle";
+import { clearTurns } from "@/lib/codriver/conversation";
 import { createAnthropicModel, verifyApiKey } from "@/lib/codriver/model";
 import {
   codriverChatPermissions,
   panelChatActor,
 } from "@/lib/codriver/panel-access";
+import { runPanelChat } from "@/lib/codriver/panel-chat";
 import { resolveRole } from "@/lib/codriver/roles";
 import { runCodriver } from "@/lib/codriver/runner";
 import {
@@ -54,6 +55,7 @@ const serverSettingsSchema = z.object({
   guestAccess: z.enum(["off", "read"]),
   memberAccess: z.boolean(),
   cooldownSeconds: z.number().int().min(0).max(300),
+  memoryTurns: z.number().int().min(0).max(10),
 });
 
 // null removes the stored key
@@ -296,6 +298,7 @@ export async function testCodriverRequest(
         login: actor.login,
         source: "panel",
         text: request,
+        reply: outcome.reply,
         calls: outcome.calls,
         status: outcome.status,
         keySource: outcome.usage.length > 0 ? access.keySource : "none",
@@ -319,24 +322,25 @@ export async function sendCodriverMessage(
     async (session) => {
       const request = parse(z.string().trim().min(1).max(300), text);
       const actor = await panelChatActor(session, serverId);
-      const result = await handleCodriverRequest(
-        {
-          serverId,
-          login: actor.login,
-          text: request,
-          source: "panel",
-          confirmationId: parse(z.string().uuid().optional(), confirmationId),
-        },
-        undefined,
-        actor,
-      );
-      return {
-        ...result,
-        reply: result.reply.replace(
-          " Reply /co yes or /co no.",
-          " Confirm or cancel below.",
-        ),
-      };
+      return runPanelChat(actor, serverId, {
+        text: request,
+        confirmationId: parse(z.string().uuid().optional(), confirmationId),
+      });
+    },
+  );
+}
+
+// Forgets what Codriver remembers of the caller's panel conversation
+export async function clearCodriverConversation(
+  serverId: string,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    codriverChatPermissions.map((permission) =>
+      permission.replace(":id:", `:${serverId}:`),
+    ),
+    async (session) => {
+      const actor = await panelChatActor(session, serverId);
+      await clearTurns(serverId, actor.login, "panel");
     },
   );
 }

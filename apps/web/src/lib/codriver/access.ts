@@ -31,6 +31,7 @@ export interface ServerSettingsView {
   guestAccess: "off" | "read";
   memberAccess: boolean;
   cooldownSeconds: number;
+  memoryTurns: number;
 }
 
 export interface AccessInput {
@@ -69,6 +70,7 @@ export type AccessDecision =
       escalationModel: string | null;
       budgets: Budget[];
       cooldownSeconds: number;
+      memoryTurns: number;
     }
   | { allowed: false; layer: AccessLayer; reason: string };
 
@@ -173,5 +175,6 @@ export function resolveAccess(input: AccessInput): AccessDecision {
     escalationModel: escalate ? CODRIVER_MODELS.sonnet : null,
     budgets,
     cooldownSeconds: server.cooldownSeconds,
+    memoryTurns: server.memoryTurns,
   };
 }

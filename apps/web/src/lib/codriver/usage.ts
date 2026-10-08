@@ -90,6 +90,8 @@ export interface RequestRecord {
   login: string;
   source: "game" | "panel" | "cli";
   text: string;
+  // What the player was told
+  reply?: string;
   calls: PlannedCall[];
   status:
     | "done"
@@ -114,6 +116,7 @@ export async function recordRequest(record: RequestRecord): Promise<number> {
       login: record.login,
       source: record.source,
       text: record.text.slice(0, 1000),
+      reply: record.reply?.slice(0, 1000) ?? null,
       toolCalls: record.calls as unknown as Prisma.InputJsonValue,
       status: record.status,
       keySource: record.keySource,

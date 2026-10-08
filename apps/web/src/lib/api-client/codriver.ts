@@ -1,4 +1,6 @@
 import type * as Codriver from "@/services/codriver";
+import type { CodriverChatReply } from "@/types/codriver";
+import { readSseEvents } from "@gcp/shared";
 import { apiGet } from "./http";
 
 const server = (serverId: string) =>
@@ -41,3 +43,37 @@ export const getCodriverUsage = (
     undefined,
     { signal },
   );
+
+// Sends a chat message and reads the event stream: progress lines, then the reply
+export async function streamCodriverMessage(
+  serverId: string,
+  text: string,
+  confirmationId: string | undefined,
+  onProgress: (text: string) => void,
+  signal?: AbortSignal,
+): Promise<CodriverChatReply> {
+  const response = await fetch(`${server(serverId)}/codriver/chat/stream`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "text/event-stream",
+    },
+    body: JSON.stringify({ text, confirmationId }),
+    signal,
+  });
+  if (!response.ok || !response.body) {
+    const body = (await response.json().catch(() => null)) as {
+      error?: string;
+    } | null;
+    throw new Error(body?.error ?? "Could not reach Codriver");
+  }
+
+  for await (const { event, data } of readSseEvents(response.body)) {
+    const payload = JSON.parse(data);
+    if (event === "progress") onProgress(String(payload.text ?? ""));
+    else if (event === "reply") return payload as CodriverChatReply;
+    else if (event === "error")
+      throw new Error(payload.message ?? "Codriver is unavailable right now.");
+  }
+  throw new Error("The connection closed before Codriver answered.");
+}

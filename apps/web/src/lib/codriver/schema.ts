@@ -47,3 +47,12 @@ export function toApiTool(tool: CodriverTool): Anthropic.Tool {
     strict: true,
   };
 }
+
+// The API accepts at most this many strict tools in one request
+export const MAX_STRICT_TOOLS = 20;
+
+// Past the limit no tool stays strict; the runner still validates every call with zod
+export function limitStrict(tools: Anthropic.Tool[]): Anthropic.Tool[] {
+  if (tools.length <= MAX_STRICT_TOOLS) return tools;
+  return tools.map(({ strict: _strict, ...tool }) => tool);
+}

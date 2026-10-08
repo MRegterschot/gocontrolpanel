@@ -45,6 +45,7 @@ export default function ServerCodriverSettingsForm({
       guestAccess: settings.guestAccess,
       memberAccess: settings.memberAccess,
       cooldownSeconds: settings.cooldownSeconds,
+      memoryTurns: settings.memoryTurns,
       monthlyBudgetDollars:
         settings.monthlyBudgetCents === null
           ? ""
@@ -61,6 +62,7 @@ export default function ServerCodriverSettingsForm({
         guestAccess: values.guestAccess,
         memberAccess: values.memberAccess,
         cooldownSeconds: values.cooldownSeconds,
+        memoryTurns: values.memoryTurns,
         monthlyBudgetCents:
           values.monthlyBudgetDollars === ""
             ? null
@@ -132,6 +134,15 @@ export default function ServerCodriverSettingsForm({
           description="Minimum time between requests per player (0 to 300)."
           min={0}
           max={300}
+          className="w-32"
+        />
+        <FormElement
+          name="memoryTurns"
+          type="number"
+          label="Remembered messages"
+          description="Earlier exchanges per player sent along with a request so follow-ups like “skip it” work. Forgotten after 15 minutes (0 to 10, 0 turns memory off)."
+          min={0}
+          max={10}
           className="w-32"
         />
         {overview.allowServerKeys && (

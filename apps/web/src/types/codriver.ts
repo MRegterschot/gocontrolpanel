@@ -66,6 +66,7 @@ export interface CodriverServerOverview {
     guestAccess: "off" | "read";
     memberAccess: boolean;
     cooldownSeconds: number;
+    memoryTurns: number;
   };
   spentMicrosThisMonth: { serverKey: number; shared: number };
 }
@@ -79,10 +80,16 @@ export interface CodriverRequestRow {
   userName: string | null;
   source: "game" | "panel" | "cli";
   text: string;
+  reply: string | null;
+  feedback: string | null;
+  feedbackAt: Date | null;
   toolCalls: unknown;
   status: string;
   keySource: "server" | "shared" | "none";
   model: string | null;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
   costMicros: number;
   latencyMs: number;
   createdAt: Date;

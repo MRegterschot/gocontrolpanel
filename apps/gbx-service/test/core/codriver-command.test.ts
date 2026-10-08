@@ -34,10 +34,36 @@ describe("CodriverCommand", () => {
       true,
     );
 
-    expect(ask).toHaveBeenCalledWith("server-a", "abc", "play winter 01");
+    expect(ask).toHaveBeenCalledWith(
+      "server-a",
+      "abc",
+      "play winter 01",
+      expect.any(Function),
+    );
     expect(reply).toHaveBeenCalledWith(
       "abc",
       expect.stringContaining("Queued Winter 01."),
+    );
+  });
+
+  it("forwards /feedback as a prefixed message, even without text", async () => {
+    const ask = vi.fn(async () => "Thanks.");
+    const { command } = setup({ ask });
+    expect(await command.dispatch("feedback", ["wrong", "map"], "abc")).toBe(
+      true,
+    );
+    expect(ask).toHaveBeenLastCalledWith(
+      "server-a",
+      "abc",
+      "/feedback wrong map",
+      expect.any(Function),
+    );
+    await command.dispatch("feedback", [], "abc");
+    expect(ask).toHaveBeenLastCalledWith(
+      "server-a",
+      "abc",
+      "/feedback",
+      expect.any(Function),
     );
   });
 
@@ -103,6 +129,42 @@ describe("CodriverCommand", () => {
     vi.useRealTimers();
   });
 
+  it("passes slow progress lines on once, skipping repeats and early ones", async () => {
+    vi.useFakeTimers();
+    let finish!: (value: string) => void;
+    let progress!: (text: string) => void;
+    const { command, reply } = setup({
+      ask: (_s, _l, _t, onProgress) =>
+        new Promise<string>((resolve) => {
+          finish = resolve;
+          progress = onProgress!;
+        }),
+    });
+
+    const pending = command.dispatch("co", ["skip"], "abc");
+    progress("Working out what to do…");
+    expect(reply).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(reply).toHaveBeenLastCalledWith(
+      "abc",
+      expect.stringContaining("Working out what to do"),
+    );
+
+    progress("Working out what to do…");
+    progress("Running: skip map…");
+    progress("Running: skip map…");
+    expect(reply).toHaveBeenCalledTimes(2);
+    expect(reply).toHaveBeenLastCalledWith(
+      "abc",
+      expect.stringContaining("Running: skip map"),
+    );
+
+    finish("Skipping.");
+    await pending;
+    vi.useRealTimers();
+  });
+
   it("replies with a generic message when the panel fails", async () => {
     const { command, reply } = setup({
       ask: async () => {
@@ -130,7 +192,12 @@ describe("CodriverCommand", () => {
     );
 
     await router.dispatch("/co cup mode please", "abc");
-    expect(ask).toHaveBeenCalledWith("server-a", "abc", "cup mode please");
+    expect(ask).toHaveBeenCalledWith(
+      "server-a",
+      "abc",
+      "cup mode please",
+      expect.any(Function),
+    );
   });
 });
 

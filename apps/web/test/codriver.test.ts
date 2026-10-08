@@ -12,7 +12,7 @@ vi.mock("@/lib/dbclient", () => ({ getClient: () => ({}) }));
 vi.mock("@/lib/sentry/report", () => ({ reportException: vi.fn() }));
 vi.mock("@/lib/logger", () => ({
   logger: { error: mocks.error },
-  getLogger: () => ({ warn: mocks.warn, error: mocks.error }),
+  getLogger: () => ({ info: vi.fn(), warn: mocks.warn, error: mocks.error }),
 }));
 vi.mock("@/lib/codriver/registry", () => ({ codriverTools: [] }));
 vi.mock("@/lib/codriver/state", () => ({ getLiveState: mocks.liveState }));
@@ -31,7 +31,7 @@ import { buildUserMessage } from "@/lib/codriver/prompt";
 import { resolveRole } from "@/lib/codriver/roles";
 import { routeCategories } from "@/lib/codriver/router";
 import { executeCalls, runCodriver } from "@/lib/codriver/runner";
-import { toApiTool } from "@/lib/codriver/schema";
+import { limitStrict, toApiTool } from "@/lib/codriver/schema";
 import { chatSafe, fuzzyFind, stripFormatting } from "@/lib/codriver/text";
 import { CodriverError, defineTool } from "@/lib/codriver/types";
 import { sessionClaimsSchema } from "@gcp/shared";
@@ -120,6 +120,26 @@ beforeEach(() => {
   confirm.mockReturnValue(null);
 });
 
+describe("strict tool limit", () => {
+  const make = (count: number) =>
+    Array.from({ length: count }, (_, i) => ({
+      name: `t${i}`,
+      description: "",
+      input_schema: { type: "object" as const },
+      strict: true,
+    }));
+
+  it("keeps strict tools up to the API limit", () => {
+    expect(limitStrict(make(20)).every((tool) => tool.strict)).toBe(true);
+  });
+
+  it("drops strict from all tools above the limit", () => {
+    const limited = limitStrict(make(21));
+    expect(limited).toHaveLength(21);
+    expect(limited.some((tool) => tool.strict)).toBe(false);
+  });
+});
+
 describe("text helpers", () => {
   it("strips Trackmania formatting but keeps escaped dollars", () => {
     expect(stripFormatting("$f00Red $oBold$z and $$5")).toBe("Red Bold and $5");
@@ -174,7 +194,7 @@ describe("modes", () => {
 });
 
 describe("routing and fast path", () => {
-  it("routes by keywords and falls back to every category", () => {
+  it("routes by keywords and falls back to maps, mode and info", () => {
     expect(routeCategories("play a random snowcar map")).toEqual(["maps"]);
     expect(routeCategories("cup mode with 100 points")).toEqual([
       "mode",
@@ -184,14 +204,7 @@ describe("routing and fast path", () => {
     expect(routeCategories("enable the live ranking plugin")).toEqual([
       "plugins",
     ]);
-    expect(routeCategories("hello there")).toEqual([
-      "maps",
-      "mode",
-      "players",
-      "plugins",
-      "server",
-      "info",
-    ]);
+    expect(routeCategories("hello there")).toEqual(["maps", "mode", "info"]);
   });
 
   it("matches exact commands only", () => {
@@ -296,6 +309,334 @@ describe("runCodriver", () => {
       (t: { name: string }) => t.name,
     );
     expect(offered).toEqual(["set_points"]);
+  });
+
+  it("tells the player which part of the request had no tool", async () => {
+    const outcome = await runCodriver(
+      {
+        serverId,
+        actor: actorWithRole("Moderator"),
+        text: "points limit 100 and load the weekly shorts",
+      },
+      options(
+        fakeModel(
+          plan(
+            [{ name: "set_points", input: { points: 100 } }],
+            "I can't load weekly shorts maps.",
+          ),
+        ),
+      ),
+    );
+    expect(outcome.status).toBe("done");
+    expect(outcome.reply).toContain("Note: I can't load weekly shorts maps.");
+  });
+
+  describe("friendly replies", () => {
+    const compose = vi.fn();
+    const composing = (...plans: ModelPlan[]) => {
+      const model = fakeModel(...plans);
+      return Object.assign(model, { compose });
+    };
+    const usage = {
+      model: "primary",
+      inputTokens: 50,
+      outputTokens: 20,
+      cacheReadTokens: 0,
+    };
+
+    beforeEach(() => {
+      compose.mockReset();
+      compose.mockResolvedValue({ text: "All set, restarting now!", usage });
+    });
+
+    it("words the outcome of actions and counts the extra call", async () => {
+      run.mockResolvedValue({ reply: "Set 100 points." });
+      const outcome = await runCodriver(
+        {
+          serverId,
+          actor: actorWithRole("Moderator"),
+          text: "points limit 100",
+        },
+        options(
+          composing(plan([{ name: "set_points", input: { points: 100 } }])),
+        ),
+      );
+      expect(outcome.reply).toBe("All set, restarting now!");
+      expect(outcome.usage).toHaveLength(2);
+      const request = compose.mock.calls[0][0];
+      expect(request.model).toBe("primary");
+      expect(request.user).toContain("Set 100 points.");
+      expect(request.user).toContain("<status>done</status>");
+    });
+
+    it("keeps the templated reply when composing fails", async () => {
+      run.mockResolvedValue({ reply: "Set 100 points." });
+      compose.mockRejectedValue(new Error("timeout"));
+      const outcome = await runCodriver(
+        {
+          serverId,
+          actor: actorWithRole("Moderator"),
+          text: "points limit 100",
+        },
+        options(
+          composing(plan([{ name: "set_points", input: { points: 100 } }])),
+        ),
+      );
+      expect(outcome.reply).toBe("Set 100 points.");
+    });
+
+    it("leaves exact commands and confirmation questions alone", async () => {
+      const outcome = await runCodriver(
+        { serverId, actor: actorWithRole("Moderator"), text: "skip" },
+        options(composing()),
+      );
+      expect(outcome.fastPath).toBe(true);
+      expect(compose).not.toHaveBeenCalled();
+
+      confirm.mockResolvedValue("Skip this map for everyone?");
+      const asked = await runCodriver(
+        {
+          serverId,
+          actor: actorWithRole("Moderator"),
+          text: "skip this map please",
+        },
+        options(composing(plan([{ name: "skip_map", input: {} }]))),
+      );
+      expect(asked.status).toBe("needs_confirmation");
+      expect(compose).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("requests that lose a part", () => {
+    const text = "skip the map and set the points limit to 100";
+
+    it("retries with the escalation model when a two-part request got one call", async () => {
+      const model = fakeModel(
+        plan([{ name: "skip_map", input: {} }]),
+        plan([
+          { name: "skip_map", input: {} },
+          { name: "set_points", input: { points: 100 } },
+        ]),
+      );
+      const outcome = await runCodriver(
+        { serverId, actor: actorWithRole("Moderator"), text },
+        options(model),
+      );
+      expect(model.plan).toHaveBeenCalledTimes(2);
+      expect(outcome.calls.map((call) => call.tool)).toEqual([
+        "skip_map",
+        "set_points",
+      ]);
+    });
+
+    it("retries the same model with a hint when there is no escalation model", async () => {
+      const model = fakeModel(
+        plan([{ name: "skip_map", input: {} }]),
+        plan([
+          { name: "skip_map", input: {} },
+          { name: "set_points", input: { points: 100 } },
+        ]),
+      );
+      const outcome = await runCodriver(
+        { serverId, actor: actorWithRole("Moderator"), text },
+        options(model, { escalationModel: null }),
+      );
+      expect(model.plan).toHaveBeenCalledTimes(2);
+      const [first, second] = model.plan.mock.calls.map((call) => call[0]);
+      expect(second.model).toBe(first.model);
+      expect(first.user).not.toContain("<check>");
+      expect(second.user).toMatch(/<check>.*did not cover: mode/);
+      expect(outcome.calls).toHaveLength(2);
+    });
+
+    it("tries a one-model setup only once more", async () => {
+      const model = fakeModel(
+        plan([{ name: "skip_map", input: {} }]),
+        plan([{ name: "skip_map", input: {} }]),
+      );
+      const outcome = await runCodriver(
+        { serverId, actor: actorWithRole("Moderator"), text },
+        options(model, { escalationModel: null }),
+      );
+      expect(model.plan).toHaveBeenCalledTimes(2);
+      expect(outcome.calls).toHaveLength(1);
+    });
+
+    it("keeps the first plan when the retry is no better", async () => {
+      const model = fakeModel(
+        plan([{ name: "skip_map", input: {} }]),
+        plan([], "What do you mean?"),
+      );
+      const outcome = await runCodriver(
+        { serverId, actor: actorWithRole("Moderator"), text },
+        options(model),
+      );
+      expect(outcome.calls.map((call) => call.tool)).toEqual(["skip_map"]);
+    });
+
+    it("says so when the retry still misses a part", async () => {
+      const model = fakeModel(
+        plan([{ name: "skip_map", input: {} }]),
+        plan([{ name: "skip_map", input: {} }]),
+      );
+      const outcome = await runCodriver(
+        { serverId, actor: actorWithRole("Moderator"), text },
+        options(model, { escalationModel: null }),
+      );
+      expect(outcome.reply).toContain("Note: I may have skipped the mode");
+    });
+
+    it("retries when a part is phrased without any conjunction", async () => {
+      const model = fakeModel(
+        plan([{ name: "skip_map", input: {} }]),
+        plan([
+          { name: "set_mode", input: { mode: "Cup" } },
+          { name: "skip_map", input: {} },
+        ]),
+      );
+      const outcome = await runCodriver(
+        {
+          serverId,
+          actor: actorWithRole("Admin"),
+          text: "skip to a map in cup mode",
+        },
+        options(model),
+      );
+      expect(model.plan).toHaveBeenCalledTimes(2);
+      expect(outcome.calls).toHaveLength(2);
+    });
+
+    it("does not retry for words that several areas share", async () => {
+      const model = fakeModel(
+        plan([{ name: "set_mode", input: { mode: "Cup" } }]),
+      );
+      await runCodriver(
+        {
+          serverId,
+          actor: actorWithRole("Admin"),
+          text: "cup mode with 100 points",
+        },
+        options(model),
+      );
+      expect(model.plan).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not retry when the model explained what it left out", async () => {
+      const model = fakeModel(
+        plan([{ name: "skip_map", input: {} }], "I can't set the points."),
+      );
+      await runCodriver(
+        { serverId, actor: actorWithRole("Moderator"), text },
+        options(model),
+      );
+      expect(model.plan).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not retry a single-area request", async () => {
+      const model = fakeModel(plan([{ name: "skip_map", input: {} }]));
+      await runCodriver(
+        {
+          serverId,
+          actor: actorWithRole("Moderator"),
+          text: "skip the map and restart it",
+        },
+        options(model),
+      );
+      expect(model.plan).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("TMX tags in the prompt", () => {
+    const tmx = defineTool({
+      name: "add_tmx_map",
+      description: "TMX",
+      category: "maps",
+      minRole: "admin",
+      input: z.strictObject({ tags: z.array(z.string()).optional() }),
+      run,
+    });
+
+    it("lists the tags when a TMX tool is offered", async () => {
+      const model = fakeModel(plan([{ name: "add_tmx_map", input: {} }]));
+      await runCodriver(
+        {
+          serverId,
+          actor: actorWithRole("Admin"),
+          text: "play a tech map from tmx",
+        },
+        options(model, {
+          tools: [...tools, tmx],
+          getTmxTags: async () => ["Tech", "RPG"],
+        }),
+      );
+      expect(model.plan.mock.calls[0][0].user).toContain("TMX tags: Tech, RPG");
+    });
+
+    it("skips the lookup when no TMX tool is offered", async () => {
+      const getTmxTags = vi.fn();
+      const model = fakeModel(plan([{ name: "skip_map", input: {} }]));
+      await runCodriver(
+        { serverId, actor: actorWithRole("Admin"), text: "skip the map now" },
+        options(model, { getTmxTags }),
+      );
+      expect(getTmxTags).not.toHaveBeenCalled();
+    });
+
+    it("carries on without tags when the lookup fails", async () => {
+      const model = fakeModel(plan([{ name: "add_tmx_map", input: {} }]));
+      const outcome = await runCodriver(
+        {
+          serverId,
+          actor: actorWithRole("Admin"),
+          text: "play a tech map from tmx",
+        },
+        options(model, {
+          tools: [...tools, tmx],
+          getTmxTags: async () => {
+            throw new Error("offline");
+          },
+        }),
+      );
+      expect(outcome.status).toBe("done");
+      expect(model.plan.mock.calls[0][0].user).not.toContain("TMX tags");
+    });
+  });
+
+  describe("guessed routes", () => {
+    const announce = defineTool({
+      name: "announce",
+      description: "Announce",
+      category: "server",
+      minRole: "moderator",
+      input: z.strictObject({ message: z.string().min(1) }),
+      run,
+    });
+    const names = (call: number, model: { plan: ReturnType<typeof vi.fn> }) =>
+      model.plan.mock.calls[call][0].tools.map((t: { name: string }) => t.name);
+
+    it("tries every tool when no keyword matched and the first try asks back", async () => {
+      const model = fakeModel(
+        plan([], "What should I announce?"),
+        plan([{ name: "announce", input: { message: "hi" } }]),
+      );
+      const outcome = await runCodriver(
+        { serverId, actor: actorWithRole("Moderator"), text: "yo shout hi" },
+        options(model, { tools: [...tools, announce] }),
+      );
+      expect(outcome.status).toBe("done");
+      expect(names(0, model)).not.toContain("announce");
+      expect(names(1, model)).toContain("announce");
+    });
+
+    it("does not widen a keyword route that got a question back", async () => {
+      const model = fakeModel(plan([], "How many points?"));
+      const outcome = await runCodriver(
+        { serverId, actor: actorWithRole("Moderator"), text: "set the points" },
+        options(model, { tools: [...tools, announce] }),
+      );
+      expect(outcome.status).toBe("unclear");
+      expect(model.plan).toHaveBeenCalledTimes(1);
+    });
   });
 
   it("escalates once when the plan uses a tool the caller wasn't offered", async () => {

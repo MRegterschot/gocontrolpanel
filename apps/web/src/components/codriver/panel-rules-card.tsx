@@ -144,7 +144,9 @@ export default function PanelRulesCard({
         id: "actions",
         header: () => <span className="sr-only">Actions</span>,
         cell: ({ row }) => (
-          <RuleActions rule={row.original} onDelete={setToDelete} />
+          <div className="flex justify-end">
+            <RuleActions rule={row.original} onDelete={setToDelete} />
+          </div>
         ),
       },
     ],

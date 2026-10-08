@@ -1,4 +1,5 @@
 import { handleCodriverMessage } from "@/lib/codriver/handle";
+import { codriverEventStream } from "@/lib/codriver/stream";
 import config from "@/lib/config";
 import { getClient } from "@/lib/dbclient";
 import { MIN_SECRET_LENGTH } from "@gcp/shared";
@@ -46,6 +47,20 @@ export async function POST(request: Request) {
   });
   if (!server) {
     return NextResponse.json({ error: "Server not found" }, { status: 404 });
+  }
+
+  // Newer GBX services ask for a stream so the player sees progress
+  if (request.headers.get("accept")?.includes("text/event-stream")) {
+    return codriverEventStream(
+      async (onProgress) => ({
+        reply: await handleCodriverMessage({
+          ...body.data,
+          source: "game",
+          onProgress,
+        }),
+      }),
+      request.signal,
+    );
   }
 
   const reply = await handleCodriverMessage({ ...body.data, source: "game" });

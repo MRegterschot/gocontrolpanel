@@ -19,7 +19,7 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/logger", () => ({
-  getLogger: () => ({ warn: vi.fn(), error: vi.fn() }),
+  getLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
 }));
 vi.mock("@/lib/codriver/state", () => ({ getLiveState: mocks.liveState }));
 vi.mock("@/lib/actor", async (original) => ({

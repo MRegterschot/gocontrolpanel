@@ -22,6 +22,7 @@ import { ServerError, ServerResponse } from "@/types/responses";
 import "server-only";
 import { doServerAction } from "../actions";
 import { logger } from "../logger";
+import { dedicatedFileName } from "../map-files";
 import { withRateLimit } from "../ratelimiter";
 import { getKeyAccountNames, getRedisClient } from "../redis";
 import { reportException } from "../sentry/report";
@@ -402,7 +403,7 @@ export async function downloadFile(
     }
 
     const arrayBuffer = await res.arrayBuffer();
-    return new File([arrayBuffer], fileName, {
+    return new File([arrayBuffer], dedicatedFileName(fileName), {
       type: "application/x-gbx",
     });
   } catch (err) {

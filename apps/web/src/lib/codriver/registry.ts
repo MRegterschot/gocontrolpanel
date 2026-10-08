@@ -1,4 +1,5 @@
 import "server-only";
+import { campaignTools } from "./tools/campaigns";
 import { infoTools } from "./tools/info";
 import { mapTools } from "./tools/maps";
 import { modeTools } from "./tools/mode";
@@ -10,6 +11,7 @@ import type { CodriverTool } from "./types";
 export const codriverTools: CodriverTool[] = [
   ...infoTools,
   ...mapTools,
+  ...campaignTools,
   ...modeTools,
   ...playerTools,
   ...pluginTools,

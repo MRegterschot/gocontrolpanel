@@ -1,6 +1,6 @@
 "use client";
 
-import { sendCodriverMessage } from "@/actions/codriver";
+import { clearCodriverConversation } from "@/actions/codriver";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +12,10 @@ import {
 } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { useCodriverChatAccess } from "@/hooks/use-codriver";
-import { codriverRequestsPath } from "@/lib/api-client/codriver";
+import {
+  codriverRequestsPath,
+  streamCodriverMessage,
+} from "@/lib/api-client/codriver";
 import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { stripFormatting } from "@/lib/codriver/text";
 import { getErrorMessage } from "@/lib/utils";
@@ -29,6 +32,9 @@ const schema = z.object({
 });
 type Message = { id: number; speaker: "You" | "Codriver"; text: string };
 
+// Tab-scoped, so the conversation survives switching tabs and reloads
+const storageKey = (serverId: string) => `codriver-chat:${serverId}`;
+
 export default function CodriverChat({ serverId }: { serverId: string }) {
   const access = useCodriverChatAccess(serverId);
   const queryClient = useQueryClient();
@@ -39,12 +45,51 @@ export default function CodriverChat({ serverId }: { serverId: string }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [result, setResult] = useState<CodriverChatReply | null>(null);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<string | null>(null);
   const inFlight = useRef(false);
   const sequence = useRef(0);
   const end = useRef<HTMLDivElement>(null);
+  const [restored, setRestored] = useState(false);
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(
+        sessionStorage.getItem(storageKey(serverId)) ?? "[]",
+      ) as Message[];
+      if (Array.isArray(saved)) {
+        setMessages((current) => (current.length ? current : saved));
+        sequence.current = Math.max(
+          sequence.current,
+          ...saved.map((m) => m.id + 1),
+        );
+      }
+    } catch {
+      // Unreadable storage just means a fresh conversation
+    }
+    setRestored(true);
+  }, [serverId]);
+  useEffect(() => {
+    if (!restored) return;
+    try {
+      sessionStorage.setItem(storageKey(serverId), JSON.stringify(messages));
+    } catch {
+      // Storage can be full or blocked; the chat still works
+    }
+  }, [messages, restored, serverId]);
   useEffect(() => {
     end.current?.scrollIntoView({ block: "nearest" });
   }, [messages, busy]);
+
+  async function clear() {
+    setMessages([]);
+    setResult(null);
+    try {
+      await unwrap(clearCodriverConversation(serverId));
+    } catch (error) {
+      toast.error("Could not clear what Codriver remembers", {
+        description: getErrorMessage(error),
+      });
+    }
+  }
 
   async function send(text: string) {
     if (inFlight.current) return;
@@ -56,13 +101,17 @@ export default function CodriverChat({ serverId }: { serverId: string }) {
     };
     add("You", text);
     try {
-      const response = await unwrap(
-        sendCodriverMessage(serverId, text, result?.confirmationId),
+      const response = await streamCodriverMessage(
+        serverId,
+        text,
+        result?.confirmationId,
+        setProgress,
       );
       setResult(response);
       add("Codriver", stripFormatting(response.reply));
       form.reset();
-      await Promise.all([
+      // Refreshing the other tabs must not keep the input locked
+      void Promise.all([
         queryClient.invalidateQueries({
           queryKey: queryKeys.codriverServer(serverId),
         }),
@@ -77,7 +126,7 @@ export default function CodriverChat({ serverId }: { serverId: string }) {
               String(query.queryKey[1]),
             ),
         }),
-      ]);
+      ]).catch(() => {});
     } catch (error) {
       toast.error("Could not send request", {
         description: getErrorMessage(error),
@@ -86,6 +135,7 @@ export default function CodriverChat({ serverId }: { serverId: string }) {
     } finally {
       inFlight.current = false;
       setBusy(false);
+      setProgress(null);
     }
   }
 
@@ -95,7 +145,8 @@ export default function CodriverChat({ serverId }: { serverId: string }) {
         <CardTitle>Ask Codriver</CardTitle>
         <CardDescription>
           Manage this server in plain English. Disruptive changes ask for
-          confirmation. Each request stands on its own.
+          confirmation. Codriver remembers your last few messages for 15
+          minutes.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -140,7 +191,7 @@ export default function CodriverChat({ serverId }: { serverId: string }) {
           ))}
           {busy && (
             <p className="text-sm text-muted-foreground">
-              Codriver is thinking…
+              {progress ?? "Codriver is thinking…"}
             </p>
           )}
           <div ref={end} />
@@ -186,6 +237,14 @@ export default function CodriverChat({ serverId }: { serverId: string }) {
                 }
               >
                 {busy ? "Sending…" : "Send request"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={busy || !messages.length}
+                onClick={() => void clear()}
+              >
+                Clear conversation
               </Button>
               <span className="text-xs text-muted-foreground">
                 {form.watch("text").length}/300

@@ -11,6 +11,11 @@ export const ServerCodriverSettingsSchema = z.object({
     .int("Must be a whole number")
     .min(0)
     .max(300),
+  memoryTurns: z
+    .number({ invalid_type_error: "Enter a number" })
+    .int("Must be a whole number")
+    .min(0)
+    .max(10),
   // Dollars; empty means no limit
   monthlyBudgetDollars: z.union([
     z.literal(""),

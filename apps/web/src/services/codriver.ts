@@ -175,6 +175,7 @@ export async function getCodriverServerOverview(
         guestAccess: server?.guestAccess ?? "off",
         memberAccess: server?.memberAccess ?? false,
         cooldownSeconds: server?.cooldownSeconds ?? 3,
+        memoryTurns: server?.memoryTurns ?? 6,
       },
       spentMicrosThisMonth: {
         serverKey: await spentMicros("server-key", serverId),
@@ -242,6 +243,7 @@ async function readRequests(
     where.OR = [
       { login: { contains: filter } },
       { text: { contains: filter } },
+      { feedback: { contains: filter } },
     ];
   }
   const [rows, totalCount] = await Promise.all([
@@ -274,10 +276,16 @@ async function readRequests(
       userName: row.user?.nickName ?? null,
       source: row.source,
       text: row.text,
+      reply: row.reply,
+      feedback: row.feedback,
+      feedbackAt: row.feedbackAt,
       toolCalls: row.toolCalls,
       status: row.status,
       keySource: row.keySource,
       model: row.model,
+      inputTokens: row.inputTokens,
+      outputTokens: row.outputTokens,
+      cacheReadTokens: row.cacheReadTokens,
       costMicros: row.costMicros,
       latencyMs: row.latencyMs,
       createdAt: row.createdAt,

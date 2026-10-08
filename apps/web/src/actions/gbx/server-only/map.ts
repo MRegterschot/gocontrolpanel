@@ -78,6 +78,22 @@ export async function jumpToMapIndexAs(
   await logAudit(actor.userId, serverId, "server.game.map.jump", index);
 }
 
+export async function removeMapsAs(
+  actor: Actor,
+  serverId: string,
+  filenames: string[],
+): Promise<void> {
+  requirePermission(actor, serverPermissions.moderator, serverId);
+
+  await auditMapListChange(
+    actor.userId,
+    serverId,
+    "server.maps.maplist.remove",
+    filenames,
+    () => gbxService.removeMaps(serverId, filenames),
+  );
+}
+
 export async function addMapAs(
   actor: Actor,
   serverId: string,

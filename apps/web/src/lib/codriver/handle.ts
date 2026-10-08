@@ -5,7 +5,9 @@ import Anthropic from "@anthropic-ai/sdk";
 import "server-only";
 import { resolveAccess } from "./access";
 import { notifyBudgetCrossings, notifyKeyRejected } from "./alerts";
+import { appendTurn, loadTurns } from "./conversation";
 import { parseFastPath } from "./fast-path";
+import { parseFeedback, saveFeedback } from "./feedback";
 import { type CodriverModel, createAnthropicModel } from "./model";
 import {
   clearPending,
@@ -13,6 +15,7 @@ import {
   takeCooldown,
   takePending,
 } from "./pending";
+import { notify, type ProgressListener, runningProgress } from "./progress";
 import { resolveRole } from "./roles";
 import { executeCalls, runCodriver } from "./runner";
 import { loadAccessInput } from "./settings";
@@ -34,6 +37,7 @@ export interface CodriverMessage {
   text: string;
   source: "game" | "panel" | "cli";
   confirmationId?: string;
+  onProgress?: ProgressListener;
 }
 
 // Tests replace the model and the clock
@@ -70,6 +74,7 @@ export async function handleCodriverRequest(
       status: Parameters<typeof recordRequest>[0]["status"],
       calls: Parameters<typeof recordRequest>[0]["calls"],
       usage: Parameters<typeof recordRequest>[0]["usage"] = [],
+      reply?: string,
     ) =>
       recordRequest({
         serverId,
@@ -77,12 +82,31 @@ export async function handleCodriverRequest(
         login,
         source,
         text: message.text,
+        reply,
         calls,
         status,
         keySource: usage.length > 0 ? access.keySource : "none",
         usage,
         latencyMs: deps.now() - started,
       });
+
+    // Nothing is stored when the server turned memory off
+    const remember = (reply: string) =>
+      access.memoryTurns > 0
+        ? appendTurn(serverId, login, source, { request: message.text, reply })
+        : Promise.resolve();
+
+    // Feedback is a note on the previous request, not a new one
+    const feedback = parseFeedback(message.text);
+    if (feedback !== null) {
+      const saved = await saveFeedback({
+        serverId,
+        login,
+        source,
+        text: feedback,
+      });
+      return { status: saved.saved ? "done" : "unclear", reply: saved.reply };
+    }
 
     const word = normalize(message.text);
     if (confirmWords.has(word)) {
@@ -99,17 +123,17 @@ export async function handleCodriverRequest(
       );
       if (!calls) return { status: "unclear", reply: "Nothing to confirm." };
       // Runs with the caller's current role, which executeCalls checks per call
+      notify(message.onProgress, runningProgress(calls));
       const executed = await executeCalls({ serverId, actor, role }, calls);
-      await record(executed.status, calls);
+      await record(executed.status, calls, [], executed.reply);
+      await remember(executed.reply);
       return { status: executed.status, reply: executed.reply };
     }
     if (cancelWords.has(word)) {
-      return {
-        status: "done",
-        reply: (await clearPending(serverId, login, source))
-          ? "Cancelled."
-          : "Nothing to cancel.",
-      };
+      const cancelled = await clearPending(serverId, login, source);
+      const reply = cancelled ? "Cancelled." : "Nothing to cancel.";
+      if (cancelled) await remember(reply);
+      return { status: "done", reply };
     }
 
     if (!(await takeCooldown(serverId, login, access.cooldownSeconds))) {
@@ -118,26 +142,35 @@ export async function handleCodriverRequest(
         reply: "One moment, Codriver is still catching up.",
       };
     }
-    // A new request replaces an unanswered question
-    await clearPending(serverId, login, source);
-
-    // Exact commands cost nothing, so they keep working when a budget is spent
-    let budgets: BudgetState[] = [];
-    if (!parseFastPath(message.text)) {
-      budgets = await budgetStates(serverId, access.budgets);
-      if (budgets.some(isSpent)) {
-        await record("over_budget", []);
-        return {
-          status: "over_budget",
-          reply: "Codriver has used its budget for this month.",
-        };
-      }
+    // Independent lookups run together. Exact commands cost nothing, so they keep
+    // working when a budget is spent.
+    const fast = !!parseFastPath(message.text);
+    const [, budgets, history] = await Promise.all([
+      // A new request replaces an unanswered question
+      clearPending(serverId, login, source),
+      fast
+        ? Promise.resolve<BudgetState[]>([])
+        : budgetStates(serverId, access.budgets),
+      fast
+        ? Promise.resolve([])
+        : loadTurns(serverId, login, source, access.memoryTurns),
+    ]);
+    if (budgets.some(isSpent)) {
+      const reply = "Codriver has used its budget for this month.";
+      await record("over_budget", [], [], reply);
+      return { status: "over_budget", reply };
     }
 
     let outcome;
     try {
       outcome = await runCodriver(
-        { serverId, actor, text: message.text },
+        {
+          serverId,
+          actor,
+          text: message.text,
+          history,
+          onProgress: message.onProgress,
+        },
         {
           model: deps.createModel(access.apiKey),
           primaryModel: access.primaryModel,
@@ -155,11 +188,20 @@ export async function handleCodriverRequest(
       outcome.status === "needs_confirmation"
         ? await savePending(serverId, login, outcome.calls, source)
         : undefined;
-    const cost = await record(outcome.status, outcome.calls, outcome.usage);
-    await notifyBudgetCrossings(serverId, budgets, cost);
-
-    // About one request in a hundred also clears old history
-    if (deps.random() < 0.01) await pruneRequests(input.retentionDays);
+    const [cost] = await Promise.all([
+      record(outcome.status, outcome.calls, outcome.usage, outcome.reply),
+      outcome.status !== "failed" && outcome.status !== "denied"
+        ? remember(outcome.reply)
+        : undefined,
+    ]);
+    // Alerts and pruning don't change the reply, so they run after it is sent
+    void (async () => {
+      await notifyBudgetCrossings(serverId, budgets, cost);
+      // About one request in a hundred also clears old history
+      if (deps.random() < 0.01) await pruneRequests(input.retentionDays);
+    })().catch((error) =>
+      log.warn({ error }, "Codriver follow-up work failed"),
+    );
 
     return {
       status: outcome.status,

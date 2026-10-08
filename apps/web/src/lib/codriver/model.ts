@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import "server-only";
+import { limitStrict } from "./schema";
 
 export const CODRIVER_MODELS = {
   haiku: "claude-haiku-5-5",
@@ -28,9 +29,22 @@ export interface PlanRequest {
   tools: Anthropic.Tool[];
 }
 
+export interface ComposeRequest {
+  model: string;
+  system: string;
+  user: string;
+}
+
+export interface ComposeResult {
+  text: string;
+  usage: ModelUsage;
+}
+
 // The runner depends on this interface so tests and evals can swap the model
 export interface CodriverModel {
   plan(request: PlanRequest): Promise<ModelPlan>;
+  // Words the outcome for the player; models without it keep the templated reply
+  compose?(request: ComposeRequest): Promise<ComposeResult>;
 }
 
 export function createAnthropicModel(
@@ -47,7 +61,7 @@ export function createAnthropicModel(
         max_tokens: 1024,
         output_config: { effort },
         system,
-        tools,
+        tools: limitStrict(tools),
         tool_choice: { type: "auto" },
         messages: [{ role: "user", content: user }],
       });
@@ -82,6 +96,35 @@ export function createAnthropicModel(
           .trim(),
         stopReason: response.stop_reason,
         usage,
+      };
+    },
+
+    // A short call, so it gets less time than planning and is never retried
+    async compose({ model, system, user }) {
+      const response = await client.messages.create(
+        {
+          model,
+          max_tokens: 300,
+          output_config: { effort: "low" },
+          system,
+          messages: [{ role: "user", content: user }],
+        },
+        { timeout: 6_000, maxRetries: 0 },
+      );
+      return {
+        text: response.content
+          .filter(
+            (block): block is Anthropic.TextBlock => block.type === "text",
+          )
+          .map((block) => block.text)
+          .join(" ")
+          .trim(),
+        usage: {
+          model,
+          inputTokens: response.usage.input_tokens,
+          outputTokens: response.usage.output_tokens,
+          cacheReadTokens: response.usage.cache_read_input_tokens ?? 0,
+        },
       };
     },
   };

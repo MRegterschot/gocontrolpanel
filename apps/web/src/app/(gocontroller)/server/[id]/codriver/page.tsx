@@ -32,12 +32,20 @@ export default async function ServerCodriverPage({
       </div>
       <Tabs defaultValue="chat">
         <TabsList>
-          <TabsTrigger value="chat">Chat</TabsTrigger>
+          <TabsTrigger value="chat" className="px-4">
+            Chat
+          </TabsTrigger>
           {canAdmin && (
             <>
-              <TabsTrigger value="usage">Usage</TabsTrigger>
-              <TabsTrigger value="history">History</TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
+              <TabsTrigger value="usage" className="px-4">
+                Usage
+              </TabsTrigger>
+              <TabsTrigger value="history" className="px-4">
+                History
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="px-4">
+                Settings
+              </TabsTrigger>
             </>
           )}
         </TabsList>

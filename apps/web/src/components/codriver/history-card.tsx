@@ -37,9 +37,9 @@ export default function CodriverHistoryCard({
       <CardHeader>
         <CardTitle>Request history</CardTitle>
         <CardDescription>
-          Filter by status or player login. Search also matches request text.
-          Exported evaluation drafts need review before adding them to the
-          dataset.
+          Filter by status or player login. Search also matches request text and
+          feedback. Exported evaluation drafts need review before adding them to
+          the dataset.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -53,7 +53,7 @@ export default function CodriverHistoryCard({
             });
           }}
         >
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <Label htmlFor={`${id}-status`}>Status</Label>
             <Select value={status} onValueChange={setStatus}>
               <SelectTrigger id={`${id}-status`} className="w-48">
@@ -69,7 +69,7 @@ export default function CodriverHistoryCard({
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <Label htmlFor={`${id}-player`}>Player login</Label>
             <Input
               id={`${id}-player`}
