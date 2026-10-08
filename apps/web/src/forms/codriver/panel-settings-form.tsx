@@ -111,6 +111,7 @@ export default function PanelSettingsForm({
           name="retentionDays"
           type="number"
           label="History retention (days)"
+          tooltip="How long Codriver keeps its request history: what players asked, which actions ran, and the tokens and cost. Older requests are deleted, except this month's, which budgets need."
           min={1}
           max={3650}
         />
