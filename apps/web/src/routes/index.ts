@@ -15,6 +15,7 @@ export const routes = {
     nadeo: "/server/:id/nadeo",
     records: "/server/:id/records",
     advanced: "/server/:id/advanced",
+    codriver: "/server/:id/codriver",
   },
   admin: {
     users: "/admin/users",
@@ -24,6 +25,7 @@ export const routes = {
     hetzner: "/admin/hetzner",
     hetznerServers: "/admin/hetzner/:id",
     auditLogs: "/admin/audit-logs",
+    codriver: "/admin/codriver",
   },
   plugins: {
     index: "/plugins",
@@ -116,6 +118,14 @@ export const routePermissions = {
       ],
     },
     advanced: ["servers:id:admin", "group:servers:id:admin"],
+    codriver: [
+      "servers:id:member",
+      "servers:id:moderator",
+      "servers:id:admin",
+      "group:servers:id:member",
+      "group:servers:id:moderator",
+      "group:servers:id:admin",
+    ],
   },
   admin: {
     users: {

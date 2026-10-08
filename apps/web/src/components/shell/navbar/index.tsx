@@ -40,7 +40,11 @@ export default async function Navbar() {
   );
   const canViewPlugins = await hasPermission(routePermissions.plugins.view);
 
+  // Codriver's operator settings are for panel admins only
+  const canViewCodriver = !!session?.user.admin;
+
   const canViewAdmin =
+    canViewCodriver ||
     canViewUsers ||
     canViewGroups ||
     canViewServers ||
@@ -64,6 +68,7 @@ export default async function Navbar() {
           canViewRoles={canViewRoles}
           canViewHetzner={canViewHetzner}
           canViewAuditLogs={canViewAuditLogs}
+          canViewCodriver={canViewCodriver}
         />
       )}
       <NavFooter />

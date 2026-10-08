@@ -6,6 +6,7 @@ import {
   mapsBodySchema,
   matchSettingsBodySchema,
   pauseBodySchema,
+  pluginEventBodySchema,
   pointsBodySchema,
   scriptNameBodySchema,
   scriptSettingsBodySchema,
@@ -22,13 +23,18 @@ import { requireServiceToken } from "../service-auth";
 
 const serverParams = z.object({ id: z.string().min(1) });
 const playerParams = serverParams.extend({ login: z.string().min(1) });
-const teamParams = serverParams.extend({ teamId: z.coerce.number().int().min(0) });
+const teamParams = serverParams.extend({
+  teamId: z.coerce.number().int().min(0),
+});
 
 const ok = <T>(data: T): ApiSuccess<T> => ({ data });
 
 function assertAllowed(method: string) {
   if (!isPassthroughAllowed(method)) {
-    throw new AppError("MethodNotAllowed", `Method ${method} is not allowed through the passthrough`);
+    throw new AppError(
+      "MethodNotAllowed",
+      `Method ${method} is not allowed through the passthrough`,
+    );
   }
 }
 
@@ -39,13 +45,20 @@ export async function internalRoutes(
   const { registry } = opts;
   app.addHook("onRequest", requireServiceToken(opts.serviceToken));
 
-  const runtimeFor = (params: unknown) => registry.get(parse(serverParams, params).id);
+  const runtimeFor = (params: unknown) =>
+    registry.get(parse(serverParams, params).id);
 
-  app.get("/internal/servers", async () => ok(registry.list().map((r) => r.status())));
+  app.get("/internal/servers", async () =>
+    ok(registry.list().map((r) => r.status())),
+  );
 
-  app.get("/internal/servers/:id", async (req) => ok(runtimeFor(req.params).status()));
+  app.get("/internal/servers/:id", async (req) =>
+    ok(runtimeFor(req.params).status()),
+  );
 
-  app.get("/internal/servers/:id/live", async (req) => ok(runtimeFor(req.params).snapshot()));
+  app.get("/internal/servers/:id/live", async (req) =>
+    ok(runtimeFor(req.params).snapshot()),
+  );
 
   app.post("/internal/servers/:id/reconnect", async (req) => {
     const connected = await runtimeFor(req.params).reconnect();
@@ -72,6 +85,13 @@ export async function internalRoutes(
     return ok(null);
   });
 
+  app.post("/internal/servers/:id/plugin-events", async (req) => {
+    const runtime = runtimeFor(req.params);
+    const { source, name, payload } = parse(pluginEventBodySchema, req.body);
+    runtime.emitPluginEvent({ plugin: source, name, payload });
+    return ok(null);
+  });
+
   app.post("/internal/servers/:id/gbx/call", async (req) => {
     const runtime = runtimeFor(req.params);
     const { method, params } = parse(gbxCallBodySchema, req.body);
@@ -85,7 +105,9 @@ export async function internalRoutes(
     calls.forEach((call) => assertAllowed(call.method));
     return ok(
       await gbxOperation(() =>
-        runtime.gbx.multicall(calls.map((call) => [call.method, ...call.params])),
+        runtime.gbx.multicall(
+          calls.map((call) => [call.method, ...call.params]),
+        ),
       ),
     );
   });
@@ -146,14 +168,18 @@ export async function internalRoutes(
   app.put("/internal/servers/:id/maps/order", async (req) => {
     const runtime = runtimeFor(req.params);
     const { filenames } = parse(mapsBodySchema, req.body);
-    return ok(await gbxOperation(() => runtime.commands.reorderMaps(filenames)));
+    return ok(
+      await gbxOperation(() => runtime.commands.reorderMaps(filenames)),
+    );
   });
 
   app.put("/internal/servers/:id/players/:login/points", async (req) => {
     const { id, login } = parse(playerParams, req.params);
     const runtime = registry.get(id);
     const { type, points } = parse(pointsBodySchema, req.body);
-    await gbxOperation(() => runtime.commands.setPlayerPoints(login, type, points));
+    await gbxOperation(() =>
+      runtime.commands.setPlayerPoints(login, type, points),
+    );
     return ok(null);
   });
 
@@ -161,12 +187,16 @@ export async function internalRoutes(
     const { id, teamId } = parse(teamParams, req.params);
     const runtime = registry.get(id);
     const { type, points } = parse(pointsBodySchema, req.body);
-    await gbxOperation(() => runtime.commands.setTeamPoints(teamId, type, points));
+    await gbxOperation(() =>
+      runtime.commands.setTeamPoints(teamId, type, points),
+    );
     return ok(null);
   });
 
   app.post("/internal/server-events", async (req) => {
-    await registry.handleLifecycleEvent(parse(serverLifecycleEventSchema, req.body));
+    await registry.handleLifecycleEvent(
+      parse(serverLifecycleEventSchema, req.body),
+    );
     return ok(null);
   });
 }

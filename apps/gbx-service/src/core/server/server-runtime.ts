@@ -1,12 +1,29 @@
-import type { LiveSnapshot, ServerClient } from "@gcp/shared";
+import {
+  MAX_CUSTOM_EVENT_BYTES,
+  type LiveSnapshot,
+  type PluginCustomEvent,
+  type ServerClient,
+} from "@gcp/shared";
 import { ChatService } from "../chat/chat-service";
-import { SystemCommands, type SystemCommandServices } from "../chat/system-commands";
+import {
+  CODRIVER_HELP,
+  CodriverCommand,
+  type CodriverClient,
+} from "../chat/codriver-command";
 import { CommandRouter } from "../chat/command-router";
+import {
+  SystemCommands,
+  type SystemCommandServices,
+} from "../chat/system-commands";
 import { AppError, errorMessage } from "../errors";
 import { TypedEventBus } from "../events";
 import { ActiveConnection } from "../gbx/active-connection";
 import { parseCallback } from "../gbx/callbacks";
-import type { GbxConnection, GbxSession, GbxSessionFactory } from "../gbx/connection";
+import type {
+  GbxConnection,
+  GbxSession,
+  GbxSessionFactory,
+} from "../gbx/connection";
 import { LiveState } from "../live/live-state";
 import type { Logger } from "../logger";
 import { ActionRouter } from "../manialink/action-router";
@@ -31,13 +48,13 @@ import type {
   ServerRepository,
   UserRepository,
 } from "../ports";
+import { ConnectionSupervisor } from "./connection-supervisor";
 import { GameEventHandler } from "./game-event-handler";
 import { Jukebox } from "./jukebox";
 import { LiveSync } from "./live-sync";
 import { MapCatalog } from "./map-catalog";
 import { MapList } from "./map-list";
 import { MatchRecorder } from "./match-recorder";
-import { ConnectionSupervisor } from "./connection-supervisor";
 import { ServerCommands } from "./server-commands";
 import type { ServerEventMap } from "./server-events";
 
@@ -66,14 +83,24 @@ export interface RuntimeDependencies {
   initialConnectWindowMs?: number;
   slowRetryDelayMs?: number;
   systemCommands?: SystemCommandServices;
+  // Forwards /co to the panel; without it /co says Codriver is not set up
+  codriver?: CodriverClient;
 }
 
 const API_VERSION = "2023-04-24";
 
-type ConnectionTarget = Pick<ServerRecord, "host" | "port" | "user" | "password">;
+type ConnectionTarget = Pick<
+  ServerRecord,
+  "host" | "port" | "user" | "password"
+>;
 
 function sameTarget(a: ConnectionTarget, b: ConnectionTarget): boolean {
-  return a.host === b.host && a.port === b.port && a.user === b.user && a.password === b.password;
+  return (
+    a.host === b.host &&
+    a.port === b.port &&
+    a.user === b.user &&
+    a.password === b.password
+  );
 }
 
 // Everything GoControlPanel runs for one dedicated server
@@ -139,7 +166,11 @@ export class ServerRuntime {
     this.commands = new ServerCommands({ gbx, state, bus, chat, mapList, log });
 
     const systemCommands = new SystemCommands({
-      serverId, state, gbx, clock, log,
+      serverId,
+      state,
+      gbx,
+      clock,
+      log,
       reply: (login, message) => chat.sendTo(login, message),
       connected: () => this.connected,
       connectedAt: () => this.connectedAt,
@@ -147,11 +178,21 @@ export class ServerRuntime {
       services: deps.systemCommands,
     });
 
+    const codriver = new CodriverCommand({
+      serverId,
+      log,
+      client: deps.codriver ?? null,
+      reply: (login, message) => chat.sendTo(login, message),
+    });
+
     const commandRouter = new CommandRouter(
       log,
       (login, message) => chat.sendTo(login, message),
       () => ({ enabled: state.enableHelpCommand, provider: this.plugins }),
-      (name, login) => systemCommands.dispatch(name, login),
+      async (name, login, args) =>
+        (await codriver.dispatch(name, args, login)) ||
+        systemCommands.dispatch(name, login),
+      () => (deps.codriver ? CODRIVER_HELP : {}),
     );
 
     this.plugins = new PluginHost(
@@ -179,7 +220,8 @@ export class ServerRuntime {
             nadeo: deps.nadeo,
             clock,
             manialinks: this.manialinks,
-            disablePlugin: (pluginId, name, reason) => this.disablePlugin(pluginId, name, reason),
+            disablePlugin: (pluginId, name, reason) =>
+              this.disablePlugin(pluginId, name, reason),
           },
           definition,
           record,
@@ -203,8 +245,12 @@ export class ServerRuntime {
       log,
     });
 
-    bus.on("playerConnect", (player) => this.manialinks.onPlayerConnect(player.login));
-    bus.on("playerDisconnect", (login) => this.manialinks.onPlayerDisconnect(login));
+    bus.on("playerConnect", (player) =>
+      this.manialinks.onPlayerConnect(player.login),
+    );
+    bus.on("playerDisconnect", (login) =>
+      this.manialinks.onPlayerDisconnect(login),
+    );
     bus.on("modeChange", () => this.syncPlugins(false));
 
     this.supervisor = new ConnectionSupervisor({
@@ -271,24 +317,47 @@ export class ServerRuntime {
     this.events.clear();
   }
 
+  // Delivers an event from the panel (e.g. "codriver:action") to this server's plugins, the
+  // same way plugin events are: as a JSON copy, after the current call returns
+  emitPluginEvent(event: PluginCustomEvent): void {
+    const json = JSON.stringify(event.payload ?? null);
+    if (Buffer.byteLength(json, "utf8") > MAX_CUSTOM_EVENT_BYTES) {
+      throw new AppError(
+        "BadRequest",
+        `Event payloads may be at most ${MAX_CUSTOM_EVENT_BYTES / 1024} KB`,
+      );
+    }
+    const copy: PluginCustomEvent = { ...event, payload: JSON.parse(json) };
+    queueMicrotask(() => this.events.emit("pluginEvent", copy));
+  }
+
   async reloadPlugins(): Promise<void> {
     this.assertConnected();
     await this.plugins.reload(this.state.plugins, this.state.liveInfo.type);
   }
 
   // A plugin broke its limits or was yanked: turn it off for this server and tell the admins
-  async disablePlugin(pluginId: string, name: string, reason: string): Promise<void> {
+  async disablePlugin(
+    pluginId: string,
+    name: string,
+    reason: string,
+  ): Promise<void> {
     await this.deps.servers.setPluginEnabled(this.serverId, pluginId, false);
     try {
-      const notifications = await this.deps.notifications.createForServerAdmins({
-        serverId: this.serverId,
-        type: "pluginDisabled",
-        message: `Plugin ${name} was turned off on ${this.name ?? "the server"}`,
-        description: reason,
-      });
+      const notifications = await this.deps.notifications.createForServerAdmins(
+        {
+          serverId: this.serverId,
+          type: "pluginDisabled",
+          message: `Plugin ${name} was turned off on ${this.name ?? "the server"}`,
+          description: reason,
+        },
+      );
       this.events.emit("adminCommand", notifications);
     } catch (error) {
-      this.log.error({ err: error, pluginId: name }, "Failed to notify admins about a disabled plugin");
+      this.log.error(
+        { err: error, pluginId: name },
+        "Failed to notify admins about a disabled plugin",
+      );
     }
     await this.refreshPlugins();
   }
@@ -310,7 +379,8 @@ export class ServerRuntime {
     await this.refreshChatConfig(record.chat);
 
     // No attempt yet: the one that is about to run reads this record anyway
-    if (!this.attemptedTarget || sameTarget(this.attemptedTarget, record)) return;
+    if (!this.attemptedTarget || sameTarget(this.attemptedTarget, record))
+      return;
 
     this.log.info("Connection details changed, reconnecting");
     // Not awaited: the caller does not need to wait for the game server
@@ -322,7 +392,12 @@ export class ServerRuntime {
     const previous = this.state.chat;
     this.state.chat = chat;
 
-    if (!this.connected || !previous || previous.manualRouting === chat.manualRouting) return;
+    if (
+      !this.connected ||
+      !previous ||
+      previous.manualRouting === chat.manualRouting
+    )
+      return;
     try {
       await this.gbx.call("ChatEnableManualRouting", chat.manualRouting);
     } catch (error) {
@@ -335,7 +410,10 @@ export class ServerRuntime {
       await this.disconnect();
       await this.start();
     } catch (error) {
-      this.log.error({ err: error }, "Failed to reconnect after the connection details changed");
+      this.log.error(
+        { err: error },
+        "Failed to reconnect after the connection details changed",
+      );
     }
   }
 
@@ -346,7 +424,11 @@ export class ServerRuntime {
   }
 
   private syncPlugins(updateConfigs: boolean): Promise<void> {
-    return this.plugins.sync(this.state.plugins, this.state.liveInfo.type, updateConfigs);
+    return this.plugins.sync(
+      this.state.plugins,
+      this.state.liveInfo.type,
+      updateConfigs,
+    );
   }
 
   private async connectOnce(): Promise<void> {
@@ -359,15 +441,23 @@ export class ServerRuntime {
 
     // A fresh session per attempt, so listeners never pile up across reconnects
     const session = this.deps.sessionFactory();
-    await session.connect(server.host, server.port, this.deps.connectTimeoutMs ?? 3000);
+    await session.connect(
+      server.host,
+      server.port,
+      this.deps.connectTimeoutMs ?? 3000,
+    );
 
     try {
       await session.call("Authenticate", server.user, server.password);
     } catch (error) {
       await session.disconnect().catch(() => undefined);
-      throw new AppError("GbxCallFailed", "Failed to authenticate with GBX server", {
-        cause: error,
-      });
+      throw new AppError(
+        "GbxCallFailed",
+        "Failed to authenticate with GBX server",
+        {
+          cause: error,
+        },
+      );
     }
 
     this.session = session;
@@ -390,11 +480,17 @@ export class ServerRuntime {
     await this.syncPlugins(false);
   }
 
-  private async initialize(server: ServerRecord, session: GbxSession): Promise<void> {
+  private async initialize(
+    server: ServerRecord,
+    session: GbxSession,
+  ): Promise<void> {
     await session.call("SetApiVersion", API_VERSION);
     await session.call("EnableCallbacks", true);
     await session.callScript("XmlRpc.EnableCallbacks", "true");
-    await session.callScript("Trackmania.Event.SetCurRaceCheckpointsMode", "always");
+    await session.callScript(
+      "Trackmania.Event.SetCurRaceCheckpointsMode",
+      "always",
+    );
 
     this.state.reset();
     this.manialinks.clear();
@@ -456,7 +552,10 @@ export class ServerRuntime {
     try {
       await session.disconnect();
     } catch (error) {
-      this.log.warn({ err: errorMessage(error) }, "Error while closing GBX session");
+      this.log.warn(
+        { err: errorMessage(error) },
+        "Error while closing GBX session",
+      );
     }
   }
 }

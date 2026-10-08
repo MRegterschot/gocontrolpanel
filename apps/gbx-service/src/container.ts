@@ -21,6 +21,7 @@ import {
   PrismaServerRepository,
 } from "./infra/db/prisma-repositories";
 import { PrismaSystemCommandServices } from "./infra/db/system-command-services";
+import { HttpCodriverClient } from "./infra/http/codriver-client";
 import { EvotmGbxSession } from "./infra/gbx/evotm-session";
 import { loadFirstPartyPackages } from "./infra/first-party-packages";
 import { HttpsPluginClient } from "./infra/http/plugin-http-client";
@@ -85,6 +86,9 @@ export async function createContainer(config: Config) {
     mapMetadata: nadeo,
     nadeo,
     systemCommands: new PrismaSystemCommandServices(db, redis),
+    codriver: config.PANEL_INTERNAL_URL
+      ? new HttpCodriverClient(config.PANEL_INTERNAL_URL, config.PANEL_INTERNAL_TOKEN)
+      : undefined,
   };
 
   const registry = new ServerRegistry({

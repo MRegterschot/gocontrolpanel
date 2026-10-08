@@ -1,11 +1,17 @@
 "use server";
 
 import { doServerActionWithAuth } from "@/lib/actions";
-import { getLogger } from "@/lib/logger";
+import { actorFromSession } from "@/lib/actor";
 import { gbxService, getGbxClient } from "@/lib/gbx-service";
-import { getErrorMessage } from "@/lib/utils";
-import { ServerError, ServerResponse } from "@/types/responses";
+import { ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
+import {
+  nextMapAs,
+  pauseMatchAs,
+  restartMapAs,
+  setModeScriptSettingsAs,
+  setScriptNameAs,
+} from "./server-only/game";
 
 export async function restartMap(serverId: string): Promise<ServerResponse> {
   return doServerActionWithAuth(
@@ -15,11 +21,7 @@ export async function restartMap(serverId: string): Promise<ServerResponse> {
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("RestartMap");
-      await logAudit(session.user.id, serverId, "server.game.map.restart");
-    },
+    (session) => restartMapAs(actorFromSession(session), serverId),
   );
 }
 
@@ -31,11 +33,7 @@ export async function nextMap(serverId: string): Promise<ServerResponse> {
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("NextMap");
-      await logAudit(session.user.id, serverId, "server.game.map.next");
-    },
+    (session) => nextMapAs(actorFromSession(session), serverId),
   );
 }
 
@@ -74,16 +72,7 @@ export async function setScriptName(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      await gbxService.setScriptName(serverId, script);
-
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.game.script.edit",
-        script,
-      );
-    },
+    (session) => setScriptNameAs(actorFromSession(session), serverId, script),
   );
 }
 
@@ -196,16 +185,8 @@ export async function setModeScriptSettings(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      await gbxService.setScriptSettings(serverId, settings);
-
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.game.scriptsettings.edit",
-        settings,
-      );
-    },
+    (session) =>
+      setModeScriptSettingsAs(actorFromSession(session), serverId, settings),
   );
 }
 
@@ -243,32 +224,6 @@ export async function pauseMatch(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const meta = {
-        type: "gbx",
-        module: "game",
-        function: "pauseMatch",
-      };
-      const log = getLogger(serverId);
-      let error: string | undefined;
-      try {
-        await gbxService.setPaused(serverId, pause);
-      } catch (e) {
-        error = getErrorMessage(e);
-      }
-
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.live.pause",
-        pause,
-        error,
-      );
-
-      if (error) {
-        log.error({ meta, error, pause }, "Failed to pause match");
-        throw new ServerError(error, "PauseMatchError");
-      }
-    },
+    (session) => pauseMatchAs(actorFromSession(session), serverId, pause),
   );
 }

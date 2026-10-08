@@ -114,3 +114,23 @@ describe("fetchPaginated", () => {
     expect(fetchMock.mock.calls[0][0]).not.toContain("filter");
   });
 });
+
+it("sends history filters with pagination without letting them override page limits", async () => {
+  const fetch = mockFetch(
+    200,
+    JSON.stringify({ data: { data: [], totalCount: 0 } }),
+  );
+  await fetchPaginated(
+    "/api/requests",
+    { pageIndex: 0, pageSize: 10 },
+    { field: "createdAt", order: "desc" },
+    "map",
+    undefined,
+    { status: "failed", login: "bob", pageSize: "1000" },
+  );
+  const query = new URL(fetch.mock.calls[0][0], "http://localhost")
+    .searchParams;
+  expect(query.get("status")).toBe("failed");
+  expect(query.get("login")).toBe("bob");
+  expect(query.get("pageSize")).toBe("10");
+});

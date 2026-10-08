@@ -54,6 +54,8 @@ model Users {
   userServers         UserServers[]
   records             Records[]
   ownedPlugins        Plugins[]
+  codriverRules       CodriverAccessRules[]
+  codriverRequests    CodriverRequests[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -183,12 +185,14 @@ model Servers {
 
   enableHelpCommand Boolean @default(true)
 
-  groupServers  GroupServers[]
-  userServers   UserServers[]
-  serverPlugins ServerPlugins[]
-  pluginStorage PluginStorage[]
-  matches       Matches[]
-  records       Records[]
+  groupServers     GroupServers[]
+  userServers      UserServers[]
+  serverPlugins    ServerPlugins[]
+  pluginStorage    PluginStorage[]
+  matches          Matches[]
+  records          Records[]
+  codriverSettings CodriverSettings?
+  codriverRequests CodriverRequests[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -408,4 +412,133 @@ model AuditLogs {
   @@index([targetType, targetId])
   @@index([deletedAt])
   @@map("audit_logs")
+}
+
+enum CodriverUserMode {
+  everyone
+  allowlist
+}
+
+enum CodriverRuleTarget {
+  server
+  group
+  user
+}
+
+enum CodriverRuleEffect {
+  allow
+  deny
+}
+
+enum CodriverModel {
+  haiku
+  sonnet
+}
+
+enum CodriverGuestAccess {
+  off
+  read
+}
+
+enum CodriverRequestSource {
+  game
+  panel
+  cli
+}
+
+enum CodriverRequestStatus {
+  done
+  needs_confirmation
+  planned
+  unclear
+  denied
+  failed
+  over_budget
+}
+
+enum CodriverKeySource {
+  server
+  shared
+  none
+}
+
+model CodriverPanelSettings {
+  id                       String           @id @default("panel")
+  enabled                  Boolean          @default(false)
+  sharedApiKeyEncrypted    String?          @db.LongText
+  sharedKeyModels          Json             @default("[\"haiku\"]")
+  sharedMonthlyBudgetCents Int?
+  allowServerKeys          Boolean          @default(false)
+  userMode                 CodriverUserMode @default(everyone)
+  retentionDays            Int              @default(90)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("codriver_panel_settings")
+}
+
+model CodriverAccessRules {
+  id                       String             @id @default(uuid())
+  targetType               CodriverRuleTarget
+  targetId                 String
+  effect                   CodriverRuleEffect
+  useSharedKey             Boolean            @default(false)
+  sharedMonthlyBudgetCents Int?
+  createdById              String?
+  createdBy                Users?             @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([targetType, targetId])
+  @@map("codriver_access_rules")
+}
+
+model CodriverSettings {
+  serverId           String              @id
+  server             Servers             @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  enabled            Boolean             @default(false)
+  apiKeyEncrypted    String?             @db.LongText
+  model              CodriverModel       @default(haiku)
+  escalation         Boolean             @default(true)
+  monthlyBudgetCents Int?
+  guestAccess        CodriverGuestAccess @default(off)
+  memberAccess       Boolean             @default(false)
+  cooldownSeconds    Int                 @default(3)
+  memoryTurns        Int                 @default(6)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("codriver_settings")
+}
+
+model CodriverRequests {
+  id              String                @id @default(uuid())
+  serverId        String
+  server          Servers               @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  userId          String?
+  user            Users?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  login           String
+  source          CodriverRequestSource
+  text            String                @db.LongText
+  toolCalls       Json?
+  status          CodriverRequestStatus
+  keySource       CodriverKeySource
+  model           String?
+  modelCalls      Int?
+  inputTokens     Int                   @default(0)
+  outputTokens    Int                   @default(0)
+  cacheReadTokens Int                   @default(0)
+  costMicros      Int                   @default(0)
+  latencyMs       Int                   @default(0)
+  reply           String?               @db.LongText
+  feedback        String?               @db.LongText
+  feedbackAt      DateTime?
+  createdAt       DateTime              @default(now())
+
+  @@index([serverId, createdAt])
+  @@index([createdAt])
+  @@map("codriver_requests")
 }
