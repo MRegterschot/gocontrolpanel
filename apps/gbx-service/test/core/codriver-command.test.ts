@@ -46,6 +46,16 @@ describe("CodriverCommand", () => {
     );
   });
 
+  it("shows the player their own request, with formatting escaped", async () => {
+    const { command, reply } = setup({ ask: vi.fn(async () => "Done.") });
+    await command.dispatch("co", ["load", "$f00red"], "abc");
+    expect(reply).toHaveBeenNthCalledWith(
+      1,
+      "abc",
+      expect.stringContaining("> load $$f00red"),
+    );
+  });
+
   it("forwards /feedback as a prefixed message, even without text", async () => {
     const ask = vi.fn(async () => "Thanks.");
     const { command } = setup({ ask });
@@ -143,7 +153,8 @@ describe("CodriverCommand", () => {
 
     const pending = command.dispatch("co", ["skip"], "abc");
     progress("Working out what to do…");
-    expect(reply).not.toHaveBeenCalled();
+    // Only the echo of the request so far
+    expect(reply).toHaveBeenCalledTimes(1);
 
     await vi.advanceTimersByTimeAsync(1000);
     expect(reply).toHaveBeenLastCalledWith(
@@ -154,7 +165,7 @@ describe("CodriverCommand", () => {
     progress("Working out what to do…");
     progress("Running: skip map…");
     progress("Running: skip map…");
-    expect(reply).toHaveBeenCalledTimes(2);
+    expect(reply).toHaveBeenCalledTimes(3);
     expect(reply).toHaveBeenLastCalledWith(
       "abc",
       expect.stringContaining("Running: skip map"),

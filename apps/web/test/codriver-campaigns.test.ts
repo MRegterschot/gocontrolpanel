@@ -219,6 +219,38 @@ describe("addTrackOfTheDay", () => {
     await addTrackOfTheDay.run(ctx, { days_ago: 1 });
     expect(mocks.getMapsInfo).toHaveBeenLastCalledWith(["yesterday"]);
   });
+
+  it("loads a specific date from the matching month", async () => {
+    vi.useFakeTimers({ now: new Date("2026-10-09T12:00:00Z") });
+    try {
+      mocks.getTotdRoyalMaps.mockResolvedValue({
+        monthList: [
+          {
+            year: 2025,
+            month: 1,
+            days: [
+              { mapUid: "jan1", monthDay: 1, startTimestamp: 1735700000 },
+              { mapUid: "jan2", monthDay: 2, startTimestamp: 1735786400 },
+            ],
+          },
+        ],
+      });
+      await addTrackOfTheDay.run(ctx, { date: "2025-01-01" });
+      expect(mocks.getTotdRoyalMaps).toHaveBeenLastCalledWith(1, 21, false);
+      expect(mocks.getMapsInfo).toHaveBeenLastCalledWith(["jan1"]);
+      await expect(
+        addTrackOfTheDay.run(ctx, { date: "2025-02-30" }),
+      ).rejects.toThrow("isn't a real date");
+      await expect(
+        addTrackOfTheDay.run(ctx, { date: "2027-01-01" }),
+      ).rejects.toThrow("future");
+      await expect(
+        addTrackOfTheDay.run(ctx, { date: "2025-01-01", days_ago: 1 }),
+      ).rejects.toThrow("not both");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe("addSeasonalCampaign", () => {
@@ -239,9 +271,26 @@ describe("addSeasonalCampaign", () => {
     mocks.getSeasonalCampaigns.mockResolvedValue(list);
     await addSeasonalCampaign.run(ctx, { name: "winter 2026" });
     expect(mocks.getMapsInfo).toHaveBeenLastCalledWith(["w"]);
+    mocks.getClubCampaigns.mockResolvedValue({ clubCampaignList: [] });
     await expect(
       addSeasonalCampaign.run(ctx, { name: "autumn 1999" }),
-    ).rejects.toThrow("No campaign matches");
+    ).rejects.toThrow("No club campaign matches");
+  });
+
+  it("searches club campaigns when no seasonal campaign matches", async () => {
+    mocks.getSeasonalCampaigns.mockResolvedValue(list);
+    mocks.getClubCampaigns.mockResolvedValue({
+      clubCampaignList: [
+        { name: "Beacon League S1", clubName: "B", clubId: 4, campaignId: 2 },
+      ],
+    });
+    mocks.getClubCampaign.mockResolvedValue({
+      name: "Beacon League S1",
+      campaign: { playlist: [{ mapUid: "b1" }] },
+    });
+    await addSeasonalCampaign.run(ctx, { name: "Beacon League S1" });
+    expect(mocks.getClubCampaign).toHaveBeenCalledWith(4, 2);
+    expect(mocks.getMapsInfo).toHaveBeenLastCalledWith(["b1"]);
   });
 });
 
@@ -273,6 +322,79 @@ describe("addClubCampaign", () => {
     expect(result.reply).toBe(
       "Map list is now Sprint (1 map), switching to it.",
     );
+  });
+});
+
+describe("addClubCampaign with a campaign name in club", () => {
+  it("searches all club campaigns when no club has that name", async () => {
+    mocks.getClubs.mockResolvedValue({ clubList: [] });
+    mocks.getClubCampaigns.mockResolvedValue({
+      clubCampaignList: [
+        {
+          name: "Beacon World League S1",
+          clubName: "Beacon",
+          clubId: 4,
+          campaignId: 2,
+        },
+      ],
+    });
+    mocks.getClubCampaign.mockResolvedValue({
+      name: "Beacon World League S1",
+      campaign: { playlist: [{ mapUid: "m1" }] },
+    });
+    await addClubCampaign.run(ctx, {
+      club: "Beacon world league",
+      campaign: "S1",
+    });
+    expect(mocks.getClubCampaigns).toHaveBeenCalledWith(
+      0,
+      "Beacon world league S1",
+      10,
+    );
+    expect(mocks.getClubCampaign).toHaveBeenCalledWith(4, 2);
+  });
+});
+
+describe("addClubCampaign confirmation", () => {
+  it("pins a near match by id and asks before loading it", async () => {
+    mocks.getClubCampaigns.mockResolvedValue({
+      clubCampaignList: [
+        { name: "BNL Season 1", clubName: "Benelux", clubId: 3, campaignId: 7 },
+      ],
+    });
+    mocks.getClubCampaign.mockResolvedValue({ name: "BNL Season 1" });
+    const input = { campaign: "BNL" };
+    const prepared = await addClubCampaign.prepare!(ctx, input);
+    expect((prepared as { campaign: string }).campaign).toBe("id:3:7:BNL");
+    expect(await addClubCampaign.confirm!(ctx, prepared)).toContain(
+      "BNL Season 1",
+    );
+    expect(await addClubCampaign.confirm!(ctx, prepared)).toContain(
+      'for "BNL"',
+    );
+  });
+
+  it("does not ask for an exact match", async () => {
+    mocks.getClubCampaigns.mockResolvedValue({
+      clubCampaignList: [
+        { name: "Sprint", clubName: "A", clubId: 1, campaignId: 9 },
+      ],
+    });
+    const prepared = await addClubCampaign.prepare!(ctx, {
+      campaign: "sprint",
+    });
+    expect((prepared as { campaign: string }).campaign).toBe("sprint");
+    expect(await addClubCampaign.confirm!(ctx, prepared)).toBeNull();
+  });
+
+  it("loads a pinned campaign without searching again", async () => {
+    mocks.getClubCampaign.mockResolvedValue({
+      name: "BNL Season 1",
+      campaign: { playlist: [{ mapUid: "m1" }] },
+    });
+    await addClubCampaign.run(ctx, { campaign: "id:3:7" });
+    expect(mocks.getClubCampaign).toHaveBeenCalledWith(3, 7);
+    expect(mocks.getClubCampaigns).not.toHaveBeenCalled();
   });
 });
 

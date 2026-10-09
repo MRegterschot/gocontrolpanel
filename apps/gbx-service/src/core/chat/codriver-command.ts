@@ -71,6 +71,8 @@ export class CodriverCommand {
     }
 
     this.inFlight.add(login);
+    // The game hides /commands, so show the player what they asked
+    say(`$i> ${typed.replace(/\$/g, "$$$$")}`).catch(() => {});
     // Fast requests stay quiet; slow ones get a few status lines, never repeated
     let latest: string | null = null;
     let lastSent: string | null = null;

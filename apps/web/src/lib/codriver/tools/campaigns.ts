@@ -16,7 +16,7 @@ import {
   searchTMXMaps,
 } from "@/lib/api/tmx";
 import { getLogger } from "@/lib/logger";
-import type { MapInfo } from "@/types/api/nadeo";
+import type { Club, MapInfo } from "@/types/api/nadeo";
 import "server-only";
 import { z } from "zod/v4";
 import { chatSafe, fuzzyFind, normalize, stripFormatting } from "../text";
@@ -187,22 +187,57 @@ export const addWeeklyShorts = defineTool({
 export const addTrackOfTheDay = defineTool({
   name: "add_totd",
   description:
-    "Load the Track of the Day. days_ago 0 is today's. royal picks the Royal TOTD. By default it replaces the map list and plays now; queue only on queue or add.",
+    "Load the Track of the Day. days_ago 0 is today's; date (YYYY-MM-DD) picks a specific day instead. royal picks the Royal TOTD. By default it replaces the map list and plays now; queue only on queue or add.",
   category: "maps",
   minRole: "admin",
   input: z.strictObject({
     days_ago: z.number().int().min(0).max(60).optional(),
+    date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
     royal: z.boolean().optional(),
     queue: queueFlag,
   }),
   async run(ctx, input) {
-    const { monthList } = await getTotdRoyalMaps(3, 0, input.royal ?? false);
+    if (input.date && input.days_ago !== undefined)
+      throw new CodriverError("Give either a date or days ago, not both.");
     const now = Date.now() / 1000;
-    const days = monthList
-      .flatMap((month) => month.days)
-      .filter((day) => day.mapUid && day.startTimestamp <= now)
-      .sort((a, b) => b.startTimestamp - a.startTimestamp);
-    const day = days[input.days_ago ?? 0];
+    let day;
+    if (input.date) {
+      const [year, month, monthDay] = input.date.split("-").map(Number);
+      const parsed = new Date(Date.UTC(year, month - 1, monthDay));
+      if (
+        parsed.getUTCMonth() !== month - 1 ||
+        parsed.getUTCDate() !== monthDay
+      )
+        throw new CodriverError(`${input.date} isn't a real date.`);
+      const current = new Date();
+      // Month offset 0 is the current month
+      const offset =
+        (current.getUTCFullYear() - year) * 12 +
+        current.getUTCMonth() +
+        1 -
+        month;
+      if (offset < 0) throw new CodriverError("That date is in the future.");
+      const { monthList } = await getTotdRoyalMaps(
+        1,
+        offset,
+        input.royal ?? false,
+      );
+      day = monthList
+        .find((m) => m.year === year && m.month === month)
+        ?.days.find(
+          (d) => d.mapUid && d.monthDay === monthDay && d.startTimestamp <= now,
+        );
+    } else {
+      const { monthList } = await getTotdRoyalMaps(3, 0, input.royal ?? false);
+      const days = monthList
+        .flatMap((month) => month.days)
+        .filter((d) => d.mapUid && d.startTimestamp <= now)
+        .sort((a, b) => b.startTimestamp - a.startTimestamp);
+      day = days[input.days_ago ?? 0];
+    }
     if (!day)
       throw new CodriverError("No Track of the Day found for that day.");
     const [info] = await mapInfos([day.mapUid]);
@@ -222,7 +257,7 @@ export const addTrackOfTheDay = defineTool({
 export const addSeasonalCampaign = defineTool({
   name: "add_campaign",
   description:
-    "Load an official seasonal campaign (people just say campaign), such as Summer 2025. Omit name for the newest. By default it replaces the map list and plays now; queue only on queue or add.",
+    "Load an official seasonal campaign (people just say campaign), such as Summer 2025. Omit name for the newest. A name that is no seasonal campaign is searched in the club campaigns. By default it replaces the map list and plays now; queue only on queue or add.",
   category: "maps",
   minRole: "admin",
   input: z.strictObject({
@@ -236,10 +271,12 @@ export const addSeasonalCampaign = defineTool({
     let campaign = campaignList[0];
     if (input.name) {
       const found = fuzzyFind(input.name, campaignList, (c) => c.name);
+      // Players say campaign for club campaigns too, without naming a club
       if (found.kind === "none")
-        throw new CodriverError(
-          `No campaign matches "${chatSafe(input.name, 40)}".`,
-        );
+        return addClubCampaign.run(ctx, {
+          campaign: input.name,
+          queue: input.queue,
+        });
       if (found.kind === "ambiguous")
         throw new CodriverError(
           `Which campaign: ${found.items.map((c) => c.name).join(", ")}?`,
@@ -258,11 +295,16 @@ export const addSeasonalCampaign = defineTool({
   },
 });
 
-async function findClub(name: string) {
+// With optional, an unknown club gives null instead of an error
+async function findClub(name: string, optional: true): Promise<null | Club>;
+async function findClub(name: string, optional?: false): Promise<Club>;
+async function findClub(name: string, optional = false) {
   const { clubList } = await getClubs(0, name, 10);
   const found = fuzzyFind(name, clubList, (club) => stripFormatting(club.name));
-  if (found.kind === "none")
+  if (found.kind === "none") {
+    if (optional) return null;
     throw new CodriverError(`No club matches "${chatSafe(name, 40)}".`);
+  }
   if (found.kind === "ambiguous")
     throw new CodriverError(
       `Which club: ${found.items.map((c) => chatSafe(c.name, 40)).join(", ")}?`,
@@ -311,6 +353,92 @@ export const listClubCampaigns = defineTool({
   },
 });
 
+interface ClubCampaignMatch {
+  clubId: number;
+  campaignId: number;
+  // False when the name only resembles what was asked for
+  exact: boolean;
+}
+
+// id:<club>:<campaign>, optionally followed by what the player asked for
+const confirmedCampaign = /^id:(\d+):(\d+)(?::(.*))?$/;
+
+async function resolveClubCampaign(input: {
+  campaign: string;
+  club?: string;
+}): Promise<ClubCampaignMatch> {
+  const confirmed = confirmedCampaign.exec(input.campaign);
+  if (confirmed)
+    return {
+      clubId: Number(confirmed[1]),
+      campaignId: Number(confirmed[2]),
+      exact: true,
+    };
+  // The model sometimes puts part of the campaign name in club; if no club has that
+  // name, search all club campaigns with both words
+  const club = input.club ? await findClub(input.club, true) : null;
+  const query =
+    club || !input.club ? input.campaign : `${input.club} ${input.campaign}`;
+  const isExact = (name: string) =>
+    normalize(query) === normalize(stripFormatting(name));
+
+  if (club) {
+    const { activityList } = await getClubActivities(club.id, 0, 100);
+    const found = fuzzyFind(
+      input.campaign,
+      activityList.filter((a) => a.activityType === "campaign"),
+      (a) => stripFormatting(a.name),
+    );
+    if (found.kind === "none")
+      throw new CodriverError(
+        `${chatSafe(club.name, 40)} has no campaign "${chatSafe(input.campaign, 40)}".`,
+      );
+    if (found.kind === "ambiguous")
+      throw new CodriverError(
+        `Which campaign: ${found.items.map((a) => chatSafe(a.name, 40)).join(", ")}?`,
+      );
+    return {
+      clubId: club.id,
+      campaignId: found.item.campaignId,
+      exact: isExact(found.item.name),
+    };
+  }
+
+  let { clubCampaignList } = await getClubCampaigns(0, query, 10);
+  if (clubCampaignList.length === 0 && query !== input.campaign)
+    ({ clubCampaignList } = await getClubCampaigns(0, input.club!, 10));
+  const found = fuzzyFind(query, clubCampaignList, (c) =>
+    stripFormatting(c.name),
+  );
+  if (found.kind === "none")
+    throw new CodriverError(
+      `No club campaign matches "${chatSafe(query, 40)}".`,
+    );
+  if (found.kind === "ambiguous")
+    throw new CodriverError(
+      `Which campaign: ${found.items
+        .map((c) => chatSafe(`${c.name} (${c.clubName})`, 50))
+        .join(", ")}?`,
+    );
+  // Several clubs can share a campaign name, and an exact match hides that
+  const best = normalize(stripFormatting(found.item.name));
+  const same = clubCampaignList.filter(
+    (c) => normalize(stripFormatting(c.name)) === best,
+  );
+  if (new Set(same.map((c) => c.clubId)).size > 1)
+    throw new CodriverError(
+      `Which campaign: ${same
+        .slice(0, 5)
+        .map((c) => chatSafe(`${c.name} (${c.clubName})`, 50))
+        .join(", ")}?`,
+    );
+  return {
+    clubId: found.item.clubId,
+    campaignId: found.item.campaignId,
+    exact: isExact(found.item.name),
+  };
+}
+
 export const addClubCampaign = defineTool({
   name: "add_club_campaign",
   description:
@@ -322,61 +450,25 @@ export const addClubCampaign = defineTool({
     club: z.string().min(1).max(40).optional(),
     queue: queueFlag,
   }),
+  // A near match is pinned by id so the confirmed campaign is the one that runs
+  async prepare(_ctx, input) {
+    const match = await resolveClubCampaign(input);
+    if (match.exact) return input;
+    return {
+      ...input,
+      campaign: `id:${match.clubId}:${match.campaignId}:${input.campaign.slice(0, 30)}`,
+      club: undefined,
+    };
+  },
+  async confirm(_ctx, input) {
+    const pinned = confirmedCampaign.exec(input.campaign);
+    if (!pinned) return null;
+    const detail = await getClubCampaign(Number(pinned[1]), Number(pinned[2]));
+    const asked = pinned[3] ? ` for "${chatSafe(pinned[3], 30)}"` : "";
+    return `No exact match${asked}, the closest is ${chatSafe(detail.name, 60)}. Load it?`;
+  },
   async run(ctx, input) {
-    let clubId: number;
-    let campaignId: number;
-    if (input.club) {
-      const club = await findClub(input.club);
-      const { activityList } = await getClubActivities(club.id, 0, 100);
-      const found = fuzzyFind(
-        input.campaign,
-        activityList.filter((a) => a.activityType === "campaign"),
-        (a) => stripFormatting(a.name),
-      );
-      if (found.kind === "none")
-        throw new CodriverError(
-          `${chatSafe(club.name, 40)} has no campaign "${chatSafe(input.campaign, 40)}".`,
-        );
-      if (found.kind === "ambiguous")
-        throw new CodriverError(
-          `Which campaign: ${found.items.map((a) => chatSafe(a.name, 40)).join(", ")}?`,
-        );
-      clubId = club.id;
-      campaignId = found.item.campaignId;
-    } else {
-      const { clubCampaignList } = await getClubCampaigns(
-        0,
-        input.campaign,
-        10,
-      );
-      const found = fuzzyFind(input.campaign, clubCampaignList, (c) =>
-        stripFormatting(c.name),
-      );
-      if (found.kind === "none")
-        throw new CodriverError(
-          `No club campaign matches "${chatSafe(input.campaign, 40)}".`,
-        );
-      if (found.kind === "ambiguous")
-        throw new CodriverError(
-          `Which campaign: ${found.items
-            .map((c) => chatSafe(`${c.name} (${c.clubName})`, 50))
-            .join(", ")}?`,
-        );
-      // Several clubs can share a campaign name, and an exact match hides that
-      const best = normalize(stripFormatting(found.item.name));
-      const same = clubCampaignList.filter(
-        (c) => normalize(stripFormatting(c.name)) === best,
-      );
-      if (new Set(same.map((c) => c.clubId)).size > 1)
-        throw new CodriverError(
-          `Which campaign: ${same
-            .slice(0, 5)
-            .map((c) => chatSafe(`${c.name} (${c.clubName})`, 50))
-            .join(", ")}?`,
-        );
-      clubId = found.item.clubId;
-      campaignId = found.item.campaignId;
-    }
+    const { clubId, campaignId } = await resolveClubCampaign(input);
 
     const detail = await getClubCampaign(clubId, campaignId);
     const infos = await mapInfos(detail.campaign.playlist.map((p) => p.mapUid));
