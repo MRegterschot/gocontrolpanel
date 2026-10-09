@@ -22,9 +22,11 @@ const editGroup = Prisma.validator<Prisma.GroupsInclude>()({
   },
 });
 
-export type EditGroups = Prisma.GroupsGetPayload<{
-  include: typeof editGroup;
-}>;
+// The theme has its own action and form
+export type EditGroups = Omit<
+  Prisma.GroupsGetPayload<{ include: typeof editGroup }>,
+  "theme"
+>;
 
 export const groupUsersServersSchema = Prisma.validator<Prisma.GroupsInclude>()(
   {

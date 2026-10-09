@@ -18,6 +18,8 @@ Release notes of GoControlPanel, newest first. The entries are the descriptions 
 
 - **Plugin marketplace.** Browse a central plugin marketplace from any panel, self-hosted ones included, and install plugins per server after accepting what they may do. Update, roll back, turn off, configure and uninstall them on the server's Plugins page. Plugins run sandboxed (QuickJS in WebAssembly) in the GBX service. One that breaks its time, memory or rate limits is turned off, and its admins are notified. See [plugin marketplace](docs/plugin-marketplace.md).
 - **Private plugins.** Users with the new `plugins:upload` permission can upload plugin packages and install them on servers they are an admin of.
+- **Plugin themes (SDK 4).** Plugins get the panel theme colors in their templates as `{{@theme.quad.*}}` for quads and `{{@theme.label.*}}` for labels. Set a theme per server in the Theme tab of its Plugins page, or per group under Admin, Groups; servers without their own use their group's, then the default.
+- **Update all plugins.** One button on a server's Plugins page updates every plugin that asks for no new permissions; the others are listed so you can accept theirs one by one.
 - **Codriver permissions.** The panel-wide Codriver page can be given to non-admins: `codriver:view` shows settings overview, usage, history and the access check; `codriver:edit` also changes settings, the shared key and access rules.
 - **Plugin SDK.** Types and a `tmcp-plugin` command line tool to create, build, check and package plugins, with an example plugin. See [plugin SDK](docs/plugin-sdk.md).
 - **Takedowns.** Versions withdrawn from the marketplace are turned off on every server within 30 minutes.

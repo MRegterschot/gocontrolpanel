@@ -1,4 +1,4 @@
-import type { GameModeType, NotificationDto, PlayerInfo } from "@gcp/shared";
+import type { GameModeType, ManialinkTheme, NotificationDto, PlayerInfo } from "@gcp/shared";
 import type { z } from "zod";
 import type { ChatService } from "../chat/chat-service";
 import type { CommandHandler } from "../chat/command-router";
@@ -58,6 +58,8 @@ export interface PluginContext<Config = unknown> {
 
   config(): Config | null;
   serverName(): string | null;
+  // Colors templates get as @theme
+  theme(): ManialinkTheme;
   // Persists a new config for this plugin and notifies the instance
   saveConfig(config: Config): Promise<void>;
 

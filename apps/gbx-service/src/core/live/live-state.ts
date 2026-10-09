@@ -1,7 +1,9 @@
 import {
   ChatConfig,
   createEmptyLiveInfo,
+  DEFAULT_THEME,
   LiveInfo,
+  ManialinkTheme,
   PlayerInfo,
   PlayerRound,
   PlayerStatus,
@@ -22,6 +24,7 @@ export class LiveState {
   activeMapRecord: MapRecord | null = null;
   chat: ChatConfig | null = null;
   enableHelpCommand = true;
+  theme: ManialinkTheme = DEFAULT_THEME;
   plugins: ServerPluginRecord[] = [];
 
   currentMatchId: string | null = null;

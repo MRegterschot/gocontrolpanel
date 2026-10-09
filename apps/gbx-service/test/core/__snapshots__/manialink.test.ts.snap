@@ -17,7 +17,7 @@ exports[`TemplateRenderer > renders action-group 1`] = `
           <quad image="x" size="3.5 3.5" pos="0.75 -0.75" />
       </frame>
 
-    <quad class="trigger" pos="5 0" z-index="2" size="5 5" bgcolor="000" opacity="0" scriptevents="1" />
+    <quad class="trigger" pos="5 0" z-index="2" size="5 5" bgcolor="222" opacity="0" scriptevents="1" />
   </frame>
 </frame>
 
@@ -313,7 +313,7 @@ exports[`TemplateRenderer > renders window 1`] = `
 <frame id="window" pos="-25 20" size="50 45" z-index="20">
   <quad pos="0 0" size="50 5" bgcolor="222" />
   <label pos="1.5 -2.25" text="Title" size="40.5 5" valign="center" halign="left" textsize="1" color="DDD" textfont="GameFontSemiBold" />
-  <label pos="48.5 -2.25" text="" size="5 5" valign="center" halign="right" textsize="1" color="222" action="close-window-test-id" focusareacolor2="fff0" />
+  <label pos="48.5 -2.25" text="" size="5 5" valign="center" halign="right" textsize="1" color="222" action="close-window-test-id" focusareacolor2="DDD0" />
 
   <quad pos="0 -5" size="50 40" bgcolor="DDD" />
   <frame pos="0 -5" size="50 40">

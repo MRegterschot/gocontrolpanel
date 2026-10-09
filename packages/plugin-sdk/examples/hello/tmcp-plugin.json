@@ -2,7 +2,7 @@
   "slug": "hello",
   "name": "Hello",
   "version": "1.0.0",
-  "sdk": 1,
+  "sdk": 4,
   "description": "Greets players when they join, keeps count per player and shows a small greeting widget.",
   "author": "GoControlPanel",
   "license": "MIT",

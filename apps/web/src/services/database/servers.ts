@@ -20,9 +20,11 @@ const editServer = Prisma.validator<Prisma.ServersInclude>()({
   },
 });
 
-export type EditServers = Prisma.ServersGetPayload<{
-  include: typeof editServer;
-}>;
+// The theme has its own action and form
+export type EditServers = Omit<
+  Prisma.ServersGetPayload<{ include: typeof editServer }>,
+  "theme"
+>;
 
 export const serversUsersSchema = Prisma.validator<Prisma.ServersInclude>()({
   userServers: {

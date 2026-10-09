@@ -19,6 +19,7 @@ export type MinimalServer = Omit<
   | "mapListChangeMessage"
   | "filemanagerPassword"
   | "enableHelpCommand"
+  | "theme"
   | "createdAt"
   | "updatedAt"
   | "deletedAt"

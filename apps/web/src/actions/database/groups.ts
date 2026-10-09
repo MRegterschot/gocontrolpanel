@@ -3,10 +3,15 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { logger } from "@/lib/logger";
+import {
+  EditGroups,
+  GroupsWithUsersWithServers,
+  groupUsersServersSchema,
+} from "@/services/database/groups";
 import { UserGroup } from "@/types/auth";
 import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "./server-only/audit-logs";
-import { EditGroups, GroupsWithUsersWithServers, groupUsersServersSchema } from "@/services/database/groups";
+import { groupServerIds, publishThemeChange } from "./server-only/themes";
 
 export async function createGroup(
   group: Omit<EditGroups, "id" | "createdAt" | "updatedAt" | "deletedAt">,
@@ -51,6 +56,7 @@ export async function updateGroup(
       const db = getClient();
 
       const { groupMembers, groupServers, ...scalarFields } = group;
+      const previousServers = await groupServerIds(groupId);
 
       const updatedGroup = await db.groups.update({
         where: { id: groupId },
@@ -76,6 +82,12 @@ export async function updateGroup(
       });
 
       await logAudit(session.user.id, groupId, "group.edit", group);
+      // Servers that joined or left the group may change theme
+      if (updatedGroup.theme !== null)
+        await publishThemeChange([
+          ...previousServers,
+          ...updatedGroup.groupServers.map((gs) => gs.serverId),
+        ]);
 
       return updatedGroup;
     },
@@ -87,7 +99,7 @@ export async function deleteGroup(groupId: string): Promise<ServerResponse> {
     ["groups:delete", `groups:${groupId}:admin`],
     async (session) => {
       const db = getClient();
-      await db.groups.update({
+      const group = await db.groups.update({
         where: { id: groupId },
         data: {
           deletedAt: new Date(),
@@ -95,6 +107,8 @@ export async function deleteGroup(groupId: string): Promise<ServerResponse> {
       });
 
       await logAudit(session.user.id, groupId, "group.delete");
+      if (group.theme !== null)
+        await publishThemeChange(await groupServerIds(groupId));
     },
   );
 }
@@ -154,7 +168,10 @@ export async function updateGroupServersOrder(
         { meta, userId, groupId },
         "User is not a member of the group",
       );
-      throw new ServerError("User is not a member of the group", "GroupMemberNotFound");
+      throw new ServerError(
+        "User is not a member of the group",
+        "GroupMemberNotFound",
+      );
     }
 
     await db.groupMember.update({

@@ -98,6 +98,8 @@ model Groups {
   description  String
   public       Boolean @default(false)
   shareRecords Boolean @default(false)
+  // Manialink theme for the group's servers that have none of their own
+  theme        Json?
 
   groupServers GroupServers[]
   groupMembers GroupMember[]
@@ -184,6 +186,8 @@ model Servers {
   mapListChangeMessage       String?
 
   enableHelpCommand Boolean @default(true)
+  // Manialink theme; null falls back to a group's theme, then the default
+  theme             Json?
 
   groupServers     GroupServers[]
   userServers      UserServers[]

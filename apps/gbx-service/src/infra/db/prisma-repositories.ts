@@ -1,4 +1,9 @@
-import type { NotificationDto, PlayerInfo, PluginManifest } from "@gcp/shared";
+import {
+  resolveTheme,
+  type NotificationDto,
+  type PlayerInfo,
+  type PluginManifest,
+} from "@gcp/shared";
 import type { DbClient, Maps, Notifications, Prisma } from "@gcp/db";
 import type {
   FirstPartyInstall,
@@ -108,9 +113,20 @@ export class PrismaServerRepository implements ServerRepository {
   async findById(serverId: string): Promise<ServerRecord | null> {
     const server = await this.db.servers.findFirst({
       where: { id: serverId, deletedAt: null },
-      include: { serverPlugins: { include: serverPluginInclude } },
+      include: {
+        serverPlugins: { include: serverPluginInclude },
+        groupServers: {
+          where: { group: { deletedAt: null } },
+          select: { group: { select: { theme: true, createdAt: true } } },
+        },
+      },
     });
     if (!server) return null;
+    // The oldest group decides when several have a theme
+    const groupThemes = server.groupServers
+      .map((gs) => gs.group)
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+      .map((group) => group.theme);
 
     return {
       id: server.id,
@@ -120,6 +136,7 @@ export class PrismaServerRepository implements ServerRepository {
       user: server.user,
       password: server.password,
       enableHelpCommand: server.enableHelpCommand,
+      theme: resolveTheme(server.theme, groupThemes),
       chat: {
         manualRouting: server.manualRouting,
         messageFormat: server.messageFormat,

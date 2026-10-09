@@ -48,7 +48,7 @@ A package may be at most 5 MB, unpack to at most 10 MB and hold at most 500 file
   "slug": "hello",
   "name": "Hello",
   "version": "1.0.0",
-  "sdk": 1,
+  "sdk": 4,
   "description": "Greets players when they join.",
   "author": "Your name",
   "license": "MIT",
@@ -70,7 +70,7 @@ A package may be at most 5 MB, unpack to at most 10 MB and hold at most 500 file
 | `slug` | 3-40 characters: lowercase letters, digits and dashes, starting with a letter. It identifies the plugin and prefixes its widget ids and actions. The names of the [first-party plugins](./first-party-plugins.md) and a few others (`help`, `plugins`, `server`, ...) are reserved. |
 | `name`, `description`, `author` | At most 60, 300 and 100 characters. |
 | `version` | A [semantic version](https://semver.org): `1.2.3`, or `1.2.3-beta.1` for a pre-release. |
-| `sdk` | The plugin SDK version the plugin targets. Currently `3` (SDK 1 and 2 packages remain supported). SDK 3 adds [plugin events](#plugin-events). Panels refuse plugins for a newer SDK than they run. |
+| `sdk` | The plugin SDK version the plugin targets. Currently `4` (SDK 1 to 3 packages remain supported). SDK 3 adds [plugin events](#plugin-events), SDK 4 adds the [theme](#widgets-and-windows) colors. Panels refuse plugins for a newer SDK than they run. |
 | `license`, `repository`, `homepage` | Optional. The links must be `https://`. |
 | `entry` | Path of the bundle inside the package. Default `index.js`. |
 | `gamemodes` | Modes the plugin runs in: `timeattack`, `rounds`, `reversecup`, `cup`, `tmwc`, `tmwt`, `teams`, `knockout`. Leave it out to run in every mode. |
@@ -207,8 +207,8 @@ A widget is a manialink page rendered from one of the package's templates. Templ
 {{#extend "widget"}}
 {{#content "widget"}}
 <frame pos="0 0">
-  <quad pos="0 0" size="50 8" bgcolor="222" opacity="0.85" />
-  <label pos="2 -4" size="38 6" text="{{ data.text }}" valign="center" textsize="1.5" textcolor="FFF" />
+  <quad pos="0 0" size="50 8" bgcolor="{{ @theme.quad.background }}" opacity="0.85" />
+  <label pos="2 -4" size="38 6" text="{{ data.text }}" valign="center" textsize="1.5" textcolor="{{ @theme.label.foreground }}" />
   <label pos="45 -4" size="8 6" text="Hi" halign="center" valign="center" action="{{action "wave"}}" />
 </frame>
 {{/content}}
@@ -234,6 +234,7 @@ ctx.action("wave", (answer) => ctx.chat.sendTo(answer.login, "Hi!"));
 - **Update pages.** By default a widget is a pair of pages: `<template>` holds the layout and script, and `<template>-update` carries only data. `widget.update()` sends the data page, so the main page keeps its client-side state. With `withUpdate: false` there's a single page, and `display()` re-renders it.
 - **Windows** belong to one player: `ctx.ui.window({ id, template, login, title, onClose })`. The close button and `window.close()` remove the window and call `onClose`.
 - **The button bar** in the top-left corner: `ctx.ui.addButton({ name, icon, action })`, where `icon` is a text glyph or, with `type: "image"`, an image URL.
+- **Theme.** Every template, including `-update` pages and inside `{{#each}}`, gets the panel's colors in two palettes, `@theme.quad.*` and `@theme.label.*`, each with `foreground`, `background`, `foregroundMuted` and `backgroundMuted`: three-digit hex without `#`, such as `DDD`. Pick the palette by element: every color attribute on a `<quad>` (`bgcolor`, `focusareacolor`) uses `quad`, and every color attribute on a `<label>` or `<entry>` (`textcolor`, `color`, `focusareacolor1`, `focusareacolor2`) uses `label`. In ManiaScript the same rule applies: `(x as CMlQuad).BgColor` uses `quad` and `(x as CMlLabel).TextColor` uses `label`. Use them instead of fixed colors, e.g. `bgcolor="{{ @theme.quad.background }}"` or `CL::Hex3ToRgb("{{ @theme.label.foreground }}")`, so plugins match the panel's windows. Declare `"sdk": 4` when you use them, so older panels refuse the plugin instead of rendering it without colors. Admins pick the colors in the **Theme** tab of a server's Plugins page, or per group under Admin, Groups. A server's own theme wins over its group's (the oldest group when several have one), then the default, `DDD`/`222`/`CCC`/`333` for both palettes. Plugins reload when the theme changes.
 - **Rules for pages.** A rendered page must be one `<manialink>` element with the page's own id, at most 128 KB. Pages that break this are refused with an error. Template helpers: `default`, `eq`, `bool`, `boolToNum`, `length`, `jsonLength`, `range`, `add`, `subtract`, `multiply`, `divide`, `action`, `actionPrefix`.
 
 ## Settings

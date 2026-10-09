@@ -1,4 +1,4 @@
-import type { SMapInfo, SPlayerInfo } from "@gcp/shared";
+import { DEFAULT_THEME, type SMapInfo, type SPlayerInfo } from "@gcp/shared";
 import { readPluginPackage } from "@gcp/shared/plugin-package";
 import { fileURLToPath } from "node:url";
 import { TemplateRenderer } from "../../src/core/manialink/template-renderer";
@@ -102,6 +102,7 @@ export function serverRecord(
     user: "SuperAdmin",
     password: "secret",
     enableHelpCommand: true,
+    theme: DEFAULT_THEME,
     chat: {
       manualRouting: false,
       messageFormat: null,

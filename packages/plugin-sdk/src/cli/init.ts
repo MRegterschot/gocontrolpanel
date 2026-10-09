@@ -86,8 +86,8 @@ export default definePlugin<Config>({
     "templates/widgets/main.hbs": `{{#extend "widget"}}
 {{#content "widget"}}
 <frame pos="0 0">
-  <quad pos="0 0" z-index="0" size="50 8" bgcolor="222" opacity="0.85" />
-  <label pos="2 -4" z-index="1" size="46 6" text="{{ data.message }}" valign="center" textsize="1.5" textcolor="FFF" action="{{action "hello"}}" />
+  <quad pos="0 0" z-index="0" size="50 8" bgcolor="{{ @theme.quad.background }}" opacity="0.85" />
+  <label pos="2 -4" z-index="1" size="46 6" text="{{ data.message }}" valign="center" textsize="1.5" textcolor="{{ @theme.label.foreground }}" action="{{action "hello"}}" />
 </frame>
 {{/content}}
 {{/extend}}

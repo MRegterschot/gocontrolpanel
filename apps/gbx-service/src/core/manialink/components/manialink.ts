@@ -1,3 +1,4 @@
+import type { ManialinkTheme } from "@gcp/shared";
 import type { ActionRouter } from "../action-router";
 import type { ManialinkService } from "../manialink-service";
 import type { TemplateRenderer } from "../template-renderer";
@@ -11,6 +12,8 @@ export interface ManialinkDeps {
   renderer: TemplateRenderer;
   manialinks: ManialinkService;
   actions: ActionRouter;
+  // The server's theme; the renderer's default when absent
+  theme?: () => ManialinkTheme;
 }
 
 export interface ManialinkOptions {
@@ -107,13 +110,17 @@ export class Manialink {
   }
 
   render(): string {
-    return this.deps.renderer.render(this.template, {
-      id: this.id,
-      position: this.position,
-      size: this.size,
-      title: this.title,
-      hideWhileDriving: this.hideWhileDriving,
-      data: this.data,
-    });
+    return this.deps.renderer.render(
+      this.template,
+      {
+        id: this.id,
+        position: this.position,
+        size: this.size,
+        title: this.title,
+        hideWhileDriving: this.hideWhileDriving,
+        data: this.data,
+      },
+      this.deps.theme?.(),
+    );
   }
 }

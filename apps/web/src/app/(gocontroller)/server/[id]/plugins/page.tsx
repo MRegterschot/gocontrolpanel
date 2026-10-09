@@ -1,5 +1,13 @@
 import InstalledPlugins from "@/components/plugins/installed-plugins";
+import ServerThemeForm from "@/components/theme/server-theme-form";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ChatConfigForm from "@/forms/server/plugins/chatconfig-form";
+import ServerPluginsForm from "@/forms/server/plugins/server-plugins-form";
+import { hasPermission } from "@/lib/auth";
+import { routePermissions, routes } from "@/routes";
 import { getServerChatConfig } from "@/services/database/servers";
+import { getServerTheme } from "@/services/database/themes";
 import { getPluginScripts } from "@/services/filemanager";
 import { getServerPlugin } from "@/services/gbx/server-plugin";
 import {
@@ -7,12 +15,6 @@ import {
   getInstalledPlugins,
   getServerPluginsContext,
 } from "@/services/plugins";
-import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ChatConfigForm from "@/forms/server/plugins/chatconfig-form";
-import ServerPluginsForm from "@/forms/server/plugins/server-plugins-form";
-import { hasPermission } from "@/lib/auth";
-import { routePermissions, routes } from "@/routes";
 import { redirect } from "next/navigation";
 
 export default async function ServerPluginsPage({
@@ -29,22 +31,25 @@ export default async function ServerPluginsPage({
   }
 
   const { data } = await getServerChatConfig(id);
+  const { data: theme } = await getServerTheme(id);
 
   const { data: serverPlugin } = await getServerPlugin(id);
   const { data: scripts } = await getPluginScripts(id);
 
-  const [{ data: installed }, { data: available }, { data: context }] = await Promise.all([
-    getInstalledPlugins(id),
-    getAvailablePlugins(id),
-    getServerPluginsContext(id),
-  ]);
+  const [{ data: installed }, { data: available }, { data: context }] =
+    await Promise.all([
+      getInstalledPlugins(id),
+      getAvailablePlugins(id),
+      getServerPluginsContext(id),
+    ]);
 
   return (
     <div className="flex flex-col gap-6 h-full">
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold">Manage Plugins</h1>
         <h4 className="text-muted-foreground">
-          Manage the plugins of the server, and configure the chat settings.
+          Manage the plugins of the server, and configure the chat settings and
+          the theme of plugin widgets.
         </h4>
       </div>
 
@@ -53,6 +58,7 @@ export default async function ServerPluginsPage({
           <TabsTrigger value="plugins">Plugins</TabsTrigger>
           <TabsTrigger value="server-plugins">Server Plugins</TabsTrigger>
           <TabsTrigger value="chat">Chat</TabsTrigger>
+          <TabsTrigger value="theme">Theme</TabsTrigger>
         </TabsList>
 
         <TabsContent value="plugins" className="flex flex-col gap-6">
@@ -80,6 +86,16 @@ export default async function ServerPluginsPage({
         <TabsContent value="chat" className="flex flex-col gap-6">
           <Card className="p-6">
             <ChatConfigForm serverId={id} chatConfig={data} />
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="theme" className="flex flex-col gap-6">
+          <Card className="p-6">
+            {theme ? (
+              <ServerThemeForm serverId={id} overview={theme} />
+            ) : (
+              <p className="text-destructive">Failed to load the theme.</p>
+            )}
           </Card>
         </TabsContent>
       </Tabs>

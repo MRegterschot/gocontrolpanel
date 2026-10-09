@@ -1,3 +1,4 @@
+import { DEFAULT_THEME } from "@gcp/shared";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { ActionRouter } from "../../src/core/manialink/action-router";
@@ -39,6 +40,20 @@ describe("TemplateRenderer", () => {
     });
     expect(renderer.render("page", { id: "x", flag: true })).toBe(
       '<root id="x"><p>3</p>True</root>',
+    );
+  });
+
+  it("passes the theme to every template", () => {
+    const page = '<q bg="{{ @theme.quad.background }}" fg="{{ @theme.label.foreground }}"/>';
+    expect(new TemplateRenderer({ page }).render("page", {})).toBe('<q bg="222" fg="DDD"/>');
+    const loop = "{{#each items}}{{ @theme.quad.foregroundMuted }}{{ @theme.label.foregroundMuted }}{{/each}}";
+    expect(new TemplateRenderer({ loop }).render("loop", { items: [1, 2] })).toBe("CCCCCCCCCCCC");
+    const light = {
+      quad: { ...DEFAULT_THEME.quad, background: "EEE" },
+      label: { ...DEFAULT_THEME.label, foreground: "111" },
+    };
+    expect(new TemplateRenderer({ page }, light).render("page", {})).toBe(
+      '<q bg="EEE" fg="111"/>',
     );
   });
 

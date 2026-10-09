@@ -1,5 +1,6 @@
 import type {
   ChatConfig,
+  ManialinkTheme,
   PluginManifest,
   JukeboxEntry,
   NotificationDto,
@@ -17,6 +18,8 @@ export interface ServerRecord {
   password: string;
   chat: ChatConfig;
   enableHelpCommand: boolean;
+  // Resolved from the server, its groups and the default
+  theme: ManialinkTheme;
   plugins: ServerPluginRecord[];
 }
 

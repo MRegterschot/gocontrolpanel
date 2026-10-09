@@ -8,6 +8,7 @@ import {
   saveServerPluginConfig,
   setServerPluginEnabled,
   uninstallServerPlugin,
+  updateAllServerPlugins,
 } from "@/actions/plugins";
 import ConfirmModal from "@/components/modals/confirm-modal";
 import { Badge } from "@/components/ui/badge";
@@ -411,6 +412,54 @@ function ReloadButton({ serverId }: { serverId: string }) {
   );
 }
 
+function UpdateAllButton({
+  serverId,
+  count,
+}: {
+  serverId: string;
+  count: number;
+}) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+
+  async function updateAll() {
+    setBusy(true);
+    try {
+      const { data, error } = await updateAllServerPlugins(serverId);
+      if (error || !data) {
+        throw new ServerError(error ?? "No result", "UpdateAllPluginsError");
+      }
+      if (data.updated.length > 0) {
+        toast.success(`Updated ${data.updated.join(", ")}`);
+      }
+      if (data.needsConsent.length > 0) {
+        toast.warning("Update these one by one to accept new permissions", {
+          description: data.needsConsent.join(", "),
+        });
+      }
+      if (data.failed.length > 0) {
+        toast.error("Failed to update some plugins", {
+          description: data.failed.join(", "),
+        });
+      }
+      router.refresh();
+    } catch (error) {
+      toast.error("Failed to update plugins", {
+        description: getErrorMessage(error),
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Button onClick={updateAll} disabled={busy}>
+      <IconArrowUp />
+      Update all ({count})
+    </Button>
+  );
+}
+
 // Every plugin on one server: from the marketplace or uploaded
 export default function InstalledPlugins({
   serverId,
@@ -425,6 +474,8 @@ export default function InstalledPlugins({
   available: AvailablePlugin[];
   marketplaceEnabled: boolean;
 }) {
+  const updatable = plugins.filter((p) => p.update && !p.update.yanked).length;
+
   return (
     <section
       aria-labelledby="installed-plugins-title"
@@ -441,6 +492,9 @@ export default function InstalledPlugins({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {updatable > 0 && (
+            <UpdateAllButton serverId={serverId} count={updatable} />
+          )}
           <ReloadButton serverId={serverId} />
           {marketplaceEnabled && (
             <Link

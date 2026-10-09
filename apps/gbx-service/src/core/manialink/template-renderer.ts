@@ -1,3 +1,4 @@
+import { DEFAULT_THEME, type ManialinkTheme } from "@gcp/shared";
 import Handlebars from "handlebars";
 import layouts from "handlebars-layouts";
 
@@ -39,7 +40,10 @@ export class TemplateRenderer {
   private readonly hbs = Handlebars.create();
   private readonly templates = new Map<string, Handlebars.TemplateDelegate>();
 
-  constructor(sources: TemplateSources) {
+  constructor(
+    sources: TemplateSources,
+    private readonly theme: ManialinkTheme = DEFAULT_THEME,
+  ) {
     registerHelpers(this.hbs);
     for (const [name, source] of Object.entries(sources)) {
       this.hbs.registerPartial(name, source);
@@ -55,9 +59,9 @@ export class TemplateRenderer {
     return [...this.templates.keys()].sort();
   }
 
-  render(name: string, context: unknown): string {
+  render(name: string, context: unknown, theme: ManialinkTheme = this.theme): string {
     const template = this.templates.get(name);
     if (!template) throw new Error(`Unknown manialink template "${name}"`);
-    return template(context);
+    return template(context, { data: { theme } });
   }
 }

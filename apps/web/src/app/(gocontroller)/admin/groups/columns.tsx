@@ -1,10 +1,10 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 import { deleteGroup } from "@/actions/database/groups";
-import type { GroupsWithUsersWithServers } from "@/services/database/groups";
 import BooleanDisplay from "@/components/boolean-display";
 import ConfirmModal from "@/components/modals/confirm-modal";
 import EditGroupModal from "@/components/modals/groups/edit-group";
+import EditGroupThemeModal from "@/components/modals/groups/edit-group-theme";
 import Modal from "@/components/modals/modal";
 import { DataTableColumnHeader } from "@/components/table/data-table-column-header";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getErrorMessage, hasPermissionSync } from "@/lib/utils";
 import { routePermissions } from "@/routes";
+import type { GroupsWithUsersWithServers } from "@/services/database/groups";
 import { ServerError } from "@/types/responses";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
@@ -81,6 +82,7 @@ export const createColumns = (
       const [_, startTransition] = useTransition();
       const [isOpen, setIsOpen] = useState(false);
       const [isEditOpen, setIsEditOpen] = useState(false);
+      const [isThemeOpen, setIsThemeOpen] = useState(false);
 
       const canEdit = hasPermissionSync(
         session,
@@ -135,6 +137,11 @@ export const createColumns = (
                   Edit group
                 </DropdownMenuItem>
               )}
+              {canEdit && (
+                <DropdownMenuItem onClick={() => setIsThemeOpen(true)}>
+                  Edit theme
+                </DropdownMenuItem>
+              )}
               {canEdit && canDelete && <DropdownMenuSeparator />}
               {canDelete && (
                 <DropdownMenuItem
@@ -160,8 +167,22 @@ export const createColumns = (
           )}
 
           {canEdit && (
-            <Modal isOpen={isEditOpen} setIsOpen={setIsEditOpen} closeOnBackdropClick={false}>
+            <Modal
+              isOpen={isEditOpen}
+              setIsOpen={setIsEditOpen}
+              closeOnBackdropClick={false}
+            >
               <EditGroupModal onSubmit={refetch} data={group} />
+            </Modal>
+          )}
+
+          {canEdit && (
+            <Modal
+              isOpen={isThemeOpen}
+              setIsOpen={setIsThemeOpen}
+              closeOnBackdropClick={false}
+            >
+              <EditGroupThemeModal onSubmit={refetch} data={group} />
             </Modal>
           )}
         </div>

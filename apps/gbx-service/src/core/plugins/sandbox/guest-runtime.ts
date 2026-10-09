@@ -111,7 +111,8 @@ export function guestRuntime(global: any): void {
 
   // Precompiled by the host; evaluating the specs is cheap compared to parsing templates here
   const specs: Record<string, string> = info.templates;
-  const compiled = new Map<string, (context: unknown) => string>();
+  type Compiled = (context: unknown, options?: { data: object }) => string;
+  const compiled = new Map<string, Compiled>();
   const evaluate = global.eval as (source: string) => unknown;
   for (const name of Object.keys(specs)) {
     const template = hb.template(evaluate(`(${specs[name]})`));
@@ -121,7 +122,7 @@ export function guestRuntime(global: any): void {
   const render = (name: string, context: unknown): string => {
     const template = compiled.get(name);
     if (!template) throw new Error(`Unknown template "${name}"`);
-    return template(context);
+    return template(context, { data: { theme: info.theme } });
   };
 
   type Entry = { label: string; fn: (...args: any[]) => unknown };

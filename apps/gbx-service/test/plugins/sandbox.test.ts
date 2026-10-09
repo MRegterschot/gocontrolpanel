@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import type { PluginCustomEvent } from "@gcp/shared";
+import { DEFAULT_THEME, type PluginCustomEvent } from "@gcp/shared";
 import { DEFAULT_SANDBOX_LIMITS } from "../../src/core/plugins/sandbox/limits";
 import { definePlugin, type PluginContext } from "../../src/core/plugins/sdk";
 import { flush } from "../fakes/clock";
@@ -178,6 +178,52 @@ describe("sandboxed plugins", () => {
     expect(stored(h, "fine")).toBe("shown");
     expect(h.session.sentManialinkIds()).not.toContain("map-info-widget");
     expect(h.session.sentManialinkIds()).toContain("plg.test-plugin.fine");
+  });
+
+  it("gives templates and update pages the theme colors", async () => {
+    const themed = `{{#extend "widget"}}{{#content "widget"}}<quad bgcolor="{{ @theme.quad.background }}"/>{{/content}}{{/extend}}`;
+    const update = `{{#extend "manialink"}}{{#content "content"}}<label textcolor="{{ @theme.label.foregroundMuted }}"/>{{/content}}{{/extend}}`;
+    const h = await createHarness({
+      packages: [
+        {
+          bytes: testPackage(
+            `return { start() { ctx.ui.widget({ id: "themed", template: "themed" }).display(); } };`,
+            { capabilities: ["ui"] },
+            { themed, "themed-update": update },
+          ),
+        },
+      ],
+    });
+    const pages = h.session.sent.map((call) => String(call.params[0])).join("\n");
+    expect(pages).toContain(`<quad bgcolor="${DEFAULT_THEME.quad.background}"/>`);
+    expect(pages).toContain(`<label textcolor="${DEFAULT_THEME.label.foregroundMuted}"/>`);
+  });
+
+  it("re-renders plugin pages when the server's theme changes", async () => {
+    const themed = `{{#extend "widget"}}{{#content "widget"}}<quad bgcolor="{{ @theme.quad.background }}"/>{{/content}}{{/extend}}`;
+    const h = await createHarness({
+      packages: [
+        {
+          bytes: testPackage(
+            `return { start() { ctx.ui.widget({ id: "themed", template: "themed", withUpdate: false }).display(); } };`,
+            { capabilities: ["ui"] },
+            { themed },
+          ),
+        },
+      ],
+    });
+    h.session.sent.length = 0;
+    h.servers.servers.get(h.runtime.serverId)!.theme = {
+      ...DEFAULT_THEME,
+      quad: { ...DEFAULT_THEME.quad, background: "0A0" },
+    };
+
+    await h.runtime.applyServerUpdate();
+    await flush();
+
+    const pages = h.session.sent.map((call) => String(call.params[0])).join("\n");
+    expect(pages).toContain('<quad bgcolor="0A0"/>');
+    expect(h.runtime.state.theme.quad.background).toBe("0A0");
   });
 
   it("turns off a plugin that hangs and tells the admins", async () => {

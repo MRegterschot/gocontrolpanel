@@ -12,7 +12,7 @@ import {
 } from "@/lib/marketplace";
 import { uploadOwnerFilter } from "@/lib/plugin-access";
 import { routePermissions } from "@/routes";
-import { storedManifest } from "@/services/plugins";
+import { getInstalledPlugins, storedManifest } from "@/services/plugins";
 import type { UploadResult } from "@/types/plugins/catalog";
 import { ServerError, ServerResponse } from "@/types/responses";
 import type { Prisma } from "@gcp/db";
@@ -336,6 +336,63 @@ export async function changeServerPluginVersion(
       to: args.version,
       capabilities: resolved.capabilities,
     });
+  });
+}
+
+export interface UpdateAllResult {
+  updated: string[];
+  // Need the admin to accept new capabilities, so they are left alone
+  needsConsent: string[];
+  failed: string[];
+}
+
+// Updates every plugin with a newer version that asks for no new capabilities
+export async function updateAllServerPlugins(
+  serverId: string,
+): Promise<ServerResponse<UpdateAllResult>> {
+  return doServerActionWithAuth(serverAdmin(serverId), async (session) => {
+    const { data: plugins, error } = await getInstalledPlugins(serverId);
+    if (error) throw new ServerError(error, "GetInstalledPluginsError");
+
+    const result: UpdateAllResult = {
+      updated: [],
+      needsConsent: [],
+      failed: [],
+    };
+    for (const plugin of plugins) {
+      const update = plugin.update;
+      if (!update || update.yanked) continue;
+      if (
+        update.capabilities.some((c) => !plugin.grantedCapabilities.includes(c))
+      ) {
+        result.needsConsent.push(plugin.name);
+        continue;
+      }
+      try {
+        const resolved =
+          plugin.source === "marketplace"
+            ? await ensureMarketplaceVersion(plugin.slug, update.version)
+            : await uploadedVersion(session, plugin.pluginId, {
+                version: update.version,
+              });
+        await installVersion(
+          session,
+          serverId,
+          resolved,
+          "server.plugins.update",
+          {
+            slug: plugin.slug,
+            from: plugin.version,
+            to: update.version,
+            capabilities: resolved.capabilities,
+          },
+        );
+        result.updated.push(plugin.name);
+      } catch {
+        result.failed.push(plugin.name);
+      }
+    }
+    return result;
   });
 }
 

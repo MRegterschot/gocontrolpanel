@@ -140,7 +140,12 @@ export class ServerRuntime {
     const chat = new ChatService(gbx, state, log);
     const actions = new ActionRouter(log);
     this.manialinks = new ManialinkService(gbx, log);
-    const manialinkDeps = { renderer, manialinks: this.manialinks, actions };
+    const manialinkDeps = {
+      renderer,
+      manialinks: this.manialinks,
+      actions,
+      theme: () => state.theme,
+    };
     const actionGroup = new ActionGroup(manialinkDeps);
     const mapList = new MapList(gbx, log);
     const catalog = new MapCatalog(deps.maps, deps.mapMetadata, clock, log);
@@ -377,6 +382,7 @@ export class ServerRuntime {
     this.name = record.name;
     this.state.enableHelpCommand = record.enableHelpCommand;
     await this.refreshChatConfig(record.chat);
+    await this.refreshTheme(record.theme);
 
     // No attempt yet: the one that is about to run reads this record anyway
     if (!this.attemptedTarget || sameTarget(this.attemptedTarget, record))
@@ -402,6 +408,21 @@ export class ServerRuntime {
       await this.gbx.call("ChatEnableManualRouting", chat.manualRouting);
     } catch (error) {
       this.log.error({ err: error }, "Failed to apply manual chat routing");
+    }
+  }
+
+  // Plugins render their pages with the theme, so they reload to show the new one
+  private async refreshTheme(theme: ServerRecord["theme"]): Promise<void> {
+    if (JSON.stringify(theme) === JSON.stringify(this.state.theme)) return;
+    this.state.theme = theme;
+    if (!this.connected) return;
+    try {
+      await this.plugins.reload(this.state.plugins, this.state.liveInfo.type);
+    } catch (error) {
+      this.log.error(
+        { err: error },
+        "Failed to reload plugins for the new theme",
+      );
     }
   }
 
@@ -498,6 +519,7 @@ export class ServerRuntime {
     await session.call("ChatEnableManualRouting", server.chat.manualRouting);
     this.state.chat = server.chat;
     this.state.enableHelpCommand = server.enableHelpCommand;
+    this.state.theme = server.theme;
     this.state.plugins = server.plugins;
 
     // Late callbacks from a replaced session must not touch the new state
