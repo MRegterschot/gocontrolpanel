@@ -456,6 +456,8 @@ The **GoControlPanel** supports a permission system that allows you to manage us
 - audit-logs:view
 - audit-logs:delete
 - plugins:upload
+- codriver:view
+- codriver:edit
 
 ---
 

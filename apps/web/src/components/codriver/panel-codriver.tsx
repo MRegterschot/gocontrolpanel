@@ -3,7 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCodriverPanelOverview } from "@/hooks/use-codriver";
-import { getErrorMessage } from "@/lib/utils";
+import { getErrorMessage, hasPermissionSync } from "@/lib/utils";
+import { routePermissions } from "@/routes";
+import { useSession } from "next-auth/react";
 import CodriverHistoryCard from "./history-card";
 import PanelAccessCheckCard from "./panel-access-check-card";
 import PanelRulesCard from "./panel-rules-card";
@@ -13,6 +15,11 @@ import CodriverUsageCard from "./usage-card";
 
 export default function PanelCodriver() {
   const { data, isPending, error } = useCodriverPanelOverview();
+  const { data: session } = useSession();
+  const canEdit = hasPermissionSync(
+    session,
+    routePermissions.admin.codriver.edit,
+  );
 
   if (isPending) {
     return <span className="text-muted-foreground">Loading...</span>;
@@ -33,9 +40,13 @@ export default function PanelCodriver() {
         <TabsTrigger value="history">History</TabsTrigger>
       </TabsList>
       <TabsContent value="settings" className="flex flex-col gap-6">
-        <PanelSettingsCard overview={data} />
-        <PanelSharedKeyCard overview={data} />
-        <PanelRulesCard rules={data.rules} />
+        {canEdit && (
+          <>
+            <PanelSettingsCard overview={data} />
+            <PanelSharedKeyCard overview={data} />
+            <PanelRulesCard rules={data.rules} />
+          </>
+        )}
         <PanelAccessCheckCard />
       </TabsContent>
       <TabsContent value="usage" className="flex flex-col gap-6">

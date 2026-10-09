@@ -17,6 +17,7 @@ import { spentMicros } from "@/lib/codriver/usage";
 import config from "@/lib/config";
 import { getClient } from "@/lib/dbclient";
 import { canStoreSecrets, secretHint } from "@/lib/secrets";
+import { routePermissions } from "@/routes";
 import type {
   CodriverAccessCheck,
   CodriverChatAccess,
@@ -26,21 +27,10 @@ import type {
   CodriverRuleRow,
   CodriverServerOverview,
 } from "@/types/codriver";
-import {
-  PaginationResponse,
-  ServerError,
-  ServerResponse,
-} from "@/types/responses";
+import { PaginationResponse, ServerResponse } from "@/types/responses";
 import type { Prisma } from "@gcp/db";
 import { PaginationState } from "@tanstack/react-table";
-import type { Session } from "next-auth";
 import "server-only";
-
-// Operator settings belong to panel admins only
-export function requirePanelAdmin(session: Session): void {
-  if (!session.user.admin)
-    throw new ServerError("Unauthorized", "Unauthorized");
-}
 
 export const serverAdminPermissions = (serverId: string) => [
   `servers:${serverId}:admin`,
@@ -89,27 +79,29 @@ async function ruleRows(): Promise<CodriverRuleRow[]> {
 export async function getCodriverPanelOverview(): Promise<
   ServerResponse<CodriverPanelOverview>
 > {
-  return doServerActionWithAuth([], async (session) => {
-    requirePanelAdmin(session);
-    const panel = await loadPanelSettings();
-    return {
-      settings: {
-        enabled: panel?.enabled ?? false,
-        sharedKeyHint: panel?.sharedApiKey
-          ? secretHint(panel.sharedApiKey)
-          : null,
-        sharedKeyModels: panel?.sharedKeyModels ?? ["haiku"],
-        sharedMonthlyBudgetCents: panel?.sharedMonthlyBudgetCents ?? null,
-        allowServerKeys: panel?.allowServerKeys ?? false,
-        userMode: panel?.userMode ?? "everyone",
-        retentionDays: panel?.retentionDays ?? 90,
-      },
-      canStoreKeys: canStoreSecrets(),
-      envKeyFallback: !!config.CODRIVER.API_KEY,
-      rules: await ruleRows(),
-      sharedSpentMicrosThisMonth: await spentMicros("shared-global", ""),
-    };
-  });
+  return doServerActionWithAuth(
+    routePermissions.admin.codriver.view,
+    async () => {
+      const panel = await loadPanelSettings();
+      return {
+        settings: {
+          enabled: panel?.enabled ?? false,
+          sharedKeyHint: panel?.sharedApiKey
+            ? secretHint(panel.sharedApiKey)
+            : null,
+          sharedKeyModels: panel?.sharedKeyModels ?? ["haiku"],
+          sharedMonthlyBudgetCents: panel?.sharedMonthlyBudgetCents ?? null,
+          allowServerKeys: panel?.allowServerKeys ?? false,
+          userMode: panel?.userMode ?? "everyone",
+          retentionDays: panel?.retentionDays ?? 90,
+        },
+        canStoreKeys: canStoreSecrets(),
+        envKeyFallback: !!config.CODRIVER.API_KEY,
+        rules: await ruleRows(),
+        sharedSpentMicrosThisMonth: await spentMicros("shared-global", ""),
+      };
+    },
+  );
 }
 
 // What Codriver would decide for this player on this server, and which layer decides it
@@ -117,33 +109,35 @@ export async function checkCodriverAccess(
   serverId: string,
   login: string,
 ): Promise<ServerResponse<CodriverAccessCheck>> {
-  return doServerActionWithAuth([], async (session) => {
-    requirePanelAdmin(session);
-    const actor = await actorForLogin(login);
-    const role = resolveRole(actor, serverId);
-    const decision = resolveAccess(
-      await loadAccessInput(serverId, actor, role),
-    );
-    return decision.allowed
-      ? {
-          role,
-          allowed: true,
-          layer: null,
-          reason: null,
-          keySource: decision.keySource,
-          primaryModel: decision.primaryModel,
-          escalationModel: decision.escalationModel,
-        }
-      : {
-          role,
-          allowed: false,
-          layer: decision.layer,
-          reason: decision.reason,
-          keySource: null,
-          primaryModel: null,
-          escalationModel: null,
-        };
-  });
+  return doServerActionWithAuth(
+    routePermissions.admin.codriver.view,
+    async () => {
+      const actor = await actorForLogin(login);
+      const role = resolveRole(actor, serverId);
+      const decision = resolveAccess(
+        await loadAccessInput(serverId, actor, role),
+      );
+      return decision.allowed
+        ? {
+            role,
+            allowed: true,
+            layer: null,
+            reason: null,
+            keySource: decision.keySource,
+            primaryModel: decision.primaryModel,
+            escalationModel: decision.escalationModel,
+          }
+        : {
+            role,
+            allowed: false,
+            layer: decision.layer,
+            reason: decision.reason,
+            keySource: null,
+            primaryModel: null,
+            escalationModel: null,
+          };
+    },
+  );
 }
 
 export async function getCodriverServerOverview(
@@ -216,10 +210,12 @@ export async function getCodriverPanelRequestsPaginated(
   filter: string,
   filters?: { status?: CodriverRequestStatus; login?: string },
 ): Promise<ServerResponse<PaginationResponse<CodriverRequestRow>>> {
-  return doServerActionWithAuth([], async (session) => {
-    requirePanelAdmin(session);
-    return readRequests(pagination, sorting, filter, filters);
-  });
+  return doServerActionWithAuth(
+    routePermissions.admin.codriver.view,
+    async () => {
+      return readRequests(pagination, sorting, filter, filters);
+    },
+  );
 }
 
 async function readRequests(

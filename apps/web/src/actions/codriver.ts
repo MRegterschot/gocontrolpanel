@@ -22,7 +22,8 @@ import {
 import { recordRequest } from "@/lib/codriver/usage";
 import { getClient } from "@/lib/dbclient";
 import { encryptSecret } from "@/lib/secrets";
-import { requirePanelAdmin, serverAdminPermissions } from "@/services/codriver";
+import { routePermissions } from "@/routes";
+import { serverAdminPermissions } from "@/services/codriver";
 import type { CodriverChatReply } from "@/types/codriver";
 import { ServerError, ServerResponse } from "@/types/responses";
 import { z } from "zod";
@@ -86,43 +87,47 @@ async function encryptVerifiedKey(key: string | null): Promise<string | null> {
 export async function saveCodriverPanelSettings(
   input: z.input<typeof panelSettingsSchema>,
 ): Promise<ServerResponse> {
-  return doServerActionWithAuth([], async (session) => {
-    requirePanelAdmin(session);
-    const data = parse(panelSettingsSchema, input);
-    await getClient().codriverPanelSettings.upsert({
-      where: { id: PANEL_SETTINGS_ID },
-      create: { id: PANEL_SETTINGS_ID, ...data },
-      update: data,
-    });
-    await logAudit(
-      session.user.id,
-      PANEL_SETTINGS_ID,
-      "codriver.panel.edit",
-      data,
-    );
-  });
+  return doServerActionWithAuth(
+    routePermissions.admin.codriver.edit,
+    async (session) => {
+      const data = parse(panelSettingsSchema, input);
+      await getClient().codriverPanelSettings.upsert({
+        where: { id: PANEL_SETTINGS_ID },
+        create: { id: PANEL_SETTINGS_ID, ...data },
+        update: data,
+      });
+      await logAudit(
+        session.user.id,
+        PANEL_SETTINGS_ID,
+        "codriver.panel.edit",
+        data,
+      );
+    },
+  );
 }
 
 export async function setCodriverSharedKey(
   key: string | null,
 ): Promise<ServerResponse> {
-  return doServerActionWithAuth([], async (session) => {
-    requirePanelAdmin(session);
-    const encrypted = await encryptVerifiedKey(parse(apiKeySchema, key));
-    await getClient().codriverPanelSettings.upsert({
-      where: { id: PANEL_SETTINGS_ID },
-      create: { id: PANEL_SETTINGS_ID, sharedApiKeyEncrypted: encrypted },
-      update: { sharedApiKeyEncrypted: encrypted },
-    });
-    await logAudit(
-      session.user.id,
-      PANEL_SETTINGS_ID,
-      "codriver.sharedkey.edit",
-      {
-        removed: encrypted === null,
-      },
-    );
-  });
+  return doServerActionWithAuth(
+    routePermissions.admin.codriver.edit,
+    async (session) => {
+      const encrypted = await encryptVerifiedKey(parse(apiKeySchema, key));
+      await getClient().codriverPanelSettings.upsert({
+        where: { id: PANEL_SETTINGS_ID },
+        create: { id: PANEL_SETTINGS_ID, sharedApiKeyEncrypted: encrypted },
+        update: { sharedApiKeyEncrypted: encrypted },
+      });
+      await logAudit(
+        session.user.id,
+        PANEL_SETTINGS_ID,
+        "codriver.sharedkey.edit",
+        {
+          removed: encrypted === null,
+        },
+      );
+    },
+  );
 }
 
 async function targetExists(
@@ -153,44 +158,53 @@ async function targetExists(
 export async function saveCodriverRule(
   input: z.input<typeof ruleSchema>,
 ): Promise<ServerResponse> {
-  return doServerActionWithAuth([], async (session) => {
-    requirePanelAdmin(session);
-    const rule = parse(ruleSchema, input);
-    if (!(await targetExists(rule.targetType, rule.targetId))) {
-      throw new ServerError(
-        `That ${rule.targetType} does not exist`,
-        "NotFound",
-      );
-    }
-    // Shared-key settings mean nothing on a user rule
-    const data =
-      rule.targetType === "user"
-        ? { ...rule, useSharedKey: false, sharedMonthlyBudgetCents: null }
-        : rule;
-    await getClient().codriverAccessRules.upsert({
-      where: {
-        targetType_targetId: {
-          targetType: data.targetType,
-          targetId: data.targetId,
+  return doServerActionWithAuth(
+    routePermissions.admin.codriver.edit,
+    async (session) => {
+      const rule = parse(ruleSchema, input);
+      if (!(await targetExists(rule.targetType, rule.targetId))) {
+        throw new ServerError(
+          `That ${rule.targetType} does not exist`,
+          "NotFound",
+        );
+      }
+      // Shared-key settings mean nothing on a user rule
+      const data =
+        rule.targetType === "user"
+          ? { ...rule, useSharedKey: false, sharedMonthlyBudgetCents: null }
+          : rule;
+      await getClient().codriverAccessRules.upsert({
+        where: {
+          targetType_targetId: {
+            targetType: data.targetType,
+            targetId: data.targetId,
+          },
         },
-      },
-      create: { ...data, createdById: session.user.id },
-      update: data,
-    });
-    await logAudit(session.user.id, data.targetId, "codriver.rule.edit", data);
-  });
+        create: { ...data, createdById: session.user.id },
+        update: data,
+      });
+      await logAudit(
+        session.user.id,
+        data.targetId,
+        "codriver.rule.edit",
+        data,
+      );
+    },
+  );
 }
 
 export async function deleteCodriverRule(id: string): Promise<ServerResponse> {
-  return doServerActionWithAuth([], async (session) => {
-    requirePanelAdmin(session);
-    const rule = await getClient().codriverAccessRules.delete({
-      where: { id: parse(z.string().min(1), id) },
-    });
-    await logAudit(session.user.id, rule.targetId, "codriver.rule.delete", {
-      targetType: rule.targetType,
-    });
-  });
+  return doServerActionWithAuth(
+    routePermissions.admin.codriver.edit,
+    async (session) => {
+      const rule = await getClient().codriverAccessRules.delete({
+        where: { id: parse(z.string().min(1), id) },
+      });
+      await logAudit(session.user.id, rule.targetId, "codriver.rule.delete", {
+        targetType: rule.targetType,
+      });
+    },
+  );
 }
 
 // Server settings -----------------------------------------------------------------------------

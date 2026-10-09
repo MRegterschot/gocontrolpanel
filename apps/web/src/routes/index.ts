@@ -186,6 +186,10 @@ export const routePermissions = {
         delete: ["hetzner:servers:delete", "hetzner:id:admin"],
       },
     },
+    codriver: {
+      view: ["codriver:view", "codriver:edit"],
+      edit: ["codriver:edit"],
+    },
     auditLogs: {
       view: [
         "audit-logs:view",

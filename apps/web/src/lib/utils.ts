@@ -278,6 +278,8 @@ export const permissions: string[] = [
   "audit-logs:view",
   "audit-logs:delete",
   "plugins:upload",
+  "codriver:view",
+  "codriver:edit",
 ] as const;
 
 export function hasPermissionSync(

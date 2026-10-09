@@ -3,15 +3,17 @@ import { requireActiveServer } from "@/lib/codriver/panel-access";
 import { usageAccumulator } from "@/lib/codriver/statistics";
 import { monthStart } from "@/lib/codriver/usage";
 import { getClient } from "@/lib/dbclient";
-import { requirePanelAdmin, serverAdminPermissions } from "@/services/codriver";
+import { routePermissions } from "@/routes";
+import { serverAdminPermissions } from "@/services/codriver";
 import "server-only";
 
 export async function getCodriverUsage(serverId?: string) {
   return doServerActionWithAuth(
-    serverId ? serverAdminPermissions(serverId) : [],
-    async (session) => {
+    serverId
+      ? serverAdminPermissions(serverId)
+      : routePermissions.admin.codriver.view,
+    async () => {
       if (serverId) await requireActiveServer(serverId);
-      else requirePanelAdmin(session);
       const db = getClient();
       const now = new Date();
       const servers = await db.servers.findMany({

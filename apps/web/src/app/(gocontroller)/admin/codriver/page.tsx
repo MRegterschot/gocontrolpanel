@@ -1,11 +1,10 @@
 import PanelCodriver from "@/components/codriver/panel-codriver";
-import { auth } from "@/lib/auth";
-import { routes } from "@/routes";
+import { hasPermission } from "@/lib/auth";
+import { routePermissions, routes } from "@/routes";
 import { redirect } from "next/navigation";
 
 export default async function AdminCodriverPage() {
-  const session = await auth();
-  if (!session?.user.admin) {
+  if (!(await hasPermission(routePermissions.admin.codriver.view))) {
     redirect(routes.dashboard);
   }
 
