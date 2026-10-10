@@ -1,6 +1,10 @@
 "use server";
 
 import { CreateFileEntrySchemaType } from "@/forms/server/files/create-file-entry-schema";
+import {
+  MoveFileEntriesSchema,
+  MoveFileEntriesSchemaType,
+} from "@/forms/server/files/move-file-entries-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { actorFromSession } from "@/lib/actor";
 import { getLogger } from "@/lib/logger";
@@ -194,6 +198,76 @@ export async function createFileEntry(
         ...data,
         lastModified: new Date(data.lastModified),
       };
+    },
+  );
+}
+
+export async function moveFileEntries(
+  serverId: string,
+  request: MoveFileEntriesSchemaType,
+): Promise<ServerResponse<FileEntry[]>> {
+  return doServerActionWithAuth(
+    [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
+    async (session) => {
+      const parsed = MoveFileEntriesSchema.safeParse(request);
+      if (!parsed.success) {
+        throw new ServerError("Invalid move request", "FileMoveError");
+      }
+
+      const fileManager = await getFileManager(serverId);
+      if (!fileManager?.health) {
+        await logAudit(
+          session.user.id,
+          serverId,
+          "server.files.move",
+          parsed.data,
+          "File manager is not healthy",
+        );
+        throw new ServerError(
+          "Could not connect to file manager",
+          "FileManagerNotHealthy",
+        );
+      }
+
+      const res = await fetch(fileManager.url + "/move", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${fileManager.password}`,
+        },
+        body: JSON.stringify(parsed.data),
+      });
+
+      if (res.status !== 200) {
+        const message =
+          res.status === 500 ? "Something went wrong" : await res.text();
+        await logAudit(
+          session.user.id,
+          serverId,
+          "server.files.move",
+          parsed.data,
+          message,
+        );
+        throw new ServerError(message, "FileMoveError");
+      }
+
+      const data = await res.json();
+
+      await logAudit(
+        session.user.id,
+        serverId,
+        "server.files.move",
+        parsed.data,
+      );
+
+      return data.map(
+        (
+          entry: Omit<FileEntry, "lastModified"> & { lastModified: string },
+        ) => ({
+          ...entry,
+          lastModified: new Date(entry.lastModified),
+        }),
+      );
     },
   );
 }

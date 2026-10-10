@@ -2,7 +2,10 @@
 import { deleteEntry } from "@/actions/filemanager";
 import { getErrorMessage, removePrefix } from "@/lib/utils";
 import { FileEntry } from "@/types/filemanager";
+import { ServerError } from "@/types/responses";
 import {
+  IconArrowsMove,
+  IconDownload,
   IconFilePlus,
   IconFolderPlus,
   IconTrash,
@@ -12,9 +15,9 @@ import { Dispatch, SetStateAction, useRef, useState } from "react";
 import { toast } from "sonner";
 import ConfirmModal from "../modals/confirm-modal";
 import CreateFileEntryModal from "../modals/files/create-file-entry";
+import MoveFileEntriesModal from "../modals/files/move-file-entries";
 import Modal from "../modals/modal";
 import { Button } from "../ui/button";
-import { ServerError } from "@/types/responses";
 
 interface ActionsProps {
   selectedItems: FileEntry[];
@@ -47,6 +50,41 @@ export default function Actions({
 
   const triggerUpload = () => {
     fileInputRef.current?.click();
+  };
+
+  const parentOf = (entryPath: string) =>
+    entryPath.slice(0, entryPath.lastIndexOf("/")) || "/";
+
+  // Moved items only stay visible if they are still in this folder
+  const handleMoved = (moved: FileEntry[] = []) => {
+    const oldPaths = selectedItems.map((item) => item.path);
+    const here = moved.filter(
+      (entry) =>
+        parentOf(entry.path) === parentOf(`${path.replace(/\/+$/, "")}/x`),
+    );
+    const withoutMoved = (prev: FileEntry[]) =>
+      prev.filter((entry) => !oldPaths.includes(entry.path));
+
+    setFolders((prev) => [
+      ...withoutMoved(prev),
+      ...here.filter((entry) => entry.isDir),
+    ]);
+    setFiles((prev) => [
+      ...withoutMoved(prev),
+      ...here.filter((entry) => !entry.isDir),
+    ]);
+    setSelectedItems([]);
+  };
+
+  // A plain navigation lets the browser stream the file or zip to disk
+  const handleDownload = () => {
+    const query = new URLSearchParams(
+      selectedItems.map((item) => ["path", item.path]),
+    );
+    const link = document.createElement("a");
+    link.href = `/api/servers/${encodeURIComponent(serverId)}/files/download?${query}`;
+    link.download = "";
+    link.click();
   };
 
   const handleDelete = async () => {
@@ -84,6 +122,23 @@ export default function Actions({
     <div className="flex items-center gap-2 justify-end">
       {selectedItems.length > 0 && (
         <>
+          <Button variant="outline" collapse="sm" onClick={handleDownload}>
+            <IconDownload />
+            Download
+          </Button>
+
+          <Modal closeOnBackdropClick={false} key={selectedItems.length}>
+            <MoveFileEntriesModal
+              serverId={serverId}
+              items={selectedItems}
+              onSubmit={handleMoved}
+            />
+            <Button variant="outline" collapse="sm">
+              <IconArrowsMove />
+              {selectedItems.length === 1 ? "Move / Rename" : "Move"}
+            </Button>
+          </Modal>
+
           <Button
             variant="destructive"
             collapse="sm"

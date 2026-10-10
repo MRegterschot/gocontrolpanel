@@ -620,6 +620,11 @@ export function PluginConfigForm({
         </div>
       );
     }
+    // One label above the whole list rather than one per row
+    const isScalarList =
+      field.type === "array" &&
+      field.items.type !== "object" &&
+      field.items.type !== "array";
     return (
       <div
         key={stableKey ?? path.at(-1)}
@@ -635,7 +640,7 @@ export function PluginConfigForm({
       >
         {field.type !== "boolean" &&
           field.type !== "object" &&
-          field.type !== "array" &&
+          (field.type !== "array" || isScalarList) &&
           (field.title || !/^\d+$/.test(path.at(-1)!)) && (
             <Label htmlFor={inputId}>
               {label}
