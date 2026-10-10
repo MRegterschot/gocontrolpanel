@@ -67,3 +67,27 @@ export function executeSSHScript(
     });
   });
 }
+
+// Like executeSSHScript, but always returns the combined output and exit code, even on failure
+export function runSSHScript(
+  conn: Client,
+  script: string,
+): Promise<{ output: string; code: number | null }> {
+  return new Promise((resolve, reject) => {
+    conn.exec("bash -s 2>&1", (err, stream) => {
+      if (err) return reject(err);
+
+      let output = "";
+      stream
+        .on("close", (code: number | null) => resolve({ output, code }))
+        .on("data", (data: Buffer) => {
+          output += data.toString();
+        });
+      stream.stderr.on("data", (data: Buffer) => {
+        output += data.toString();
+      });
+
+      stream.end(script);
+    });
+  });
+}

@@ -1,8 +1,11 @@
 "use server";
 
 import { doServerActionWithAuth } from "@/lib/actions";
-import { connectToSSHServer, executeSSHScript } from "@/lib/ssh";
-import { ServerError } from "@/types/responses";
+import { readFileSync } from "fs";
+import path from "path";
+import { packageDirectorySync } from "pkg-dir";
+import { connectToSSHServer, executeSSHScript, runSSHScript } from "@/lib/ssh";
+import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
 import { getDBHetznerServer } from "../database/server-only/hetzner-servers";
 import { getHetznerServer } from "./util";
@@ -151,6 +154,72 @@ export async function stopTrackmaniaServer(
       }
 
       la();
+    },
+  );
+}
+
+// Pulls the latest file manager image and recreates every running file manager on the server
+export async function updateFileManagers(
+  projectId: string,
+  serverId: number,
+): Promise<ServerResponse<{ output: string; success: boolean }>> {
+  return doServerActionWithAuth(
+    ["hetzner:servers:manage", `hetzner:${projectId}:admin`],
+    async (session) => {
+      const la = (error?: string) =>
+        logAudit(
+          session.user.id,
+          projectId,
+          "hetzner.server.manage.updateFileManagers",
+          { id: serverId },
+          error,
+        );
+
+      const hetznerServer = await getHetznerServer(projectId, serverId);
+
+      if (!hetznerServer) {
+        la("Server not found");
+        throw new ServerError("Server not found", "HetznerServerNotFound");
+      }
+
+      const dbHetznerServer = await getDBHetznerServer(serverId);
+
+      if (!dbHetznerServer) {
+        la("DB Server not found");
+        throw new ServerError("DB Server not found", "DBHetznerServerNotFound");
+      }
+
+      if (!dbHetznerServer.privateKey) {
+        la("SSH private key not found for the server");
+        throw new ServerError(
+          "SSH private key not found for the server",
+          "SSHPrivateKeyNotFound",
+        );
+      }
+
+      const script = readFileSync(
+        path.join(
+          packageDirectorySync() || process.cwd(),
+          "hetzner",
+          "update-filemanager.sh",
+        ),
+        "utf-8",
+      );
+
+      const sshConn = await connectToSSHServer(
+        hetznerServer.public_net.ipv4?.ip || "",
+        22,
+        "root",
+        Buffer.from(dbHetznerServer.privateKey),
+      );
+
+      try {
+        const { output, code } = await runSSHScript(sshConn, script);
+        await la(code === 0 ? undefined : `Update failed with exit code ${code}`);
+        return { output, success: code === 0 };
+      } finally {
+        sshConn.end();
+      }
     },
   );
 }

@@ -9,6 +9,7 @@ import DetachServerFromNetworkModal from "@/components/modals/hetzner/detach-ser
 import HetznerDatabaseDetailsModal from "@/components/modals/hetzner/hetzner-database-details";
 import HetznerServerDetailsModal from "@/components/modals/hetzner/hetzner-server-details";
 import HetznerServerMetricsModal from "@/components/modals/hetzner/hetzner-server-metrics";
+import HetznerUpdateFileManagerModal from "@/components/modals/hetzner/hetzner-update-filemanager";
 import Modal from "@/components/modals/modal";
 import { DataTableColumnHeader } from "@/components/table/data-table-column-header";
 import { Button } from "@/components/ui/button";
@@ -136,12 +137,21 @@ export const createServersColumns = (
       const [isAttachOpen, setIsAttachOpen] = useState(false);
       const [isDetachOpen, setIsDetachOpen] = useState(false);
       const [isAddServerOpen, setIsAddServerOpen] = useState(false);
+      const [isUpdateFmOpen, setIsUpdateFmOpen] = useState(false);
 
       const canDelete = hasPermissionSync(
         session,
         routePermissions.admin.hetzner.servers.delete,
         data.projectId,
       );
+
+      const canManage =
+        server.labels.type === "dedi" &&
+        hasPermissionSync(
+          session,
+          routePermissions.admin.hetzner.servers.manage,
+          data.projectId,
+        );
 
       const canCreate = hasPermissionSync(
         session,
@@ -204,6 +214,11 @@ export const createServersColumns = (
               <DropdownMenuItem onClick={() => setIsMetricsOpen(true)}>
                 View Metrics
               </DropdownMenuItem>
+              {canManage && (
+                <DropdownMenuItem onClick={() => setIsUpdateFmOpen(true)}>
+                  Update File Managers
+                </DropdownMenuItem>
+              )}
               {canCreate && (
                 <>
                   {!Object.keys(row.original.labels).some((key) =>
@@ -266,6 +281,22 @@ export const createServersColumns = (
               }}
             />
           </Modal>
+
+          {canManage && (
+            <Modal
+              isOpen={isUpdateFmOpen}
+              setIsOpen={setIsUpdateFmOpen}
+              closeOnBackdropClick={false}
+            >
+              <HetznerUpdateFileManagerModal
+                data={{
+                  projectId: data.projectId,
+                  serverId: server.id,
+                  serverName: server.name,
+                }}
+              />
+            </Modal>
+          )}
 
           {canCreate && (
             <>
