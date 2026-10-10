@@ -537,6 +537,10 @@ export function PluginConfigForm({
           : scripts.map((script) => ({ label: script, value: script })));
       if (value && !options.some((option) => option.value === value))
         options.push({ label: String(value), value: String(value) });
+      // The map list can repeat a file, which would duplicate item keys
+      const uniqueOptions = options.filter(
+        (option, i) => options.findIndex((o) => o.value === option.value) === i,
+      );
       control = (
         <div className="flex gap-2">
           <Select value={String(value ?? "")} onValueChange={update}>
@@ -544,7 +548,7 @@ export function PluginConfigForm({
               <SelectValue placeholder="Choose..." />
             </SelectTrigger>
             <SelectContent>
-              {options
+              {uniqueOptions
                 .filter((option) => option.value)
                 .map((option) => (
                   <SelectItem key={option.value} value={option.value}>
