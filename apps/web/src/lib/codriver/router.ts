@@ -50,6 +50,7 @@ const keywords: Record<ToolCategory, string[]> = {
     "pack",
     "attack",
     "gamemode",
+    "download",
   ],
   mode: [
     "mode",
@@ -79,6 +80,10 @@ const keywords: Record<ToolCategory, string[]> = {
     "timeout",
     "winners",
     "match",
+    "script",
+    "scripts",
+    "generate",
+    "generator",
   ],
   players: [
     "kick",
@@ -109,6 +114,8 @@ const keywords: Record<ToolCategory, string[]> = {
     "reload",
     "config",
     "configure",
+    "lobby",
+    "pickban",
   ],
   server: [
     "server",

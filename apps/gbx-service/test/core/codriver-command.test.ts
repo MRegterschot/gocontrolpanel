@@ -2,19 +2,25 @@ import { describe, expect, it, vi } from "vitest";
 import {
   CODRIVER_HELP,
   CodriverCommand,
+  type CodriverAnswer,
   type CodriverClient,
 } from "../../src/core/chat/codriver-command";
 import { CommandRouter } from "../../src/core/chat/command-router";
 import { silentLogger } from "../fakes/logger";
 
-function setup(client: CodriverClient | null, thinkingDelayMs = 1000) {
+function setup(
+  client: Partial<CodriverClient> | null,
+  thinkingDelayMs = 1000,
+  now?: () => number,
+) {
   const reply = vi.fn(async () => {});
   const command = new CodriverCommand({
     serverId: "server-a",
-    client,
+    client: client && { ask: vi.fn(), clear: vi.fn(), ...client },
     log: silentLogger,
     reply,
     thinkingDelayMs,
+    now,
   });
   return { command, reply };
 }
@@ -27,7 +33,7 @@ describe("CodriverCommand", () => {
   });
 
   it("forwards the request text and replies with the answer", async () => {
-    const ask = vi.fn(async () => "Queued Winter 01.");
+    const ask = vi.fn(async () => ({ reply: "Queued Winter 01." }));
     const { command, reply } = setup({ ask });
 
     expect(await command.dispatch("co", ["play", "winter", "01"], "abc")).toBe(
@@ -47,7 +53,9 @@ describe("CodriverCommand", () => {
   });
 
   it("shows the player their own request, with formatting escaped", async () => {
-    const { command, reply } = setup({ ask: vi.fn(async () => "Done.") });
+    const { command, reply } = setup({
+      ask: vi.fn(async () => ({ reply: "Done." })),
+    });
     await command.dispatch("co", ["load", "$f00red"], "abc");
     expect(reply).toHaveBeenNthCalledWith(
       1,
@@ -57,7 +65,7 @@ describe("CodriverCommand", () => {
   });
 
   it("forwards /feedback as a prefixed message, even without text", async () => {
-    const ask = vi.fn(async () => "Thanks.");
+    const ask = vi.fn(async () => ({ reply: "Thanks." }));
     const { command } = setup({ ask });
     expect(await command.dispatch("feedback", ["wrong", "map"], "abc")).toBe(
       true,
@@ -78,7 +86,7 @@ describe("CodriverCommand", () => {
   });
 
   it("answers /ai the same way", async () => {
-    const ask = vi.fn(async () => "ok");
+    const ask = vi.fn(async () => ({ reply: "ok" }));
     const { command } = setup({ ask });
     await command.dispatch("ai", ["status"], "abc");
     expect(ask).toHaveBeenCalledOnce();
@@ -105,9 +113,9 @@ describe("CodriverCommand", () => {
   });
 
   it("handles one request per player at a time", async () => {
-    let finish!: (value: string) => void;
+    let finish!: (value: CodriverAnswer) => void;
     const ask = vi.fn(
-      () => new Promise<string>((resolve) => (finish = resolve)),
+      () => new Promise<CodriverAnswer>((resolve) => (finish = resolve)),
     );
     const { command, reply } = setup({ ask });
 
@@ -118,34 +126,34 @@ describe("CodriverCommand", () => {
       expect.stringContaining("Still working"),
     );
 
-    finish("Skipping.");
+    finish({ reply: "Skipping." });
     await first;
     expect(ask).toHaveBeenCalledOnce();
   });
 
   it("shows a working note for slow answers", async () => {
     vi.useFakeTimers();
-    let finish!: (value: string) => void;
+    let finish!: (value: CodriverAnswer) => void;
     const { command, reply } = setup({
-      ask: () => new Promise<string>((resolve) => (finish = resolve)),
+      ask: () => new Promise<CodriverAnswer>((resolve) => (finish = resolve)),
     });
 
     const pending = command.dispatch("co", ["play", "a", "snow", "map"], "abc");
     await vi.advanceTimersByTimeAsync(1000);
     expect(reply).toHaveBeenCalledWith("abc", expect.stringContaining("On it"));
 
-    finish("Queued.");
+    finish({ reply: "Queued." });
     await pending;
     vi.useRealTimers();
   });
 
   it("passes slow progress lines on once, skipping repeats and early ones", async () => {
     vi.useFakeTimers();
-    let finish!: (value: string) => void;
+    let finish!: (value: CodriverAnswer) => void;
     let progress!: (text: string) => void;
     const { command, reply } = setup({
       ask: (_s, _l, _t, onProgress) =>
-        new Promise<string>((resolve) => {
+        new Promise<CodriverAnswer>((resolve) => {
           finish = resolve;
           progress = onProgress!;
         }),
@@ -171,7 +179,113 @@ describe("CodriverCommand", () => {
       expect.stringContaining("Running: skip map"),
     );
 
-    finish("Skipping.");
+    finish({ reply: "Skipping." });
+    await pending;
+    vi.useRealTimers();
+  });
+
+  it("collects /co+ parts and sends them with the next /co", async () => {
+    const ask = vi.fn(async () => ({ reply: "Done." }));
+    const { command, reply } = setup({ ask });
+
+    await command.dispatch("co+", ["create", "a", "cup", "script."], "abc");
+    await command.dispatch("ai+", ["Then", "load", "BNL."], "abc");
+    expect(ask).not.toHaveBeenCalled();
+    expect(reply).toHaveBeenLastCalledWith(
+      "abc",
+      expect.stringContaining("Added (35/1200)"),
+    );
+
+    await command.dispatch("co", ["Then", "go", "to", "the", "lobby."], "abc");
+    expect(ask).toHaveBeenCalledWith(
+      "server-a",
+      "abc",
+      "create a cup script. Then load BNL. Then go to the lobby.",
+      expect.any(Function),
+    );
+    // The draft is used up
+    await command.dispatch("co", ["status"], "abc");
+    expect(ask).toHaveBeenLastCalledWith(
+      "server-a",
+      "abc",
+      "status",
+      expect.any(Function),
+    );
+  });
+
+  it("sends a draft with an empty /co and drops it when it expires", async () => {
+    let time = 0;
+    const ask = vi.fn(async () => ({ reply: "Done." }));
+    const { command, reply } = setup({ ask }, 1000, () => time);
+
+    await command.dispatch("co+", ["skip"], "abc");
+    await command.dispatch("co", [], "abc");
+    expect(ask).toHaveBeenLastCalledWith(
+      "server-a",
+      "abc",
+      "skip",
+      expect.any(Function),
+    );
+
+    await command.dispatch("co+", ["restart"], "abc");
+    time = 5 * 60_000 + 1;
+    await command.dispatch("co", [], "abc");
+    expect(ask).toHaveBeenCalledTimes(1);
+    expect(reply).toHaveBeenLastCalledWith(
+      "abc",
+      expect.stringContaining("Ask me something"),
+    );
+  });
+
+  it("refuses a draft longer than the panel accepts", async () => {
+    const { command, reply } = setup({ ask: vi.fn() });
+    await command.dispatch("co+", ["x".repeat(1201)], "abc");
+    expect(reply).toHaveBeenLastCalledWith(
+      "abc",
+      expect.stringContaining("longer than 1200"),
+    );
+  });
+
+  it("says each step's reply on its own line", async () => {
+    const { command, reply } = setup({
+      ask: async () => ({
+        reply: "1. Created a.Script.txt.\n2. Ran /lobby of Match.",
+      }),
+    });
+    await command.dispatch("co", ["do", "it"], "abc");
+    expect(reply).toHaveBeenNthCalledWith(
+      2,
+      "abc",
+      expect.stringContaining("1. Created a.Script.txt."),
+    );
+    expect(reply).toHaveBeenNthCalledWith(
+      3,
+      "abc",
+      expect.stringContaining("2. Ran /lobby of Match."),
+    );
+  });
+
+  it("gives each step of a long request its own status lines", async () => {
+    vi.useFakeTimers();
+    let finish!: (value: CodriverAnswer) => void;
+    let progress!: (text: string) => void;
+    const { command, reply } = setup({
+      ask: (_s, _l, _t, onProgress) =>
+        new Promise<CodriverAnswer>((resolve) => {
+          finish = resolve;
+          progress = onProgress!;
+        }),
+    });
+    const pending = command.dispatch("co", ["steps"], "abc");
+    await vi.advanceTimersByTimeAsync(1000);
+    for (const step of [1, 2])
+      for (const stage of ["a", "b", "c", "d"])
+        progress(`Step ${step}/2: ${stage}`);
+    const notes = reply.mock.calls
+      .map((call) => (call as unknown as [string, string])[1])
+      .filter((text) => text.includes("Step"));
+    expect(notes).toHaveLength(6);
+    finish({ reply: "Done." });
     await pending;
     vi.useRealTimers();
   });
@@ -190,7 +304,7 @@ describe("CodriverCommand", () => {
   });
 
   it("gets the command arguments from the router", async () => {
-    const ask = vi.fn(async () => "ok");
+    const ask = vi.fn(async () => ({ reply: "ok" }));
     const { command } = setup({ ask });
     const router = new CommandRouter(
       silentLogger,

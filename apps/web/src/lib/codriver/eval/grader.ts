@@ -41,6 +41,8 @@ function canonical(value: unknown): unknown {
 
 export function normalizeCall(call: PlannedCall, mode: string): unknown {
   const input = { ...(call.input as Record<string, unknown>) };
+  if (call.tool === "generate_script" && typeof input.mode === "string")
+    input.mode = normalize(input.mode).replace(/ /g, "");
   if (call.tool === "set_mode" && typeof input.mode === "string")
     input.mode = input.mode.toLowerCase();
   if (
@@ -60,7 +62,16 @@ export function normalizeCall(call: PlannedCall, mode: string): unknown {
       })
       .sort((a, b) => a.name.localeCompare(b.name));
   }
-  for (const key of ["player", "query", "who", "plugin", "author"]) {
+  for (const key of [
+    "player",
+    "query",
+    "who",
+    "plugin",
+    "author",
+    "campaign",
+    "club",
+    "command",
+  ]) {
     if (typeof input[key] === "string") input[key] = normalize(input[key]);
   }
   if (Array.isArray(input.tags))

@@ -126,7 +126,7 @@ describe("panel chat authorization", () => {
     expect((await sendCodriverMessage(serverId, " ")).code).toBe(
       "ValidationError",
     );
-    expect((await sendCodriverMessage(serverId, "x".repeat(301))).code).toBe(
+    expect((await sendCodriverMessage(serverId, "x".repeat(1201))).code).toBe(
       "ValidationError",
     );
     mocks.server.mockResolvedValue(null);

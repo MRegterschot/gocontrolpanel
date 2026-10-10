@@ -1,9 +1,10 @@
 import { DEFAULT_THEME, type SMapInfo, type SPlayerInfo } from "@gcp/shared";
 import { readPluginPackage } from "@gcp/shared/plugin-package";
 import { fileURLToPath } from "node:url";
+import type { CodriverClient } from "../../src/core/chat/codriver-command";
+import type { SystemCommandServices } from "../../src/core/chat/system-commands";
 import { TemplateRenderer } from "../../src/core/manialink/template-renderer";
 import type { SandboxLimits } from "../../src/core/plugins/sandbox/limits";
-import type { SystemCommandServices } from "../../src/core/chat/system-commands";
 import { PackageLoader } from "../../src/core/plugins/sandbox/package-loader";
 import type { SandboxAssets } from "../../src/core/plugins/sandbox/sandboxed-plugin";
 import type { PluginDefinition } from "../../src/core/plugins/sdk";
@@ -169,6 +170,7 @@ export interface HarnessOptions {
   sandboxLimits?: SandboxLimits;
   templates?: Record<string, string>;
   systemCommands?: SystemCommandServices;
+  codriver?: CodriverClient;
 }
 
 export type Harness = Awaited<ReturnType<typeof createHarness>>;
@@ -267,6 +269,7 @@ export async function createHarness(options: HarnessOptions = {}) {
     mapMetadata: nadeo,
     nadeo,
     systemCommands: options.systemCommands,
+    codriver: options.codriver,
   });
 
   if (options.connect !== false) {

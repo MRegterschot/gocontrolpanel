@@ -10,6 +10,8 @@ import {
   CodriverCommand,
   type CodriverClient,
 } from "../chat/codriver-command";
+import { CodriverDrafts } from "../chat/codriver-drafts";
+import { CodriverWindows } from "../chat/codriver-window";
 import { CommandRouter } from "../chat/command-router";
 import {
   SystemCommands,
@@ -113,6 +115,8 @@ export class ServerRuntime {
   readonly plugins: PluginHost;
 
   private readonly log: Logger;
+  private readonly chatCommands: CommandRouter;
+  private readonly codriverWindows: CodriverWindows | null;
   private readonly liveSync: LiveSync;
   private readonly handler: GameEventHandler;
   private readonly supervisor: ConnectionSupervisor;
@@ -183,11 +187,28 @@ export class ServerRuntime {
       services: deps.systemCommands,
     });
 
+    // /co+ in chat and Add in the window build the same draft
+    const codriverDrafts = new CodriverDrafts(() => clock.now());
+    const codriverWindows = deps.codriver
+      ? new CodriverWindows({
+          serverId,
+          client: deps.codriver,
+          deps: manialinkDeps,
+          actionGroup,
+          drafts: codriverDrafts,
+          log,
+        })
+      : null;
+    this.codriverWindows = codriverWindows;
     const codriver = new CodriverCommand({
       serverId,
       log,
       client: deps.codriver ?? null,
       reply: (login, message) => chat.sendTo(login, message),
+      drafts: codriverDrafts,
+      open: codriverWindows
+        ? (login) => codriverWindows.open(login)
+        : undefined,
     });
 
     const commandRouter = new CommandRouter(
@@ -199,6 +220,8 @@ export class ServerRuntime {
         systemCommands.dispatch(name, login),
       () => (deps.codriver ? CODRIVER_HELP : {}),
     );
+
+    this.chatCommands = commandRouter;
 
     this.plugins = new PluginHost(
       deps.plugins,
@@ -253,9 +276,10 @@ export class ServerRuntime {
     bus.on("playerConnect", (player) =>
       this.manialinks.onPlayerConnect(player.login),
     );
-    bus.on("playerDisconnect", (login) =>
-      this.manialinks.onPlayerDisconnect(login),
-    );
+    bus.on("playerDisconnect", (login) => {
+      this.codriverWindows?.forget(login);
+      this.manialinks.onPlayerDisconnect(login);
+    });
     bus.on("modeChange", () => this.syncPlugins(false));
 
     this.supervisor = new ConnectionSupervisor({
@@ -320,6 +344,17 @@ export class ServerRuntime {
     this.supervisor.stop();
     await this.closeSession();
     this.events.clear();
+  }
+
+  // Runs a plugin's chat command for the panel, as if `login` typed it; false when the
+  // plugin isn't loaded or has no such command
+  runPluginCommand(
+    pluginId: string,
+    command: string,
+    args: string[],
+    login: string,
+  ): Promise<boolean> {
+    return this.chatCommands.runAs(pluginId, command, args, login);
   }
 
   // Delivers an event from the panel (e.g. "codriver:action") to this server's plugins, the
@@ -497,6 +532,8 @@ export class ServerRuntime {
     this.connectedAt = this.deps.clock.now();
     this.log.info({ name: server.name }, "Connected to GBX server");
     this.events.emit("connect");
+    // Pages were cleared for the new session; plugins add their buttons as they load
+    this.codriverWindows?.showButton();
 
     await this.syncPlugins(false);
   }
@@ -553,6 +590,7 @@ export class ServerRuntime {
 
     await this.plugins.unloadAll();
     this.manialinks.clear();
+    this.codriverWindows?.reset();
     this.events.emit("disconnect");
     this.supervisor.handleConnectionLost();
   }
@@ -566,6 +604,7 @@ export class ServerRuntime {
       await this.plugins.unloadAll();
       this.connected = false;
       this.connectedAt = null;
+      this.codriverWindows?.reset();
       this.events.emit("disconnect");
     }
 

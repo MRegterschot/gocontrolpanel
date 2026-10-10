@@ -138,7 +138,7 @@ const examples: { role: "guest" | "moderator" | "admin"; text: string }[] = [
   },
   {
     role: "admin",
-    text: "/co cup mode with 100 points, /co enable live round, /co ban Bob",
+    text: "/co cup mode with 100 points, /co enable live round, /co ban Bob, /co generate a cup script in the BNL folder",
   },
 ];
 

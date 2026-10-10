@@ -1,0 +1,189 @@
+{{#extend "window"}}
+{{#content "window"}}
+<frame id="codriver" pos="2 -2" size="{{ data.width }} {{ subtract size.y 4 }}">
+  <frame id="codriver-empty" hidden="1">
+    <label pos="0 -2.25" size="{{ data.width }} 5" text="Try “status”, “list plugins” or “skip this map”. Disruptive changes ask for confirmation." textsize="1" textcolor="{{ @theme.label.backgroundMuted }}" valign="center" textfont="GameFontRegular" />
+  </frame>
+
+  {{! Pools of controls the script places; the update page says where and with what text }}
+  <frame id="codriver-log" size="{{ data.width }} 1">
+  {{! Under the messages, so the mouse wheel scrolls the log anywhere over it }}
+  <quad size="{{ data.width }} 1000" bgcolor="{{ @theme.quad.foreground }}" opacity="0" scriptevents="1" z-index="-1" />
+  {{#range 0 data.bubbles}}
+  <quad id="codriver-bubble-{{ i }}" size="1 1" bgcolor="{{ @theme.quad.foregroundMuted }}" hidden="1" />
+  {{/range}}
+  {{#range 0 data.speakers}}
+  <label id="codriver-speaker-{{ i }}" size="1 3" textsize="0.6" textcolor="{{ @theme.label.backgroundMuted }}" valign="center" textfont="GameFontSemiBold" z-index="1" hidden="1" />
+  {{/range}}
+  {{#range 0 data.lines}}
+  <label id="codriver-line-{{ i }}" size="1 3.3" textsize="1" textcolor="{{ @theme.label.background }}" valign="center" textfont="GameFontRegular" z-index="1" hidden="1" />
+  {{/range}}
+  </frame>
+
+  <label id="codriver-progress" size="{{ data.width }} 4" textsize="1" textcolor="{{ @theme.label.backgroundMuted }}" valign="top" textfont="GameFontRegular" hidden="1" />
+
+  <frame id="codriver-confirm" size="{{ data.width }} 5" hidden="1">
+    <label pos="0 -2.25" size="50 5" text="Confirm this change within 60 seconds." textsize="1" textcolor="{{ @theme.label.background }}" valign="center" textfont="GameFontRegular" />
+    <frame pos="{{ subtract data.width 41 }} 0" size="20 5">
+      <quad size="20 5" bgcolor="{{ @theme.quad.foregroundMuted }}" action="codriver-confirm" />
+      <quad pos="0 -4.75" size="20 0.25" bgcolor="{{ @theme.quad.background }}" />
+      <label pos="10 -2.25" text=" Confirm" textsize="1" textcolor="{{ @theme.label.background }}" valign="center" halign="center" textfont="GameFontRegular" />
+    </frame>
+    <frame pos="{{ subtract data.width 20 }} 0" size="20 5">
+      <quad size="20 5" bgcolor="{{ @theme.quad.foregroundMuted }}" action="codriver-cancel" />
+      <quad pos="0 -4.75" size="20 0.25" bgcolor="{{ @theme.quad.background }}" />
+      <label pos="10 -2.25" text=" Cancel" textsize="1" textcolor="{{ @theme.label.background }}" valign="center" halign="center" textfont="GameFontRegular" />
+    </frame>
+  </frame>
+
+  <frame id="codriver-draft" pos="0 {{ data.draftY }}" size="{{ data.width }} 5" hidden="1">
+    <label id="codriver-draft-text" pos="0 -2.25" size="{{ subtract data.width 17 }} 5" textsize="1" textcolor="{{ @theme.label.backgroundMuted }}" valign="center" textfont="GameFontRegular" />
+    <frame pos="{{ subtract data.width 15 }} 0" size="15 5">
+      <quad size="15 5" bgcolor="{{ @theme.quad.foregroundMuted }}" action="codriver-discard" />
+      <quad pos="0 -4.75" size="15 0.25" bgcolor="{{ @theme.quad.background }}" />
+      <label pos="7.5 -2.25" text=" Discard" textsize="1" textcolor="{{ @theme.label.background }}" valign="center" halign="center" textfont="GameFontRegular" />
+    </frame>
+  </frame>
+
+  {{! Send and Clear stack beside the text box, together as tall as it }}
+  <frame pos="0 {{ data.inputY }}" size="{{ data.width }} {{ data.inputHeight }}">
+    <quad pos="0 {{ subtract 0.25 data.inputHeight }}" size="{{ subtract data.width 17 }} 0.25" bgcolor="{{ @theme.quad.background }}" />
+    <textedit pos="0 0" size="{{ subtract data.width 17 }} {{ data.inputHeight }}" name="codriver-entry" id="codriver-entry" default="" autonewline="1" showlinenumbers="0" textformat="Basic" textsize="1" focusareacolor1="{{ @theme.label.foregroundMuted }}" focusareacolor2="{{ @theme.label.foregroundMuted }}" textcolor="{{ @theme.label.background }}" textfont="GameFontRegular" />
+
+    <frame pos="{{ subtract data.width 15 }} 0" size="15 4.75">
+      <quad size="15 4.75" bgcolor="{{ @theme.quad.foregroundMuted }}" action="codriver-send" />
+      <quad pos="0 -4.5" size="15 0.25" bgcolor="{{ @theme.quad.background }}" />
+      <label id="codriver-send-label" pos="7.5 -2.25" text=" Send" textsize="1" textcolor="{{ @theme.label.background }}" valign="center" halign="center" textfont="GameFontRegular" />
+    </frame>
+
+    <frame pos="{{ subtract data.width 15 }} -5.25" size="15 4.75">
+      <quad size="15 4.75" bgcolor="{{ @theme.quad.foregroundMuted }}" action="codriver-clear" />
+      <quad pos="0 -4.5" size="15 0.25" bgcolor="{{ @theme.quad.background }}" />
+      <label pos="7.5 -2.25" text=" Clear" textsize="1" textcolor="{{ @theme.label.background }}" valign="center" halign="center" textfont="GameFontRegular" />
+    </frame>
+  </frame>
+</frame>
+{{/content}}
+
+{{#content "globals"}}
+declare Integer CodriverShown;
+declare Integer CodriverEntryCleared;
+declare Integer CodriverScrolled;
+// Frames left to hold the log at the bottom; a new ScrollMax only takes effect a frame later
+declare Integer CodriverStickFrames;
+{{/content}}
+
+{{#content "script"}}
+// Places the pooled controls and bars from what the update page last set
+Void CodriverApply() {
+  declare Text[] CodriverSpeakerTexts for This;
+  declare Vec2[] CodriverSpeakerPos for This;
+  declare Real[] CodriverSpeakerWidths for This;
+  declare Vec2[] CodriverBubblePos for This;
+  declare Vec2[] CodriverBubbleSizes for This;
+  declare Text[] CodriverLineTexts for This;
+  declare Vec2[] CodriverLinePos for This;
+  declare Real[] CodriverLineWidths for This;
+  declare Boolean CodriverEmpty for This;
+  declare Boolean CodriverBusy for This;
+  declare Text CodriverProgress for This;
+  declare Real CodriverProgressY for This;
+  declare Boolean CodriverConfirm for This;
+  declare Real CodriverConfirmY for This;
+  declare Text CodriverDraft for This;
+  declare Integer CodriverClearEntry for This;
+  declare Real CodriverLogHeight for This;
+  declare Real CodriverContentHeight for This;
+  declare Integer CodriverScrollEnd for This;
+
+  // The log shows what fits between the top and the bars; the rest scrolls
+  declare Log <=> (Page.GetFirstChild("codriver-log") as CMlFrame);
+  // Someone reading the newest message keeps seeing it as the log grows or shrinks
+  declare Boolean AtBottom = Log.ScrollOffset.Y >= Log.ScrollMax.Y - 1.;
+  Log.Size = <{{ data.width }}., CodriverLogHeight>;
+  declare Real MaxY = CodriverContentHeight - CodriverLogHeight;
+  if (MaxY < 0.) MaxY = 0.;
+  Log.ScrollMax = <0., MaxY>;
+  if (CodriverScrollEnd != CodriverScrolled || AtBottom) {
+    CodriverScrolled = CodriverScrollEnd;
+    CodriverStickFrames = 5;
+  }
+
+  for (I, 0, {{ subtract data.bubbles 1 }}) {
+    declare Bubble <=> (Page.GetFirstChild("codriver-bubble-" ^ I) as CMlQuad);
+    Bubble.Visible = I < CodriverBubblePos.count;
+    if (Bubble.Visible) {
+      Bubble.RelativePosition_V3 = CodriverBubblePos[I];
+      Bubble.Size = CodriverBubbleSizes[I];
+    }
+  }
+  for (I, 0, {{ subtract data.speakers 1 }}) {
+    declare Speaker <=> (Page.GetFirstChild("codriver-speaker-" ^ I) as CMlLabel);
+    Speaker.Visible = I < CodriverSpeakerTexts.count;
+    if (Speaker.Visible) {
+      Speaker.SetText(CodriverSpeakerTexts[I]);
+      Speaker.RelativePosition_V3 = CodriverSpeakerPos[I];
+      Speaker.Size = <CodriverSpeakerWidths[I], 3.>;
+    }
+  }
+  for (I, 0, {{ subtract data.lines 1 }}) {
+    declare Line <=> (Page.GetFirstChild("codriver-line-" ^ I) as CMlLabel);
+    Line.Visible = I < CodriverLineTexts.count;
+    if (Line.Visible) {
+      Line.SetText(CodriverLineTexts[I]);
+      Line.RelativePosition_V3 = CodriverLinePos[I];
+      Line.Size = <CodriverLineWidths[I], 3.3>;
+    }
+  }
+
+  Page.GetFirstChild("codriver-empty").Visible = CodriverEmpty;
+  declare Progress <=> (Page.GetFirstChild("codriver-progress") as CMlLabel);
+  Progress.Visible = CodriverBusy;
+  Progress.SetText("$i" ^ CodriverProgress);
+  Progress.RelativePosition_V3 = <0., CodriverProgressY>;
+
+  declare Confirm <=> Page.GetFirstChild("codriver-confirm");
+  Confirm.Visible = CodriverConfirm;
+  Confirm.RelativePosition_V3 = <0., CodriverConfirmY>;
+
+  Page.GetFirstChild("codriver-draft").Visible = CodriverDraft != "";
+  (Page.GetFirstChild("codriver-draft-text") as CMlLabel).SetText(CodriverDraft);
+
+  declare SendLabel <=> (Page.GetFirstChild("codriver-send-label") as CMlLabel);
+  if (CodriverBusy) SendLabel.SetText("Sending…");
+  else SendLabel.SetText(" Send");
+
+  // Send or Add took the text; anything typed since stays
+  if (CodriverClearEntry != CodriverEntryCleared) {
+    CodriverEntryCleared = CodriverClearEntry;
+    (Page.GetFirstChild("codriver-entry") as CMlTextEdit).Value = "";
+  }
+}
+{{/content}}
+
+{{#content "main"}}
+declare Integer CodriverUpdate for This = -1;
+declare Integer CodriverClearEntry for This = 0;
+CodriverShown = -1;
+CodriverScrolled = -1;
+declare LogFrame <=> (Page.GetFirstChild("codriver-log") as CMlFrame);
+LogFrame.ScrollActive = True;
+LogFrame.ScrollMin = <0., 0.>;
+CodriverEntryCleared = CodriverClearEntry;
+(Page.GetFirstChild("codriver-entry") as CMlTextEdit).StartEdition();
+{{/content}}
+
+{{#content "loop"}}
+declare Integer CodriverUpdate for This;
+if (CodriverUpdate != CodriverShown) {
+  CodriverShown = CodriverUpdate;
+  CodriverApply();
+}
+if (CodriverStickFrames > 0) {
+  CodriverStickFrames = CodriverStickFrames - 1;
+  declare Log <=> (Page.GetFirstChild("codriver-log") as CMlFrame);
+  Log.ScrollOffset = <0., Log.ScrollMax.Y>;
+}
+{{/content}}
+
+{{/extend}}

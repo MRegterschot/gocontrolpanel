@@ -92,3 +92,114 @@ export async function uploadFilesAs(
 
   return parsedData;
 }
+
+async function healthyFileManager(serverId: string) {
+  const fileManager = await getFileManager(serverId);
+  if (!fileManager?.health) {
+    throw new ServerError(
+      "Could not connect to file manager",
+      "FileManagerNotHealthy",
+    );
+  }
+  return fileManager;
+}
+
+// GET a file manager listing such as /scripts or /maps: paths relative to that folder
+async function listFiles(serverId: string, route: string): Promise<string[]> {
+  const fileManager = await healthyFileManager(serverId);
+  const res = await fetch(`${fileManager.url}${route}`, {
+    headers: { Authorization: `Bearer ${fileManager.password}` },
+  });
+  if (res.status !== 200) {
+    throw new ServerError(`Failed to list ${route}`, "FileFetchError");
+  }
+  const data: unknown = await res.json();
+  return Array.isArray(data)
+    ? data.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+// Mode scripts under UserData/Scripts/Modes, such as "BNL/TM_Cup_BNL.Script.txt"
+export async function listModeScriptsAs(
+  actor: Actor,
+  serverId: string,
+): Promise<string[]> {
+  requirePermission(actor, serverPermissions.admin, serverId);
+  return listFiles(serverId, "/scripts");
+}
+
+// Map files under UserData/Maps, as the map list names them
+export async function listMapFilesAs(
+  actor: Actor,
+  serverId: string,
+): Promise<string[]> {
+  requirePermission(actor, serverPermissions.admin, serverId);
+  return listFiles(serverId, "/maps");
+}
+
+// `path` is relative to UserData, such as "Scripts/Modes/TM_Cup.Script.txt"
+export async function readFileTextAs(
+  actor: Actor,
+  serverId: string,
+  path: string,
+): Promise<string> {
+  requirePermission(actor, serverPermissions.admin, serverId);
+  const fileManager = await healthyFileManager(serverId);
+  const res = await fetch(`${fileManager.url}/UserData/${encodePath(path)}`, {
+    headers: { Authorization: `Bearer ${fileManager.password}` },
+  });
+  if (res.status !== 200) {
+    throw new ServerError("Failed to get file", "FileFetchError");
+  }
+  return res.text();
+}
+
+// Creates or overwrites a text file; the file manager creates missing folders
+export async function writeFileTextAs(
+  actor: Actor,
+  serverId: string,
+  path: string,
+  text: string,
+): Promise<void> {
+  requirePermission(actor, serverPermissions.admin, serverId);
+  const fileManager = await getFileManager(serverId);
+  if (!fileManager?.health) {
+    await logAudit(
+      actor.userId,
+      serverId,
+      "server.files.edit",
+      { path, text },
+      "File manager is not healthy",
+    );
+    throw new ServerError(
+      "Could not connect to file manager",
+      "FileManagerNotHealthy",
+    );
+  }
+  const res = await fetch(`${fileManager.url}/UserData/${encodePath(path)}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${fileManager.password}`,
+    },
+    body: JSON.stringify(text),
+  });
+  await logAudit(
+    actor.userId,
+    serverId,
+    "server.files.edit",
+    { path, text },
+    res.status !== 200 ? "Failed to save file" : undefined,
+  );
+  if (res.status !== 200) {
+    getLogger(serverId).error(
+      { path, status: res.status, body: await res.text() },
+      "Failed to save file",
+    );
+    throw new ServerError("Failed to save file", "FileSaveError");
+  }
+}
+
+function encodePath(path: string): string {
+  return path.split("/").map(encodeURIComponent).join("/");
+}

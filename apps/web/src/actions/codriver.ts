@@ -19,6 +19,7 @@ import {
   loadRules,
   PANEL_SETTINGS_ID,
 } from "@/lib/codriver/settings";
+import { MAX_REQUEST_LENGTH } from "@/lib/codriver/text";
 import { recordRequest } from "@/lib/codriver/usage";
 import { getClient } from "@/lib/dbclient";
 import { encryptSecret } from "@/lib/secrets";
@@ -334,7 +335,10 @@ export async function sendCodriverMessage(
       permission.replace(":id:", `:${serverId}:`),
     ),
     async (session) => {
-      const request = parse(z.string().trim().min(1).max(300), text);
+      const request = parse(
+        z.string().trim().min(1).max(MAX_REQUEST_LENGTH),
+        text,
+      );
       const actor = await panelChatActor(session, serverId);
       return runPanelChat(actor, serverId, {
         text: request,

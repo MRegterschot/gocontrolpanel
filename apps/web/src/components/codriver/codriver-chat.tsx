@@ -17,7 +17,7 @@ import {
   streamCodriverMessage,
 } from "@/lib/api-client/codriver";
 import { queryKeys, unwrap } from "@/lib/api-client/query";
-import { stripFormatting } from "@/lib/codriver/text";
+import { MAX_REQUEST_LENGTH, stripFormatting } from "@/lib/codriver/text";
 import { getErrorMessage } from "@/lib/utils";
 import type { CodriverChatReply } from "@/types/codriver";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,7 +28,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 const schema = z.object({
-  text: z.string().trim().min(1, "Enter a request").max(300),
+  text: z.string().trim().min(1, "Enter a request").max(MAX_REQUEST_LENGTH),
 });
 type Message = { id: number; speaker: "You" | "Codriver"; text: string };
 
@@ -247,7 +247,7 @@ export default function CodriverChat({ serverId }: { serverId: string }) {
                 Clear conversation
               </Button>
               <span className="text-xs text-muted-foreground">
-                {form.watch("text").length}/300
+                {form.watch("text").length}/{MAX_REQUEST_LENGTH}
               </span>
             </div>
           </form>

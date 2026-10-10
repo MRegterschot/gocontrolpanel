@@ -122,7 +122,7 @@ export function createPluginContext(
       });
     },
     command(name, handler) {
-      cleanup.add(services.commands.register(name, handler));
+      cleanup.add(services.commands.register(name, handler, record.pluginId));
     },
     action(pattern, handler) {
       const remove = services.actions.register(pattern, handler);

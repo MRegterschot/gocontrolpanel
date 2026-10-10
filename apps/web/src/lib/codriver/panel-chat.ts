@@ -4,9 +4,10 @@ import "server-only";
 import { z } from "zod";
 import { handleCodriverRequest } from "./handle";
 import type { ProgressListener } from "./progress";
+import { MAX_REQUEST_LENGTH } from "./text";
 
 export const panelChatSchema = z.object({
-  text: z.string().trim().min(1).max(300),
+  text: z.string().trim().min(1).max(MAX_REQUEST_LENGTH),
   confirmationId: z.string().uuid().optional(),
 });
 

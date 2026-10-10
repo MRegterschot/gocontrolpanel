@@ -31,7 +31,7 @@ import { buildUserMessage } from "@/lib/codriver/prompt";
 import { resolveRole } from "@/lib/codriver/roles";
 import { routeCategories } from "@/lib/codriver/router";
 import { executeCalls, runCodriver } from "@/lib/codriver/runner";
-import { limitStrict, toApiTool } from "@/lib/codriver/schema";
+import { countOptional, limitStrict, toApiTool } from "@/lib/codriver/schema";
 import { chatSafe, fuzzyFind, stripFormatting } from "@/lib/codriver/text";
 import { CodriverError, defineTool } from "@/lib/codriver/types";
 import { sessionClaimsSchema } from "@gcp/shared";
@@ -137,6 +137,52 @@ describe("strict tool limit", () => {
     const limited = limitStrict(make(21));
     expect(limited).toHaveLength(21);
     expect(limited.some((tool) => tool.strict)).toBe(false);
+  });
+
+  it("drops strict when the schemas have too many optional parameters", () => {
+    const withOptional = (count: number) => ({
+      name: `o${count}`,
+      description: "",
+      input_schema: {
+        type: "object" as const,
+        properties: {
+          required: { type: "string" },
+          ...Object.fromEntries(
+            Array.from({ length: count }, (_, i) => [
+              `p${i}`,
+              { type: "string" },
+            ]),
+          ),
+        },
+        required: ["required"],
+      },
+      strict: true,
+    });
+    expect(
+      limitStrict([withOptional(12), withOptional(12)]).every((t) => t.strict),
+    ).toBe(true);
+    expect(
+      limitStrict([withOptional(12), withOptional(13)]).some((t) => t.strict),
+    ).toBe(false);
+  });
+
+  it("counts optional parameters inside arrays of objects", () => {
+    expect(
+      countOptional({
+        type: "object",
+        properties: {
+          order: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: { action: {}, seed: {} },
+              required: ["action"],
+            },
+          },
+        },
+        required: [],
+      }),
+    ).toBe(2);
   });
 });
 
@@ -636,6 +682,40 @@ describe("runCodriver", () => {
       );
       expect(outcome.status).toBe("unclear");
       expect(model.plan).toHaveBeenCalledTimes(1);
+    });
+
+    it("widens a keyword route once when the model says no tool fits", async () => {
+      // "points" routes to the mode and player tools only, away from announce
+      const model = fakeModel(
+        plan([], "I can't announce messages, no tool here does that."),
+        plan([{ name: "announce", input: { message: "100 points" } }]),
+      );
+      const outcome = await runCodriver(
+        {
+          serverId,
+          actor: actorWithRole("Moderator"),
+          text: "shout 100 points",
+        },
+        options(model, { tools: [...tools, announce] }),
+      );
+      expect(outcome.status).toBe("done");
+      expect(names(0, model)).not.toContain("announce");
+      expect(names(1, model)).toContain("announce");
+      expect(model.plan).toHaveBeenCalledTimes(2);
+    });
+
+    it("widens only once", async () => {
+      const model = fakeModel(
+        plan([], "I can't do that."),
+        plan([], "I still can't do that."),
+      );
+      const outcome = await runCodriver(
+        { serverId, actor: actorWithRole("Moderator"), text: "set the points" },
+        options(model, { tools: [...tools, announce] }),
+      );
+      expect(outcome.status).toBe("unclear");
+      expect(outcome.reply).toContain("still can't");
+      expect(model.plan).toHaveBeenCalledTimes(2);
     });
   });
 

@@ -139,6 +139,35 @@ describe("connection controls", () => {
   });
 });
 
+describe("plugin commands", () => {
+  it("runs a plugin's command and reports when it has none", async () => {
+    const { request, h } = await setup();
+    const run = vi.spyOn(h.runtime, "runPluginCommand");
+    run.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+    const body = { pluginId: "p-match", command: "lobby", login: "abc" };
+
+    const ran = await request(
+      "POST",
+      internalPaths.pluginCommand("server-1"),
+      body,
+    );
+    expect(ran.json().data).toEqual({ handled: true });
+    expect(run).toHaveBeenCalledWith("p-match", "lobby", [], "abc");
+    const missing = await request(
+      "POST",
+      internalPaths.pluginCommand("server-1"),
+      body,
+    );
+    expect(missing.json().data).toEqual({ handled: false });
+    const invalid = await request(
+      "POST",
+      internalPaths.pluginCommand("server-1"),
+      { ...body, command: "lobby; rm" },
+    );
+    expect(invalid.statusCode).toBe(400);
+  });
+});
+
 describe("gbx passthrough", () => {
   it("forwards allowlisted calls", async () => {
     const { request, h } = await setup({

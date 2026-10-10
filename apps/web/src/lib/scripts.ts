@@ -2471,9 +2471,13 @@ export function generateScript(
         case "float":
           scriptContent += `#Setting ${settingName} ${setting.value ?? ""}\n`;
           break;
-        case "string":
-          scriptContent += `#Setting ${settingName} "${setting.value ?? ""}"\n`;
+        case "string": {
+          // Triple quotes let a value such as JSON contain double quotes
+          const text = String(setting.value ?? "");
+          const quote = text.includes('"') ? '"""' : '"';
+          scriptContent += `#Setting ${settingName} ${quote}${text}${quote}\n`;
           break;
+        }
         default:
           const error = new ServerError(
             `Unsupported setting type: ${setting.type}`,

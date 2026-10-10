@@ -26,6 +26,8 @@ export function parseCommand(text: string): ParsedCommand | null {
 // Dispatches "/command args" chat messages to registered handlers
 export class CommandRouter {
   private readonly handlers = new Map<string, Set<CommandHandler>>();
+  // Which plugin registered a handler, so the panel can run one plugin's command
+  private readonly owners = new WeakMap<CommandHandler, string>();
 
   constructor(
     private readonly log: Logger,
@@ -40,15 +42,32 @@ export class CommandRouter {
     private readonly extraHelp: () => Record<string, string> = () => ({}),
   ) {}
 
-  register(name: string, handler: CommandHandler): () => void {
+  register(name: string, handler: CommandHandler, owner?: string): () => void {
     const key = name.toLowerCase();
     let set = this.handlers.get(key);
     if (!set) {
       set = new Set();
       this.handlers.set(key, set);
     }
-    set.add(handler);
-    return () => set.delete(handler);
+    // A wrapper, so one function registered by two owners stays two handlers
+    const entry: CommandHandler = (args, login) => handler(args, login);
+    if (owner) this.owners.set(entry, owner);
+    set.add(entry);
+    return () => set.delete(entry);
+  }
+
+  // Runs one owner's handlers for a command as `login`; false when it has none
+  async runAs(
+    owner: string,
+    name: string,
+    args: string[],
+    login: string,
+  ): Promise<boolean> {
+    const handlers = [...(this.handlers.get(name.toLowerCase()) ?? [])].filter(
+      (handler) => this.owners.get(handler) === owner,
+    );
+    await Promise.all(handlers.map((handler) => handler(args, login)));
+    return handlers.length > 0;
   }
 
   // Returns true when the message was a command

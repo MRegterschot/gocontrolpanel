@@ -6,6 +6,7 @@ import {
   mapsBodySchema,
   matchSettingsBodySchema,
   pauseBodySchema,
+  pluginCommandBodySchema,
   pluginEventBodySchema,
   pointsBodySchema,
   scriptNameBodySchema,
@@ -90,6 +91,21 @@ export async function internalRoutes(
     const { source, name, payload } = parse(pluginEventBodySchema, req.body);
     runtime.emitPluginEvent({ plugin: source, name, payload });
     return ok(null);
+  });
+
+  app.post("/internal/servers/:id/plugin-commands", async (req) => {
+    const runtime = runtimeFor(req.params);
+    const { pluginId, command, args, login } = parse(
+      pluginCommandBodySchema,
+      req.body,
+    );
+    const handled = await runtime.runPluginCommand(
+      pluginId,
+      command,
+      args,
+      login,
+    );
+    return ok({ handled });
   });
 
   app.post("/internal/servers/:id/gbx/call", async (req) => {

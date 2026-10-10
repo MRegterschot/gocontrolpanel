@@ -12,6 +12,8 @@ const mocks = vi.hoisted(() => ({
   cooldown: vi.fn(),
   findServer: vi.fn(),
   handle: vi.fn(),
+  clearTurns: vi.fn(),
+  clearPending: vi.fn(),
   accessInput: vi.fn(),
   budgetStates: vi.fn(),
   record: vi.fn(),
@@ -62,9 +64,18 @@ vi.mock("@/lib/codriver/feedback", async (original) => ({
   saveFeedback: mocks.saveFeedback,
 }));
 vi.mock("@/lib/codriver/pending", () => ({
-  savePending: async (s: string, l: string, calls: unknown, source: string) => {
+  savePending: async (
+    s: string,
+    l: string,
+    calls: unknown,
+    source: string,
+    steps?: unknown,
+  ) => {
     const id = crypto.randomUUID();
-    mocks.pending.set(`${source}:${s}:${l}`, JSON.stringify({ id, calls }));
+    mocks.pending.set(
+      `${source}:${s}:${l}`,
+      JSON.stringify({ id, calls, steps }),
+    );
     return id;
   },
   takePending: async (
@@ -79,7 +90,7 @@ vi.mock("@/lib/codriver/pending", () => ({
     const pending = JSON.parse(value);
     if (expectedId && pending.id !== expectedId) return null;
     mocks.pending.delete(key);
-    return pending.calls;
+    return { calls: pending.calls, steps: pending.steps };
   },
   clearPending: async (s: string, l: string, source: string) =>
     mocks.pending.delete(`${source}:${s}:${l}`),
@@ -355,6 +366,96 @@ describe("handleCodriverMessage", () => {
     expect(mocks.executeCalls).toHaveBeenCalledTimes(1);
   });
 
+  it("runs a stepped request one step at a time and resumes after a confirmation", async () => {
+    const done = (reply: string) => ({
+      status: "done",
+      reply,
+      calls: [{ tool: "x", input: {} }],
+      usage: [],
+      fastPath: false,
+    });
+    const confirmCall = { tool: "set_match_config", input: { maps: "BNL" } };
+    mocks.runCodriver
+      .mockResolvedValueOnce(done("Created BNL/TM_Cup_BNL.Script.txt."))
+      .mockResolvedValueOnce(done("Map list is now BNL."))
+      .mockResolvedValueOnce({
+        status: "needs_confirmation",
+        reply: "Set the Match plugin to 5 maps? Reply /co yes or /co no.",
+        calls: [confirmCall],
+        usage: [],
+        fastPath: false,
+      })
+      .mockResolvedValueOnce(done("Ran /lobby of Match."));
+    mocks.executeCalls.mockResolvedValueOnce({
+      status: "done",
+      reply: "Updated the Match plugin.",
+      calls: [confirmCall],
+    });
+
+    expect(
+      await ask(
+        "Create a cup script. Save it in a BNL folder. Then load the BNL campaign, then set up the match plugin. Then go to the lobby.",
+      ),
+    ).toBe(
+      "1. Created BNL/TM_Cup_BNL.Script.txt.\n2. Map list is now BNL.\n3. Set the Match plugin to 5 maps? Reply /co yes or /co no.",
+    );
+    expect(mocks.runCodriver).toHaveBeenCalledTimes(3);
+    expect(mocks.runCodriver.mock.calls[1][0]).toMatchObject({
+      text: "load the BNL campaign",
+      history: [
+        {
+          request: "Create a cup script. Save it in a BNL folder.",
+          reply: "Created BNL/TM_Cup_BNL.Script.txt.",
+        },
+      ],
+    });
+    // Each step keeps its templated reply
+    expect(mocks.runCodriver.mock.calls[0][1]).toMatchObject({
+      compose: false,
+    });
+
+    expect(await ask("yes")).toBe(
+      "1. Created BNL/TM_Cup_BNL.Script.txt.\n2. Map list is now BNL.\n3. Updated the Match plugin.\n4. Ran /lobby of Match.",
+    );
+    expect(mocks.executeCalls).toHaveBeenCalledWith(expect.anything(), [
+      confirmCall,
+    ]);
+    expect(mocks.runCodriver).toHaveBeenCalledTimes(4);
+    expect(mocks.runCodriver.mock.calls[3][0].text).toBe("go to the lobby.");
+    expect(mocks.runCodriver.mock.calls[3][0].history).toEqual(
+      expect.arrayContaining([
+        {
+          request: "set up the match plugin.",
+          reply: "Updated the Match plugin.",
+        },
+      ]),
+    );
+  });
+
+  it("stops a stepped request at the first step that doesn't finish", async () => {
+    mocks.runCodriver
+      .mockResolvedValueOnce({
+        status: "done",
+        reply: "Created A.Script.txt.",
+        calls: [],
+        usage: [],
+        fastPath: false,
+      })
+      .mockResolvedValueOnce({
+        status: "unclear",
+        reply: "Which club: Benelux, Benelux Cup?",
+        calls: [],
+        usage: [],
+        fastPath: false,
+      });
+    expect(
+      await ask("Make a script. Then load the campaign. Then go to the lobby."),
+    ).toBe(
+      "1. Created A.Script.txt.\n2. Which club: Benelux, Benelux Cup?\nStopped, so step 3 didn't run.",
+    );
+    expect(mocks.runCodriver).toHaveBeenCalledTimes(2);
+  });
+
   it("cancels a pending question", async () => {
     mocks.runCodriver.mockResolvedValue({
       status: "needs_confirmation",
@@ -422,7 +523,13 @@ describe("POST /api/internal/codriver", () => {
 
   async function post(body: unknown, authorization?: string) {
     vi.doMock("@/lib/codriver/handle", () => ({
-      handleCodriverMessage: mocks.handle,
+      handleCodriverRequest: mocks.handle,
+    }));
+    vi.doMock("@/lib/codriver/conversation", () => ({
+      clearTurns: mocks.clearTurns,
+    }));
+    vi.doMock("@/lib/codriver/pending", () => ({
+      clearPending: mocks.clearPending,
     }));
     const { POST } = await import("@/app/api/internal/codriver/route");
     const headers: Record<string, string> = {
@@ -443,7 +550,7 @@ describe("POST /api/internal/codriver", () => {
   beforeEach(() => {
     mocks.config.CODRIVER.INTERNAL_TOKEN = token;
     mocks.findServer.mockResolvedValue({ id: serverId });
-    mocks.handle.mockResolvedValue("Skipping.");
+    mocks.handle.mockResolvedValue({ status: "done", reply: "Skipping." });
   });
 
   it("is not found without a strong enough token", async () => {
@@ -467,7 +574,22 @@ describe("POST /api/internal/codriver", () => {
   it("passes only server, login and text on and returns the reply", async () => {
     const response = await post({ ...body, role: "admin" }, `Bearer ${token}`);
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ data: { reply: "Skipping." } });
+    expect(await response.json()).toEqual({
+      data: { status: "done", reply: "Skipping." },
+    });
     expect(mocks.handle).toHaveBeenCalledWith({ ...body, source: "game" });
+  });
+
+  it("clears the player's conversation and open question", async () => {
+    const response = await post(
+      { serverId, login: "abc", text: "", clear: true },
+      `Bearer ${token}`,
+    );
+    expect(await response.json()).toEqual({
+      data: { status: "done", reply: "Conversation cleared." },
+    });
+    expect(mocks.clearTurns).toHaveBeenCalledWith(serverId, "abc", "game");
+    expect(mocks.clearPending).toHaveBeenCalledWith(serverId, "abc", "game");
+    expect(mocks.handle).not.toHaveBeenCalled();
   });
 });

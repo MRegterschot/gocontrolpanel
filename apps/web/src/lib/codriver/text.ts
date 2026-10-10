@@ -17,6 +17,9 @@ export function chatSafe(text: string, max = 200): string {
   return plain.length > max ? `${plain.slice(0, max - 1)}…` : plain;
 }
 
+// Longest chat request; a request split into steps keeps a shorter limit per step
+export const MAX_REQUEST_LENGTH = 1200;
+
 export function normalize(text: string): string {
   return stripFormatting(text)
     .toLowerCase()

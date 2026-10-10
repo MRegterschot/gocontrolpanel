@@ -7,6 +7,7 @@ import {
   type ChatConfigResult,
   type GbxCallBody,
   type MapsChangeResult,
+  type PluginCommandBody,
   type PluginEventBody,
   type PointsBody,
   type ServerLifecycleEvent,
@@ -87,6 +88,15 @@ export const gbxService = {
   // Delivered to the server's plugins as "<source>:<name>"
   emitPluginEvent: (serverId: string, event: PluginEventBody) =>
     request<null>("POST", internalPaths.pluginEvent(serverId), event),
+
+  // Runs an installed plugin's chat command as `login`; handled is false when it isn't loaded
+  runPluginCommand: (serverId: string, body: PluginCommandBody) =>
+    request<{ handled: boolean }>(
+      "POST",
+      internalPaths.pluginCommand(serverId),
+      body,
+      { timeoutMs: LONG_TIMEOUT_MS },
+    ),
 
   sendChat: (serverId: string, message: string, login?: string) =>
     request<null>("POST", internalPaths.chat(serverId), { message, login }),

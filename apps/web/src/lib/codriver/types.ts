@@ -42,6 +42,8 @@ export interface CodriverTool<S extends z.ZodType = z.ZodType> {
   // One line; sent to the model
   description: string;
   category: ToolCategory;
+  // Other areas a call of this tool takes care of, for the completeness check
+  covers?: ToolCategory[];
   minRole: CodriverRole;
   input: S;
   // Resolve fuzzy targets before confirmation; stored calls keep that exact identity
@@ -59,6 +61,11 @@ export function defineTool<S extends z.ZodType>(
   tool: CodriverTool<S>,
 ): CodriverTool {
   return tool as unknown as CodriverTool;
+}
+
+// The areas of a request a tool's call takes care of
+export function toolAreas(tool: CodriverTool | undefined): ToolCategory[] {
+  return tool ? [tool.category, ...(tool.covers ?? [])] : [];
 }
 
 // A validated tool call, ready to run

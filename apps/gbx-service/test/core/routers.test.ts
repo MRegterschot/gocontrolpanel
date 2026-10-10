@@ -94,6 +94,29 @@ describe("CommandRouter", () => {
     expect(await router.dispatch("not a command", "abc")).toBe(false);
   });
 
+  it("runs only the owning plugin's handler for a command", async () => {
+    const router = new CommandRouter(
+      silentLogger,
+      async () => {},
+      () => ({ enabled: true, provider: helpProvider }),
+    );
+    const match = vi.fn();
+    const other = vi.fn();
+    router.register("lobby", match, "plugin-match");
+    const remove = router.register("lobby", other, "plugin-other");
+
+    expect(await router.runAs("plugin-match", "LOBBY", ["x"], "abc")).toBe(
+      true,
+    );
+    expect(match).toHaveBeenCalledWith(["x"], "abc");
+    expect(other).not.toHaveBeenCalled();
+    expect(await router.runAs("plugin-match", "pickban", [], "abc")).toBe(
+      false,
+    );
+    remove();
+    expect(await router.runAs("plugin-other", "lobby", [], "abc")).toBe(false);
+  });
+
   it("answers /version privately without plugins, even when help is disabled", async () => {
     const h = await createHarness({
       server: { enableHelpCommand: false },

@@ -58,6 +58,15 @@ const aliases: Record<string, string> = {
   winners: "S_NbOfWinners",
   "number of winners": "S_NbOfWinners",
   laps: "S_ForceLapsNb",
+  warmups: "S_WarmUpNb",
+  "warm ups": "S_WarmUpNb",
+  "number of warmups": "S_WarmUpNb",
+  "warmup time": "S_WarmUpDuration",
+  "complex points repartition": "S_ComplexPointsRepartition",
+  "complex repartition": "S_ComplexPointsRepartition",
+  "dnf penalty": "S_DNF_LossPoints",
+  "dnf points": "S_DNF_LossPoints",
+  "dnf loss points": "S_DNF_LossPoints",
 };
 
 export function resolveSetting(script: string, name: string): ModeSetting {
@@ -67,7 +76,23 @@ export function resolveSetting(script: string, name: string): ModeSetting {
       `Codriver can't change the settings of ${modeKey(script)}.`,
     );
   }
+  return resolveSettingIn(settings, modeKey(script), name);
+}
 
+// "S_WarmUpNb" -> "Warm Up Nb", so words in a request can match it
+function settingWords(name: string): string {
+  return name
+    .replace(/^S_/, "")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/_/g, " ");
+}
+
+// Finds a setting by name, alias or description among `settings` of the mode `label`
+export function resolveSettingIn(
+  settings: ModeSetting[],
+  label: string,
+  name: string,
+): ModeSetting {
   const wanted = name.trim().toLowerCase();
   const byName = (settingName: string) =>
     settings.find(
@@ -79,11 +104,16 @@ export function resolveSetting(script: string, name: string): ModeSetting {
     byName(`s_${wanted}`) ??
     byName(aliases[normalize(name)] ?? "");
   if (direct) return direct;
+  // Any DNF penalty wording means the points a DNF costs, not the last chance DNF mode
+  if (/dnf/i.test(name) && !/mode|chance/i.test(name)) {
+    const dnf = byName("S_DNF_LossPoints");
+    if (dnf) return dnf;
+  }
 
   const found = fuzzyFind(
     name,
     settings,
-    (setting) => `${setting.description} ${setting.name.replace(/^S_/, "")}`,
+    (setting) => `${settingWords(setting.name)} ${setting.description}`,
   );
   if (found.kind === "match") return found.item;
   if (found.kind === "ambiguous") {
@@ -91,7 +121,33 @@ export function resolveSetting(script: string, name: string): ModeSetting {
       `"${name}" could mean ${found.items.map((s) => s.name).join(", ")}. Which one?`,
     );
   }
-  throw new CodriverError(`${modeKey(script)} has no setting "${name}".`);
+  throw new CodriverError(`${label} has no setting "${name}".`);
+}
+
+const durationUnits: Record<string, number> = {
+  s: 1,
+  sec: 1,
+  secs: 1,
+  second: 1,
+  seconds: 1,
+  m: 60,
+  min: 60,
+  mins: 60,
+  minute: 60,
+  minutes: 60,
+  h: 3600,
+  hr: 3600,
+  hrs: 3600,
+  hour: 3600,
+  hours: 3600,
+};
+
+// "30s" or "4 hours" for settings counted in seconds
+function durationSeconds(text: string): number | null {
+  const match = /^(\d+(?:\.\d+)?)\s*([a-z]+)$/i.exec(text);
+  if (!match) return null;
+  const unit = durationUnits[match[2].toLowerCase()];
+  return unit ? Math.round(Number(match[1]) * unit) : null;
 }
 
 const truthy = new Set(["true", "on", "yes", "1", "enabled", "enable"]);
@@ -110,7 +166,9 @@ export function coerceSetting(
       break;
     }
     case "int": {
-      const value = Number(text);
+      const value = /Duration|Time/.test(setting.name)
+        ? (durationSeconds(text) ?? Number(text))
+        : Number(text);
       if (Number.isInteger(value) && Math.abs(value) <= 1_000_000) return value;
       break;
     }
@@ -120,7 +178,12 @@ export function coerceSetting(
       break;
     }
     case "string":
-      if (text.length <= 200) return text;
+      // ManiaScript strings can't contain the triple quote that delimits them
+      if (text.length <= 200 && !text.includes('"""')) {
+        if (/Complex.*Repartition/.test(setting.name) && text)
+          return complexRepartition(text, setting.name);
+        return text;
+      }
       break;
   }
   throw new CodriverError(
@@ -128,15 +191,79 @@ export function coerceSetting(
   );
 }
 
+// {"2": [4, 8], "3,4": [0, 4, 10]}: points per number of players, normalized to compact JSON
+function complexRepartition(text: string, name: string): string {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    parsed = null;
+  }
+  const valid =
+    !!parsed &&
+    typeof parsed === "object" &&
+    !Array.isArray(parsed) &&
+    Object.entries(parsed).every(
+      ([key, points]) =>
+        /^\d+(\s*,\s*\d+)*$/.test(key) &&
+        Array.isArray(points) &&
+        points.every((point) => Number.isInteger(point)),
+    );
+  if (!valid)
+    throw new CodriverError(
+      `${name} needs JSON such as {"3": [2, 6, 10]}: points per number of players.`,
+    );
+  return JSON.stringify(parsed);
+}
+
+export type SettingInput = { name: string; value: string | number | boolean };
+
 // Validates and converts settings by name for a script
 export function resolveSettings(
   script: string,
-  settings: { name: string; value: string | number | boolean }[],
+  settings: SettingInput[],
+): Record<string, string | number | boolean> {
+  const known = modeSettings(script);
+  if (!known) {
+    throw new CodriverError(
+      `Codriver can't change the settings of ${modeKey(script)}.`,
+    );
+  }
+  return resolveSettingsIn(known, modeKey(script), settings);
+}
+
+export function resolveSettingsIn(
+  known: ModeSetting[],
+  label: string,
+  settings: SettingInput[],
 ): Record<string, string | number | boolean> {
   const result: Record<string, string | number | boolean> = {};
   for (const entry of settings) {
-    const setting = resolveSetting(script, entry.name);
+    const setting = resolveSettingIn(known, label, entry.name);
     result[setting.name] = coerceSetting(setting, entry.value);
   }
   return result;
+}
+
+// The #Setting lines of a custom mode script, for scripts the panel has no description of
+export function parseScriptSettings(source: string): ModeSetting[] {
+  const settings: ModeSetting[] = [];
+  const line =
+    /^#Setting\s+(S_\w+)\s+("""[\s\S]*?"""|"(?:[^"\\]|\\.)*"|\S+)(?:\s+as\s+(?:_\()?"((?:[^"\\]|\\.)*)")?/gm;
+  for (const [, name, raw, description = ""] of source.matchAll(line)) {
+    if (settings.some((setting) => setting.name === name)) continue;
+    const quoted = raw.startsWith('"');
+    const value = raw.replace(/^"""|"""$/g, "").replace(/^"|"$/g, "");
+    const type = quoted
+      ? "string"
+      : /^(true|false)$/i.test(raw)
+        ? "boolean"
+        : /^-?\d+$/.test(raw)
+          ? "int"
+          : /^-?\d*\.\d+$/.test(raw)
+            ? "float"
+            : null;
+    if (type) settings.push({ name, description, type, default: value });
+  }
+  return settings;
 }

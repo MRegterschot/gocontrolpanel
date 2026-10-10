@@ -35,7 +35,8 @@ export function parseFastPath(text: string): PlannedCall | null {
   if (exact) return exact;
 
   const toggle = pluginToggle.exec(normalized);
-  if (toggle) {
+  // "enable match and go to the lobby" asks for more than a toggle
+  if (toggle && !/\b(and|then|also)\b/.test(toggle[2])) {
     return {
       tool: "set_plugin_enabled",
       input: { plugin: toggle[2], enabled: !/disable|off/.test(toggle[1]) },

@@ -12,7 +12,7 @@ import { coerceSetting } from "../modes";
 import { chatSafe, fuzzyFind } from "../text";
 import { CodriverError, defineTool, type ToolContext } from "../types";
 
-interface InstalledPlugin {
+export interface InstalledPlugin {
   pluginId: string;
   slug: string;
   name: string;
@@ -21,7 +21,9 @@ interface InstalledPlugin {
   manifest: unknown;
 }
 
-async function installedPlugins(serverId: string): Promise<InstalledPlugin[]> {
+export async function installedPlugins(
+  serverId: string,
+): Promise<InstalledPlugin[]> {
   const rows = await getClient().serverPlugins.findMany({
     where: { serverId, plugin: { source: { not: "builtin" } } },
     include: { plugin: true, version: true },

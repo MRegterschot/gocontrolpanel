@@ -1205,5 +1205,78 @@
         }
       ]
     }
+  },
+  {
+    "id": "script-generate-folder",
+    "text": "create a cup script and save it in the BNL folder",
+    "role": "admin",
+    "state": {
+      "mode": "TimeAttack",
+      "map": "Lobby",
+      "players": 2
+    },
+    "expected": {
+      "kind": "calls",
+      "calls": [
+        {
+          "tool": "generate_script",
+          "input": {
+            "mode": "cup",
+            "folder": "BNL"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "club-campaign-download",
+    "text": "download the BNL campaign maps from the benelux club",
+    "role": "admin",
+    "state": {
+      "mode": "TimeAttack",
+      "map": "Lobby",
+      "players": 2
+    },
+    "expected": {
+      "kind": "calls",
+      "calls": [
+        {
+          "tool": "add_club_campaign",
+          "input": {
+            "campaign": "BNL",
+            "club": "benelux"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "match-enable-lobby",
+    "text": "enable the match plugin and set the server to the lobby state",
+    "role": "admin",
+    "state": {
+      "mode": "TimeAttack",
+      "map": "Lobby",
+      "players": 2
+    },
+    "expected": {
+      "kind": "calls",
+      "calls": [
+        {
+          "tool": "set_plugin_enabled",
+          "input": {
+            "plugin": "match",
+            "enabled": true
+          }
+        },
+        {
+          "tool": "run_plugin_command",
+          "input": {
+            "plugin": "match",
+            "command": "lobby"
+          }
+        }
+      ]
+    }
   }
 ]

@@ -1,13 +1,15 @@
 import { exclusiveKeywordHits } from "./router";
 import type { PlannedCall, ToolCategory } from "./types";
 
+type AreasOf = (tool: string) => ToolCategory | ToolCategory[] | undefined;
+
 // Areas the request mentions that none of the planned calls touch
 export function uncoveredAreas(
   categories: ToolCategory[],
   calls: PlannedCall[],
-  categoryOf: (tool: string) => ToolCategory | undefined,
+  categoryOf: AreasOf,
 ): ToolCategory[] {
-  const covered = new Set(calls.map((call) => categoryOf(call.tool)));
+  const covered = new Set(calls.flatMap((call) => categoryOf(call.tool)));
   return categories.filter(
     (category) => category !== "info" && !covered.has(category),
   );
@@ -18,7 +20,7 @@ export function missedAreas(
   text: string,
   categories: ToolCategory[],
   calls: PlannedCall[],
-  categoryOf: (tool: string) => ToolCategory | undefined,
+  categoryOf: AreasOf,
 ): ToolCategory[] {
   return uncoveredAreas(categories, calls, categoryOf).filter(
     (category) => exclusiveKeywordHits(text, category).length > 0,
@@ -31,7 +33,7 @@ export function looksIncomplete(
   categories: ToolCategory[],
   calls: PlannedCall[],
   modelText: string,
-  categoryOf: (tool: string) => ToolCategory | undefined,
+  categoryOf: AreasOf,
 ): boolean {
   return (
     !modelText.trim() &&

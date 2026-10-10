@@ -1,6 +1,7 @@
 import { getRedisClient } from "@/lib/redis";
 import { randomUUID } from "node:crypto";
 import "server-only";
+import type { PendingSteps } from "./steps";
 import type { PlannedCall } from "./types";
 
 // How long a confirmation question stays open
@@ -12,18 +13,25 @@ const pendingKey = (serverId: string, login: string, source: Source) =>
 const cooldownKey = (serverId: string, login: string) =>
   `codriver:cooldown:${serverId}:${login}`;
 
+export interface PendingRequest {
+  calls: PlannedCall[];
+  // Set when the calls are one step of a longer request
+  steps?: PendingSteps;
+}
+
 // Stores the validated calls, not the text, so "yes" runs exactly what was shown
 export async function savePending(
   serverId: string,
   login: string,
   calls: PlannedCall[],
   source: Source = "game",
+  steps?: PendingSteps,
 ): Promise<string> {
   const redis = await getRedisClient();
   const id = randomUUID();
   await redis.set(
     pendingKey(serverId, login, source),
-    JSON.stringify({ id, calls }),
+    JSON.stringify({ id, calls, ...(steps ? { steps } : {}) }),
     "EX",
     PENDING_TTL_SECONDS,
   );
@@ -36,7 +44,7 @@ export async function takePending(
   login: string,
   source: Source = "game",
   expectedId?: string,
-): Promise<PlannedCall[] | null> {
+): Promise<PendingRequest | null> {
   const redis = await getRedisClient();
   const key = pendingKey(serverId, login, source);
   const value = await redis.eval(
@@ -46,15 +54,15 @@ export async function takePending(
     local pending = cjson.decode(value)
     if ARGV[1] ~= '' and pending.id ~= ARGV[1] then return nil end
     redis.call('DEL', KEYS[1])
-    return cjson.encode(pending.calls)
+    return value
   `,
     1,
     key,
     expectedId ?? "",
   );
-  return typeof value === "string"
-    ? (JSON.parse(value) as PlannedCall[])
-    : null;
+  if (typeof value !== "string") return null;
+  const { calls, steps } = JSON.parse(value) as PendingRequest;
+  return { calls, steps };
 }
 
 export async function clearPending(

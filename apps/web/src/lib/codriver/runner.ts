@@ -26,6 +26,7 @@ import {
   type CodriverTool,
   hasRole,
   type PlannedCall,
+  toolAreas,
   type ToolContext,
 } from "./types";
 
@@ -33,6 +34,13 @@ async function defaultTmxTags(): Promise<string[]> {
   // Loaded on demand so requests that never touch TMX don't pull the client in
   const { getTMXTags } = await import("@/lib/api/tmx");
   return (await getTMXTags()).map((tag) => tag.Name);
+}
+
+// The model saying no offered tool fits, as opposed to asking a question back
+const cannotPattern =
+  /\b(can't|cannot|can not|unable to|not able to|no tool|don't have a tool|isn't something i can)\b/i;
+export function cannotDo(text: string): boolean {
+  return cannotPattern.test(text);
 }
 
 export const MAX_TEXT_LENGTH = 300;
@@ -61,6 +69,8 @@ export interface CodriverOptions {
   tools?: CodriverTool[];
   // Trackmania Exchange tag names for the prompt; defaults to the cached TMX list
   getTmxTags?: () => Promise<string[]>;
+  // False keeps the templated reply instead of having the model word it
+  compose?: boolean;
 }
 
 export type CodriverStatus =
@@ -262,12 +272,8 @@ export async function runCodriver(
       if ("calls" in result) {
         if (
           !route.fallback &&
-          looksIncomplete(
-            text,
-            categories,
-            result.calls,
-            plan.text,
-            (tool) => offered.get(tool)?.category,
+          looksIncomplete(text, categories, result.calls, plan.text, (tool) =>
+            toolAreas(offered.get(tool)),
           )
         ) {
           // With only one model, try it again with a hint about what was left out
@@ -278,7 +284,7 @@ export async function runCodriver(
               text,
               categories,
               result.calls,
-              (tool) => offered.get(tool)?.category,
+              (tool) => toolAreas(offered.get(tool)),
             );
             check = missing.length
               ? `Your previous plan did not cover: ${missing.join(", ")}. If the request asks for something there, call the matching tool too, with every setting mentioned.`
@@ -292,6 +298,22 @@ export async function runCodriver(
           }
         }
         break;
+      }
+      // Keywords can route a request away from the tool it needs ("red bull faster" hits the
+      // red team). When the model says it can't, it gets one more try with every tool.
+      if (
+        plan.calls.length === 0 &&
+        plan.text &&
+        plan.stopReason === "end_turn" &&
+        offered !== wide &&
+        !attempts
+          .slice(index + 1)
+          .some((attempt) => attempt.offered === wide) &&
+        cannotDo(plan.text)
+      ) {
+        attempts.splice(index + 1, 0, { model, offered: wide });
+        log.info({ model }, "Codriver retrying with every tool");
+        continue;
       }
       // A question back is a valid answer; don't pay for a second opinion. After a
       // guessed route it may only mean the right tool wasn't offered.
@@ -321,20 +343,13 @@ export async function runCodriver(
     if (lastText) note = ` Note: ${chatSafe(lastText, 200)}`;
     else if (
       !route.fallback &&
-      looksIncomplete(
-        text,
-        categories,
-        calls,
-        "",
-        (tool) => wide.get(tool)?.category,
+      looksIncomplete(text, categories, calls, "", (tool) =>
+        toolAreas(wide.get(tool)),
       )
     ) {
       // The retries didn't fix it, so say so rather than let a part vanish
-      const missing = missedAreas(
-        text,
-        categories,
-        calls,
-        (tool) => wide.get(tool)?.category,
+      const missing = missedAreas(text, categories, calls, (tool) =>
+        toolAreas(wide.get(tool)),
       );
       if (missing.length > 0)
         note = ` Note: I may have skipped the ${missing.join("/")} part, ask again if so.`;
@@ -410,6 +425,7 @@ export async function runCodriver(
   );
   if (
     options.model.compose &&
+    options.compose !== false &&
     !fast &&
     acted &&
     (executed.status === "done" || executed.status === "failed")

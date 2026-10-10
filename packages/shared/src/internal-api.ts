@@ -66,6 +66,7 @@ export const internalPaths = {
     `/internal/servers/${id}/teams/${teamId}/points`,
   serverEvents: "/internal/server-events",
   pluginEvent: (id: string) => `/internal/servers/${id}/plugin-events`,
+  pluginCommand: (id: string) => `/internal/servers/${id}/plugin-commands`,
 } as const;
 
 const xmlRpcValue: z.ZodType<unknown> = z.unknown();
@@ -133,3 +134,11 @@ export const pluginEventBodySchema = z.object({
   payload: z.unknown(),
 });
 export type PluginEventBody = z.infer<typeof pluginEventBodySchema>;
+
+export const pluginCommandBodySchema = z.object({
+  pluginId: z.string().min(1),
+  command: z.string().regex(/^[a-z0-9_-]{1,32}$/i),
+  args: z.array(z.string().max(100)).max(20).default([]),
+  login: z.string().min(1),
+});
+export type PluginCommandBody = z.input<typeof pluginCommandBodySchema>;

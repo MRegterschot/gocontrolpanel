@@ -136,6 +136,249 @@ main() {
 "
 `;
 
+exports[`TemplateRenderer > renders codriver-window 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<frame id="window" pos="-25 20" size="50 45" z-index="20">
+  <quad pos="0 0" size="50 5" bgcolor="222" />
+  <label pos="1.5 -2.25" text="Title" size="40.5 5" valign="center" halign="left" textsize="1" color="DDD" textfont="GameFontSemiBold" />
+  <label pos="48.5 -2.25" text="" size="5 5" valign="center" halign="right" textsize="1" color="222" action="close-window-test-id" focusareacolor2="DDD0" />
+
+  <quad pos="0 -5" size="50 40" bgcolor="DDD" />
+  <frame pos="0 -5" size="50 40">
+    <frame id="codriver" pos="2 -2" size=" 36">
+  <frame id="codriver-empty" hidden="1">
+    <label pos="0 -2.25" size=" 5" text="Try “status”, “list plugins” or “skip this map”. Disruptive changes ask for confirmation." textsize="1" textcolor="333" valign="center" textfont="GameFontRegular" />
+  </frame>
+
+  <frame id="codriver-log" size=" 1">
+  <quad size=" 1000" bgcolor="DDD" opacity="0" scriptevents="1" z-index="-1" />
+  </frame>
+
+  <label id="codriver-progress" size=" 4" textsize="1" textcolor="333" valign="top" textfont="GameFontRegular" hidden="1" />
+
+  <frame id="codriver-confirm" size=" 5" hidden="1">
+    <label pos="0 -2.25" size="50 5" text="Confirm this change within 60 seconds." textsize="1" textcolor="222" valign="center" textfont="GameFontRegular" />
+    <frame pos="NaN 0" size="20 5">
+      <quad size="20 5" bgcolor="CCC" action="codriver-confirm" />
+      <quad pos="0 -4.75" size="20 0.25" bgcolor="222" />
+      <label pos="10 -2.25" text=" Confirm" textsize="1" textcolor="222" valign="center" halign="center" textfont="GameFontRegular" />
+    </frame>
+    <frame pos="NaN 0" size="20 5">
+      <quad size="20 5" bgcolor="CCC" action="codriver-cancel" />
+      <quad pos="0 -4.75" size="20 0.25" bgcolor="222" />
+      <label pos="10 -2.25" text=" Cancel" textsize="1" textcolor="222" valign="center" halign="center" textfont="GameFontRegular" />
+    </frame>
+  </frame>
+
+  <frame id="codriver-draft" pos="0 " size=" 5" hidden="1">
+    <label id="codriver-draft-text" pos="0 -2.25" size="NaN 5" textsize="1" textcolor="333" valign="center" textfont="GameFontRegular" />
+    <frame pos="NaN 0" size="15 5">
+      <quad size="15 5" bgcolor="CCC" action="codriver-discard" />
+      <quad pos="0 -4.75" size="15 0.25" bgcolor="222" />
+      <label pos="7.5 -2.25" text=" Discard" textsize="1" textcolor="222" valign="center" halign="center" textfont="GameFontRegular" />
+    </frame>
+  </frame>
+
+  <frame pos="0 " size=" ">
+    <quad pos="0 NaN" size="NaN 0.25" bgcolor="222" />
+    <textedit pos="0 0" size="NaN " name="codriver-entry" id="codriver-entry" default="" autonewline="1" showlinenumbers="0" textformat="Basic" textsize="1" focusareacolor1="CCC" focusareacolor2="CCC" textcolor="222" textfont="GameFontRegular" />
+
+    <frame pos="NaN 0" size="15 4.75">
+      <quad size="15 4.75" bgcolor="CCC" action="codriver-send" />
+      <quad pos="0 -4.5" size="15 0.25" bgcolor="222" />
+      <label id="codriver-send-label" pos="7.5 -2.25" text=" Send" textsize="1" textcolor="222" valign="center" halign="center" textfont="GameFontRegular" />
+    </frame>
+
+    <frame pos="NaN -5.25" size="15 4.75">
+      <quad size="15 4.75" bgcolor="CCC" action="codriver-clear" />
+      <quad pos="0 -4.5" size="15 0.25" bgcolor="222" />
+      <label pos="7.5 -2.25" text=" Clear" textsize="1" textcolor="222" valign="center" halign="center" textfont="GameFontRegular" />
+    </frame>
+  </frame>
+</frame>
+
+  </frame>
+</frame>
+
+<script><!--
+#Include "MathLib" as ML
+#Include "TextLib" as TL
+#Include "TimeLib" as TimeLib
+#Include "ColorLib" as CL
+
+declare Integer CodriverShown;
+declare Integer CodriverEntryCleared;
+declare Integer CodriverScrolled;
+// Frames left to hold the log at the bottom; a new ScrollMax only takes effect a frame later
+declare Integer CodriverStickFrames;
+
+
+// Places the pooled controls and bars from what the update page last set
+Void CodriverApply() {
+  declare Text[] CodriverSpeakerTexts for This;
+  declare Vec2[] CodriverSpeakerPos for This;
+  declare Real[] CodriverSpeakerWidths for This;
+  declare Vec2[] CodriverBubblePos for This;
+  declare Vec2[] CodriverBubbleSizes for This;
+  declare Text[] CodriverLineTexts for This;
+  declare Vec2[] CodriverLinePos for This;
+  declare Real[] CodriverLineWidths for This;
+  declare Boolean CodriverEmpty for This;
+  declare Boolean CodriverBusy for This;
+  declare Text CodriverProgress for This;
+  declare Real CodriverProgressY for This;
+  declare Boolean CodriverConfirm for This;
+  declare Real CodriverConfirmY for This;
+  declare Text CodriverDraft for This;
+  declare Integer CodriverClearEntry for This;
+  declare Real CodriverLogHeight for This;
+  declare Real CodriverContentHeight for This;
+  declare Integer CodriverScrollEnd for This;
+
+  // The log shows what fits between the top and the bars; the rest scrolls
+  declare Log <=> (Page.GetFirstChild("codriver-log") as CMlFrame);
+  // Someone reading the newest message keeps seeing it as the log grows or shrinks
+  declare Boolean AtBottom = Log.ScrollOffset.Y >= Log.ScrollMax.Y - 1.;
+  Log.Size = <., CodriverLogHeight>;
+  declare Real MaxY = CodriverContentHeight - CodriverLogHeight;
+  if (MaxY < 0.) MaxY = 0.;
+  Log.ScrollMax = <0., MaxY>;
+  if (CodriverScrollEnd != CodriverScrolled || AtBottom) {
+    CodriverScrolled = CodriverScrollEnd;
+    CodriverStickFrames = 5;
+  }
+
+  for (I, 0, NaN) {
+    declare Bubble <=> (Page.GetFirstChild("codriver-bubble-" ^ I) as CMlQuad);
+    Bubble.Visible = I < CodriverBubblePos.count;
+    if (Bubble.Visible) {
+      Bubble.RelativePosition_V3 = CodriverBubblePos[I];
+      Bubble.Size = CodriverBubbleSizes[I];
+    }
+  }
+  for (I, 0, NaN) {
+    declare Speaker <=> (Page.GetFirstChild("codriver-speaker-" ^ I) as CMlLabel);
+    Speaker.Visible = I < CodriverSpeakerTexts.count;
+    if (Speaker.Visible) {
+      Speaker.SetText(CodriverSpeakerTexts[I]);
+      Speaker.RelativePosition_V3 = CodriverSpeakerPos[I];
+      Speaker.Size = <CodriverSpeakerWidths[I], 3.>;
+    }
+  }
+  for (I, 0, NaN) {
+    declare Line <=> (Page.GetFirstChild("codriver-line-" ^ I) as CMlLabel);
+    Line.Visible = I < CodriverLineTexts.count;
+    if (Line.Visible) {
+      Line.SetText(CodriverLineTexts[I]);
+      Line.RelativePosition_V3 = CodriverLinePos[I];
+      Line.Size = <CodriverLineWidths[I], 3.3>;
+    }
+  }
+
+  Page.GetFirstChild("codriver-empty").Visible = CodriverEmpty;
+  declare Progress <=> (Page.GetFirstChild("codriver-progress") as CMlLabel);
+  Progress.Visible = CodriverBusy;
+  Progress.SetText("$i" ^ CodriverProgress);
+  Progress.RelativePosition_V3 = <0., CodriverProgressY>;
+
+  declare Confirm <=> Page.GetFirstChild("codriver-confirm");
+  Confirm.Visible = CodriverConfirm;
+  Confirm.RelativePosition_V3 = <0., CodriverConfirmY>;
+
+  Page.GetFirstChild("codriver-draft").Visible = CodriverDraft != "";
+  (Page.GetFirstChild("codriver-draft-text") as CMlLabel).SetText(CodriverDraft);
+
+  declare SendLabel <=> (Page.GetFirstChild("codriver-send-label") as CMlLabel);
+  if (CodriverBusy) SendLabel.SetText("Sending…");
+  else SendLabel.SetText(" Send");
+
+  // Send or Add took the text; anything typed since stays
+  if (CodriverClearEntry != CodriverEntryCleared) {
+    CodriverEntryCleared = CodriverClearEntry;
+    (Page.GetFirstChild("codriver-entry") as CMlTextEdit).Value = "";
+  }
+}
+
+
+main() {
+  declare Integer CodriverUpdate for This = -1;
+declare Integer CodriverClearEntry for This = 0;
+CodriverShown = -1;
+CodriverScrolled = -1;
+declare LogFrame <=> (Page.GetFirstChild("codriver-log") as CMlFrame);
+LogFrame.ScrollActive = True;
+LogFrame.ScrollMin = <0., 0.>;
+CodriverEntryCleared = CodriverClearEntry;
+(Page.GetFirstChild("codriver-entry") as CMlTextEdit).StartEdition();
+
+
+  while (True) {
+    yield;
+
+    foreach(event in PendingEvents){
+      if(event.Control == Null) continue;
+
+      
+    }
+
+    declare Integer CodriverUpdate for This;
+if (CodriverUpdate != CodriverShown) {
+  CodriverShown = CodriverUpdate;
+  CodriverApply();
+}
+if (CodriverStickFrames > 0) {
+  CodriverStickFrames = CodriverStickFrames - 1;
+  declare Log <=> (Page.GetFirstChild("codriver-log") as CMlFrame);
+  Log.ScrollOffset = <0., Log.ScrollMax.Y>;
+}
+
+  }
+}
+--></script>
+
+</manialink>
+"
+`;
+
+exports[`TemplateRenderer > renders codriver-window-update 1`] = `
+"<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>
+<manialink name="GCP:test-id" id="test-id" version="3">
+<script>
+<!--
+main() {
+  declare Integer CodriverUpdate for This;
+  declare Text[] CodriverSpeakerTexts for This;
+  declare Vec2[] CodriverSpeakerPos for This;
+  declare Real[] CodriverSpeakerWidths for This;
+  declare Vec2[] CodriverBubblePos for This;
+  declare Vec2[] CodriverBubbleSizes for This;
+  declare Text[] CodriverLineTexts for This;
+  declare Vec2[] CodriverLinePos for This;
+  declare Real[] CodriverLineWidths for This;
+  declare Boolean CodriverEmpty for This;
+  declare Boolean CodriverBusy for This;
+  declare Text CodriverProgress for This;
+  declare Real CodriverProgressY for This;
+  declare Boolean CodriverConfirm for This;
+  declare Real CodriverConfirmY for This;
+  declare Text CodriverDraft for This;
+  declare Integer CodriverClearEntry for This;
+  declare Real CodriverLogHeight for This;
+  declare Real CodriverContentHeight for This;
+  declare Integer CodriverScrollEnd for This;
+
+  
+}
+-->
+</script>
+
+</manialink>
+"
+`;
+
 exports[`TemplateRenderer > renders manialink 1`] = `
 "<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?xml-model href="https://raw.githubusercontent.com/reaby/manialink-xsd/main/manialink_v3.xsd" ?>

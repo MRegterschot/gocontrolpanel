@@ -19,7 +19,16 @@ import { notify, type ProgressListener, runningProgress } from "./progress";
 import { resolveRole } from "./roles";
 import { executeCalls, runCodriver } from "./runner";
 import { loadAccessInput } from "./settings";
+import {
+  MAX_REQUEST_LENGTH,
+  MAX_STEPS,
+  runSteps,
+  splitSteps,
+  type StepsOutcome,
+  stoppedNote,
+} from "./steps";
 import { normalize } from "./text";
+import type { PlannedCall } from "./types";
 import {
   type BudgetState,
   budgetStates,
@@ -96,6 +105,40 @@ export async function handleCodriverRequest(
         ? appendTurn(serverId, login, source, { request: message.text, reply })
         : Promise.resolve();
 
+    // A stepped request is stored and recorded as one request
+    const finishSteps = async (
+      outcome: StepsOutcome,
+      budgets: BudgetState[],
+      confirmed: PlannedCall[] = [],
+    ): Promise<CodriverChatReply> => {
+      const confirmationId =
+        outcome.status === "needs_confirmation"
+          ? await savePending(
+              serverId,
+              login,
+              outcome.calls,
+              source,
+              outcome.pending,
+            )
+          : undefined;
+      const cost = await record(
+        outcome.status,
+        [...confirmed, ...outcome.allCalls],
+        outcome.usage,
+        outcome.reply,
+      );
+      if (outcome.status !== "failed" && outcome.status !== "denied")
+        await remember(outcome.reply);
+      void (async () => notifyBudgetCrossings(serverId, budgets, cost))().catch(
+        (error) => log.warn({ error }, "Codriver follow-up work failed"),
+      );
+      return {
+        status: outcome.status,
+        reply: outcome.reply,
+        ...(confirmationId ? { confirmationId } : {}),
+      };
+    };
+
     // Feedback is a note on the previous request, not a new one
     const feedback = parseFeedback(message.text);
     if (feedback !== null) {
@@ -115,19 +158,77 @@ export async function handleCodriverRequest(
           status: "unclear",
           reply: "Use Confirm on the request you want to execute.",
         };
-      const calls = await takePending(
+      const pending = await takePending(
         serverId,
         login,
         source,
         message.confirmationId,
       );
-      if (!calls) return { status: "unclear", reply: "Nothing to confirm." };
+      if (!pending) return { status: "unclear", reply: "Nothing to confirm." };
+      const { calls, steps } = pending;
       // Runs with the caller's current role, which executeCalls checks per call
       notify(message.onProgress, runningProgress(calls));
       const executed = await executeCalls({ serverId, actor, role }, calls);
-      await record(executed.status, calls, [], executed.reply);
-      await remember(executed.reply);
-      return { status: executed.status, reply: executed.reply };
+      if (!steps) {
+        await record(executed.status, calls, [], executed.reply);
+        await remember(executed.reply);
+        return { status: executed.status, reply: executed.reply };
+      }
+
+      // One step of a longer request: the steps after it run now
+      const number = steps.done.length + 1;
+      const done = [...steps.done, `${number}. ${executed.reply}`];
+      const turns = [
+        ...steps.turns,
+        { request: steps.step, reply: executed.reply },
+      ];
+      const budgets =
+        executed.status === "done" && steps.steps.length > 0
+          ? await budgetStates(serverId, access.budgets)
+          : [];
+      const budgetSpent = budgets.some(isSpent);
+      if (
+        executed.status !== "done" ||
+        steps.steps.length === 0 ||
+        budgetSpent
+      ) {
+        const reply = [
+          ...done,
+          budgetSpent ? "Codriver has used its budget for this month." : "",
+          stoppedNote(steps.steps.length, number + 1),
+        ]
+          .filter(Boolean)
+          .join("\n");
+        await record(executed.status, calls, [], reply);
+        await remember(reply);
+        return { status: executed.status, reply };
+      }
+      const history = await loadTurns(
+        serverId,
+        login,
+        source,
+        access.memoryTurns,
+      );
+      return finishSteps(
+        await runSteps(
+          {
+            serverId,
+            actor,
+            text: steps.steps.join(" "),
+            history,
+            onProgress: message.onProgress,
+          },
+          {
+            model: deps.createModel(access.apiKey),
+            primaryModel: access.primaryModel,
+            escalationModel: access.escalationModel,
+          },
+          steps.steps,
+          { done, turns },
+        ),
+        budgets,
+        calls,
+      );
     }
     if (cancelWords.has(word)) {
       const cancelled = await clearPending(serverId, login, source);
@@ -161,22 +262,42 @@ export async function handleCodriverRequest(
       return { status: "over_budget", reply };
     }
 
+    // "Do X. Then do Y" runs as one request per step
+    const steps = fast ? [] : splitSteps(message.text);
+    if (steps.length > MAX_STEPS) {
+      return {
+        status: "unclear",
+        reply: `That's ${steps.length} steps; ask for at most ${MAX_STEPS} at once.`,
+      };
+    }
+    if (message.text.trim().length > MAX_REQUEST_LENGTH) {
+      return {
+        status: "unclear",
+        reply: `Keep it under ${MAX_REQUEST_LENGTH} characters.`,
+      };
+    }
+    const codriverRequest = {
+      serverId,
+      actor,
+      text: message.text,
+      history,
+      onProgress: message.onProgress,
+    };
+    const codriverOptions = {
+      model: deps.createModel(access.apiKey),
+      primaryModel: access.primaryModel,
+      escalationModel: access.escalationModel,
+    };
+
     let outcome;
     try {
-      outcome = await runCodriver(
-        {
-          serverId,
-          actor,
-          text: message.text,
-          history,
-          onProgress: message.onProgress,
-        },
-        {
-          model: deps.createModel(access.apiKey),
-          primaryModel: access.primaryModel,
-          escalationModel: access.escalationModel,
-        },
-      );
+      if (steps.length > 1) {
+        return await finishSteps(
+          await runSteps(codriverRequest, codriverOptions, steps),
+          budgets,
+        );
+      }
+      outcome = await runCodriver(codriverRequest, codriverOptions);
     } catch (error) {
       if (error instanceof Anthropic.AuthenticationError) {
         await notifyKeyRejected(serverId, access.keySource);

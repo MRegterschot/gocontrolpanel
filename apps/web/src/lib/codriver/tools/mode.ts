@@ -45,7 +45,7 @@ async function waitForScript(serverId: string, script: string): Promise<void> {
 export const setMode = defineTool({
   name: "set_mode",
   description:
-    "Switch the game mode, optionally with settings; restarts the current map.",
+    "Switch the game mode, optionally with settings; restarts the current map. Doesn't create script files.",
   category: "mode",
   minRole: "admin",
   input: z.strictObject({

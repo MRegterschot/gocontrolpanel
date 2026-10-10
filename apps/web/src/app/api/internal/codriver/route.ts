@@ -1,8 +1,11 @@
-import { handleCodriverMessage } from "@/lib/codriver/handle";
+import { clearTurns } from "@/lib/codriver/conversation";
+import { handleCodriverRequest } from "@/lib/codriver/handle";
+import { clearPending } from "@/lib/codriver/pending";
 import { codriverEventStream } from "@/lib/codriver/stream";
+import { MAX_REQUEST_LENGTH } from "@/lib/codriver/text";
 import config from "@/lib/config";
 import { getClient } from "@/lib/dbclient";
-import { MIN_SECRET_LENGTH } from "@gcp/shared";
+import { type CodriverProgress, MIN_SECRET_LENGTH } from "@gcp/shared";
 import { NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
 import { z } from "zod";
@@ -13,7 +16,9 @@ const bodySchema = z.object({
   serverId: z.string().min(1).max(64),
   login: z.string().min(1).max(64),
   // The runner rejects anything over its own limit with a reply the player sees
-  text: z.string().max(1000),
+  text: z.string().max(MAX_REQUEST_LENGTH),
+  // The in-game window's Clear: forgets the conversation and any open question
+  clear: z.literal(true).optional(),
 });
 
 function validToken(header: string | null, token: string): boolean {
@@ -49,23 +54,31 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Server not found" }, { status: 404 });
   }
 
+  const { clear, ...message } = body.data;
+  // The status lets the in-game window offer Confirm and Cancel
+  const answer = async (onProgress?: (progress: CodriverProgress) => void) => {
+    if (clear) {
+      await Promise.all([
+        clearTurns(message.serverId, message.login, "game"),
+        clearPending(message.serverId, message.login, "game"),
+      ]);
+      return { status: "done", reply: "Conversation cleared." };
+    }
+    const { status, reply } = await handleCodriverRequest({
+      ...message,
+      source: "game",
+      ...(onProgress ? { onProgress } : {}),
+    });
+    return { status, reply };
+  };
+
   // Newer GBX services ask for a stream so the player sees progress
   if (request.headers.get("accept")?.includes("text/event-stream")) {
-    return codriverEventStream(
-      async (onProgress) => ({
-        reply: await handleCodriverMessage({
-          ...body.data,
-          source: "game",
-          onProgress,
-        }),
-      }),
-      request.signal,
-    );
+    return codriverEventStream(answer, request.signal);
   }
 
-  const reply = await handleCodriverMessage({ ...body.data, source: "game" });
   return NextResponse.json(
-    { data: { reply } },
+    { data: await answer() },
     { headers: { "Cache-Control": "no-store" } },
   );
 }
