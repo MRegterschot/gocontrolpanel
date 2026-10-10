@@ -2,6 +2,7 @@
 
 import { createFileEntry } from "@/actions/filemanager";
 import FormElement from "@/components/form/form-element";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,8 @@ import {
   getUpdatedSettingsForGameMode,
 } from "@/lib/scripts";
 import { getErrorMessage } from "@/lib/utils";
+import { ServerError } from "@/types/responses";
+import { GameModeType } from "@gcp/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconFileTextSpark, IconPlus } from "@tabler/icons-react";
 import { useMemo, useState } from "react";
@@ -31,7 +34,18 @@ import {
   ScriptGeneratorSchema,
   ScriptGeneratorSchemaType,
 } from "./script-generator-schema";
-import { ServerError } from "@/types/responses";
+
+// Detection matches these strings in the script name (case-insensitive)
+const MODE_TYPE_LABELS: Record<GameModeType, string> = {
+  timeattack: "Time Attack",
+  rounds: "Rounds",
+  reversecup: "Reverse Cup",
+  cup: "Cup",
+  tmwc: "TM World Cup",
+  tmwt: "TM World Teams",
+  teams: "Teams",
+  knockout: "Knockout",
+};
 
 function getInputType(type: string) {
   switch (type) {
@@ -178,6 +192,21 @@ export default function ScriptGeneratorForm({
           <h4 className="text-muted-foreground">
             Generate a script with the desired settings.
           </h4>
+        </div>
+
+        <div className="flex flex-col gap-2 rounded-md border p-3 text-sm">
+          <p className="text-muted-foreground">
+            For GoControlPanel to detect the game mode, the script name must
+            include one of these type strings. Scripts that match none are
+            treated as Rounds.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(MODE_TYPE_LABELS).map(([type, label]) => (
+              <Badge key={type} variant="secondary">
+                <code>{type}</code> → {label}
+              </Badge>
+            ))}
+          </div>
         </div>
 
         <div className="flex flex-col xl:flex-row gap-6">
