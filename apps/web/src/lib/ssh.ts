@@ -72,9 +72,12 @@ export function executeSSHScript(
 export function runSSHScript(
   conn: Client,
   script: string,
+  args: string[] = [],
 ): Promise<{ output: string; code: number | null }> {
+  // Arguments are fixed by the caller, but quote them anyway
+  const quoted = args.map((arg) => `'${arg.replace(/'/g, `'\\''`)}'`).join(" ");
   return new Promise((resolve, reject) => {
-    conn.exec("bash -s 2>&1", (err, stream) => {
+    conn.exec(`bash -s -- ${quoted} 2>&1`, (err, stream) => {
       if (err) return reject(err);
 
       let output = "";

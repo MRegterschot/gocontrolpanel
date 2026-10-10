@@ -9,7 +9,7 @@ import DetachServerFromNetworkModal from "@/components/modals/hetzner/detach-ser
 import HetznerDatabaseDetailsModal from "@/components/modals/hetzner/hetzner-database-details";
 import HetznerServerDetailsModal from "@/components/modals/hetzner/hetzner-server-details";
 import HetznerServerMetricsModal from "@/components/modals/hetzner/hetzner-server-metrics";
-import HetznerUpdateFileManagerModal from "@/components/modals/hetzner/hetzner-update-filemanager";
+import HetznerUpdateContainersModal from "@/components/modals/hetzner/hetzner-update-containers";
 import Modal from "@/components/modals/modal";
 import { DataTableColumnHeader } from "@/components/table/data-table-column-header";
 import { Button } from "@/components/ui/button";
@@ -138,6 +138,7 @@ export const createServersColumns = (
       const [isDetachOpen, setIsDetachOpen] = useState(false);
       const [isAddServerOpen, setIsAddServerOpen] = useState(false);
       const [isUpdateFmOpen, setIsUpdateFmOpen] = useState(false);
+      const [isUpdateTmOpen, setIsUpdateTmOpen] = useState(false);
 
       const canDelete = hasPermissionSync(
         session,
@@ -219,6 +220,11 @@ export const createServersColumns = (
                   Update File Managers
                 </DropdownMenuItem>
               )}
+              {canManage && (
+                <DropdownMenuItem onClick={() => setIsUpdateTmOpen(true)}>
+                  Update Trackmania Servers
+                </DropdownMenuItem>
+              )}
               {canCreate && (
                 <>
                   {!Object.keys(row.original.labels).some((key) =>
@@ -288,11 +294,29 @@ export const createServersColumns = (
               setIsOpen={setIsUpdateFmOpen}
               closeOnBackdropClick={false}
             >
-              <HetznerUpdateFileManagerModal
+              <HetznerUpdateContainersModal
                 data={{
                   projectId: data.projectId,
                   serverId: server.id,
                   serverName: server.name,
+                  target: "filemanager",
+                }}
+              />
+            </Modal>
+          )}
+
+          {canManage && (
+            <Modal
+              isOpen={isUpdateTmOpen}
+              setIsOpen={setIsUpdateTmOpen}
+              closeOnBackdropClick={false}
+            >
+              <HetznerUpdateContainersModal
+                data={{
+                  projectId: data.projectId,
+                  serverId: server.id,
+                  serverName: server.name,
+                  target: "trackmania",
                 }}
               />
             </Modal>
