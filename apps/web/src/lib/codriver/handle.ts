@@ -16,6 +16,7 @@ import {
   takePending,
 } from "./pending";
 import { notify, type ProgressListener, runningProgress } from "./progress";
+import { reservationMicros, reserveBudget } from "./reservations";
 import { resolveRole } from "./roles";
 import { executeCalls, runCodriver } from "./runner";
 import { loadAccessInput } from "./settings";
@@ -78,6 +79,9 @@ export async function handleCodriverRequest(
     const input = await loadAccessInput(serverId, actor, role);
     const access = resolveAccess(input);
     if (!access.allowed) return { status: "denied", reply: access.reason };
+    const models = [access.primaryModel, access.escalationModel].filter(
+      (model): model is string => model !== null,
+    );
 
     const record = (
       status: Parameters<typeof recordRequest>[0]["status"],
@@ -186,12 +190,17 @@ export async function handleCodriverRequest(
         executed.status === "done" && steps.steps.length > 0
           ? await budgetStates(serverId, access.budgets)
           : [];
-      const budgetSpent = budgets.some(isSpent);
-      if (
-        executed.status !== "done" ||
-        steps.steps.length === 0 ||
-        budgetSpent
-      ) {
+      const continues = executed.status === "done" && steps.steps.length > 0;
+      const release =
+        continues && !budgets.some(isSpent)
+          ? await reserveBudget(
+              serverId,
+              budgets,
+              reservationMicros(models, steps.steps.length),
+            )
+          : null;
+      const budgetSpent = continues && !release;
+      if (!continues || !release) {
         const reply = [
           ...done,
           budgetSpent ? "Codriver has used its budget for this month." : "",
@@ -209,26 +218,30 @@ export async function handleCodriverRequest(
         source,
         access.memoryTurns,
       );
-      return finishSteps(
-        await runSteps(
-          {
-            serverId,
-            actor,
-            text: steps.steps.join(" "),
-            history,
-            onProgress: message.onProgress,
-          },
-          {
-            model: deps.createModel(access.apiKey),
-            primaryModel: access.primaryModel,
-            escalationModel: access.escalationModel,
-          },
-          steps.steps,
-          { done, turns },
-        ),
-        budgets,
-        calls,
-      );
+      try {
+        return await finishSteps(
+          await runSteps(
+            {
+              serverId,
+              actor,
+              text: steps.steps.join(" "),
+              history,
+              onProgress: message.onProgress,
+            },
+            {
+              model: deps.createModel(access.apiKey),
+              primaryModel: access.primaryModel,
+              escalationModel: access.escalationModel,
+            },
+            steps.steps,
+            { done, turns },
+          ),
+          budgets,
+          calls,
+        );
+      } finally {
+        await release();
+      }
     }
     if (cancelWords.has(word)) {
       const cancelled = await clearPending(serverId, login, source);
@@ -276,59 +289,74 @@ export async function handleCodriverRequest(
         reply: `Keep it under ${MAX_REQUEST_LENGTH} characters.`,
       };
     }
-    const codriverRequest = {
+    // Holds this request's worst-case cost until it is recorded
+    const release = await reserveBudget(
       serverId,
-      actor,
-      text: message.text,
-      history,
-      onProgress: message.onProgress,
-    };
-    const codriverOptions = {
-      model: deps.createModel(access.apiKey),
-      primaryModel: access.primaryModel,
-      escalationModel: access.escalationModel,
-    };
-
-    let outcome;
-    try {
-      if (steps.length > 1) {
-        return await finishSteps(
-          await runSteps(codriverRequest, codriverOptions, steps),
-          budgets,
-        );
-      }
-      outcome = await runCodriver(codriverRequest, codriverOptions);
-    } catch (error) {
-      if (error instanceof Anthropic.AuthenticationError) {
-        await notifyKeyRejected(serverId, access.keySource);
-      }
-      await record("failed", []);
-      throw error;
-    }
-    const confirmationId =
-      outcome.status === "needs_confirmation"
-        ? await savePending(serverId, login, outcome.calls, source)
-        : undefined;
-    const [cost] = await Promise.all([
-      record(outcome.status, outcome.calls, outcome.usage, outcome.reply),
-      outcome.status !== "failed" && outcome.status !== "denied"
-        ? remember(outcome.reply)
-        : undefined,
-    ]);
-    // Alerts and pruning don't change the reply, so they run after it is sent
-    void (async () => {
-      await notifyBudgetCrossings(serverId, budgets, cost);
-      // About one request in a hundred also clears old history
-      if (deps.random() < 0.01) await pruneRequests(input.retentionDays);
-    })().catch((error) =>
-      log.warn({ error }, "Codriver follow-up work failed"),
+      budgets,
+      reservationMicros(models, steps.length),
     );
+    if (!release) {
+      const reply = "Codriver has used its budget for this month.";
+      await record("over_budget", [], [], reply);
+      return { status: "over_budget", reply };
+    }
+    try {
+      const codriverRequest = {
+        serverId,
+        actor,
+        text: message.text,
+        history,
+        onProgress: message.onProgress,
+      };
+      const codriverOptions = {
+        model: deps.createModel(access.apiKey),
+        primaryModel: access.primaryModel,
+        escalationModel: access.escalationModel,
+      };
 
-    return {
-      status: outcome.status,
-      reply: outcome.reply,
-      ...(confirmationId ? { confirmationId } : {}),
-    };
+      let outcome;
+      try {
+        if (steps.length > 1) {
+          return await finishSteps(
+            await runSteps(codriverRequest, codriverOptions, steps),
+            budgets,
+          );
+        }
+        outcome = await runCodriver(codriverRequest, codriverOptions);
+      } catch (error) {
+        if (error instanceof Anthropic.AuthenticationError) {
+          await notifyKeyRejected(serverId, access.keySource);
+        }
+        await record("failed", []);
+        throw error;
+      }
+      const confirmationId =
+        outcome.status === "needs_confirmation"
+          ? await savePending(serverId, login, outcome.calls, source)
+          : undefined;
+      const [cost] = await Promise.all([
+        record(outcome.status, outcome.calls, outcome.usage, outcome.reply),
+        outcome.status !== "failed" && outcome.status !== "denied"
+          ? remember(outcome.reply)
+          : undefined,
+      ]);
+      // Alerts and pruning don't change the reply, so they run after it is sent
+      void (async () => {
+        await notifyBudgetCrossings(serverId, budgets, cost);
+        // About one request in a hundred also clears old history
+        if (deps.random() < 0.01) await pruneRequests(input.retentionDays);
+      })().catch((error) =>
+        log.warn({ error }, "Codriver follow-up work failed"),
+      );
+
+      return {
+        status: outcome.status,
+        reply: outcome.reply,
+        ...(confirmationId ? { confirmationId } : {}),
+      };
+    } finally {
+      await release();
+    }
   } catch (error) {
     log.error({ error, login }, "Codriver request failed");
     return { status: "failed", reply: "Codriver is unavailable right now." };
