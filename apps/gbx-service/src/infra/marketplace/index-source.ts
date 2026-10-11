@@ -1,4 +1,8 @@
-import { parseMarketplaceIndex, type MarketplaceIndex } from "@gcp/shared";
+import {
+  parseMarketplaceIndex,
+  readBodyLimited,
+  type MarketplaceIndex,
+} from "@gcp/shared";
 import type { Logger } from "../../core/logger";
 import type { MarketplaceIndexSource } from "../../core/plugins/marketplace-watcher";
 
@@ -15,13 +19,16 @@ export class HttpMarketplaceIndexSource implements MarketplaceIndexSource {
       headers: { accept: "application/json" },
       signal: AbortSignal.timeout(15_000),
     });
-    if (!response.ok) throw new Error(`Marketplace index answered ${response.status}`);
+    if (!response.ok)
+      throw new Error(`Marketplace index answered ${response.status}`);
 
-    const text = await response.text();
-    if (text.length > MAX_INDEX_BYTES) throw new Error("Marketplace index is too large");
+    const text = new TextDecoder().decode(
+      await readBodyLimited(response, MAX_INDEX_BYTES),
+    );
 
     const { index, skipped } = parseMarketplaceIndex(JSON.parse(text));
-    if (skipped > 0) this.log.warn({ skipped }, "Skipped invalid marketplace entries");
+    if (skipped > 0)
+      this.log.warn({ skipped }, "Skipped invalid marketplace entries");
     return index;
   }
 }

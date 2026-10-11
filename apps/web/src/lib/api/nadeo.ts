@@ -1,4 +1,5 @@
 import config from "@/lib/config";
+import { getErrorMessage } from "@/lib/utils";
 import {
   AccountNames,
   Club,
@@ -19,6 +20,7 @@ import {
   WebIdentity,
 } from "@/types/api/nadeo";
 import { ServerError, ServerResponse } from "@/types/responses";
+import { fetchPublic } from "@gcp/shared/public-fetch";
 import "server-only";
 import { doServerAction } from "../actions";
 import { logger } from "../logger";
@@ -52,9 +54,7 @@ export async function authenticate(
   return promise;
 }
 
-async function authenticateUncached(
-  audience: string,
-): Promise<NadeoTokens> {
+async function authenticateUncached(audience: string): Promise<NadeoTokens> {
   const login = config.NADEO.SERVER_LOGIN;
   const pass = config.NADEO.SERVER_PASSWORD;
   const contact = config.NADEO.CONTACT;
@@ -356,67 +356,50 @@ export async function getClubById(clubId: number): Promise<Club> {
   return await doRequest<Club>(url, "NadeoLiveServices");
 }
 
+// Map files are a few MB; the cap keeps a hostile URL from filling memory
+const MAX_MAP_BYTES = 32 * 1024 * 1024;
+
+// The URL comes from the caller or a third-party API, so it may only reach public https hosts
 export async function downloadFile(
   url: string,
   fileName: string,
 ): Promise<File> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30000); // 30 seconds
   const meta = {
     type: "nadeo",
     module: "download",
     function: "downloadFile",
   };
 
+  let res;
   try {
-    const res = await fetch(url, {
-      headers: {
-        "Content-Type": "application/x-gbx",
-        "User-Agent": config.NADEO.CONTACT,
-      },
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeout);
-
-    if (!res.ok) {
-      logger.error(
-        {
-          meta,
-          response: {
-            status: res.status,
-            statusText: res.statusText,
-            error: await res.text(),
-          },
-          url,
-          fileName,
-        },
-        "Failed to download map",
-      );
-
-      reportException(res, meta);
-
-      throw new ServerError(
-        `Failed to download map: ${res.status} ${res.statusText}`,
-        "NadeoDownloadError",
-      );
-    }
-
-    const arrayBuffer = await res.arrayBuffer();
-    return new File([arrayBuffer], dedicatedFileName(fileName), {
-      type: "application/x-gbx",
+    res = await fetchPublic(url, {
+      headers: { "User-Agent": config.NADEO.CONTACT },
+      timeoutMs: 30_000,
+      maxBytes: MAX_MAP_BYTES,
     });
   } catch (err) {
     reportException(err, meta);
-    if ((err as any).name === "AbortError") {
-      logger.error({ meta, url, fileName }, "Download for map timed out");
-      throw new ServerError(
-        `Download for map ${fileName} timed out`,
-        "NadeoDownloadTimeoutError",
-      );
-    }
-    throw err;
+    logger.error({ meta, url, fileName, err }, "Failed to download map");
+    throw new ServerError(
+      `Failed to download map ${fileName}: ${getErrorMessage(err)}`,
+      "NadeoDownloadError",
+    );
   }
+
+  if (res.status < 200 || res.status >= 300) {
+    logger.error(
+      { meta, status: res.status, url, fileName },
+      "Failed to download map",
+    );
+    throw new ServerError(
+      `Failed to download map: ${res.status}`,
+      "NadeoDownloadError",
+    );
+  }
+
+  return new File([new Uint8Array(res.body)], dedicatedFileName(fileName), {
+    type: "application/x-gbx",
+  });
 }
 
 export async function getClubRoom(

@@ -30,6 +30,17 @@ export async function uploadFilesAs(
     paths: formData.getAll("paths[]").map((path) => path.toString()),
   };
 
+  // Folder and file names come from users and from Nadeo/TMX names
+  const badPath = uploadAuditData.paths.find(
+    (path) => !path.startsWith("/") || hasDotSegment(path),
+  );
+  const badFile = uploadAuditData.files.find(
+    (name) => /[\\/]/.test(name) || hasDotSegment(name),
+  );
+  if (badPath !== undefined || badFile !== undefined) {
+    throw new ServerError("Invalid upload path", "InvalidFilePath");
+  }
+
   const fileManager = await getFileManager(serverId);
   if (!fileManager?.health) {
     await logAudit(
@@ -203,4 +214,10 @@ export async function writeFileTextAs(
 
 function encodePath(path: string): string {
   return path.split("/").map(encodeURIComponent).join("/");
+}
+
+function hasDotSegment(path: string): boolean {
+  return path
+    .split(/[\\/]/)
+    .some((segment) => segment === "." || segment === "..");
 }

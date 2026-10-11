@@ -1,5 +1,6 @@
 export * from "./codriver-stream";
 export * from "./internal-api";
+export * from "./net/read-limited";
 export * from "./permissions";
 export * from "./plugins";
 export * from "./server-events";

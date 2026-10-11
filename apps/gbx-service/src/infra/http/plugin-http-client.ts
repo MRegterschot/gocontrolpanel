@@ -1,6 +1,5 @@
-import { lookup, type LookupAddress } from "node:dns";
+import { assertPublicHttpsUrl, publicLookup } from "@gcp/shared/public-fetch";
 import { request } from "node:https";
-import { BlockList, isIP } from "node:net";
 import type {
   PluginHttpClient,
   PluginHttpRequest,
@@ -8,80 +7,42 @@ import type {
 } from "../../core/ports";
 
 // Plugins reach only the hosts they declared, and never an address inside the network the
-// service runs in (Redis and the database usually have no password there).
-const privateRanges = new BlockList();
-for (const [network, prefix] of [
-  ["0.0.0.0", 8],
-  ["10.0.0.0", 8],
-  ["100.64.0.0", 10],
-  ["127.0.0.0", 8],
-  ["169.254.0.0", 16],
-  ["172.16.0.0", 12],
-  ["192.0.0.0", 24],
-  ["192.168.0.0", 16],
-  ["198.18.0.0", 15],
-  ["224.0.0.0", 4],
-  ["240.0.0.0", 4],
-] as const) {
-  privateRanges.addSubnet(network, prefix, "ipv4");
-}
-for (const [network, prefix] of [
-  ["::", 128],
-  ["::1", 128],
-  ["fc00::", 7],
-  ["fe80::", 10],
-  ["ff00::", 8],
-] as const) {
-  privateRanges.addSubnet(network, prefix, "ipv6");
-}
+// service runs in; the address rules live in @gcp/shared/public-fetch
+export { isPrivateAddress } from "@gcp/shared/public-fetch";
 
-export function isPrivateAddress(address: string): boolean {
-  const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(address);
-  if (mapped) return privateRanges.check(mapped[1], "ipv4");
-  const family = isIP(address);
-  if (family === 0) return true;
-  return privateRanges.check(address, family === 4 ? "ipv4" : "ipv6");
-}
-
-type LookupCallback = (
-  error: NodeJS.ErrnoException | null,
-  address: string | LookupAddress[],
-  family?: number,
-) => void;
-
-// DNS lookup that fails for private addresses, used for the actual connection so a
-// rebinding name can't slip past an earlier check
-function publicLookup(hostname: string, options: { all?: boolean }, callback: LookupCallback) {
-  lookup(hostname, { all: true }, (error, addresses) => {
-    if (error) return callback(error, []);
-    const blocked = addresses.find((entry) => isPrivateAddress(entry.address));
-    if (blocked || addresses.length === 0) {
-      return callback(
-        Object.assign(new Error(`${hostname} resolves to a private address`), { code: "EPRIVATE" }),
-        [],
-      );
-    }
-    if (options.all) callback(null, addresses);
-    else callback(null, addresses[0].address, addresses[0].family);
-  });
-}
+// Hop-by-hop and routing headers a plugin may not set
+const RESERVED_HEADERS = new Set([
+  "host",
+  "connection",
+  "transfer-encoding",
+  "upgrade",
+  "te",
+  "keep-alive",
+  "proxy-authorization",
+]);
 
 export class HttpsPluginClient implements PluginHttpClient {
   constructor(private readonly userAgent = "GoControlPanel-Plugin") {}
 
   fetch(input: PluginHttpRequest): Promise<PluginHttpResponse> {
-    const url = new URL(input.url);
-    if (url.protocol !== "https:") return Promise.reject(new Error("Only https:// URLs are allowed"));
-    if (isIP(url.hostname.replace(/^\[|\]$/g, "")) !== 0) {
-      return Promise.reject(new Error("Requests must use a host name, not an IP address"));
+    let url: URL;
+    try {
+      url = assertPublicHttpsUrl(input.url);
+    } catch (error) {
+      return Promise.reject(error);
     }
+    const headers = Object.fromEntries(
+      Object.entries(input.headers).filter(
+        ([name]) => !RESERVED_HEADERS.has(name.toLowerCase()),
+      ),
+    );
 
     return new Promise((resolve, reject) => {
       const req = request(
         url,
         {
           method: input.method,
-          headers: { "user-agent": this.userAgent, ...input.headers },
+          headers: { "user-agent": this.userAgent, ...headers },
           lookup: publicLookup as never,
           timeout: input.timeoutMs,
         },
@@ -91,7 +52,11 @@ export class HttpsPluginClient implements PluginHttpClient {
           res.on("data", (chunk: Buffer) => {
             size += chunk.length;
             if (size > input.maxResponseBytes) {
-              req.destroy(new Error(`The response is larger than ${input.maxResponseBytes / 1024} KB`));
+              req.destroy(
+                new Error(
+                  `The response is larger than ${input.maxResponseBytes / 1024} KB`,
+                ),
+              );
               return;
             }
             chunks.push(chunk);
@@ -99,7 +64,8 @@ export class HttpsPluginClient implements PluginHttpClient {
           res.on("end", () => {
             const headers: Record<string, string> = {};
             for (const [name, value] of Object.entries(res.headers)) {
-              if (value !== undefined) headers[name] = Array.isArray(value) ? value.join(", ") : value;
+              if (value !== undefined)
+                headers[name] = Array.isArray(value) ? value.join(", ") : value;
             }
             resolve({
               status: res.statusCode ?? 0,
@@ -112,10 +78,15 @@ export class HttpsPluginClient implements PluginHttpClient {
       );
 
       const deadline = setTimeout(
-        () => req.destroy(new Error(`No answer within ${input.timeoutMs / 1000} s`)),
+        () =>
+          req.destroy(
+            new Error(`No answer within ${input.timeoutMs / 1000} s`),
+          ),
         input.timeoutMs,
       );
-      req.on("timeout", () => req.destroy(new Error(`No answer within ${input.timeoutMs / 1000} s`)));
+      req.on("timeout", () =>
+        req.destroy(new Error(`No answer within ${input.timeoutMs / 1000} s`)),
+      );
       req.on("error", reject);
       req.on("close", () => clearTimeout(deadline));
       if (input.body !== undefined) req.write(input.body);
