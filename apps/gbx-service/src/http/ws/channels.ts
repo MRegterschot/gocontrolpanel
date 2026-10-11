@@ -12,6 +12,8 @@ import type { ServerRuntime } from "../../core/server/server-runtime";
 import type { ServerEventMap } from "../../core/server/server-events";
 
 export const CloseCode = {
+  // The socket reached its lifetime; the client reconnects with a fresh ticket
+  Reauthenticate: 4001,
   Unauthorized: 4401,
   Forbidden: 4403,
   NotFound: 4404,

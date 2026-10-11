@@ -303,3 +303,17 @@ describe("stopping", () => {
     expect(sockets).toHaveLength(0);
   });
 });
+
+describe("lifetime closes", () => {
+  it("reconnects at once with a fresh ticket when the service asks to reauthenticate", async () => {
+    const { options, sockets } = setup();
+    await settle();
+    sockets[0].open();
+
+    sockets[0].closeWith(4001, "Session refresh");
+    await settle();
+
+    expect(options.fetchTicket).toHaveBeenCalledTimes(2);
+    expect(sockets).toHaveLength(2);
+  });
+});

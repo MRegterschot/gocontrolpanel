@@ -14,6 +14,7 @@ export interface AppOptions {
   tickets: TicketVerifier;
   allowedOrigins?: string[];
   heartbeatMs?: number;
+  wsMaxLifetimeMs?: number;
 }
 
 // Builds the HTTP/WS app without listening, so tests can inject requests or bind port 0
@@ -55,6 +56,8 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     tickets: options.tickets,
     allowedOrigins: options.allowedOrigins ?? [],
     heartbeatMs: options.heartbeatMs ?? 30_000,
+    // Bounds how long a revoked permission keeps receiving live data
+    maxLifetimeMs: options.wsMaxLifetimeMs ?? 10 * 60_000,
   });
 
   return app;

@@ -16,7 +16,9 @@ export function claims(overrides: Partial<SessionClaims> = {}): SessionClaims {
 export const ticketFor = (overrides: Partial<SessionClaims> = {}) =>
   signWsTicket(claims(overrides), TICKET_SECRET);
 
-export async function createApp(options: HarnessOptions & { allowedOrigins?: string[] } = {}) {
+export async function createApp(
+  options: HarnessOptions & { allowedOrigins?: string[]; wsMaxLifetimeMs?: number } = {},
+) {
   const h = await createHarness(options);
   const registry = new ServerRegistry({
     servers: h.servers,
@@ -31,6 +33,7 @@ export async function createApp(options: HarnessOptions & { allowedOrigins?: str
     serviceToken: SERVICE_TOKEN,
     tickets: new TicketVerifier(TICKET_SECRET, h.clock),
     allowedOrigins: options.allowedOrigins,
+    wsMaxLifetimeMs: options.wsMaxLifetimeMs,
   });
 
   const request = (method: "GET" | "POST" | "PUT", url: string, payload?: unknown) =>

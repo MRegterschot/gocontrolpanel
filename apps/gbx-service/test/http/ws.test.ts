@@ -272,3 +272,12 @@ describe("server-wide channels", () => {
     expect(notAdmin.messages).toEqual([]);
   });
 });
+
+describe("ws socket lifetime", () => {
+  it("closes sockets after their lifetime so permissions are checked again", async () => {
+    const { base } = await setup({ wsMaxLifetimeMs: 200 });
+    const conn = connect(`${base}/ws/live/server-1?ticket=${await ticketFor(viewer)}`);
+    await conn.next("beginMatch");
+    expect(await conn.closed).toBe(4001);
+  });
+});
