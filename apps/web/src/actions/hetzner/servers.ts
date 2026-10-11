@@ -4,8 +4,11 @@ import { AddHetznerDatabaseSchemaType } from "@/forms/admin/hetzner/database/add
 import { AttachHetznerServerToNetworkSchemaType } from "@/forms/admin/hetzner/server/attach-hetzner-server-to-network-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { axiosHetzner } from "@/lib/axios/hetzner";
-import { HandlebarsServer } from "@/lib/handlebars";
-import { getKeyHetznerRecentlyCreatedServers, getRedisClient } from "@/lib/redis";
+import { assertProvisioningChoices, HandlebarsServer } from "@/lib/handlebars";
+import {
+  getKeyHetznerRecentlyCreatedServers,
+  getRedisClient,
+} from "@/lib/redis";
 import { generateRandomString } from "@/lib/utils";
 import { HetznerServer, HetznerServerCache } from "@/types/api/hetzner/servers";
 import { ServerResponse } from "@/types/responses";
@@ -108,6 +111,7 @@ export async function createHetznerDatabase(
         db_password: data.databasePassword || generateRandomString(16),
       };
 
+      assertProvisioningChoices(dbData.db_type);
       const userData = dbTemplate(dbData);
 
       const keyName = `db-${data.name}-${generateRandomString(8)}`;

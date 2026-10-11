@@ -7,6 +7,7 @@ import { doServerActionWithAuth } from "@/lib/actions";
 import { axiosHetzner } from "@/lib/axios/hetzner";
 import { getClient } from "@/lib/dbclient";
 import { publishServerEvent } from "@/lib/gbx-service";
+import { assertProvisioningChoices } from "@/lib/handlebars";
 import {
   getKeyHetznerRecentlyCreatedServers,
   getRedisClient,
@@ -49,6 +50,10 @@ export async function createAdvancedServerSetup(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
       await authorizePanelTarget(session, data);
+      assertProvisioningChoices(
+        data.database?.databaseType,
+        data.serverController?.type,
+      );
       const la = (error?: string, id?: number) =>
         logAudit(
           session.user.id,
@@ -245,6 +250,10 @@ export async function createAdvancedServerSetup(
         stack_name: "stack-0",
       };
 
+      assertProvisioningChoices(
+        dediData.db.type,
+        dediData.server_controller?.type,
+      );
       const userData = dediTemplate(dediData);
 
       const keyName = `advanced-${server.name}-${generateRandomString(8)}`;
@@ -426,6 +435,10 @@ export async function createSimpleServerSetup(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
       await authorizePanelTarget(session, data);
+      assertProvisioningChoices(
+        data.database?.databaseType,
+        data.serverController?.type,
+      );
       const la = (error?: string, id?: number) =>
         logAudit(
           session.user.id,
@@ -553,6 +566,10 @@ export async function createSimpleServerSetup(
         stack_name: "stack-0",
       };
 
+      assertProvisioningChoices(
+        dediData.db.type,
+        dediData.server_controller?.type,
+      );
       const userData = dediTemplate(dediData);
 
       const keyName = `simple-${server.name}-${generateRandomString(8)}`;

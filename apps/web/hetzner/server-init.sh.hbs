@@ -8,13 +8,19 @@ apt install -y docker.io docker-compose-v2 curl unzip dnsutils
 cd /root
 curl -sSLf -o gcp.zip https://github.com/MRegterschot/gocontrolpanel/archive/refs/heads/master.zip
 unzip gcp.zip
+# The workspace layout keeps these under apps/web/hetzner; scripts expect gocontrolpanel-master/hetzner
+if [ -d gocontrolpanel-master/apps/web/hetzner ] && [ ! -d gocontrolpanel-master/hetzner ]; then
+  mv gocontrolpanel-master/apps/web/hetzner gocontrolpanel-master/hetzner
+fi
 cd gocontrolpanel-master/hetzner
 
-STACK_DIR="/root/gocontrolpanel-master/hetzner/{{{stack_name}}}"
+STACK_NAME={{sh stack_name}}
+STACK_DIR="/root/gocontrolpanel-master/hetzner/$STACK_NAME"
 ENV_FILE="$STACK_DIR/.env"
 mkdir -p "$(dirname "$ENV_FILE")"
 
-COMPOSE_DIR="/root/gocontrolpanel-master/hetzner/{{{server_controller.type}}}"
+CONTROLLER_TYPE={{sh server_controller.type}}
+COMPOSE_DIR="/root/gocontrolpanel-master/hetzner/$CONTROLLER_TYPE"
 COMPOSE_FILES="-f $COMPOSE_DIR/docker-compose.yml"
 
 TM_SYSTEM_FORCE_IP_ADDRESS=$(dig +short myip.opendns.com @resolver1.opendns.com)
@@ -25,17 +31,17 @@ if [ -z "$TM_SYSTEM_FORCE_IP_ADDRESS" ]; then
 fi
 
 cat > "$ENV_FILE" <<'EOF'
-COMPOSE_PROJECT_NAME={{{stack_name}}}
-TM_MASTERSERVER_LOGIN={{{dedi_login}}}
-TM_MASTERSERVER_PASSWORD={{{dedi_password}}}
-TM_SERVER_PASSWORD={{{room_password}}}
-TM_AUTHORIZATION_SUPERADMIN_PASSWORD={{{superadmin_password}}}
-TM_AUTHORIZATION_ADMIN_PASSWORD={{{admin_password}}}
-TM_AUTHORIZATION_USER_PASSWORD={{{user_password}}}
-FM_PASSWORD={{{filemanager_password}}}
-TM_PORT={{{port}}}
-TM_XMLRPC_PORT={{{xmlrpc_port}}}
-FM_PORT={{{fm_port}}}
+COMPOSE_PROJECT_NAME={{env stack_name}}
+TM_MASTERSERVER_LOGIN={{env dedi_login}}
+TM_MASTERSERVER_PASSWORD={{env dedi_password}}
+TM_SERVER_PASSWORD={{env room_password}}
+TM_AUTHORIZATION_SUPERADMIN_PASSWORD={{env superadmin_password}}
+TM_AUTHORIZATION_ADMIN_PASSWORD={{env admin_password}}
+TM_AUTHORIZATION_USER_PASSWORD={{env user_password}}
+FM_PASSWORD={{env filemanager_password}}
+TM_PORT={{env port}}
+TM_XMLRPC_PORT={{env xmlrpc_port}}
+FM_PORT={{env fm_port}}
 EOF
 
 cat >> "$ENV_FILE" <<EOF
@@ -45,18 +51,19 @@ EOF
 {{#if server_controller}}
 {{#if server_controller.type}}
 cat >> "$ENV_FILE" <<'EOF'
-DB_HOST={{{db.host}}}
-DB_PORT={{{db.port}}}
-DB_NAME={{{db.name}}}
-DB_USER={{{db.user}}}
-DB_PASSWORD={{{db.password}}}
-DB_ROOT_PASSWORD={{{db.root_password}}}
+DB_HOST={{env db.host}}
+DB_PORT={{env db.port}}
+DB_NAME={{env db.name}}
+DB_USER={{env db.user}}
+DB_PASSWORD={{env db.password}}
+DB_ROOT_PASSWORD={{env db.root_password}}
 EOF
 
 {{#if db.local}}
-sed -i "s/^DB_HOST=.*/DB_HOST={{{db.type}}}/" "$ENV_FILE"
+DB_TYPE={{sh db.type}}
+sed -i "s/^DB_HOST=.*/DB_HOST=$DB_TYPE/" "$ENV_FILE"
 
-COMPOSE_FILES="$COMPOSE_FILES -f /root/gocontrolpanel-master/hetzner/docker-configs/docker-compose.{{{db.type}}}.yml"
+COMPOSE_FILES="$COMPOSE_FILES -f /root/gocontrolpanel-master/hetzner/docker-configs/docker-compose.$DB_TYPE.yml"
 {{/if}}
 {{/if}}
 
@@ -65,23 +72,23 @@ COMPOSE_FILES="$COMPOSE_FILES -f /root/gocontrolpanel-master/hetzner/docker-conf
 
 {{#if (eq server_controller.type "maniacontrol")}}
 cat >> "$ENV_FILE" <<'EOF'
-MC_ADMINS={{{server_controller.admins}}}
+MC_ADMINS={{env server_controller.admins}}
 EOF
 {{/if}}
 
 {{#if (eq server_controller.type "minicontrol")}}
 cat >> "$ENV_FILE" <<'EOF'
-MINI_ADMINS={{{server_controller.admins}}}
-MINI_EXCLUDED_PLUGINS={{{server_controller.excludedPlugins}}}
-MINI_CONTACT_INFO={{{server_controller.contactInfo}}}
-MINI_IDENTIFIER={{{server_controller.identifier}}}
-MINI_SECRET={{{server_controller.secret}}}
+MINI_ADMINS={{env server_controller.admins}}
+MINI_EXCLUDED_PLUGINS={{env server_controller.excludedPlugins}}
+MINI_CONTACT_INFO={{env server_controller.contactInfo}}
+MINI_IDENTIFIER={{env server_controller.identifier}}
+MINI_SECRET={{env server_controller.secret}}
 EOF
 {{/if}}
 
 {{#if (eq server_controller.type "pyplanet")}}
 cat >> "$ENV_FILE" <<'EOF'
-PY_ADMINS={{{server_controller.admins}}}
+PY_ADMINS={{env server_controller.admins}}
 EOF
 {{/if}}
 {{/if}}
