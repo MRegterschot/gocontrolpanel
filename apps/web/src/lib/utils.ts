@@ -195,12 +195,19 @@ export function isValidHetznerServerName(name: string): boolean {
   return name.length <= maxLength && hostnameRegex.test(name);
 }
 
+// Cryptographically random; also used for server and database passwords
 export function generateRandomString(length = 16): string {
   const chars =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  // Bytes at or above this would favour the first characters
+  const limit = 256 - (256 % chars.length);
   let result = "";
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  while (result.length < length) {
+    for (const byte of crypto.getRandomValues(new Uint8Array(length * 2))) {
+      if (byte < limit && result.length < length) {
+        result += chars[byte % chars.length];
+      }
+    }
   }
   return result;
 }
