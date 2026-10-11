@@ -2,7 +2,6 @@
 "use client";
 
 import { deleteAuditLogById } from "@/actions/database/audit-logs";
-import type { AuditLogsWithUsers } from "@/services/database/audit-logs";
 import BooleanDisplay from "@/components/boolean-display";
 import AuditLogDetailsModal from "@/components/modals/audit-logs/audit-log-details";
 import ConfirmModal from "@/components/modals/confirm-modal";
@@ -16,15 +15,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { parseTmTags } from "@/lib/tmtags";
 import { getErrorMessage, hasPermissionSync } from "@/lib/utils";
 import { routePermissions } from "@/routes";
+import type { AuditLogsWithUsers } from "@/services/database/audit-logs";
 import { ServerError } from "@/types/responses";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { parseTmTags } from "tmtags";
 
 export const createColumns = (
   refetch: () => void,

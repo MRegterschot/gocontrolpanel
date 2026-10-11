@@ -2,6 +2,7 @@ import ClubActivities from "@/components/nadeo/clubs/club-activities";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { parseTmTags } from "@/lib/tmtags";
 import { getClub, getClubMembersCount } from "@/services/nadeo/clubs";
 import {
   IconArrowLeft,
@@ -10,7 +11,6 @@ import {
 } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
-import { parseTmTags } from "tmtags";
 import Clubs from "../clubs/clubs";
 
 export default async function ClubsTab({

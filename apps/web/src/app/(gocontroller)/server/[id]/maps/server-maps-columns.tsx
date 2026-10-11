@@ -9,11 +9,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { parseTmTags } from "@/lib/tmtags";
 import { Maps } from "@gcp/db";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { useTransition } from "react";
-import { parseTmTags } from "tmtags";
 
 export const createColumns = (
   onAddMap: (map: Maps) => void,

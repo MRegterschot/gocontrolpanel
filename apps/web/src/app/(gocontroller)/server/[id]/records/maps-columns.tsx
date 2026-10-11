@@ -1,6 +1,5 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client";
-import type { MapsWithRecords } from "@/services/database/maps";
 import Modal from "@/components/modals/modal";
 import MapRecordsModal from "@/components/modals/records/map-records";
 import { DataTableColumnHeader } from "@/components/table/data-table-column-header";
@@ -12,10 +11,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { parseTmTags } from "@/lib/tmtags";
+import type { MapsWithRecords } from "@/services/database/maps";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { useState } from "react";
-import { parseTmTags } from "tmtags";
 
 export const createMapsColumns = (): ColumnDef<MapsWithRecords>[] => [
   {

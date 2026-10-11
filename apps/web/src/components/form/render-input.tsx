@@ -1,4 +1,5 @@
 "use client";
+import { escapeHtml, parseTmTags } from "@/lib/tmtags";
 import { cn } from "@/lib/utils";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import { useState } from "react";
@@ -9,7 +10,6 @@ import {
   FieldValues,
   Merge,
 } from "react-hook-form";
-import { parseTmTags } from "tmtags";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
 import { FilterInput } from "../ui/filter-input";
@@ -140,7 +140,7 @@ export default function RenderInput<TControl extends FieldValues>({
                   dangerouslySetInnerHTML={{
                     __html: option.parseTmTags
                       ? parseTmTags(option.label)
-                      : option.label,
+                      : escapeHtml(option.label),
                   }}
                 />
               </SelectItem>

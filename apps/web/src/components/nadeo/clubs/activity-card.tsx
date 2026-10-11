@@ -1,4 +1,5 @@
 import CampaignDetailsModal from "@/components/modals/nadeo/campaign-details";
+import { parseTmTags } from "@/lib/tmtags";
 import { capitalizeWords, cn } from "@/lib/utils";
 import { ClubActivity } from "@/types/api/nadeo";
 import {
@@ -12,7 +13,6 @@ import {
 } from "@tabler/icons-react";
 import { MoreHorizontal } from "lucide-react";
 import Image from "next/image";
-import { parseTmTags } from "tmtags";
 import Modal from "../../modals/modal";
 import { default as RoomDetailsModal } from "../../modals/nadeo/room-details";
 import { Badge } from "../../ui/badge";

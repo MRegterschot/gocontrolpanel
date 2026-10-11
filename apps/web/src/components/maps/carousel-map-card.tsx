@@ -1,5 +1,6 @@
 import { nextMap, restartMap } from "@/actions/gbx/game";
 import { jumpToMap } from "@/actions/gbx/map";
+import { parseTmTags, stripTmTags } from "@/lib/tmtags";
 import { cn, getErrorMessage } from "@/lib/utils";
 import { ServerError } from "@/types/responses";
 import { Maps } from "@gcp/db";
@@ -13,7 +14,6 @@ import {
 } from "@tabler/icons-react";
 import Image from "next/image";
 import { toast } from "sonner";
-import { parseTmTags, stripTmTags } from "tmtags";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";

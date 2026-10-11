@@ -1,7 +1,3 @@
-import { getMapList } from "@/services/database/maps";
-import { getMatchSettings, getScripts } from "@/services/filemanager";
-import { getModeScriptInfo, getModeScriptSettings, getScriptName, getShowOpponents } from "@/services/gbx/game";
-import { getCurrentMapIndex } from "@/services/gbx/map";
 import MapCarousel from "@/components/maps/map-carousel";
 import ServerUnavailable from "@/components/servers/server-unavailable";
 import { Card } from "@/components/ui/card";
@@ -12,9 +8,18 @@ import PlaylistForm from "@/forms/server/game/playlist-form";
 import ScriptNameForm from "@/forms/server/game/script-name-form";
 import ShowOpponentsForm from "@/forms/server/game/show-opponents-form";
 import { hasPermission } from "@/lib/auth";
+import { parseTmTags } from "@/lib/tmtags";
 import { routePermissions } from "@/routes";
+import { getMapList } from "@/services/database/maps";
+import { getMatchSettings, getScripts } from "@/services/filemanager";
+import {
+  getModeScriptInfo,
+  getModeScriptSettings,
+  getScriptName,
+  getShowOpponents,
+} from "@/services/gbx/game";
+import { getCurrentMapIndex } from "@/services/gbx/map";
 import { ModeScriptInfo } from "@/types/gbx";
-import { parseTmTags } from "tmtags";
 
 export default async function ServerGamePage({
   params,

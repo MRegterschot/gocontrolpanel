@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
 import { getClubCampaignWithMaps } from "@/lib/api-client/nadeo";
 import { queryKeys, unwrap } from "@/lib/api-client/query";
+import { parseTmTags } from "@/lib/tmtags";
 import { getErrorMessage } from "@/lib/utils";
 import { ClubActivity } from "@/types/api/nadeo";
 import { ServerError } from "@/types/responses";
@@ -20,7 +21,6 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
-import { parseTmTags } from "tmtags";
 import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
 
