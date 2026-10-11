@@ -24,7 +24,7 @@ import {
 import { HetznerServerCache } from "@/types/api/hetzner/servers";
 import { ServerError, ServerResponse } from "@/types/responses";
 import { Servers } from "@gcp/db";
-import { logAudit } from "./server-only/audit-logs";
+import { logAudit, withAudit } from "./server-only/audit-logs";
 
 function redactSecrets<
   T extends { password?: string; filemanagerPassword?: string | null },
@@ -56,35 +56,35 @@ export async function createServer(
   recentlyCreatedProjectId?: string,
 ): Promise<ServerResponse<ServersWithUsers>> {
   return doServerActionWithAuth(["servers:create"], async (session) => {
-    const db = getClient();
-
     const input = parseInput(createServerInput, server);
-    const newServer = await db.servers.create({
-      data: {
-        name: input.name,
-        description: input.description ?? "",
-        host: input.host,
-        port: input.port,
-        user: input.user,
-        password: input.password,
-        filemanagerUrl: input.filemanagerUrl || null,
-        filemanagerPassword: input.filemanagerPassword || null,
-        userServers: {
-          create: (input.userServers ?? []).map((us) => ({
-            userId: us.userId,
-            role: us.role,
-          })),
-        },
-      },
-      include: serversUsersSchema,
-      omit: omitSecrets,
-    });
-
-    await logAudit(
-      session.user.id,
-      newServer.id,
-      "server.create",
-      redactSecrets(input),
+    const newServer = await withAudit(
+      (tx) =>
+        tx.servers.create({
+          data: {
+            name: input.name,
+            description: input.description ?? "",
+            host: input.host,
+            port: input.port,
+            user: input.user,
+            password: input.password,
+            filemanagerUrl: input.filemanagerUrl || null,
+            filemanagerPassword: input.filemanagerPassword || null,
+            userServers: {
+              create: (input.userServers ?? []).map((us) => ({
+                userId: us.userId,
+                role: us.role,
+              })),
+            },
+          },
+          include: serversUsersSchema,
+          omit: omitSecrets,
+        }),
+      (newServer) => [
+        session.user.id,
+        newServer.id,
+        "server.create",
+        redactSecrets(input),
+      ],
     );
     await publishServerEvent({
       type: "server.created",
@@ -166,41 +166,38 @@ export async function updateServer(
         );
       }
 
-      const updatedServer = await db.servers.update({
-        where: { id: serverId },
-        data: {
-          name: input.name,
-          description: input.description,
-          host: input.host,
-          port: input.port,
-          user: input.user,
-          // An empty password keeps the stored one
-          ...(input.password && { password: input.password }),
-          filemanagerUrl,
-          ...(input.filemanagerPassword && {
-            filemanagerPassword: input.filemanagerPassword,
-          }),
-          ...(filemanagerUrl === null && { filemanagerPassword: null }),
-          // Memberships are only replaced when the caller sends them
-          ...(input.userServers && {
-            userServers: {
-              deleteMany: {},
-              create: input.userServers.map((us) => ({
-                userId: us.userId,
-                role: us.role,
-              })),
+      const updatedServer = await withAudit(
+        (tx) =>
+          tx.servers.update({
+            where: { id: serverId },
+            data: {
+              name: input.name,
+              description: input.description,
+              host: input.host,
+              port: input.port,
+              user: input.user,
+              // An empty password keeps the stored one
+              ...(input.password && { password: input.password }),
+              filemanagerUrl,
+              ...(input.filemanagerPassword && {
+                filemanagerPassword: input.filemanagerPassword,
+              }),
+              ...(filemanagerUrl === null && { filemanagerPassword: null }),
+              // Memberships are only replaced when the caller sends them
+              ...(input.userServers && {
+                userServers: {
+                  deleteMany: {},
+                  create: input.userServers.map((us) => ({
+                    userId: us.userId,
+                    role: us.role,
+                  })),
+                },
+              }),
             },
+            include: serversUsersSchema,
+            omit: omitSecrets,
           }),
-        },
-        include: serversUsersSchema,
-        omit: omitSecrets,
-      });
-
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.edit",
-        redactSecrets(input),
+        () => [session.user.id, serverId, "server.edit", redactSecrets(input)],
       );
       await publishServerEvent({ type: "server.updated", serverId });
 
@@ -279,14 +276,15 @@ export async function deleteServer(serverId: string): Promise<ServerResponse> {
   return doServerActionWithAuth(
     ["servers:delete", `servers:${serverId}:admin`],
     async (session) => {
-      const db = getClient();
-      await db.servers.update({
-        where: { id: serverId },
-        data: { deletedAt: new Date() },
-      });
+      await withAudit(
+        (tx) =>
+          tx.servers.update({
+            where: { id: serverId, deletedAt: null },
+            data: { deletedAt: new Date() },
+          }),
+        () => [session.user.id, serverId, "server.delete"],
+      );
       await publishServerEvent({ type: "server.deleted", serverId });
-
-      await logAudit(session.user.id, serverId, "server.delete");
     },
   );
 }

@@ -31,3 +31,15 @@ export async function logAudit(
     data: auditLogData(userId, targetId, action, details, error),
   });
 }
+
+// Runs a write and its audit entry in one transaction: both happen, or neither does
+export async function withAudit<T>(
+  write: (tx: Prisma.TransactionClient) => Promise<T>,
+  audit: (result: T) => Parameters<typeof auditLogData>,
+): Promise<T> {
+  return getClient().$transaction(async (tx) => {
+    const result = await write(tx);
+    await tx.auditLogs.create({ data: auditLogData(...audit(result)) });
+    return result;
+  });
+}

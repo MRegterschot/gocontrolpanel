@@ -50,6 +50,14 @@ vi.mock("@/lib/dbclient", () => ({
 vi.mock("@/actions/database/server-only/audit-logs", () => ({
   logAudit: mocks.audit,
   auditLogData: (...args: unknown[]) => ({ args }),
+  withAudit: async (
+    write: (tx: unknown) => Promise<unknown>,
+    audit: (result: unknown) => unknown[],
+  ) => {
+    const result = await write(mocks);
+    mocks.audit(...audit(result));
+    return result;
+  },
 }));
 vi.mock("@/actions/database/server-only/themes", () => ({
   groupServerIds: async () => [],

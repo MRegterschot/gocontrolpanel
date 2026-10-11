@@ -6,7 +6,7 @@ import { getClient } from "@/lib/dbclient";
 import { getList } from "@/lib/utils";
 import { ServerError, ServerResponse } from "@/types/responses";
 import { Users } from "@gcp/db";
-import { logAudit } from "./server-only/audit-logs";
+import { logAudit, withAudit } from "./server-only/audit-logs";
 
 export async function updateUser(
   userId: string,
@@ -56,15 +56,22 @@ export async function updateUser(
       }
     }
 
-    await db.users.update({
-      where: { id: userId },
-      data: { admin: input.admin, permissions },
-    });
-
-    await logAudit(session.user.id, userId, "user.edit", {
-      admin: input.admin,
-      permissions,
-    });
+    await withAudit(
+      (tx) =>
+        tx.users.update({
+          where: { id: userId },
+          data: { admin: input.admin, permissions },
+        }),
+      () => [
+        session.user.id,
+        userId,
+        "user.edit",
+        {
+          admin: input.admin,
+          permissions,
+        },
+      ],
+    );
   });
 }
 
@@ -84,12 +91,12 @@ export async function deleteUserById(userId: string): Promise<ServerResponse> {
       );
     }
 
-    const db = getClient();
-
-    await db.users.delete({
-      where: { id: userId },
-    });
-
-    await logAudit(session.user.id, userId, "user.delete");
+    await withAudit(
+      (tx) =>
+        tx.users.delete({
+          where: { id: userId },
+        }),
+      () => [session.user.id, userId, "user.delete"],
+    );
   });
 }
