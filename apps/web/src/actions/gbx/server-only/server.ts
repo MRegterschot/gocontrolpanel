@@ -1,5 +1,6 @@
 import { ServerSettingsSchemaType } from "@/forms/server/settings/settings-schema";
 import { type Actor, requirePermission } from "@/lib/actor";
+import { redactSecrets } from "@/lib/audit-redact";
 import { getClient } from "@/lib/dbclient";
 import { getGbxClient, publishServerEvent } from "@/lib/gbx-service";
 import { getLogger } from "@/lib/logger";
@@ -83,7 +84,7 @@ export async function saveServerSettingsAs(
     actor.userId,
     serverId,
     "server.settings.edit",
-    serverSettings,
+    redactSecrets(serverSettings),
     error,
   );
 

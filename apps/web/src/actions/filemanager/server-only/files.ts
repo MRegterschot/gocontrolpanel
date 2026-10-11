@@ -1,4 +1,5 @@
 import { type Actor, requirePermission } from "@/lib/actor";
+import { fileAuditDetails } from "@/lib/audit-redact";
 import { getLogger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
 import { FileEntry } from "@/types/filemanager";
@@ -168,7 +169,7 @@ export async function writeFileTextAs(
       actor.userId,
       serverId,
       "server.files.edit",
-      { path, text },
+      fileAuditDetails(path, text),
       "File manager is not healthy",
     );
     throw new ServerError(
@@ -188,7 +189,7 @@ export async function writeFileTextAs(
     actor.userId,
     serverId,
     "server.files.edit",
-    { path, text },
+    fileAuditDetails(path, text),
     res.status !== 200 ? "Failed to save file" : undefined,
   );
   if (res.status !== 200) {
