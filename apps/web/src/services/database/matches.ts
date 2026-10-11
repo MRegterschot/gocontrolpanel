@@ -1,4 +1,5 @@
 import { doServerActionWithAuth } from "@/lib/actions";
+import { csvRow } from "@/lib/csv";
 import { getClient } from "@/lib/dbclient";
 import { getLogger } from "@/lib/logger";
 import { getList } from "@/lib/utils";
@@ -15,6 +16,7 @@ import slugid from "slugid";
 const matchesMapRecordsSchema = Prisma.validator<Prisma.MatchesInclude>()({
   map: true,
   records: {
+    where: { deletedAt: null },
     include: {
       user: {
         select: {
@@ -25,7 +27,7 @@ const matchesMapRecordsSchema = Prisma.validator<Prisma.MatchesInclude>()({
   },
   _count: {
     select: {
-      records: true,
+      records: { where: { deletedAt: null } },
     },
   },
 });
@@ -79,6 +81,7 @@ export async function getMatchesPaginated(
         serverId: fetchArgs.serverId,
         records: {
           some: {
+            deletedAt: null,
             time: { not: -1 },
           },
         },
@@ -154,10 +157,11 @@ export async function exportMatchToCSV(
       const log = getLogger(serverId);
       const db = getClient();
 
-      const match = await db.matches.findUnique({
-        where: { id: matchId, serverId },
+      const match = await db.matches.findFirst({
+        where: { id: matchId, serverId, deletedAt: null },
         include: {
           records: {
+            where: { deletedAt: null },
             include: {
               user: {
                 select: {
@@ -176,7 +180,7 @@ export async function exportMatchToCSV(
       }
 
       const csvRows = [];
-      csvRows.push(headers.join(","));
+      csvRows.push(csvRow(headers));
 
       for (const record of match.records) {
         const row = values.map((value) => {
@@ -202,7 +206,7 @@ export async function exportMatchToCSV(
           }
         });
 
-        csvRows.push(row.join(","));
+        csvRows.push(csvRow(row));
       }
 
       return csvRows.join("\n");
