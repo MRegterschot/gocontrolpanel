@@ -1,12 +1,21 @@
 "use server";
 
 import { doServerActionWithAuth } from "@/lib/actions";
+import {
+  createProjectInput,
+  parseInput,
+  updateProjectInput,
+} from "@/lib/admin-inputs";
 import { getClient } from "@/lib/dbclient";
 import { decryptHetznerToken, encryptHetznerToken } from "@/lib/hetzner";
 import { getList } from "@/lib/utils";
+import {
+  EditHetznerProjects,
+  HetznerProjectsWithUsers,
+  hetznerProjectUsersSchema,
+} from "@/services/database/hetzner-projects";
 import { ServerResponse } from "@/types/responses";
 import { logAudit } from "./server-only/audit-logs";
-import { EditHetznerProjects, HetznerProjectsWithUsers, hetznerProjectUsersSchema } from "@/services/database/hetzner-projects";
 
 export async function createHetznerProject(
   hetznerProject: Omit<
@@ -17,15 +26,15 @@ export async function createHetznerProject(
   return doServerActionWithAuth(["hetzner:create"], async (session) => {
     const db = getClient();
 
-    const { hetznerProjectUsers, apiTokens, ...projectData } = hetznerProject;
+    const input = parseInput(createProjectInput, hetznerProject);
     const newProject = await db.hetznerProjects.create({
       data: {
-        ...projectData,
-        apiTokens: getList<string>(apiTokens).map((token) =>
+        name: input.name,
+        apiTokens: (input.apiTokens ?? []).map((token) =>
           encryptHetznerToken(token),
         ),
         hetznerProjectUsers: {
-          create: hetznerProjectUsers.map((hpu) => ({
+          create: (input.hetznerProjectUsers ?? []).map((hpu) => ({
             role: hpu.role,
             userId: hpu.userId,
           })),
@@ -38,7 +47,7 @@ export async function createHetznerProject(
       session.user.id,
       newProject.id,
       "hetzner.project.create",
-      hetznerProject,
+      auditDetails(input),
     );
 
     return {
@@ -61,24 +70,30 @@ export async function updateHetznerProject(
     async (session) => {
       const db = getClient();
 
-      const { hetznerProjectUsers, apiTokens, ...projectData } = hetznerProject;
+      const input = parseInput(updateProjectInput, hetznerProject);
 
       const updatedHetznerProject = await db.hetznerProjects.update({
         where: {
           id: hetznerProjectId,
+          deletedAt: null,
         },
         data: {
-          ...projectData,
-          apiTokens: getList<string>(apiTokens).map((token) =>
-            encryptHetznerToken(token),
-          ),
-          hetznerProjectUsers: {
-            deleteMany: {},
-            create: hetznerProjectUsers?.map((hpu) => ({
-              role: hpu.role,
-              userId: hpu.userId,
-            })),
-          },
+          name: input.name,
+          // Tokens and members are only replaced when the caller sends them
+          ...(input.apiTokens && {
+            apiTokens: input.apiTokens.map((token) =>
+              encryptHetznerToken(token),
+            ),
+          }),
+          ...(input.hetznerProjectUsers && {
+            hetznerProjectUsers: {
+              deleteMany: {},
+              create: input.hetznerProjectUsers.map((hpu) => ({
+                role: hpu.role,
+                userId: hpu.userId,
+              })),
+            },
+          }),
         },
         include: hetznerProjectUsersSchema,
       });
@@ -87,7 +102,7 @@ export async function updateHetznerProject(
         session.user.id,
         hetznerProjectId,
         "hetzner.project.edit",
-        hetznerProject,
+        auditDetails(input),
       );
 
       return {
@@ -122,4 +137,19 @@ export async function deleteHetznerProject(
       );
     },
   );
+}
+
+// API tokens never go into the audit log
+function auditDetails(input: {
+  name?: string;
+  apiTokens?: string[];
+  hetznerProjectUsers?: { userId: string; role: string }[];
+}) {
+  return {
+    name: input.name,
+    apiTokens: input.apiTokens
+      ? `${input.apiTokens.length} token(s)`
+      : undefined,
+    hetznerProjectUsers: input.hetznerProjectUsers,
+  };
 }

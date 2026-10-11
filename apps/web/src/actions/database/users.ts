@@ -1,10 +1,11 @@
 "use server";
 
 import { doServerActionWithAuth } from "@/lib/actions";
+import { parseInput, updateUserInput } from "@/lib/admin-inputs";
 import { getClient } from "@/lib/dbclient";
-import { Users } from "@gcp/db";
 import { getList } from "@/lib/utils";
 import { ServerError, ServerResponse } from "@/types/responses";
+import { Users } from "@gcp/db";
 import { logAudit } from "./server-only/audit-logs";
 
 export async function updateUser(
@@ -24,16 +25,46 @@ export async function updateUser(
 ): Promise<ServerResponse> {
   return doServerActionWithAuth(["users:edit"], async (session) => {
     const db = getClient();
+    const input = parseInput(updateUserInput, data);
+
+    const target = await db.users.findUnique({
+      where: { id: userId },
+      select: { admin: true, permissions: true },
+    });
+    if (!target) throw new ServerError("User not found", "UserNotFound");
+
+    const permissions = [...new Set(input.permissions)];
+    if (!session.user.admin) {
+      // Delegated user managers can't create admins or grant more than they hold
+      if (userId === session.user.id || target.admin || input.admin) {
+        throw new ServerError(
+          "Only admins can edit admins, grant admin, or edit themselves",
+          "Unauthorized",
+        );
+      }
+      const current = getList<string>(target.permissions);
+      const own = new Set(session.user.permissions);
+      const changed = [
+        ...permissions.filter((p) => !current.includes(p)),
+        ...current.filter((p) => !permissions.includes(p)),
+      ];
+      if (changed.some((p) => !own.has(p))) {
+        throw new ServerError(
+          "You can only grant or remove permissions you have yourself",
+          "Unauthorized",
+        );
+      }
+    }
 
     await db.users.update({
       where: { id: userId },
-      data: {
-        ...data,
-        permissions: getList<string>(data.permissions),
-      },
+      data: { admin: input.admin, permissions },
     });
 
-    await logAudit(session.user.id, userId, "user.edit", data);
+    await logAudit(session.user.id, userId, "user.edit", {
+      admin: input.admin,
+      permissions,
+    });
   });
 }
 
@@ -47,7 +78,10 @@ export async function deleteUserById(userId: string): Promise<ServerResponse> {
         undefined,
         "Cannot delete your own account",
       );
-      throw new ServerError("Cannot delete your own account", "CannotDeleteOwnAccount");
+      throw new ServerError(
+        "Cannot delete your own account",
+        "CannotDeleteOwnAccount",
+      );
     }
 
     const db = getClient();

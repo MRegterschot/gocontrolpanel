@@ -1,24 +1,34 @@
 "use server";
 
 import { doServerActionWithAuth } from "@/lib/actions";
-import { getClient } from "@/lib/dbclient";
-import { getLogger } from "@/lib/logger";
+import {
+  chatConfigInput,
+  createServerInput,
+  parseInput,
+  updateServerInput,
+} from "@/lib/admin-inputs";
 import { saveChatConfig } from "@/lib/chat-config";
+import { getClient } from "@/lib/dbclient";
 import { gbxService, publishServerEvent } from "@/lib/gbx-service";
-import { updateFileManager } from "@/lib/managers/file-manager";
-import { Servers } from "@gcp/db";
+import { getLogger } from "@/lib/logger";
 import {
   getKeyHetznerRecentlyCreatedServers,
   getRedisClient,
 } from "@/lib/redis";
+import {
+  EditServers,
+  ServersWithUsers,
+  omitSecrets,
+  serversUsersSchema,
+} from "@/services/database/servers";
 import { HetznerServerCache } from "@/types/api/hetzner/servers";
 import { ServerError, ServerResponse } from "@/types/responses";
+import { Servers } from "@gcp/db";
 import { logAudit } from "./server-only/audit-logs";
-import { EditServers, ServersWithUsers, omitSecrets, serversUsersSchema } from "@/services/database/servers";
 
-function redactSecrets<T extends { password?: string; filemanagerPassword?: string | null }>(
-  server: T,
-) {
+function redactSecrets<
+  T extends { password?: string; filemanagerPassword?: string | null },
+>(server: T) {
   return {
     ...server,
     ...(server.password && { password: "[redacted]" }),
@@ -48,12 +58,19 @@ export async function createServer(
   return doServerActionWithAuth(["servers:create"], async (session) => {
     const db = getClient();
 
-    const { userServers, ...serverData } = server;
+    const input = parseInput(createServerInput, server);
     const newServer = await db.servers.create({
       data: {
-        ...serverData,
+        name: input.name,
+        description: input.description ?? "",
+        host: input.host,
+        port: input.port,
+        user: input.user,
+        password: input.password,
+        filemanagerUrl: input.filemanagerUrl || null,
+        filemanagerPassword: input.filemanagerPassword || null,
         userServers: {
-          create: userServers.map((us) => ({
+          create: (input.userServers ?? []).map((us) => ({
             userId: us.userId,
             role: us.role,
           })),
@@ -67,9 +84,12 @@ export async function createServer(
       session.user.id,
       newServer.id,
       "server.create",
-      redactSecrets(server),
+      redactSecrets(input),
     );
-    await publishServerEvent({ type: "server.created", serverId: newServer.id });
+    await publishServerEvent({
+      type: "server.created",
+      serverId: newServer.id,
+    });
 
     if (recentlyCreatedProjectId) {
       const client = await getRedisClient();
@@ -111,6 +131,7 @@ export async function updateServer(
       | "mapListChangeMessage"
       | "createdAt"
       | "updatedAt"
+      | "deletedAt"
     >
   >,
 ): Promise<ServerResponse<ServersWithUsers>> {
@@ -118,68 +139,83 @@ export async function updateServer(
     ["servers:edit", `servers:${serverId}:admin`],
     async (session) => {
       const db = getClient();
+      const input = parseInput(updateServerInput, server);
 
-      // Get the original server data before the update
-      const originalServer = await db.servers.findUnique({
-        where: { id: serverId },
-        select: {
-          filemanagerUrl: true,
-          filemanagerPassword: true,
-        },
+      const original = await db.servers.findFirst({
+        where: { id: serverId, deletedAt: null },
+        select: { filemanagerUrl: true, filemanagerPassword: true },
       });
+      if (!original) {
+        throw new ServerError("Server not found", "ServerNotFound");
+      }
 
-      // An empty password keeps the stored one
-      const { userServers, password, filemanagerPassword, ...rest } = server;
-      const scalarFields = {
-        ...rest,
-        ...(password && { password }),
-        ...(filemanagerPassword && { filemanagerPassword }),
-      };
+      // The stored file manager token only ever goes to the origin it was saved for
+      const filemanagerUrl =
+        input.filemanagerUrl === undefined
+          ? undefined
+          : input.filemanagerUrl || null;
+      if (
+        filemanagerUrl &&
+        !input.filemanagerPassword &&
+        original.filemanagerPassword &&
+        !sameOrigin(filemanagerUrl, original.filemanagerUrl)
+      ) {
+        throw new ServerError(
+          "Enter the file manager password again when changing its URL",
+          "FileManagerPasswordRequired",
+        );
+      }
+
       const updatedServer = await db.servers.update({
         where: { id: serverId },
         data: {
-          ...scalarFields,
-          userServers: {
-            deleteMany: {},
-            create: userServers?.map((us) => ({
-              userId: us.userId,
-              role: us.role,
-            })),
-          },
+          name: input.name,
+          description: input.description,
+          host: input.host,
+          port: input.port,
+          user: input.user,
+          // An empty password keeps the stored one
+          ...(input.password && { password: input.password }),
+          filemanagerUrl,
+          ...(input.filemanagerPassword && {
+            filemanagerPassword: input.filemanagerPassword,
+          }),
+          ...(filemanagerUrl === null && { filemanagerPassword: null }),
+          // Memberships are only replaced when the caller sends them
+          ...(input.userServers && {
+            userServers: {
+              deleteMany: {},
+              create: input.userServers.map((us) => ({
+                userId: us.userId,
+                role: us.role,
+              })),
+            },
+          }),
         },
         include: serversUsersSchema,
         omit: omitSecrets,
       });
 
-      let filemanagerUrlChanged =
-        scalarFields.filemanagerUrl !== originalServer?.filemanagerUrl;
-      if (!filemanagerUrlChanged && !scalarFields.filemanagerUrl) {
-        filemanagerUrlChanged = false;
-      }
-
-      const filemanagerPasswordChanged =
-        !!filemanagerPassword &&
-        filemanagerPassword !== originalServer?.filemanagerPassword;
-
-      if (filemanagerUrlChanged || filemanagerPasswordChanged) {
-        await updateFileManager(
-          serverId,
-          scalarFields.filemanagerUrl,
-          filemanagerPassword || originalServer?.filemanagerPassword || undefined,
-        );
-      }
-
       await logAudit(
         session.user.id,
         serverId,
         "server.edit",
-        redactSecrets(server),
+        redactSecrets(input),
       );
       await publishServerEvent({ type: "server.updated", serverId });
 
       return updatedServer;
     },
   );
+}
+
+function sameOrigin(next: string, previous: string | null): boolean {
+  if (!previous) return false;
+  try {
+    return new URL(next).origin === new URL(previous).origin;
+  } catch {
+    return false;
+  }
 }
 
 export async function updateServerChatConfig(
@@ -195,9 +231,7 @@ export async function updateServerChatConfig(
     | "scriptSettingsSavedMessage"
     | "mapListChangeMessage"
   >,
-): Promise<
-  ServerResponse<Omit<Servers, "password" | "filemanagerPassword">>
-> {
+): Promise<ServerResponse<Omit<Servers, "password" | "filemanagerPassword">>> {
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
@@ -209,11 +243,17 @@ export async function updateServerChatConfig(
       const log = getLogger(serverId);
 
       const db = getClient();
-      const { server, applied, error } = await saveChatConfig(chatConfig, {
+      const input = parseInput(chatConfigInput, chatConfig);
+      const { server, applied, error } = await saveChatConfig(input, {
         save: (data) =>
-          db.servers.update({ where: { id: serverId }, data, omit: omitSecrets }),
+          db.servers.update({
+            where: { id: serverId },
+            data,
+            omit: omitSecrets,
+          }),
         apply: (config) => gbxService.applyChatConfig(serverId, config),
-        notifyUpdated: () => publishServerEvent({ type: "server.updated", serverId }),
+        notifyUpdated: () =>
+          publishServerEvent({ type: "server.updated", serverId }),
         log,
       });
 

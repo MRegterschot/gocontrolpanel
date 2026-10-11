@@ -2,74 +2,57 @@ import { FileManager } from "@/types/filemanager";
 import { ServerError } from "@/types/responses";
 import "server-only";
 import { getClient } from "../dbclient";
-import { appGlobals } from "../global";
 import { reportException } from "../sentry/report";
 
+const HEALTH_TIMEOUT_MS = 5_000;
+
+// Read from the database on every call, so a changed or removed URL/password applies at once
 export async function getFileManager(serverId: string): Promise<FileManager> {
-  if (!appGlobals.fileManagers?.[serverId]) {
-    const db = getClient();
-    const server = await db.servers.findUnique({
-      where: { id: serverId },
-    });
+  const server = await getClient().servers.findFirst({
+    where: { id: serverId, deletedAt: null },
+    select: { filemanagerUrl: true, filemanagerPassword: true },
+  });
 
-    if (!server) {
-      const error = new ServerError(
-        `Server with id ${serverId} not found`,
-        "ServerNotFound",
-      );
-      reportException(error);
-      throw error;
-    }
-
-    if (!server.filemanagerUrl) {
-      return {
-        url: server.filemanagerUrl || undefined,
-        health: false,
-      };
-    }
-
-    const res = await fetch(`${server.filemanagerUrl}/health`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${server.filemanagerPassword}`,
-      },
-    });
-
-    const fileManager = {
-      url: server.filemanagerUrl,
-      password: server.filemanagerPassword || undefined,
-      health: res.status === 200,
-    };
-
-    appGlobals.fileManagers = appGlobals.fileManagers || {};
-    appGlobals.fileManagers[serverId] = fileManager;
-
-    return fileManager;
-  }
-
-  if (!appGlobals.fileManagers[serverId]) {
+  if (!server) {
     const error = new ServerError(
-      `FileManager with id ${serverId} not found`,
-      "FileManagerNotFound",
+      `Server with id ${serverId} not found`,
+      "ServerNotFound",
     );
     reportException(error);
     throw error;
   }
 
-  const fileManager = appGlobals.fileManagers[serverId];
+  if (!server.filemanagerUrl) {
+    return { url: undefined, health: false };
+  }
 
-  const res = await fetch(`${fileManager.url}/health`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${fileManager.password}`,
-    },
-  });
+  const fileManager = {
+    url: server.filemanagerUrl.replace(/\/+$/, ""),
+    password: server.filemanagerPassword || undefined,
+  };
+  return { ...fileManager, health: await checkHealth(fileManager) };
+}
 
-  fileManager.health = res.status === 200;
-
-  return fileManager;
+async function checkHealth({
+  url,
+  password,
+}: {
+  url: string;
+  password?: string;
+}): Promise<boolean> {
+  try {
+    const res = await fetch(`${url}/health`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${password}`,
+      },
+      signal: AbortSignal.timeout(HEALTH_TIMEOUT_MS),
+    });
+    return res.status === 200;
+  } catch {
+    return false;
+  }
 }
 
 export async function getFileManagerHealth(serverId: string): Promise<boolean> {
@@ -77,34 +60,25 @@ export async function getFileManagerHealth(serverId: string): Promise<boolean> {
   return fileManager.health;
 }
 
-export async function updateFileManager(
-  serverId: string,
-  url?: string | null,
-  password?: string | null,
-) {
-  if (!url) {
-    return {
-      url: url || undefined,
-      health: false,
-    };
+// Joins a caller-supplied path onto the file manager URL; the bearer token must never leave its origin
+export function fileManagerUrl(baseUrl: string, path: string): string {
+  if (
+    !path.startsWith("/") ||
+    path.startsWith("//") ||
+    path.includes("\\") ||
+    path.split("/").some((segment) => isDotSegment(segment))
+  ) {
+    throw new ServerError("Invalid file path", "InvalidFilePath");
   }
+  const base = new URL(baseUrl);
+  const url = new URL(baseUrl + path);
+  if (url.origin !== base.origin) {
+    throw new ServerError("Invalid file path", "InvalidFilePath");
+  }
+  return url.toString();
+}
 
-  const res = await fetch(`${url}/health`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${password}`,
-    },
-  });
-
-  const fileManager = {
-    url,
-    password: password || undefined,
-    health: res.status === 200,
-  };
-
-  appGlobals.fileManagers = appGlobals.fileManagers || {};
-  appGlobals.fileManagers[serverId] = fileManager;
-
-  return fileManager;
+function isDotSegment(segment: string): boolean {
+  const decoded = segment.replace(/%2e/gi, ".");
+  return decoded === "." || decoded === "..";
 }

@@ -300,7 +300,8 @@ export function hasPermissionsJWTSync(
   if (jwt.admin) return true;
   if (!permissions || permissions.length === 0) return true;
 
-  const userPermissions = jwt.permissions;
+  // A copy: the session object is shared by later checks in the same request
+  const userPermissions = [...jwt.permissions];
 
   jwt.groups.forEach((group) => {
     const role = group.role.toLowerCase();

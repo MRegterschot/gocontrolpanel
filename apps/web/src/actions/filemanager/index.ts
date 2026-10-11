@@ -7,8 +7,9 @@ import {
 } from "@/forms/server/files/move-file-entries-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { actorFromSession } from "@/lib/actor";
+import { fileAuditDetails } from "@/lib/audit-redact";
 import { getLogger } from "@/lib/logger";
-import { getFileManager } from "@/lib/managers/file-manager";
+import { fileManagerUrl, getFileManager } from "@/lib/managers/file-manager";
 import { FileEntry } from "@/types/filemanager";
 import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
@@ -34,7 +35,7 @@ export async function saveFileText(
           session.user.id,
           serverId,
           "server.files.edit",
-          { path, text },
+          fileAuditDetails(path, text),
           "File manager is not healthy",
         );
         throw new ServerError(
@@ -43,7 +44,7 @@ export async function saveFileText(
         );
       }
 
-      const res = await fetch(fileManager.url + path, {
+      const res = await fetch(fileManagerUrl(fileManager.url!, path), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -56,7 +57,7 @@ export async function saveFileText(
         session.user.id,
         serverId,
         "server.files.edit",
-        { path, text },
+        fileAuditDetails(path, text),
         res.status !== 200 ? "Failed to save file" : undefined,
       );
 
