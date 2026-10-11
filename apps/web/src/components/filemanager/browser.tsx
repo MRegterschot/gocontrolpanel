@@ -1,7 +1,7 @@
 "use client";
-import { uploadFiles } from "@/actions/filemanager";
 import { getErrorMessage, pathToBreadcrumbs } from "@/lib/utils";
 import { FileEntry } from "@/types/filemanager";
+import { ServerError } from "@/types/responses";
 import { IconUpload } from "@tabler/icons-react";
 import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -9,7 +9,6 @@ import Actions from "./actions";
 import FilesBreadcrumbs from "./breadcrumbs";
 import FileCard from "./file-card";
 import FolderCard from "./folder-card";
-import { ServerError } from "@/types/responses";
 
 interface BrowserProps {
   data: FileEntry[];
@@ -48,10 +47,7 @@ export default function Browser({ data, serverId, path }: BrowserProps) {
       }
 
       try {
-        const { data, error } = await uploadFiles(serverId, formData);
-        if (error) {
-          throw new ServerError(error, "UploadFilesError");
-        }
+        const data = await uploadFiles(serverId, formData);
 
         setFolders((prev) => [
           ...prev.filter(
@@ -232,4 +228,26 @@ export default function Browser({ data, serverId, path }: BrowserProps) {
       </div>
     </div>
   );
+}
+
+// Uploads go to a route handler, which checks access before reading the (large) body
+async function uploadFiles(
+  serverId: string,
+  formData: FormData,
+): Promise<FileEntry[]> {
+  const res = await fetch(
+    `/api/servers/${encodeURIComponent(serverId)}/files/upload`,
+    { method: "POST", body: formData },
+  );
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok || body.error) {
+    throw new ServerError(
+      body.error ?? `Upload failed (${res.status})`,
+      "UploadFilesError",
+    );
+  }
+  return (body.data as FileEntry[]).map((entry) => ({
+    ...entry,
+    lastModified: entry.lastModified ? new Date(entry.lastModified) : undefined,
+  }));
 }

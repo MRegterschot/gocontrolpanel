@@ -52,10 +52,17 @@ export async function GET(
 
   return new NextResponse(res.body, {
     headers: {
-      "Content-Type":
-        res.headers.get("Content-Type") ?? "application/octet-stream",
-      "Content-Disposition": res.headers.get("Content-Disposition") ?? "",
+      // Never rendered as a page on the panel's origin
+      "Content-Type": "application/octet-stream",
+      "Content-Disposition": attachment(res.headers.get("Content-Disposition")),
+      "X-Content-Type-Options": "nosniff",
       "Cache-Control": "private, no-store",
     },
   });
+}
+
+// Keeps the file manager's file name but always downloads
+function attachment(disposition: string | null): string {
+  const filename = disposition?.match(/filename\*?=[^;]+/i)?.[0];
+  return filename ? `attachment; ${filename}` : "attachment";
 }
