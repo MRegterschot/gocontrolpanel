@@ -80,6 +80,7 @@ export async function getLogs(
         22,
         "root",
         Buffer.from(dbHetznerServer.privateKey),
+        dbHetznerServer,
       );
 
       const result = await executeSSHScript(sshConn, commands[command]);

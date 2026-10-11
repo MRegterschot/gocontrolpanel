@@ -837,6 +837,7 @@ export async function addTrackmaniaServer(
         22,
         "root",
         Buffer.from(dbHetznerServer.privateKey),
+        dbHetznerServer,
       );
 
       const result = await executeSSHScript(sshConn, script);
@@ -1016,6 +1017,7 @@ export async function deleteTrackmaniaServer(
         22,
         "root",
         Buffer.from(dbHetznerServer.privateKey),
+        dbHetznerServer,
       );
 
       const result = await executeSSHScript(sshConn, script);

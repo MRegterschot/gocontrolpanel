@@ -369,6 +369,8 @@ model HetznerServers {
   hetznerId  Int     @unique
   publicKey  String? @db.LongText
   privateKey Bytes?
+  // SHA256 fingerprint of the SSH host key, pinned on the first connection
+  hostKeyFingerprint String?
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

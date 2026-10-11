@@ -1,11 +1,11 @@
 "use server";
 
 import { doServerActionWithAuth } from "@/lib/actions";
+import { connectToSSHServer, executeSSHScript, runSSHScript } from "@/lib/ssh";
+import { ServerError, ServerResponse } from "@/types/responses";
 import { readFileSync } from "fs";
 import path from "path";
 import { packageDirectorySync } from "pkg-dir";
-import { connectToSSHServer, executeSSHScript, runSSHScript } from "@/lib/ssh";
-import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
 import { getDBHetznerServer } from "../database/server-only/hetzner-servers";
 import { getHetznerServer } from "./util";
@@ -32,7 +32,10 @@ export async function restartTrackmaniaServer(
 
       if (isNaN(tmServerNumber)) {
         la("Invalid Trackmania server number");
-        throw new ServerError("Invalid Trackmania server number", "InvalidTMServerNumber");
+        throw new ServerError(
+          "Invalid Trackmania server number",
+          "InvalidTMServerNumber",
+        );
       }
 
       const hetznerServer = await getHetznerServer(projectId, serverId);
@@ -46,7 +49,10 @@ export async function restartTrackmaniaServer(
 
       if (parseInt(labels[`${tmServerNumber}.version`] || "0") < 1) {
         la("Server version is outdated");
-        throw new ServerError("Server version is outdated", "OutdatedServerVersion");
+        throw new ServerError(
+          "Server version is outdated",
+          "OutdatedServerVersion",
+        );
       }
 
       const dbHetznerServer = await getDBHetznerServer(serverId);
@@ -58,7 +64,10 @@ export async function restartTrackmaniaServer(
 
       if (!dbHetznerServer.privateKey) {
         la("SSH private key not found for the server");
-        throw new ServerError("SSH private key not found for the server", "SSHPrivateKeyNotFound");
+        throw new ServerError(
+          "SSH private key not found for the server",
+          "SSHPrivateKeyNotFound",
+        );
       }
 
       const script = `~/gocontrolpanel-master/hetzner/stack-${tmServerNumber}/restart.sh`;
@@ -68,6 +77,7 @@ export async function restartTrackmaniaServer(
         22,
         "root",
         Buffer.from(dbHetznerServer.privateKey),
+        dbHetznerServer,
       );
 
       const result = await executeSSHScript(sshConn, script);
@@ -76,7 +86,10 @@ export async function restartTrackmaniaServer(
 
       if (result.stderr) {
         la(`Error executing command on server: ${result.stderr.slice(-100)}`);
-        throw new ServerError(`Error executing command on server: ${result.stderr}`, "SSHCommandExecutionError");
+        throw new ServerError(
+          `Error executing command on server: ${result.stderr}`,
+          "SSHCommandExecutionError",
+        );
       }
 
       la();
@@ -106,7 +119,10 @@ export async function stopTrackmaniaServer(
 
       if (isNaN(tmServerNumber)) {
         la("Invalid Trackmania server number");
-        throw new ServerError("Invalid Trackmania server number", "InvalidTMServerNumber");
+        throw new ServerError(
+          "Invalid Trackmania server number",
+          "InvalidTMServerNumber",
+        );
       }
 
       const hetznerServer = await getHetznerServer(projectId, serverId);
@@ -120,7 +136,10 @@ export async function stopTrackmaniaServer(
 
       if (parseInt(labels[`${tmServerNumber}.version`] || "0") < 1) {
         la("Server version is outdated");
-        throw new ServerError("Server version is outdated", "OutdatedServerVersion");
+        throw new ServerError(
+          "Server version is outdated",
+          "OutdatedServerVersion",
+        );
       }
 
       const dbHetznerServer = await getDBHetznerServer(serverId);
@@ -132,7 +151,10 @@ export async function stopTrackmaniaServer(
 
       if (!dbHetznerServer.privateKey) {
         la("SSH private key not found for the server");
-        throw new ServerError("SSH private key not found for the server", "SSHPrivateKeyNotFound");
+        throw new ServerError(
+          "SSH private key not found for the server",
+          "SSHPrivateKeyNotFound",
+        );
       }
 
       const script = `~/gocontrolpanel-master/hetzner/stack-${tmServerNumber}/down.sh`;
@@ -142,6 +164,7 @@ export async function stopTrackmaniaServer(
         22,
         "root",
         Buffer.from(dbHetznerServer.privateKey),
+        dbHetznerServer,
       );
 
       const result = await executeSSHScript(sshConn, script);
@@ -150,7 +173,10 @@ export async function stopTrackmaniaServer(
 
       if (result.stderr) {
         la(`Error executing command on server: ${result.stderr.slice(-100)}`);
-        throw new ServerError(`Error executing command on server: ${result.stderr}`, "SSHCommandExecutionError");
+        throw new ServerError(
+          `Error executing command on server: ${result.stderr}`,
+          "SSHCommandExecutionError",
+        );
       }
 
       la();
@@ -216,15 +242,17 @@ export async function updateServerContainers(
         22,
         "root",
         Buffer.from(dbHetznerServer.privateKey),
+        dbHetznerServer,
       );
 
       try {
-        const { output, code } = await runSSHScript(
-          sshConn,
-          script,
-          ["--target", target],
+        const { output, code } = await runSSHScript(sshConn, script, [
+          "--target",
+          target,
+        ]);
+        await la(
+          code === 0 ? undefined : `Update failed with exit code ${code}`,
         );
-        await la(code === 0 ? undefined : `Update failed with exit code ${code}`);
         return { output, success: code === 0 };
       } finally {
         sshConn.end();
