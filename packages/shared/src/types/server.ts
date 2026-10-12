@@ -12,7 +12,7 @@ export interface PlayerInfo {
 export interface ServerInfo {
   id: string;
   name: string;
-  filemanagerUrl?: string;
+  hasFileManager?: boolean;
   isConnected: boolean;
 }
 

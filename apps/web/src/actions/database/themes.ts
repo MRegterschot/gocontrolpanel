@@ -1,4 +1,5 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
@@ -22,6 +23,7 @@ export async function updateServerTheme(
   serverId: string,
   theme: ManialinkTheme | null,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
@@ -44,6 +46,7 @@ export async function updateGroupTheme(
   groupId: string,
   theme: ManialinkTheme | null,
 ): Promise<ServerResponse> {
+  assertResourceId(groupId);
   return doServerActionWithAuth(
     ["groups:edit", `groups:${groupId}:admin`],
     async (session) => {

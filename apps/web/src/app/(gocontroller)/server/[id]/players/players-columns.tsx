@@ -1,7 +1,14 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
-import { addGuest, banPlayer, blacklistPlayer, forceSpectator, kickPlayer, removeGuest } from "@/actions/gbx/player";
+import {
+  addGuest,
+  banPlayer,
+  blacklistPlayer,
+  forceSpectator,
+  kickPlayer,
+  removeGuest,
+} from "@/actions/gbx/player";
 import BooleanDisplay from "@/components/boolean-display";
 import ConfirmModal from "@/components/modals/confirm-modal";
 import { DataTableColumnHeader } from "@/components/table/data-table-column-header";
@@ -13,15 +20,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { parseTmTags } from "@/lib/tmtags";
 import { getErrorMessage } from "@/lib/utils";
-import { PlayerInfo } from "@gcp/shared";
 import { ServerError } from "@/types/responses";
+import { PlayerInfo } from "@gcp/shared";
 import { IconCamera, IconSteeringWheelFilled } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { parseTmTags } from "tmtags";
 
 export const createColumns = (id: string): ColumnDef<PlayerInfo>[] => [
   {

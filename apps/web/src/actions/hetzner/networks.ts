@@ -1,4 +1,5 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { AddHetznerNetworkSchemaType } from "@/forms/admin/hetzner/network/add-hetzner-network-schema";
 import { AddSubnetToNetworkSchemaType } from "@/forms/admin/hetzner/network/add-subnet-to-network-schema";
@@ -14,6 +15,7 @@ export async function deleteHetznerNetwork(
   projectId: string,
   networkId: number,
 ): Promise<ServerResponse> {
+  assertResourceId(projectId);
   return doServerActionWithAuth(
     ["hetzner:servers:delete", `hetzner:${projectId}:admin`],
     async (session) => {
@@ -41,6 +43,7 @@ export async function createHetznerNetwork(
   projectId: string,
   data: AddHetznerNetworkSchemaType,
 ): Promise<ServerResponse<HetznerNetwork>> {
+  assertResourceId(projectId);
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
@@ -81,6 +84,7 @@ export async function addSubnetToNetwork(
   networkId: number,
   data: AddSubnetToNetworkSchemaType,
 ): Promise<ServerResponse> {
+  assertResourceId(projectId);
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
@@ -117,6 +121,7 @@ export async function removeSubnetFromNetwork(
   networkId: number,
   data: RemoveSubnetFromNetworkSchemaType,
 ): Promise<ServerResponse> {
+  assertResourceId(projectId);
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {

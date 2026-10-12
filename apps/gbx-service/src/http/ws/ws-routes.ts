@@ -11,6 +11,8 @@ export interface WsRouteOptions {
   // Browser origins allowed to open sockets; empty allows any
   allowedOrigins: string[];
   heartbeatMs: number;
+  // Permissions are only checked on connect, so every socket is closed after about this long
+  maxLifetimeMs: number;
 }
 
 function keepAlive(socket: WebSocket, intervalMs: number): () => void {
@@ -66,7 +68,11 @@ export async function wsRoutes(app: FastifyInstance, opts: WsRouteOptions) {
       if (!result.ok) return close(result.code, result.reason);
 
       const stopHeartbeat = keepAlive(socket, opts.heartbeatMs);
+      // Jitter, so sockets opened together don't all reconnect at once
+      const lifetime = opts.maxLifetimeMs * (0.9 + Math.random() * 0.2);
+      const expiry = setTimeout(() => close(CloseCode.Reauthenticate, "Session refresh"), lifetime);
       socket.once("close", () => {
+        clearTimeout(expiry);
         stopHeartbeat();
         result.cleanup();
       });

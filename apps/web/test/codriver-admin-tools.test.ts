@@ -452,7 +452,7 @@ describe("phase 4 registry and confirmations", () => {
     expect(mocks.kick).not.toHaveBeenCalled();
   });
 
-  it("does not emit an action event when a plugin is already enabled", async () => {
+  it("requires confirmation even when a plugin is already enabled", async () => {
     mocks.findServerPlugins.mockResolvedValue([
       {
         pluginId: "p1",
@@ -466,7 +466,7 @@ describe("phase 4 registry and confirmations", () => {
       { serverId, actor: admin, text: "enable demo" },
       options,
     );
-    expect(result.status).toBe("done");
+    expect(result.status).toBe("needs_confirmation");
     expect(mocks.setEnabled).not.toHaveBeenCalled();
     expect(mocks.emitPluginEvent).not.toHaveBeenCalled();
   });

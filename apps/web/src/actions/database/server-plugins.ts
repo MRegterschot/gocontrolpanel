@@ -1,4 +1,5 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { reloadServerPluginsAs } from "@/actions/server-only/plugins";
 import { doServerActionWithAuth } from "@/lib/actions";
@@ -17,6 +18,7 @@ export async function updateServerPlugin(
   pluginId: string,
   config: Record<string, any>,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
@@ -58,6 +60,7 @@ export async function updateServerPlugin(
 export async function reloadServerPlugins(
   serverId: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     (session) => reloadServerPluginsAs(actorFromSession(session), serverId),

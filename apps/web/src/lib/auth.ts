@@ -16,6 +16,7 @@ import {
 } from "next";
 import { getServerSession, NextAuthOptions, Profile, Session } from "next-auth";
 import { OAuthConfig } from "next-auth/providers/oauth";
+import { cache } from "react";
 import slugid from "slugid";
 import { getWebIdentities } from "./api/nadeo";
 import config from "./config";
@@ -126,51 +127,38 @@ export const authOptions: NextAuthOptions = {
     },
     async jwt({ token, user }) {
       let dbUser: UsersWithGroupsWithServers | null = null;
-      try {
-        if (user) {
-          const login = slugid.encode(user.accountId);
-
-          token.accountId = user.accountId;
-          token.login = login;
-          token.displayName = user.displayName;
-
-          dbUser = await getUserByLogin(login);
-        } else {
-          dbUser = await getUserById(token.id);
+      if (user) {
+        token.accountId = user.accountId;
+        token.login = slugid.encode(user.accountId);
+        token.displayName = user.displayName;
+        dbUser = await getUserByLogin(token.login);
+        if (dbUser?.deletedAt) {
+          throw new ServerError("Account disabled", "Unauthorized");
         }
-      } catch {
-        if (!dbUser) {
-          if (!token.ubiId) {
+        // Bootstrap only a real sign-in. Database errors must never reset permissions.
+        if (!dbUser || !dbUser.authenticated) {
+          let ubiUid = dbUser?.ubiUid ?? "";
+          if (!ubiUid) {
             try {
-              const { data: webidentities, error } = await getWebIdentities([
-                token.accountId,
-              ]);
-              if (error) {
-                throw new ServerError(error, "GetWebIdentitiesError");
-              }
-              if (webidentities && webidentities.length > 0) {
-                token.ubiId = webidentities[0].uid;
-              }
-            } catch (error) {
-              const meta = {
-                type: "nadeo",
-                module: "auth",
-                function: "getWebIdentities",
-              };
-              logger.error({ meta, error }, "Failed to fetch web identities");
+              const { data } = await getWebIdentities([token.accountId]);
+              ubiUid = data?.[0]?.uid ?? "";
+            } catch {
+              logger.warn("Could not fetch Ubisoft identity during sign-in");
             }
           }
-
           dbUser = await upsertUserAuth({
             login: token.login,
             nickName: token.displayName,
             admin: config.DEFAULT_ADMINS.includes(token.login),
             path: "",
-            ubiUid: token.ubiId ?? "",
+            ubiUid,
             permissions: config.DEFAULT_PERMISSIONS,
             authenticated: true,
           });
         }
+      } else {
+        // A missing/disabled account or a database failure invalidates this session.
+        dbUser = await getUserById(token.id);
       }
 
       if (!dbUser) {
@@ -193,7 +181,12 @@ export const authOptions: NextAuthOptions = {
           .map((g) => ({
             id: g.id,
             name: g.name,
-            servers: g.groupServers.map((s) => s.server),
+            servers: g.groupServers.map((s) => ({
+              id: s.server.id,
+              name: s.server.name,
+              description: s.server.description,
+              hasFileManager: !!s.server.filemanagerUrl,
+            })),
           }));
       } else {
         token.adminGroups = [];
@@ -213,7 +206,12 @@ export const authOptions: NextAuthOptions = {
           orderServers({
             id: g.group.id,
             name: g.group.name,
-            servers: g.group.groupServers.map((s) => s.server),
+            servers: g.group.groupServers.map((s) => ({
+              id: s.server.id,
+              name: s.server.name,
+              description: s.server.description,
+              hasFileManager: !!s.server.filemanagerUrl,
+            })),
             role: g.role,
             order: i,
             serversOrder: g.serversOrder?.split(",") || [],
@@ -259,28 +257,25 @@ export const authOptions: NextAuthOptions = {
   },
 };
 
+const requestSession = cache(() => getServerSession(authOptions));
+
 export function auth(
   ...args:
     | [GetServerSidePropsContext["req"], GetServerSidePropsContext["res"]]
     | [NextApiRequest, NextApiResponse]
     | []
 ) {
-  return getServerSession(...args, authOptions);
+  return args.length === 0
+    ? requestSession()
+    : getServerSession(...args, authOptions);
 }
 
 export async function withAuth(
   permissions?: string[],
   id = "",
 ): Promise<Session> {
-  const perm = await hasPermission(permissions, id);
-  if (!perm) {
-    const error = new ServerError("Unauthorized", "Unauthorized");
-    reportException(error);
-    throw error;
-  }
-
   const session = await auth();
-  if (!session) {
+  if (!session || !hasPermissionSync(session, permissions, id)) {
     const error = new ServerError("Unauthorized", "Unauthorized");
     reportException(error);
     throw error;

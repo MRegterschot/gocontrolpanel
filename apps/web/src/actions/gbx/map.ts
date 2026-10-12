@@ -1,4 +1,5 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { actorFromSession } from "@/lib/actor";
@@ -22,6 +23,7 @@ export async function setJukebox(
   serverId: string,
   jukebox: JukeboxMap[],
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -47,6 +49,7 @@ export async function setJukebox(
 }
 
 export async function clearJukebox(serverId: string): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -62,6 +65,7 @@ export async function addMapToJukebox(
   serverId: string,
   map: Maps,
 ): Promise<ServerResponse<JukeboxMap>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -77,6 +81,7 @@ export async function removeMapFromJukebox(
   serverId: string,
   mapId: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -113,6 +118,7 @@ export async function jumpToMap(
   serverId: string,
   index: number,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -128,6 +134,7 @@ export async function addMap(
   serverId: string,
   filename: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -143,6 +150,7 @@ export async function addMapList(
   serverId: string,
   filenames: string[],
 ): Promise<ServerResponse<number>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -184,6 +192,7 @@ export async function removeMap(
   serverId: string,
   filename: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -207,6 +216,7 @@ export async function removeMapList(
   serverId: string,
   filenames: string[],
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -230,6 +240,7 @@ export async function reorderMapList(
   serverId: string,
   filenames: string[],
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,

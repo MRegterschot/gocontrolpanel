@@ -1,6 +1,7 @@
 import { type Actor, requirePermission } from "@/lib/actor";
+import { fileAuditDetails } from "@/lib/audit-redact";
 import { getLogger } from "@/lib/logger";
-import { getFileManager } from "@/lib/managers/file-manager";
+import { fileManagerFetch, getFileManager } from "@/lib/managers/file-manager";
 import { FileEntry } from "@/types/filemanager";
 import { ServerError } from "@/types/responses";
 import { serverPermissions } from "@gcp/shared";
@@ -29,6 +30,17 @@ export async function uploadFilesAs(
     paths: formData.getAll("paths[]").map((path) => path.toString()),
   };
 
+  // Folder and file names come from users and from Nadeo/TMX names
+  const badPath = uploadAuditData.paths.find(
+    (path) => !path.startsWith("/") || hasDotSegment(path),
+  );
+  const badFile = uploadAuditData.files.find(
+    (name) => /[\\/]/.test(name) || hasDotSegment(name),
+  );
+  if (badPath !== undefined || badFile !== undefined) {
+    throw new ServerError("Invalid upload path", "InvalidFilePath");
+  }
+
   const fileManager = await getFileManager(serverId);
   if (!fileManager?.health) {
     await logAudit(
@@ -52,7 +64,7 @@ export async function uploadFilesAs(
     "Uploading files to file manager",
   );
 
-  const res = await fetch(fileManager.url + "/upload", {
+  const res = await fileManagerFetch(fileManager.url + "/upload", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${fileManager.password}`,
@@ -107,7 +119,7 @@ async function healthyFileManager(serverId: string) {
 // GET a file manager listing such as /scripts or /maps: paths relative to that folder
 async function listFiles(serverId: string, route: string): Promise<string[]> {
   const fileManager = await healthyFileManager(serverId);
-  const res = await fetch(`${fileManager.url}${route}`, {
+  const res = await fileManagerFetch(`${fileManager.url}${route}`, {
     headers: { Authorization: `Bearer ${fileManager.password}` },
   });
   if (res.status !== 200) {
@@ -145,9 +157,12 @@ export async function readFileTextAs(
 ): Promise<string> {
   requirePermission(actor, serverPermissions.admin, serverId);
   const fileManager = await healthyFileManager(serverId);
-  const res = await fetch(`${fileManager.url}/UserData/${encodePath(path)}`, {
-    headers: { Authorization: `Bearer ${fileManager.password}` },
-  });
+  const res = await fileManagerFetch(
+    `${fileManager.url}/UserData/${encodePath(path)}`,
+    {
+      headers: { Authorization: `Bearer ${fileManager.password}` },
+    },
+  );
   if (res.status !== 200) {
     throw new ServerError("Failed to get file", "FileFetchError");
   }
@@ -168,7 +183,7 @@ export async function writeFileTextAs(
       actor.userId,
       serverId,
       "server.files.edit",
-      { path, text },
+      fileAuditDetails(path, text),
       "File manager is not healthy",
     );
     throw new ServerError(
@@ -176,19 +191,22 @@ export async function writeFileTextAs(
       "FileManagerNotHealthy",
     );
   }
-  const res = await fetch(`${fileManager.url}/UserData/${encodePath(path)}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${fileManager.password}`,
+  const res = await fileManagerFetch(
+    `${fileManager.url}/UserData/${encodePath(path)}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${fileManager.password}`,
+      },
+      body: JSON.stringify(text),
     },
-    body: JSON.stringify(text),
-  });
+  );
   await logAudit(
     actor.userId,
     serverId,
     "server.files.edit",
-    { path, text },
+    fileAuditDetails(path, text),
     res.status !== 200 ? "Failed to save file" : undefined,
   );
   if (res.status !== 200) {
@@ -202,4 +220,10 @@ export async function writeFileTextAs(
 
 function encodePath(path: string): string {
   return path.split("/").map(encodeURIComponent).join("/");
+}
+
+function hasDotSegment(path: string): boolean {
+  return path
+    .split(/[\\/]/)
+    .some((segment) => segment === "." || segment === "..");
 }

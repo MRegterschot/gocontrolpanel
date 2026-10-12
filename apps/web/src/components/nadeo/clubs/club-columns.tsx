@@ -1,9 +1,9 @@
 "use client";
+import { parseTmTags } from "@/lib/tmtags";
 import { Club } from "@/types/api/nadeo";
 import { IconArrowRight } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
-import { parseTmTags } from "tmtags";
 
 export const createColumns = (
   _: () => void,

@@ -231,6 +231,7 @@ export const reloadPlugins = defineTool({
 
 export const listPlugins = defineTool({
   name: "list_plugins",
+  readOnly: true,
   description: "List installed plugins and whether they are enabled.",
   category: "info",
   minRole: "moderator",

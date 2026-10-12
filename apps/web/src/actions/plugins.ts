@@ -1,4 +1,5 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { logAudit } from "@/actions/database/server-only/audit-logs";
 import { doServerActionWithAuth } from "@/lib/actions";
@@ -245,6 +246,7 @@ export async function installMarketplacePlugin(
   version: string,
   acceptedCapabilities: string[],
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(serverAdmin(serverId), async (session) => {
     const args = parse(
       z.object({ slug: id, version: versionString, accepted: capabilityList }),
@@ -273,6 +275,7 @@ export async function installUploadedPlugin(
   versionId: string,
   acceptedCapabilities: string[],
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(serverAdmin(serverId), async (session) => {
     const args = parse(
       z.object({ pluginId: id, versionId: id, accepted: capabilityList }),
@@ -308,6 +311,7 @@ export async function changeServerPluginVersion(
   version: string,
   acceptedCapabilities: string[],
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(serverAdmin(serverId), async (session) => {
     const args = parse(
       z.object({
@@ -350,6 +354,7 @@ export interface UpdateAllResult {
 export async function updateAllServerPlugins(
   serverId: string,
 ): Promise<ServerResponse<UpdateAllResult>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(serverAdmin(serverId), async (session) => {
     const { data: plugins, error } = await getInstalledPlugins(serverId);
     if (error) throw new ServerError(error, "GetInstalledPluginsError");
@@ -401,6 +406,7 @@ export async function setServerPluginEnabled(
   pluginId: string,
   enabled: boolean,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(serverAdmin(serverId), (session) =>
     setServerPluginEnabledAs(
       actorFromSession(session),
@@ -416,6 +422,7 @@ export async function uninstallServerPlugin(
   serverId: string,
   pluginId: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(serverAdmin(serverId), async (session) => {
     const args = parse(z.object({ pluginId: id }), { pluginId });
     const row = await installedRow(serverId, args.pluginId);
@@ -456,6 +463,7 @@ export async function saveServerPluginConfig(
   config: PluginConfig,
   clearedSecrets: string[] = [],
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(serverAdmin(serverId), (session) =>
     saveServerPluginConfigAs(
       actorFromSession(session),

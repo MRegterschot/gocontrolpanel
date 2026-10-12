@@ -1,4 +1,6 @@
 "use server";
+import { validateListFilename } from "@/lib/list-filename";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { actorFromSession } from "@/lib/actor";
@@ -27,6 +29,7 @@ export async function banPlayer(
   login: string,
   reason: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -43,6 +46,7 @@ export async function unbanPlayer(
   serverId: string,
   login: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -55,6 +59,7 @@ export async function unbanPlayer(
 }
 
 export async function cleanBanList(serverId: string): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -74,6 +79,7 @@ export async function blacklistPlayer(
   serverId: string,
   login: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -89,6 +95,7 @@ export async function unblacklistPlayer(
   serverId: string,
   login: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -105,6 +112,7 @@ export async function loadBlacklist(
   serverId: string,
   filename: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -114,7 +122,7 @@ export async function loadBlacklist(
     ],
     async (session) => {
       const client = getGbxClient(serverId);
-      await client.call("LoadBlackList", filename);
+      await client.call("LoadBlackList", validateListFilename(filename));
       await logAudit(
         session.user.id,
         serverId,
@@ -129,6 +137,7 @@ export async function saveBlacklist(
   serverId: string,
   filename: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -138,7 +147,7 @@ export async function saveBlacklist(
     ],
     async (session) => {
       const client = getGbxClient(serverId);
-      await client.call("SaveBlackList", filename);
+      await client.call("SaveBlackList", validateListFilename(filename));
       await logAudit(
         session.user.id,
         serverId,
@@ -152,6 +161,7 @@ export async function saveBlacklist(
 export async function cleanBlacklist(
   serverId: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -175,6 +185,7 @@ export async function addGuest(
   serverId: string,
   login: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -190,6 +201,7 @@ export async function removeGuest(
   serverId: string,
   login: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -205,6 +217,7 @@ export async function loadGuestlist(
   serverId: string,
   filename: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -214,7 +227,7 @@ export async function loadGuestlist(
     ],
     async (session) => {
       const client = getGbxClient(serverId);
-      await client.call("LoadGuestList", filename);
+      await client.call("LoadGuestList", validateListFilename(filename));
       await logAudit(
         session.user.id,
         serverId,
@@ -229,6 +242,7 @@ export async function saveGuestlist(
   serverId: string,
   filename: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -238,7 +252,7 @@ export async function saveGuestlist(
     ],
     async (session) => {
       const client = getGbxClient(serverId);
-      await client.call("SaveGuestList", filename);
+      await client.call("SaveGuestList", validateListFilename(filename));
       await logAudit(
         session.user.id,
         serverId,
@@ -252,6 +266,7 @@ export async function saveGuestlist(
 export async function cleanGuestlist(
   serverId: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -276,6 +291,7 @@ export async function kickPlayer(
   login: string,
   reason: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -294,6 +310,7 @@ export async function forceSpectator(
   login: string,
   status: number,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -311,6 +328,7 @@ export async function setPlayerRoundPoints(
   login: string,
   points: number,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -333,6 +351,7 @@ export async function setPlayerMapPoints(
   login: string,
   points: number,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -350,6 +369,7 @@ export async function setPlayerMatchPoints(
   login: string,
   points: number,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -372,6 +392,7 @@ export async function setTeamRoundPoints(
   teamId: number,
   points: number,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -389,6 +410,7 @@ export async function setTeamMapPoints(
   teamId: number,
   points: number,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -406,6 +428,7 @@ export async function setTeamMatchPoints(
   teamId: number,
   points: number,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,

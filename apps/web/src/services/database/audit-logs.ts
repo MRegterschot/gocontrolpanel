@@ -1,3 +1,4 @@
+import { adminAuditScope } from "@/actions/database/server-only/audit-scope";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { PaginationResponse, ServerResponse } from "@/types/responses";
@@ -6,7 +7,7 @@ import { PaginationState } from "@tanstack/react-table";
 import "server-only";
 
 const auditLogsUsersSchema = Prisma.validator<Prisma.AuditLogsInclude>()({
-  user: true,
+  user: { select: { id: true, login: true, nickName: true } },
 });
 
 export type AuditLogsWithUsers = Prisma.AuditLogsGetPayload<{
@@ -49,22 +50,8 @@ export async function getAuditLogsPaginated(
         !session.user.admin &&
         !session.user.permissions.includes("audit-logs:view")
       ) {
-        const userServerIds = session.user.servers.map((s) => s.id);
-        const userGroupIds = session.user.groups.map((g) => g.id);
-        const userGroupServerIds = session.user.groups
-          .flatMap((g) => g.servers)
-          .map((s) => s.id);
-        const userHetznerIds = session.user.projects.map((p) => p.id);
-
-        const allIds = [
-          ...new Set([
-            ...userServerIds,
-            ...userGroupServerIds,
-            ...userHetznerIds,
-          ]),
-        ];
-
-        if (allIds.length === 0) {
+        const scope = adminAuditScope(session);
+        if (!scope) {
           return {
             data: [],
             totalCount: 0,
@@ -73,16 +60,7 @@ export async function getAuditLogsPaginated(
 
         where.AND = [
           ...((where.AND as Prisma.AuditLogsWhereInput[]) ?? []),
-          {
-            OR: [
-              {
-                targetType: "server",
-                targetId: { in: [...userServerIds, ...userGroupServerIds] },
-              },
-              { targetType: "group", targetId: { in: userGroupIds } },
-              { targetType: "hetzner", targetId: { in: userHetznerIds } },
-            ],
-          },
+          scope,
         ];
       }
 

@@ -10,13 +10,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { parseTmTags } from "@/lib/tmtags";
 import { getErrorMessage } from "@/lib/utils";
 import { JukeboxMap } from "@/types/map";
 import { ServerError } from "@/types/responses";
 import { MoreHorizontal } from "lucide-react";
 import { memo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { parseTmTags } from "tmtags";
 
 const MapActionsCell = memo(function MapActionsCell({
   data,

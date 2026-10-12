@@ -11,9 +11,7 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   {
-    ignores: [
-      "src/lib/manialink/*.js"
-    ]
+    ignores: ["src/lib/manialink/*.js"],
   },
   ...compat.extends("next/core-web-vitals", "next/typescript", "prettier"),
   {
@@ -29,7 +27,16 @@ const eslintConfig = [
       "react-hooks/exhaustive-deps": "off",
       "react-hooks/rules-of-hooks": "warn",
       "@typescript-eslint/no-explicit-any": "off",
+      // tmtags does not escape HTML; use the safe wrapper in @/lib/tmtags
+      "no-restricted-imports": [
+        "error",
+        { paths: [{ name: "tmtags", message: "Import from @/lib/tmtags." }] },
+      ],
     },
+  },
+  {
+    files: ["src/lib/tmtags.ts"],
+    rules: { "no-restricted-imports": "off" },
   },
 ];
 

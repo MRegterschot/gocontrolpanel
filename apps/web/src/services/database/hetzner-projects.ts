@@ -100,7 +100,8 @@ export async function getHetznerProjectsPaginated(
             project.id,
           )
             ? getList<string>(project.apiTokens).map((token) =>
-                decryptHetznerToken(token),
+                // An unreadable token shows up empty, so it has to be entered again
+                tryDecrypt(token),
               )
             : Array.from({ length: getList(project.apiTokens).length }, () =>
                 crypto.randomUUID(),
@@ -109,4 +110,12 @@ export async function getHetznerProjectsPaginated(
       };
     },
   );
+}
+
+function tryDecrypt(token: string): string {
+  try {
+    return decryptHetznerToken(token);
+  } catch {
+    return "";
+  }
 }

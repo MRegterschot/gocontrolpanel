@@ -1,4 +1,9 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
+import {
+  encryptServerPassword,
+  requireServerCredentialsKey,
+} from "@/lib/server-credentials";
 
 import { AdvancedServerSetupSchemaType } from "@/forms/admin/hetzner/setup-steps/advanced/server-setup-schema";
 import { SimpleServerSetupSchemaType } from "@/forms/admin/hetzner/setup-steps/simple/server-setup-schema";
@@ -7,22 +12,34 @@ import { doServerActionWithAuth } from "@/lib/actions";
 import { axiosHetzner } from "@/lib/axios/hetzner";
 import { getClient } from "@/lib/dbclient";
 import { publishServerEvent } from "@/lib/gbx-service";
-import { updateFileManager } from "@/lib/managers/file-manager";
+import { assertProvisioningChoices } from "@/lib/handlebars";
 import {
   getKeyHetznerRecentlyCreatedServers,
   getRedisClient,
 } from "@/lib/redis";
 import { connectToSSHServer, executeSSHScript } from "@/lib/ssh";
-import { generateRandomString, getErrorMessage, sleep } from "@/lib/utils";
+import {
+  generateRandomString,
+  getErrorMessage,
+  hasPermissionSync,
+  sleep,
+} from "@/lib/utils";
 import { HetznerServer, HetznerServerCache } from "@/types/api/hetzner/servers";
 import { ServerError, ServerResponse } from "@/types/responses";
+import { Session } from "next-auth";
 import { logAudit } from "../database/server-only/audit-logs";
 import {
   createDBHetznerServer,
   getDBHetznerServer,
 } from "../database/server-only/hetzner-servers";
 import { createHetznerNetwork } from "./networks";
-import { attachHetznerServerToNetwork, createHetznerDatabase, dediTemplate, tmServerTemplate, updateHetznerServer } from "./servers";
+import {
+  attachHetznerServerToNetwork,
+  createHetznerDatabase,
+  dediTemplate,
+  tmServerTemplate,
+  updateHetznerServer,
+} from "./servers";
 import {
   createHetznerSSHKey,
   getApiToken,
@@ -34,9 +51,16 @@ export async function createAdvancedServerSetup(
   projectId: string,
   data: AdvancedServerSetupSchemaType,
 ): Promise<ServerResponse<HetznerServer>> {
+  assertResourceId(projectId);
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
+      requireServerCredentialsKey();
+      await authorizePanelTarget(session, data);
+      assertProvisioningChoices(
+        data.database?.databaseType,
+        data.serverController?.type,
+      );
       const la = (error?: string, id?: number) =>
         logAudit(
           session.user.id,
@@ -152,7 +176,10 @@ export async function createAdvancedServerSetup(
         if (!network?.databaseInNetwork) {
           if (!networkId) {
             la("Network must be selected for existing databases.");
-            throw new ServerError("Network must be selected for existing databases.", "HetznerNetworkNotSelected");
+            throw new ServerError(
+              "Network must be selected for existing databases.",
+              "HetznerNetworkNotSelected",
+            );
           }
 
           const { error: dbError } = await attachHetznerServerToNetwork(
@@ -189,7 +216,10 @@ export async function createAdvancedServerSetup(
 
           if (dbError) {
             la(dbError);
-            throw new ServerError(dbError, "HetznerDatabaseNetworkAttachmentError");
+            throw new ServerError(
+              dbError,
+              "HetznerDatabaseNetworkAttachmentError",
+            );
           }
         }
       }
@@ -227,6 +257,10 @@ export async function createAdvancedServerSetup(
         stack_name: "stack-0",
       };
 
+      assertProvisioningChoices(
+        dediData.db.type,
+        dediData.server_controller?.type,
+      );
       const userData = dediTemplate(dediData);
 
       const keyName = `advanced-${server.name}-${generateRandomString(8)}`;
@@ -294,9 +328,11 @@ export async function createAdvancedServerSetup(
               host: cachedServer.ip || "",
               port: cachedServer.port,
               user: "SuperAdmin",
-              password: cachedServer.password,
+              password: encryptServerPassword(cachedServer.password),
               filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
-              filemanagerPassword: cachedServer.filemanagerPassword,
+              filemanagerPassword: encryptServerPassword(
+                cachedServer.filemanagerPassword,
+              ),
               userServers: {
                 create: [
                   {
@@ -343,21 +379,17 @@ export async function createAdvancedServerSetup(
               host: cachedServer.ip || "",
               port: cachedServer.port,
               user: "SuperAdmin",
-              password: cachedServer.password,
+              password: encryptServerPassword(cachedServer.password),
               filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
-              filemanagerPassword: cachedServer.filemanagerPassword,
+              filemanagerPassword: encryptServerPassword(
+                cachedServer.filemanagerPassword,
+              ),
             },
           });
           await publishServerEvent({
             type: "server.updated",
             serverId: data.serverId,
           });
-
-          updateFileManager(
-            data.serverId,
-            `http://${cachedServer.ip}:${cachedServer.fm_port}`,
-            cachedServer.filemanagerPassword,
-          );
         } else {
           const client = await getRedisClient();
           const key = getKeyHetznerRecentlyCreatedServers(projectId);
@@ -394,7 +426,10 @@ export async function createAdvancedServerSetup(
 
         if (serverError) {
           la(serverError, serverId);
-          throw new ServerError(serverError, "HetznerServerNetworkAttachmentError");
+          throw new ServerError(
+            serverError,
+            "HetznerServerNetworkAttachmentError",
+          );
         }
       }
 
@@ -407,9 +442,16 @@ export async function createSimpleServerSetup(
   projectId: string,
   data: SimpleServerSetupSchemaType,
 ): Promise<ServerResponse<HetznerServer>> {
+  assertResourceId(projectId);
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
+      requireServerCredentialsKey();
+      await authorizePanelTarget(session, data);
+      assertProvisioningChoices(
+        data.database?.databaseType,
+        data.serverController?.type,
+      );
       const la = (error?: string, id?: number) =>
         logAudit(
           session.user.id,
@@ -537,6 +579,10 @@ export async function createSimpleServerSetup(
         stack_name: "stack-0",
       };
 
+      assertProvisioningChoices(
+        dediData.db.type,
+        dediData.server_controller?.type,
+      );
       const userData = dediTemplate(dediData);
 
       const keyName = `simple-${server.name}-${generateRandomString(8)}`;
@@ -604,9 +650,11 @@ export async function createSimpleServerSetup(
               host: cachedServer.ip || "",
               port: cachedServer.port,
               user: "SuperAdmin",
-              password: cachedServer.password,
+              password: encryptServerPassword(cachedServer.password),
               filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
-              filemanagerPassword: cachedServer.filemanagerPassword,
+              filemanagerPassword: encryptServerPassword(
+                cachedServer.filemanagerPassword,
+              ),
               userServers: {
                 create: [
                   {
@@ -653,21 +701,17 @@ export async function createSimpleServerSetup(
               host: cachedServer.ip || "",
               port: cachedServer.port,
               user: "SuperAdmin",
-              password: cachedServer.password,
+              password: encryptServerPassword(cachedServer.password),
               filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
-              filemanagerPassword: cachedServer.filemanagerPassword,
+              filemanagerPassword: encryptServerPassword(
+                cachedServer.filemanagerPassword,
+              ),
             },
           });
           await publishServerEvent({
             type: "server.updated",
             serverId: data.serverId,
           });
-
-          updateFileManager(
-            data.serverId,
-            `http://${cachedServer.ip}:${cachedServer.fm_port}`,
-            cachedServer.filemanagerPassword,
-          );
         } else {
           const client = await getRedisClient();
           const key = getKeyHetznerRecentlyCreatedServers(projectId);
@@ -695,7 +739,10 @@ export async function createSimpleServerSetup(
 
           if (dbError) {
             la(dbError, serverId);
-            throw new ServerError(dbError, "HetznerDatabaseNetworkAttachmentError");
+            throw new ServerError(
+              dbError,
+              "HetznerDatabaseNetworkAttachmentError",
+            );
           }
         }
 
@@ -709,7 +756,10 @@ export async function createSimpleServerSetup(
 
         if (serverError) {
           la(serverError, serverId);
-          throw new ServerError(serverError, "HetznerServerNetworkAttachmentError");
+          throw new ServerError(
+            serverError,
+            "HetznerServerNetworkAttachmentError",
+          );
         }
       }
 
@@ -723,9 +773,12 @@ export async function addTrackmaniaServer(
   serverId: number,
   tmServer: TMServerSchemaType,
 ) {
+  assertResourceId(projectId);
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
+      requireServerCredentialsKey();
+      await authorizePanelTarget(session, tmServer);
       const la = (error?: string, result?: string) =>
         logAudit(
           session.user.id,
@@ -762,7 +815,10 @@ export async function addTrackmaniaServer(
 
       if (!dbHetznerServer.privateKey) {
         la("SSH private key not found for the server");
-        throw new ServerError("SSH private key not found for the server", "SSHPrivateKeyNotFound");
+        throw new ServerError(
+          "SSH private key not found for the server",
+          "SSHPrivateKeyNotFound",
+        );
       }
 
       const tmServers: number[] = [];
@@ -800,6 +856,7 @@ export async function addTrackmaniaServer(
         22,
         "root",
         Buffer.from(dbHetznerServer.privateKey),
+        dbHetznerServer,
       );
 
       const result = await executeSSHScript(sshConn, script);
@@ -809,7 +866,10 @@ export async function addTrackmaniaServer(
       if (result.stderr) {
         // Log last 100 characters of stderr
         la(`Error executing command on server: ${result.stderr.slice(-100)}`);
-        throw new ServerError(`Error executing command on server: ${result.stderr}`, "SSHCommandExecutionError");
+        throw new ServerError(
+          `Error executing command on server: ${result.stderr}`,
+          "SSHCommandExecutionError",
+        );
       }
 
       // Add new labels to the server for the new TM server
@@ -845,9 +905,11 @@ export async function addTrackmaniaServer(
               host: cachedServer.ip || "",
               port: cachedServer.port,
               user: "SuperAdmin",
-              password: cachedServer.password,
+              password: encryptServerPassword(cachedServer.password),
               filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
-              filemanagerPassword: cachedServer.filemanagerPassword,
+              filemanagerPassword: encryptServerPassword(
+                cachedServer.filemanagerPassword,
+              ),
               userServers: {
                 create: [
                   {
@@ -894,21 +956,17 @@ export async function addTrackmaniaServer(
               host: cachedServer.ip || "",
               port: cachedServer.port,
               user: "SuperAdmin",
-              password: cachedServer.password,
+              password: encryptServerPassword(cachedServer.password),
               filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
-              filemanagerPassword: cachedServer.filemanagerPassword,
+              filemanagerPassword: encryptServerPassword(
+                cachedServer.filemanagerPassword,
+              ),
             },
           });
           await publishServerEvent({
             type: "server.updated",
             serverId: tmServer.serverId,
           });
-
-          updateFileManager(
-            tmServer.serverId,
-            `http://${cachedServer.ip}:${cachedServer.fm_port}`,
-            cachedServer.filemanagerPassword,
-          );
         } else {
           const client = await getRedisClient();
           const key = getKeyHetznerRecentlyCreatedServers(projectId);
@@ -929,6 +987,7 @@ export async function deleteTrackmaniaServer(
   serverId: number,
   tmServerNumber: number,
 ) {
+  assertResourceId(projectId);
   return doServerActionWithAuth(
     ["hetzner:servers:delete", `hetzner:${projectId}:admin`],
     async (session) => {
@@ -947,7 +1006,10 @@ export async function deleteTrackmaniaServer(
 
       if (isNaN(tmServerNumber)) {
         la("Invalid TM server number");
-        throw new ServerError("Invalid TM server number", "InvalidTMServerNumber");
+        throw new ServerError(
+          "Invalid TM server number",
+          "InvalidTMServerNumber",
+        );
       }
 
       const hetznerServer = await getHetznerServer(projectId, serverId);
@@ -966,7 +1028,10 @@ export async function deleteTrackmaniaServer(
 
       if (!dbHetznerServer.privateKey) {
         la("SSH private key not found for the server");
-        throw new ServerError("SSH private key not found for the server", "SSHPrivateKeyNotFound");
+        throw new ServerError(
+          "SSH private key not found for the server",
+          "SSHPrivateKeyNotFound",
+        );
       }
 
       const script = `docker compose -p stack-${tmServerNumber} -f /root/gocontrolpanel-master/hetzner/docker-compose.yml down -v`;
@@ -976,6 +1041,7 @@ export async function deleteTrackmaniaServer(
         22,
         "root",
         Buffer.from(dbHetznerServer.privateKey),
+        dbHetznerServer,
       );
 
       const result = await executeSSHScript(sshConn, script);
@@ -984,7 +1050,10 @@ export async function deleteTrackmaniaServer(
 
       if (result.stderr) {
         la(`Error executing command on server: ${result.stderr.slice(-100)}`);
-        throw new ServerError(`Error executing command on server: ${result.stderr}`, "SSHCommandExecutionError");
+        throw new ServerError(
+          `Error executing command on server: ${result.stderr}`,
+          "SSHCommandExecutionError",
+        );
       }
 
       // Remove labels of the deleted TM server
@@ -1001,4 +1070,58 @@ export async function deleteTrackmaniaServer(
       la(undefined, result.stdout);
     },
   );
+}
+
+// Checked before any paid cloud call: provisioning may only touch panel servers and groups
+// the caller already administers
+async function authorizePanelTarget(
+  session: Session,
+  target: {
+    createServer?: boolean;
+    updateServer?: boolean;
+    serverId?: string;
+    groupId?: string;
+  },
+) {
+  const db = getClient();
+
+  if (target.createServer && target.groupId) {
+    const group = await db.groups.findFirst({
+      where: { id: target.groupId, deletedAt: null },
+      select: { id: true },
+    });
+    if (
+      !group ||
+      !hasPermissionSync(
+        session,
+        ["groups:edit", "groups:id:admin"],
+        target.groupId,
+      )
+    ) {
+      throw new ServerError(
+        "You can only add servers to groups you administer",
+        "Unauthorized",
+      );
+    }
+  }
+
+  if (!target.createServer && target.updateServer && target.serverId) {
+    const server = await db.servers.findFirst({
+      where: { id: target.serverId, deletedAt: null },
+      select: { id: true },
+    });
+    if (
+      !server ||
+      !hasPermissionSync(
+        session,
+        ["servers:edit", "servers:id:admin"],
+        target.serverId,
+      )
+    ) {
+      throw new ServerError(
+        "You can only update servers you administer",
+        "Unauthorized",
+      );
+    }
+  }
 }

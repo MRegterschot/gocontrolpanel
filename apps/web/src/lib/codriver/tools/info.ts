@@ -16,6 +16,7 @@ function formatTime(ms: number): string {
 
 export const getServerState = defineTool({
   name: "get_server_state",
+  readOnly: true,
   description: "Current mode, map, players and queue length.",
   category: "info",
   minRole: "guest",
@@ -37,6 +38,7 @@ export const getServerState = defineTool({
 
 export const getModeSettings = defineTool({
   name: "get_mode_settings",
+  readOnly: true,
   description:
     "Show the current mode's settings that differ from the defaults.",
   category: "info",
@@ -75,6 +77,7 @@ export const getModeSettings = defineTool({
 
 export const explainSetting = defineTool({
   name: "explain_setting",
+  readOnly: true,
   description: "Explain one setting of the current mode.",
   category: "info",
   minRole: "guest",
@@ -90,6 +93,7 @@ export const explainSetting = defineTool({
 
 export const getMapRecords = defineTool({
   name: "get_map_records",
+  readOnly: true,
   description: "Best times on the current map recorded on this server.",
   category: "info",
   minRole: "guest",
@@ -144,6 +148,7 @@ const examples: { role: "guest" | "moderator" | "admin"; text: string }[] = [
 
 export const codriverHelp = defineTool({
   name: "codriver_help",
+  readOnly: true,
   description: "What the caller can ask Codriver.",
   category: "info",
   minRole: "guest",

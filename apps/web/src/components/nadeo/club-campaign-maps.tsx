@@ -3,6 +3,7 @@ import {
   addCampaignToServer,
   downloadCampaign,
 } from "@/actions/nadeo/campaigns";
+import { parseTmTags } from "@/lib/tmtags";
 import { getErrorMessage } from "@/lib/utils";
 import { ClubCampaignWithNamesAndPlaylistMaps } from "@/types/api/nadeo";
 import { ServerError } from "@/types/responses";
@@ -10,7 +11,6 @@ import { IconDownload, IconMapPlus, IconPhoto } from "@tabler/icons-react";
 import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
-import { parseTmTags } from "tmtags";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { Separator } from "../ui/separator";

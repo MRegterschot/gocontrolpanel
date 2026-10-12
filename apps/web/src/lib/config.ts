@@ -7,6 +7,8 @@ const config: Config = {
   HETZNER: {
     URL: "https://api.hetzner.cloud/v1",
     KEY: process.env.HETZNER_KEY || "",
+    // Set while rotating HETZNER_KEY; values stored with it still decrypt
+    PREVIOUS_KEY: process.env.HETZNER_KEY_PREVIOUS,
   },
   ECM: {
     URL: "https://us-central1-fantasy-trackmania.cloudfunctions.net",

@@ -1,9 +1,9 @@
 "use client";
 
-import type { RecordsWithUser } from "@/services/database/matches";
 import TimeDisplay from "@/components/time-display";
+import { parseTmTags } from "@/lib/tmtags";
+import type { RecordsWithUser } from "@/services/database/matches";
 import { ColumnDef } from "@tanstack/react-table";
-import { parseTmTags } from "tmtags";
 
 export const createColumns = (
   rounds?: boolean,

@@ -19,6 +19,8 @@ const mocks = vi.hoisted(() => ({
   record: vi.fn(),
   budgetAlert: vi.fn(),
   keyAlert: vi.fn(),
+  reserve: vi.fn(),
+  release: vi.fn(),
 }));
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/config", () => ({ default: mocks.config }));
@@ -44,6 +46,10 @@ vi.mock("@/lib/codriver/usage", () => ({
   isSpent: (state: { spent: boolean }) => state.spent,
   recordRequest: mocks.record,
   pruneRequests: vi.fn(),
+}));
+vi.mock("@/lib/codriver/reservations", () => ({
+  reservationMicros: () => 1000,
+  reserveBudget: mocks.reserve,
 }));
 vi.mock("@/lib/codriver/alerts", () => ({
   notifyBudgetCrossings: mocks.budgetAlert,
@@ -166,6 +172,8 @@ beforeEach(() => {
   mocks.cooldown.mockResolvedValue(true);
   mocks.accessInput.mockImplementation(async () => accessInput());
   mocks.budgetStates.mockResolvedValue([{ spent: false }]);
+  mocks.release.mockResolvedValue(undefined);
+  mocks.reserve.mockResolvedValue(mocks.release);
   mocks.runCodriver.mockResolvedValue({
     status: "done",
     reply: "Skipping.",
@@ -234,6 +242,22 @@ describe("handleCodriverMessage", () => {
     );
 
     expect(await ask("skip")).toBe("Skipping.");
+  });
+
+  it("refuses a request whose reservation doesn't fit the remaining budget", async () => {
+    mocks.budgetStates.mockResolvedValue([{ spent: false }]);
+    mocks.reserve.mockResolvedValueOnce(null);
+    expect(await ask("play a snow map")).toContain("budget");
+    expect(mocks.runCodriver).not.toHaveBeenCalled();
+  });
+
+  it("releases the reservation after recording the request", async () => {
+    mocks.budgetStates.mockResolvedValue([{ spent: false }]);
+    expect(await ask("skip")).toBe("Skipping.");
+    expect(mocks.release).toHaveBeenCalledTimes(1);
+    expect(mocks.record.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.release.mock.invocationCallOrder[0],
+    );
   });
 
   it("runs requests and returns the reply", async () => {

@@ -4,7 +4,8 @@ set -x -e
 
 cd ~/gocontrolpanel-master/hetzner
 
-STACK_DIR="/root/gocontrolpanel-master/hetzner/{{{stack_name}}}"
+STACK_NAME={{sh stack_name}}
+STACK_DIR="/root/gocontrolpanel-master/hetzner/$STACK_NAME"
 ENV_FILE="$STACK_DIR/.env"
 mkdir -p "$(dirname "$ENV_FILE")"
 
@@ -19,17 +20,17 @@ if [ -z "$TM_SYSTEM_FORCE_IP_ADDRESS" ]; then
 fi
 
 cat > "$ENV_FILE" <<'EOF'
-COMPOSE_PROJECT_NAME={{{stack_name}}}
-TM_MASTERSERVER_LOGIN={{{dedi_login}}}
-TM_MASTERSERVER_PASSWORD={{{dedi_password}}}
-TM_SERVER_PASSWORD={{{room_password}}}
-TM_AUTHORIZATION_SUPERADMIN_PASSWORD={{{superadmin_password}}}
-TM_AUTHORIZATION_ADMIN_PASSWORD={{{admin_password}}}
-TM_AUTHORIZATION_USER_PASSWORD={{{user_password}}}
-FM_PASSWORD='{{{filemanager_password}}}'
-TM_PORT={{{port}}}
-TM_XMLRPC_PORT={{{xmlrpc_port}}}
-FM_PORT={{{fm_port}}}
+COMPOSE_PROJECT_NAME={{env stack_name}}
+TM_MASTERSERVER_LOGIN={{env dedi_login}}
+TM_MASTERSERVER_PASSWORD={{env dedi_password}}
+TM_SERVER_PASSWORD={{env room_password}}
+TM_AUTHORIZATION_SUPERADMIN_PASSWORD={{env superadmin_password}}
+TM_AUTHORIZATION_ADMIN_PASSWORD={{env admin_password}}
+TM_AUTHORIZATION_USER_PASSWORD={{env user_password}}
+FM_PASSWORD={{env filemanager_password}}
+TM_PORT={{env port}}
+TM_XMLRPC_PORT={{env xmlrpc_port}}
+FM_PORT={{env fm_port}}
 EOF
 
 cat >> "$ENV_FILE" <<EOF

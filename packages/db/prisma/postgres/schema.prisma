@@ -45,6 +45,7 @@ model Users {
   ubiUid        String?
   permissions   String[] @default([])
   authenticated Boolean  @default(false)
+  deletedAt DateTime?
 
   notifications Notifications[]
   auditLogs     AuditLogs[]
@@ -171,9 +172,9 @@ model Servers {
   host                String
   port                Int
   user                String
-  password            String
+  password            String @db.Text
   filemanagerUrl      String?
-  filemanagerPassword String?
+  filemanagerPassword String? @db.Text
 
   manualRouting     Boolean @default(false)
   messageFormat     String?
@@ -369,6 +370,8 @@ model HetznerServers {
   hetznerId  Int     @unique
   publicKey  String? @db.Text
   privateKey Bytes?
+  // SHA256 fingerprint of the SSH host key, pinned on the first connection
+  hostKeyFingerprint String?
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

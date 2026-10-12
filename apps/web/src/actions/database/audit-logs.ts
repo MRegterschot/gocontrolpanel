@@ -3,84 +3,69 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { logger } from "@/lib/logger";
-import { Prisma } from "@gcp/db";
 import { ServerError, ServerResponse } from "@/types/responses";
+import { Prisma } from "@gcp/db";
+import { auditLogData } from "./server-only/audit-logs";
+import { adminAuditScope } from "./server-only/audit-scope";
 
 export async function deleteAuditLogById(id: string): Promise<ServerResponse> {
-  return doServerActionWithAuth(
-    [
-      "audit-logs:delete",
-      "servers::admin",
-      "groups::admin",
-      "group:servers::admin",
-      "hetzner::admin",
-    ],
-    async (session) => {
-      const meta = {
-        type: "database",
-        module: "audit-logs",
-        function: "deleteAuditLogById",
-      };
+  return doServerActionWithAuth(["audit-logs:delete"], async (session) => {
+    const meta = {
+      type: "database",
+      module: "audit-logs",
+      function: "deleteAuditLogById",
+    };
 
-      const db = getClient();
+    const db = getClient();
 
-      const where: Prisma.AuditLogsWhereUniqueInput = {
-        id,
-        deletedAt: null,
-      };
+    const where: Prisma.AuditLogsWhereUniqueInput = {
+      id,
+      deletedAt: null,
+    };
 
-      if (
-        !session.user.admin &&
-        !session.user.permissions.includes("audit-logs:delete")
-      ) {
-        const userServerIds = session.user.servers.map((s) => s.id);
-        const userGroupIds = session.user.groups.map((g) => g.id);
-        const userGroupServerIds = session.user.groups
-          .flatMap((g) => g.servers)
-          .map((s) => s.id);
-        const userHetznerIds = session.user.projects.map((p) => p.id);
-
-        const allIds = [
-          ...new Set([
-            ...userServerIds,
-            ...userGroupServerIds,
-            ...userHetznerIds,
-          ]),
-        ];
-
-        if (allIds.length === 0) {
-          logger.warn(
-            { meta, userId: session.user.id, auditLogId: id },
-            "Not authorized to delete this log",
-          );
-          throw new ServerError("Not authorized to delete this log.", "AuditLogNotAuthorized");
-        }
-
-        where.OR = [
-          {
-            targetType: "server",
-            targetId: { in: [...userServerIds, ...userGroupServerIds] },
-          },
-          { targetType: "group", targetId: { in: userGroupIds } },
-          { targetType: "hetzner", targetId: { in: userHetznerIds } },
-        ];
+    if (
+      !session.user.admin &&
+      !session.user.permissions.includes("audit-logs:delete")
+    ) {
+      const scope = adminAuditScope(session);
+      if (!scope) {
+        logger.warn(
+          { meta, userId: session.user.id, auditLogId: id },
+          "Not authorized to delete this log",
+        );
+        throw new ServerError(
+          "Not authorized to delete this log.",
+          "AuditLogNotAuthorized",
+        );
       }
 
-      const auditLog = await db.auditLogs.findUnique({
-        where,
-      });
+      where.AND = [scope];
+    }
 
-      if (!auditLog) {
-        logger.warn({ meta, id }, "Audit log not found");
-        throw new ServerError("Audit log not found.", "AuditLogNotFound");
-      }
+    const auditLog = await db.auditLogs.findUnique({
+      where,
+    });
 
-      await db.auditLogs.update({
+    if (!auditLog) {
+      logger.warn({ meta, id }, "Audit log not found");
+      throw new ServerError("Audit log not found.", "AuditLogNotFound");
+    }
+
+    await db.$transaction([
+      db.auditLogs.update({
         where,
         data: {
           deletedAt: new Date(),
         },
-      });
-    },
-  );
+      }),
+      // Deleting an audit entry is itself audited
+      db.auditLogs.create({
+        data: auditLogData(session.user.id, id, "audit-logs.delete", {
+          action: auditLog.action,
+          targetType: auditLog.targetType,
+          targetId: auditLog.targetId,
+        }),
+      }),
+    ]);
+  });
 }

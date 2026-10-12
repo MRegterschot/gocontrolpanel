@@ -5,25 +5,9 @@ import {
   UserServerRole,
 } from "@gcp/db";
 
-export type MinimalServer = Omit<
-  Servers,
-  | "user"
-  | "password"
-  | "manualRouting"
-  | "messageFormat"
-  | "connectMessage"
-  | "disconnectMessage"
-  | "scriptNameChangeMessage"
-  | "matchSettingsLoadedMessage"
-  | "scriptSettingsSavedMessage"
-  | "mapListChangeMessage"
-  | "filemanagerPassword"
-  | "enableHelpCommand"
-  | "theme"
-  | "createdAt"
-  | "updatedAt"
-  | "deletedAt"
->;
+export type MinimalServer = Pick<Servers, "id" | "name" | "description"> & {
+  hasFileManager: boolean;
+};
 
 export interface UserGroup {
   id: string;

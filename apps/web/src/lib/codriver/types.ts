@@ -39,6 +39,7 @@ export interface ToolResult {
 
 export interface CodriverTool<S extends z.ZodType = z.ZodType> {
   name: string;
+  readOnly?: boolean;
   // One line; sent to the model
   description: string;
   category: ToolCategory;

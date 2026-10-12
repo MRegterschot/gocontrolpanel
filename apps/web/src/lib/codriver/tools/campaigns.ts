@@ -314,6 +314,7 @@ async function findClub(name: string, optional = false) {
 
 export const findClubs = defineTool({
   name: "find_clubs",
+  readOnly: true,
   description: "Search Trackmania clubs by name.",
   category: "maps",
   minRole: "moderator",
@@ -332,6 +333,7 @@ export const findClubs = defineTool({
 
 export const listClubCampaigns = defineTool({
   name: "list_club_campaigns",
+  readOnly: true,
   description: "List the campaigns of a club, by club name.",
   category: "maps",
   minRole: "moderator",

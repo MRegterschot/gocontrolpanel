@@ -12,6 +12,7 @@ export class PrismaSystemCommandServices implements SystemCommandServices {
     const user = await this.db.users.findFirst({
       where: {
         login,
+        deletedAt: null,
         OR: [
           { admin: true },
           { userServers: { some: { serverId, role: "Admin" } } },
@@ -19,7 +20,10 @@ export class PrismaSystemCommandServices implements SystemCommandServices {
             groupMembers: {
               some: {
                 role: "Admin",
-                group: { deletedAt: null, groupServers: { some: { serverId } } },
+                group: {
+                  deletedAt: null,
+                  groupServers: { some: { serverId } },
+                },
               },
             },
           },

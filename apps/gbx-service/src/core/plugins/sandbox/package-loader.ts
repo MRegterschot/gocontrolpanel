@@ -3,7 +3,7 @@ import { readPluginPackage, type PluginPackage } from "@gcp/shared/plugin-packag
 import type { PluginPackageRepository, ServerPluginRecord } from "../../ports";
 import type { PluginDefinition } from "../sdk";
 import { sandboxedDefinition, type SandboxDependencies } from "./sandboxed-plugin";
-import { precompileTemplates } from "./templates";
+import { precompileUntrustedTemplates } from "./templates";
 
 interface LoadedPackage {
   pkg: PluginPackage;
@@ -38,7 +38,7 @@ export class PackageLoader {
       if (pkg.sha256 !== ref.sha256) {
         throw new Error(`Package ${record.name}@${ref.version} does not match its checksum`);
       }
-      loaded = { pkg, templates: precompileTemplates(pkg.templates) };
+      loaded = { pkg, templates: await precompileUntrustedTemplates(pkg.templates) };
       this.remember(ref.sha256, loaded);
     }
     const { pkg, templates } = loaded;

@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { parseTmTags } from "@/lib/tmtags";
 import { formatTime, hasPermissionSync } from "@/lib/utils";
 import type { MatchesWithMapAndRecords } from "@/services/database/matches";
 import {
@@ -27,7 +28,6 @@ import {
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { useMemo, useState } from "react";
-import { parseTmTags } from "tmtags";
 import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
 import Modal from "../modal";

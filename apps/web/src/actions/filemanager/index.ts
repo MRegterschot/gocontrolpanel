@@ -1,4 +1,6 @@
 "use server";
+import { fileManagerFetch } from "@/lib/managers/file-manager";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { CreateFileEntrySchemaType } from "@/forms/server/files/create-file-entry-schema";
 import {
@@ -7,8 +9,9 @@ import {
 } from "@/forms/server/files/move-file-entries-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { actorFromSession } from "@/lib/actor";
+import { fileAuditDetails } from "@/lib/audit-redact";
 import { getLogger } from "@/lib/logger";
-import { getFileManager } from "@/lib/managers/file-manager";
+import { fileManagerUrl, getFileManager } from "@/lib/managers/file-manager";
 import { FileEntry } from "@/types/filemanager";
 import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
@@ -19,6 +22,7 @@ export async function saveFileText(
   path: string,
   text: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
@@ -34,7 +38,7 @@ export async function saveFileText(
           session.user.id,
           serverId,
           "server.files.edit",
-          { path, text },
+          fileAuditDetails(path, text),
           "File manager is not healthy",
         );
         throw new ServerError(
@@ -43,20 +47,23 @@ export async function saveFileText(
         );
       }
 
-      const res = await fetch(fileManager.url + path, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${fileManager.password}`,
+      const res = await fileManagerFetch(
+        fileManagerUrl(fileManager.url!, path),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${fileManager.password}`,
+          },
+          body: JSON.stringify(text),
         },
-        body: JSON.stringify(text),
-      });
+      );
 
       await logAudit(
         session.user.id,
         serverId,
         "server.files.edit",
-        { path, text },
+        fileAuditDetails(path, text),
         res.status !== 200 ? "Failed to save file" : undefined,
       );
 
@@ -83,6 +90,7 @@ export async function deleteEntry(
   serverId: string,
   paths: string[],
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
@@ -101,7 +109,7 @@ export async function deleteEntry(
         );
       }
 
-      const res = await fetch(fileManager.url + "/delete", {
+      const res = await fileManagerFetch(fileManager.url + "/delete", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -129,6 +137,7 @@ export async function uploadFiles(
   serverId: string,
   formData: FormData,
 ): Promise<ServerResponse<FileEntry[]>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     (session) => uploadFilesAs(actorFromSession(session), serverId, formData),
@@ -139,6 +148,7 @@ export async function createFileEntry(
   serverId: string,
   request: CreateFileEntrySchemaType,
 ): Promise<ServerResponse<FileEntry>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
@@ -157,7 +167,7 @@ export async function createFileEntry(
         );
       }
 
-      const res = await fetch(fileManager.url + "/create", {
+      const res = await fileManagerFetch(fileManager.url + "/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -206,6 +216,7 @@ export async function moveFileEntries(
   serverId: string,
   request: MoveFileEntriesSchemaType,
 ): Promise<ServerResponse<FileEntry[]>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
@@ -229,7 +240,7 @@ export async function moveFileEntries(
         );
       }
 
-      const res = await fetch(fileManager.url + "/move", {
+      const res = await fileManagerFetch(fileManager.url + "/move", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

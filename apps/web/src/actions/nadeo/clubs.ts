@@ -1,4 +1,5 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { downloadFile } from "@/lib/api/nadeo";
@@ -14,6 +15,7 @@ export async function downloadRoom(
   serverId: string,
   room: RoomWithMaps | ClubRoomWithNamesAndMaps["room"],
 ): Promise<ServerResponse<string[]>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -37,7 +39,10 @@ export async function downloadRoom(
           JSON.parse(JSON.stringify(room)),
           "File manager is not healthy",
         );
-        throw new ServerError("File manager is not healthy", "FileManagerNotHealthy");
+        throw new ServerError(
+          "File manager is not healthy",
+          "FileManagerNotHealthy",
+        );
       }
 
       const downloadResults = await Promise.allSettled(
@@ -87,7 +92,10 @@ export async function downloadRoom(
 
       if (errors > 0) {
         log.error({ meta, errors }, "Failed to download some maps");
-        throw new ServerError(`Failed to download ${errors} maps`, "DownloadMapsError");
+        throw new ServerError(
+          `Failed to download ${errors} maps`,
+          "DownloadMapsError",
+        );
       }
 
       return downloadResults
@@ -103,6 +111,7 @@ export async function addRoomToServer(
   serverId: string,
   room: RoomWithMaps | ClubRoomWithNamesAndMaps["room"],
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -126,14 +135,20 @@ export async function addRoomToServer(
           JSON.parse(JSON.stringify(room)),
           "File manager is not healthy",
         );
-        throw new ServerError("File manager is not healthy", "FileManagerNotHealthy");
+        throw new ServerError(
+          "File manager is not healthy",
+          "FileManagerNotHealthy",
+        );
       }
 
       const addResults = await Promise.allSettled(
         room.mapObjects.map((map) => {
           if (!map?.fileUrl) {
             return Promise.reject(
-              new ServerError(`Map ${map.uid} does not have a valid download URL`, "MapFileUrlMissing"),
+              new ServerError(
+                `Map ${map.uid} does not have a valid download URL`,
+                "MapFileUrlMissing",
+              ),
             );
           }
           return addMapToServer(serverId, map.fileUrl, map.fileName);
@@ -158,7 +173,10 @@ export async function addRoomToServer(
 
       if (errors > 0) {
         log.error({ meta, errors }, "Failed to add some maps");
-        throw new ServerError(`Failed to add ${errors} maps`, "AddMapsToServerError");
+        throw new ServerError(
+          `Failed to add ${errors} maps`,
+          "AddMapsToServerError",
+        );
       }
     },
   );

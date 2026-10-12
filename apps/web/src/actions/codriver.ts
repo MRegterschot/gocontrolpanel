@@ -1,4 +1,5 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { logAudit } from "@/actions/database/server-only/audit-logs";
 import { doServerActionWithAuth } from "@/lib/actions";
@@ -229,6 +230,7 @@ export async function saveCodriverServerSettings(
   serverId: string,
   input: z.input<typeof serverSettingsSchema>,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     serverAdminPermissions(serverId),
     async (session) => {
@@ -248,6 +250,7 @@ export async function setCodriverServerKey(
   serverId: string,
   key: string | null,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     serverAdminPermissions(serverId),
     async (session) => {
@@ -277,6 +280,7 @@ export async function testCodriverRequest(
   serverId: string,
   text: string,
 ): Promise<ServerResponse<{ status: string; reply: string }>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     serverAdminPermissions(serverId),
     async (session) => {
@@ -330,6 +334,7 @@ export async function sendCodriverMessage(
   text: string,
   confirmationId?: string,
 ): Promise<ServerResponse<CodriverChatReply>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     codriverChatPermissions.map((permission) =>
       permission.replace(":id:", `:${serverId}:`),
@@ -352,6 +357,7 @@ export async function sendCodriverMessage(
 export async function clearCodriverConversation(
   serverId: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     codriverChatPermissions.map((permission) =>
       permission.replace(":id:", `:${serverId}:`),

@@ -1,4 +1,5 @@
 import { addMapToServer, downloadMap } from "@/actions/tmx/maps";
+import { parseTmTags } from "@/lib/tmtags";
 import { cn, getErrorMessage } from "@/lib/utils";
 import { TMXMap } from "@/types/api/tmx";
 import { ServerError } from "@/types/responses";
@@ -12,7 +13,6 @@ import {
 import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
-import { parseTmTags } from "tmtags";
 import MapMedals from "../maps/map-medals";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";

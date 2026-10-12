@@ -38,6 +38,8 @@ export interface ChannelSocketOptions {
 
 // Forbidden: reconnecting cannot succeed unless the permissions change
 const FINAL_CLOSE_CODES = new Set([4403]);
+// The service ends sockets after a while so permissions are checked again; reconnect at once
+const REAUTHENTICATE_CLOSE_CODE = 4001;
 // The service does not manage the server. Usually it has not registered a just-created server yet, so
 // retry a few times, but not forever for a server that does not exist.
 const NOT_FOUND_CLOSE_CODE = 4404;
@@ -124,6 +126,10 @@ export function openChannelSocket(options: ChannelSocketOptions): () => void {
         (event.code === NOT_FOUND_CLOSE_CODE && ++notFoundCloses > MAX_NOT_FOUND_RETRIES);
       if (giveUp) {
         log.debug({ meta, code: event.code, reason: event.reason }, "WebSocket closed for good");
+        return;
+      }
+      if (event.code === REAUTHENTICATE_CLOSE_CODE && !disposed) {
+        retryTimer = setTimeout(connect, 0);
         return;
       }
       scheduleReconnect();

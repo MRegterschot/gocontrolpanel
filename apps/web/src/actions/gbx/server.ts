@@ -1,4 +1,5 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { ServerSettingsSchemaType } from "@/forms/server/settings/settings-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
@@ -10,6 +11,7 @@ export async function saveServerSettings(
   serverId: string,
   serverSettings: ServerSettingsSchemaType,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     (session) =>

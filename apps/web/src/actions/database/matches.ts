@@ -1,14 +1,16 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
-import { ServerResponse } from "@/types/responses";
-import { logAudit } from "./server-only/audit-logs";
+import { ServerError, ServerResponse } from "@/types/responses";
+import { auditLogData } from "./server-only/audit-logs";
 
 export async function deleteMatch(
   serverId: string,
   matchId: string,
 ): Promise<ServerResponse<void>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -17,25 +19,32 @@ export async function deleteMatch(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      const db = getClient();
+      const deletedAt = new Date();
 
-      await db.matches.update({
-        where: { id: matchId },
-        data: { deletedAt: new Date() },
+      // The match must belong to the server the caller was authorized for
+      await getClient().$transaction(async (tx) => {
+        const { count } = await tx.matches.updateMany({
+          where: { id: matchId, serverId, deletedAt: null },
+          data: { deletedAt },
+        });
+        if (count === 0) {
+          throw new ServerError("Match not found", "MatchNotFound");
+        }
+
+        await tx.records.updateMany({
+          where: { matchId, deletedAt: null },
+          data: { deletedAt },
+        });
+
+        await tx.auditLogs.create({
+          data: auditLogData(
+            session.user.id,
+            serverId,
+            "server.records.match.delete",
+            matchId,
+          ),
+        });
       });
-
-      // Delete the records associated with the match
-      await db.records.updateMany({
-        where: { matchId },
-        data: { deletedAt: new Date() },
-      });
-
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.records.match.delete",
-        matchId,
-      );
     },
   );
 }

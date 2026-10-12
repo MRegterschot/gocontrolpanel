@@ -3,6 +3,7 @@ export interface Config {
   HETZNER: {
     URL: string;
     KEY: string;
+    PREVIOUS_KEY?: string;
   };
   ECM: {
     URL: string;

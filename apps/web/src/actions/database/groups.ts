@@ -1,8 +1,15 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { doServerActionWithAuth } from "@/lib/actions";
+import {
+  createGroupInput,
+  parseInput,
+  updateGroupInput,
+} from "@/lib/admin-inputs";
 import { getClient } from "@/lib/dbclient";
 import { logger } from "@/lib/logger";
+import { hasPermissionSync } from "@/lib/utils";
 import {
   EditGroups,
   GroupsWithUsersWithServers,
@@ -10,35 +17,41 @@ import {
 } from "@/services/database/groups";
 import { UserGroup } from "@/types/auth";
 import { ServerError, ServerResponse } from "@/types/responses";
-import { logAudit } from "./server-only/audit-logs";
+import { serverPermissions } from "@gcp/shared";
+import { Session } from "next-auth";
+import { withAudit } from "./server-only/audit-logs";
 import { groupServerIds, publishThemeChange } from "./server-only/themes";
 
 export async function createGroup(
   group: Omit<EditGroups, "id" | "createdAt" | "updatedAt" | "deletedAt">,
 ): Promise<ServerResponse<GroupsWithUsersWithServers>> {
   return doServerActionWithAuth(["groups:create"], async (session) => {
-    const db = getClient();
+    const input = parseInput(createGroupInput, group);
+    const serverIds = uniqueServerIds(input.groupServers);
+    requireServerAuthority(session, serverIds);
 
-    const { groupMembers, groupServers, ...groupData } = group;
-    const newGroup = await db.groups.create({
-      data: {
-        ...groupData,
-        groupServers: {
-          create: groupServers.map((gs) => ({
-            serverId: gs.serverId,
-          })),
-        },
-        groupMembers: {
-          create: groupMembers.map((gm) => ({
-            role: gm.role,
-            userId: gm.userId,
-          })),
-        },
-      },
-      include: groupUsersServersSchema,
-    });
-
-    await logAudit(session.user.id, newGroup.id, "group.create", group);
+    const newGroup = await withAudit(
+      (tx) =>
+        tx.groups.create({
+          data: {
+            name: input.name,
+            description: input.description ?? "",
+            public: input.public,
+            shareRecords: input.shareRecords,
+            groupServers: {
+              create: serverIds.map((serverId) => ({ serverId })),
+            },
+            groupMembers: {
+              create: (input.groupMembers ?? []).map((gm) => ({
+                role: gm.role,
+                userId: gm.userId,
+              })),
+            },
+          },
+          include: groupUsersServersSchema,
+        }),
+      (newGroup) => [session.user.id, newGroup.id, "group.create", input],
+    );
 
     return newGroup;
   });
@@ -50,38 +63,57 @@ export async function updateGroup(
     Omit<EditGroups, "id" | "createdAt" | "updatedAt" | "deletedAt">
   >,
 ): Promise<ServerResponse<GroupsWithUsersWithServers>> {
+  assertResourceId(groupId);
   return doServerActionWithAuth(
     ["groups:edit", `groups:${groupId}:admin`],
     async (session) => {
-      const db = getClient();
-
-      const { groupMembers, groupServers, ...scalarFields } = group;
+      const input = parseInput(updateGroupInput, group);
       const previousServers = await groupServerIds(groupId);
 
-      const updatedGroup = await db.groups.update({
-        where: { id: groupId },
-        data: {
-          ...scalarFields,
-          groupServers: {
-            deleteMany: {},
-            create: groupServers?.map((gs) => ({
-              serverId: gs.serverId,
-            })),
-          },
-          groupMembers: {
-            deleteMany: {},
-            create: groupMembers?.map((gm) => ({
-              role: gm.role,
-              userId: gm.userId,
-              order: gm.order,
-              serversOrder: gm.serversOrder,
-            })),
-          },
-        },
-        include: groupUsersServersSchema,
-      });
+      // Linking or unlinking a server needs authority over that server, not just the group.
+      // Links to deleted servers are left alone.
+      let added: string[] = [];
+      let removed: string[] = [];
+      if (input.groupServers) {
+        const serverIds = uniqueServerIds(input.groupServers);
+        const active = await activeGroupServerIds(groupId);
+        added = serverIds.filter((id) => !active.includes(id));
+        removed = active.filter((id) => !serverIds.includes(id));
+        requireServerAuthority(session, [...added, ...removed]);
+      }
 
-      await logAudit(session.user.id, groupId, "group.edit", group);
+      const updatedGroup = await withAudit(
+        (tx) =>
+          tx.groups.update({
+            where: { id: groupId, deletedAt: null },
+            data: {
+              name: input.name,
+              description: input.description,
+              public: input.public,
+              shareRecords: input.shareRecords,
+              // Relations are only replaced when the caller sends them
+              ...((added.length > 0 || removed.length > 0) && {
+                groupServers: {
+                  deleteMany: { serverId: { in: removed } },
+                  create: added.map((serverId) => ({ serverId })),
+                },
+              }),
+              ...(input.groupMembers && {
+                groupMembers: {
+                  deleteMany: {},
+                  create: input.groupMembers.map((gm) => ({
+                    role: gm.role,
+                    userId: gm.userId,
+                    order: gm.order,
+                    serversOrder: gm.serversOrder,
+                  })),
+                },
+              }),
+            },
+            include: groupUsersServersSchema,
+          }),
+        () => [session.user.id, groupId, "group.edit", input],
+      );
       // Servers that joined or left the group may change theme
       if (updatedGroup.theme !== null)
         await publishThemeChange([
@@ -94,19 +126,50 @@ export async function updateGroup(
   );
 }
 
+async function activeGroupServerIds(groupId: string): Promise<string[]> {
+  const rows = await getClient().groupServers.findMany({
+    where: { groupId, server: { deletedAt: null } },
+    select: { serverId: true },
+  });
+  return rows.map((row) => row.serverId);
+}
+
+function uniqueServerIds(groupServers?: { serverId: string }[]): string[] {
+  return [...new Set((groupServers ?? []).map((gs) => gs.serverId))];
+}
+
+function requireServerAuthority(session: Session, serverIds: string[]) {
+  const denied = serverIds.filter(
+    (serverId) =>
+      !hasPermissionSync(
+        session,
+        ["servers:edit", ...serverPermissions.admin],
+        serverId,
+      ),
+  );
+  if (denied.length > 0) {
+    throw new ServerError(
+      "You can only add or remove servers you administer",
+      "Unauthorized",
+    );
+  }
+}
+
 export async function deleteGroup(groupId: string): Promise<ServerResponse> {
+  assertResourceId(groupId);
   return doServerActionWithAuth(
     ["groups:delete", `groups:${groupId}:admin`],
     async (session) => {
-      const db = getClient();
-      const group = await db.groups.update({
-        where: { id: groupId },
-        data: {
-          deletedAt: new Date(),
-        },
-      });
-
-      await logAudit(session.user.id, groupId, "group.delete");
+      const group = await withAudit(
+        (tx) =>
+          tx.groups.update({
+            where: { id: groupId },
+            data: {
+              deletedAt: new Date(),
+            },
+          }),
+        () => [session.user.id, groupId, "group.delete"],
+      );
       if (group.theme !== null)
         await publishThemeChange(await groupServerIds(groupId));
     },
@@ -143,6 +206,7 @@ export async function updateGroupServersOrder(
   groupId: string,
   serverIdsInOrder: string[],
 ): Promise<ServerResponse> {
+  assertResourceId(groupId);
   return doServerActionWithAuth([], async (session) => {
     const meta = {
       type: "database",

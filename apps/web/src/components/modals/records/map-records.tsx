@@ -1,11 +1,11 @@
 import { ModalContent } from "@/components/modals/modal";
 import { DataTable } from "@/components/table/data-table";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { parseTmTags } from "@/lib/tmtags";
 import { formatTime } from "@/lib/utils";
 import type { MapsWithRecords } from "@/services/database/maps";
 import { IconPhoto, IconStopwatch, IconUser } from "@tabler/icons-react";
 import Image from "next/image";
-import { parseTmTags } from "tmtags";
 import { Card } from "../../ui/card";
 import { DefaultModalProps } from "../default-props";
 import { createColumns } from "./map-records-columns";

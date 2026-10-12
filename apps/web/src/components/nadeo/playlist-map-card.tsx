@@ -1,5 +1,6 @@
 "use client";
 import { addMapToServer, downloadMapFromUrl } from "@/actions/nadeo/maps";
+import { parseTmTags } from "@/lib/tmtags";
 import { cn, getErrorMessage } from "@/lib/utils";
 import { PlaylistWithMap } from "@/types/api/nadeo";
 import { ServerError } from "@/types/responses";
@@ -12,7 +13,6 @@ import {
 import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
-import { parseTmTags } from "tmtags";
 import MapMedals from "../maps/map-medals";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";

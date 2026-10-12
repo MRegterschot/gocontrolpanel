@@ -1,7 +1,9 @@
-import { generateKeyPairSync } from "crypto";
+import { ServerError } from "@/types/responses";
+import { createHash, generateKeyPairSync } from "crypto";
 import "server-only";
 import { Client } from "ssh2";
 import sshpk from "sshpk";
+import { getClient } from "./dbclient";
 
 export function generateSSHKeyPair() {
   const { publicKey, privateKey } = generateKeyPairSync("rsa", {
@@ -19,23 +21,60 @@ export function generateSSHKeyPair() {
   };
 }
 
+export function hostKeyFingerprint(key: Buffer): string {
+  return `SHA256:${createHash("sha256").update(key).digest("base64").replace(/=+$/, "")}`;
+}
+
+// The host key a provisioned server must present. Hetzner doesn't publish host keys, so the
+// first connection pins it (trust on first use) and every later one must match.
+export interface HostKeyPin {
+  hetznerId: number;
+  hostKeyFingerprint: string | null;
+}
+
 export function connectToSSHServer(
   host: string,
   port: number,
   username: string,
   privateKey: string | Buffer,
+  pin: HostKeyPin,
 ): Promise<Client> {
-  return new Promise((resolve, reject) => {
+  let presented: string | null = null;
+  return new Promise<Client>((resolve, reject) => {
     const conn = new Client();
     conn
       .on("ready", () => resolve(conn))
-      .on("error", (err: Error) => reject(err))
+      .on("error", (err: Error) =>
+        reject(
+          presented && pin.hostKeyFingerprint
+            ? new ServerError(
+                `The server's SSH host key changed (expected ${pin.hostKeyFingerprint}, got ${presented}). If it was rebuilt, clear the stored fingerprint.`,
+                "SSHHostKeyMismatch",
+              )
+            : err,
+        ),
+      )
       .connect({
         host,
         port,
         username,
         privateKey,
+        readyTimeout: 20_000,
+        hostVerifier: (key: Buffer) => {
+          presented = hostKeyFingerprint(key);
+          return (
+            !pin.hostKeyFingerprint || presented === pin.hostKeyFingerprint
+          );
+        },
       });
+  }).then(async (conn) => {
+    if (!pin.hostKeyFingerprint && presented) {
+      await getClient().hetznerServers.updateMany({
+        where: { hetznerId: pin.hetznerId, hostKeyFingerprint: null },
+        data: { hostKeyFingerprint: presented },
+      });
+    }
+    return conn;
   });
 }
 

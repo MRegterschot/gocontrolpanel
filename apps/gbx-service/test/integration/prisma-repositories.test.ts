@@ -1,6 +1,10 @@
 import { createPrismaClient, type DbClient } from "@gcp/db";
+import {
+  createPluginPackage,
+  readPluginPackage,
+} from "@gcp/shared/plugin-package";
+import { encryptServerCredential } from "@gcp/shared/server-credentials";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { createPluginPackage, readPluginPackage } from "@gcp/shared/plugin-package";
 import {
   PrismaFirstPartyRepository,
   PrismaMapRepository,
@@ -55,7 +59,7 @@ describe.skipIf(!url)("Prisma repositories", () => {
         host: "127.0.0.1",
         port: 5000,
         user: "SuperAdmin",
-        password: "pw",
+        password: encryptServerCredential("pw", process.env.SECRETS_KEY!),
         messageFormat: "<{nickName}> {message}",
         deletedAt,
       },
@@ -86,7 +90,12 @@ describe.skipIf(!url)("Prisma repositories", () => {
       create: { name: "map-info" },
     });
     await db.serverPlugins.create({
-      data: { serverId: "s1", pluginId: plugin.id, enabled: true, config: { a: 1 } },
+      data: {
+        serverId: "s1",
+        pluginId: plugin.id,
+        enabled: true,
+        config: { a: 1 },
+      },
     });
 
     const repo = new PrismaServerRepository(db);
@@ -97,7 +106,14 @@ describe.skipIf(!url)("Prisma repositories", () => {
     expect(server).toMatchObject({
       id: "s1",
       chat: { manualRouting: false, messageFormat: "<{nickName}> {message}" },
-      plugins: [{ pluginId: plugin.id, name: "map-info", enabled: true, config: { a: 1 } }],
+      plugins: [
+        {
+          pluginId: plugin.id,
+          name: "map-info",
+          enabled: true,
+          config: { a: 1 },
+        },
+      ],
     });
 
     await repo.updatePluginConfig("s1", plugin.id, { a: 2 });
@@ -110,12 +126,24 @@ describe.skipIf(!url)("Prisma repositories", () => {
       { login: "a", nickName: "A", playerId: 1, spectatorStatus: 0, teamId: 0 },
       { login: "b", nickName: "B", playerId: 2, spectatorStatus: 0, teamId: 0 },
     ]);
-    await repo.upsertMany([{ login: "a", nickName: "A2", playerId: 1, spectatorStatus: 0, teamId: 0 }]);
+    await repo.upsertMany([
+      {
+        login: "a",
+        nickName: "A2",
+        playerId: 1,
+        spectatorStatus: 0,
+        teamId: 0,
+      },
+    ]);
     await repo.ensureExists("b", "ignored");
     await repo.ensureExists("c", "C");
 
     const users = await db.users.findMany({ orderBy: { login: "asc" } });
-    expect(users.map((u) => [u.login, u.nickName])).toEqual([["a", "A2"], ["b", "B"], ["c", "C"]]);
+    expect(users.map((u) => [u.login, u.nickName])).toEqual([
+      ["a", "A2"],
+      ["b", "B"],
+      ["c", "C"],
+    ]);
   });
 
   it("stores maps and their metadata", async () => {
@@ -131,7 +159,9 @@ describe.skipIf(!url)("Prisma repositories", () => {
       thumbnailUrl: "https://t/uid-1",
     });
     expect(updated.thumbnailUrl).toBe("https://t/uid-1");
-    expect((await repo.findByFileNames(["uid-1.Map.Gbx"])).map((m) => m.uid)).toEqual(["uid-1"]);
+    expect(
+      (await repo.findByFileNames(["uid-1.Map.Gbx"])).map((m) => m.uid),
+    ).toEqual(["uid-1"]);
     expect(await repo.findByUid("nope")).toBeNull();
   });
 
@@ -139,13 +169,35 @@ describe.skipIf(!url)("Prisma repositories", () => {
     await createServer("s1");
     const map = await createMap("uid-1");
     await new PrismaPlayerRepository(db).ensureExists("a", "A");
-    const match = await new PrismaMatchRepository(db).create({ serverId: "s1", mapId: map.id, mode: "rounds" });
+    const match = await new PrismaMatchRepository(db).create({
+      serverId: "s1",
+      mapId: map.id,
+      mode: "rounds",
+    });
     const records = new PrismaRecordRepository(db);
-    const base = { serverId: "s1", matchId: match.id, round: 1, mapId: map.id, mapUid: map.uid, login: "a" };
+    const base = {
+      serverId: "s1",
+      matchId: match.id,
+      round: 1,
+      mapId: map.id,
+      mapUid: map.uid,
+      login: "a",
+    };
 
     await records.save({ ...base, time: 5000, checkpoints: [1000, 5000] });
-    await records.save({ ...base, time: 4000, checkpoints: [900, 4000], points: 10 });
-    await records.save({ ...base, matchId: null, round: null, time: 3000, checkpoints: [3000] });
+    await records.save({
+      ...base,
+      time: 4000,
+      checkpoints: [900, 4000],
+      points: 10,
+    });
+    await records.save({
+      ...base,
+      matchId: null,
+      round: null,
+      time: 3000,
+      checkpoints: [3000],
+    });
 
     const rows = await db.records.findMany({ orderBy: { time: "asc" } });
     expect(rows.map((r) => [r.time, r.round, r.points])).toEqual([
@@ -168,21 +220,43 @@ describe.skipIf(!url)("Prisma repositories", () => {
     });
     const map = await createMap("uid-1");
     const players = new PrismaPlayerRepository(db);
-    for (const login of ["a", "b"]) await players.ensureExists(login, login.toUpperCase());
+    for (const login of ["a", "b"])
+      await players.ensureExists(login, login.toUpperCase());
 
     const records = new PrismaRecordRepository(db);
     const save = (serverId: string, login: string, time: number) =>
-      records.save({ serverId, matchId: null, round: null, mapId: map.id, mapUid: map.uid, login, time, checkpoints: [] });
+      records.save({
+        serverId,
+        matchId: null,
+        round: null,
+        mapId: map.id,
+        mapUid: map.uid,
+        login,
+        time,
+        checkpoints: [],
+      });
     await save("s1", "a", 5000);
     await save("s2", "b", 4000);
     await save("s3", "b", 1000);
     await save("s1", "a", 4500);
 
-    expect(await records.findLocalRecord("s1", "uid-1")).toEqual({ login: "b", time: 4000, nickName: "B" });
-    expect(await records.findLocalRecord("s3", "uid-1")).toMatchObject({ time: 1000 });
+    expect(await records.findLocalRecord("s1", "uid-1")).toEqual({
+      login: "b",
+      time: 4000,
+      nickName: "B",
+    });
+    expect(await records.findLocalRecord("s3", "uid-1")).toMatchObject({
+      time: 1000,
+    });
 
-    const perPlayer = await records.findPlayerRecords("s1", "uid-1", ["a", "b"]);
-    expect(perPlayer.map((r) => [r.login, r.time]).sort()).toEqual([["a", 4500], ["b", 4000]]);
+    const perPlayer = await records.findPlayerRecords("s1", "uid-1", [
+      "a",
+      "b",
+    ]);
+    expect(perPlayer.map((r) => [r.login, r.time]).sort()).toEqual([
+      ["a", 4500],
+      ["b", 4000],
+    ]);
 
     // A server outside any sharing group still sees its own records
     expect(await records.findPlayerRecords("s3", "uid-1", ["b"])).toEqual([
@@ -219,18 +293,30 @@ describe.skipIf(!url)("Prisma repositories", () => {
       },
     });
 
-    const created = await new PrismaNotificationRepository(db).createForServerAdmins({
+    const created = await new PrismaNotificationRepository(
+      db,
+    ).createForServerAdmins({
       serverId: "s1",
       type: "adminCommand",
       message: "help",
     });
 
-    expect(created.map((n) => n.userId).sort()).toEqual([both.id, direct.id, group.id].sort());
-    expect(created[0]).toMatchObject({ serverId: "s1", read: false, description: null });
+    expect(created.map((n) => n.userId).sort()).toEqual(
+      [both.id, direct.id, group.id].sort(),
+    );
+    expect(created[0]).toMatchObject({
+      serverId: "s1",
+      read: false,
+      description: null,
+    });
     expect(typeof created[0].timestamp).toBe("string");
   });
 
-  const installPackage = async (serverId: string, version = "1.0.0", enabled = true) => {
+  const installPackage = async (
+    serverId: string,
+    version = "1.0.0",
+    enabled = true,
+  ) => {
     const plugin = await db.plugins.upsert({
       where: { name: "hello" },
       update: {},
@@ -284,9 +370,9 @@ describe.skipIf(!url)("Prisma repositories", () => {
         },
       },
     ]);
-    expect(await new PrismaPluginPackageRepository(db).loadPackage(version.id)).toEqual(
-      new Uint8Array([1, 2, 3]),
-    );
+    expect(
+      await new PrismaPluginPackageRepository(db).loadPackage(version.id),
+    ).toEqual(new Uint8Array([1, 2, 3]));
 
     await repo.setPluginEnabled("s1", plugin.id, false);
     expect((await repo.findPlugins("s1"))[0].enabled).toBe(false);
@@ -306,12 +392,21 @@ describe.skipIf(!url)("Prisma repositories", () => {
 
     expect(await storage.get("s1", plugin.id, "a:1")).toEqual({ n: 2 });
     expect(await storage.get("s1", plugin.id, "missing")).toBeNull();
-    expect(await storage.keys("s1", plugin.id, "a:", 10)).toEqual(["a:1", "a:2"]);
-    expect(await storage.usage("s1", plugin.id)).toEqual({ keys: 3, bytes: 15 });
+    expect(await storage.keys("s1", plugin.id, "a:", 10)).toEqual([
+      "a:1",
+      "a:2",
+    ]);
+    expect(await storage.usage("s1", plugin.id)).toEqual({
+      keys: 3,
+      bytes: 15,
+    });
     expect(await storage.sizeOf("s1", plugin.id, "a:2")).toBe(5);
 
     await storage.delete("s1", plugin.id, "a:2");
-    expect(await storage.usage("s1", plugin.id)).toEqual({ keys: 2, bytes: 10 });
+    expect(await storage.usage("s1", plugin.id)).toEqual({
+      keys: 2,
+      bytes: 10,
+    });
     expect(await storage.usage("s2", plugin.id)).toEqual({ keys: 1, bytes: 1 });
   });
 
@@ -328,17 +423,33 @@ describe.skipIf(!url)("Prisma repositories", () => {
       { slug: "unknown", version: "9.9.9", reason: null },
     ]);
     expect(affected).toEqual([
-      { serverId: "s1", pluginId: plugin.id, name: "hello", version: "1.0.0", reason: "Steals API keys" },
+      {
+        serverId: "s1",
+        pluginId: plugin.id,
+        name: "hello",
+        version: "1.0.0",
+        reason: "Steals API keys",
+      },
     ]);
-    const version = await db.pluginVersions.findFirstOrThrow({ where: { pluginId: plugin.id } });
-    expect([version.yanked, version.yankReason]).toEqual([true, "Steals API keys"]);
-    expect((await db.serverPlugins.findMany({ where: { pluginId: plugin.id } })).map((sp) => sp.enabled)).toEqual([
-      false,
-      false,
+    const version = await db.pluginVersions.findFirstOrThrow({
+      where: { pluginId: plugin.id },
+    });
+    expect([version.yanked, version.yankReason]).toEqual([
+      true,
+      "Steals API keys",
     ]);
+    expect(
+      (await db.serverPlugins.findMany({ where: { pluginId: plugin.id } })).map(
+        (sp) => sp.enabled,
+      ),
+    ).toEqual([false, false]);
 
     // A second check finds nothing left to turn off
-    expect(await catalog.applyYanks([{ slug: "hello", version: "1.0.0", reason: "Steals API keys" }])).toEqual([]);
+    expect(
+      await catalog.applyYanks([
+        { slug: "hello", version: "1.0.0", reason: "Steals API keys" },
+      ]),
+    ).toEqual([]);
   });
 
   it("moves built-in installs onto the first-party package and keeps their settings", async () => {
@@ -346,11 +457,20 @@ describe.skipIf(!url)("Prisma repositories", () => {
     await createServer("untouched");
     await createServer("enabled");
     const legacy = await db.plugins.create({
-      data: { name: "map-info", description: "Old description", source: "builtin" },
+      data: {
+        name: "map-info",
+        description: "Old description",
+        source: "builtin",
+      },
     });
     await db.serverPlugins.createMany({
       data: [
-        { serverId: "configured", pluginId: legacy.id, enabled: false, config: { a: 1 } },
+        {
+          serverId: "configured",
+          pluginId: legacy.id,
+          enabled: false,
+          config: { a: 1 },
+        },
         { serverId: "untouched", pluginId: legacy.id, enabled: false },
         { serverId: "enabled", pluginId: legacy.id, enabled: true },
       ],
@@ -379,10 +499,20 @@ describe.skipIf(!url)("Prisma repositories", () => {
       removed: 1,
     });
 
-    const plugin = await db.plugins.findUniqueOrThrow({ where: { name: "map-info" } });
-    expect(plugin).toMatchObject({ id: legacy.id, source: "marketplace", displayName: "Map info" });
-    const rows = await db.serverPlugins.findMany({ orderBy: { serverId: "asc" } });
-    expect(rows.map((r) => [r.serverId, r.enabled, r.config, r.grantedCapabilities])).toEqual([
+    const plugin = await db.plugins.findUniqueOrThrow({
+      where: { name: "map-info" },
+    });
+    expect(plugin).toMatchObject({
+      id: legacy.id,
+      source: "marketplace",
+      displayName: "Map info",
+    });
+    const rows = await db.serverPlugins.findMany({
+      orderBy: { serverId: "asc" },
+    });
+    expect(
+      rows.map((r) => [r.serverId, r.enabled, r.config, r.grantedCapabilities]),
+    ).toEqual([
       ["configured", false, { a: 1 }, ["ui", "maps:read"]],
       ["enabled", true, null, ["ui", "maps:read"]],
     ]);
@@ -412,7 +542,11 @@ describe.skipIf(!url)("Prisma repositories", () => {
       "index.js": "globalThis.__tmcpRegister({ create() { return {}; } });",
     });
     const pkg = readPluginPackage(bytes);
-    const result = await new PrismaFirstPartyRepository(db).install(pkg.manifest, pkg.sha256, bytes);
+    const result = await new PrismaFirstPartyRepository(db).install(
+      pkg.manifest,
+      pkg.sha256,
+      bytes,
+    );
     expect(result.skipped).toMatch(/uploaded/);
     expect(await db.pluginVersions.count()).toBe(0);
   });

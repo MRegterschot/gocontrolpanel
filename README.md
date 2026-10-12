@@ -164,10 +164,10 @@ Manage your Hetzner Cloud servers, networks and volumes. You can create and dele
 
 GoControlPanel runs as two containers next to your database and Redis:
 
-| Container | Image | What it does |
-|---|---|---|
-| `gocontrolpanel` | `marijnregterschot/gocontrolpanel` | The web panel: UI, sign in, database, Nadeo, Trackmania Exchange, Hetzner and file manager. Runs the database migrations on start. Port `3000`. |
-| `gbx-service` | `marijnregterschot/gocontrolpanel-gbx-service` | Holds the connections to your dedicated servers, runs the in-game plugins and widgets, records matches and serves the live WebSockets to the browser. Port `3100`. |
+| Container        | Image                                          | What it does                                                                                                                                                       |
+| ---------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `gocontrolpanel` | `marijnregterschot/gocontrolpanel`             | The web panel: UI, sign in, database, Nadeo, Trackmania Exchange, Hetzner and file manager. Runs the database migrations on start. Port `3000`.                    |
+| `gbx-service`    | `marijnregterschot/gocontrolpanel-gbx-service` | Holds the connections to your dedicated servers, runs the in-game plugins and widgets, records matches and serves the live WebSockets to the browser. Port `3100`. |
 
 Both images come in a MariaDB/MySQL and a PostgreSQL (`-postgres` suffix) flavour. The two containers share the database and Redis, and authenticate to each other with `GBX_SERVICE_TOKEN` and `WS_TICKET_SECRET`.
 
@@ -209,9 +209,9 @@ Make sure to update or add the environment variables for the services in your `d
   - `DEFAULT_ADMINS`: Comma-separated list of default admin logins. Probably your own login, e.g., `v8vgGbx_TuKkBabAyn7nsQ`.
   - `DEFAULT_PERMISSIONS`: Comma-separated list of default permissions for new users. You can find a list of available permissions in the [Permissions](#permissions) section.
   - **NADEO Configuration**: Make sure to update `NADEO_CLIENT_ID`, `NADEO_CLIENT_SECRET`, `NADEO_REDIRECT_URI`, `NADEO_SERVER_LOGIN`, `NADEO_SERVER_PASSWORD` and `NADEO_CONTACT` with your valid NADEO API credentials. Nadeo API credentials can be obtained from the [Nadeo API manager](https://api.trackmania.com/manager). The server login and password can be obtained from the [Dedicated Server Manager](https://www.trackmania.com/player/dedicated-servers).
-  - `HETZNER_KEY`: If you are using the Hetzner Cloud API, set this environment variable so that your API tokens are encrypted before being stored in the database. This can be any random string, e.g., `myhetznerkey`.
+  - `HETZNER_KEY`: Required for the Hetzner Cloud integration. Encrypts API tokens and SSH keys before they are stored in the database. Use a random string of at least 32 characters, for example from `openssl rand -hex 32`. When you change it, set the old value as `HETZNER_KEY_PREVIOUS` so stored values can still be decrypted.
   - **GBX service connection**: `GBX_SERVICE_URL` is the address of the `gbx-service` container (`http://gbx-service:3100`). `GBX_SERVICE_WS_URL` is the address the browser uses to open the live WebSockets, so it must be reachable from your users (for example `ws://<your-host>:3100`, or `wss://...` behind HTTPS). `GBX_SERVICE_TOKEN` and `WS_TICKET_SECRET` are secrets of at least 32 characters (`openssl rand -base64 32`) and must be identical in both containers. The panel refuses to start without them.
-  - **Codriver AI assistant (optional)**: the panel operator enables Codriver and stores the Anthropic API keys on the Codriver admin page. `SECRETS_KEY` (at least 32 characters) encrypts those keys; keep it stable, because changing it makes stored keys unreadable. `ANTHROPIC_API_KEY` is only a fallback for the shared key while none is stored. `PANEL_INTERNAL_TOKEN` (at least 32 characters, the same in both containers) authenticates the GBX service when it forwards `/co` chat commands. Leave it empty to turn `/co` off. The server Codriver page provides chat, usage and request history; operator-wide usage is under Admin → Codriver. Apply pending database migrations during upgrades, including the phase 5 model-call tracking column. See [the Codriver plan and evaluation commands](docs/codriver-plan.md).
+  - **Codriver AI assistant (optional)**: the panel operator enables Codriver and stores the Anthropic API keys on the Codriver admin page. `SECRETS_KEY` (at least 32 characters, shared with the GBX service) encrypts those keys and all stored dedicated/file-manager credentials; keep it stable, because changing it makes stored keys unreadable. `ANTHROPIC_API_KEY` is only a fallback for the shared key while none is stored. `PANEL_INTERNAL_TOKEN` (at least 32 characters, the same in both containers) authenticates the GBX service when it forwards `/co` chat commands. Leave it empty to turn `/co` off. The server Codriver page provides chat, usage and request history; operator-wide usage is under Admin → Codriver. Apply pending database migrations during upgrades, including the phase 5 model-call tracking column. See [the Codriver plan and evaluation commands](docs/codriver-plan.md).
   - `MARKETPLACE_INDEX_URL` (optional): The plugin marketplace the panel browses. Defaults to the official marketplace; set it to an empty value to turn browsing off. Uploading private plugins works either way.
   - `LOG_LEVEL`: Set the log level for GoControlPanel. Supported values are `trace`, `debug`, `info`, `warn`, `error` and `fatal`. The default is `info`.
   - `PLAUSIBLE_API_HOST`: Set the Plausible API host for analytics, e.g., `analytics.mywebsite.com`. This is optional and can be left empty if you do not want to use Plausible analytics.
@@ -384,7 +384,7 @@ Make sure to update or add the environment variables for the added services in y
   - `DEFAULT_ADMINS`: Comma-separated list of default admin logins.
   - `DEFAULT_PERMISSIONS`: Comma-separated list of default permissions for new users. You can find a list of available permissions in the [Permissions](#permissions) section.
   - **NADEO Configuration**: Make sure to update `NADEO_CLIENT_ID`, `NADEO_CLIENT_SECRET`, `NADEO_REDIRECT_URI`, `NADEO_SERVER_LOGIN`, `NADEO_SERVER_PASSWORD` and `NADEO_CONTACT` with your valid NADEO API credentials. Nadeo API credentials can be obtained from the [Nadeo API manager](https://api.trackmania.com/manager). The server login and password can be found in your existing stack configuration under the `dedicated` or `trackmania` service.
-  - `HETZNER_KEY`: If you are using the Hetzner Cloud API, set this environment variable so that your API tokens are encrypted before being stored in the database. This can be any random string, e.g., `myhetznerkey`.
+  - `HETZNER_KEY`: Required for the Hetzner Cloud integration. Encrypts API tokens and SSH keys before they are stored in the database. Use a random string of at least 32 characters, for example from `openssl rand -hex 32`. When you change it, set the old value as `HETZNER_KEY_PREVIOUS` so stored values can still be decrypted.
   - **GBX service connection**: `GBX_SERVICE_URL` is the address of the `gbx-service` container (`http://gbx-service:3100`). `GBX_SERVICE_WS_URL` is the address the browser uses to open the live WebSockets, so it must be reachable from your users (for example `ws://<your-host>:3100`, or `wss://...` behind HTTPS). `GBX_SERVICE_TOKEN` and `WS_TICKET_SECRET` are secrets of at least 32 characters (`openssl rand -base64 32`) and must be identical in both containers. The panel refuses to start without them.
   - `MARKETPLACE_INDEX_URL` (optional): The plugin marketplace the panel browses. Defaults to the official marketplace; set it to an empty value to turn browsing off. Uploading private plugins works either way.
   - `LOG_LEVEL`: Set the log level for GoControlPanel. Supported values are `trace`, `debug`, `info`, `warn`, `error` and `fatal`. The default is `info`.
@@ -495,14 +495,14 @@ the GBX service build. `/help version` describes the command when help is enable
 
 Other native commands also reply privately and work without plugins:
 
-| Command | Information | Access |
-| --- | --- | --- |
-| `/uptime` | Service uptime and duration of the current server connection | Everyone |
-| `/status` | Connection state, game mode, drivers and spectators | Everyone |
-| `/plugins` | Installed versions and disabled/running/not-running state | Everyone |
-| `/ping` | Dedicated server XML-RPC round-trip time (not gameplay latency) | Everyone |
-| `/sysinfo` | Node version, platform, process memory, CPU count and host CPU load | Server admins |
-| `/diagnostics` | Database, Redis and GBX connectivity checked separately | Server admins |
+| Command        | Information                                                         | Access        |
+| -------------- | ------------------------------------------------------------------- | ------------- |
+| `/uptime`      | Service uptime and duration of the current server connection        | Everyone      |
+| `/status`      | Connection state, game mode, drivers and spectators                 | Everyone      |
+| `/plugins`     | Installed versions and disabled/running/not-running state           | Everyone      |
+| `/ping`        | Dedicated server XML-RPC round-trip time (not gameplay latency)     | Everyone      |
+| `/sysinfo`     | Node version, platform, process memory, CPU count and host CPU load | Server admins |
+| `/diagnostics` | Database, Redis and GBX connectivity checked separately             | Server admins |
 
 Global panel admins, direct server Admins, and Admins of groups containing the
 server can use the restricted commands. Probes and permission checks time out
@@ -549,3 +549,7 @@ Contributions are welcome! If you have suggestions or improvements, please creat
 ## License
 
 This project is licensed under the MIT License - see the [License](License) file for details.
+
+### Security upgrade: account revocation and server credentials
+
+Upgrades that include `20261011140000_user_revocation_and_credentials` require a coordinated database/credential migration. Follow [the security upgrade instructions](docs/security-upgrade-2026-10-11.md) before restarting the services. Existing plaintext server credentials are intentionally rejected until encrypted with the shared `SECRETS_KEY`.

@@ -3,6 +3,7 @@
 import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
 import { getMapByUid } from "@/lib/api-client/database";
 import { queryKeys, unwrap } from "@/lib/api-client/query";
+import { parseTmTags } from "@/lib/tmtags";
 import { cn, formatTime } from "@/lib/utils";
 import {
   IconPhoto,
@@ -12,7 +13,6 @@ import {
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
-import { parseTmTags } from "tmtags";
 import { Card } from "../ui/card";
 import LiveActions from "./live-actions";
 

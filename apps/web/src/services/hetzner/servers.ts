@@ -10,6 +10,7 @@ import {
   getKeyHetznerRecentlyCreatedServers,
   getRedisClient,
 } from "@/lib/redis";
+import { hasPermissionSync } from "@/lib/utils";
 import {
   HetznerServer,
   HetznerServerCache,
@@ -23,6 +24,7 @@ import {
   ServerResponse,
 } from "@/types/responses";
 import { PaginationState } from "@tanstack/react-table";
+import { Session } from "next-auth";
 import "server-only";
 
 export async function getHetznerServersPaginated(
@@ -37,7 +39,7 @@ export async function getHetznerServersPaginated(
       `hetzner:${fetchArgs?.projectId}:moderator`,
       `hetzner:${fetchArgs?.projectId}:admin`,
     ],
-    async () => {
+    async (session) => {
       const { projectId } = fetchArgs || {};
       if (!projectId) {
         throw new ServerError(
@@ -67,8 +69,13 @@ export async function getHetznerServersPaginated(
 
       await setRateLimit(projectId, res);
 
+      // Provisioning keeps credentials in labels; project moderators and admins may read them
+      const servers = canReadCredentials(session, projectId)
+        ? res.data.servers
+        : res.data.servers.map(withoutCredentialLabels);
+
       return {
-        data: res.data.servers,
+        data: servers,
         totalCount: res.data.meta.pagination.total_entries || 0,
       };
     },
@@ -121,31 +128,29 @@ export async function getRateLimit(
 export async function getRecentlyCreatedHetznerServers(): Promise<
   ServerResponse<HetznerServerCache[]>
 > {
-  return doServerActionWithAuth(
-    [`hetzner::moderator`, `hetzner::admin`],
-    async (session) => {
-      const projectIds = session.user.projects.map((p) => p.id);
+  return doServerActionWithAuth([], async (session) => {
+    // The cache holds SuperAdmin and file manager passwords, as do the labels moderators see
+    const projectIds = session.user.projects.map((p) => p.id);
 
-      if (projectIds.length === 0) {
-        return [];
-      }
+    if (projectIds.length === 0) {
+      return [];
+    }
 
-      const client = await getRedisClient();
-      const keys = projectIds.map((id) =>
-        getKeyHetznerRecentlyCreatedServers(id),
-      );
+    const client = await getRedisClient();
+    const keys = projectIds.map((id) =>
+      getKeyHetznerRecentlyCreatedServers(id),
+    );
 
-      const results = await Promise.all(
-        keys.map((key) => client.lrange(key, 0, -1)),
-      );
+    const results = await Promise.all(
+      keys.map((key) => client.lrange(key, 0, -1)),
+    );
 
-      const servers: HetznerServerCache[] = results.flatMap((result) =>
-        result.map((item) => JSON.parse(item)),
-      );
+    const servers: HetznerServerCache[] = results.flatMap((result) =>
+      result.map((item) => JSON.parse(item)),
+    );
 
-      return servers;
-    },
-  );
+    return servers;
+  });
 }
 
 export async function getAllDatabases(
@@ -213,4 +218,28 @@ export async function getHetznerServerMetrics(
       return res.data.metrics;
     },
   );
+}
+
+function canReadCredentials(session: Session, projectId: string): boolean {
+  return hasPermissionSync(
+    session,
+    [
+      "hetzner:servers:create",
+      "hetzner:servers:manage",
+      "hetzner:id:moderator",
+      "hetzner:id:admin",
+    ],
+    projectId,
+  );
+}
+
+function withoutCredentialLabels(server: HetznerServer): HetznerServer {
+  return {
+    ...server,
+    labels: Object.fromEntries(
+      Object.entries(server.labels ?? {}).filter(
+        ([key]) => !/password/i.test(key),
+      ),
+    ),
+  };
 }

@@ -1,5 +1,6 @@
 import { TMXMappackSearch, TMXMapSearch } from "@/types/api/tmx";
 import { ServerError } from "@/types/responses";
+import { readBodyLimited } from "@gcp/shared";
 import "server-only";
 import config from "../config";
 import { logger } from "../logger";
@@ -7,6 +8,7 @@ import { withRateLimit } from "../ratelimiter";
 import { reportException } from "../sentry/report";
 
 const TMX_URL = "https://trackmania.exchange";
+const MAX_MAP_BYTES = 32 * 1024 * 1024;
 
 export async function searchTMXMaps(
   queryParams: Record<string, string>,
@@ -94,9 +96,8 @@ export async function downloadTMXMap(
       signal: controller.signal,
     });
 
-    clearTimeout(timeout);
-
     if (!res.ok) {
+      clearTimeout(timeout);
       logger.error(
         {
           meta,
@@ -117,8 +118,11 @@ export async function downloadTMXMap(
       );
     }
 
-    const arrayBuffer = await res.arrayBuffer();
-    return new File([arrayBuffer], `TMX_${mapId}.Map.Gbx`, {
+    // The timeout keeps running while the body downloads
+    const body = await readBodyLimited(res, MAX_MAP_BYTES).finally(() =>
+      clearTimeout(timeout),
+    );
+    return new File([body], `TMX_${mapId}.Map.Gbx`, {
       type: "application/x-gbx",
     });
   } catch (err) {

@@ -15,17 +15,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Users } from "@gcp/db";
+import { parseTmTags } from "@/lib/tmtags";
 import { getErrorMessage, getList, hasPermissionSync } from "@/lib/utils";
 import { routePermissions } from "@/routes";
 import { ServerError } from "@/types/responses";
+import { Users } from "@gcp/db";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { parseTmTags } from "tmtags";
 
 export const createColumns = (refetch: () => void): ColumnDef<Users>[] => [
   {
@@ -66,7 +66,7 @@ export const createColumns = (refetch: () => void): ColumnDef<Users>[] => [
       <DataTableColumnHeader column={column} title={"Permissions"} />
     ),
     cell: ({ row }) => {
-      const permissions = getList<string>(row.original.permissions)
+      const permissions = getList<string>(row.original.permissions);
       return (
         <span className="truncate">
           {permissions.map((perm: string, index: number) => (
@@ -177,7 +177,11 @@ export const createColumns = (refetch: () => void): ColumnDef<Users>[] => [
           )}
 
           {canEdit && (
-            <Modal isOpen={isEditOpen} setIsOpen={setIsEditOpen} closeOnBackdropClick={false}>
+            <Modal
+              isOpen={isEditOpen}
+              setIsOpen={setIsEditOpen}
+              closeOnBackdropClick={false}
+            >
               <EditUserModal data={user} onSubmit={refetch} />
             </Modal>
           )}

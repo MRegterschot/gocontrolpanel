@@ -31,6 +31,18 @@ export function costMicros(usage: ModelUsage[]): number {
   );
 }
 
+// A Codriver prompt (instructions, tools, history) stays well under this
+const MAX_PROMPT_TOKENS = 30_000;
+const MAX_OUTPUT_TOKENS = 1024;
+
+// Worst-case cost of one model call, for budget reservations
+export function maxCallMicros(model: string): number {
+  const price = prices[model] ?? prices[CODRIVER_MODELS.sonnet];
+  return Math.ceil(
+    MAX_PROMPT_TOKENS * price.input + MAX_OUTPUT_TOKENS * price.output,
+  );
+}
+
 export function monthStart(now = new Date()): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
 }

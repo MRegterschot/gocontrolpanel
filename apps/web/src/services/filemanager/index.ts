@@ -1,6 +1,10 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getLogger } from "@/lib/logger";
-import { getFileManager } from "@/lib/managers/file-manager";
+import {
+  fileManagerFetch,
+  fileManagerUrl,
+  getFileManager,
+} from "@/lib/managers/file-manager";
 import { gameModesScripts } from "@/lib/scripts";
 import { ContentType, File, FileEntry } from "@/types/filemanager";
 import { ServerError, ServerResponse } from "@/types/responses";
@@ -27,13 +31,16 @@ export async function getRoute(
         );
       }
 
-      const res = await fetch(fileManager.url + path, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${fileManager.password}`,
+      const res = await fileManagerFetch(
+        fileManagerUrl(fileManager.url!, path),
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${fileManager.password}`,
+          },
         },
-      });
+      );
 
       if (res.status !== 200) {
         log.error(
@@ -96,13 +103,16 @@ export async function getFile(
         );
       }
 
-      const res = await fetch(fileManager.url + path, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${fileManager.password}`,
+      const res = await fileManagerFetch(
+        fileManagerUrl(fileManager.url!, path),
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${fileManager.password}`,
+          },
         },
-      });
+      );
 
       if (res.status !== 200) {
         log.error(
@@ -165,7 +175,7 @@ export async function getScripts(
           );
         }
 
-        const res = await fetch(`${fileManager.url}/scripts`, {
+        const res = await fileManagerFetch(`${fileManager.url}/scripts`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -213,13 +223,16 @@ export async function getPluginScripts(
           );
         }
 
-        const res = await fetch(`${fileManager.url}/plugin-scripts`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${fileManager.password}`,
+        const res = await fileManagerFetch(
+          `${fileManager.url}/plugin-scripts`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${fileManager.password}`,
+            },
           },
-        });
+        );
 
         if (res.status !== 200) {
           throw new ServerError("Failed to get scripts", "FileFetchError");
@@ -265,13 +278,16 @@ export async function getMatchSettings(
           );
         }
 
-        const res = await fetch(`${fileManager.url}/match-settings`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${fileManager.password}`,
+        const res = await fileManagerFetch(
+          `${fileManager.url}/match-settings`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${fileManager.password}`,
+            },
           },
-        });
+        );
 
         if (res.status !== 200) {
           throw new ServerError(

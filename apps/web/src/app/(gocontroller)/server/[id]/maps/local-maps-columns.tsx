@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { parseTmTags } from "@/lib/tmtags";
 import { getErrorMessage } from "@/lib/utils";
 import { LocalMapInfo } from "@/types/map";
 import { ServerError } from "@/types/responses";
@@ -16,7 +17,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { parseTmTags } from "tmtags";
 
 export const createColumns = (
   serverId: string,
