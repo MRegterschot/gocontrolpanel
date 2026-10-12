@@ -5,7 +5,7 @@ const roleSchema = z.enum(["Admin", "Moderator", "Member"]);
 const claimServerSummarySchema = z.object({
   id: z.string(),
   name: z.string(),
-  filemanagerUrl: z.string().nullable().optional(),
+  hasFileManager: z.boolean().optional(),
 });
 
 // Subset of the next-auth JWT the GBX service needs for authorization
@@ -96,6 +96,8 @@ export function hasPermission(
   required?: readonly string[],
   id = "",
 ): boolean {
+  if (required?.some((permission) => permission.includes(":id:") && !id.trim()))
+    return false;
   if (claims.admin) return true;
   if (!required || required.length === 0) return true;
 
@@ -106,7 +108,10 @@ export function hasPermission(
 }
 
 // Same rule as the old live/map sockets: admin, direct member, or via a group
-export function canViewServer(claims: SessionClaims, serverId: string): boolean {
+export function canViewServer(
+  claims: SessionClaims,
+  serverId: string,
+): boolean {
   return (
     claims.admin ||
     claims.servers.some((server) => server.id === serverId) ||

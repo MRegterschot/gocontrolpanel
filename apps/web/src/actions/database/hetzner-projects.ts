@@ -1,4 +1,5 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import {
@@ -64,6 +65,7 @@ export async function updateHetznerProject(
     Omit<EditHetznerProjects, "id" | "createdAt" | "updatedAt" | "deletedAt">
   >,
 ): Promise<ServerResponse<HetznerProjectsWithUsers>> {
+  assertResourceId(hetznerProjectId);
   return doServerActionWithAuth(
     ["hetzner:edit", `hetzner:${hetznerProjectId}:admin`],
     async (session) => {
@@ -117,6 +119,7 @@ export async function updateHetznerProject(
 export async function deleteHetznerProject(
   hetznerProjectId: string,
 ): Promise<ServerResponse> {
+  assertResourceId(hetznerProjectId);
   return doServerActionWithAuth(
     ["hetzner:delete", `hetzner:${hetznerProjectId}:admin`],
     async (session) => {

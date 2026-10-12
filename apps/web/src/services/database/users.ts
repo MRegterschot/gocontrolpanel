@@ -1,11 +1,10 @@
 import { doServerActionWithAuth } from "@/lib/actions";
-import { getAccountNames, searchAccountNames } from "@/lib/api/nadeo";
 import { getClient } from "@/lib/dbclient";
 import { PaginationResponse, ServerResponse } from "@/types/responses";
 import { Prisma, Users } from "@gcp/db";
 import { PaginationState } from "@tanstack/react-table";
 import "server-only";
-import slugid from "slugid";
+import { z } from "zod";
 
 export type UserMinimal = Pick<Users, "id" | "login" | "nickName">;
 
@@ -29,7 +28,8 @@ export async function getUsersByIds(
 
       return await db.users.findMany({
         where: {
-          id: { in: ids },
+          id: { in: z.array(z.string().min(1).max(64)).max(100).parse(ids) },
+          deletedAt: null,
         },
         select: {
           id: true,
@@ -59,9 +59,14 @@ export async function getUsersByLogins(
     async () => {
       const db = getClient();
 
+      logins = z
+        .array(z.string().regex(/^[A-Za-z0-9_-]{22}$/))
+        .max(100)
+        .parse(logins);
       const foundUsers = await db.users.findMany({
         where: {
           login: { in: logins },
+          deletedAt: null,
         },
         select: {
           id: true,
@@ -70,39 +75,7 @@ export async function getUsersByLogins(
         },
       });
 
-      const missingLogins = logins.filter(
-        (login) => !foundUsers.some((user) => user.login === login),
-      );
-
-      if (missingLogins.length > 0) {
-        const accountNames = await getAccountNames(
-          missingLogins.map((login) => slugid.decode(login)),
-        );
-
-        if (accountNames && Object.keys(accountNames).length > 0) {
-          await db.users.createMany({
-            data: Object.entries(accountNames).map(
-              ([accountId, accountName]) => ({
-                login: slugid.encode(accountId),
-                nickName: accountName,
-                path: "",
-              }),
-            ),
-            skipDuplicates: true,
-          });
-        }
-      }
-
-      return await db.users.findMany({
-        where: {
-          login: { in: logins },
-        },
-        select: {
-          id: true,
-          login: true,
-          nickName: true,
-        },
-      });
+      return foundUsers;
     },
   );
 }
@@ -117,6 +90,7 @@ export async function getUsersPaginated(
 
     const where: Prisma.UsersWhereInput = {
       authenticated: true,
+      deletedAt: null,
       ...(filter && {
         OR: [
           { login: { contains: filter } },
@@ -163,51 +137,10 @@ export async function searchUser(
       "hetzner::admin",
     ],
     async () => {
-      const db = getClient();
-
-      const user = await db.users.findFirst({
-        where: {
-          OR: [{ login: { equals: search } }, { nickName: { equals: search } }],
-        },
-        select: {
-          id: true,
-          login: true,
-          nickName: true,
-        },
-      });
-
-      if (user) {
-        return user;
-      }
-
-      if (search.length > 3) {
-        const { data: accountNames, error } = await searchAccountNames([
-          search,
-        ]);
-
-        if (!error && accountNames && Object.keys(accountNames).length > 0) {
-          await db.users.createMany({
-            data: Object.entries(accountNames).map(
-              ([accountName, accountId]) => ({
-                login: slugid.encode(accountId),
-                nickName: accountName,
-                path: "",
-              }),
-            ),
-            skipDuplicates: true,
-          });
-        }
-      }
-
-      return await db.users.findFirst({
-        where: {
-          OR: [{ login: search }, { nickName: search }],
-        },
-        select: {
-          id: true,
-          login: true,
-          nickName: true,
-        },
+      const value = z.string().trim().min(1).max(100).parse(search);
+      return getClient().users.findFirst({
+        where: { deletedAt: null, OR: [{ login: value }, { nickName: value }] },
+        select: { id: true, login: true, nickName: true },
       });
     },
   );

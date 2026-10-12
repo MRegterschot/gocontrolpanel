@@ -1,6 +1,6 @@
-"use server";
 import { ServerResponse } from "@/types/responses";
 import { Session } from "next-auth";
+import "server-only";
 import { withAuth } from "./auth";
 import { logger } from "./logger";
 import { reportException } from "./sentry/report";

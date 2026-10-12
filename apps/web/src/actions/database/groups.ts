@@ -1,4 +1,5 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import {
@@ -62,6 +63,7 @@ export async function updateGroup(
     Omit<EditGroups, "id" | "createdAt" | "updatedAt" | "deletedAt">
   >,
 ): Promise<ServerResponse<GroupsWithUsersWithServers>> {
+  assertResourceId(groupId);
   return doServerActionWithAuth(
     ["groups:edit", `groups:${groupId}:admin`],
     async (session) => {
@@ -154,6 +156,7 @@ function requireServerAuthority(session: Session, serverIds: string[]) {
 }
 
 export async function deleteGroup(groupId: string): Promise<ServerResponse> {
+  assertResourceId(groupId);
   return doServerActionWithAuth(
     ["groups:delete", `groups:${groupId}:admin`],
     async (session) => {
@@ -203,6 +206,7 @@ export async function updateGroupServersOrder(
   groupId: string,
   serverIdsInOrder: string[],
 ): Promise<ServerResponse> {
+  assertResourceId(groupId);
   return doServerActionWithAuth([], async (session) => {
     const meta = {
       type: "database",

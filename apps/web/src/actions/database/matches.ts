@@ -1,4 +1,5 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
@@ -9,6 +10,7 @@ export async function deleteMatch(
   serverId: string,
   matchId: string,
 ): Promise<ServerResponse<void>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,

@@ -1,4 +1,6 @@
 "use server";
+import { validateListFilename } from "@/lib/list-filename";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { actorFromSession } from "@/lib/actor";
@@ -14,6 +16,7 @@ import {
 } from "./server-only/game";
 
 export async function restartMap(serverId: string): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -26,6 +29,7 @@ export async function restartMap(serverId: string): Promise<ServerResponse> {
 }
 
 export async function nextMap(serverId: string): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -41,6 +45,7 @@ export async function setShowOpponents(
   serverId: string,
   count: number,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -65,6 +70,7 @@ export async function setScriptName(
   serverId: string,
   script: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -80,6 +86,7 @@ export async function loadMatchSettings(
   serverId: string,
   filename: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -88,7 +95,10 @@ export async function loadMatchSettings(
       `group:servers:${serverId}:admin`,
     ],
     async (session) => {
-      await gbxService.loadMatchSettings(serverId, filename);
+      await gbxService.loadMatchSettings(
+        serverId,
+        validateListFilename(filename),
+      );
 
       await logAudit(
         session.user.id,
@@ -104,6 +114,7 @@ export async function appendPlaylist(
   serverId: string,
   filename: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -113,7 +124,10 @@ export async function appendPlaylist(
     ],
     async (session) => {
       const client = getGbxClient(serverId);
-      await client.call("AppendPlaylistFromMatchSettings", filename);
+      await client.call(
+        "AppendPlaylistFromMatchSettings",
+        validateListFilename(filename),
+      );
       await logAudit(
         session.user.id,
         serverId,
@@ -128,6 +142,7 @@ export async function saveMatchSettings(
   serverId: string,
   filename: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -137,7 +152,7 @@ export async function saveMatchSettings(
     ],
     async (session) => {
       const client = getGbxClient(serverId);
-      await client.call("SaveMatchSettings", filename);
+      await client.call("SaveMatchSettings", validateListFilename(filename));
       await logAudit(
         session.user.id,
         serverId,
@@ -152,6 +167,7 @@ export async function insertPlaylist(
   serverId: string,
   filename: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -161,7 +177,10 @@ export async function insertPlaylist(
     ],
     async (session) => {
       const client = getGbxClient(serverId);
-      await client.call("InsertPlaylistFromMatchSettings", filename);
+      await client.call(
+        "InsertPlaylistFromMatchSettings",
+        validateListFilename(filename),
+      );
       await logAudit(
         session.user.id,
         serverId,
@@ -178,6 +197,7 @@ export async function setModeScriptSettings(
     [key: string]: string | number | boolean;
   },
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -195,6 +215,7 @@ export async function triggerModeScriptEventArray(
   method: string,
   params: string[],
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -217,6 +238,7 @@ export async function pauseMatch(
   serverId: string,
   pause: boolean,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,

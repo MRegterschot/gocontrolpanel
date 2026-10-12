@@ -30,7 +30,10 @@ interface Connection {
   next(type?: string): Promise<{ type: string; data: any }>;
 }
 
-function connect(url: string, headers: Record<string, string> = {}): Connection {
+function connect(
+  url: string,
+  headers: Record<string, string> = {},
+): Connection {
   const socket = new WebSocket(url, { headers });
   sockets.push(socket);
   const messages: { type: string; data: any }[] = [];
@@ -39,7 +42,9 @@ function connect(url: string, headers: Record<string, string> = {}): Connection 
     messages.push(JSON.parse(String(raw)));
     waiters.splice(0).forEach((wake) => wake());
   });
-  const closed = new Promise<number>((resolve) => socket.on("close", (code) => resolve(code)));
+  const closed = new Promise<number>((resolve) =>
+    socket.on("close", (code) => resolve(code)),
+  );
 
   let read = 0;
   return {
@@ -52,7 +57,11 @@ function connect(url: string, headers: Record<string, string> = {}): Connection 
           if (!type || message.type === type) return message;
         }
         await new Promise<void>((resolve, reject) => {
-          const timer = setTimeout(() => reject(new Error(`Timed out waiting for ${type ?? "message"}`)), 2000);
+          const timer = setTimeout(
+            () =>
+              reject(new Error(`Timed out waiting for ${type ?? "message"}`)),
+            2000,
+          );
           waiters.push(() => {
             clearTimeout(timer);
             resolve();
@@ -63,7 +72,9 @@ function connect(url: string, headers: Record<string, string> = {}): Connection 
   };
 }
 
-const viewer = { servers: [{ id: "server-1", name: "Test Server", role: "Member" as const }] };
+const viewer = {
+  servers: [{ id: "server-1", name: "Test Server", role: "Member" as const }],
+};
 
 describe("ws connection rate limiting", () => {
   it("limits all channels before ticket verification and rejects upgrades with HTTP 429", async () => {
@@ -152,21 +163,31 @@ describe("ws authentication", () => {
 
   it("closes with an invalid ticket", async () => {
     const { base } = await setup();
-    expect(await connect(`${base}/ws/live/server-1?ticket=garbage`).closed).toBe(4401);
+    expect(
+      await connect(`${base}/ws/live/server-1?ticket=garbage`).closed,
+    ).toBe(4401);
   });
 
   it("refuses to reuse a ticket", async () => {
     const { base } = await setup();
     const ticket = await ticketFor(viewer);
-    await connect(`${base}/ws/live/server-1?ticket=${ticket}`).next("beginMatch");
-    expect(await connect(`${base}/ws/live/server-1?ticket=${ticket}`).closed).toBe(4401);
+    await connect(`${base}/ws/live/server-1?ticket=${ticket}`).next(
+      "beginMatch",
+    );
+    expect(
+      await connect(`${base}/ws/live/server-1?ticket=${ticket}`).closed,
+    ).toBe(4401);
   });
 
   it("enforces the origin allowlist", async () => {
     const { base } = await setup({ allowedOrigins: ["https://panel.test"] });
-    const bad = connect(`${base}/ws/servers?ticket=${await ticketFor()}`, { Origin: "https://evil.test" });
+    const bad = connect(`${base}/ws/servers?ticket=${await ticketFor()}`, {
+      Origin: "https://evil.test",
+    });
     expect(await bad.closed).toBe(4403);
-    const good = connect(`${base}/ws/servers?ticket=${await ticketFor()}`, { Origin: "https://panel.test" });
+    const good = connect(`${base}/ws/servers?ticket=${await ticketFor()}`, {
+      Origin: "https://panel.test",
+    });
     expect((await good.next()).type).toBe("servers");
   });
 });
@@ -174,29 +195,50 @@ describe("ws authentication", () => {
 describe("live channel", () => {
   it("sends a snapshot and then live race events", async () => {
     const { base, h } = await setup({ players: [player("p1")] });
-    const socket = connect(`${base}/ws/live/server-1?ticket=${await ticketFor(viewer)}`);
+    const socket = connect(
+      `${base}/ws/live/server-1?ticket=${await ticketFor(viewer)}`,
+    );
 
     const snapshot = await socket.next("beginMatch");
     expect(snapshot.data.info.type).toBe("rounds");
 
-    await h.script("Trackmania.Event.WayPoint", { login: "p1", accountid: "a", racetime: 1000, isendrace: true, checkpointinrace: 1, curracecheckpoints: [1000] });
+    await h.script("Trackmania.Event.WayPoint", {
+      login: "p1",
+      accountid: "a",
+      racetime: 1000,
+      isendrace: true,
+      checkpointinrace: 1,
+      curracecheckpoints: [1000],
+    });
     const finish = await socket.next("finish");
-    expect(finish.data.round.players.p1).toMatchObject({ hasFinished: true, time: 1000 });
+    expect(finish.data.round.players.p1).toMatchObject({
+      hasFinished: true,
+      time: 1000,
+    });
   });
 
   it("denies users without access to the server", async () => {
     const { base } = await setup();
-    expect(await connect(`${base}/ws/live/server-1?ticket=${await ticketFor()}`).closed).toBe(4403);
+    expect(
+      await connect(`${base}/ws/live/server-1?ticket=${await ticketFor()}`)
+        .closed,
+    ).toBe(4403);
   });
 
   it("reports servers this service does not manage", async () => {
     const { base } = await setup();
-    expect(await connect(`${base}/ws/live/other?ticket=${await ticketFor({ admin: true })}`).closed).toBe(4404);
+    expect(
+      await connect(
+        `${base}/ws/live/other?ticket=${await ticketFor({ admin: true })}`,
+      ).closed,
+    ).toBe(4404);
   });
 
   it("closes sockets when the server is removed", async () => {
     const { base, registry } = await setup();
-    const socket = connect(`${base}/ws/map/server-1?ticket=${await ticketFor(viewer)}`);
+    const socket = connect(
+      `${base}/ws/map/server-1?ticket=${await ticketFor(viewer)}`,
+    );
     await socket.next("activeMap");
     await registry.remove("server-1");
     expect(await socket.closed).toBe(1001);
@@ -206,7 +248,9 @@ describe("live channel", () => {
 describe("map and players channels", () => {
   it("sends the active map and map changes", async () => {
     const { base, h } = await setup();
-    const socket = connect(`${base}/ws/map/server-1?ticket=${await ticketFor(viewer)}`);
+    const socket = connect(
+      `${base}/ws/map/server-1?ticket=${await ticketFor(viewer)}`,
+    );
     expect((await socket.next()).data).toBe("map-a-uid");
 
     await h.script("Maniaplanet.StartMap_Start", { map: { uid: "next" } });
@@ -215,14 +259,26 @@ describe("map and players channels", () => {
 
   it("requires moderator rights for the player list", async () => {
     const { base, h } = await setup({ players: [player("p1")] });
-    expect(await connect(`${base}/ws/players/server-1?ticket=${await ticketFor(viewer)}`).closed).toBe(4403);
+    expect(
+      await connect(
+        `${base}/ws/players/server-1?ticket=${await ticketFor(viewer)}`,
+      ).closed,
+    ).toBe(4403);
 
-    const moderator = { servers: [{ id: "server-1", name: "S", role: "Moderator" as const }] };
-    const socket = connect(`${base}/ws/players/server-1?ticket=${await ticketFor(moderator)}`);
-    expect((await socket.next("playerList")).data.map((p: any) => p.login)).toEqual(["p1"]);
+    const moderator = {
+      servers: [{ id: "server-1", name: "S", role: "Moderator" as const }],
+    };
+    const socket = connect(
+      `${base}/ws/players/server-1?ticket=${await ticketFor(moderator)}`,
+    );
+    expect(
+      (await socket.next("playerList")).data.map((p: any) => p.login),
+    ).toEqual(["p1"]);
 
     await h.callback("ManiaPlanet.PlayerDisconnect", ["p1", ""]);
-    expect((await socket.next("playerDisconnect")).data).toEqual({ login: "p1" });
+    expect((await socket.next("playerDisconnect")).data).toEqual({
+      login: "p1",
+    });
   });
 });
 
@@ -231,21 +287,39 @@ describe("server-wide channels", () => {
     const { base, h } = await setup();
     const socket = connect(
       `${base}/ws/servers?ticket=${await ticketFor({
-        groups: [{ id: "g", name: "G", role: "Member", servers: [{ id: "server-1", name: "Test Server", filemanagerUrl: "http://fm" }] }],
+        groups: [
+          {
+            id: "g",
+            name: "G",
+            role: "Member",
+            servers: [
+              { id: "server-1", name: "Test Server", hasFileManager: true },
+            ],
+          },
+        ],
       })}`,
     );
     expect((await socket.next("servers")).data).toEqual([
-      { id: "server-1", name: "Test Server", filemanagerUrl: "http://fm", isConnected: true },
+      {
+        id: "server-1",
+        name: "Test Server",
+        hasFileManager: true,
+        isConnected: true,
+      },
     ]);
 
     h.session.drop();
     await flush();
-    expect((await socket.next("disconnect")).data).toEqual({ serverId: "server-1" });
+    expect((await socket.next("disconnect")).data).toEqual({
+      serverId: "server-1",
+    });
   });
 
   it("shows every client to users with servers:clients:view", async () => {
     const { base } = await setup();
-    const socket = connect(`${base}/ws/clients?ticket=${await ticketFor({ permissions: ["servers:clients:view"] })}`);
+    const socket = connect(
+      `${base}/ws/clients?ticket=${await ticketFor({ permissions: ["servers:clients:view"] })}`,
+    );
     expect((await socket.next("clients")).data).toHaveLength(1);
 
     const other = connect(`${base}/ws/clients?ticket=${await ticketFor()}`);
@@ -255,15 +329,25 @@ describe("server-wide channels", () => {
   it("delivers admin notifications only to the addressed admin", async () => {
     const { base, h, registry } = await setup({ players: [player("p1")] });
     h.notifications.adminUserIds = ["user-1", "user-2"];
-    const admin = { servers: [{ id: "server-1", name: "S", role: "Admin" as const }] };
-    const mine = connect(`${base}/ws/notifications?ticket=${await ticketFor(admin)}`);
-    const notAdmin = connect(`${base}/ws/notifications?ticket=${await ticketFor({ id: "user-2" })}`);
+    const admin = {
+      servers: [{ id: "server-1", name: "S", role: "Admin" as const }],
+    };
+    const mine = connect(
+      `${base}/ws/notifications?ticket=${await ticketFor(admin)}`,
+    );
+    const notAdmin = connect(
+      `${base}/ws/notifications?ticket=${await ticketFor({ id: "user-2" })}`,
+    );
     // Both sockets must finish asynchronous ticket verification and subscribe first.
     await vi.waitFor(() => {
       expect(registry.events.listenerCount("adminCommand")).toBe(2);
     });
 
-    const created = await h.notifications.createForServerAdmins({ serverId: "server-1", type: "adminCommand", message: "help" });
+    const created = await h.notifications.createForServerAdmins({
+      serverId: "server-1",
+      type: "adminCommand",
+      message: "help",
+    });
     h.runtime.events.emit("adminCommand", created);
 
     const message = await mine.next("adminCommand");
@@ -276,7 +360,9 @@ describe("server-wide channels", () => {
 describe("ws socket lifetime", () => {
   it("closes sockets after their lifetime so permissions are checked again", async () => {
     const { base } = await setup({ wsMaxLifetimeMs: 200 });
-    const conn = connect(`${base}/ws/live/server-1?ticket=${await ticketFor(viewer)}`);
+    const conn = connect(
+      `${base}/ws/live/server-1?ticket=${await ticketFor(viewer)}`,
+    );
     await conn.next("beginMatch");
     expect(await conn.closed).toBe(4001);
   });

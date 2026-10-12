@@ -22,7 +22,8 @@
     "migrate:create": "bun --env-file=.env run --filter @gcp/db migrate:create",
     "deploy": "bun --env-file=.env run --filter @gcp/db deploy",
     "reset": "bun --env-file=.env run --filter @gcp/db reset",
-    "pretty": "prettier --write \"**/*.{ts,tsx,json,css}\""
+    "pretty": "prettier --write \"**/*.{ts,tsx,json,css}\"",
+    "encrypt:server-credentials": "bun --env-file=.env scripts/encrypt-server-credentials.ts"
   },
   "overrides": {
     "@radix-ui/react-focus-scope": "1.1.7",

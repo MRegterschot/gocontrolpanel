@@ -1,4 +1,5 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getGbxClient } from "@/lib/gbx-service";
@@ -11,6 +12,7 @@ export async function setServerPlugin(
   name: string,
   settings: Record<string, string | number | boolean>,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
@@ -30,6 +32,7 @@ export async function setServerPluginVariables(
   serverId: string,
   variables: Record<string, string | number | boolean>,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
@@ -50,6 +53,7 @@ export async function triggerServerPluginEvent(
   eventName: string,
   param: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
@@ -70,6 +74,7 @@ export async function triggerServerPluginEventArray(
   eventName: string,
   params: string[],
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {

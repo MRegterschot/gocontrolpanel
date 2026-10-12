@@ -1,4 +1,9 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
+import {
+  encryptServerPassword,
+  requireServerCredentialsKey,
+} from "@/lib/server-credentials";
 
 import { AdvancedServerSetupSchemaType } from "@/forms/admin/hetzner/setup-steps/advanced/server-setup-schema";
 import { SimpleServerSetupSchemaType } from "@/forms/admin/hetzner/setup-steps/simple/server-setup-schema";
@@ -46,9 +51,11 @@ export async function createAdvancedServerSetup(
   projectId: string,
   data: AdvancedServerSetupSchemaType,
 ): Promise<ServerResponse<HetznerServer>> {
+  assertResourceId(projectId);
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
+      requireServerCredentialsKey();
       await authorizePanelTarget(session, data);
       assertProvisioningChoices(
         data.database?.databaseType,
@@ -321,9 +328,11 @@ export async function createAdvancedServerSetup(
               host: cachedServer.ip || "",
               port: cachedServer.port,
               user: "SuperAdmin",
-              password: cachedServer.password,
+              password: encryptServerPassword(cachedServer.password),
               filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
-              filemanagerPassword: cachedServer.filemanagerPassword,
+              filemanagerPassword: encryptServerPassword(
+                cachedServer.filemanagerPassword,
+              ),
               userServers: {
                 create: [
                   {
@@ -370,9 +379,11 @@ export async function createAdvancedServerSetup(
               host: cachedServer.ip || "",
               port: cachedServer.port,
               user: "SuperAdmin",
-              password: cachedServer.password,
+              password: encryptServerPassword(cachedServer.password),
               filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
-              filemanagerPassword: cachedServer.filemanagerPassword,
+              filemanagerPassword: encryptServerPassword(
+                cachedServer.filemanagerPassword,
+              ),
             },
           });
           await publishServerEvent({
@@ -431,9 +442,11 @@ export async function createSimpleServerSetup(
   projectId: string,
   data: SimpleServerSetupSchemaType,
 ): Promise<ServerResponse<HetznerServer>> {
+  assertResourceId(projectId);
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
+      requireServerCredentialsKey();
       await authorizePanelTarget(session, data);
       assertProvisioningChoices(
         data.database?.databaseType,
@@ -637,9 +650,11 @@ export async function createSimpleServerSetup(
               host: cachedServer.ip || "",
               port: cachedServer.port,
               user: "SuperAdmin",
-              password: cachedServer.password,
+              password: encryptServerPassword(cachedServer.password),
               filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
-              filemanagerPassword: cachedServer.filemanagerPassword,
+              filemanagerPassword: encryptServerPassword(
+                cachedServer.filemanagerPassword,
+              ),
               userServers: {
                 create: [
                   {
@@ -686,9 +701,11 @@ export async function createSimpleServerSetup(
               host: cachedServer.ip || "",
               port: cachedServer.port,
               user: "SuperAdmin",
-              password: cachedServer.password,
+              password: encryptServerPassword(cachedServer.password),
               filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
-              filemanagerPassword: cachedServer.filemanagerPassword,
+              filemanagerPassword: encryptServerPassword(
+                cachedServer.filemanagerPassword,
+              ),
             },
           });
           await publishServerEvent({
@@ -756,9 +773,11 @@ export async function addTrackmaniaServer(
   serverId: number,
   tmServer: TMServerSchemaType,
 ) {
+  assertResourceId(projectId);
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
+      requireServerCredentialsKey();
       await authorizePanelTarget(session, tmServer);
       const la = (error?: string, result?: string) =>
         logAudit(
@@ -886,9 +905,11 @@ export async function addTrackmaniaServer(
               host: cachedServer.ip || "",
               port: cachedServer.port,
               user: "SuperAdmin",
-              password: cachedServer.password,
+              password: encryptServerPassword(cachedServer.password),
               filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
-              filemanagerPassword: cachedServer.filemanagerPassword,
+              filemanagerPassword: encryptServerPassword(
+                cachedServer.filemanagerPassword,
+              ),
               userServers: {
                 create: [
                   {
@@ -935,9 +956,11 @@ export async function addTrackmaniaServer(
               host: cachedServer.ip || "",
               port: cachedServer.port,
               user: "SuperAdmin",
-              password: cachedServer.password,
+              password: encryptServerPassword(cachedServer.password),
               filemanagerUrl: `http://${cachedServer.ip}:${cachedServer.fm_port}`,
-              filemanagerPassword: cachedServer.filemanagerPassword,
+              filemanagerPassword: encryptServerPassword(
+                cachedServer.filemanagerPassword,
+              ),
             },
           });
           await publishServerEvent({
@@ -964,6 +987,7 @@ export async function deleteTrackmaniaServer(
   serverId: number,
   tmServerNumber: number,
 ) {
+  assertResourceId(projectId);
   return doServerActionWithAuth(
     ["hetzner:servers:delete", `hetzner:${projectId}:admin`],
     async (session) => {

@@ -1,4 +1,5 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { gbxService } from "@/lib/gbx-service";
@@ -8,6 +9,7 @@ import { logAudit } from "../database/server-only/audit-logs";
 export async function stopReconnect(
   serverId: string,
 ): Promise<ServerResponse<void>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(["servers:clients:manage"], async (session) => {
     await gbxService.stopReconnect(serverId);
 
@@ -18,6 +20,7 @@ export async function stopReconnect(
 export async function triggerReconnect(
   serverId: string,
 ): Promise<ServerResponse<void>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(["servers:clients:manage"], async (session) => {
     await gbxService.reconnect(serverId);
 
@@ -32,6 +35,7 @@ export async function triggerReconnect(
 export async function resendAllManialinks(
   serverId: string,
 ): Promise<ServerResponse<void>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(["servers:clients:manage"], async (session) => {
     await gbxService.resendManialinks(serverId);
 
@@ -46,6 +50,7 @@ export async function resendAllManialinks(
 export async function disconnectClient(
   serverId: string,
 ): Promise<ServerResponse<void>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(["servers:clients:manage"], async (session) => {
     await gbxService.disconnect(serverId);
 

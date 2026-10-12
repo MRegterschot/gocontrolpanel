@@ -1,10 +1,14 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { downloadFile } from "@/lib/api/nadeo";
 import { getLogger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
-import { CampaignWithNamesAndPlaylistMaps, ClubCampaignWithNamesAndPlaylistMaps } from "@/types/api/nadeo";
+import {
+  CampaignWithNamesAndPlaylistMaps,
+  ClubCampaignWithNamesAndPlaylistMaps,
+} from "@/types/api/nadeo";
 import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
 import { uploadFiles } from "../filemanager";
@@ -16,6 +20,7 @@ export async function downloadCampaign(
     | CampaignWithNamesAndPlaylistMaps
     | ClubCampaignWithNamesAndPlaylistMaps["campaign"],
 ): Promise<ServerResponse<string[]>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -39,7 +44,10 @@ export async function downloadCampaign(
           JSON.parse(JSON.stringify(campaign)),
           "Failed to download campaign, file manager is not healthy",
         );
-        throw new ServerError("File manager is not healthy", "FileManagerNotHealthy");
+        throw new ServerError(
+          "File manager is not healthy",
+          "FileManagerNotHealthy",
+        );
       }
 
       const downloadResults = await Promise.allSettled(
@@ -92,7 +100,10 @@ export async function downloadCampaign(
 
       if (errors > 0) {
         log.error({ meta, errors }, "Failed to download some maps");
-        throw new ServerError(`Failed to download ${errors} maps`, "DownloadMapsError");
+        throw new ServerError(
+          `Failed to download ${errors} maps`,
+          "DownloadMapsError",
+        );
       }
 
       return downloadResults
@@ -110,6 +121,7 @@ export async function addCampaignToServer(
     | CampaignWithNamesAndPlaylistMaps
     | ClubCampaignWithNamesAndPlaylistMaps["campaign"],
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -133,7 +145,10 @@ export async function addCampaignToServer(
           JSON.parse(JSON.stringify(campaign)),
           "Failed to add campaign, file manager is not healthy",
         );
-        throw new ServerError("File manager is not healthy", "FileManagerNotHealthy");
+        throw new ServerError(
+          "File manager is not healthy",
+          "FileManagerNotHealthy",
+        );
       }
 
       const addResults = await Promise.allSettled(
@@ -170,7 +185,10 @@ export async function addCampaignToServer(
 
       if (errors > 0) {
         log.error({ meta, errors }, "Failed to add some maps");
-        throw new ServerError(`Failed to add ${errors} maps`, "AddMapsToServerError");
+        throw new ServerError(
+          `Failed to add ${errors} maps`,
+          "AddMapsToServerError",
+        );
       }
     },
   );

@@ -1,4 +1,5 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { downloadTMXMap, searchTMXMaps } from "@/lib/api/tmx";
@@ -14,6 +15,7 @@ export async function downloadMappack(
   mappackId: number,
   mappackName: string,
 ): Promise<ServerResponse<string[]>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -37,7 +39,10 @@ export async function downloadMappack(
           { mappackId, mappackName },
           "File manager is not healthy",
         );
-        throw new ServerError("File manager is not healthy", "FileManagerNotHealthy");
+        throw new ServerError(
+          "File manager is not healthy",
+          "FileManagerNotHealthy",
+        );
       }
 
       const mappackSearch = await searchTMXMaps(
@@ -53,7 +58,10 @@ export async function downloadMappack(
           { mappackId, mappackName },
           "Found no downloadable maps in mappack",
         );
-        throw new ServerError("Found no downloadable maps in mappack", "NoDownloadableMapsInMappack");
+        throw new ServerError(
+          "Found no downloadable maps in mappack",
+          "NoDownloadableMapsInMappack",
+        );
       }
 
       if (mappackSearch.More) {
@@ -64,7 +72,10 @@ export async function downloadMappack(
           { mappackId, mappackName },
           "Cannot download mappack with more than 100 maps",
         );
-        throw new ServerError("Cannot download mappack with more than 100 maps", "MappackTooLarge");
+        throw new ServerError(
+          "Cannot download mappack with more than 100 maps",
+          "MappackTooLarge",
+        );
       }
 
       const downloadResults = await Promise.allSettled(
@@ -112,7 +123,10 @@ export async function downloadMappack(
 
       if (errors > 0) {
         log.error({ meta, errors }, "Failed to download some maps");
-        throw new ServerError(`Failed to download ${errors} maps`, "DownloadMapsError");
+        throw new ServerError(
+          `Failed to download ${errors} maps`,
+          "DownloadMapsError",
+        );
       }
 
       return downloadResults
@@ -129,6 +143,7 @@ export async function addMappackToServer(
   mappackId: number,
   mappackName: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,

@@ -1,4 +1,5 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { SendEcmRecordsSchema } from "@/forms/server/records/send-ecm-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
@@ -22,6 +23,7 @@ export async function sendRecordsToEcm(
   matchId: string,
   input: z.infer<typeof SendEcmRecordsSchema>,
 ): Promise<ServerResponse<void>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(permissions(serverId), async (session) => {
     const values = SendEcmRecordsSchema.parse(input);
     const key = values.apiKey || (await savedEcmApiKey(serverId));

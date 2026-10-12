@@ -53,7 +53,7 @@ export function guestActor(login: string): Actor {
 export async function actorForLogin(login: string): Promise<Actor> {
   const db = getClient();
   const user = await db.users.findUnique({
-    where: { login },
+    where: { login, deletedAt: null },
     select: {
       id: true,
       login: true,

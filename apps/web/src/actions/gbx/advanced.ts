@@ -1,4 +1,5 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { actorFromSession } from "@/lib/actor";
@@ -10,6 +11,7 @@ import { sendChatMessageAs } from "./server-only/advanced";
 export async function connectFakePlayer(
   serverId: string,
 ): Promise<ServerResponse<string>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
@@ -29,6 +31,7 @@ export async function disconnectFakePlayer(
   serverId: string,
   login: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
@@ -49,6 +52,7 @@ export async function sendChatMessage(
   message: string,
   login?: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,

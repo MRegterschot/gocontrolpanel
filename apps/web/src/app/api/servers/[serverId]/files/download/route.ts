@@ -1,7 +1,7 @@
 import { logAudit } from "@/actions/database/server-only/audit-logs";
 import { actorFromSession, actorHasPermission } from "@/lib/actor";
 import { auth } from "@/lib/auth";
-import { getFileManager } from "@/lib/managers/file-manager";
+import { fileManagerFetch, getFileManager } from "@/lib/managers/file-manager";
 import { serverPermissions } from "@gcp/shared";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -31,7 +31,7 @@ export async function GET(
   }
 
   const query = new URLSearchParams(paths.map((path) => ["path", path]));
-  const res = await fetch(`${fileManager.url}/download?${query}`, {
+  const res = await fileManagerFetch(`${fileManager.url}/download?${query}`, {
     headers: { Authorization: `Bearer ${fileManager.password}` },
   });
 

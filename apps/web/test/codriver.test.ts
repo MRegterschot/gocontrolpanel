@@ -73,6 +73,8 @@ const run = vi.fn();
 const confirm = vi.fn();
 const tools = [
   defineTool({
+    // Synthetic, side-effect-free tools isolate routing from the production confirmation policy.
+    readOnly: true,
     name: "skip_map",
     description: "Skip",
     category: "maps",
@@ -82,6 +84,8 @@ const tools = [
     run,
   }),
   defineTool({
+    // Synthetic, side-effect-free tools isolate routing from the production confirmation policy.
+    readOnly: true,
     name: "set_points",
     description: "Points",
     category: "mode",
@@ -90,6 +94,8 @@ const tools = [
     run,
   }),
   defineTool({
+    // Synthetic, side-effect-free tools isolate routing from the production confirmation policy.
+    readOnly: true,
     name: "set_mode",
     description: "Mode",
     category: "mode",
@@ -318,6 +324,8 @@ describe("runCodriver", () => {
 
   it("validates fast-path input even when only planning", async () => {
     const toggle = defineTool({
+      // Synthetic, side-effect-free tools isolate routing from the production confirmation policy.
+      readOnly: true,
       name: "set_plugin_enabled",
       description: "Toggle",
       category: "plugins",
@@ -594,6 +602,8 @@ describe("runCodriver", () => {
 
   describe("TMX tags in the prompt", () => {
     const tmx = defineTool({
+      // Synthetic, side-effect-free tools isolate routing from the production confirmation policy.
+      readOnly: true,
       name: "add_tmx_map",
       description: "TMX",
       category: "maps",
@@ -650,6 +660,8 @@ describe("runCodriver", () => {
 
   describe("guessed routes", () => {
     const announce = defineTool({
+      // Synthetic, side-effect-free tools isolate routing from the production confirmation policy.
+      readOnly: true,
       name: "announce",
       description: "Announce",
       category: "server",
@@ -859,4 +871,28 @@ describe("runCodriver", () => {
     );
     expect(outcome.status).toBe("unclear");
   });
+});
+
+describe("mutation confirmation boundary", () => {
+  it.each([undefined, () => null])(
+    "requires confirmation for a mutating tool even without a custom prompt",
+    async (confirmation) => {
+      const mutate = vi.fn().mockResolvedValue({ reply: "Changed" });
+      const tool = defineTool({
+        name: "skip_map",
+        description: "Skip",
+        category: "maps",
+        minRole: "moderator",
+        input: z.strictObject({}),
+        confirm: confirmation,
+        run: mutate,
+      });
+      const result = await runCodriver(
+        { serverId, actor: actorWithRole("Moderator"), text: "skip" },
+        options(fakeModel(), { tools: [tool] }),
+      );
+      expect(result.status).toBe("needs_confirmation");
+      expect(mutate).not.toHaveBeenCalled();
+    },
+  );
 });

@@ -1,4 +1,5 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { AddHetznerVolumeSchemaType } from "@/forms/admin/hetzner/volume/add-hetzner-volume-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
@@ -12,6 +13,7 @@ export async function deleteHetznerVolume(
   projectId: string,
   volumeId: number,
 ): Promise<ServerResponse> {
+  assertResourceId(projectId);
   return doServerActionWithAuth(
     ["hetzner:servers:delete", `hetzner:${projectId}:admin`],
     async (session) => {
@@ -39,6 +41,7 @@ export async function createHetznerVolume(
   projectId: string,
   data: AddHetznerVolumeSchemaType,
 ): Promise<ServerResponse<HetznerVolume>> {
+  assertResourceId(projectId);
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {

@@ -33,12 +33,12 @@ export function buildUserMessage(
   check?: string,
 ): string {
   const lines = [`Caller role: ${state.role}`];
-  if (state.mode) lines.push(`Mode: ${state.mode}`);
+  if (state.mode) lines.push(`Mode: ${escape(state.mode)}`);
   if (state.map) lines.push(`Map: ${escape(state.map)}`);
   if (state.players !== undefined)
     lines.push(`Players online: ${state.players}`);
   if (state.settings?.length)
-    lines.push(`Mode settings: ${state.settings.join(", ")}`);
+    lines.push(`Mode settings: ${state.settings.map(escape).join(", ")}`);
   if (state.tmxTags?.length)
     lines.push(`TMX tags: ${state.tmxTags.map(escape).join(", ")}`);
   const turns = history.map(

@@ -1,4 +1,5 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { downloadFile } from "@/lib/api/nadeo";
@@ -15,6 +16,7 @@ export async function downloadMapFromUrl(
   fileName: string,
   path?: string,
 ): Promise<ServerResponse<string>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -38,7 +40,10 @@ export async function downloadMapFromUrl(
           { url, fileName, path },
           "File manager is not healthy",
         );
-        throw new ServerError("File manager is not healthy", "FileManagerNotHealthy");
+        throw new ServerError(
+          "File manager is not healthy",
+          "FileManagerNotHealthy",
+        );
       }
 
       const file = await downloadFile(url, fileName);
@@ -86,6 +91,7 @@ export async function addMapToServer(
   fileName: string,
   path?: string,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -109,7 +115,10 @@ export async function addMapToServer(
           { url, fileName, path },
           "File manager is not healthy",
         );
-        throw new ServerError("File manager is not healthy", "FileManagerNotHealthy");
+        throw new ServerError(
+          "File manager is not healthy",
+          "FileManagerNotHealthy",
+        );
       }
 
       const { data: file, error } = await downloadMapFromUrl(

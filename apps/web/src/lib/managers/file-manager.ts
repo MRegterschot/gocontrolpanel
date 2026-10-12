@@ -3,6 +3,7 @@ import { ServerError } from "@/types/responses";
 import "server-only";
 import { getClient } from "../dbclient";
 import { reportException } from "../sentry/report";
+import { decryptServerPassword } from "../server-credentials";
 
 const HEALTH_TIMEOUT_MS = 5_000;
 
@@ -28,7 +29,9 @@ export async function getFileManager(serverId: string): Promise<FileManager> {
 
   const fileManager = {
     url: server.filemanagerUrl.replace(/\/+$/, ""),
-    password: server.filemanagerPassword || undefined,
+    password: server.filemanagerPassword
+      ? decryptServerPassword(server.filemanagerPassword)
+      : undefined,
   };
   return { ...fileManager, health: await checkHealth(fileManager) };
 }
@@ -43,6 +46,7 @@ async function checkHealth({
   try {
     const res = await fetch(`${url}/health`, {
       method: "GET",
+      redirect: "error",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${password}`,
@@ -81,4 +85,17 @@ export function fileManagerUrl(baseUrl: string, path: string): string {
 function isDotSegment(segment: string): boolean {
   const decoded = segment.replace(/%2e/gi, ".");
   return decoded === "." || decoded === "..";
+}
+
+// The signal remains active while callers consume/stream the body.
+export function fileManagerFetch(
+  url: string,
+  init: RequestInit = {},
+): Promise<Response> {
+  const deadline = AbortSignal.timeout(120_000);
+  return fetch(url, {
+    ...init,
+    redirect: "error",
+    signal: init.signal ? AbortSignal.any([init.signal, deadline]) : deadline,
+  });
 }

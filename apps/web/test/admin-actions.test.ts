@@ -19,6 +19,9 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("server-only", () => ({}));
+vi.mock("@/lib/server-credentials", () => ({
+  encryptServerPassword: (value: string) => `encrypted:${value}`,
+}));
 vi.mock("@/lib/actions", () => ({
   doServerActionWithAuth: async (
     _roles: string[],
@@ -212,7 +215,7 @@ describe("user actions", () => {
   it("allows granting permissions they hold", async () => {
     await updateUser("other", { admin: false, permissions: ["users:edit"] });
     expect(mocks.users.update).toHaveBeenCalledWith({
-      where: { id: "other" },
+      where: { id: "other", deletedAt: null },
       data: { admin: false, permissions: ["users:edit"] },
     });
   });
@@ -275,4 +278,25 @@ describe("audit log scope", () => {
     });
     expect(adminAuditScope({ user: user() } as never)).toBeNull();
   });
+});
+
+import { deleteUserById } from "@/actions/database/users";
+it("disables deleted accounts without destroying the identity/audit relations", async () => {
+  mocks.session.user = user({ admin: true });
+  await deleteUserById("other");
+  expect(mocks.users.update).toHaveBeenCalledWith({
+    where: { id: "other", deletedAt: null },
+    data: {
+      deletedAt: expect.any(Date),
+      authenticated: false,
+      admin: false,
+      permissions: [],
+    },
+  });
+});
+it("rejects empty scoped IDs before checking any-resource admin permissions", async () => {
+  await expect(updateServer("", { name: "bad" })).rejects.toThrow(
+    "Invalid resource ID",
+  );
+  expect(mocks.servers.update).not.toHaveBeenCalled();
 });

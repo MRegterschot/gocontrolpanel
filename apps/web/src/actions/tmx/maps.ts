@@ -1,4 +1,5 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { actorFromSession } from "@/lib/actor";
@@ -9,6 +10,7 @@ export async function downloadMap(
   serverId: string,
   mapId: number,
 ): Promise<ServerResponse<string>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -24,6 +26,7 @@ export async function addMapToServer(
   serverId: string,
   mapId: number,
 ): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,

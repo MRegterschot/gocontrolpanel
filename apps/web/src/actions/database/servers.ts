@@ -1,4 +1,6 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
+import { encryptServerPassword } from "@/lib/server-credentials";
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import {
@@ -66,9 +68,11 @@ export async function createServer(
             host: input.host,
             port: input.port,
             user: input.user,
-            password: input.password,
+            password: encryptServerPassword(input.password),
             filemanagerUrl: input.filemanagerUrl || null,
-            filemanagerPassword: input.filemanagerPassword || null,
+            filemanagerPassword: input.filemanagerPassword
+              ? encryptServerPassword(input.filemanagerPassword)
+              : null,
             userServers: {
               create: (input.userServers ?? []).map((us) => ({
                 userId: us.userId,
@@ -135,6 +139,7 @@ export async function updateServer(
     >
   >,
 ): Promise<ServerResponse<ServersWithUsers>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     ["servers:edit", `servers:${serverId}:admin`],
     async (session) => {
@@ -177,10 +182,14 @@ export async function updateServer(
               port: input.port,
               user: input.user,
               // An empty password keeps the stored one
-              ...(input.password && { password: input.password }),
+              ...(input.password && {
+                password: encryptServerPassword(input.password),
+              }),
               filemanagerUrl,
               ...(input.filemanagerPassword && {
-                filemanagerPassword: input.filemanagerPassword,
+                filemanagerPassword: encryptServerPassword(
+                  input.filemanagerPassword,
+                ),
               }),
               ...(filemanagerUrl === null && { filemanagerPassword: null }),
               // Memberships are only replaced when the caller sends them
@@ -229,6 +238,7 @@ export async function updateServerChatConfig(
     | "mapListChangeMessage"
   >,
 ): Promise<ServerResponse<Omit<Servers, "password" | "filemanagerPassword">>> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
     async (session) => {
@@ -273,6 +283,7 @@ export async function updateServerChatConfig(
 }
 
 export async function deleteServer(serverId: string): Promise<ServerResponse> {
+  assertResourceId(serverId);
   return doServerActionWithAuth(
     ["servers:delete", `servers:${serverId}:admin`],
     async (session) => {

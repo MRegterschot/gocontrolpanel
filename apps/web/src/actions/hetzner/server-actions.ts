@@ -1,4 +1,5 @@
 "use server";
+import { assertResourceId } from "@/lib/resource-id";
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { connectToSSHServer, executeSSHScript, runSSHScript } from "@/lib/ssh";
@@ -15,6 +16,7 @@ export async function restartTrackmaniaServer(
   serverId: number,
   tmServerNumber: number,
 ) {
+  assertResourceId(projectId);
   return doServerActionWithAuth(
     ["hetzner:servers:manage", `hetzner:${projectId}:admin`],
     async (session) => {
@@ -102,6 +104,7 @@ export async function stopTrackmaniaServer(
   serverId: number,
   tmServerNumber: number,
 ) {
+  assertResourceId(projectId);
   return doServerActionWithAuth(
     ["hetzner:servers:manage", `hetzner:${projectId}:admin`],
     async (session) => {
@@ -190,6 +193,7 @@ export async function updateServerContainers(
   serverId: number,
   target: "filemanager" | "trackmania",
 ): Promise<ServerResponse<{ output: string; success: boolean }>> {
+  assertResourceId(projectId);
   return doServerActionWithAuth(
     ["hetzner:servers:manage", `hetzner:${projectId}:admin`],
     async (session) => {

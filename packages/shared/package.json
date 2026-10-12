@@ -8,7 +8,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./plugin-package": "./src/plugins/package.ts",
-    "./public-fetch": "./src/net/public-fetch.ts"
+    "./public-fetch": "./src/net/public-fetch.ts",
+    "./server-credentials": "./src/crypto/server-credentials.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

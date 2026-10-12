@@ -388,7 +388,11 @@ export async function runCodriver(
   try {
     for (const call of calls) {
       const tool = tools.find((t) => t.name === call.tool)!;
-      const prompt = await tool.confirm?.(ctx, call.input);
+      const prompt =
+        (await tool.confirm?.(ctx, call.input)) ??
+        (tool.readOnly
+          ? null
+          : `Run ${tool.name} with ${JSON.stringify(call.input)}?`);
       if (prompt) prompts.push(prompt);
     }
   } catch (error) {

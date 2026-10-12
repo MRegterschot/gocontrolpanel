@@ -6,24 +6,24 @@ services:
     restart: unless-stopped
     environment:
       NEXTAUTH_URL: http://localhost:3000
-      NEXTAUTH_SECRET: 
-      DEFAULT_ADMINS: 
-      DEFAULT_PERMISSIONS: 
-      NADEO_CLIENT_ID: 
-      NADEO_CLIENT_SECRET: 
+      NEXTAUTH_SECRET:
+      DEFAULT_ADMINS:
+      DEFAULT_PERMISSIONS:
+      NADEO_CLIENT_ID:
+      NADEO_CLIENT_SECRET:
       NADEO_REDIRECT_URI: http://localhost:3000/api/auth/callback/nadeo
-      NADEO_SERVER_LOGIN: 
-      NADEO_SERVER_PASSWORD: 
+      NADEO_SERVER_LOGIN:
+      NADEO_SERVER_PASSWORD:
       NADEO_CONTACT: GoControlPanel / <your contact info>
-      DATABASE_URL: mysql://gocontrolpanel:VettePanel123@db:3306/gocontrolpanel
-      REDIS_URI: redis://redis:6379
-      HETZNER_KEY: 
+      DATABASE_URL: mysql://gocontrolpanel:${MARIADB_PASSWORD:?Set MARIADB_PASSWORD}@db:3306/gocontrolpanel
+      REDIS_URI: redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD}@redis:6379
+      HETZNER_KEY:
       GBX_SERVICE_URL: http://gbx-service:3100
       GBX_SERVICE_WS_URL: ws://localhost:3100 # Must be reachable from the browser
       GBX_SERVICE_TOKEN: # Same value as the GBX service, at least 32 characters
       WS_TICKET_SECRET: # Same value as the GBX service, at least 32 characters
       PANEL_INTERNAL_TOKEN: # Optional, for Codriver: same value as the GBX service, at least 32 characters
-      SECRETS_KEY: # Optional, for Codriver: encrypts stored API keys, at least 32 characters
+      SECRETS_KEY: ${SECRETS_KEY:?Set the same SECRETS_KEY in both services}
       ANTHROPIC_API_KEY: # Optional, fallback Codriver key while none is stored in the panel
       LOG_LEVEL: info
     depends_on:
@@ -34,21 +34,22 @@ services:
   gbx-service:
     image: marijnregterschot/gocontrolpanel-gbx-service:beta # Use marijnregterschot/gocontrolpanel-gbx-service-postgres:beta if you are using PostgreSQL
     ports:
-      - 3100:3100 # WebSockets for the browser; /internal routes require GBX_SERVICE_TOKEN
+      - "127.0.0.1:3100:3100" # Expose browser WebSockets through a TLS reverse proxy
     restart: unless-stopped
     environment:
-      DATABASE_URL: mysql://gocontrolpanel:VettePanel123@db:3306/gocontrolpanel
-      REDIS_URI: redis://redis:6379
+      DATABASE_URL: mysql://gocontrolpanel:${MARIADB_PASSWORD:?Set MARIADB_PASSWORD}@db:3306/gocontrolpanel
+      SECRETS_KEY: ${SECRETS_KEY:?Set the same SECRETS_KEY in both services}
+      REDIS_URI: redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD}@redis:6379
       GBX_SERVICE_TOKEN: # Same value as the web app, at least 32 characters
       WS_TICKET_SECRET: # Same value as the web app, at least 32 characters
       WS_ALLOWED_ORIGINS: http://localhost:3000
       PANEL_INTERNAL_URL: http://gocontrolpanel:3000 # Optional, for Codriver /co commands
       PANEL_INTERNAL_TOKEN: # Same value as the web app, at least 32 characters
-      NADEO_SERVER_LOGIN: 
-      NADEO_SERVER_PASSWORD: 
+      NADEO_SERVER_LOGIN:
+      NADEO_SERVER_PASSWORD:
       NADEO_CONTACT: GoControlPanel / <your contact info>
-      NADEO_CLIENT_ID: 
-      NADEO_CLIENT_SECRET: 
+      NADEO_CLIENT_ID:
+      NADEO_CLIENT_SECRET:
       LOG_LEVEL: info
     depends_on:
       - db
@@ -62,8 +63,8 @@ services:
       - 2350:2350/udp
       - 2350:2350/tcp
     environment:
-      TM_MASTERSERVER_LOGIN: 
-      TM_MASTERSERVER_PASSWORD: 
+      TM_MASTERSERVER_LOGIN:
+      TM_MASTERSERVER_PASSWORD:
       TM_SYSTEM_XMLRPC_ALLOWREMOTE: True
     volumes:
       - user-data:/server/UserData
@@ -78,15 +79,18 @@ services:
     image: mariadb:latest
     restart: unless-stopped
     environment:
-      MARIADB_ROOT_PASSWORD: password_whatever
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?Set MARIADB_ROOT_PASSWORD}
       MARIADB_USER: gocontrolpanel
-      MARIADB_PASSWORD: VettePanel123
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:?Set MARIADB_PASSWORD}
       MARIADB_DATABASE: gocontrolpanel
     volumes:
       - db-data:/var/lib/mysql
 
   redis:
-    image: redis:latest
+    image: redis:7-alpine
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD}
+    command: ["sh", "-c", 'exec redis-server --requirepass "$$REDIS_PASSWORD"']
     restart: unless-stopped
     volumes:
       - redis-data:/data

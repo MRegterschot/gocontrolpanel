@@ -1,7 +1,7 @@
 import { getClient } from "@/lib/dbclient";
-import { Prisma, Users } from "@gcp/db";
 import { getList } from "@/lib/utils";
 import { MinimalServer } from "@/types/auth";
+import { Prisma, Users } from "@gcp/db";
 import "server-only";
 
 const includeGroupsWithServers = Prisma.validator<Prisma.UsersInclude>()({
@@ -31,8 +31,6 @@ const includeGroupsWithServers = Prisma.validator<Prisma.UsersInclude>()({
                   id: true,
                   name: true,
                   description: true,
-                  host: true,
-                  port: true,
                   filemanagerUrl: true,
                 },
               },
@@ -103,8 +101,6 @@ const includeServersAndMembers = Prisma.validator<Prisma.GroupsInclude>()({
           id: true,
           name: true,
           description: true,
-          host: true,
-          port: true,
           filemanagerUrl: true,
         },
       },
@@ -124,6 +120,7 @@ export async function getUserById(
   return await db.users.findUniqueOrThrow({
     where: {
       authenticated: true,
+      deletedAt: null,
       id: userId,
     },
     include: includeGroupsWithServers,
@@ -132,12 +129,11 @@ export async function getUserById(
 
 export async function getUserByLogin(
   login: string,
-): Promise<UsersWithGroupsWithServers> {
+): Promise<UsersWithGroupsWithServers | null> {
   const db = getClient();
 
-  return await db.users.findUniqueOrThrow({
+  return await db.users.findUnique({
     where: {
-      authenticated: true,
       login,
     },
     include: includeGroupsWithServers,
@@ -152,10 +148,12 @@ export async function upsertUserAuth(
   return await db.users.upsert({
     where: {
       login: user.login,
+      deletedAt: null,
     },
     update: {
-      ...user,
-      permissions: getList<string>(user.permissions),
+      authenticated: true,
+      nickName: user.nickName,
+      ubiUid: user.ubiUid,
     },
     create: {
       ...user,
@@ -201,8 +199,6 @@ export async function getPublicGroupsWithServers(): Promise<
               id: true,
               name: true,
               description: true,
-              host: true,
-              port: true,
               filemanagerUrl: true,
             },
           },
@@ -214,7 +210,12 @@ export async function getPublicGroupsWithServers(): Promise<
   return groups.map((group) => ({
     id: group.id,
     name: group.name,
-    servers: group.groupServers.map((gs) => gs.server),
+    servers: group.groupServers.map((gs) => ({
+      id: gs.server.id,
+      name: gs.server.name,
+      description: gs.server.description,
+      hasFileManager: !!gs.server.filemanagerUrl,
+    })),
   }));
 }
 

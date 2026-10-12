@@ -198,13 +198,7 @@ export const routePermissions = {
         "group:servers::admin",
         "hetzner::admin",
       ],
-      delete: [
-        "audit-logs:delete",
-        "servers:id:admin",
-        "groups:id:admin",
-        "group:servers:id:admin",
-        "hetzner:id:admin",
-      ],
+      delete: ["audit-logs:delete"],
     },
   },
 };

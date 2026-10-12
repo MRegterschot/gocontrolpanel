@@ -1,9 +1,6 @@
+import { searchAndImportUser } from "@/actions/database/users";
 import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
-import {
-  getUsersByIds,
-  getUsersByLogins,
-  searchUser,
-} from "@/lib/api-client/database";
+import { getUsersByIds, getUsersByLogins } from "@/lib/api-client/database";
 import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { getErrorMessage } from "@/lib/utils";
 import type { UserMinimal } from "@/services/database/users";
@@ -67,7 +64,7 @@ export function useSearchUsers({
     setSearchError(null);
 
     try {
-      const { data, error } = await searchUser(query);
+      const { data, error } = await searchAndImportUser(query);
       if (error) {
         throw new ServerError(error, "SearchUserError");
       }

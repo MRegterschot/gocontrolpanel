@@ -45,6 +45,7 @@ model Users {
   ubiUid        String?
   permissions   String[] @default([])
   authenticated Boolean  @default(false)
+  deletedAt DateTime?
 
   notifications Notifications[]
   auditLogs     AuditLogs[]
@@ -171,9 +172,9 @@ model Servers {
   host                String
   port                Int
   user                String
-  password            String
+  password            String @db.Text
   filemanagerUrl      String?
-  filemanagerPassword String?
+  filemanagerPassword String? @db.Text
 
   manualRouting     Boolean @default(false)
   messageFormat     String?
