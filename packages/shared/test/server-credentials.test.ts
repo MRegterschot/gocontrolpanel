@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  SERVER_CREDENTIAL_PREFIX,
   decryptServerCredential,
   encryptServerCredential,
 } from "../src/crypto/server-credentials";
@@ -20,10 +21,15 @@ describe("server credential encryption", () => {
     expect(() =>
       decryptServerCredential(encrypted, "different-key-0123456789-0123456789"),
     ).toThrow();
-    const last = encrypted.at(-3) === "A" ? "B" : "A";
+    // Flip a ciphertext byte; editing a base64 char is flaky when it matches the original
+    const bytes = Buffer.from(
+      encrypted.slice(SERVER_CREDENTIAL_PREFIX.length),
+      "base64",
+    );
+    bytes[bytes.length - 1] ^= 1;
     expect(() =>
       decryptServerCredential(
-        encrypted.slice(0, -3) + last + encrypted.slice(-2),
+        SERVER_CREDENTIAL_PREFIX + bytes.toString("base64"),
         key,
       ),
     ).toThrow();

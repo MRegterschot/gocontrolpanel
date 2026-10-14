@@ -76,6 +76,7 @@ jobs:
       DATABASE_URL: postgresql://gcp:gcp@localhost:5432/gcp_test
       INTEGRATION_DATABASE_URL: postgresql://gcp:gcp@localhost:5432/gcp_test
       INTEGRATION_REDIS_URL: redis://localhost:6379
+      SECRETS_KEY: ci-only-secrets-key-0123456789abcdef
 
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
