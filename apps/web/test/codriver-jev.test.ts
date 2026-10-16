@@ -144,11 +144,16 @@ beforeEach(() => {
 describe("Jev fast path", () => {
   it("runs a confident reworded command without the planner", async () => {
     const model = fakeModel();
-    const jev = fakeJev({ command: command("skip_map", 0.97) });
+    const jev = fakeJev({
+      command: command("skip_map", 0.97),
+      explicit: noul(0.95),
+    });
     const outcome = await ask("can we go to another one", model, jev);
     expect(outcome).toMatchObject({ status: "done", fastPath: true });
     expect(outcome.calls).toEqual([{ tool: "skip_map", input: {} }]);
-    expect(outcome.usage).toEqual([jevUsage]);
+    expect(outcome.usage).toEqual([
+      { ...jevUsage, jevOutcome: "fast_explicit" },
+    ]);
     expect(model.plan).not.toHaveBeenCalled();
   });
 
@@ -176,6 +181,7 @@ describe("Jev fast path", () => {
     expect(outcome.fastPath).toBe(false);
     expect(model.plan).toHaveBeenCalledTimes(1);
     expect(outcome.usage.map((u) => u.model)).toEqual([JEV_MODEL, "m"]);
+    expect(outcome.usage[0].jevOutcome).toBe("passed");
   });
 
   it("is not asked about long or multi-part requests", () => {
@@ -207,7 +213,64 @@ describe("Jev fast path", () => {
       fakeModel(plan([{ name: "skip_map", input: {} }])),
       jev,
     );
-    expect(Object.keys(jev.decide.mock.calls[0][1])).toEqual(["command"]);
+    // No route questions, since the keywords already found a route
+    expect(Object.keys(jev.decide.mock.calls[0][1])).toEqual([
+      "command",
+      "explicit",
+    ]);
+  });
+});
+
+describe("Jev explicit orders", () => {
+  const skipTool = defineTool({
+    name: "skip_map",
+    description: "Skip",
+    category: "maps",
+    minRole: "moderator",
+    immediateWhenExplicit: true,
+    input: z.strictObject({}),
+    confirm: () => null,
+    run,
+  });
+  const askSkip = (explicit: number) =>
+    runCodriver(
+      {
+        serverId,
+        actor: actorWithRole("Moderator"),
+        text: "can we go to another one",
+      },
+      {
+        ...options(
+          fakeModel(),
+          fakeJev({
+            command: command("skip_map", 0.97),
+            explicit: noul(explicit),
+          }),
+        ),
+        tools: [skipTool],
+      },
+    );
+
+  it("runs a reworded order at once", async () => {
+    expect(await askSkip(0.95)).toMatchObject({ status: "done" });
+  });
+
+  it("still asks when the request is a question or a wish", async () => {
+    const outcome = await askSkip(0.3);
+    expect(outcome).toMatchObject({
+      status: "needs_confirmation",
+      fastPath: true,
+    });
+    expect(run).not.toHaveBeenCalled();
+  });
+
+  it("asks the explicit question together with the command question", async () => {
+    const jev = fakeJev({ command: command("other", 0.9) });
+    await askJev(jev, "skip please", { route: false, fast: true });
+    expect(Object.keys(jev.decide.mock.calls[0][1])).toEqual([
+      "command",
+      "explicit",
+    ]);
   });
 });
 
@@ -258,7 +321,12 @@ describe("Jev fallback routing", () => {
     const jev = { decide: vi.fn().mockRejectedValue(new Error("timeout")) };
     const outcome = await ask("yo shout hi", model, jev);
     expect(outcome.status).toBe("done");
-    expect(outcome.usage).toHaveLength(2);
+    // The planner's two calls, plus a zero-cost entry that records the failed Jev call
+    expect(outcome.usage.map((u) => u.jevOutcome)).toEqual([
+      "failed",
+      undefined,
+      undefined,
+    ]);
     expect(mocks.warn).toHaveBeenCalled();
   });
 });

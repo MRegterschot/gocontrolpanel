@@ -7,11 +7,21 @@ export const CODRIVER_MODELS = {
   sonnet: "claude-sonnet-5-5",
 } as const;
 
+// What a Jev call changed for the request; "failed" is a call that errored or timed out
+export type JevOutcome =
+  | "fast_explicit"
+  | "fast"
+  | "routed"
+  | "passed"
+  | "failed";
+
 export interface ModelUsage {
   model: string;
   inputTokens: number;
   outputTokens: number;
   cacheReadTokens: number;
+  // Jev entries only
+  jevOutcome?: JevOutcome;
 }
 
 export interface ModelPlan {

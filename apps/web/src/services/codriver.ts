@@ -1,11 +1,13 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { actorForLogin } from "@/lib/actor";
 import { availability, resolveAccess } from "@/lib/codriver/access";
+import { accessLevel } from "@/lib/codriver/access-level";
 import {
   codriverChatPermissions,
   panelChatActor,
   requireActiveServer,
 } from "@/lib/codriver/panel-access";
+import { codriverTools } from "@/lib/codriver/registry";
 import { resolveRole } from "@/lib/codriver/roles";
 import {
   loadAccessInput,
@@ -129,6 +131,7 @@ export async function checkCodriverAccess(
             keySource: decision.keySource,
             primaryModel: decision.primaryModel,
             escalationModel: decision.escalationModel,
+            access: accessLevel(role, codriverTools),
           }
         : {
             role,
@@ -138,6 +141,7 @@ export async function checkCodriverAccess(
             keySource: null,
             primaryModel: null,
             escalationModel: null,
+            access: null,
           };
     },
   );
@@ -285,6 +289,8 @@ async function readRequests(
       inputTokens: row.inputTokens,
       outputTokens: row.outputTokens,
       cacheReadTokens: row.cacheReadTokens,
+      jevOutcome: row.jevOutcome as CodriverRequestRow["jevOutcome"],
+      jevInputTokens: row.jevInputTokens,
       costMicros: row.costMicros,
       latencyMs: row.latencyMs,
       createdAt: row.createdAt,

@@ -75,6 +75,9 @@ const MAX_FAST_WORDS = 8;
 
 const ROUTE_PREFIX = "route_";
 const FAST_KEY = "command";
+const EXPLICIT_KEY = "explicit";
+// An order, unlike a question or a wish, may skip the confirmation of tools that allow it
+export const JEV_EXPLICIT_THRESHOLD = 0.9;
 
 export function wantsJevFastPath(text: string): boolean {
   const words = normalize(text).split(" ").filter(Boolean);
@@ -92,6 +95,8 @@ export interface JevDecision {
   fast: PlannedCall | null;
   fastOption?: string;
   fastProbability?: number;
+  // The player gave an order rather than asking or wishing; only set with `fast`
+  explicit: boolean;
   usage: ModelUsage | null;
 }
 
@@ -123,13 +128,28 @@ export async function askJev(
           "Anything else, including requests that name a map, player, plugin, setting or value, ask several things, or are not a command",
       },
     };
+    questions[EXPLICIT_KEY] = {
+      type: "noul",
+      instructions:
+        "Is the player ordering this to happen right now, as an imperative?",
+      criteria: {
+        true: "A direct order, such as 'skip', 'next map please' or 'restart this map'",
+        false:
+          "A question, suggestion, wish or remark, such as 'should we skip?', 'can we restart?', 'this map is boring' or 'maybe skip it'",
+      },
+    };
   }
   if (Object.keys(questions).length === 0) {
-    return { categories: null, fast: null, usage: null };
+    return { categories: null, fast: null, explicit: false, usage: null };
   }
 
   const { answers, usage } = await classifier.decide(text, questions);
-  const decision: JevDecision = { categories: null, fast: null, usage };
+  const decision: JevDecision = {
+    categories: null,
+    fast: null,
+    explicit: false,
+    usage,
+  };
 
   if (want.route) {
     const probabilities: Partial<Record<ToolCategory, number>> = {};
@@ -154,6 +174,11 @@ export async function askJev(
       if (option && probability >= JEV_FAST_THRESHOLD)
         decision.fast = option.call;
     }
+    const explicit = answers[EXPLICIT_KEY];
+    decision.explicit =
+      !!decision.fast &&
+      explicit?.type === "noul" &&
+      explicit.noul >= JEV_EXPLICIT_THRESHOLD;
   }
   return decision;
 }

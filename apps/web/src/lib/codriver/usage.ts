@@ -21,6 +21,22 @@ const prices: Record<
 // Jev classifies before planning; it counts towards cost but not towards model calls
 const isPlanner = (call: ModelUsage) => call.model !== JEV_MODEL;
 
+// The most telling outcome when several Jev calls ran, as in a request split into steps
+const jevOutcomeOrder = ["fast_explicit", "fast", "routed", "failed", "passed"];
+
+function jevSummary(usage: ModelUsage[]) {
+  const calls = usage.filter((call) => !isPlanner(call));
+  const outcome = jevOutcomeOrder.find((candidate) =>
+    calls.some((call) => call.jevOutcome === candidate),
+  );
+  return {
+    jevOutcome: outcome ?? null,
+    jevInputTokens: outcome
+      ? calls.reduce((sum, call) => sum + call.inputTokens, 0)
+      : null,
+  };
+}
+
 export function costMicros(usage: ModelUsage[]): number {
   return Math.round(
     usage.reduce((total, call) => {
@@ -146,6 +162,7 @@ export async function recordRequest(record: RequestRecord): Promise<number> {
         (sum, call) => sum + call.cacheReadTokens,
         0,
       ),
+      ...jevSummary(record.usage),
       costMicros: cost,
       latencyMs: record.latencyMs,
     },

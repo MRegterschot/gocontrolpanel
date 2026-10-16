@@ -50,6 +50,13 @@ export interface CodriverAccessCheck {
   keySource: "server" | "shared" | null;
   primaryModel: string | null;
   escalationModel: string | null;
+  // What the role may do; null when access is refused
+  access: {
+    level: "read" | "partial" | "full";
+    tools: number;
+    changing: number;
+    total: number;
+  } | null;
 }
 
 export interface CodriverServerOverview {
@@ -94,6 +101,9 @@ export interface CodriverRequestRow {
   inputTokens: number;
   outputTokens: number;
   cacheReadTokens: number;
+  // Null when Jev was not asked
+  jevOutcome: "fast_explicit" | "fast" | "routed" | "passed" | "failed" | null;
+  jevInputTokens: number | null;
   costMicros: number;
   latencyMs: number;
   createdAt: Date;

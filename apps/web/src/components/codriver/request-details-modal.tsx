@@ -19,6 +19,17 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 
 const dash = <span className="text-muted-foreground">-</span>;
 
+const jevLabels: Record<
+  NonNullable<CodriverRequestRow["jevOutcome"]>,
+  string
+> = {
+  fast_explicit: "Ran the command as an explicit order, without Claude",
+  fast: "Recognised the command, which then asked for confirmation",
+  routed: "Chose the tool areas for the planner",
+  passed: "Asked, but left the request to the planner",
+  failed: "Failed or timed out, keyword routing was used",
+};
+
 export default function RequestDetailsModal({
   data: row,
 }: DefaultModalProps<CodriverRequestRow>) {
@@ -75,6 +86,20 @@ export default function RequestDetailsModal({
           </Field>
           <Field label="Cache read">{row.cacheReadTokens}</Field>
           <Field label="Cost">${(row.costMicros / 1_000_000).toFixed(4)}</Field>
+          <Field label="Jev">
+            {row.jevOutcome ? (
+              <>
+                {jevLabels[row.jevOutcome]}
+                {row.jevInputTokens ? (
+                  <span className="block text-xs text-muted-foreground">
+                    {row.jevInputTokens} input tokens
+                  </span>
+                ) : null}
+              </>
+            ) : (
+              dash
+            )}
+          </Field>
         </div>
       </div>
     </ModalContent>

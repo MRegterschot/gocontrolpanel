@@ -895,4 +895,44 @@ describe("mutation confirmation boundary", () => {
       expect(mutate).not.toHaveBeenCalled();
     },
   );
+
+  describe("immediateWhenExplicit", () => {
+    const skip = (confirm?: () => string | null) =>
+      defineTool({
+        name: "skip_map",
+        description: "Skip",
+        category: "maps",
+        minRole: "moderator",
+        immediateWhenExplicit: true,
+        input: z.strictObject({}),
+        confirm,
+        run: vi.fn().mockResolvedValue({ reply: "Skipped" }),
+      });
+    const ask = (
+      text: string,
+      model: CodriverModel,
+      confirm?: () => null | string,
+    ) =>
+      runCodriver(
+        { serverId, actor: actorWithRole("Moderator"), text },
+        options(model, { tools: [skip(confirm)] }),
+      );
+
+    it("runs an exact command at once", async () => {
+      const result = await ask("skip", fakeModel(), () => null);
+      expect(result).toMatchObject({ status: "done", reply: "Skipped" });
+    });
+
+    it("still asks when the tool's own confirm has a prompt", async () => {
+      const result = await ask("skip", fakeModel(), () => "For everyone?");
+      expect(result.status).toBe("needs_confirmation");
+      expect(result.reply).toContain("For everyone?");
+    });
+
+    it("asks for a request the planner worked out, which is not known to be an order", async () => {
+      const model = fakeModel(plan([{ name: "skip_map", input: {} }]));
+      const result = await ask("skip this map please", model, () => null);
+      expect(result.status).toBe("needs_confirmation");
+    });
+  });
 });

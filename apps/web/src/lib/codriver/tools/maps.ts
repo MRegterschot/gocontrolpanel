@@ -184,6 +184,7 @@ export const jumpToMap = defineTool({
 
 export const skipMap = defineTool({
   name: "skip_map",
+  immediateWhenExplicit: true,
   description: "Skip to the next map.",
   category: "maps",
   minRole: "moderator",
@@ -208,6 +209,7 @@ export const skipMap = defineTool({
 
 export const restartMap = defineTool({
   name: "restart_map",
+  immediateWhenExplicit: true,
   description: "Restart the current map.",
   category: "maps",
   minRole: "moderator",

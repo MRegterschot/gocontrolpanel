@@ -7,11 +7,13 @@ import type { Turn } from "./conversation";
 import { emitAction } from "./events";
 import { parseFastPath } from "./fast-path";
 import { askJev, wantsJevFastPath } from "./jev";
-import type {
-  CodriverModel,
-  JevClassifier,
-  ModelPlan,
-  ModelUsage,
+import {
+  type CodriverModel,
+  JEV_MODEL,
+  type JevClassifier,
+  type JevOutcome,
+  type ModelPlan,
+  type ModelUsage,
 } from "./model";
 import { modeKey, modeSettings } from "./modes";
 import { notify, type ProgressListener, runningProgress } from "./progress";
@@ -158,20 +160,31 @@ export async function runCodriver(
 
   // Exact commands skip the model but get the same checks
   let fast = parseFastPath(text);
+  // Exact commands are orders by definition; Jev has to judge reworded ones
+  let explicit = !!fast;
   let routed = fast ? null : routeRequest(text);
   if (routed && options.classifier) {
     const want = { route: routed.fallback, fast: wantsJevFastPath(text) };
     if (want.route || want.fast) {
       try {
         const jev = await askJev(options.classifier, text, want);
-        if (jev.usage) usage.push(jev.usage);
+        const jevOutcome: JevOutcome = jev.fast
+          ? jev.explicit
+            ? "fast_explicit"
+            : "fast"
+          : jev.categories
+            ? "routed"
+            : "passed";
+        if (jev.usage) usage.push({ ...jev.usage, jevOutcome });
         if (jev.fast) {
           fast = jev.fast;
+          explicit = jev.explicit;
           log.info(
             {
               jev: "fast",
               option: jev.fastOption,
               probability: jev.fastProbability,
+              explicit: jev.explicit,
             },
             "Jev took the fast path",
           );
@@ -193,6 +206,13 @@ export async function runCodriver(
         }
       } catch (error) {
         // Every Jev failure keeps the keyword route
+        usage.push({
+          model: JEV_MODEL,
+          inputTokens: 0,
+          outputTokens: 0,
+          cacheReadTokens: 0,
+          jevOutcome: "failed",
+        });
         log.warn({ err: error }, "Jev could not classify the request");
       }
     }
@@ -437,7 +457,7 @@ export async function runCodriver(
       const tool = tools.find((t) => t.name === call.tool)!;
       const prompt =
         (await tool.confirm?.(ctx, call.input)) ??
-        (tool.readOnly
+        (tool.readOnly || (explicit && tool.immediateWhenExplicit)
           ? null
           : `Run ${tool.name} with ${JSON.stringify(call.input)}?`);
       if (prompt) prompts.push(prompt);

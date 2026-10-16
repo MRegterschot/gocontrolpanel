@@ -19,6 +19,12 @@ import { getErrorMessage } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
+const accessLabels = {
+  read: "Read only",
+  partial: "Partial access",
+  full: "Full access",
+};
+
 export default function PanelAccessCheckCard() {
   const [serverId, setServerId] = useState("");
   const [login, setLogin] = useState("");
@@ -99,6 +105,20 @@ export default function PanelAccessCheckCard() {
             <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1">
               <dt className="text-muted-foreground">Player role</dt>
               <dd className="capitalize">{result.role}</dd>
+              <dt className="text-muted-foreground">Access</dt>
+              <dd>
+                {result.access ? (
+                  <>
+                    {accessLabels[result.access.level]}
+                    <span className="block text-xs text-muted-foreground">
+                      {result.access.tools} of {result.access.total} tools,{" "}
+                      {result.access.changing} can change things
+                    </span>
+                  </>
+                ) : (
+                  "—"
+                )}
+              </dd>
               <dt className="text-muted-foreground">Key source</dt>
               <dd>{result.keySource ?? "—"}</dd>
               <dt className="text-muted-foreground">Models</dt>

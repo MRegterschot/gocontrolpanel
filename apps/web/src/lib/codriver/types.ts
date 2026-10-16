@@ -40,6 +40,9 @@ export interface ToolResult {
 export interface CodriverTool<S extends z.ZodType = z.ZodType> {
   name: string;
   readOnly?: boolean;
+  // An explicit order for this tool (an exact command, or one Jev judges to be an order) skips
+  // the default confirmation; the tool's own confirm() still applies
+  immediateWhenExplicit?: boolean;
   // One line; sent to the model
   description: string;
   category: ToolCategory;
