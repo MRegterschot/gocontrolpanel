@@ -17,6 +17,7 @@ export const PanelSettingsSchema = z.object({
     .int("Must be a whole number")
     .min(1, "At least 1 day")
     .max(3650, "At most 3650 days"),
+  jevEnabled: z.boolean(),
 });
 
 export type PanelSettingsSchemaType = z.infer<typeof PanelSettingsSchema>;

@@ -6,7 +6,7 @@ import ConfirmModal from "@/components/modals/confirm-modal";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { getErrorMessage } from "@/lib/utils";
-import { ServerError } from "@/types/responses";
+import { ServerError, type ServerResponse } from "@/types/responses";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -18,12 +18,25 @@ import {
   PanelSharedKeySchemaType,
 } from "./panel-shared-key-schema";
 
+// Defaults to the shared Anthropic key; the Jev card passes its own key's details
 export default function PanelSharedKeyForm({
   canStoreKeys,
   hasKey,
+  save = setCodriverSharedKey,
+  name = "Shared API key",
+  label = "Anthropic API key",
+  placeholder = "sk-ant-...",
+  removeTitle = "Remove the shared API key?",
+  removeDescription = "Codriver stops using the shared key until a new one is stored. Servers with their own key keep working.",
 }: {
   canStoreKeys: boolean;
   hasKey: boolean;
+  save?: (key: string | null) => Promise<ServerResponse>;
+  name?: string;
+  label?: string;
+  placeholder?: string;
+  removeTitle?: string;
+  removeDescription?: string;
 }) {
   const queryClient = useQueryClient();
   const [confirmRemove, setConfirmRemove] = useState(false);
@@ -36,13 +49,13 @@ export default function PanelSharedKeyForm({
 
   async function onSubmit(values: PanelSharedKeySchemaType) {
     try {
-      const { error } = await setCodriverSharedKey(values.key);
+      const { error } = await save(values.key);
       if (error) {
         throw new ServerError(error, "SetCodriverKeyError");
       }
       form.reset({ key: "" });
       await invalidateCodriverPanel(queryClient);
-      toast.success("Shared API key saved");
+      toast.success(`${name} saved`);
     } catch (error) {
       toast.error("Failed to save the API key", {
         description: getErrorMessage(error),
@@ -53,12 +66,12 @@ export default function PanelSharedKeyForm({
   async function onRemove() {
     setRemoving(true);
     try {
-      const { error } = await setCodriverSharedKey(null);
+      const { error } = await save(null);
       if (error) {
         throw new ServerError(error, "RemoveCodriverKeyError");
       }
       await invalidateCodriverPanel(queryClient);
-      toast.success("Shared API key removed");
+      toast.success(`${name} removed`);
     } catch (error) {
       toast.error("Failed to remove the API key", {
         description: getErrorMessage(error),
@@ -78,8 +91,8 @@ export default function PanelSharedKeyForm({
           <FormElement
             name="key"
             type="password"
-            label="Anthropic API key"
-            placeholder="sk-ant-..."
+            label={label}
+            placeholder={placeholder}
             isDisabled={!canStoreKeys}
             rootClassName="flex-1 min-w-64"
           />
@@ -107,8 +120,8 @@ export default function PanelSharedKeyForm({
         isOpen={confirmRemove}
         onClose={() => setConfirmRemove(false)}
         onConfirm={onRemove}
-        title="Remove the shared API key?"
-        description="Codriver stops using the shared key until a new one is stored. Servers with their own key keep working."
+        title={removeTitle}
+        description={removeDescription}
         confirmText="Remove"
         cancelText="Cancel"
       />

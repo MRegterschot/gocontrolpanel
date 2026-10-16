@@ -138,6 +138,8 @@ function accessInput(overrides = {}) {
       sharedMonthlyBudgetCents: null,
       allowServerKeys: false,
       userMode: "everyone",
+      jevEnabled: false,
+      jevApiKey: null,
     },
     serverRule: {
       effect: "allow",
@@ -159,6 +161,7 @@ function accessInput(overrides = {}) {
     },
     role: "moderator",
     envApiKey: "",
+    envJevApiKey: "",
     retentionDays: 90,
     ...overrides,
   };

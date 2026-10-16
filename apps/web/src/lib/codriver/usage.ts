@@ -3,7 +3,7 @@ import { getLogger } from "@/lib/logger";
 import type { Prisma } from "@gcp/db";
 import "server-only";
 import type { Budget, BudgetScope } from "./access";
-import { CODRIVER_MODELS, type ModelUsage } from "./model";
+import { CODRIVER_MODELS, JEV_MODEL, type ModelUsage } from "./model";
 import type { PlannedCall } from "./types";
 
 // Dollars per million tokens, which is the same number as micro-dollars per token.
@@ -14,7 +14,12 @@ const prices: Record<
 > = {
   [CODRIVER_MODELS.haiku]: { input: 0.1, output: 0.5, cacheRead: 0.01 },
   [CODRIVER_MODELS.sonnet]: { input: 2, output: 10, cacheRead: 0.2 },
+  // Jev only charges for input
+  [JEV_MODEL]: { input: 0.042, output: 0, cacheRead: 0 },
 };
+
+// Jev classifies before planning; it counts towards cost but not towards model calls
+const isPlanner = (call: ModelUsage) => call.model !== JEV_MODEL;
 
 export function costMicros(usage: ModelUsage[]): number {
   return Math.round(
@@ -120,7 +125,8 @@ export interface RequestRecord {
 
 export async function recordRequest(record: RequestRecord): Promise<number> {
   const cost = costMicros(record.usage);
-  const last = record.usage.at(-1);
+  const planner = record.usage.filter(isPlanner);
+  const last = planner.at(-1);
   await getClient().codriverRequests.create({
     data: {
       serverId: record.serverId,
@@ -133,16 +139,10 @@ export async function recordRequest(record: RequestRecord): Promise<number> {
       status: record.status,
       keySource: record.keySource,
       model: last?.model ?? null,
-      modelCalls: record.usage.length,
-      inputTokens: record.usage.reduce(
-        (sum, call) => sum + call.inputTokens,
-        0,
-      ),
-      outputTokens: record.usage.reduce(
-        (sum, call) => sum + call.outputTokens,
-        0,
-      ),
-      cacheReadTokens: record.usage.reduce(
+      modelCalls: planner.length,
+      inputTokens: planner.reduce((sum, call) => sum + call.inputTokens, 0),
+      outputTokens: planner.reduce((sum, call) => sum + call.outputTokens, 0),
+      cacheReadTokens: planner.reduce(
         (sum, call) => sum + call.cacheReadTokens,
         0,
       ),

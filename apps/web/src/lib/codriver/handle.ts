@@ -8,7 +8,12 @@ import { notifyBudgetCrossings, notifyKeyRejected } from "./alerts";
 import { appendTurn, loadTurns } from "./conversation";
 import { parseFastPath } from "./fast-path";
 import { parseFeedback, saveFeedback } from "./feedback";
-import { type CodriverModel, createAnthropicModel } from "./model";
+import {
+  type CodriverModel,
+  createAnthropicModel,
+  createJevClassifier,
+  type JevClassifier,
+} from "./model";
 import {
   clearPending,
   savePending,
@@ -53,12 +58,15 @@ export interface CodriverMessage {
 // Tests replace the model and the clock
 export interface HandleDeps {
   createModel(apiKey: string): CodriverModel;
+  // Left out in tests that don't cover Jev, which keeps routing keyword-only
+  createClassifier?(apiKey: string): JevClassifier;
   now(): number;
   random(): number;
 }
 
 const defaultDeps: HandleDeps = {
   createModel: createAnthropicModel,
+  createClassifier: createJevClassifier,
   now: Date.now,
   random: Math.random,
 };
@@ -82,6 +90,10 @@ export async function handleCodriverRequest(
     const models = [access.primaryModel, access.escalationModel].filter(
       (model): model is string => model !== null,
     );
+    const classifier =
+      access.jevApiKey && deps.createClassifier
+        ? deps.createClassifier(access.jevApiKey)
+        : undefined;
 
     const record = (
       status: Parameters<typeof recordRequest>[0]["status"],
@@ -232,6 +244,7 @@ export async function handleCodriverRequest(
               model: deps.createModel(access.apiKey),
               primaryModel: access.primaryModel,
               escalationModel: access.escalationModel,
+              classifier,
             },
             steps.steps,
             { done, turns },
@@ -312,6 +325,7 @@ export async function handleCodriverRequest(
         model: deps.createModel(access.apiKey),
         primaryModel: access.primaryModel,
         escalationModel: access.escalationModel,
+        classifier,
       };
 
       let outcome;

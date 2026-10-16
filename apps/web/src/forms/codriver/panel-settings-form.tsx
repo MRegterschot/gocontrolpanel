@@ -39,6 +39,7 @@ export default function PanelSettingsForm({
       allowServerKeys: settings.allowServerKeys,
       userMode: settings.userMode,
       retentionDays: settings.retentionDays,
+      jevEnabled: settings.jevEnabled,
     },
   });
 
@@ -51,6 +52,7 @@ export default function PanelSettingsForm({
         allowServerKeys: values.allowServerKeys,
         userMode: values.userMode,
         retentionDays: values.retentionDays,
+        jevEnabled: values.jevEnabled,
       });
       if (error) {
         throw new ServerError(error, "SaveCodriverSettingsError");
@@ -114,6 +116,12 @@ export default function PanelSettingsForm({
           tooltip="How long Codriver keeps its request history: what players asked, which actions ran, and the tokens and cost. Older requests are deleted, except this month's, which budgets need."
           min={1}
           max={3650}
+        />
+        <FormElement
+          name="jevEnabled"
+          type="checkbox"
+          label="Route requests with TypeSafe Jev"
+          tooltip="Jev picks the tool areas for requests no keyword matches, and runs short reworded commands such as skip or restart without a Claude call. Player requests are sent to TypeSafe, so tell your players before turning this on. Needs a TypeSafe key below."
         />
         <Button
           type="submit"

@@ -188,7 +188,8 @@ export default function PanelRuleForm({
             <FormElement
               name="useSharedKey"
               type="checkbox"
-              label="Use the shared key"
+              label="Use the shared keys"
+              tooltip="The panel's Anthropic key, and its TypeSafe key when Jev routing is on. A server with its own Anthropic key keeps using that one."
             />
             <FormElement
               name="budgetDollars"

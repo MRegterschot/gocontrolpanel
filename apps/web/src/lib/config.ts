@@ -43,6 +43,8 @@ const config: Config = {
     INTERNAL_TOKEN: process.env.PANEL_INTERNAL_TOKEN || "",
     // Development fallback for the shared key when the operator has not stored one
     API_KEY: process.env.ANTHROPIC_API_KEY || "",
+    // Development fallback for the Jev key, used only while Jev routing is turned on
+    JEV_API_KEY: process.env.TYPESAFE_API_KEY || "",
   },
   MARKETPLACE: {
     INDEX_URL:

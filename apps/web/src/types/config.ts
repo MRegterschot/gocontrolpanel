@@ -29,6 +29,7 @@ export interface Config {
   CODRIVER: {
     INTERNAL_TOKEN: string;
     API_KEY: string;
+    JEV_API_KEY: string;
   };
   MARKETPLACE: {
     // Empty turns browsing the marketplace off; uploading plugins keeps working

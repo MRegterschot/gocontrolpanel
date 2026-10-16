@@ -94,9 +94,12 @@ export async function getCodriverPanelOverview(): Promise<
           allowServerKeys: panel?.allowServerKeys ?? false,
           userMode: panel?.userMode ?? "everyone",
           retentionDays: panel?.retentionDays ?? 90,
+          jevEnabled: panel?.jevEnabled ?? false,
+          jevKeyHint: panel?.jevApiKey ? secretHint(panel.jevApiKey) : null,
         },
         canStoreKeys: canStoreSecrets(),
         envKeyFallback: !!config.CODRIVER.API_KEY,
+        envJevKeyFallback: !!config.CODRIVER.JEV_API_KEY,
         rules: await ruleRows(),
         sharedSpentMicrosThisMonth: await spentMicros("shared-global", ""),
       };

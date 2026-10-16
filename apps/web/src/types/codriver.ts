@@ -22,11 +22,15 @@ export interface CodriverPanelOverview {
     allowServerKeys: boolean;
     userMode: "everyone" | "allowlist";
     retentionDays: number;
+    jevEnabled: boolean;
+    jevKeyHint: string | null;
   };
   // SECRETS_KEY is set, so keys can be stored
   canStoreKeys: boolean;
   // ANTHROPIC_API_KEY is set and used while no shared key is stored
   envKeyFallback: boolean;
+  // TYPESAFE_API_KEY is set and used while no Jev key is stored
+  envJevKeyFallback: boolean;
   rules: CodriverRuleRow[];
   sharedSpentMicrosThisMonth: number;
 }

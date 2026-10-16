@@ -10,7 +10,6 @@ import CodriverHistoryCard from "./history-card";
 import PanelAccessCheckCard from "./panel-access-check-card";
 import PanelRulesCard from "./panel-rules-card";
 import PanelSettingsCard from "./panel-settings-card";
-import PanelSharedKeyCard from "./panel-shared-key-card";
 import CodriverUsageCard from "./usage-card";
 
 export default function PanelCodriver() {
@@ -43,7 +42,6 @@ export default function PanelCodriver() {
         {canEdit && (
           <>
             <PanelSettingsCard overview={data} />
-            <PanelSharedKeyCard overview={data} />
             <PanelRulesCard rules={data.rules} />
           </>
         )}

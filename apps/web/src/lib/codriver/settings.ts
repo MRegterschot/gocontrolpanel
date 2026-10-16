@@ -57,6 +57,8 @@ export async function loadPanelSettings(): Promise<
     allowServerKeys: row.allowServerKeys,
     userMode: row.userMode,
     retentionDays: row.retentionDays,
+    jevEnabled: row.jevEnabled,
+    jevApiKey: decryptOrNull(row.jevApiKeyEncrypted, "Jev key"),
   };
 }
 
@@ -131,6 +133,7 @@ export async function loadAccessInput(
     server,
     role,
     envApiKey: config.CODRIVER.API_KEY,
+    envJevApiKey: config.CODRIVER.JEV_API_KEY,
     retentionDays: panel?.retentionDays ?? 90,
   };
 }

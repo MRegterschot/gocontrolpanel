@@ -478,6 +478,8 @@ model CodriverPanelSettings {
   allowServerKeys          Boolean          @default(false)
   userMode                 CodriverUserMode @default(everyone)
   retentionDays            Int              @default(90)
+  jevEnabled               Boolean          @default(false)
+  jevApiKeyEncrypted       String?          @db.LongText
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

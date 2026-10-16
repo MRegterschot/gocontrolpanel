@@ -6,7 +6,13 @@ import { looksIncomplete, missedAreas } from "./completeness";
 import type { Turn } from "./conversation";
 import { emitAction } from "./events";
 import { parseFastPath } from "./fast-path";
-import type { CodriverModel, ModelPlan, ModelUsage } from "./model";
+import { askJev, wantsJevFastPath } from "./jev";
+import type {
+  CodriverModel,
+  JevClassifier,
+  ModelPlan,
+  ModelUsage,
+} from "./model";
 import { modeKey, modeSettings } from "./modes";
 import { notify, type ProgressListener, runningProgress } from "./progress";
 import {
@@ -71,6 +77,8 @@ export interface CodriverOptions {
   getTmxTags?: () => Promise<string[]>;
   // False keeps the templated reply instead of having the model word it
   compose?: boolean;
+  // Routes keyword misses and recognises reworded commands; without it routing is keyword-only
+  classifier?: JevClassifier;
 }
 
 export type CodriverStatus =
@@ -149,7 +157,46 @@ export async function runCodriver(
   }
 
   // Exact commands skip the model but get the same checks
-  const fast = parseFastPath(text);
+  let fast = parseFastPath(text);
+  let routed = fast ? null : routeRequest(text);
+  if (routed && options.classifier) {
+    const want = { route: routed.fallback, fast: wantsJevFastPath(text) };
+    if (want.route || want.fast) {
+      try {
+        const jev = await askJev(options.classifier, text, want);
+        if (jev.usage) usage.push(jev.usage);
+        if (jev.fast) {
+          fast = jev.fast;
+          log.info(
+            {
+              jev: "fast",
+              option: jev.fastOption,
+              probability: jev.fastProbability,
+            },
+            "Jev took the fast path",
+          );
+        } else if (jev.categories) {
+          routed = { categories: jev.categories, fallback: false };
+          log.info(
+            { jev: "route", probabilities: jev.routeProbabilities },
+            "Jev routed the request",
+          );
+        } else {
+          log.info(
+            {
+              option: jev.fastOption,
+              probability: jev.fastProbability,
+              probabilities: jev.routeProbabilities,
+            },
+            "Jev left the request to the planner",
+          );
+        }
+      } catch (error) {
+        // Every Jev failure keeps the keyword route
+        log.warn({ err: error }, "Jev could not classify the request");
+      }
+    }
+  }
   let calls: PlannedCall[];
   // What the model said it could not do, shown next to the result
   let note = "";
@@ -173,7 +220,7 @@ export async function runCodriver(
       );
     calls = [{ tool: fast.tool, input: parsed.data }];
   } else {
-    const route = routeRequest(text);
+    const route = routed!;
     const categories = route.categories;
     const offeredFor = (wanted: readonly string[]) =>
       new Map(

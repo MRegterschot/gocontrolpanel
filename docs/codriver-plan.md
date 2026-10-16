@@ -284,6 +284,7 @@ Controls: fast path, keyword tool routing, templated replies, one call per comma
 - Strip Trackmania formatting codes and limit length of anything echoed into chat.
 - Never act on a player with a higher role than the caller.
 - Passwords and keys are not readable through any tool.
+- With Jev routing on, the text of player requests also goes to TypeSafe (see "Jev routing"). It is off by default; tell players before turning it on.
 - Full audit through `logAudit` plus `CodriverRequests`.
 
 ## 15. Observability
@@ -384,3 +385,20 @@ After tools that change something have run, the primary model gets one short ext
 ## TMX tags
 
 Maps and mappacks on Trackmania Exchange are found by style through tags (`GET /api/meta/tags`, 72 of them such as Tech, FullSpeed, RPG, Dirt, SnowCar). The search accepts `tag=<ids>` for both maps and mappacks; several ids are an OR unless `taginclusive=true` is added, which Codriver always does so that "tech fullspeed" means both. When a TMX tool is offered the prompt lists the tag names (cached for a day), and the model passes `tags`; they are matched to ids in code and an unknown or ambiguous tag is reported to the player. `add_tmx_mappack` also takes `tags` and then picks one of the hits at random.
+
+## Jev routing
+
+Optional, off by default. TypeSafe's Jev model (`POST https://api.typesafe.ai/v1/systemone`, pinned to `jev-1.13.0` because thresholds are tuned against one version) answers typed questions about the request text in one call before planning:
+
+- **Fallback router:** when no keyword matches, one Noul question per tool category. Categories at 0.5 or above are offered to the planner and count as a real route, so the guessed-route retry with every tool is skipped. If none passes, the keyword fallback stays.
+- **Fast path for reworded commands:** for requests of at most eight words without "and", "then" or "also" that are not exact commands, one Choice question over the argument-free commands (skip, restart, pause, unpause, clear jukebox, status, mode settings, list and reload plugins, help) plus `other`. At 0.9 or above the command runs without Claude, through the same role, validation and confirmation checks as an exact command.
+
+Each call has a 1.5 s timeout and no retries; any error keeps today's behaviour. The operator turns it on under Admin → Codriver and stores a separate TypeSafe key (encrypted like the Anthropic keys, checked through `GET /v1/models`). `TYPESAFE_API_KEY` is a development fallback while Jev is on and no key is stored. Like the shared Anthropic key, the Jev key is only used on servers whose access rule allows the shared keys, including servers that bring their own Anthropic key. Jev's cost (input tokens only, $0.042 per million) is added to the request's `costMicros` and budgets; it is not counted in `modelCalls` or the token columns. Logs record each Jev decision with its probabilities so the thresholds can be tuned.
+
+Check routing and the fast path without Claude calls (needs `TYPESAFE_API_KEY`):
+
+```sh
+bun run --filter @gcp/web codriver:eval --jev --output /tmp/codriver-jev.json
+```
+
+It compares the categories of each case's expected tools with the keyword route, the Jev route and the combination the runner uses, and counts fast-path false positives (a command chosen where the case expects something else); it exits nonzero when there are any.

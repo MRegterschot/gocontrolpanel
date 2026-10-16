@@ -35,6 +35,8 @@ const panel: PanelSettingsView = {
   sharedMonthlyBudgetCents: 2000,
   allowServerKeys: false,
   userMode: "everyone",
+  jevEnabled: false,
+  jevApiKey: null,
 };
 const allow: RuleView = {
   effect: "allow",
@@ -67,6 +69,7 @@ function input(overrides: Partial<AccessInput> = {}): AccessInput {
     server,
     role: "moderator",
     envApiKey: "",
+    envJevApiKey: "",
     ...overrides,
   };
 }
@@ -178,6 +181,45 @@ describe("resolveAccess: which key pays", () => {
     );
     expect(decision).toMatchObject({ allowed: true, apiKey: "env-key" });
     expect(layer({ panel: { ...panel, sharedApiKey: null } })).toBe("key");
+  });
+
+  it("uses the stored Jev key, else the environment one, only while Jev is on", () => {
+    const jev = (
+      jevEnabled: boolean,
+      jevApiKey: string | null,
+      envJevApiKey = "",
+    ) => {
+      const decision = resolveAccess(
+        input({ panel: { ...panel, jevEnabled, jevApiKey }, envJevApiKey }),
+      );
+      return decision.allowed ? decision.jevApiKey : "denied";
+    };
+    expect(jev(true, "stored", "env")).toBe("stored");
+    expect(jev(true, null, "env")).toBe("env");
+    expect(jev(true, null)).toBeNull();
+    expect(jev(false, "stored", "env")).toBeNull();
+  });
+
+  it("gives the Jev key only to servers allowed to use the shared keys", () => {
+    const jevFor = (useSharedKey: boolean) => {
+      const decision = resolveAccess(
+        input({
+          panel: {
+            ...panel,
+            allowServerKeys: true,
+            jevEnabled: true,
+            jevApiKey: "jev",
+          },
+          serverRule: { ...allow, useSharedKey },
+          server: { ...server, apiKey: "server-key" },
+        }),
+      );
+      return decision.allowed
+        ? [decision.keySource, decision.jevApiKey]
+        : "denied";
+    };
+    expect(jevFor(true)).toEqual(["server", "jev"]);
+    expect(jevFor(false)).toEqual(["server", null]);
   });
 
   it("uses the server's own key only when the operator allows server keys", () => {

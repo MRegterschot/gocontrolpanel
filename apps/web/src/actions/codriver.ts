@@ -6,7 +6,12 @@ import { doServerActionWithAuth } from "@/lib/actions";
 import { actorFromSession } from "@/lib/actor";
 import { availability, resolveAccess } from "@/lib/codriver/access";
 import { clearTurns } from "@/lib/codriver/conversation";
-import { createAnthropicModel, verifyApiKey } from "@/lib/codriver/model";
+import {
+  createAnthropicModel,
+  createJevClassifier,
+  verifyApiKey,
+  verifyJevKey,
+} from "@/lib/codriver/model";
 import {
   codriverChatPermissions,
   panelChatActor,
@@ -40,6 +45,7 @@ const panelSettingsSchema = z.object({
   allowServerKeys: z.boolean(),
   userMode: z.enum(["everyone", "allowlist"]),
   retentionDays: z.number().int().min(1).max(3650),
+  jevEnabled: z.boolean(),
 });
 
 const ruleSchema = z.object({
@@ -124,6 +130,36 @@ export async function setCodriverSharedKey(
         session.user.id,
         PANEL_SETTINGS_ID,
         "codriver.sharedkey.edit",
+        {
+          removed: encrypted === null,
+        },
+      );
+    },
+  );
+}
+
+export async function setCodriverJevKey(
+  key: string | null,
+): Promise<ServerResponse> {
+  return doServerActionWithAuth(
+    routePermissions.admin.codriver.edit,
+    async (session) => {
+      const parsed = parse(apiKeySchema, key);
+      let encrypted: string | null = null;
+      if (parsed !== null) {
+        const check = await verifyJevKey(parsed);
+        if (!check.ok) throw new ServerError(check.reason, "InvalidApiKey");
+        encrypted = encryptSecret(parsed);
+      }
+      await getClient().codriverPanelSettings.upsert({
+        where: { id: PANEL_SETTINGS_ID },
+        create: { id: PANEL_SETTINGS_ID, jevApiKeyEncrypted: encrypted },
+        update: { jevApiKeyEncrypted: encrypted },
+      });
+      await logAudit(
+        session.user.id,
+        PANEL_SETTINGS_ID,
+        "codriver.jevkey.edit",
         {
           removed: encrypted === null,
         },
@@ -308,6 +344,9 @@ export async function testCodriverRequest(
           model: createAnthropicModel(access.apiKey),
           primaryModel: access.primaryModel,
           escalationModel: access.escalationModel,
+          classifier: access.jevApiKey
+            ? createJevClassifier(access.jevApiKey)
+            : undefined,
           dryRun: true,
         },
       );

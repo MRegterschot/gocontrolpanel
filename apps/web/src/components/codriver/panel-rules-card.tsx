@@ -124,7 +124,7 @@ export default function PanelRulesCard({
       },
       {
         accessorKey: "useSharedKey",
-        header: "Shared key",
+        header: "Shared keys",
         cell: ({ row }) =>
           row.original.targetType === "user"
             ? "—"

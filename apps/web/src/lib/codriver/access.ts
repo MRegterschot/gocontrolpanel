@@ -14,6 +14,9 @@ export interface PanelSettingsView {
   sharedMonthlyBudgetCents: number | null;
   allowServerKeys: boolean;
   userMode: "everyone" | "allowlist";
+  // Jev classifies requests before planning, with the panel's own TypeSafe key
+  jevEnabled: boolean;
+  jevApiKey: string | null;
 }
 
 export interface RuleView {
@@ -45,6 +48,8 @@ export interface AccessInput {
   role: CodriverRole;
   // ANTHROPIC_API_KEY, the development fallback for the shared key
   envApiKey: string;
+  // TYPESAFE_API_KEY, the development fallback for the Jev key
+  envJevApiKey: string;
 }
 
 export type BudgetScope = "server-key" | "shared-server" | "shared-global";
@@ -71,6 +76,8 @@ export type AccessDecision =
       budgets: Budget[];
       cooldownSeconds: number;
       memoryTurns: number;
+      // Null when Jev is off or has no key
+      jevApiKey: string | null;
     }
   | { allowed: false; layer: AccessLayer; reason: string };
 
@@ -176,5 +183,10 @@ export function resolveAccess(input: AccessInput): AccessDecision {
     budgets,
     cooldownSeconds: server.cooldownSeconds,
     memoryTurns: server.memoryTurns,
+    // The Jev key is shared too, so it follows the same rule as the shared Anthropic key
+    jevApiKey:
+      panel.jevEnabled && available.useSharedKey
+        ? (panel.jevApiKey ?? (input.envJevApiKey || null))
+        : null,
   };
 }

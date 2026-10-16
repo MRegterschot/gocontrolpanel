@@ -1,7 +1,12 @@
 // Manual, paid model evaluation. No database or game operations are executed.
 import { evalCaseSchema } from "@/lib/codriver/eval/grader";
+import { evaluateJevCase } from "@/lib/codriver/eval/jev";
 import { evaluateCase } from "@/lib/codriver/eval/run";
-import { CODRIVER_MODELS, createAnthropicModel } from "@/lib/codriver/model";
+import {
+  CODRIVER_MODELS,
+  createAnthropicModel,
+  createJevClassifier,
+} from "@/lib/codriver/model";
 import { codriverTools } from "@/lib/codriver/registry";
 import { readFile, writeFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
@@ -15,6 +20,8 @@ const { values } = parseArgs({
     output: { type: "string" },
     filter: { type: "string" },
     "validate-only": { type: "boolean", default: false },
+    // Checks Jev routing and the Jev fast path only; no Claude calls
+    jev: { type: "boolean", default: false },
   },
 });
 if (
@@ -46,6 +53,49 @@ const selected = cases.filter(
   (test) => !values.filter || test.id.includes(values.filter),
 );
 if (!selected.length) throw new Error("No cases match --filter");
+if (values.jev) {
+  const jevKey = process.env.TYPESAFE_API_KEY;
+  if (!jevKey) throw new Error("Set TYPESAFE_API_KEY to run the Jev check");
+  // The eval tolerates a slower round trip than live requests
+  const classifier = createJevClassifier(jevKey, 10_000);
+  const results: Awaited<ReturnType<typeof evaluateJevCase>>[] = [];
+  for (const test of selected) {
+    try {
+      results.push(await evaluateJevCase(test, classifier, codriverTools));
+    } catch {
+      console.error(`${test.id}: Jev call failed, skipped`);
+    }
+  }
+  for (const result of results.filter(
+    (r) => r.fastFalsePositive || (r.keywordFallback && !r.combinedCovers),
+  ))
+    console.log(
+      `CHECK ${result.id}: needs ${result.needed.join(",") || "-"}, Jev ${result.jevRoute.join(",") || "-"}${result.fastFalsePositive ? `, fast ${result.fastOption} (${result.fastProbability?.toFixed(2)})` : ""}`,
+    );
+  const count = (pick: (r: (typeof results)[number]) => boolean) =>
+    results.filter(pick).length;
+  const fallback = results.filter((r) => r.keywordFallback);
+  const summary = {
+    cases: results.length,
+    keywordCovers: count((r) => r.keywordCovers),
+    jevCovers: count((r) => r.jevCovers),
+    combinedCovers: count((r) => r.combinedCovers),
+    keywordFallbacks: fallback.length,
+    fallbackCoveredByKeyword: fallback.filter((r) => r.keywordCovers).length,
+    fallbackCoveredByJev: fallback.filter((r) => r.jevCovers).length,
+    fastAsked: count((r) => r.fastAsked),
+    fastTaken: count((r) => !!r.fast),
+    fastFalsePositives: count((r) => r.fastFalsePositive),
+    costMicros: Math.round(results.reduce((sum, r) => sum + r.costMicros, 0)),
+  };
+  console.log(JSON.stringify(summary, null, 2));
+  if (values.output)
+    await writeFile(
+      values.output,
+      JSON.stringify({ summary, results }, null, 2),
+    );
+  process.exit(summary.fastFalsePositives === 0 ? 0 : 1);
+}
 const apiKey = process.env.ANTHROPIC_API_KEY;
 if (!apiKey)
   throw new Error(
