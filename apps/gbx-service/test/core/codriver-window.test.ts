@@ -169,6 +169,49 @@ describe("Codriver window", () => {
     expect(pages(h, CODRIVER_WINDOW_ID, "abc")).toHaveLength(2);
   });
 
+  it("cancels the running request from the window", async () => {
+    let finish!: (answer: CodriverAnswer) => void;
+    let progress!: (text: string) => void;
+    const { h, client } = await setup((_s, _l, text, onProgress) =>
+      text === "cancel"
+        ? Promise.resolve({ reply: "Okay, stopping your request." })
+        : new Promise<CodriverAnswer>((resolve) => {
+            finish = resolve;
+            progress = onProgress!;
+          }),
+    );
+    await h.click("abc", "codriver-open");
+    expect(mainXml(h)).toContain('action="codriver-stop"');
+    await h.click("abc", "codriver-send", [
+      { Name: "codriver-entry", Value: "load the BNL campaign" },
+    ]);
+
+    await h.click("abc", "codriver-stop");
+    expect(client.ask).toHaveBeenLastCalledWith("server-1", "abc", "cancel");
+    expect(updateXml(h)).toContain('CodriverProgress = "Cancelling…";');
+    // Progress arriving while it winds down must not replace that text
+    progress("Working out what to do…");
+    expect(updateXml(h)).toContain('CodriverProgress = "Cancelling…";');
+
+    // A second press does not ask the panel again
+    await h.click("abc", "codriver-stop");
+    expect(client.ask).toHaveBeenCalledTimes(2);
+
+    finish({ reply: "Request cancelled.", status: "cancelled" });
+    await vi.waitFor(() =>
+      expect(updateXml(h)).toContain("CodriverBusy = False;"),
+    );
+    expect(updateXml(h)).toContain("Request cancelled.");
+    expect(updateXml(h)).toContain("CodriverConfirm = False;");
+  });
+
+  it("ignores Cancel request when nothing is running", async () => {
+    const { h, client } = await setup(async () => ({ reply: "ok" }));
+    await h.click("abc", "codriver-open");
+    await h.click("abc", "codriver-stop");
+    expect(client.ask).not.toHaveBeenCalled();
+  });
+
   it("sends only update pages while a request runs, then offers confirmation", async () => {
     let finish!: (answer: CodriverAnswer) => void;
     let progress!: (text: string) => void;

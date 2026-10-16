@@ -5,6 +5,7 @@ import { storedManifest } from "@/services/plugins";
 import { validatePluginConfig, type PluginConfig } from "@gcp/shared";
 import "server-only";
 import { z } from "zod/v4";
+import { quote } from "../confirm-text";
 import { chatSafe, fuzzyFind, normalize } from "../text";
 import { CodriverError, defineTool, type ToolContext } from "../types";
 import { serverMaps } from "./map-list";
@@ -275,6 +276,8 @@ const COMMAND_RETRY_MS = 500;
 
 export const runPluginCommand = defineTool({
   name: "run_plugin_command",
+  summary: (input) =>
+    `Run /${chatSafe(input.command.replace(/^\//, ""), 40)}${input.args?.length ? ` ${chatSafe(input.args.join(" "), 60)}` : ""} from the plugin ${quote(input.plugin)}`,
   description:
     "Run a chat command of an installed plugin, such as the Match plugin's lobby (set the server to the lobby state), matchstart, matchstop or pickban.",
   category: "plugins",

@@ -19,6 +19,7 @@ import {
 import { runPanelChat } from "@/lib/codriver/panel-chat";
 import { resolveRole } from "@/lib/codriver/roles";
 import { runCodriver } from "@/lib/codriver/runner";
+import { requestCancel } from "@/lib/codriver/running";
 import {
   loadAccessInput,
   loadPanelSettings,
@@ -388,6 +389,22 @@ export async function sendCodriverMessage(
         text: request,
         confirmationId: parse(z.string().uuid().optional(), confirmationId),
       });
+    },
+  );
+}
+
+// Stops the caller's panel request that is still working
+export async function cancelCodriverRequest(
+  serverId: string,
+): Promise<ServerResponse<{ cancelled: boolean }>> {
+  assertResourceId(serverId);
+  return doServerActionWithAuth(
+    codriverChatPermissions.map((permission) =>
+      permission.replace(":id:", `:${serverId}:`),
+    ),
+    async (session) => {
+      const actor = await panelChatActor(session, serverId);
+      return { cancelled: await requestCancel(serverId, actor.login, "panel") };
     },
   );
 }

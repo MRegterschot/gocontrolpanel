@@ -12,7 +12,7 @@ export const CODRIVER_COMMANDS: ReadonlySet<string> = new Set([
 ]);
 
 export const CODRIVER_HELP: Record<string, string> = {
-  co: "asks Codriver, the AI assistant, e.g. /co play a random snow map (also /ai); /co alone opens the Codriver window",
+  co: "asks Codriver, the AI assistant, e.g. /co play a random snow map (also /ai); /co cancel stops a request that is still running; /co alone opens the Codriver window",
   "co+":
     "adds a part to a long Codriver request; the next /co sends it all, e.g. /co+ create a cup script. Then load the BNL campaign",
   feedback:
@@ -118,6 +118,16 @@ export class CodriverCommand {
     const text = isFeedback
       ? `/feedback ${typed}`.trim()
       : [draft, typed].filter(Boolean).join(" ");
+    // "cancel" reaches the panel even while the last request is running, to stop it
+    if (!draft && !isFeedback && /^(cancel|stop)$/i.test(typed)) {
+      try {
+        await say((await client.ask(serverId, login, typed)).reply);
+      } catch (error) {
+        log.warn({ err: error, login }, "Codriver cancel failed");
+        await say("Codriver is unavailable right now.");
+      }
+      return true;
+    }
     if (this.inFlight.has(login)) {
       await say("Still working on your last request.");
       return true;

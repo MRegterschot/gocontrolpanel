@@ -19,6 +19,7 @@ import { getLogger } from "@/lib/logger";
 import type { Club, MapInfo } from "@/types/api/nadeo";
 import "server-only";
 import { z } from "zod/v4";
+import { loadPhrase, quote } from "../confirm-text";
 import { chatSafe, fuzzyFind, normalize, stripFormatting } from "../text";
 import { CodriverError, defineTool, type ToolContext } from "../types";
 import { playOnly, serverMaps } from "./map-list";
@@ -158,6 +159,13 @@ async function finish(
 
 export const addWeeklyShorts = defineTool({
   name: "add_weekly_shorts",
+  summary: (input) =>
+    loadPhrase(
+      input.weeks_ago
+        ? `the Weekly Shorts from ${input.weeks_ago} week${input.weeks_ago === 1 ? "" : "s"} ago`
+        : "this week's Weekly Shorts",
+      input.queue,
+    ),
   description:
     "Load the official Weekly Shorts of a week. weeks_ago 0 is this week. By default they replace the map list and play now; queue only on queue or add.",
   category: "maps",
@@ -186,6 +194,17 @@ export const addWeeklyShorts = defineTool({
 
 export const addTrackOfTheDay = defineTool({
   name: "add_totd",
+  summary: (input) =>
+    loadPhrase(
+      input.royal
+        ? "the Royal Track of the Day"
+        : input.date
+          ? `the Track of the Day of ${input.date}`
+          : input.days_ago
+            ? `the Track of the Day from ${input.days_ago} day${input.days_ago === 1 ? "" : "s"} ago`
+            : "today's Track of the Day",
+      input.queue,
+    ),
   description:
     "Load the Track of the Day. days_ago 0 is today's; date (YYYY-MM-DD) picks a specific day instead. royal picks the Royal TOTD. By default it replaces the map list and plays now; queue only on queue or add.",
   category: "maps",
@@ -256,6 +275,11 @@ export const addTrackOfTheDay = defineTool({
 
 export const addSeasonalCampaign = defineTool({
   name: "add_campaign",
+  summary: (input) =>
+    loadPhrase(
+      input.name ? `the campaign ${quote(input.name)}` : "the newest campaign",
+      input.queue,
+    ),
   description:
     "Load an official seasonal campaign (people just say campaign), such as Summer 2025. Omit name for the newest. A name that is no seasonal campaign is searched in the club campaigns. By default it replaces the map list and plays now; queue only on queue or add.",
   category: "maps",
@@ -443,6 +467,11 @@ async function resolveClubCampaign(input: {
 
 export const addClubCampaign = defineTool({
   name: "add_club_campaign",
+  summary: (input) =>
+    loadPhrase(
+      `the campaign ${quote(input.campaign)}${input.club ? ` from the club ${quote(input.club)}` : ""}`,
+      input.queue,
+    ),
   description:
     "Load a club campaign. Give the club name too when the player did. By default it replaces the map list and plays now; queue only on queue or add.",
   category: "maps",
@@ -485,8 +514,56 @@ export const addClubCampaign = defineTool({
   },
 });
 
+// TMX matches a name as a substring, so "World League S1" finds nothing for a pack called
+// "Beacon World League Season 1". Try season numbers spelled out, then fewer words.
+export function mappackNameAttempts(name: string): string[] {
+  const spelled = name.replace(/\bs(\d+)\b/gi, "season $1");
+  // Fewer words come from what the player said, so a season number is not cut to "season"
+  const words = name.split(/\s+/).filter(Boolean);
+  const shorter = [];
+  for (let count = words.length - 1; count >= 2; count--)
+    shorter.push(words.slice(0, count).join(" "));
+  return [...new Set([name, spelled, ...shorter])];
+}
+
+// The mappack a name stands for. Asks which one when several fit, and says so when none do,
+// so a wrong name is found before anything has been changed.
+async function resolveMappackName(input: {
+  name: string;
+  tags?: string[];
+}): Promise<{ id: number; name: string }> {
+  const tagParams = await tmxTagParams(input.tags);
+  for (const attempt of mappackNameAttempts(input.name)) {
+    const { Results } = await searchTMXMappacks(
+      { name: attempt, ...tagParams },
+      10,
+    );
+    if (Results.length === 0) continue;
+    const picked = fuzzyFind(attempt, Results, (pack) => pack.Name);
+    if (picked.kind === "match")
+      return { id: picked.item.MappackId, name: picked.item.Name };
+    const options = (picked.kind === "ambiguous" ? picked.items : Results)
+      .slice(0, 5)
+      .map((p) => `${chatSafe(p.Name, 40)} (#${p.MappackId})`)
+      .join(", ");
+    throw new CodriverError(
+      `No mappack is called "${chatSafe(input.name, 40)}". Which one: ${options}?`,
+    );
+  }
+  throw new CodriverError(
+    `No mappack matches "${chatSafe(input.name, 40)}" on Trackmania Exchange.`,
+  );
+}
+
 export const addTmxMappack = defineTool({
   name: "add_tmx_mappack",
+  summary: (input) =>
+    loadPhrase(
+      input.id && input.name
+        ? `the TMX mappack ${quote(input.name)} (#${input.id})`
+        : `a TMX mappack${input.id ? ` (id ${input.id})` : ""}${input.name ? ` called ${quote(input.name)}` : ""}${input.tags?.length ? ` tagged ${input.tags.join(", ")}` : ""}`,
+      input.queue,
+    ),
   description:
     "Load a Trackmania Exchange (TMX) mappack, by name, id or style tags (the TMX tags in the state). Packs over 100 maps are refused. By default it replaces the map list and plays now; queue only on queue or add.",
   category: "maps",
@@ -497,38 +574,40 @@ export const addTmxMappack = defineTool({
     tags: z.array(z.string().min(1).max(30)).max(3).optional(),
     queue: queueFlag,
   }),
+  // A name is looked up before the player confirms, and pinned by id so the confirmed pack is
+  // the one that loads
+  async prepare(_ctx, input) {
+    if (input.id || !input.name) return input;
+    const pack = await resolveMappackName({
+      name: input.name,
+      tags: input.tags,
+    });
+    return { ...input, id: pack.id, name: pack.name };
+  },
   async run(ctx, input) {
     if (!input.name && !input.id && !input.tags?.length)
       throw new CodriverError("Tell me the mappack's name, id or a tag.");
     let packId = input.id;
-    let packName = `Mappack ${input.id}`;
+    let packName = input.name ?? `Mappack ${input.id}`;
+    if (!packId && input.name) {
+      const pack = await resolveMappackName({
+        name: input.name,
+        tags: input.tags,
+      });
+      packId = pack.id;
+      packName = pack.name;
+    }
     if (!packId) {
+      // Tags only: any hit will do
       const { Results } = await searchTMXMappacks(
-        {
-          ...(input.name ? { name: input.name } : {}),
-          ...(await tmxTagParams(input.tags)),
-        },
+        await tmxTagParams(input.tags),
         10,
       );
       if (Results.length === 0)
-        throw new CodriverError("No mappack matches that.");
-      // A name must match closely; a tag search just takes one of the hits
-      const picked = input.name
-        ? fuzzyFind(input.name, Results, (pack) => pack.Name)
-        : ({
-            kind: "match",
-            item: Results[Math.floor(Math.random() * Results.length)],
-          } as const);
-      if (picked.kind === "none")
-        throw new CodriverError(
-          `No mappack matches "${chatSafe(input.name!, 40)}".`,
-        );
-      if (picked.kind === "ambiguous")
-        throw new CodriverError(
-          `Which mappack: ${picked.items.map((p) => `${chatSafe(p.Name, 40)} (#${p.MappackId})`).join(", ")}?`,
-        );
-      packId = picked.item.MappackId;
-      packName = picked.item.Name;
+        throw new CodriverError("No mappack matches those tags.");
+      const picked = Results[Math.floor(Math.random() * Results.length)];
+      packId = picked.MappackId;
+      packName = picked.Name;
     }
 
     const { Results, More } = await searchTMXMaps(

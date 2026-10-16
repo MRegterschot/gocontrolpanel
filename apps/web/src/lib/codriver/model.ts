@@ -37,6 +37,8 @@ export interface PlanRequest {
   system: string;
   user: string;
   tools: Anthropic.Tool[];
+  // Aborts the call when the player cancels
+  signal?: AbortSignal;
 }
 
 export interface ComposeRequest {
@@ -87,6 +89,7 @@ export interface JevClassifier {
   decide(
     state: string,
     questions: Record<string, JevQuestion>,
+    signal?: AbortSignal,
   ): Promise<JevResult>;
 }
 
@@ -96,7 +99,7 @@ export function createJevClassifier(
   timeoutMs = 1_500,
 ): JevClassifier {
   return {
-    async decide(state, questions) {
+    async decide(state, questions, signal) {
       const response = await fetch(`${JEV_URL}/systemone`, {
         method: "POST",
         headers: {
@@ -105,7 +108,9 @@ export function createJevClassifier(
         },
         // Pinned rather than jev-latest, since thresholds are tuned to one version
         body: JSON.stringify({ state, model: JEV_MODEL, questions }),
-        signal: AbortSignal.timeout(timeoutMs),
+        signal: signal
+          ? AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)])
+          : AbortSignal.timeout(timeoutMs),
       });
       if (!response.ok) {
         throw new Error(`Jev returned HTTP ${response.status}`);
@@ -157,17 +162,20 @@ export function createAnthropicModel(
   const client = new Anthropic({ apiKey, timeout: 15_000, maxRetries: 1 });
 
   return {
-    async plan({ model, system, user, tools }) {
-      const response = await client.messages.create({
-        model,
-        // Thinking counts towards this; low effort keeps it short
-        max_tokens: 1024,
-        output_config: { effort },
-        system,
-        tools: limitStrict(tools),
-        tool_choice: { type: "auto" },
-        messages: [{ role: "user", content: user }],
-      });
+    async plan({ model, system, user, tools, signal }) {
+      const response = await client.messages.create(
+        {
+          model,
+          // Thinking counts towards this; low effort keeps it short
+          max_tokens: 1024,
+          output_config: { effort },
+          system,
+          tools: limitStrict(tools),
+          tool_choice: { type: "auto" },
+          messages: [{ role: "user", content: user }],
+        },
+        { signal },
+      );
 
       const usage: ModelUsage = {
         model,

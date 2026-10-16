@@ -5,6 +5,7 @@ import {
 } from "@/actions/gbx/server-only/server";
 import "server-only";
 import { z } from "zod/v4";
+import { quote } from "../confirm-text";
 import { chatSafe } from "../text";
 import { CodriverError, defineTool } from "../types";
 
@@ -63,6 +64,7 @@ export const setServerSettings = defineTool({
 
 export const announce = defineTool({
   name: "announce",
+  summary: (input) => `Announce ${quote(input.message, 80)} to everyone`,
   description: "Send a chat message to everyone on the server.",
   category: "server",
   minRole: "moderator",

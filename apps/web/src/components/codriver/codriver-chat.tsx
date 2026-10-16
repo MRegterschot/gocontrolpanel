@@ -1,6 +1,9 @@
 "use client";
 
-import { clearCodriverConversation } from "@/actions/codriver";
+import {
+  cancelCodriverRequest,
+  clearCodriverConversation,
+} from "@/actions/codriver";
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import {
@@ -86,6 +89,16 @@ export default function CodriverChat({ serverId }: { serverId: string }) {
       await unwrap(clearCodriverConversation(serverId));
     } catch (error) {
       toast.error("Could not clear what Codriver remembers", {
+        description: getErrorMessage(error),
+      });
+    }
+  }
+
+  async function cancel() {
+    try {
+      await unwrap(cancelCodriverRequest(serverId));
+    } catch (error) {
+      toast.error("Could not cancel the request", {
         description: getErrorMessage(error),
       });
     }
@@ -190,9 +203,19 @@ export default function CodriverChat({ serverId }: { serverId: string }) {
             </div>
           ))}
           {busy && (
-            <p className="text-sm text-muted-foreground">
-              {progress ?? "Codriver is thinking…"}
-            </p>
+            <div className="flex items-center gap-3">
+              <p className="text-sm text-muted-foreground">
+                {progress ?? "Codriver is thinking…"}
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => void cancel()}
+              >
+                Cancel request
+              </Button>
+            </div>
           )}
           <div ref={end} />
         </div>

@@ -9,6 +9,7 @@ import { getTMXTags, searchTMXMaps } from "@/lib/api/tmx";
 import { getErrorMessage } from "@/lib/utils";
 import "server-only";
 import { z } from "zod/v4";
+import { loadPhrase, quote } from "../confirm-text";
 import { getLiveState } from "../state";
 import { chatSafe, fuzzyFind, stripFormatting } from "../text";
 import { CodriverError, defineTool, type ToolContext } from "../types";
@@ -94,6 +95,11 @@ export async function tmxTagParams(
 
 export const addTmxMap = defineTool({
   name: "add_tmx_map",
+  summary: (input) =>
+    loadPhrase(
+      `a TMX map${input.name ? ` called ${quote(input.name)}` : ""}${input.tags?.length ? ` tagged ${input.tags.join(", ")}` : ""}${input.author ? ` by ${chatSafe(input.author, 40)}` : ""}${input.difficulty ? `, ${input.difficulty}` : ""}${input.pick ? `, the ${input.pick} one` : ""}`,
+      input.queue,
+    ),
   description:
     "Find a map on Trackmania Exchange (TMX), add it to the server and play it. Use for maps not on the server. Put the kind of map in tags (the TMX tags in the state, for example Tech, FullSpeed, RPG, Dirt, SnowCar) and only use name for a map's title. By default it replaces the map list and plays now; queue only on queue or add.",
   category: "maps",
@@ -152,6 +158,7 @@ export const addTmxMap = defineTool({
 
 export const queueServerMap = defineTool({
   name: "queue_server_map",
+  summary: (input) => `Queue the map ${quote(input.query)}`,
   description: "Queue a map that is already on the server, by name.",
   category: "maps",
   minRole: "moderator",
@@ -164,6 +171,7 @@ export const queueServerMap = defineTool({
 
 export const jumpToMap = defineTool({
   name: "jump_to_map",
+  summary: (input) => `Switch to the map ${quote(input.query)} right now`,
   description:
     "Switch to a map on the server right now, ending the current one.",
   category: "maps",
@@ -184,6 +192,7 @@ export const jumpToMap = defineTool({
 
 export const skipMap = defineTool({
   name: "skip_map",
+  summary: () => "Skip to the next map",
   immediateWhenExplicit: true,
   description: "Skip to the next map.",
   category: "maps",
@@ -209,6 +218,7 @@ export const skipMap = defineTool({
 
 export const restartMap = defineTool({
   name: "restart_map",
+  summary: () => "Restart the current map",
   immediateWhenExplicit: true,
   description: "Restart the current map.",
   category: "maps",
@@ -227,6 +237,7 @@ export const restartMap = defineTool({
 
 export const clearJukebox = defineTool({
   name: "clear_jukebox",
+  summary: () => "Clear all queued maps",
   description: "Remove all queued maps.",
   category: "maps",
   minRole: "moderator",

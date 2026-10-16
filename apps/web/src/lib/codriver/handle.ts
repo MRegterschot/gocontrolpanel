@@ -24,6 +24,7 @@ import { notify, type ProgressListener, runningProgress } from "./progress";
 import { reservationMicros, reserveBudget } from "./reservations";
 import { resolveRole } from "./roles";
 import { executeCalls, runCodriver } from "./runner";
+import { requestCancel, startRunning } from "./running";
 import { loadAccessInput } from "./settings";
 import {
   MAX_REQUEST_LENGTH,
@@ -45,6 +46,8 @@ import {
 
 const confirmWords = new Set(["yes", "y", "confirm", "ok", "do it"]);
 const cancelWords = new Set(["no", "n", "cancel", "stop"]);
+// Only these stop a request that is still running; "no" answers a confirmation question
+const stopWords = new Set(["cancel", "stop"]);
 
 export interface CodriverMessage {
   serverId: string;
@@ -256,6 +259,9 @@ export async function handleCodriverRequest(
         await release();
       }
     }
+    if (stopWords.has(word) && (await requestCancel(serverId, login, source))) {
+      return { status: "done", reply: "Okay, stopping your request." };
+    }
     if (cancelWords.has(word)) {
       const cancelled = await clearPending(serverId, login, source);
       const reply = cancelled ? "Cancelled." : "Nothing to cancel.";
@@ -313,6 +319,8 @@ export async function handleCodriverRequest(
       await record("over_budget", [], [], reply);
       return { status: "over_budget", reply };
     }
+    // Fast commands finish at once, so only slower requests can be cancelled
+    const running = fast ? null : await startRunning(serverId, login, source);
     try {
       const codriverRequest = {
         serverId,
@@ -320,6 +328,7 @@ export async function handleCodriverRequest(
         text: message.text,
         history,
         onProgress: message.onProgress,
+        signal: running?.signal,
       };
       const codriverOptions = {
         model: deps.createModel(access.apiKey),
@@ -350,7 +359,9 @@ export async function handleCodriverRequest(
           : undefined;
       const [cost] = await Promise.all([
         record(outcome.status, outcome.calls, outcome.usage, outcome.reply),
-        outcome.status !== "failed" && outcome.status !== "denied"
+        outcome.status !== "failed" &&
+        outcome.status !== "denied" &&
+        outcome.status !== "cancelled"
           ? remember(outcome.reply)
           : undefined,
       ]);
@@ -369,6 +380,7 @@ export async function handleCodriverRequest(
         ...(confirmationId ? { confirmationId } : {}),
       };
     } finally {
+      await running?.finish();
       await release();
     }
   } catch (error) {

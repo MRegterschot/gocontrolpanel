@@ -156,7 +156,12 @@ exports[`TemplateRenderer > renders codriver-window 1`] = `
   <quad size=" 1000" bgcolor="DDD" opacity="0" scriptevents="1" z-index="-1" />
   </frame>
 
-  <label id="codriver-progress" size=" 4" textsize="1" textcolor="333" valign="top" textfont="GameFontRegular" hidden="1" />
+  <label id="codriver-progress" size="NaN 4" textsize="1" textcolor="333" valign="top" textfont="GameFontRegular" hidden="1" />
+  <frame id="codriver-stop" pos="NaN 0" size="20 4" hidden="1">
+    <quad size="20 4" bgcolor="CCC" action="codriver-stop" />
+    <quad pos="0 -3.75" size="20 0.25" bgcolor="222" />
+    <label pos="10 -1.75" text=" Cancel request" textsize="0.8" textcolor="222" valign="center" halign="center" textfont="GameFontRegular" />
+  </frame>
 
   <frame id="codriver-confirm" size=" 5" hidden="1">
     <label pos="0 -2.25" size="50 5" text="Confirm this change within 60 seconds." textsize="1" textcolor="222" valign="center" textfont="GameFontRegular" />
@@ -282,6 +287,12 @@ Void CodriverApply() {
   Progress.Visible = CodriverBusy;
   Progress.SetText("$i" ^ CodriverProgress);
   Progress.RelativePosition_V3 = <0., CodriverProgressY>;
+
+  // Cancel sits at the right end of the progress row
+  declare Stop <=> Page.GetFirstChild("codriver-stop");
+  Stop.Visible = CodriverBusy;
+  declare Vec2 StopPos = Stop.RelativePosition_V3;
+  Stop.RelativePosition_V3 = <StopPos.X, CodriverProgressY>;
 
   declare Confirm <=> Page.GetFirstChild("codriver-confirm");
   Confirm.Visible = CodriverConfirm;

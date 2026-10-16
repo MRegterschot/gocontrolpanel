@@ -19,6 +19,7 @@ import { getClient } from "@/lib/dbclient";
 import { getGbxClient } from "@/lib/gbx-service";
 import "server-only";
 import { z } from "zod/v4";
+import { quote } from "../confirm-text";
 import { resolveRole } from "../roles";
 import { getLiveState } from "../state";
 import { chatSafe, fuzzyFind } from "../text";
@@ -146,6 +147,14 @@ const spectatorModes = { spectator: 1, player: 2, free: 0 } as const;
 
 export const forceSpectator = defineTool({
   name: "force_spectator",
+  summary: (input) => {
+    const who = quote(input.player.replace(/^login:/, ""));
+    return input.mode === "spectator"
+      ? `Force ${who} to spectate`
+      : input.mode === "player"
+        ? `Force ${who} to play`
+        : `Let ${who} choose between playing and spectating`;
+  },
   description:
     "Force an online player to spectate or to play, or let them choose again (free).",
   category: "players",

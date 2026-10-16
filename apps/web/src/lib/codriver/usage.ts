@@ -133,7 +133,8 @@ export interface RequestRecord {
     | "unclear"
     | "denied"
     | "failed"
-    | "over_budget";
+    | "over_budget"
+    | "cancelled";
   keySource: "server" | "shared" | "none";
   usage: ModelUsage[];
   latencyMs: number;

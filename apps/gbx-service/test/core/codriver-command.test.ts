@@ -112,6 +112,31 @@ describe("CodriverCommand", () => {
     );
   });
 
+  it("lets cancel through while the last request is still running", async () => {
+    let finish!: (value: CodriverAnswer) => void;
+    const ask = vi
+      .fn()
+      .mockImplementationOnce(
+        () => new Promise<CodriverAnswer>((resolve) => (finish = resolve)),
+      )
+      .mockResolvedValueOnce({ reply: "Okay, stopping your request." });
+    const { command, reply } = setup({ ask });
+
+    const first = command.dispatch("co", ["play a snow map"], "abc");
+    await command.dispatch("co", ["cancel"], "abc");
+    expect(ask).toHaveBeenLastCalledWith("server-a", "abc", "cancel");
+    expect(reply).toHaveBeenCalledWith(
+      "abc",
+      expect.stringContaining("Okay, stopping your request."),
+    );
+    expect(reply).not.toHaveBeenCalledWith(
+      "abc",
+      expect.stringContaining("Still working"),
+    );
+    finish({ reply: "Request cancelled." });
+    await first;
+  });
+
   it("handles one request per player at a time", async () => {
     let finish!: (value: CodriverAnswer) => void;
     const ask = vi.fn(

@@ -105,6 +105,7 @@ export async function askJev(
   classifier: JevClassifier,
   text: string,
   want: { route: boolean; fast: boolean },
+  signal?: AbortSignal,
 ): Promise<JevDecision> {
   const questions: Record<string, JevQuestion> = {};
   if (want.route) {
@@ -143,7 +144,7 @@ export async function askJev(
     return { categories: null, fast: null, explicit: false, usage: null };
   }
 
-  const { answers, usage } = await classifier.decide(text, questions);
+  const { answers, usage } = await classifier.decide(text, questions, signal);
   const decision: JevDecision = {
     categories: null,
     fast: null,

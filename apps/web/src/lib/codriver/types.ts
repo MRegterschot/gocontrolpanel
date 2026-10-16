@@ -52,6 +52,9 @@ export interface CodriverTool<S extends z.ZodType = z.ZodType> {
   input: S;
   // Resolve fuzzy targets before confirmation; stored calls keep that exact identity
   prepare?: (ctx: ToolContext, input: z.output<S>) => Promise<z.output<S>>;
+  // A plain-words description of what the call does, used to ask for confirmation when the
+  // tool has no prompt of its own
+  summary?: (input: z.output<S>) => string;
   // Disruptive calls are shown to the caller first and run after they confirm
   confirm?: (
     ctx: ToolContext,

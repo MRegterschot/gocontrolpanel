@@ -44,6 +44,8 @@ async function waitForScript(serverId: string, script: string): Promise<void> {
 
 export const setMode = defineTool({
   name: "set_mode",
+  summary: (input) =>
+    `Switch the game mode to ${input.mode} (this restarts the current map)`,
   description:
     "Switch the game mode, optionally with settings; restarts the current map. Doesn't create script files.",
   category: "mode",
@@ -92,6 +94,7 @@ export const setModeSettings = defineTool({
 
 export const pauseMatch = defineTool({
   name: "pause_match",
+  summary: (input) => (input.paused ? "Pause the match" : "Resume the match"),
   description: "Pause or resume the match.",
   category: "mode",
   minRole: "moderator",

@@ -8,6 +8,7 @@ import { storedManifest } from "@/services/plugins";
 import { validatePluginConfig, type PluginConfig } from "@gcp/shared";
 import "server-only";
 import { z } from "zod/v4";
+import { quote } from "../confirm-text";
 import { coerceSetting } from "../modes";
 import { chatSafe, fuzzyFind } from "../text";
 import { CodriverError, defineTool, type ToolContext } from "../types";
@@ -72,6 +73,8 @@ export async function findPlugin(
 
 export const setPluginEnabled = defineTool({
   name: "set_plugin_enabled",
+  summary: (input) =>
+    `Turn ${input.enabled ? "on" : "off"} the plugin ${quote(input.plugin)}`,
   description: "Turn an installed plugin on or off on this server.",
   category: "plugins",
   minRole: "admin",
@@ -219,6 +222,7 @@ export const setPluginConfig = defineTool({
 
 export const reloadPlugins = defineTool({
   name: "reload_plugins",
+  summary: () => "Reload all plugins",
   description: "Reload all plugins on this server.",
   category: "plugins",
   minRole: "admin",

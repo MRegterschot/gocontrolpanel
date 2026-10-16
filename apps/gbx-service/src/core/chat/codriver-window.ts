@@ -43,6 +43,8 @@ interface PlayerChat {
   login: string;
   messages: Message[];
   busy: boolean;
+  // The player pressed Cancel and the request is winding down
+  stopping: boolean;
   progress: string | null;
   confirm: boolean;
   window: Window | null;
@@ -284,6 +286,7 @@ export class CodriverWindows {
     });
     on("codriver-confirm", (login) => this.send(login, "yes"));
     on("codriver-cancel", (login) => this.send(login, "no"));
+    on("codriver-stop", (login) => this.stop(login));
     on("codriver-clear", (login) => this.clear(login));
   }
 
@@ -343,6 +346,7 @@ export class CodriverWindows {
 
     this.add(chat, "You", text);
     chat.busy = true;
+    chat.stopping = false;
     chat.progress = null;
     chat.confirm = false;
     this.render(chat);
@@ -352,7 +356,8 @@ export class CodriverWindows {
         login,
         text,
         (progress) => {
-          chat.progress = progress;
+          // Keep saying "Cancelling…" until the request itself ends
+          if (!chat.stopping) chat.progress = progress;
           this.render(chat);
         },
       );
@@ -372,6 +377,20 @@ export class CodriverWindows {
       chat.busy = false;
       chat.progress = null;
       this.render(chat);
+    }
+  }
+
+  // Asks the panel to stop the request in flight; that request then answers "Request cancelled."
+  async stop(login: string): Promise<void> {
+    const chat = this.chat(login);
+    if (!chat.busy || chat.stopping) return;
+    chat.stopping = true;
+    chat.progress = "Cancelling…";
+    this.render(chat);
+    try {
+      await this.options.client.ask(this.options.serverId, login, "cancel");
+    } catch (error) {
+      this.options.log.warn({ err: error, login }, "Codriver cancel failed");
     }
   }
 
@@ -411,6 +430,7 @@ export class CodriverWindows {
         scrollEnd: 0,
         messages: [],
         busy: false,
+        stopping: false,
         progress: null,
         confirm: false,
         window: null,

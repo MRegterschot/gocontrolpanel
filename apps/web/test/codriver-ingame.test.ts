@@ -21,6 +21,9 @@ const mocks = vi.hoisted(() => ({
   keyAlert: vi.fn(),
   reserve: vi.fn(),
   release: vi.fn(),
+  requestCancel: vi.fn(),
+  finish: vi.fn(),
+  startRunning: vi.fn(),
 }));
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/config", () => ({ default: mocks.config }));
@@ -68,6 +71,10 @@ vi.mock("@/lib/codriver/conversation", () => ({
 vi.mock("@/lib/codriver/feedback", async (original) => ({
   ...(await original<typeof import("@/lib/codriver/feedback")>()),
   saveFeedback: mocks.saveFeedback,
+}));
+vi.mock("@/lib/codriver/running", () => ({
+  startRunning: mocks.startRunning,
+  requestCancel: mocks.requestCancel,
 }));
 vi.mock("@/lib/codriver/pending", () => ({
   savePending: async (
@@ -171,6 +178,12 @@ beforeEach(() => {
   mocks.config.CODRIVER.API_KEY = "key";
   mocks.pending.clear();
   mocks.turns.length = 0;
+  mocks.requestCancel.mockResolvedValue(false);
+  mocks.finish.mockResolvedValue(undefined);
+  mocks.startRunning.mockResolvedValue({
+    signal: new AbortController().signal,
+    finish: mocks.finish,
+  });
   mocks.actorForLogin.mockResolvedValue(moderator);
   mocks.cooldown.mockResolvedValue(true);
   mocks.accessInput.mockImplementation(async () => accessInput());
@@ -481,6 +494,45 @@ describe("handleCodriverMessage", () => {
       "1. Created A.Script.txt.\n2. Which club: Benelux, Benelux Cup?\nStopped, so step 3 didn't run.",
     );
     expect(mocks.runCodriver).toHaveBeenCalledTimes(2);
+  });
+
+  it("stops a running request on cancel, instead of clearing the open question", async () => {
+    mocks.requestCancel.mockResolvedValue(true);
+    expect(await ask("cancel")).toBe("Okay, stopping your request.");
+    expect(mocks.requestCancel).toHaveBeenCalledWith(serverId, "abc", "game");
+  });
+
+  it("does not let no stop a running request", async () => {
+    mocks.requestCancel.mockResolvedValue(true);
+    expect(await ask("no")).toBe("Nothing to cancel.");
+    expect(mocks.requestCancel).not.toHaveBeenCalled();
+  });
+
+  it("tracks a slower request while it runs and always clears it", async () => {
+    mocks.runCodriver.mockRejectedValue(new Error("boom"));
+    await ask("play a snow map");
+    expect(mocks.startRunning).toHaveBeenCalledWith(serverId, "abc", "game");
+    expect(mocks.finish).toHaveBeenCalled();
+  });
+
+  it("does not track an exact command", async () => {
+    await ask("skip");
+    expect(mocks.startRunning).not.toHaveBeenCalled();
+  });
+
+  it("does not remember a cancelled request", async () => {
+    mocks.runCodriver.mockResolvedValue({
+      status: "cancelled",
+      reply: "Request cancelled.",
+      calls: [],
+      usage: [],
+      fastPath: false,
+    });
+    expect(await ask("play a snow map")).toBe("Request cancelled.");
+    expect(mocks.record).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "cancelled" }),
+    );
+    expect(mocks.turns).toEqual([]);
   });
 
   it("cancels a pending question", async () => {

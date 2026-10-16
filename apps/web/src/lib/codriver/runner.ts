@@ -3,6 +3,7 @@ import { getLogger } from "@/lib/logger";
 import type { CodriverProgress } from "@gcp/shared";
 import "server-only";
 import { looksIncomplete, missedAreas } from "./completeness";
+import { confirmQuestion } from "./confirm-text";
 import type { Turn } from "./conversation";
 import { emitAction } from "./events";
 import { parseFastPath } from "./fast-path";
@@ -62,6 +63,8 @@ export interface CodriverRequest {
   history?: Turn[];
   // Told when a slow stage starts; failures here must never affect the request
   onProgress?: ProgressListener;
+  // Aborted when the player cancels; checked before anything that changes the server
+  signal?: AbortSignal;
 }
 
 export interface CodriverOptions {
@@ -89,7 +92,8 @@ export type CodriverStatus =
   | "planned"
   | "unclear"
   | "denied"
-  | "failed";
+  | "failed"
+  | "cancelled";
 
 export interface CodriverOutcome {
   status: CodriverStatus;
@@ -146,6 +150,10 @@ export async function runCodriver(
     fastPath = false,
   ): CodriverOutcome => ({ status, reply, calls, usage, fastPath });
 
+  // Checked before every step that costs money or changes the server; once tools run, it's too late
+  const cancelled = () =>
+    request.signal?.aborted ? outcome("cancelled", "Request cancelled.") : null;
+
   if (!text)
     return outcome("unclear", "Ask me something, for example /co help.");
   if (text.length > MAX_TEXT_LENGTH) {
@@ -167,7 +175,12 @@ export async function runCodriver(
     const want = { route: routed.fallback, fast: wantsJevFastPath(text) };
     if (want.route || want.fast) {
       try {
-        const jev = await askJev(options.classifier, text, want);
+        const jev = await askJev(
+          options.classifier,
+          text,
+          want,
+          request.signal,
+        );
         const jevOutcome: JevOutcome = jev.fast
           ? jev.explicit
             ? "fast_explicit"
@@ -206,17 +219,20 @@ export async function runCodriver(
         }
       } catch (error) {
         // Every Jev failure keeps the keyword route
-        usage.push({
-          model: JEV_MODEL,
-          inputTokens: 0,
-          outputTokens: 0,
-          cacheReadTokens: 0,
-          jevOutcome: "failed",
-        });
+        if (!request.signal?.aborted)
+          usage.push({
+            model: JEV_MODEL,
+            inputTokens: 0,
+            outputTokens: 0,
+            cacheReadTokens: 0,
+            jevOutcome: "failed",
+          });
         log.warn({ err: error }, "Jev could not classify the request");
       }
     }
   }
+  const stopped = cancelled();
+  if (stopped) return stopped;
   let calls: PlannedCall[];
   // What the model said it could not do, shown next to the result
   let note = "";
@@ -317,13 +333,26 @@ export async function runCodriver(
           : { stage: "escalating", text: "Thinking harder…" },
       );
       const modelStarted = performance.now();
-      const plan = await options.model.plan({
-        model,
-        system: SYSTEM_PROMPT,
-        user: check ? userFor(check) : user,
-        tools: [...offered.values()].map(toApiTool),
-      });
+      let plan: ModelPlan;
+      try {
+        plan = await options.model.plan({
+          model,
+          system: SYSTEM_PROMPT,
+          user: check ? userFor(check) : user,
+          tools: [...offered.values()].map(toApiTool),
+          signal: request.signal,
+        });
+      } catch (error) {
+        // An aborted call is the player's cancel, not a failure
+        const stopped = cancelled();
+        if (stopped) return stopped;
+        throw error;
+      }
       usage.push(plan.usage);
+      {
+        const stopped = cancelled();
+        if (stopped) return stopped;
+      }
       log.info(
         { model, modelMs: Math.round(performance.now() - modelStarted) },
         "Codriver model call",
@@ -450,6 +479,12 @@ export async function runCodriver(
     );
   }
 
+  // Preparing can be slow (it looks targets up), so a cancel may have arrived meanwhile
+  {
+    const stopped = cancelled();
+    if (stopped) return stopped;
+  }
+
   // Confirmation is asked for the whole request when any call needs it
   const prompts: string[] = [];
   try {
@@ -459,7 +494,7 @@ export async function runCodriver(
         (await tool.confirm?.(ctx, call.input)) ??
         (tool.readOnly || (explicit && tool.immediateWhenExplicit)
           ? null
-          : `Run ${tool.name} with ${JSON.stringify(call.input)}?`);
+          : confirmQuestion(tool, call.input));
       if (prompt) prompts.push(prompt);
     }
   } catch (error) {
@@ -472,6 +507,10 @@ export async function runCodriver(
       [],
       !!fast,
     );
+  }
+  {
+    const stopped = cancelled();
+    if (stopped) return stopped;
   }
   if (prompts.length > 0) {
     return outcome(

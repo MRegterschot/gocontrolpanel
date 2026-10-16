@@ -873,6 +873,92 @@ describe("runCodriver", () => {
   });
 });
 
+describe("cancelling", () => {
+  const ask = (model: CodriverModel, signal: AbortSignal) =>
+    runCodriver(
+      {
+        serverId,
+        actor: actorWithRole("Moderator"),
+        text: "set the points to 5",
+        signal,
+      },
+      options(model),
+    );
+
+  it("stops before calling the model when already cancelled", async () => {
+    const model = fakeModel();
+    const outcome = await ask(model, AbortSignal.abort());
+    expect(outcome).toMatchObject({ status: "cancelled" });
+    expect(model.plan).not.toHaveBeenCalled();
+    expect(run).not.toHaveBeenCalled();
+  });
+
+  it("reports an aborted model call as cancelled, not failed", async () => {
+    const controller = new AbortController();
+    const model = {
+      plan: vi.fn().mockImplementation(async () => {
+        controller.abort();
+        throw new Error("aborted");
+      }),
+    };
+    const outcome = await ask(model, controller.signal);
+    expect(outcome.status).toBe("cancelled");
+  });
+
+  it("does not run the plan when cancelled while the model was answering", async () => {
+    const controller = new AbortController();
+    const model = {
+      plan: vi.fn().mockImplementation(async () => {
+        controller.abort();
+        return plan([{ name: "set_points", input: { points: 5 } }]);
+      }),
+    };
+    const outcome = await ask(model, controller.signal);
+    expect(outcome.status).toBe("cancelled");
+    // The model call was still paid for
+    expect(outcome.usage).toHaveLength(1);
+    expect(run).not.toHaveBeenCalled();
+  });
+
+  it("does not ask for confirmation when cancelled while the targets were looked up", async () => {
+    const controller = new AbortController();
+    const slow = defineTool({
+      name: "add_totd",
+      description: "Slow",
+      category: "maps",
+      minRole: "moderator",
+      input: z.strictObject({}),
+      // Resolving a campaign or mappack takes a while
+      prepare: async (_ctx, input) => {
+        controller.abort();
+        return input;
+      },
+      run,
+    });
+    const model = fakeModel(plan([{ name: "add_totd", input: {} }]));
+    const outcome = await runCodriver(
+      {
+        serverId,
+        actor: actorWithRole("Moderator"),
+        text: "load the track of the day",
+        signal: controller.signal,
+      },
+      options(model, { tools: [slow] }),
+    );
+    expect(outcome.status).toBe("cancelled");
+    expect(run).not.toHaveBeenCalled();
+  });
+
+  it("passes the signal to the model", async () => {
+    const controller = new AbortController();
+    const model = fakeModel(
+      plan([{ name: "set_points", input: { points: 5 } }]),
+    );
+    await ask(model, controller.signal);
+    expect(model.plan.mock.calls[0][0].signal).toBe(controller.signal);
+  });
+});
+
 describe("mutation confirmation boundary", () => {
   it.each([undefined, () => null])(
     "requires confirmation for a mutating tool even without a custom prompt",

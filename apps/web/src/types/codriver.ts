@@ -117,6 +117,7 @@ export const codriverStatuses = [
   "denied",
   "failed",
   "over_budget",
+  "cancelled",
 ] as const;
 export type CodriverRequestStatus = (typeof codriverStatuses)[number];
 export interface CodriverChatReply {

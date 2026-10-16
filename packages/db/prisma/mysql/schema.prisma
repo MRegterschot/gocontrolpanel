@@ -461,6 +461,7 @@ enum CodriverRequestStatus {
   denied
   failed
   over_budget
+  cancelled
 }
 
 enum CodriverKeySource {
