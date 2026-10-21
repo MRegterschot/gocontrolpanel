@@ -412,14 +412,18 @@ model AuditLogs {
   targetId   String
   details    Json?
   error      String?
+  // Set when the change came through the public API
+  apiKeyId   String?
 
-  user Users? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user   Users?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  apiKey ApiKeys? @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   @@index([targetType, targetId])
+  @@index([apiKeyId])
   @@index([deletedAt])
   @@map("audit_logs")
 }
@@ -576,6 +580,8 @@ model ApiKeys {
   expiresAt   DateTime?
   lastUsedAt  DateTime?
   revokedAt   DateTime?
+
+  auditLogs AuditLogs[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

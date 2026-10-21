@@ -115,7 +115,7 @@ For every request:
 
 The narrowed group claims also expand to `groups:<id>:admin`, the permission for managing the group itself. No `/v1` endpoint exposes group management; a test keeps it that way.
 
-`logAudit` records `apiKeyId` in the entry details for operations performed with a key.
+Audit entries get a nullable `apiKeyId` column. `publicApiRoute` runs the handler in an `AsyncLocalStorage` context (`lib/api-keys/context.ts`) and `auditLogData` reads it, so the existing `*As` functions record the key without passing it along.
 
 ## 6. Contract first (`packages/shared/src/public-api`)
 

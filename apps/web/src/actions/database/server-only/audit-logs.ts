@@ -1,3 +1,4 @@
+import { currentApiKeyId } from "@/lib/api-keys/context";
 import { getClient } from "@/lib/dbclient";
 import { Prisma } from "@gcp/db";
 import "server-only";
@@ -10,6 +11,7 @@ export function auditLogData(
   details?: Prisma.InputJsonValue,
   error?: string,
 ): Prisma.AuditLogsUncheckedCreateInput {
+  const apiKeyId = currentApiKeyId();
   return {
     userId,
     action,
@@ -17,6 +19,7 @@ export function auditLogData(
     targetId,
     details,
     error,
+    ...(apiKeyId && { apiKeyId }),
   };
 }
 
