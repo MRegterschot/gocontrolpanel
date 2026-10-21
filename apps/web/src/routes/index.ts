@@ -33,6 +33,7 @@ export const routes = {
     index: "/plugins",
     detail: "/plugins/:slug",
   },
+  apiDocs: "/api-docs",
   login: "/login",
 };
 
@@ -459,6 +460,14 @@ export const breadCrumbs: {
       },
       {
         label: "API Keys",
+      },
+    ],
+  },
+  {
+    path: routes.apiDocs,
+    breadCrumbs: [
+      {
+        label: "API Reference",
       },
     ],
   },

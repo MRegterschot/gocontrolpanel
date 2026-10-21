@@ -170,6 +170,22 @@ describe("v1 routes", () => {
   });
 });
 
+describe("v1 permissions", () => {
+  // Group keys carry groups:<id>:admin; no v1 route may treat that as group management
+  it("never check group management permissions", () => {
+    const sources = (dir: string): string[] =>
+      readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+        const full = path.join(dir, entry.name);
+        return entry.isDirectory()
+          ? sources(full)
+          : [readFileSync(full, "utf8")];
+      });
+    for (const source of sources(V1)) {
+      expect(source).not.toMatch(/["'`]groups:/);
+    }
+  });
+});
+
 describe("v1 handlers", () => {
   it("lists the servers the key reaches", async () => {
     const res = await serversRoute.GET(req("/servers"), ctx());

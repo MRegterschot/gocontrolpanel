@@ -22,7 +22,7 @@ export default async function ServerApiKeysPage({
         <h1 className="text-2xl font-bold">API Keys</h1>
         <h4 className="text-muted-foreground">
           Keys let other tools use this server through the{" "}
-          <Link href="/api/v1/openapi.json" className="underline">
+          <Link href={routes.apiDocs} className="underline">
             public API
           </Link>
           . A key stops working when its creator is no longer an admin here.

@@ -1,6 +1,6 @@
 # Public API with API keys: plan
 
-Status: planned. Each phase is developed on its own stacked branch (section 10).
+Status: implemented on stacked branches (section 10); user documentation is in [public-api.md](public-api.md). Browser checks of the key management pages need the migrations applied.
 
 Server admins and group admins create API keys that let external tools call a versioned HTTP API (`/api/v1`) for the servers the key targets. Panel admins can create keys for any server or group.
 
@@ -70,16 +70,16 @@ model ApiKeys {
 
 ## 4. Scopes
 
-| Scope           | Allows                                  |
-| --------------- | --------------------------------------- |
-| `server:read`   | Server info and status                  |
-| `players:read`  | Connected players                       |
-| `players:write` | Kick, ban and similar player operations |
-| `maps:read`     | Map list                                |
-| `maps:write`    | Add and remove maps, add maps from TMX  |
-| `jukebox:read`  | Jukebox contents                        |
-| `jukebox:write` | Queue and clear jukebox maps            |
-| `matches:read`  | Recorded matches                        |
+| Scope           | Allows                            |
+| --------------- | --------------------------------- |
+| `server:read`   | Server info                       |
+| `players:read`  | Connected players                 |
+| `players:write` | Kick players                      |
+| `maps:read`     | Map list                          |
+| `maps:write`    | Add maps from Trackmania Exchange |
+| `jukebox:read`  | Jukebox contents                  |
+| `jukebox:write` | Queue maps and clear the jukebox  |
+| `matches:read`  | Recorded matches                  |
 
 Scopes live in `@gcp/shared` so the web UI and the route wrapper use the same list. A key needs at least one scope.
 
@@ -160,8 +160,9 @@ Responses are the contract's DTOs, never Prisma rows or raw GBX structs.
 ## 9. Key management UI
 
 - **Server page** (`server/[id]/api-keys`): the server's own keys, with create, rename and revoke for server admins. A read-only list shows group keys that can reach this server, linking to the group.
-- **Group page**: API keys tab for the group's admins. Every admin of the group can see and revoke all of its keys, not only their own.
-- **Admin page** (`admin/api-keys`): every key, with revoke. No create button; keys are created from their target.
+- **Groups table** (Admin → Groups): an **API keys** row action opens the group's keys for its admins (`groups:id:admin`; `groups:edit` alone is not enough). Every admin of the group can see and revoke all of its keys, not only their own.
+- **Admin page** (`admin/api-keys`): every key. It needs the new `api-keys:view` permission and revoking needs `api-keys:revoke`, like the other admin pages' role permissions. No create button; keys are created from their target.
+- **API reference** (`/api-docs`): a panel page generated from the contract, linked from the key pages.
 - Writes are Server Actions with Zod validation, `logAudit` and transactions like the existing admin actions. Reads use GET routes, typed clients and query hooks.
 - Creation shows the token once in a modal with a copy button. The form offers scopes and an optional expiry.
 - Permissions are enforced on the server (`serverPermissions.admin`, `groups:id:admin`) and mirrored in the UI with `hasPermissionSync`. Group moderators cannot create group keys.

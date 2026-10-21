@@ -13,13 +13,13 @@ export const API_KEY_SCOPES = [
 export type ApiKeyScope = (typeof API_KEY_SCOPES)[number];
 
 export const API_KEY_SCOPE_DESCRIPTIONS: Record<ApiKeyScope, string> = {
-  "server:read": "Server info and status",
+  "server:read": "Server info",
   "players:read": "Connected players",
-  "players:write": "Kick, ban and other player operations",
+  "players:write": "Kick players",
   "maps:read": "Map list",
-  "maps:write": "Add and remove maps, add maps from TMX",
+  "maps:write": "Add maps from Trackmania Exchange",
   "jukebox:read": "Jukebox contents",
-  "jukebox:write": "Queue and clear jukebox maps",
+  "jukebox:write": "Queue maps and clear the jukebox",
   "matches:read": "Recorded matches",
 };
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { z } from "zod/v4";
 import { isApiKeyScope } from "../src/api-keys";
 import { type ApiEndpoint, publicApiEndpoints } from "../src/public-api";
 
@@ -44,4 +45,20 @@ describe("public API contract", () => {
       }
     }
   });
+
+  // The panel's reference page renders these
+  it.each(endpoints.map((e) => [e.id, e] as const))(
+    "%s converts to JSON Schema",
+    (_, endpoint) => {
+      for (const schema of [endpoint.params, endpoint.query, endpoint.body]) {
+        if (schema)
+          expect(() => z.toJSONSchema(schema, { io: "input" })).not.toThrow();
+      }
+      if (endpoint.response) {
+        expect(() =>
+          z.toJSONSchema(endpoint.response!, { io: "output" }),
+        ).not.toThrow();
+      }
+    },
+  );
 });
