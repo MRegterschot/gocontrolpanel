@@ -34,30 +34,39 @@ type RateLimitOptions = {
   tokenCost?: number; // default: 1
 };
 
+// Takes a token from the bucket without waiting; retryAfterMs is 0 when allowed
+export async function takeRateLimitToken(
+  options: RateLimitOptions,
+): Promise<{ allowed: boolean; retryAfterMs: number }> {
+  const { key, ratePerMinute = 60, burst = 10, tokenCost = 1 } = options;
+  const redis = await getRedisClient();
+  const now = Date.now();
+  const refillRate = ratePerMinute / 60000; // tokens per ms
+
+  const result = (await redis.eval(
+    LUA_SCRIPT,
+    1,
+    `rate:${key}`,
+    now.toString(),
+    refillRate.toString(),
+    burst.toString(),
+    tokenCost.toString(),
+  )) as [number, number];
+  const [allowed, retryAfter] = result;
+  return {
+    allowed: allowed === 1,
+    retryAfterMs: allowed === 1 ? 0 : retryAfter,
+  };
+}
+
 export function redisRateLimit(options: RateLimitOptions) {
   return async function <T>(fn: () => Promise<T>): Promise<T> {
-    const { key, ratePerMinute = 60, burst = 10, tokenCost = 1 } = options;
-
-    const redis = await getRedisClient();
-    const now = Date.now();
-    const refillRate = ratePerMinute / 60000; // tokens per ms
-
-    const result = (await redis.eval(
-      LUA_SCRIPT,
-      1,
-      `rate:${key}`,
-      now.toString(),
-      refillRate.toString(),
-      burst.toString(),
-      tokenCost.toString(),
-    )) as [number, number];
-    const [allowed, retryAfter] = result;
-
-    if (allowed === 1) {
+    const { allowed, retryAfterMs } = await takeRateLimitToken(options);
+    if (allowed) {
       return fn();
     } else {
       return new Promise((resolve) =>
-        setTimeout(() => resolve(redisRateLimit(options)(fn)), retryAfter),
+        setTimeout(() => resolve(redisRateLimit(options)(fn)), retryAfterMs),
       );
     }
   };
