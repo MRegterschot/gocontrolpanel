@@ -1,0 +1,77 @@
+import type { getMatchAs, MatchSummary } from "@/services/database/matches";
+import type { JukeboxMap } from "@/types/map";
+import type { Maps } from "@gcp/db";
+import type { PlayerInfo } from "@gcp/shared";
+import type {
+  ApiJukeboxEntry,
+  ApiMap,
+  ApiMatch,
+  ApiMatchDetail,
+  ApiPlayer,
+} from "@gcp/shared/public-api";
+import "server-only";
+
+// Panel and GBX shapes to the public API's DTOs; the route wrapper strips anything extra
+
+export function toApiPlayer(player: PlayerInfo): ApiPlayer {
+  return {
+    login: player.login,
+    nickName: player.nickName,
+    playerId: player.playerId,
+    teamId: player.teamId,
+    spectator: player.spectatorStatus % 10 !== 0,
+  };
+}
+
+export function toApiMap(map: Maps): ApiMap {
+  return {
+    uid: map.uid,
+    name: map.name,
+    fileName: map.fileName,
+    author: map.author,
+    authorNickname: map.authorNickname,
+    medals: {
+      author: map.authorTime,
+      gold: map.goldTime,
+      silver: map.silverTime,
+      bronze: map.bronzeTime,
+    },
+  };
+}
+
+// Jukebox entries come from Redis as JSON, so QueuedAt may already be a string
+export function toApiJukeboxEntry(entry: JukeboxMap): ApiJukeboxEntry {
+  return {
+    map: toApiMap(entry),
+    queuedBy: {
+      login: entry.QueuedBy,
+      displayName: entry.QueuedByDisplayName,
+    },
+    queuedAt: new Date(entry.QueuedAt).toISOString(),
+  };
+}
+
+export function toApiMatch(match: MatchSummary): ApiMatch {
+  return {
+    id: match.id,
+    mode: match.mode,
+    map: { uid: match.map.uid, name: match.map.name },
+    recordCount: match._count.records,
+    createdAt: match.createdAt.toISOString(),
+  };
+}
+
+export function toApiMatchDetail(
+  match: NonNullable<Awaited<ReturnType<typeof getMatchAs>>>,
+): ApiMatchDetail {
+  return {
+    ...toApiMatch(match),
+    records: match.records.map((record) => ({
+      login: record.login,
+      nickName: record.user?.nickName ?? null,
+      time: record.time,
+      round: record.round,
+      points: record.points,
+    })),
+  };
+}

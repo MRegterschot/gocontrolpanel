@@ -1,6 +1,7 @@
 import { checkAndUpdateMapsInfoIfNeeded } from "@/actions/database/server-only/gbx";
 import { createMissingMaps } from "@/actions/database/server-only/maps";
 import { doServerActionWithAuth } from "@/lib/actions";
+import { type Actor, actorFromSession, requirePermission } from "@/lib/actor";
 import { getAccountNames, getMapsInfo } from "@/lib/api/nadeo";
 import { getClient } from "@/lib/dbclient";
 import { getGbxClient } from "@/lib/gbx-service";
@@ -11,7 +12,7 @@ import {
   ServerResponse,
 } from "@/types/responses";
 import { Maps, Prisma } from "@gcp/db";
-import { MapInfoMinimal } from "@gcp/shared";
+import { MapInfoMinimal, serverPermissions } from "@gcp/shared";
 import { PaginationState } from "@tanstack/react-table";
 import "server-only";
 
@@ -83,80 +84,89 @@ export async function getMapList(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async () => {
-      const meta = {
-        type: "database",
-        module: "maps",
-        function: "getMapList",
-      };
-      const log = getLogger(serverId);
-      const client = getGbxClient(serverId);
-      const pageSize = 100;
-      let allMapList: MapInfoMinimal[] = [];
-
-      if (count === undefined) {
-        let currentStart = start;
-        while (true) {
-          const batch: MapInfoMinimal[] = await client.call(
-            "GetMapList",
-            pageSize,
-            currentStart,
-          );
-          if (!batch || batch.length === 0) break;
-
-          allMapList = allMapList.concat(batch);
-          if (batch.length < pageSize) break; // No more pages
-
-          currentStart += batch.length;
-        }
-      } else {
-        allMapList = await client.call("GetMapList", count, start);
-      }
-
-      if (!allMapList || allMapList.length === 0) {
-        log.error({ meta }, "Failed to get map list or map list is empty");
-        throw new ServerError(
-          "Failed to get map list or map list is empty",
-          "MapListEmpty",
-        );
-      }
-
-      const uids = allMapList.filter((map) => map?.UId).map((map) => map.UId);
-
-      const db = getClient();
-
-      const existingMaps = await db.maps.findMany({
-        where: {
-          uid: { in: uids },
-          deletedAt: null,
-        },
-      });
-
-      const existingUids = new Set(existingMaps.map((m) => m.uid));
-
-      const missingMaps = allMapList.filter(
-        (map) => !existingUids.has(map.UId),
-      );
-
-      if (missingMaps.length > 0) {
-        existingMaps.push(...(await createMissingMaps(serverId, missingMaps)));
-      }
-
-      const orderedMaps = allMapList
-        .map((map) => {
-          const foundMap = existingMaps.find((m) => m.uid === map.UId);
-          return foundMap
-            ? {
-                ...foundMap,
-                path: map.FileName,
-              }
-            : null;
-        })
-        .filter((map) => map !== null);
-
-      return orderedMaps;
-    },
+    (session) =>
+      getMapListAs(actorFromSession(session), serverId, count, start),
   );
+}
+
+// The server's map list with panel map rows, for an actor; the panel and the public API call this
+export async function getMapListAs(
+  actor: Actor,
+  serverId: string,
+  count?: number,
+  start: number = 0,
+): Promise<(Maps & { path: string })[]> {
+  requirePermission(actor, serverPermissions.member, serverId);
+
+  const meta = {
+    type: "database",
+    module: "maps",
+    function: "getMapList",
+  };
+  const log = getLogger(serverId);
+  const client = getGbxClient(serverId);
+  const pageSize = 100;
+  let allMapList: MapInfoMinimal[] = [];
+
+  if (count === undefined) {
+    let currentStart = start;
+    while (true) {
+      const batch: MapInfoMinimal[] = await client.call(
+        "GetMapList",
+        pageSize,
+        currentStart,
+      );
+      if (!batch || batch.length === 0) break;
+
+      allMapList = allMapList.concat(batch);
+      if (batch.length < pageSize) break; // No more pages
+
+      currentStart += batch.length;
+    }
+  } else {
+    allMapList = await client.call("GetMapList", count, start);
+  }
+
+  if (!allMapList || allMapList.length === 0) {
+    log.error({ meta }, "Failed to get map list or map list is empty");
+    throw new ServerError(
+      "Failed to get map list or map list is empty",
+      "MapListEmpty",
+    );
+  }
+
+  const uids = allMapList.filter((map) => map?.UId).map((map) => map.UId);
+
+  const db = getClient();
+
+  const existingMaps = await db.maps.findMany({
+    where: {
+      uid: { in: uids },
+      deletedAt: null,
+    },
+  });
+
+  const existingUids = new Set(existingMaps.map((m) => m.uid));
+
+  const missingMaps = allMapList.filter((map) => !existingUids.has(map.UId));
+
+  if (missingMaps.length > 0) {
+    existingMaps.push(...(await createMissingMaps(serverId, missingMaps)));
+  }
+
+  const orderedMaps = allMapList
+    .map((map) => {
+      const foundMap = existingMaps.find((m) => m.uid === map.UId);
+      return foundMap
+        ? {
+            ...foundMap,
+            path: map.FileName,
+          }
+        : null;
+    })
+    .filter((map) => map !== null);
+
+  return orderedMaps;
 }
 
 export async function getMapRecordsPaginated(

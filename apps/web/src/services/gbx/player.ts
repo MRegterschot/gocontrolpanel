@@ -1,8 +1,9 @@
 import { doServerActionWithAuth } from "@/lib/actions";
+import { actorFromSession, requirePermission, type Actor } from "@/lib/actor";
 import { callEach } from "@/lib/gbx-batch";
 import { getGbxClient, type GbxClient } from "@/lib/gbx-service";
 import { ServerResponse } from "@/types/responses";
-import { PlayerInfo } from "@gcp/shared";
+import { PlayerInfo, serverPermissions } from "@gcp/shared";
 import "server-only";
 
 // One round trip for the whole list; a player the server no longer knows is shown by login only
@@ -42,38 +43,46 @@ export async function getPlayerList(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async () => {
-      const client = getGbxClient(serverId);
-      const playerList = await client.call("GetPlayerList", 1000, 0);
-
-      if (!playerList || !Array.isArray(playerList)) {
-        return [];
-      }
-
-      const players: PlayerInfo[] = [];
-      for (const player of playerList) {
-        try {
-          players.push({
-            nickName: player.NickName,
-            login: player.Login,
-            playerId: player.PlayerId,
-            spectatorStatus: player.SpectatorStatus,
-            teamId: player.TeamId,
-          });
-        } catch {
-          players.push({
-            nickName: "-",
-            login: player.Login,
-            playerId: 0,
-            spectatorStatus: 0,
-            teamId: 0,
-          });
-        }
-      }
-
-      return players;
-    },
+    (session) => getPlayerListAs(actorFromSession(session), serverId),
   );
+}
+
+// The player list for an actor; the panel and the public API both call this
+export async function getPlayerListAs(
+  actor: Actor,
+  serverId: string,
+): Promise<PlayerInfo[]> {
+  requirePermission(actor, serverPermissions.member, serverId);
+
+  const client = getGbxClient(serverId);
+  const playerList = await client.call("GetPlayerList", 1000, 0);
+
+  if (!playerList || !Array.isArray(playerList)) {
+    return [];
+  }
+
+  const players: PlayerInfo[] = [];
+  for (const player of playerList) {
+    try {
+      players.push({
+        nickName: player.NickName,
+        login: player.Login,
+        playerId: player.PlayerId,
+        spectatorStatus: player.SpectatorStatus,
+        teamId: player.TeamId,
+      });
+    } catch {
+      players.push({
+        nickName: "-",
+        login: player.Login,
+        playerId: 0,
+        spectatorStatus: 0,
+        teamId: 0,
+      });
+    }
+  }
+
+  return players;
 }
 
 export async function getBanList(
