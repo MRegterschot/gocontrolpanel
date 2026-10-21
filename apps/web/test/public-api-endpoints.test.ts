@@ -151,7 +151,7 @@ describe("v1 routes", () => {
     );
   });
 
-  it("all go through publicApiRoute, apart from the OpenAPI document", () => {
+  it("all go through publicApiRoute, apart from the documentation", () => {
     const exported = (dir: string): string[] =>
       readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
         const full = path.join(dir, entry.name);
@@ -161,12 +161,16 @@ describe("v1 routes", () => {
           ...readFileSync(full, "utf8").matchAll(
             /export (?:const|async function|function) (GET|POST|PUT|PATCH|DELETE)\b/g,
           ),
-        ].map((m) => `${path.relative(V1, full)} ${m[1]}`);
+        ].map((m) => `${path.dirname(path.relative(V1, full))} ${m[1]}`);
       });
-    expect(exported(V1).length).toBe(publicApiEndpoints.length + 1);
-    expect(exported(V1)).toContain(
-      `${path.join("openapi.json", "route.ts")} GET`,
-    );
+    const docs = [
+      "openapi.json GET",
+      `docs GET`,
+      `${path.join("docs", "scalar.js")} GET`,
+    ];
+    const routes = exported(V1);
+    expect(routes).toEqual(expect.arrayContaining(docs));
+    expect(routes.length).toBe(publicApiEndpoints.length + docs.length);
   });
 });
 
