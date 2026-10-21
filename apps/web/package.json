@@ -89,7 +89,8 @@
     "tmtags": "^1.0.3",
     "tw-animate-css": "^1.2.5",
     "vaul": "^1.1.2",
-    "zod": "^3.24.2"
+    "zod": "^3.25.76",
+    "zod-openapi": "^5.4.6"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
