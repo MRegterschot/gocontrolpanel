@@ -18,6 +18,7 @@ import { routes } from "@/routes";
 import {
   IconClipboardText,
   IconCloud,
+  IconKey,
   IconLogs,
   IconRobot,
   IconServerCog,
@@ -36,6 +37,7 @@ export default async function NavAdmin({
   canViewHetzner,
   canViewAuditLogs,
   canViewCodriver,
+  canViewApiKeys,
 }: {
   canViewUsers: boolean;
   canViewGroups: boolean;
@@ -44,6 +46,7 @@ export default async function NavAdmin({
   canViewHetzner: boolean;
   canViewAuditLogs: boolean;
   canViewCodriver: boolean;
+  canViewApiKeys: boolean;
 }) {
   const group: NavGroup = {
     name: "Admin",
@@ -89,6 +92,12 @@ export default async function NavAdmin({
         url: routes.admin.codriver,
         icon: IconRobot,
         auth: canViewCodriver,
+      },
+      {
+        name: "API Keys",
+        url: routes.admin.apiKeys,
+        icon: IconKey,
+        auth: canViewApiKeys,
       },
     ],
   };

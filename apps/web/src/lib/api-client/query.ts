@@ -28,6 +28,9 @@ export const queryKeys = {
     ["servers", serverId, "server-plugin"] as const,
   ecmApiKey: (serverId: string) =>
     ["servers", serverId, "ecm", "api-key"] as const,
+  serverApiKeys: (serverId: string) =>
+    ["servers", serverId, "api-keys"] as const,
+  groupApiKeys: (groupId: string) => ["groups", groupId, "api-keys"] as const,
   codriverServer: (serverId: string) =>
     ["servers", serverId, "codriver"] as const,
   codriverChat: (serverId: string) =>

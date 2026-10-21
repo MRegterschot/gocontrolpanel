@@ -37,6 +37,7 @@ import {
   IconDeviceDesktop,
   IconDeviceGamepad,
   IconFileDescription,
+  IconKey,
   IconMap,
   IconRobot,
   IconServer,
@@ -207,6 +208,19 @@ export function getServerGroup(
         auth: hasPermissionSync(
           session,
           routePermissions.servers.codriver,
+          server.id,
+        ),
+        needsConnection: false,
+      },
+      {
+        name: "API Keys",
+        url: generatePath(routes.servers.apiKeys, {
+          id: server.id,
+        }),
+        icon: IconKey,
+        auth: hasPermissionSync(
+          session,
+          routePermissions.servers.apiKeys,
           server.id,
         ),
         needsConnection: false,

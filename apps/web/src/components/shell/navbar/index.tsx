@@ -44,7 +44,12 @@ export default async function Navbar() {
     routePermissions.admin.codriver.view,
   );
 
+  const canViewApiKeys = await hasPermission(
+    routePermissions.admin.apiKeys.view,
+  );
+
   const canViewAdmin =
+    canViewApiKeys ||
     canViewCodriver ||
     canViewUsers ||
     canViewGroups ||
@@ -70,6 +75,7 @@ export default async function Navbar() {
           canViewHetzner={canViewHetzner}
           canViewAuditLogs={canViewAuditLogs}
           canViewCodriver={canViewCodriver}
+          canViewApiKeys={canViewApiKeys}
         />
       )}
       <NavFooter />
