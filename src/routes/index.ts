@@ -16,7 +16,7 @@ export const routes = {
     records: "/server/:id/records",
   },
   tournaments: {
-    tournament: "/tournaments/:id",
+    competition: "/competitions/:id",
     stage: "/tournaments/:id/stages/:stageId",
     registrations: "/tournaments/:id/stages/:stageId/registrations",
   },
@@ -191,253 +191,253 @@ export const breadCrumbs: {
   path: string;
   breadCrumbs: TBreadcrumb[];
 }[] = [
-  {
-    path: routes.dashboard,
-    breadCrumbs: [
-      {
-        label: "Dashboard",
-      },
-    ],
-  },
-  {
-    path: routes.servers.settings,
-    breadCrumbs: [
-      {
-        label: "Server",
-      },
-      {
-        label: "Settings",
-      },
-    ],
-  },
-  {
-    path: routes.servers.game,
-    breadCrumbs: [
-      {
-        label: "Server",
-      },
-      {
-        label: "Game",
-      },
-    ],
-  },
-  {
-    path: routes.servers.maps,
-    breadCrumbs: [
-      {
-        label: "Server",
-      },
-      {
-        label: "Maps",
-      },
-    ],
-  },
-  {
-    path: routes.servers.players,
-    breadCrumbs: [
-      {
-        label: "Server",
-      },
-      {
-        label: "Players",
-      },
-    ],
-  },
-  {
-    path: routes.servers.live,
-    breadCrumbs: [
-      {
-        label: "Server",
-      },
-      {
-        label: "Live",
-      },
-    ],
-  },
-  {
-    path: routes.servers.files,
-    breadCrumbs: [
-      {
-        label: "Server",
-      },
-      {
-        label: "Files",
-      },
-    ],
-  },
-  {
-    path: routes.servers.editor,
-    breadCrumbs: [
-      {
-        label: "Server",
-      },
-      {
-        label: "Files",
-      },
-      {
-        label: "Editor",
-      },
-    ],
-  },
-  {
-    path: routes.servers.plugins,
-    breadCrumbs: [
-      {
-        label: "Server",
-      },
-      {
-        label: "Plugins",
-      },
-    ],
-  },
-  {
-    path: routes.servers.tmx,
-    breadCrumbs: [
-      {
-        label: "Server",
-      },
-      {
-        label: "TMX",
-      },
-    ],
-  },
-  {
-    path: routes.servers.nadeo,
-    breadCrumbs: [
-      {
-        label: "Server",
-      },
-      {
-        label: "Nadeo",
-      },
-    ],
-  },
-  {
-    path: routes.servers.records,
-    breadCrumbs: [
-      {
-        label: "Server",
-      },
-      {
-        label: "Records",
-      },
-    ],
-  },
-  {
-    path: routes.tournaments.tournament,
-    breadCrumbs: [
-      {
-        label: "Tournaments",
-      },
-      {
-        label: "Tournament Info",
-      },
-    ],
-  },
-  {
-    path: routes.tournaments.stage,
-    breadCrumbs: [
-      {
-        label: "Tournaments",
-      },
-      {
-        label: "Stage Info",
-      },
-    ],
-  },
-  {
-    path: routes.tournaments.registrations,
-    breadCrumbs: [
-      {
-        label: "Tournaments",
-      },
-      {
-        label: "Stage Info",
-      },
-      {
-        label: "Registrations",
-      },
-    ],
-  },
-  {
-    path: routes.admin.users,
-    breadCrumbs: [
-      {
-        label: "Admin",
-      },
-      {
-        label: "Users",
-      },
-    ],
-  },
-  {
-    path: routes.admin.groups,
-    breadCrumbs: [
-      {
-        label: "Admin",
-      },
-      {
-        label: "Groups",
-      },
-    ],
-  },
-  {
-    path: routes.admin.roles,
-    breadCrumbs: [
-      {
-        label: "Admin",
-      },
-      {
-        label: "Roles",
-      },
-    ],
-  },
-  {
-    path: routes.admin.servers,
-    breadCrumbs: [
-      {
-        label: "Admin",
-      },
-      {
-        label: "Servers",
-      },
-    ],
-  },
-  {
-    path: routes.admin.hetzner,
-    breadCrumbs: [
-      {
-        label: "Admin",
-      },
-      {
-        label: "Hetzner",
-      },
-    ],
-  },
-  {
-    path: routes.admin.hetznerServers,
-    breadCrumbs: [
-      {
-        label: "Admin",
-      },
-      {
-        label: "Hetzner",
-        path: routes.admin.hetzner,
-      },
-      {
-        label: "Project",
-      },
-    ],
-  },
-  {
-    path: routes.admin.auditLogs,
-    breadCrumbs: [
-      {
-        label: "Admin",
-      },
-      {
-        label: "Audit Logs",
-      },
-    ],
-  },
-];
+    {
+      path: routes.dashboard,
+      breadCrumbs: [
+        {
+          label: "Dashboard",
+        },
+      ],
+    },
+    {
+      path: routes.servers.settings,
+      breadCrumbs: [
+        {
+          label: "Server",
+        },
+        {
+          label: "Settings",
+        },
+      ],
+    },
+    {
+      path: routes.servers.game,
+      breadCrumbs: [
+        {
+          label: "Server",
+        },
+        {
+          label: "Game",
+        },
+      ],
+    },
+    {
+      path: routes.servers.maps,
+      breadCrumbs: [
+        {
+          label: "Server",
+        },
+        {
+          label: "Maps",
+        },
+      ],
+    },
+    {
+      path: routes.servers.players,
+      breadCrumbs: [
+        {
+          label: "Server",
+        },
+        {
+          label: "Players",
+        },
+      ],
+    },
+    {
+      path: routes.servers.live,
+      breadCrumbs: [
+        {
+          label: "Server",
+        },
+        {
+          label: "Live",
+        },
+      ],
+    },
+    {
+      path: routes.servers.files,
+      breadCrumbs: [
+        {
+          label: "Server",
+        },
+        {
+          label: "Files",
+        },
+      ],
+    },
+    {
+      path: routes.servers.editor,
+      breadCrumbs: [
+        {
+          label: "Server",
+        },
+        {
+          label: "Files",
+        },
+        {
+          label: "Editor",
+        },
+      ],
+    },
+    {
+      path: routes.servers.plugins,
+      breadCrumbs: [
+        {
+          label: "Server",
+        },
+        {
+          label: "Plugins",
+        },
+      ],
+    },
+    {
+      path: routes.servers.tmx,
+      breadCrumbs: [
+        {
+          label: "Server",
+        },
+        {
+          label: "TMX",
+        },
+      ],
+    },
+    {
+      path: routes.servers.nadeo,
+      breadCrumbs: [
+        {
+          label: "Server",
+        },
+        {
+          label: "Nadeo",
+        },
+      ],
+    },
+    {
+      path: routes.servers.records,
+      breadCrumbs: [
+        {
+          label: "Server",
+        },
+        {
+          label: "Records",
+        },
+      ],
+    },
+    {
+      path: routes.tournaments.competition,
+      breadCrumbs: [
+        {
+          label: "Tournaments",
+        },
+        {
+          label: "Tournament Info",
+        },
+      ],
+    },
+    {
+      path: routes.tournaments.stage,
+      breadCrumbs: [
+        {
+          label: "Tournaments",
+        },
+        {
+          label: "Stage Info",
+        },
+      ],
+    },
+    {
+      path: routes.tournaments.registrations,
+      breadCrumbs: [
+        {
+          label: "Tournaments",
+        },
+        {
+          label: "Stage Info",
+        },
+        {
+          label: "Registrations",
+        },
+      ],
+    },
+    {
+      path: routes.admin.users,
+      breadCrumbs: [
+        {
+          label: "Admin",
+        },
+        {
+          label: "Users",
+        },
+      ],
+    },
+    {
+      path: routes.admin.groups,
+      breadCrumbs: [
+        {
+          label: "Admin",
+        },
+        {
+          label: "Groups",
+        },
+      ],
+    },
+    {
+      path: routes.admin.roles,
+      breadCrumbs: [
+        {
+          label: "Admin",
+        },
+        {
+          label: "Roles",
+        },
+      ],
+    },
+    {
+      path: routes.admin.servers,
+      breadCrumbs: [
+        {
+          label: "Admin",
+        },
+        {
+          label: "Servers",
+        },
+      ],
+    },
+    {
+      path: routes.admin.hetzner,
+      breadCrumbs: [
+        {
+          label: "Admin",
+        },
+        {
+          label: "Hetzner",
+        },
+      ],
+    },
+    {
+      path: routes.admin.hetznerServers,
+      breadCrumbs: [
+        {
+          label: "Admin",
+        },
+        {
+          label: "Hetzner",
+          path: routes.admin.hetzner,
+        },
+        {
+          label: "Project",
+        },
+      ],
+    },
+    {
+      path: routes.admin.auditLogs,
+      breadCrumbs: [
+        {
+          label: "Admin",
+        },
+        {
+          label: "Audit Logs",
+        },
+      ],
+    },
+  ];

@@ -20,8 +20,10 @@ type Steps = "general" | "server" | "common" | "mode" | "maps" | "summary";
 
 export default function CreateMatchTemplateForm({
   callback,
+  compeitionId
 }: {
   callback?: () => void;
+  compeitionId: number
 }) {
   const [step, setStep] = useState<Steps>("general");
 
@@ -96,7 +98,7 @@ export default function CreateMatchTemplateForm({
   };
 
   return (
-    <Tabs value={step} onValueChange={() => {}} className="w-full gap-3">
+    <Tabs value={step} onValueChange={() => { }} className="w-full gap-3">
       <TabsList className="w-full">
         <TabsTrigger value="general" className="cursor-default">
           General

@@ -12,7 +12,8 @@ import {
 
 export default __t.row({
   name: __t.string(),
-  id: __t.u32().primaryKey(),
+  id: __t.u32(),
   parentId: __t.u32().name("parent_id"),
   template: __t.bool(),
+  templatePublic: __t.bool().name("template_public"),
 });

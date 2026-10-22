@@ -15,7 +15,7 @@ export function useCompetitionTree(tournamentId: number) {
   const [matches] = useTable(tables.tab_match);
 
   const [competitions] = useTable(tables.project_competition_descendants); // TODO, filter by tournamentId
-  const [registrationRows] = useTable(tables.unstable_registration);
+  const [registrationRows] = useTable(tables.tabRegistration);
 
   // const registeredPlayerRows = tables.temp_registration_player.where(r => r.registrationId.eq(tournamentId));
 

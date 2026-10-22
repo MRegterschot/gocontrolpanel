@@ -125,6 +125,7 @@ export const CompetitionV1 = __t.object("CompetitionV1", {
   id: __t.u32(),
   parentId: __t.u32(),
   template: __t.bool(),
+  templatePublic: __t.bool(),
 });
 export type CompetitionV1 = __Infer<typeof CompetitionV1>;
 
@@ -179,6 +180,24 @@ export const ConnectionDataOptionFirstOffsetN = __t.object("ConnectionDataOption
   take: __t.u8(),
 });
 export type ConnectionDataOptionFirstOffsetN = __Infer<typeof ConnectionDataOptionFirstOffsetN>;
+
+// The tagged union or sum type for the algebraic type `ConnectionError`.
+export const ConnectionError = __t.enum("ConnectionError", {
+  NoParallel: __t.unit(),
+  SelfCycle: __t.unit(),
+  get Cycle() {
+    return NodeHandle;
+  },
+  NoOtherCompetition: __t.unit(),
+  NoTemplateMix: __t.unit(),
+  InvalidNodes: __t.unit(),
+  Unauthorized: __t.unit(),
+  InternalError: __t.string(),
+  InvalidTargetNode: __t.unit(),
+  InvalidOriginNode: __t.unit(),
+  InvalidKind: __t.unit(),
+});
+export type ConnectionError = __Infer<typeof ConnectionError>;
 
 // The tagged union or sum type for the algebraic type `ConnectionKind`.
 export const ConnectionKind = __t.enum("ConnectionKind", {
@@ -496,7 +515,7 @@ export const LbEntry = __t.object("LbEntry", {
   get mode() {
     return TmMode;
   },
-  stepIdx: __t.u8(),
+  teamId: __t.u32(),
 });
 export type LbEntry = __Infer<typeof LbEntry>;
 
@@ -889,24 +908,6 @@ export const ModeSettingsV2 = __t.enum("ModeSettingsV2", {
 });
 export type ModeSettingsV2 = __Infer<typeof ModeSettingsV2>;
 
-export const MyProjectV1 = __t.object("MyProjectV1", {
-  id: __t.u32(),
-  userId: __t.u32(),
-  creatorName: __t.string(),
-  name: __t.string(),
-  startingAt: __t.timestamp(),
-  endingAt: __t.timestamp(),
-  description: __t.string(),
-  get status() {
-    return ProjectStatus;
-  },
-  get kind() {
-    return ProjectKind;
-  },
-  verified: __t.bool(),
-});
-export type MyProjectV1 = __Infer<typeof MyProjectV1>;
-
 // The tagged union or sum type for the algebraic type `NodeHandle`.
 export const NodeHandle = __t.enum("NodeHandle", {
   MatchV1: __t.u32(),
@@ -1119,6 +1120,7 @@ export const RawServerConfigV2 = __t.object("RawServerConfigV2", {
   get config() {
     return ServerConfigV2;
   },
+  name: __t.string(),
 });
 export type RawServerConfigV2 = __Infer<typeof RawServerConfigV2>;
 

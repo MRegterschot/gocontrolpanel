@@ -29,7 +29,7 @@ export default function CreateMatchForm({
   const [isCreateMatchTemplateModalOpen, setIsCreateMatchTemplateModalOpen] =
     useState(false);
 
-  const [matchTemplateRows] = useTable(tables.my_match_template);
+  //const [matchTemplateRows] = useTable(tables.my_match_template);
 
   const form = useForm<CreateMatchSchemaType>({
     resolver: zodResolver(CreateMatchSchema),
@@ -41,10 +41,10 @@ export default function CreateMatchForm({
 
   async function onSubmit(values: CreateMatchSchemaType) {
     try {
-      createMatch({
+      /* createMatch({
         ...values,
         withTemplate: values.withTemplate,
-      });
+      }); */
 
       toast.success("Match successfully created");
       if (callback) {
@@ -66,9 +66,9 @@ export default function CreateMatchForm({
         >
           <FormElement
             name="name"
-            label="Match Name"
+            label="Config Name"
             type="text"
-            placeholder="Enter match name"
+            placeholder="Enter config name"
           />
 
           <div className="flex flex-1 gap-2 items-end">

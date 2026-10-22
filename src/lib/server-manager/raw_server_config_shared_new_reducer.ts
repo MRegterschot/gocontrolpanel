@@ -15,6 +15,7 @@ import {
 } from "./types";
 
 export default {
+  name: __t.string(),
   competitionId: __t.u32(),
   get config() {
     return ServerConfigV2;
