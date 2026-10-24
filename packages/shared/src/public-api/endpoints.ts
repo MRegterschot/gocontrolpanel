@@ -125,6 +125,40 @@ export const forceSpectator = defineEndpoint({
   status: 204,
 });
 
+export const connectFakePlayer = defineEndpoint({
+  id: "connectFakePlayer",
+  method: "post",
+  path: "/servers/{serverId}/fake-players",
+  scope: "players:write",
+  tag: "Players",
+  summary: "Connect a fake player",
+  description: "For testing plugins and layouts.",
+  params: serverParams,
+  status: 201,
+  response: dataOf(
+    z.object({ login: z.string().meta({ example: "*fakeplayer1*" }) }),
+  ),
+});
+
+export const disconnectFakePlayer = defineEndpoint({
+  id: "disconnectFakePlayer",
+  method: "delete",
+  path: "/servers/{serverId}/fake-players/{login}",
+  scope: "players:write",
+  tag: "Players",
+  summary: "Disconnect a fake player",
+  params: serverParams.extend({
+    login: z
+      .string()
+      .regex(/^[A-Za-z0-9_*-]{1,64}$/)
+      .meta({
+        description: "The fake player's login, or * for all of them",
+        example: "*fakeplayer1*",
+      }),
+  }),
+  status: 204,
+});
+
 export const listBans = defineEndpoint({
   id: "listBans",
   method: "get",
@@ -1110,6 +1144,8 @@ export const publicApiEndpoints = [
   kickPlayer,
   banPlayer,
   forceSpectator,
+  connectFakePlayer,
+  disconnectFakePlayer,
   listBans,
   unbanPlayer,
   clearBans,

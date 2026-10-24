@@ -13,6 +13,8 @@ const mocks = vi.hoisted(() => ({
   listFile: vi.fn(),
   cleanList: vi.fn(),
   listed: vi.fn(),
+  connectFake: vi.fn(),
+  disconnectFake: vi.fn(),
 }));
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/auth", () => ({ auth: vi.fn() }));
@@ -37,6 +39,10 @@ vi.mock("@/actions/gbx/server-only/player", () => ({
   playerListFileAs: mocks.listFile,
   cleanPlayerListAs: mocks.cleanList,
 }));
+vi.mock("@/actions/gbx/server-only/advanced", () => ({
+  connectFakePlayerAs: mocks.connectFake,
+  disconnectFakePlayerAs: mocks.disconnectFake,
+}));
 vi.mock("@/services/gbx/player", () => ({
   getListedPlayersAs: mocks.listed,
 }));
@@ -46,6 +52,8 @@ import * as bansRoute from "@/app/api/v1/servers/[serverId]/bans/route";
 import * as blacklistLoginRoute from "@/app/api/v1/servers/[serverId]/blacklist/[login]/route";
 import * as blacklistLoadRoute from "@/app/api/v1/servers/[serverId]/blacklist/load/route";
 import * as blacklistRoute from "@/app/api/v1/servers/[serverId]/blacklist/route";
+import * as fakePlayerRoute from "@/app/api/v1/servers/[serverId]/fake-players/[login]/route";
+import * as fakePlayersRoute from "@/app/api/v1/servers/[serverId]/fake-players/route";
 import * as guestlistLoginRoute from "@/app/api/v1/servers/[serverId]/guestlist/[login]/route";
 import * as guestlistRoute from "@/app/api/v1/servers/[serverId]/guestlist/route";
 import * as guestlistSaveRoute from "@/app/api/v1/servers/[serverId]/guestlist/save/route";
@@ -258,5 +266,32 @@ describe("v1 blacklist and guestlist", () => {
     );
     expect(res.status).toBe(403);
     expect(mocks.blacklist).not.toHaveBeenCalled();
+  });
+});
+
+describe("v1 fake players", () => {
+  it("connects one and returns its login", async () => {
+    mocks.connectFake.mockResolvedValue("*fakeplayer1*");
+    const res = await fakePlayersRoute.POST(
+      req("/servers/server-a/fake-players", { method: "POST" }),
+      onA(),
+    );
+    expect(res.status).toBe(201);
+    expect(await res.json()).toEqual({ data: { login: "*fakeplayer1*" } });
+  });
+
+  it("disconnects one, or all with *", async () => {
+    for (const login of ["*fakeplayer1*", "*"]) {
+      const res = await fakePlayerRoute.DELETE(
+        req(`/servers/server-a/fake-players/${login}`, { method: "DELETE" }),
+        onA({ login }),
+      );
+      expect(res.status).toBe(204);
+      expect(mocks.disconnectFake).toHaveBeenLastCalledWith(
+        actor,
+        "server-a",
+        login,
+      );
+    }
   });
 });

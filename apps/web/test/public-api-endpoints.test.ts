@@ -188,6 +188,20 @@ describe("v1 permissions", () => {
       expect(source).not.toMatch(/["'`]groups:/);
     }
   });
+
+  // Reconnecting and disconnecting clients needs a panel-wide permission that keys never hold
+  it("never reach the panel-wide client operations", () => {
+    const sources = (dir: string): string[] =>
+      readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+        const full = path.join(dir, entry.name);
+        return entry.isDirectory()
+          ? sources(full)
+          : [readFileSync(full, "utf8")];
+      });
+    for (const source of sources(V1)) {
+      expect(source).not.toMatch(/servers:clients|actions\/gbx\/clients/);
+    }
+  });
 });
 
 describe("v1 handlers", () => {
