@@ -18,6 +18,8 @@ export interface ApiEndpoint {
   params?: ObjectSchema;
   query?: ObjectSchema;
   body?: z.ZodType;
+  // Bodies are limited to 64 KB unless the endpoint allows more
+  maxBodyBytes?: number;
   status: 200 | 201 | 204;
   // Absent only for 204 responses
   response?: z.ZodType;

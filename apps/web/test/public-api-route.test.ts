@@ -285,10 +285,28 @@ describe("publicApiRoute", () => {
     ],
     ["a missing record", notFound("Match not found"), 404, "Match not found"],
     [
+      "a folder that already exists",
+      new ServerError("Folder already exists", "FileExists"),
+      409,
+      "Folder already exists",
+    ],
+    [
       "a disconnected server",
       new ServerError("Offline", "ServerNotConnected"),
       503,
       "Offline",
+    ],
+    [
+      "the dedicated server refusing a call",
+      new ServerError("Login unknown.", "GbxCallFailed"),
+      422,
+      "Login unknown.",
+    ],
+    [
+      "removing the last map",
+      new ServerError("Cannot remove the last map", "RemoveLastMapError"),
+      409,
+      "Cannot remove the last map",
     ],
     [
       "an unexpected error",
@@ -304,6 +322,17 @@ describe("publicApiRoute", () => {
     );
     expect(res.status).toBe(status);
     expect((await res.json()).error.message).toBe(message);
+  });
+
+  it("does not log a call the dedicated server refused", async () => {
+    mocks.logError.mockClear();
+    const { route } = serverRoute(
+      vi.fn(async () =>
+        Promise.reject(new ServerError("Login unknown.", "GbxCallFailed")),
+      ),
+    );
+    await route(req("/servers/server-a"), ctx({ serverId: "server-a" }));
+    expect(mocks.logError).not.toHaveBeenCalled();
   });
 
   it("runs the handler under the key, for audit entries", async () => {

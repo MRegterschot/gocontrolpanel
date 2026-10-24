@@ -3,10 +3,12 @@ import { assertResourceId } from "@/lib/resource-id";
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { actorFromSession } from "@/lib/actor";
-import { getGbxClient } from "@/lib/gbx-service";
 import { ServerResponse } from "@/types/responses";
-import { logAudit } from "../database/server-only/audit-logs";
-import { sendChatMessageAs } from "./server-only/advanced";
+import {
+  connectFakePlayerAs,
+  disconnectFakePlayerAs,
+  sendChatMessageAs,
+} from "./server-only/advanced";
 
 export async function connectFakePlayer(
   serverId: string,
@@ -14,16 +16,7 @@ export async function connectFakePlayer(
   assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      const login = await client.call("ConnectFakePlayer");
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.advanced.fakeplayer.connect",
-      );
-      return login;
-    },
+    (session) => connectFakePlayerAs(actorFromSession(session), serverId),
   );
 }
 
@@ -34,16 +27,8 @@ export async function disconnectFakePlayer(
   assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("DisconnectFakePlayer", login);
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.advanced.fakeplayer.disconnect",
-        login,
-      );
-    },
+    (session) =>
+      disconnectFakePlayerAs(actorFromSession(session), serverId, login),
   );
 }
 

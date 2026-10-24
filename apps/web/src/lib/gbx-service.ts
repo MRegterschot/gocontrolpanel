@@ -5,6 +5,8 @@ import {
   SERVER_EVENTS_CHANNEL,
   type ChatConfig,
   type ChatConfigResult,
+  type CommandBody,
+  type CommandResult,
   type GbxCallBody,
   type MapsChangeResult,
   type PluginCommandBody,
@@ -65,6 +67,10 @@ export function getGbxClient(serverId: string): GbxClient {
 
 // Commands that also update live state, plugins or chat announcements in the service
 export const gbxService = {
+  executeCommand: (serverId: string, body: CommandBody) =>
+    request<CommandResult>("POST", internalPaths.command(serverId), body, {
+      timeoutMs: LONG_TIMEOUT_MS,
+    }),
   reconnect: (serverId: string) =>
     request<{ connected: boolean }>(
       "POST",

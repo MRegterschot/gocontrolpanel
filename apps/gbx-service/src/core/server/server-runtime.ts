@@ -1,5 +1,6 @@
 import {
   MAX_CUSTOM_EVENT_BYTES,
+  type CommandResult,
   type LiveSnapshot,
   type PluginCustomEvent,
   type ServerClient,
@@ -116,6 +117,7 @@ export class ServerRuntime {
 
   private readonly log: Logger;
   private readonly chatCommands: CommandRouter;
+  private readonly chat: ChatService;
   private readonly codriverWindows: CodriverWindows | null;
   private readonly liveSync: LiveSync;
   private readonly handler: GameEventHandler;
@@ -142,6 +144,7 @@ export class ServerRuntime {
     this.gbx = gbx;
 
     const chat = new ChatService(gbx, state, log);
+    this.chat = chat;
     const actions = new ActionRouter(log);
     this.manialinks = new ManialinkService(gbx, log);
     const manialinkDeps = {
@@ -355,6 +358,28 @@ export class ServerRuntime {
     login: string,
   ): Promise<boolean> {
     return this.chatCommands.runAs(pluginId, command, args, login);
+  }
+
+  async executeCommand(
+    command: string,
+    params: string[],
+    login: string,
+  ): Promise<CommandResult> {
+    this.assertConnected();
+    const start = performance.now();
+    const { result, messages, messagesTruncated } =
+      await this.chat.captureCommand(login, () =>
+        this.chatCommands.executeDetailed(command, params, login),
+      );
+    return {
+      command: command.toLowerCase(),
+      login,
+      ...result,
+      messages,
+      messagesTruncated,
+      outputComplete: result.source !== "plugin" && !messagesTruncated,
+      durationMs: Math.round(performance.now() - start),
+    };
   }
 
   // Delivers an event from the panel (e.g. "codriver:action") to this server's plugins, the

@@ -1,4 +1,5 @@
 import type { ChatConfig, PlayerChat, PlayerInfo } from "@gcp/shared";
+import { AsyncLocalStorage } from "node:async_hooks";
 import type { GbxConnection } from "../gbx/connection";
 import type { LiveState } from "../live/live-state";
 import type { Logger } from "../logger";
@@ -13,6 +14,53 @@ export type AnnouncementKey = keyof Pick<
 >;
 
 export class ChatService {
+  private readonly commandOutput = new AsyncLocalStorage<{
+    login: string;
+    messages: string[];
+    characters: number;
+    truncated: boolean;
+    active: boolean;
+  }>();
+
+  async captureCommand<T>(login: string, run: () => Promise<T>) {
+    const output = {
+      login,
+      messages: [] as string[],
+      characters: 0,
+      truncated: false,
+      active: true,
+    };
+    return this.commandOutput.run(output, async () => {
+      try {
+        const result = await run();
+        return {
+          result,
+          messages: [...output.messages],
+          messagesTruncated: output.truncated,
+        };
+      } finally {
+        output.active = false;
+      }
+    });
+  }
+
+  private capture(message: string, login?: string): void {
+    const output = this.commandOutput.getStore();
+    if (
+      !output?.active ||
+      (login !== undefined && !login.split(",").includes(output.login))
+    )
+      return;
+    const remaining = 16384 - output.characters;
+    if (remaining <= 0 || output.messages.length >= 100) {
+      output.truncated = true;
+      return;
+    }
+    output.messages.push(message.slice(0, remaining));
+    output.characters += Math.min(message.length, remaining);
+    if (message.length > remaining) output.truncated = true;
+  }
+
   constructor(
     private readonly gbx: GbxConnection,
     private readonly state: LiveState,
@@ -21,12 +69,14 @@ export class ChatService {
 
   // Broadcast, split into chunks the server accepts
   async send(message: string): Promise<void> {
+    this.capture(message);
     for (const chunk of splitChatMessage(message)) {
       await this.call("ChatSendServerMessage", chunk);
     }
   }
 
   async sendTo(login: string, message: string): Promise<void> {
+    this.capture(message, login);
     for (const chunk of splitChatMessage(message)) {
       await this.call("ChatSendServerMessageToLogin", chunk, login);
     }

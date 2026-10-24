@@ -1,11 +1,39 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod/v4";
 import { isApiKeyScope } from "../src/api-keys";
-import { type ApiEndpoint, publicApiEndpoints } from "../src/public-api";
+import {
+  type ApiEndpoint,
+  playerLogin,
+  publicApiEndpoints,
+  updateScriptSettings,
+  updateSettings,
+} from "../src/public-api";
 
 const endpoints: readonly ApiEndpoint[] = publicApiEndpoints;
 
 describe("public API contract", () => {
+  it("accepts real and fake player logins", () => {
+    expect(playerLogin.parse("*fakeplayer1*")).toBe("*fakeplayer1*");
+    expect(playerLogin.parse("normal-login_1")).toBe("normal-login_1");
+    expect(playerLogin.safeParse("../player").success).toBe(false);
+  });
+
+  it.each([
+    [updateSettings.body, { callVoteRatio: "bad" }],
+    [updateScriptSettings.body, { settings: { S_TimeLimit: {} } }],
+  ])(
+    "reports invalid values without also claiming there are no changes",
+    (schema, body) => {
+      const result = schema.safeParse(body);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues.map((issue) => issue.message)).not.toContain(
+          "Change at least one setting",
+        );
+      }
+    },
+  );
+
   it("has unique operation IDs and routes", () => {
     const ids = endpoints.map((e) => e.id);
     const routes = endpoints.map((e) => `${e.method} ${e.path}`);

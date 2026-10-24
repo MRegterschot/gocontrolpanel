@@ -2,7 +2,7 @@
 
 GoControlPanel has a versioned HTTP API at `/api/v1` for tools outside the panel: scoreboards, Discord bots, tournament software and scripts. Requests authenticate with an API key that a server or group admin creates in the panel.
 
-The OpenAPI 3.1 description is served at `/api/v1/openapi.json`; import it into Postman, Insomnia or a client generator. The panel shows the same reference under **API Reference**, linked from every API Keys page.
+The OpenAPI 3.1 description is served at `/api/v1/openapi.json`; import it into Bruno, Postman, Insomnia or a client generator. Its server URL is the address you fetched it from, so imported requests work without editing. An interactive reference at `/api/v1/docs` is linked from every API Keys page.
 
 ## API keys
 
@@ -38,18 +38,34 @@ A key never grants more than its server or group. A key created by a panel admin
 
 Every key has one or more scopes:
 
-| Scope           | Allows                                 |
-| --------------- | -------------------------------------- |
-| `server:read`   | Server info                            |
-| `players:read`  | Connected players                      |
-| `players:write` | Kicking players                        |
-| `maps:read`     | The map list                           |
-| `maps:write`    | Adding maps from Trackmania Exchange   |
-| `jukebox:read`  | Jukebox contents                       |
-| `jukebox:write` | Queueing maps and clearing the jukebox |
-| `matches:read`  | Recorded matches and their records     |
+| Scope            | Allows                                                                                                                                               |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `server:read`    | Server info                                                                                                                                          |
+| `players:read`   | Connected players, bans, blacklist and guestlist                                                                                                     |
+| `players:write`  | Kicking, banning and forcing players to spectate; managing the blacklist and guestlist and their files; fake players                                 |
+| `maps:read`      | The map list, the current and next map, and the map files on the server                                                                              |
+| `maps:write`     | Adding, removing and reordering maps, also from Trackmania Exchange                                                                                  |
+| `jukebox:read`   | Jukebox contents                                                                                                                                     |
+| `jukebox:write`  | Queueing, removing and reordering maps, and clearing the jukebox                                                                                     |
+| `game:read`      | The game mode script, its settings and opponent visibility                                                                                           |
+| `game:write`     | Restarting, skipping, jumping and pausing; changing the game mode, its settings and opponent visibility; match settings files; points; script events |
+| `chat:read`      | The chat history                                                                                                                                     |
+| `chat:write`     | Sending chat messages, shown as `[Admin] <key name> (API key)`                                                                                       |
+| `settings:read`  | Server settings and the join link, passwords included                                                                                                |
+| `settings:write` | Changing server settings, passwords included                                                                                                         |
+| `plugins:read`   | Installed plugins and their settings, without secrets; the dedicated server's script plugin                                                          |
+| `plugins:write`  | Installing marketplace plugins, enabling, configuring, updating and uninstalling plugins; the dedicated server's script plugin                       |
+| `files:read`     | Reading files on the dedicated server, configs included                                                                                              |
+| `files:write`    | Creating, changing, moving and deleting files on the dedicated server                                                                                |
+| `matches:read`   | Recorded matches and their records                                                                                                                   |
 
 `GET /api/v1/servers` works with any key.
+
+`files:write` can rewrite any file below `UserData`, including the dedicated server's config with its passwords. Give it only to tools you trust as much as a server admin.
+
+Some panel actions are not in the API: reconnecting or disconnecting the panel from a dedicated server and resending manialinks need a panel-wide permission that keys never hold, and private plugin uploads are managed in the panel only.
+
+Installing or updating a plugin through the API needs the same consent as the panel: list every capability the version asks for in `acceptedCapabilities`. Private uploaded plugins are installed and updated in the panel only.
 
 ### Managing keys
 
@@ -113,15 +129,17 @@ Errors have one shape:
 }
 ```
 
-| Status | Meaning                                                                     |
-| ------ | --------------------------------------------------------------------------- |
-| 400    | Invalid path, query or body; `issues` lists each problem                    |
-| 401    | Missing, unknown, revoked or expired key, or the key's creator lost access  |
-| 403    | The key lacks the scope, or cannot reach this server                        |
-| 404    | Not found, for example a match of another server or a map not on the server |
-| 413    | Body over 64 KB                                                             |
-| 429    | Rate limited; wait for the number of seconds in `Retry-After`               |
-| 503    | The dedicated server is not connected                                       |
+| Status | Meaning                                                                      |
+| ------ | ---------------------------------------------------------------------------- |
+| 400    | Invalid path, query or body; `issues` lists each problem                     |
+| 401    | Missing, unknown, revoked or expired key, or the key's creator lost access   |
+| 403    | The key lacks the scope, or cannot reach this server                         |
+| 404    | Not found, for example a match of another server or a map not on the server  |
+| 409    | The request conflicts with the server's state, such as removing its last map |
+| 413    | Body over 64 KB, or 16 MB for file contents                                  |
+| 422    | The dedicated server refused the call; `message` has its reason              |
+| 429    | Rate limited; wait for the number of seconds in `Retry-After`                |
+| 503    | The dedicated server is not connected                                        |
 
 A server the key cannot reach and a server that does not exist both answer `403`.
 
@@ -136,5 +154,7 @@ The API is contract first. Every endpoint is a `defineEndpoint` entry in `packag
 1. Add the endpoint to the contract, with a scope from `packages/shared/src/api-keys.ts`.
 2. Add `apps/web/src/app/api/v1/<path>/route.ts` exporting the method as `publicApiRoute(endpoint, handler)`. The wrapper authenticates, checks the scope and server, validates input and strips any output the contract does not declare.
 3. Call an actor-based function (`*As(actor, ...)`) so the permission check and audit log are the same as in the panel.
+
+Bodies are limited to 64 KB; an endpoint that needs more sets `maxBodyBytes`.
 
 `apps/web/test/public-api-endpoints.test.ts` fails when a contract endpoint has no route or a v1 route bypasses the contract.

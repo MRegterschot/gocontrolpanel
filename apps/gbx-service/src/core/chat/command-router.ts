@@ -1,3 +1,4 @@
+import type { CommandResult } from "@gcp/shared";
 import {
   name as appName,
   version as appVersion,
@@ -75,23 +76,40 @@ export class CommandRouter {
     const command = parseCommand(text);
     if (!command) return false;
 
+    await this.execute(command.name, command.args, login);
+    return true;
+  }
+
+  // Structured invocation preserves arguments containing spaces; false for unknown commands.
+  async execute(name: string, args: string[], login: string): Promise<boolean> {
+    return (await this.executeDetailed(name, args, login)).handled;
+  }
+
+  async executeDetailed(
+    name: string,
+    args: string[],
+    login: string,
+  ): Promise<Pick<CommandResult, "handled" | "source">> {
+    const command = { name: name.toLowerCase(), args };
+
     // Native commands work without plugins and cannot be overridden by one.
     if (command.name === "version") {
       await this.reply(login, `${appName} v${appVersion}`);
-      return true;
+      return { handled: true, source: "builtin" };
     }
 
     if (command.name === "help") {
       await this.handleHelp(command.args, login);
-      return true;
+      return { handled: true, source: "builtin" };
     }
 
     if (await this.systemCommand?.(command.name, login, command.args))
-      return true;
+      return { handled: true, source: "builtin" };
 
     // Handlers run concurrently; one slow or failing handler never blocks the others
+    const handlers = [...(this.handlers.get(command.name) ?? [])];
     await Promise.all(
-      [...(this.handlers.get(command.name) ?? [])].map(async (handler) => {
+      handlers.map(async (handler) => {
         try {
           await handler(command.args, login);
         } catch (error) {
@@ -103,7 +121,10 @@ export class CommandRouter {
       }),
     );
 
-    return true;
+    return {
+      handled: handlers.length > 0,
+      source: handlers.length ? "plugin" : null,
+    };
   }
 
   private async handleHelp(args: string[], login: string): Promise<void> {

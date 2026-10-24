@@ -1,8 +1,9 @@
+import { addMapsAs } from "@/actions/gbx/server-only/map";
 import { toApiMap } from "@/lib/public-api/dto";
 import { publicApiRoute } from "@/lib/public-api/route";
 import { getMapListAs } from "@/services/database/maps";
 import { ServerError } from "@/types/responses";
-import { listMaps } from "@gcp/shared/public-api";
+import { addMaps, listMaps } from "@gcp/shared/public-api";
 
 export const GET = publicApiRoute(
   listMaps,
@@ -24,3 +25,8 @@ export const GET = publicApiRoute(
     }
   },
 );
+
+export const POST = publicApiRoute(addMaps, async ({ actor, params, body }) => {
+  const added = await addMapsAs(actor, params.serverId, body.fileNames);
+  return { data: { added } };
+});

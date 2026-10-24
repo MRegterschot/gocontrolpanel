@@ -3,10 +3,9 @@ import {
   clearJukeboxAs,
 } from "@/actions/gbx/server-only/map";
 import { toApiJukeboxEntry } from "@/lib/public-api/dto";
+import { mapListOf } from "@/lib/public-api/maps";
 import { notFound, publicApiRoute } from "@/lib/public-api/route";
-import { getMapListAs } from "@/services/database/maps";
 import { getJukeboxAs } from "@/services/gbx/map";
-import { ServerError } from "@/types/responses";
 import { addToJukebox, clearJukebox, getJukebox } from "@gcp/shared/public-api";
 
 export const GET = publicApiRoute(getJukebox, async ({ actor, params }) => {
@@ -18,12 +17,7 @@ export const POST = publicApiRoute(
   addToJukebox,
   async ({ actor, params, body }) => {
     // Only maps on this server's map list can be queued, as in the panel and Codriver
-    const maps = await getMapListAs(actor, params.serverId).catch((error) => {
-      if (error instanceof ServerError && error.name === "MapListEmpty") {
-        return [];
-      }
-      throw error;
-    });
+    const maps = await mapListOf(actor, params.serverId);
     const map = maps.find((m) => m.uid === body.uid);
     if (!map) throw notFound("Map is not on this server's map list");
 

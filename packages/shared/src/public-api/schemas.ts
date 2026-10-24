@@ -9,13 +9,34 @@ export const resourceId = z
     example: "3f1c2a9e-8d4b-4c4e-9b7a-1f2e3d4c5b6a",
   });
 
+// Fake players have logins such as *fakeplayer1*
 export const playerLogin = z
   .string()
-  .regex(/^[A-Za-z0-9_-]{1,64}$/)
+  .regex(/^[A-Za-z0-9_*-]{1,64}$/)
   .meta({
     description: "Trackmania account login",
     example: "v8XxSOkeTqy7tw8DGcZd0Q",
   });
+
+export const mapUid = z
+  .string()
+  .regex(/^[A-Za-z0-9_-]{1,64}$/)
+  .meta({ description: "Map UID", example: "Tp9Ozi0W0DMRwv1MJHTtD6cTgw0" });
+
+// A path below the server's Maps folder; the dedicated server resolves it from there
+export const mapFileName = z
+  .string()
+  .max(255)
+  .regex(/^(?!\/)(?!.*(^|\/)\.{1,2}(\/|$))[^\\:*?"<>|]+\.Map\.Gbx$/i)
+  .meta({
+    description: "Path below the server's Maps folder",
+    example: "Downloaded/Spring 2026 - 01.Map.Gbx",
+  });
+
+// A list of map UIDs in a new order; it must hold exactly the current entries
+export const uidOrderBody = z.object({
+  uids: z.array(mapUid).min(1).max(1000),
+});
 
 const time = z.int().meta({ description: "Time in milliseconds; -1 is a DNF" });
 const medal = z.int().meta({ description: "Medal time in milliseconds" });
@@ -46,16 +67,36 @@ export const ServerSchema = z
 export const PlayerSchema = z
   .object({
     login: z.string(),
-    nickName: z
-      .string()
-      .meta({
-        description: "Display name, may contain Trackmania formatting tags",
-      }),
+    nickName: z.string().meta({
+      description: "Display name, may contain Trackmania formatting tags",
+    }),
     playerId: z.int(),
     teamId: z.int().meta({ description: "-1 without teams" }),
     spectator: z.boolean(),
   })
   .meta({ id: "Player" });
+
+export const ListedPlayerSchema = z
+  .object({
+    login: z.string(),
+    nickName: z.string().meta({
+      description:
+        "Display name, or - when the server does not know the player",
+    }),
+  })
+  .meta({ id: "ListedPlayer" });
+
+// Same rule as the web's validateListFilename, which checks it again
+export const listFileBody = z.object({
+  filename: z
+    .string()
+    .max(255)
+    .regex(/^(?!\/)(?!.*(^|\/)\.{1,2}(\/|$))[\w .\/-]+\.(txt|xml)$/i)
+    .meta({
+      description: "Relative .txt or .xml file on the dedicated server",
+      example: "blacklist.txt",
+    }),
+});
 
 export const MapSummarySchema = z
   .object({
@@ -78,6 +119,10 @@ export const MapSchema = MapSummarySchema.extend({
   }),
 }).meta({ id: "Map" });
 
+export const CurrentMapsSchema = z
+  .object({ current: MapSchema, next: MapSchema })
+  .meta({ id: "CurrentMaps" });
+
 export const JukeboxEntrySchema = z
   .object({
     map: MapSchema,
@@ -85,6 +130,171 @@ export const JukeboxEntrySchema = z
     queuedAt: z.iso.datetime(),
   })
   .meta({ id: "JukeboxEntry" });
+
+const currentAndNext = <S extends z.ZodType>(value: S) =>
+  z.object({
+    current: value,
+    next: value.meta({ description: "Takes effect on the next map" }),
+  });
+
+export const GameSchema = z
+  .object({
+    script: currentAndNext(z.string()).meta({
+      description: "Game mode script",
+    }),
+    showOpponents: currentAndNext(z.int()).meta({
+      description:
+        "Forced opponent visibility; 0 keeps the players' choice, 1 shows all",
+    }),
+  })
+  .meta({ id: "Game" });
+
+const scriptDescription = z.object({
+  name: z.string(),
+  description: z.string(),
+  type: z.string(),
+  default: z.string(),
+});
+
+export const ScriptInfoSchema = z
+  .object({
+    name: z.string(),
+    description: z.string(),
+    version: z.string(),
+    compatibleMapTypes: z.string(),
+    settings: z.array(scriptDescription),
+    commands: z.array(scriptDescription),
+  })
+  .meta({ id: "ScriptInfo" });
+
+export const scriptSettingValue = z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+]);
+
+export const ScriptSettingsSchema = z
+  .record(z.string(), scriptSettingValue)
+  .meta({ id: "ScriptSettings", example: { S_TimeLimit: 300 } });
+
+export const pointsType = z.enum(["round", "map", "match"]);
+
+const visibility = z.enum(["visible", "hidden", "hiddenFromNations"]);
+
+const settingsShape = {
+  name: z.string(),
+  comment: z.string(),
+  password: z.string().meta({ description: "Empty for none" }),
+  spectatorPassword: z.string().meta({ description: "Empty for none" }),
+  maxPlayers: z.int().meta({ description: "Takes effect on the next map" }),
+  maxSpectators: z.int().meta({ description: "Takes effect on the next map" }),
+  keepPlayerSlots: z.boolean(),
+  visibility,
+  callVoteTimeout: z.int().meta({ description: "Seconds" }),
+  callVoteRatio: z.number().meta({
+    description: "Percentage of votes needed to pass; -1 disables votes",
+  }),
+  autoSaveReplays: z.boolean(),
+  horns: z.boolean().meta({ description: "Whether players can use horns" }),
+  serviceAnnounces: z.boolean(),
+  profileSkins: z.boolean(),
+  mapDownload: z.boolean().meta({
+    description: "Whether players can download the server's maps",
+  }),
+  downloadRate: z.int().meta({ description: "Kbps" }),
+  uploadRate: z.int().meta({ description: "Kbps" }),
+  helpCommand: z.boolean().meta({
+    description: "Whether the panel's /help chat command is on",
+  }),
+};
+
+export const ServerSettingsSchema = z
+  .object(settingsShape)
+  .meta({ id: "ServerSettings" });
+
+// The limits of the panel's settings form; fields left out keep their value
+export const ServerSettingsChangesSchema = z
+  .object({
+    ...settingsShape,
+    name: z.string().trim().min(1).max(255),
+    comment: z.string().max(1000),
+    password: z.string().max(255),
+    spectatorPassword: z.string().max(255),
+    maxPlayers: settingsShape.maxPlayers.min(0).max(255),
+    maxSpectators: settingsShape.maxSpectators.min(0).max(255),
+    callVoteTimeout: settingsShape.callVoteTimeout.min(0).max(255),
+    callVoteRatio: settingsShape.callVoteRatio.min(-1).max(100),
+    downloadRate: settingsShape.downloadRate.min(1),
+    uploadRate: settingsShape.uploadRate.min(1),
+  })
+  .partial()
+  .refine((changes) => Object.keys(changes).length > 0, {
+    message: "Change at least one setting",
+    // Only when the fields themselves are valid, so a bad value isn't reported as no change
+    when: (payload) => payload.issues.length === 0,
+  });
+
+const pluginVersion = z.object({
+  version: z.string(),
+  capabilities: z.array(z.string()).meta({
+    description: "What the version may do; accept them to install it",
+  }),
+  yanked: z.boolean().meta({ description: "Withdrawn from the marketplace" }),
+});
+
+export const InstalledPluginSchema = z
+  .object({
+    id: resourceId,
+    slug: z.string(),
+    name: z.string(),
+    description: z.string().nullable(),
+    author: z.string().nullable(),
+    source: z.enum(["marketplace", "upload"]),
+    version: z.string(),
+    enabled: z.boolean(),
+    yanked: z.boolean(),
+    grantedCapabilities: z.array(z.string()),
+    config: z.record(z.string(), z.unknown()).meta({
+      description: "Secrets are left out",
+    }),
+    setSecrets: z.array(z.string()).meta({
+      description: "Secret settings that have a value",
+    }),
+    update: pluginVersion.nullable().meta({
+      description:
+        "The newest version, when it is newer than the installed one",
+    }),
+    versions: z.array(pluginVersion),
+  })
+  .meta({ id: "InstalledPlugin" });
+
+export const ServerScriptPluginSchema = z
+  .object({
+    name: z.string().meta({ description: "Empty when none is loaded" }),
+    settings: z.array(scriptDescription),
+    values: ScriptSettingsSchema,
+  })
+  .meta({ id: "ServerScriptPlugin" });
+
+// Relative to the server's UserData folder; never absolute, never leaving it
+export const userDataPath = z
+  .string()
+  .max(1024)
+  .regex(/^(?![\\/])(?!.*\/\/)(?!.*(^|\/)\.{1,2}(\/|$))[^\\]*$/)
+  .meta({
+    description: "Path relative to the server's UserData folder",
+    example: "Maps/Downloaded",
+  });
+
+export const FileEntrySchema = z
+  .object({
+    name: z.string(),
+    path: z.string().meta({ description: "Relative to UserData" }),
+    isDir: z.boolean(),
+    size: z.int().nullable().meta({ description: "Bytes" }),
+    lastModified: z.iso.datetime().nullable(),
+  })
+  .meta({ id: "FileEntry" });
 
 export const MatchSchema = z
   .object({
@@ -133,8 +343,19 @@ export function pageOf<S extends z.ZodType>(item: S) {
 
 export type ApiServer = z.output<typeof ServerSchema>;
 export type ApiPlayer = z.output<typeof PlayerSchema>;
+export type ApiListedPlayer = z.output<typeof ListedPlayerSchema>;
 export type ApiMap = z.output<typeof MapSchema>;
+export type ApiCurrentMaps = z.output<typeof CurrentMapsSchema>;
 export type ApiJukeboxEntry = z.output<typeof JukeboxEntrySchema>;
+export type ApiGame = z.output<typeof GameSchema>;
+export type ApiScriptInfo = z.output<typeof ScriptInfoSchema>;
+export type ApiServerSettings = z.output<typeof ServerSettingsSchema>;
+export type ApiServerSettingsChanges = z.output<
+  typeof ServerSettingsChangesSchema
+>;
+export type ApiInstalledPlugin = z.output<typeof InstalledPluginSchema>;
+export type ApiServerScriptPlugin = z.output<typeof ServerScriptPluginSchema>;
+export type ApiFileEntry = z.output<typeof FileEntrySchema>;
 export type ApiMatch = z.output<typeof MatchSchema>;
 export type ApiMatchDetail = z.output<typeof MatchDetailSchema>;
 export type ApiErrorBody = z.output<typeof ApiErrorSchema>;

@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   setScriptName: vi.fn(),
   setScriptSettings: vi.fn(),
   setPaused: vi.fn(),
+  loadMatchSettings: vi.fn(),
   addMaps: vi.fn(),
   getFileManager: vi.fn(),
   downloadTMXMap: vi.fn(),
@@ -45,6 +46,7 @@ vi.mock("@/lib/gbx-service", () => ({
     setScriptName: mocks.setScriptName,
     setScriptSettings: mocks.setScriptSettings,
     setPaused: mocks.setPaused,
+    loadMatchSettings: mocks.loadMatchSettings,
     addMaps: mocks.addMaps,
     setPlayerPoints: mocks.setPlayerPoints,
     setTeamPoints: mocks.setTeamPoints,
@@ -61,22 +63,41 @@ vi.mock("@/actions/database/server-only/audit-logs", () => ({
   logAudit: mocks.audit,
 }));
 
-import { uploadFilesAs } from "@/actions/filemanager/server-only/files";
+import {
+  createEntryAs,
+  deleteEntriesAs,
+  moveEntriesAs,
+  readFileBytesAs,
+  uploadFilesAs,
+} from "@/actions/filemanager/server-only/files";
 import { sendChatMessageAs } from "@/actions/gbx/server-only/advanced";
 import {
+  matchSettingsFileAs,
   nextMapAs,
   pauseMatchAs,
   restartMapAs,
   setModeScriptSettingsAs,
   setScriptNameAs,
+  setShowOpponentsAs,
+  triggerModeScriptEventAs,
 } from "@/actions/gbx/server-only/game";
-import { addMapAs, jumpToMapIndexAs } from "@/actions/gbx/server-only/map";
+import {
+  addMapAs,
+  addMapsAs,
+  jumpToMapIndexAs,
+  removeFromJukeboxAs,
+  reorderMapsAs,
+  setJukeboxAs,
+} from "@/actions/gbx/server-only/map";
 import {
   addGuestAs,
   banPlayerAs,
   blacklistPlayerAs,
+  cleanBanListAs,
+  cleanPlayerListAs,
   forceSpectatorAs,
   kickPlayerAs,
+  playerListFileAs,
   removeGuestAs,
   setPlayerMapPointsAs,
   setPlayerMatchPointsAs,
@@ -92,9 +113,17 @@ import {
   updateServerOptionsAs,
 } from "@/actions/gbx/server-only/server";
 import {
+  setServerPluginAs,
+  setServerPluginVariablesAs,
+  triggerServerPluginEventAs,
+} from "@/actions/gbx/server-only/server-plugin";
+import {
+  changeMarketplacePluginVersionAs,
+  installMarketplacePluginAs,
   reloadServerPluginsAs,
   saveServerPluginConfigAs,
   setServerPluginEnabledAs,
+  uninstallServerPluginAs,
 } from "@/actions/server-only/plugins";
 import {
   addTmxMapToServerAs,
@@ -150,9 +179,24 @@ describe("actor-based cores", () => {
       () => setScriptNameAs(guest, serverId, "TM_TimeAttack_Online.Script.txt"),
       () => setModeScriptSettingsAs(guest, serverId, { S_Foo: 1 }),
       () => pauseMatchAs(guest, serverId, true),
+      () => setShowOpponentsAs(guest, serverId, 1),
+      () => matchSettingsFileAs(guest, serverId, "load", "MatchSettings/a.txt"),
+      () => triggerModeScriptEventAs(guest, serverId, "Event", []),
       () => jumpToMapIndexAs(guest, serverId, 2),
       () => addMapAs(guest, serverId, "a.Map.Gbx"),
+      () => addMapsAs(guest, serverId, ["a.Map.Gbx"]),
+      () => reorderMapsAs(guest, serverId, ["a.Map.Gbx"]),
+      () => setJukeboxAs(guest, serverId, []),
+      () => removeFromJukeboxAs(guest, serverId, "map-1"),
       () => uploadFilesAs(guest, serverId, new FormData()),
+      () => readFileBytesAs(guest, serverId, "/UserData/a.txt"),
+      () =>
+        createEntryAs(guest, serverId, { path: "/UserData/a", isDir: true }),
+      () =>
+        moveEntriesAs(guest, serverId, {
+          items: [{ from: "/UserData/a", to: "/UserData/b" }],
+        }),
+      () => deleteEntriesAs(guest, serverId, ["/UserData/a"]),
       () => downloadMapAs(guest, serverId, 1),
       () => addTmxMapToServerAs(guest, serverId, 1),
       () => kickPlayerAs(guest, serverId, "p", "r"),
@@ -163,6 +207,10 @@ describe("actor-based cores", () => {
       () => unblacklistPlayerAs(guest, serverId, "p"),
       () => addGuestAs(guest, serverId, "p"),
       () => removeGuestAs(guest, serverId, "p"),
+      () => cleanBanListAs(guest, serverId),
+      () => cleanPlayerListAs(guest, serverId, "blacklist"),
+      () =>
+        playerListFileAs(guest, serverId, "guestlist", "save", "guests.txt"),
       () => setPlayerRoundPointsAs(guest, serverId, "p", 1),
       () => setPlayerMapPointsAs(guest, serverId, "p", 1),
       () => setPlayerMatchPointsAs(guest, serverId, "p", 1),
@@ -172,6 +220,12 @@ describe("actor-based cores", () => {
       () => setServerPluginEnabledAs(guest, serverId, "plugin", true),
       () => saveServerPluginConfigAs(guest, serverId, "plugin", {}),
       () => reloadServerPluginsAs(guest, serverId),
+      () => installMarketplacePluginAs(guest, serverId, "x", "1.0.0", []),
+      () => changeMarketplacePluginVersionAs(guest, serverId, "p", "1.0.0", []),
+      () => uninstallServerPluginAs(guest, serverId, "p"),
+      () => setServerPluginAs(guest, serverId, false, "x", {}),
+      () => setServerPluginVariablesAs(guest, serverId, {}),
+      () => triggerServerPluginEventAs(guest, serverId, "x", []),
       () => updateServerOptionsAs(guest, serverId, { Name: "Other" }),
       () => saveServerSettingsAs(guest, serverId, {} as never),
       () => sendChatMessageAs(guest, serverId, "hi"),
@@ -183,6 +237,7 @@ describe("actor-based cores", () => {
     expect(mocks.setScriptName).not.toHaveBeenCalled();
     expect(mocks.setScriptSettings).not.toHaveBeenCalled();
     expect(mocks.setPaused).not.toHaveBeenCalled();
+    expect(mocks.loadMatchSettings).not.toHaveBeenCalled();
     expect(mocks.addMaps).not.toHaveBeenCalled();
     expect(mocks.getFileManager).not.toHaveBeenCalled();
     expect(mocks.downloadTMXMap).not.toHaveBeenCalled();
@@ -227,6 +282,112 @@ describe("actor-based cores", () => {
       "server.players.kick",
       { login: "player", reason: "afk" },
     );
+  });
+
+  it("playerListFileAs picks the list's method and audits the file", async () => {
+    await playerListFileAs(
+      moderatorActor(),
+      serverId,
+      "guestlist",
+      "load",
+      "lists/guests.txt",
+    );
+    expect(mocks.call).toHaveBeenCalledWith(
+      "LoadGuestList",
+      "lists/guests.txt",
+    );
+    expect(mocks.audit).toHaveBeenCalledWith(
+      "user-1",
+      serverId,
+      "server.players.guestlist.load",
+      "lists/guests.txt",
+    );
+  });
+
+  it("playerListFileAs rejects a traversing filename before calling the server", async () => {
+    await expect(
+      playerListFileAs(
+        moderatorActor(),
+        serverId,
+        "blacklist",
+        "save",
+        "../blacklist.txt",
+      ),
+    ).rejects.toMatchObject({ name: "ValidationError" });
+    expect(mocks.call).not.toHaveBeenCalled();
+    expect(mocks.audit).not.toHaveBeenCalled();
+  });
+
+  it("cleanPlayerListAs empties the named list", async () => {
+    await cleanPlayerListAs(moderatorActor(), serverId, "blacklist");
+    expect(mocks.call).toHaveBeenCalledWith("CleanBlackList");
+    expect(mocks.audit).toHaveBeenCalledWith(
+      "user-1",
+      serverId,
+      "server.players.blacklist.clear",
+    );
+  });
+
+  it.each([
+    ["load", "server.game.matchsettings.load"],
+    ["save", "server.game.matchsettings.save"],
+    ["append", "server.game.playlist.append"],
+    ["insert", "server.game.playlist.insert"],
+  ] as const)(
+    "matchSettingsFileAs %s keeps the panel's audit action",
+    async (operation, action) => {
+      await matchSettingsFileAs(
+        moderatorActor(),
+        serverId,
+        operation,
+        "MatchSettings/a.txt",
+      );
+      expect(mocks.audit).toHaveBeenCalledWith(
+        "user-1",
+        serverId,
+        action,
+        "MatchSettings/a.txt",
+      );
+    },
+  );
+
+  it("plugin changes need a server admin, not a moderator", async () => {
+    // moderatorActor() holds every role that counts as moderator, admin included
+    const mod: Actor = {
+      ...moderatorActor(),
+      claims: sessionClaimsSchema.parse({
+        id: "user-1",
+        login: "mod",
+        displayName: "Mod",
+        admin: false,
+        permissions: [`servers:${serverId}:moderator`],
+      }),
+    };
+    for (const call of [
+      () => installMarketplacePluginAs(mod, serverId, "x", "1.0.0", []),
+      () => uninstallServerPluginAs(mod, serverId, "p"),
+      () => setServerPluginAs(mod, serverId, false, "x", {}),
+    ]) {
+      await expect(call()).rejects.toMatchObject({ name: "Unauthorized" });
+    }
+    expect(mocks.call).not.toHaveBeenCalled();
+  });
+
+  it("changeMarketplacePluginVersionAs refuses a private upload", async () => {
+    mocks.dbFindPlugin.mockResolvedValue({
+      plugin: { name: "mine", source: "upload" },
+      version: { version: "1.0.0", manifest: {}, yanked: false },
+    });
+    await expect(
+      changeMarketplacePluginVersionAs(
+        adminActor(),
+        serverId,
+        "p",
+        "2.0.0",
+        [],
+      ),
+    ).rejects.toMatchObject({ name: "PluginNotFromMarketplace" });
+    expect(mocks.dbUpdatePlugin).not.toHaveBeenCalled();
   });
 
   it("setServerPluginEnabledAs updates the plugin and audits with the actor", async () => {

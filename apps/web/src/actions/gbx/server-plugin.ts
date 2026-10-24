@@ -2,9 +2,15 @@
 import { assertResourceId } from "@/lib/resource-id";
 
 import { doServerActionWithAuth } from "@/lib/actions";
+import { actorFromSession } from "@/lib/actor";
 import { getGbxClient } from "@/lib/gbx-service";
 import { ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
+import {
+  setServerPluginAs,
+  setServerPluginVariablesAs,
+  triggerServerPluginEventAs,
+} from "./server-only/server-plugin";
 
 export async function setServerPlugin(
   serverId: string,
@@ -15,16 +21,14 @@ export async function setServerPlugin(
   assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("SetServerPlugin", forceReload, name, settings);
-      await logAudit(
-        session.user.id,
+    (session) =>
+      setServerPluginAs(
+        actorFromSession(session),
         serverId,
-        "server.plugin.serverPlugin.set",
-        { name, settings, forceReload },
-      );
-    },
+        forceReload,
+        name,
+        settings,
+      ),
   );
 }
 
@@ -35,16 +39,12 @@ export async function setServerPluginVariables(
   assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("SetServerPluginVariables", variables);
-      await logAudit(
-        session.user.id,
+    (session) =>
+      setServerPluginVariablesAs(
+        actorFromSession(session),
         serverId,
-        "server.plugin.serverPlugin.setVariables",
-        { variables },
-      );
-    },
+        variables,
+      ),
   );
 }
 
@@ -77,15 +77,12 @@ export async function triggerServerPluginEventArray(
   assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("TriggerServerPluginEventArray", eventName, params);
-      await logAudit(
-        session.user.id,
+    (session) =>
+      triggerServerPluginEventAs(
+        actorFromSession(session),
         serverId,
-        "server.plugin.serverPlugin.triggerEventArray",
-        { eventName, params },
-      );
-    },
+        eventName,
+        params,
+      ),
   );
 }

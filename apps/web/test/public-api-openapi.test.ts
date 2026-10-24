@@ -1,3 +1,4 @@
+import { GET } from "@/app/api/v1/openapi.json/route";
 import { buildOpenApiDocument } from "@/lib/public-api/openapi";
 import { publicApiEndpoints } from "@gcp/shared/public-api";
 import { describe, expect, it } from "vitest";
@@ -78,5 +79,26 @@ describe("public API OpenAPI document", () => {
         "MatchDetail",
       ]),
     );
+  });
+
+  // Importers like Bruno, Postman and Insomnia can't call a relative server URL
+  it("serves an absolute server URL for the caller's origin", async () => {
+    const direct = await GET(
+      new Request("http://localhost:3000/api/v1/openapi.json"),
+    ).json();
+    expect(direct.servers).toEqual([{ url: "http://localhost:3000/api/v1" }]);
+
+    const proxied = await GET(
+      new Request("http://internal:3000/api/v1/openapi.json", {
+        headers: {
+          "x-forwarded-host": "panel.example.com, internal",
+          "x-forwarded-proto": "https",
+        },
+      }),
+    ).json();
+    expect(proxied.servers).toEqual([
+      { url: "https://panel.example.com/api/v1" },
+    ]);
+    expect(proxied.paths).toEqual(direct.paths);
   });
 });

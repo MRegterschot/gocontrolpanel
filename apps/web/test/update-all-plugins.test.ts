@@ -34,9 +34,13 @@ vi.mock("@/lib/gbx-service", () => ({ publishServerEvent: mocks.publish }));
 vi.mock("@/actions/database/server-only/audit-logs", () => ({
   logAudit: mocks.audit,
 }));
-vi.mock("@/lib/actor", () => ({ actorFromSession: vi.fn() }));
+vi.mock("@/lib/actor", () => ({
+  actorFromSession: (session: { user: { id: string } }) => ({
+    userId: session.user.id,
+  }),
+  requirePermission: vi.fn(),
+}));
 vi.mock("@/lib/plugin-access", () => ({ uploadOwnerFilter: () => ({}) }));
-vi.mock("@/actions/server-only/plugins", () => ({}));
 vi.mock("@/lib/marketplace", () => ({
   downloadMarketplacePackage: vi.fn(),
   findMarketplacePlugin: vi.fn(),

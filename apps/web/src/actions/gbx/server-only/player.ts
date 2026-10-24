@@ -1,5 +1,6 @@
 import { type Actor, requirePermission } from "@/lib/actor";
 import { gbxService, getGbxClient } from "@/lib/gbx-service";
+import { validateListFilename } from "@/lib/list-filename";
 import { serverPermissions } from "@gcp/shared";
 import "server-only";
 import { logAudit } from "../../database/server-only/audit-logs";
@@ -37,6 +38,67 @@ export async function unbanPlayerAs(
     "server.players.banlist.remove",
     login,
   );
+}
+
+export async function cleanBanListAs(
+  actor: Actor,
+  serverId: string,
+): Promise<void> {
+  requirePermission(actor, serverPermissions.moderator, serverId);
+
+  const client = getGbxClient(serverId);
+  await client.call("CleanBanList");
+  await logAudit(actor.userId, serverId, "server.players.banlist.clear");
+}
+
+export type PlayerListName = "blacklist" | "guestlist";
+
+const LIST_METHODS = {
+  blacklist: {
+    load: "LoadBlackList",
+    save: "SaveBlackList",
+    clean: "CleanBlackList",
+  },
+  guestlist: {
+    load: "LoadGuestList",
+    save: "SaveGuestList",
+    clean: "CleanGuestList",
+  },
+} as const;
+
+// Loads or saves the blacklist or guestlist from a file on the dedicated server
+export async function playerListFileAs(
+  actor: Actor,
+  serverId: string,
+  list: PlayerListName,
+  operation: "load" | "save",
+  filename: string,
+): Promise<void> {
+  requirePermission(actor, serverPermissions.moderator, serverId);
+
+  const client = getGbxClient(serverId);
+  await client.call(
+    LIST_METHODS[list][operation],
+    validateListFilename(filename),
+  );
+  await logAudit(
+    actor.userId,
+    serverId,
+    `server.players.${list}.${operation}`,
+    filename,
+  );
+}
+
+export async function cleanPlayerListAs(
+  actor: Actor,
+  serverId: string,
+  list: PlayerListName,
+): Promise<void> {
+  requirePermission(actor, serverPermissions.moderator, serverId);
+
+  const client = getGbxClient(serverId);
+  await client.call(LIST_METHODS[list].clean);
+  await logAudit(actor.userId, serverId, `server.players.${list}.clear`);
 }
 
 export async function blacklistPlayerAs(

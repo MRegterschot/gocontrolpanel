@@ -7,6 +7,17 @@ export const API_KEY_SCOPES = [
   "maps:write",
   "jukebox:read",
   "jukebox:write",
+  "game:read",
+  "game:write",
+  "chat:read",
+  "chat:write",
+  "commands:write",
+  "settings:read",
+  "settings:write",
+  "plugins:read",
+  "plugins:write",
+  "files:read",
+  "files:write",
   "matches:read",
 ] as const;
 
@@ -14,12 +25,27 @@ export type ApiKeyScope = (typeof API_KEY_SCOPES)[number];
 
 export const API_KEY_SCOPE_DESCRIPTIONS: Record<ApiKeyScope, string> = {
   "server:read": "Server info",
-  "players:read": "Connected players",
-  "players:write": "Kick players",
-  "maps:read": "Map list",
-  "maps:write": "Add maps from Trackmania Exchange",
+  "players:read": "Connected players, bans, blacklist and guestlist",
+  "players:write": "Kick, ban, spectate, blacklist, guestlist and fake players",
+  "maps:read": "Map list, current map and map files",
+  "maps:write": "Add, remove and reorder maps, also from Trackmania Exchange",
   "jukebox:read": "Jukebox contents",
-  "jukebox:write": "Queue maps and clear the jukebox",
+  "jukebox:write": "Queue, remove, reorder and clear jukebox maps",
+  "game:read": "Game mode script, its settings and opponent visibility",
+  "game:write":
+    "Restart, skip and pause; game mode, settings, points and script events",
+  "chat:read": "Chat history",
+  "chat:write": "Send chat messages",
+  "commands:write":
+    "Execute built-in and plugin chat commands as the key's creator",
+  "settings:read": "Server settings and the join link, passwords included",
+  "settings:write": "Change server settings, passwords included",
+  "plugins:read": "Installed plugins and their settings, without secrets",
+  "plugins:write":
+    "Install, configure, update and remove plugins; the dedicated server's script plugin",
+  "files:read": "Read files on the dedicated server, configs included",
+  "files:write":
+    "Create, change, move and delete files on the dedicated server",
   "matches:read": "Recorded matches",
 };
 

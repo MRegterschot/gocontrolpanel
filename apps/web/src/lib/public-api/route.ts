@@ -34,6 +34,22 @@ const STATUS: Record<string, number> = {
   MissingScope: 403,
   NotFound: 404,
   RateLimited: 429,
+  // From the GBX service
+  BadRequest: 400,
+  PlayerNotFound: 404,
+  RemoveLastMapError: 409,
+  // The dedicated server refused the call; the message carries its reason
+  GbxCallFailed: 422,
+  // Plugin installs and settings
+  PluginNotFound: 404,
+  CapabilitiesNotAccepted: 400,
+  PluginNotFromMarketplace: 400,
+  PluginHasNoConfig: 400,
+  PluginYanked: 409,
+  PluginNameTaken: 409,
+  PluginIncompatible: 409,
+  // File manager
+  FileExists: 409,
 };
 
 type Issue = { path: string; message: string };
@@ -110,14 +126,17 @@ function rawQuery(query: URLSearchParams): Record<string, string | string[]> {
   return raw;
 }
 
-async function readBody(req: NextRequest): Promise<unknown> {
+async function readBody(
+  req: NextRequest,
+  maxBytes = MAX_BODY_BYTES,
+): Promise<unknown> {
   const tooLarge = () =>
     new ApiFailure(413, "PayloadTooLarge", "Request body is too large");
-  if (Number(req.headers.get("content-length") ?? 0) > MAX_BODY_BYTES) {
+  if (Number(req.headers.get("content-length") ?? 0) > maxBytes) {
     throw tooLarge();
   }
   const text = await req.text();
-  if (Buffer.byteLength(text) > MAX_BODY_BYTES) {
+  if (Buffer.byteLength(text) > maxBytes) {
     throw tooLarge();
   }
   // A body whose fields all have defaults may be left out
@@ -194,7 +213,11 @@ export function publicApiRoute<E extends ApiEndpoint>(
         ? validate(endpoint.query, rawQuery(req.nextUrl.searchParams), "query")
         : undefined;
       const body = endpoint.body
-        ? validate(endpoint.body, await readBody(req), "body")
+        ? validate(
+            endpoint.body,
+            await readBody(req, endpoint.maxBodyBytes),
+            "body",
+          )
         : undefined;
 
       const { keyId, actor } = principal;

@@ -34,6 +34,7 @@ export const PASSTHROUGH_METHODS: ReadonlySet<string> = new Set([
   "GetMapList",
   "GetMapInfo",
   "GetCurrentMapInfo",
+  "GetNextMapInfo",
   // Players
   "GetPlayerList",
   "GetPlayerInfo",

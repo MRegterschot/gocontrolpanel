@@ -1,7 +1,16 @@
+import { CreateFileEntrySchemaType } from "@/forms/server/files/create-file-entry-schema";
+import {
+  MoveFileEntriesSchema,
+  MoveFileEntriesSchemaType,
+} from "@/forms/server/files/move-file-entries-schema";
 import { type Actor, requirePermission } from "@/lib/actor";
 import { fileAuditDetails } from "@/lib/audit-redact";
 import { getLogger } from "@/lib/logger";
-import { fileManagerFetch, getFileManager } from "@/lib/managers/file-manager";
+import {
+  fileManagerFetch,
+  fileManagerUrl,
+  getFileManager,
+} from "@/lib/managers/file-manager";
 import { FileEntry } from "@/types/filemanager";
 import { ServerError } from "@/types/responses";
 import { serverPermissions } from "@gcp/shared";
@@ -216,6 +225,202 @@ export async function writeFileTextAs(
     );
     throw new ServerError("Failed to save file", "FileSaveError");
   }
+}
+
+// `paths` are absolute, such as /UserData/Maps/a.Map.Gbx
+export async function deleteEntriesAs(
+  actor: Actor,
+  serverId: string,
+  paths: string[],
+): Promise<void> {
+  requirePermission(actor, serverPermissions.admin, serverId);
+
+  const fileManager = await getFileManager(serverId);
+  if (!fileManager?.health) {
+    await logAudit(
+      actor.userId,
+      serverId,
+      "server.files.delete",
+      paths,
+      "File manager is not healthy",
+    );
+    throw new ServerError(
+      "Could not connect to file manager",
+      "FileManagerNotHealthy",
+    );
+  }
+
+  const res = await fileManagerFetch(fileManager.url + "/delete", {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${fileManager.password}`,
+    },
+    body: JSON.stringify(paths),
+  });
+
+  await logAudit(
+    actor.userId,
+    serverId,
+    "server.files.delete",
+    paths,
+    res.status !== 200 ? "Failed to delete item" : undefined,
+  );
+
+  if (res.status !== 200) {
+    throw new ServerError("Failed to delete item", "FileDeleteError");
+  }
+}
+
+// Creates a file or folder; `request.path` is relative to UserData, such as Maps/Event
+export async function createEntryAs(
+  actor: Actor,
+  serverId: string,
+  request: CreateFileEntrySchemaType,
+): Promise<FileEntry> {
+  requirePermission(actor, serverPermissions.admin, serverId);
+
+  const fileManager = await getFileManager(serverId);
+  if (!fileManager?.health) {
+    await logAudit(
+      actor.userId,
+      serverId,
+      "server.files.create",
+      request,
+      "File manager is not healthy",
+    );
+    throw new ServerError(
+      "Could not connect to file manager",
+      "FileManagerNotHealthy",
+    );
+  }
+
+  const res = await fileManagerFetch(fileManager.url + "/create", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${fileManager.password}`,
+    },
+    body: JSON.stringify(request),
+  });
+
+  if (res.status !== 200) {
+    // A body can only be read once
+    const message =
+      res.status === 500 ? "Something went wrong" : await res.text();
+    await logAudit(
+      actor.userId,
+      serverId,
+      "server.files.create",
+      request,
+      message,
+    );
+    throw new ServerError(
+      message,
+      res.status === 409 ? "FileExists" : "FileCreateError",
+    );
+  }
+
+  const data = await res.json();
+
+  await logAudit(
+    actor.userId,
+    serverId,
+    "server.files.create",
+    request,
+    !data ? "Failed to create file entry" : undefined,
+  );
+
+  if (!data) {
+    throw new ServerError("Failed to create file entry", "FileCreateError");
+  }
+
+  return {
+    ...data,
+    lastModified: new Date(data.lastModified),
+  };
+}
+
+// Moves or renames entries; paths are absolute
+export async function moveEntriesAs(
+  actor: Actor,
+  serverId: string,
+  request: MoveFileEntriesSchemaType,
+): Promise<FileEntry[]> {
+  requirePermission(actor, serverPermissions.admin, serverId);
+
+  const parsed = MoveFileEntriesSchema.safeParse(request);
+  if (!parsed.success) {
+    throw new ServerError("Invalid move request", "FileMoveError");
+  }
+
+  const fileManager = await getFileManager(serverId);
+  if (!fileManager?.health) {
+    await logAudit(
+      actor.userId,
+      serverId,
+      "server.files.move",
+      parsed.data,
+      "File manager is not healthy",
+    );
+    throw new ServerError(
+      "Could not connect to file manager",
+      "FileManagerNotHealthy",
+    );
+  }
+
+  const res = await fileManagerFetch(fileManager.url + "/move", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${fileManager.password}`,
+    },
+    body: JSON.stringify(parsed.data),
+  });
+
+  if (res.status !== 200) {
+    const message =
+      res.status === 500 ? "Something went wrong" : await res.text();
+    await logAudit(
+      actor.userId,
+      serverId,
+      "server.files.move",
+      parsed.data,
+      message,
+    );
+    throw new ServerError(message, "FileMoveError");
+  }
+
+  const data = await res.json();
+
+  await logAudit(actor.userId, serverId, "server.files.move", parsed.data);
+
+  return data.map(
+    (entry: Omit<FileEntry, "lastModified"> & { lastModified: string }) => ({
+      ...entry,
+      lastModified: new Date(entry.lastModified),
+    }),
+  );
+}
+
+// The file's bytes as stored, whatever its type; `path` is absolute, such as /UserData/Maps/a.Map.Gbx
+export async function readFileBytesAs(
+  actor: Actor,
+  serverId: string,
+  path: string,
+): Promise<Buffer> {
+  requirePermission(actor, serverPermissions.admin, serverId);
+  const fileManager = await healthyFileManager(serverId);
+  const res = await fileManagerFetch(fileManagerUrl(fileManager.url!, path), {
+    headers: { Authorization: `Bearer ${fileManager.password}` },
+  });
+  if (res.status === 404) {
+    throw new ServerError("File not found", "NotFound");
+  }
+  if (res.status !== 200) {
+    throw new ServerError("Failed to get file", "FileFetchError");
+  }
+  return Buffer.from(await res.arrayBuffer());
 }
 
 function encodePath(path: string): string {

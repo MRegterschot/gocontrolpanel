@@ -41,6 +41,7 @@ export interface ApiErrorBody {
 }
 
 export const internalPaths = {
+  command: (id: string) => `/internal/servers/${id}/commands`,
   servers: "/internal/servers",
   server: (id: string) => `/internal/servers/${id}`,
   live: (id: string) => `/internal/servers/${id}/live`,
@@ -142,3 +143,21 @@ export const pluginCommandBodySchema = z.object({
   login: z.string().min(1),
 });
 export type PluginCommandBody = z.input<typeof pluginCommandBodySchema>;
+
+export const commandBodySchema = z.object({
+  command: z.string().regex(/^[a-z0-9_-]{1,32}\+?$/i),
+  params: z.array(z.string().max(1000)).max(20).default([]),
+  login: z.string().min(1),
+});
+export type CommandBody = z.input<typeof commandBodySchema>;
+
+export interface CommandResult {
+  command: string;
+  login: string;
+  handled: boolean;
+  source: "builtin" | "plugin" | null;
+  messages: string[];
+  messagesTruncated: boolean;
+  outputComplete: boolean;
+  durationMs: number;
+}

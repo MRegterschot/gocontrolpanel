@@ -1,5 +1,6 @@
+import { getServerPluginAs } from "@/actions/gbx/server-only/server-plugin";
 import { doServerActionWithAuth } from "@/lib/actions";
-import { getGbxClient } from "@/lib/gbx-service";
+import { actorFromSession } from "@/lib/actor";
 import { ServerPlugin } from "@/types/gbx/server-plugin";
 import { ServerResponse } from "@/types/responses";
 import "server-only";
@@ -9,9 +10,6 @@ export async function getServerPlugin(
 ): Promise<ServerResponse<ServerPlugin>> {
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
-    async () => {
-      const client = getGbxClient(serverId);
-      return await client.call("GetServerPlugin");
-    },
+    (session) => getServerPluginAs(actorFromSession(session), serverId),
   );
 }
