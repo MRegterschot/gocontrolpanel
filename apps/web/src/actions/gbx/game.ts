@@ -1,18 +1,18 @@
 "use server";
-import { validateListFilename } from "@/lib/list-filename";
 import { assertResourceId } from "@/lib/resource-id";
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { actorFromSession } from "@/lib/actor";
-import { gbxService, getGbxClient } from "@/lib/gbx-service";
 import { ServerResponse } from "@/types/responses";
-import { logAudit } from "../database/server-only/audit-logs";
 import {
+  matchSettingsFileAs,
   nextMapAs,
   pauseMatchAs,
   restartMapAs,
   setModeScriptSettingsAs,
   setScriptNameAs,
+  setShowOpponentsAs,
+  triggerModeScriptEventAs,
 } from "./server-only/game";
 
 export async function restartMap(serverId: string): Promise<ServerResponse> {
@@ -53,16 +53,7 @@ export async function setShowOpponents(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("SetForceShowAllOpponents", count);
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.game.showopponents.edit",
-        count,
-      );
-    },
+    (session) => setShowOpponentsAs(actorFromSession(session), serverId, count),
   );
 }
 
@@ -94,19 +85,13 @@ export async function loadMatchSettings(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      await gbxService.loadMatchSettings(
+    (session) =>
+      matchSettingsFileAs(
+        actorFromSession(session),
         serverId,
-        validateListFilename(filename),
-      );
-
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.game.matchsettings.load",
+        "load",
         filename,
-      );
-    },
+      ),
   );
 }
 
@@ -122,19 +107,13 @@ export async function appendPlaylist(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call(
-        "AppendPlaylistFromMatchSettings",
-        validateListFilename(filename),
-      );
-      await logAudit(
-        session.user.id,
+    (session) =>
+      matchSettingsFileAs(
+        actorFromSession(session),
         serverId,
-        "server.game.playlist.append",
+        "append",
         filename,
-      );
-    },
+      ),
   );
 }
 
@@ -150,16 +129,13 @@ export async function saveMatchSettings(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("SaveMatchSettings", validateListFilename(filename));
-      await logAudit(
-        session.user.id,
+    (session) =>
+      matchSettingsFileAs(
+        actorFromSession(session),
         serverId,
-        "server.game.matchsettings.save",
+        "save",
         filename,
-      );
-    },
+      ),
   );
 }
 
@@ -175,19 +151,13 @@ export async function insertPlaylist(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call(
-        "InsertPlaylistFromMatchSettings",
-        validateListFilename(filename),
-      );
-      await logAudit(
-        session.user.id,
+    (session) =>
+      matchSettingsFileAs(
+        actorFromSession(session),
         serverId,
-        "server.game.playlist.insert",
+        "insert",
         filename,
-      );
-    },
+      ),
   );
 }
 
@@ -223,14 +193,13 @@ export async function triggerModeScriptEventArray(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("TriggerModeScriptEventArray", method, params);
-      await logAudit(session.user.id, serverId, "server.live.scriptevent", {
+    (session) =>
+      triggerModeScriptEventAs(
+        actorFromSession(session),
+        serverId,
         method,
         params,
-      });
-    },
+      ),
   );
 }
 

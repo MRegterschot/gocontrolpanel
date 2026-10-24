@@ -1,4 +1,5 @@
 import type { getMatchAs, MatchSummary } from "@/services/database/matches";
+import type { ModeScriptInfo } from "@/types/gbx";
 import type { JukeboxMap } from "@/types/map";
 import type { Maps } from "@gcp/db";
 import type { PlayerInfo, SMapInfo } from "@gcp/shared";
@@ -9,6 +10,7 @@ import type {
   ApiMatch,
   ApiMatchDetail,
   ApiPlayer,
+  ApiScriptInfo,
 } from "@gcp/shared/public-api";
 import "server-only";
 
@@ -95,5 +97,27 @@ export function toApiMatchDetail(
       round: record.round,
       points: record.points,
     })),
+  };
+}
+
+export function toApiScriptInfo(info: ModeScriptInfo): ApiScriptInfo {
+  const describe = (d: {
+    Name: string;
+    Desc: string;
+    Type: string;
+    Default: string;
+  }) => ({
+    name: d.Name,
+    description: d.Desc,
+    type: d.Type,
+    default: d.Default,
+  });
+  return {
+    name: info.Name,
+    description: info.Description,
+    version: info.Version,
+    compatibleMapTypes: info.CompatibleMapTypes,
+    settings: (info.ParamDescs ?? []).map(describe),
+    commands: (info.CommandDescs ?? []).map(describe),
   };
 }

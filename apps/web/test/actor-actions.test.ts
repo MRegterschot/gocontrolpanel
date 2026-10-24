@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   setScriptName: vi.fn(),
   setScriptSettings: vi.fn(),
   setPaused: vi.fn(),
+  loadMatchSettings: vi.fn(),
   addMaps: vi.fn(),
   getFileManager: vi.fn(),
   downloadTMXMap: vi.fn(),
@@ -45,6 +46,7 @@ vi.mock("@/lib/gbx-service", () => ({
     setScriptName: mocks.setScriptName,
     setScriptSettings: mocks.setScriptSettings,
     setPaused: mocks.setPaused,
+    loadMatchSettings: mocks.loadMatchSettings,
     addMaps: mocks.addMaps,
     setPlayerPoints: mocks.setPlayerPoints,
     setTeamPoints: mocks.setTeamPoints,
@@ -64,11 +66,14 @@ vi.mock("@/actions/database/server-only/audit-logs", () => ({
 import { uploadFilesAs } from "@/actions/filemanager/server-only/files";
 import { sendChatMessageAs } from "@/actions/gbx/server-only/advanced";
 import {
+  matchSettingsFileAs,
   nextMapAs,
   pauseMatchAs,
   restartMapAs,
   setModeScriptSettingsAs,
   setScriptNameAs,
+  setShowOpponentsAs,
+  triggerModeScriptEventAs,
 } from "@/actions/gbx/server-only/game";
 import {
   addMapAs,
@@ -160,6 +165,9 @@ describe("actor-based cores", () => {
       () => setScriptNameAs(guest, serverId, "TM_TimeAttack_Online.Script.txt"),
       () => setModeScriptSettingsAs(guest, serverId, { S_Foo: 1 }),
       () => pauseMatchAs(guest, serverId, true),
+      () => setShowOpponentsAs(guest, serverId, 1),
+      () => matchSettingsFileAs(guest, serverId, "load", "MatchSettings/a.txt"),
+      () => triggerModeScriptEventAs(guest, serverId, "Event", []),
       () => jumpToMapIndexAs(guest, serverId, 2),
       () => addMapAs(guest, serverId, "a.Map.Gbx"),
       () => addMapsAs(guest, serverId, ["a.Map.Gbx"]),
@@ -201,6 +209,7 @@ describe("actor-based cores", () => {
     expect(mocks.setScriptName).not.toHaveBeenCalled();
     expect(mocks.setScriptSettings).not.toHaveBeenCalled();
     expect(mocks.setPaused).not.toHaveBeenCalled();
+    expect(mocks.loadMatchSettings).not.toHaveBeenCalled();
     expect(mocks.addMaps).not.toHaveBeenCalled();
     expect(mocks.getFileManager).not.toHaveBeenCalled();
     expect(mocks.downloadTMXMap).not.toHaveBeenCalled();
@@ -290,6 +299,29 @@ describe("actor-based cores", () => {
       "server.players.blacklist.clear",
     );
   });
+
+  it.each([
+    ["load", "server.game.matchsettings.load"],
+    ["save", "server.game.matchsettings.save"],
+    ["append", "server.game.playlist.append"],
+    ["insert", "server.game.playlist.insert"],
+  ] as const)(
+    "matchSettingsFileAs %s keeps the panel's audit action",
+    async (operation, action) => {
+      await matchSettingsFileAs(
+        moderatorActor(),
+        serverId,
+        operation,
+        "MatchSettings/a.txt",
+      );
+      expect(mocks.audit).toHaveBeenCalledWith(
+        "user-1",
+        serverId,
+        action,
+        "MatchSettings/a.txt",
+      );
+    },
+  );
 
   it("setServerPluginEnabledAs updates the plugin and audits with the actor", async () => {
     mocks.dbFindPlugin.mockResolvedValue({

@@ -66,7 +66,7 @@ const LIST_METHODS = {
   },
 } as const;
 
-// Loads or saves the blacklist or guestlist file in the server's config folder
+// Loads or saves the blacklist or guestlist from a file on the dedicated server
 export async function playerListFileAs(
   actor: Actor,
   serverId: string,

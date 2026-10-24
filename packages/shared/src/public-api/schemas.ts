@@ -92,7 +92,7 @@ export const listFileBody = z.object({
     .max(255)
     .regex(/^(?!\/)(?!.*(^|\/)\.{1,2}(\/|$))[\w .\/-]+\.(txt|xml)$/i)
     .meta({
-      description: "Relative .txt or .xml file in the server's config folder",
+      description: "Relative .txt or .xml file on the dedicated server",
       example: "blacklist.txt",
     }),
 });
@@ -129,6 +129,54 @@ export const JukeboxEntrySchema = z
     queuedAt: z.iso.datetime(),
   })
   .meta({ id: "JukeboxEntry" });
+
+const currentAndNext = <S extends z.ZodType>(value: S) =>
+  z.object({
+    current: value,
+    next: value.meta({ description: "Takes effect on the next map" }),
+  });
+
+export const GameSchema = z
+  .object({
+    script: currentAndNext(z.string()).meta({
+      description: "Game mode script",
+    }),
+    showOpponents: currentAndNext(z.int()).meta({
+      description:
+        "Forced opponent visibility; 0 keeps the players' choice, 1 shows all",
+    }),
+  })
+  .meta({ id: "Game" });
+
+const scriptDescription = z.object({
+  name: z.string(),
+  description: z.string(),
+  type: z.string(),
+  default: z.string(),
+});
+
+export const ScriptInfoSchema = z
+  .object({
+    name: z.string(),
+    description: z.string(),
+    version: z.string(),
+    compatibleMapTypes: z.string(),
+    settings: z.array(scriptDescription),
+    commands: z.array(scriptDescription),
+  })
+  .meta({ id: "ScriptInfo" });
+
+export const scriptSettingValue = z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+]);
+
+export const ScriptSettingsSchema = z
+  .record(z.string(), scriptSettingValue)
+  .meta({ id: "ScriptSettings", example: { S_TimeLimit: 300 } });
+
+export const pointsType = z.enum(["round", "map", "match"]);
 
 export const MatchSchema = z
   .object({
@@ -181,6 +229,8 @@ export type ApiListedPlayer = z.output<typeof ListedPlayerSchema>;
 export type ApiMap = z.output<typeof MapSchema>;
 export type ApiCurrentMaps = z.output<typeof CurrentMapsSchema>;
 export type ApiJukeboxEntry = z.output<typeof JukeboxEntrySchema>;
+export type ApiGame = z.output<typeof GameSchema>;
+export type ApiScriptInfo = z.output<typeof ScriptInfoSchema>;
 export type ApiMatch = z.output<typeof MatchSchema>;
 export type ApiMatchDetail = z.output<typeof MatchDetailSchema>;
 export type ApiErrorBody = z.output<typeof ApiErrorSchema>;

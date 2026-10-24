@@ -7,6 +7,8 @@ export const API_KEY_SCOPES = [
   "maps:write",
   "jukebox:read",
   "jukebox:write",
+  "game:read",
+  "game:write",
   "matches:read",
 ] as const;
 
@@ -20,6 +22,9 @@ export const API_KEY_SCOPE_DESCRIPTIONS: Record<ApiKeyScope, string> = {
   "maps:write": "Add, remove and reorder maps, also from Trackmania Exchange",
   "jukebox:read": "Jukebox contents",
   "jukebox:write": "Queue, remove, reorder and clear jukebox maps",
+  "game:read": "Game mode script, its settings and opponent visibility",
+  "game:write":
+    "Restart, skip and pause; game mode, settings, points and script events",
   "matches:read": "Recorded matches",
 };
 

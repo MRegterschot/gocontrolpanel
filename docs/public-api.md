@@ -38,16 +38,18 @@ A key never grants more than its server or group. A key created by a panel admin
 
 Every key has one or more scopes:
 
-| Scope           | Allows                                                                                                 |
-| --------------- | ------------------------------------------------------------------------------------------------------ |
-| `server:read`   | Server info                                                                                            |
-| `players:read`  | Connected players, bans, blacklist and guestlist                                                       |
-| `players:write` | Kicking, banning and forcing players to spectate; managing the blacklist and guestlist and their files |
-| `maps:read`     | The map list, the current and next map, and the map files on the server                                |
-| `maps:write`    | Adding, removing and reordering maps, also from Trackmania Exchange                                    |
-| `jukebox:read`  | Jukebox contents                                                                                       |
-| `jukebox:write` | Queueing, removing and reordering maps, and clearing the jukebox                                       |
-| `matches:read`  | Recorded matches and their records                                                                     |
+| Scope           | Allows                                                                                                                                               |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `server:read`   | Server info                                                                                                                                          |
+| `players:read`  | Connected players, bans, blacklist and guestlist                                                                                                     |
+| `players:write` | Kicking, banning and forcing players to spectate; managing the blacklist and guestlist and their files                                               |
+| `maps:read`     | The map list, the current and next map, and the map files on the server                                                                              |
+| `maps:write`    | Adding, removing and reordering maps, also from Trackmania Exchange                                                                                  |
+| `jukebox:read`  | Jukebox contents                                                                                                                                     |
+| `jukebox:write` | Queueing, removing and reordering maps, and clearing the jukebox                                                                                     |
+| `game:read`     | The game mode script, its settings and opponent visibility                                                                                           |
+| `game:write`    | Restarting, skipping, jumping and pausing; changing the game mode, its settings and opponent visibility; match settings files; points; script events |
+| `matches:read`  | Recorded matches and their records                                                                                                                   |
 
 `GET /api/v1/servers` works with any key.
 

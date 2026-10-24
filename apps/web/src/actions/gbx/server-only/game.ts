@@ -1,5 +1,6 @@
 import { type Actor, requirePermission } from "@/lib/actor";
 import { gbxService, getGbxClient } from "@/lib/gbx-service";
+import { validateListFilename } from "@/lib/list-filename";
 import { getLogger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/utils";
 import { ServerError } from "@/types/responses";
@@ -81,4 +82,72 @@ export async function pauseMatchAs(
     log.error({ meta, error, pause: paused }, "Failed to pause match");
     throw new ServerError(error, "PauseMatchError");
   }
+}
+
+export async function setShowOpponentsAs(
+  actor: Actor,
+  serverId: string,
+  count: number,
+): Promise<void> {
+  requirePermission(actor, serverPermissions.moderator, serverId);
+
+  const client = getGbxClient(serverId);
+  await client.call("SetForceShowAllOpponents", count);
+  await logAudit(
+    actor.userId,
+    serverId,
+    "server.game.showopponents.edit",
+    count,
+  );
+}
+
+export type MatchSettingsOperation = "load" | "save" | "append" | "insert";
+
+// Match settings files, relative to the server's Maps folder
+export async function matchSettingsFileAs(
+  actor: Actor,
+  serverId: string,
+  operation: MatchSettingsOperation,
+  filename: string,
+): Promise<void> {
+  requirePermission(actor, serverPermissions.moderator, serverId);
+
+  const file = validateListFilename(filename);
+  const client = getGbxClient(serverId);
+  switch (operation) {
+    case "load":
+      await gbxService.loadMatchSettings(serverId, file);
+      break;
+    case "save":
+      await client.call("SaveMatchSettings", file);
+      break;
+    case "append":
+      await client.call("AppendPlaylistFromMatchSettings", file);
+      break;
+    case "insert":
+      await client.call("InsertPlaylistFromMatchSettings", file);
+      break;
+  }
+
+  const action =
+    operation === "load" || operation === "save"
+      ? `server.game.matchsettings.${operation}`
+      : `server.game.playlist.${operation}`;
+  await logAudit(actor.userId, serverId, action, filename);
+}
+
+export async function triggerModeScriptEventAs(
+  actor: Actor,
+  serverId: string,
+  method: string,
+  params: string[],
+): Promise<void> {
+  requirePermission(actor, serverPermissions.moderator, serverId);
+
+  const client = getGbxClient(serverId);
+  await client.call("TriggerModeScriptEventArray", method, params);
+  await logAudit(actor.userId, serverId, "server.live.scriptevent", {
+    method,
+    params,
+  });
 }

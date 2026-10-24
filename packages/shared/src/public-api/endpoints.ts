@@ -3,6 +3,7 @@ import { defineEndpoint } from "./endpoint";
 import {
   CurrentMapsSchema,
   dataOf,
+  GameSchema,
   JukeboxEntrySchema,
   ListedPlayerSchema,
   listFileBody,
@@ -15,11 +16,22 @@ import {
   paginationQuery,
   playerLogin,
   PlayerSchema,
+  pointsType,
   resourceId,
+  ScriptInfoSchema,
+  ScriptSettingsSchema,
+  scriptSettingValue,
   serverParams,
   ServerSchema,
   uidOrderBody,
 } from "./schemas";
+
+const matchSettingsBody = z.object({
+  filename: listFileBody.shape.filename.meta({
+    description: "Relative to the server's Maps folder",
+    example: "MatchSettings/tracklist.txt",
+  }),
+});
 
 export const listServers = defineEndpoint({
   id: "listServers",
@@ -472,6 +484,241 @@ export const reorderJukebox = defineEndpoint({
   status: 204,
 });
 
+export const getGame = defineEndpoint({
+  id: "getGame",
+  method: "get",
+  path: "/servers/{serverId}/game",
+  scope: "game:read",
+  tag: "Game",
+  summary: "Get the game mode script and opponent visibility",
+  params: serverParams,
+  status: 200,
+  response: dataOf(GameSchema),
+});
+
+export const getScriptInfo = defineEndpoint({
+  id: "getScriptInfo",
+  method: "get",
+  path: "/servers/{serverId}/game/script",
+  scope: "game:read",
+  tag: "Game",
+  summary: "Describe the running game mode script and its settings",
+  params: serverParams,
+  status: 200,
+  response: dataOf(ScriptInfoSchema),
+});
+
+export const setScript = defineEndpoint({
+  id: "setScript",
+  method: "put",
+  path: "/servers/{serverId}/game/script",
+  scope: "game:write",
+  tag: "Game",
+  summary: "Change the game mode script",
+  description: "Takes effect on the next map; restart the map to apply it now.",
+  params: serverParams,
+  body: z.object({
+    script: z
+      .string()
+      .max(255)
+      .regex(/^(?!\/)(?!.*(^|\/)\.{1,2}(\/|$))[\w .\/-]+\.Script\.txt$/i)
+      .meta({ example: "Trackmania/TM_TimeAttack_Online.Script.txt" }),
+  }),
+  status: 204,
+});
+
+export const getScriptSettings = defineEndpoint({
+  id: "getScriptSettings",
+  method: "get",
+  path: "/servers/{serverId}/game/script-settings",
+  scope: "game:read",
+  tag: "Game",
+  summary: "Get the game mode script's settings",
+  params: serverParams,
+  status: 200,
+  response: dataOf(ScriptSettingsSchema),
+});
+
+export const updateScriptSettings = defineEndpoint({
+  id: "updateScriptSettings",
+  method: "patch",
+  path: "/servers/{serverId}/game/script-settings",
+  scope: "game:write",
+  tag: "Game",
+  summary: "Change some of the game mode script's settings",
+  description: "Settings left out keep their value.",
+  params: serverParams,
+  body: z.object({
+    settings: z
+      .record(z.string().regex(/^S_\w{1,100}$/), scriptSettingValue)
+      .refine((settings) => Object.keys(settings).length > 0, {
+        message: "Change at least one setting",
+      })
+      .meta({ example: { S_TimeLimit: 300 } }),
+  }),
+  status: 204,
+});
+
+export const restartMap = defineEndpoint({
+  id: "restartMap",
+  method: "post",
+  path: "/servers/{serverId}/game/restart",
+  scope: "game:write",
+  tag: "Game",
+  summary: "Restart the current map",
+  params: serverParams,
+  status: 204,
+});
+
+export const nextMap = defineEndpoint({
+  id: "nextMap",
+  method: "post",
+  path: "/servers/{serverId}/game/next",
+  scope: "game:write",
+  tag: "Game",
+  summary: "Skip to the next map",
+  params: serverParams,
+  status: 204,
+});
+
+export const jumpToMap = defineEndpoint({
+  id: "jumpToMap",
+  method: "post",
+  path: "/servers/{serverId}/game/jump",
+  scope: "game:write",
+  tag: "Game",
+  summary: "Switch to a map on the map list",
+  params: serverParams,
+  body: z.object({ uid: mapUid }),
+  status: 204,
+});
+
+export const setPaused = defineEndpoint({
+  id: "setPaused",
+  method: "put",
+  path: "/servers/{serverId}/game/pause",
+  scope: "game:write",
+  tag: "Game",
+  summary: "Pause or resume the match",
+  description: "Only for game modes that support pausing.",
+  params: serverParams,
+  body: z.object({ paused: z.boolean() }),
+  status: 204,
+});
+
+export const setShowOpponents = defineEndpoint({
+  id: "setShowOpponents",
+  method: "put",
+  path: "/servers/{serverId}/game/show-opponents",
+  scope: "game:write",
+  tag: "Game",
+  summary: "Force the number of visible opponents",
+  description: "Takes effect on the next map.",
+  params: serverParams,
+  body: z.object({
+    count: z.int().min(0).max(1000).meta({
+      description:
+        "0 keeps the players' choice, 1 shows all, any other number shows at least that many",
+    }),
+  }),
+  status: 204,
+});
+
+export const triggerScriptEvent = defineEndpoint({
+  id: "triggerScriptEvent",
+  method: "post",
+  path: "/servers/{serverId}/game/script-events",
+  scope: "game:write",
+  tag: "Game",
+  summary: "Send an event to the game mode script",
+  params: serverParams,
+  body: z.object({
+    method: z
+      .string()
+      .regex(/^[\w.]{1,100}$/)
+      .meta({ example: "Trackmania.ForceEndRound" }),
+    params: z.array(z.string().max(1000)).max(50).default([]),
+  }),
+  status: 204,
+});
+
+export const loadMatchSettings = defineEndpoint({
+  id: "loadMatchSettings",
+  method: "post",
+  path: "/servers/{serverId}/game/match-settings/load",
+  scope: "game:write",
+  tag: "Match settings",
+  summary: "Load match settings, replacing the map list",
+  params: serverParams,
+  body: matchSettingsBody,
+  status: 204,
+});
+
+export const saveMatchSettings = defineEndpoint({
+  id: "saveMatchSettings",
+  method: "post",
+  path: "/servers/{serverId}/game/match-settings/save",
+  scope: "game:write",
+  tag: "Match settings",
+  summary: "Save the match settings and map list",
+  params: serverParams,
+  body: matchSettingsBody,
+  status: 204,
+});
+
+export const appendPlaylist = defineEndpoint({
+  id: "appendPlaylist",
+  method: "post",
+  path: "/servers/{serverId}/game/match-settings/append",
+  scope: "game:write",
+  tag: "Match settings",
+  summary:
+    "Add the playlist of a match settings file to the end of the map list",
+  params: serverParams,
+  body: matchSettingsBody,
+  status: 204,
+});
+
+export const insertPlaylist = defineEndpoint({
+  id: "insertPlaylist",
+  method: "post",
+  path: "/servers/{serverId}/game/match-settings/insert",
+  scope: "game:write",
+  tag: "Match settings",
+  summary: "Insert the playlist of a match settings file after the current map",
+  params: serverParams,
+  body: matchSettingsBody,
+  status: 204,
+});
+
+export const setPlayerPoints = defineEndpoint({
+  id: "setPlayerPoints",
+  method: "put",
+  path: "/servers/{serverId}/players/{login}/points",
+  scope: "game:write",
+  tag: "Points",
+  summary: "Set a player's points",
+  description: "For game modes with points.",
+  params: serverParams.extend({ login: playerLogin }),
+  body: z.object({ type: pointsType, points: z.int() }),
+  status: 204,
+});
+
+export const setTeamPoints = defineEndpoint({
+  id: "setTeamPoints",
+  method: "put",
+  path: "/servers/{serverId}/teams/{teamId}/points",
+  scope: "game:write",
+  tag: "Points",
+  summary: "Set a team's points",
+  description: "For team game modes.",
+  params: serverParams.extend({
+    teamId: z.coerce.number().int().min(0).max(255).meta({ example: 0 }),
+  }),
+  body: z.object({ type: pointsType, points: z.int() }),
+  status: 204,
+});
+
 export const listMatches = defineEndpoint({
   id: "listMatches",
   method: "get",
@@ -531,6 +778,23 @@ export const publicApiEndpoints = [
   clearJukebox,
   removeFromJukebox,
   reorderJukebox,
+  getGame,
+  getScriptInfo,
+  setScript,
+  getScriptSettings,
+  updateScriptSettings,
+  restartMap,
+  nextMap,
+  jumpToMap,
+  setPaused,
+  setShowOpponents,
+  triggerScriptEvent,
+  loadMatchSettings,
+  saveMatchSettings,
+  appendPlaylist,
+  insertPlaylist,
+  setPlayerPoints,
+  setTeamPoints,
   listMatches,
   getMatch,
 ] as const;
