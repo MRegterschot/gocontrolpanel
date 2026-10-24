@@ -719,6 +719,39 @@ export const setTeamPoints = defineEndpoint({
   status: 204,
 });
 
+export const getChat = defineEndpoint({
+  id: "getChat",
+  method: "get",
+  path: "/servers/{serverId}/chat",
+  scope: "chat:read",
+  tag: "Chat",
+  summary: "Get recent chat lines",
+  description:
+    "As the server shows them, so lines may contain formatting tags.",
+  params: serverParams,
+  status: 200,
+  response: dataOf(z.array(z.string())),
+});
+
+export const sendChat = defineEndpoint({
+  id: "sendChat",
+  method: "post",
+  path: "/servers/{serverId}/chat",
+  scope: "chat:write",
+  tag: "Chat",
+  summary: "Send a chat message",
+  description:
+    "Shown like a message from the panel: [Admin] followed by the key's name.",
+  params: serverParams,
+  body: z.object({
+    message: z.string().trim().min(1).max(500),
+    login: playerLogin.optional().meta({
+      description: "Send only to this player",
+    }),
+  }),
+  status: 204,
+});
+
 export const listMatches = defineEndpoint({
   id: "listMatches",
   method: "get",
@@ -795,6 +828,8 @@ export const publicApiEndpoints = [
   insertPlaylist,
   setPlayerPoints,
   setTeamPoints,
+  getChat,
+  sendChat,
   listMatches,
   getMatch,
 ] as const;

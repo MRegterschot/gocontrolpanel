@@ -9,6 +9,8 @@ export const API_KEY_SCOPES = [
   "jukebox:write",
   "game:read",
   "game:write",
+  "chat:read",
+  "chat:write",
   "matches:read",
 ] as const;
 
@@ -25,6 +27,8 @@ export const API_KEY_SCOPE_DESCRIPTIONS: Record<ApiKeyScope, string> = {
   "game:read": "Game mode script, its settings and opponent visibility",
   "game:write":
     "Restart, skip and pause; game mode, settings, points and script events",
+  "chat:read": "Chat history",
+  "chat:write": "Send chat messages",
   "matches:read": "Recorded matches",
 };
 

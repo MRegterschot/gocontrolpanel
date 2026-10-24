@@ -34,6 +34,7 @@ vi.mock("@/lib/dbclient", () => ({
 import type { Actor } from "@/lib/actor";
 import { apiKeyClaims } from "@/lib/api-keys/authenticate";
 import { getMatchAs, getMatchesPageAs } from "@/services/database/matches";
+import { getChatHistoryAs } from "@/services/gbx/advanced";
 import { getCurrentMapsAs, getJukeboxAs } from "@/services/gbx/map";
 import { getListedPlayersAs, getPlayerListAs } from "@/services/gbx/player";
 
@@ -69,6 +70,7 @@ describe("actor reads with a server key", () => {
   it.each([
     ["players", (serverId: string) => getPlayerListAs(keyActor, serverId)],
     ["jukebox", (serverId: string) => getJukeboxAs(keyActor, serverId)],
+    ["the chat", (serverId: string) => getChatHistoryAs(keyActor, serverId)],
     [
       "the current map",
       (serverId: string) => getCurrentMapsAs(keyActor, serverId),

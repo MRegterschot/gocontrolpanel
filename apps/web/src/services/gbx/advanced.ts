@@ -1,7 +1,8 @@
 import { doServerActionWithAuth } from "@/lib/actions";
+import { type Actor, actorFromSession, requirePermission } from "@/lib/actor";
 import { getGbxClient } from "@/lib/gbx-service";
 import { ServerResponse } from "@/types/responses";
-import { SPlayerInfo } from "@gcp/shared";
+import { serverPermissions, SPlayerInfo } from "@gcp/shared";
 import "server-only";
 
 export async function getJoinLink(
@@ -53,9 +54,15 @@ export async function getChatHistory(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async () => {
-      const client = getGbxClient(serverId);
-      return await client.call("GetChatLines");
-    },
+    (session) => getChatHistoryAs(actorFromSession(session), serverId),
   );
+}
+
+// Recent chat lines as the server shows them, formatting tags included
+export async function getChatHistoryAs(
+  actor: Actor,
+  serverId: string,
+): Promise<string[]> {
+  requirePermission(actor, serverPermissions.member, serverId);
+  return getGbxClient(serverId).call("GetChatLines");
 }

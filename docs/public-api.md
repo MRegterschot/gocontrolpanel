@@ -49,6 +49,8 @@ Every key has one or more scopes:
 | `jukebox:write` | Queueing, removing and reordering maps, and clearing the jukebox                                                                                     |
 | `game:read`     | The game mode script, its settings and opponent visibility                                                                                           |
 | `game:write`    | Restarting, skipping, jumping and pausing; changing the game mode, its settings and opponent visibility; match settings files; points; script events |
+| `chat:read`     | The chat history                                                                                                                                     |
+| `chat:write`    | Sending chat messages, shown as `[Admin] <key name> (API key)`                                                                                       |
 | `matches:read`  | Recorded matches and their records                                                                                                                   |
 
 `GET /api/v1/servers` works with any key.
