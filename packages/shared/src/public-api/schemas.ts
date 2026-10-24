@@ -178,6 +178,59 @@ export const ScriptSettingsSchema = z
 
 export const pointsType = z.enum(["round", "map", "match"]);
 
+const visibility = z.enum(["visible", "hidden", "hiddenFromNations"]);
+
+const settingsShape = {
+  name: z.string(),
+  comment: z.string(),
+  password: z.string().meta({ description: "Empty for none" }),
+  spectatorPassword: z.string().meta({ description: "Empty for none" }),
+  maxPlayers: z.int().meta({ description: "Takes effect on the next map" }),
+  maxSpectators: z.int().meta({ description: "Takes effect on the next map" }),
+  keepPlayerSlots: z.boolean(),
+  visibility,
+  callVoteTimeout: z.int().meta({ description: "Seconds" }),
+  callVoteRatio: z.number().meta({
+    description: "Percentage of votes needed to pass; -1 disables votes",
+  }),
+  autoSaveReplays: z.boolean(),
+  horns: z.boolean().meta({ description: "Whether players can use horns" }),
+  serviceAnnounces: z.boolean(),
+  profileSkins: z.boolean(),
+  mapDownload: z.boolean().meta({
+    description: "Whether players can download the server's maps",
+  }),
+  downloadRate: z.int().meta({ description: "Kbps" }),
+  uploadRate: z.int().meta({ description: "Kbps" }),
+  helpCommand: z.boolean().meta({
+    description: "Whether the panel's /help chat command is on",
+  }),
+};
+
+export const ServerSettingsSchema = z
+  .object(settingsShape)
+  .meta({ id: "ServerSettings" });
+
+// The limits of the panel's settings form; fields left out keep their value
+export const ServerSettingsChangesSchema = z
+  .object({
+    ...settingsShape,
+    name: z.string().trim().min(1).max(255),
+    comment: z.string().max(1000),
+    password: z.string().max(255),
+    spectatorPassword: z.string().max(255),
+    maxPlayers: settingsShape.maxPlayers.min(0).max(255),
+    maxSpectators: settingsShape.maxSpectators.min(0).max(255),
+    callVoteTimeout: settingsShape.callVoteTimeout.min(0).max(255),
+    callVoteRatio: settingsShape.callVoteRatio.min(-1).max(100),
+    downloadRate: settingsShape.downloadRate.min(1),
+    uploadRate: settingsShape.uploadRate.min(1),
+  })
+  .partial()
+  .refine((changes) => Object.keys(changes).length > 0, {
+    message: "Change at least one setting",
+  });
+
 export const MatchSchema = z
   .object({
     id: resourceId,
@@ -231,6 +284,10 @@ export type ApiCurrentMaps = z.output<typeof CurrentMapsSchema>;
 export type ApiJukeboxEntry = z.output<typeof JukeboxEntrySchema>;
 export type ApiGame = z.output<typeof GameSchema>;
 export type ApiScriptInfo = z.output<typeof ScriptInfoSchema>;
+export type ApiServerSettings = z.output<typeof ServerSettingsSchema>;
+export type ApiServerSettingsChanges = z.output<
+  typeof ServerSettingsChangesSchema
+>;
 export type ApiMatch = z.output<typeof MatchSchema>;
 export type ApiMatchDetail = z.output<typeof MatchDetailSchema>;
 export type ApiErrorBody = z.output<typeof ApiErrorSchema>;

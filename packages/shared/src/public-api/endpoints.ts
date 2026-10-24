@@ -23,6 +23,8 @@ import {
   scriptSettingValue,
   serverParams,
   ServerSchema,
+  ServerSettingsChangesSchema,
+  ServerSettingsSchema,
   uidOrderBody,
 } from "./schemas";
 
@@ -752,6 +754,47 @@ export const sendChat = defineEndpoint({
   status: 204,
 });
 
+export const getSettings = defineEndpoint({
+  id: "getSettings",
+  method: "get",
+  path: "/servers/{serverId}/settings",
+  scope: "settings:read",
+  tag: "Settings",
+  summary: "Get the server settings, passwords included",
+  params: serverParams,
+  status: 200,
+  response: dataOf(ServerSettingsSchema),
+});
+
+export const updateSettings = defineEndpoint({
+  id: "updateSettings",
+  method: "patch",
+  path: "/servers/{serverId}/settings",
+  scope: "settings:write",
+  tag: "Settings",
+  summary: "Change some server settings",
+  description: "Settings left out keep their value.",
+  params: serverParams,
+  body: ServerSettingsChangesSchema,
+  status: 200,
+  response: dataOf(ServerSettingsSchema),
+});
+
+export const getJoinLink = defineEndpoint({
+  id: "getJoinLink",
+  method: "get",
+  path: "/servers/{serverId}/join-link",
+  scope: "settings:read",
+  tag: "Settings",
+  summary: "Get a link that joins the server from the game",
+  description: "Contains the server password when one is set.",
+  params: serverParams,
+  status: 200,
+  response: dataOf(
+    z.object({ link: z.string().meta({ example: "#qjoin=login@Trackmania" }) }),
+  ),
+});
+
 export const listMatches = defineEndpoint({
   id: "listMatches",
   method: "get",
@@ -830,6 +873,9 @@ export const publicApiEndpoints = [
   setTeamPoints,
   getChat,
   sendChat,
+  getSettings,
+  updateSettings,
+  getJoinLink,
   listMatches,
   getMatch,
 ] as const;

@@ -10,17 +10,24 @@ export async function getJoinLink(
 ): Promise<ServerResponse<string>> {
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
-    async () => {
-      const client = getGbxClient(serverId);
-      const [serverInfo, serverOptions] = await client.multicall([
-        ["GetMainServerPlayerInfo"],
-        ["GetServerOptions"],
-      ]);
-
-      const joinLink = `#qjoin=${serverInfo.Login}${serverOptions.Password ? `:${serverOptions.Password}` : ""}@Trackmania`;
-      return joinLink;
-    },
+    (session) => getJoinLinkAs(actorFromSession(session), serverId),
   );
+}
+
+// A link that joins the server from the game; it carries the password, so admins only
+export async function getJoinLinkAs(
+  actor: Actor,
+  serverId: string,
+): Promise<string> {
+  requirePermission(actor, serverPermissions.admin, serverId);
+
+  const client = getGbxClient(serverId);
+  const [serverInfo, serverOptions] = await client.multicall([
+    ["GetMainServerPlayerInfo"],
+    ["GetServerOptions"],
+  ]);
+
+  return `#qjoin=${serverInfo.Login}${serverOptions.Password ? `:${serverOptions.Password}` : ""}@Trackmania`;
 }
 
 export async function getServerPlayerInfo(

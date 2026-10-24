@@ -11,6 +11,8 @@ export const API_KEY_SCOPES = [
   "game:write",
   "chat:read",
   "chat:write",
+  "settings:read",
+  "settings:write",
   "matches:read",
 ] as const;
 
@@ -29,6 +31,8 @@ export const API_KEY_SCOPE_DESCRIPTIONS: Record<ApiKeyScope, string> = {
     "Restart, skip and pause; game mode, settings, points and script events",
   "chat:read": "Chat history",
   "chat:write": "Send chat messages",
+  "settings:read": "Server settings and the join link, passwords included",
+  "settings:write": "Change server settings, passwords included",
   "matches:read": "Recorded matches",
 };
 
