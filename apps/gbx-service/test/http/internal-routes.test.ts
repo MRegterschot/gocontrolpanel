@@ -140,6 +140,73 @@ describe("connection controls", () => {
 });
 
 describe("plugin commands", () => {
+  it("executes built-in commands and reports unknown commands", async () => {
+    const { request } = await setup();
+    const known = await request("POST", internalPaths.command("server-1"), {
+      command: "version",
+      login: "abc",
+    });
+    expect(known.statusCode).toBe(200);
+    expect(known.json().data).toMatchObject({
+      command: "version",
+      login: "abc",
+      handled: true,
+      source: "builtin",
+      messages: [expect.stringContaining(" v")],
+      messagesTruncated: false,
+      outputComplete: true,
+      durationMs: expect.any(Number),
+    });
+    const unknown = await request("POST", internalPaths.command("server-1"), {
+      command: "not-registered",
+      login: "abc",
+      params: ["two words"],
+    });
+    expect(unknown.json().data).toMatchObject({
+      command: "not-registered",
+      handled: false,
+      source: null,
+      messages: [],
+      outputComplete: true,
+    });
+  });
+
+  it("validates commands and parameters before dispatch", async () => {
+    const { request, h } = await setup();
+    const run = vi.spyOn(h.runtime, "executeCommand");
+    for (const body of [
+      { command: "help match", login: "abc" },
+      { command: "help", login: "abc", params: [1] },
+      { command: "help", login: "" },
+    ]) {
+      const res = await request(
+        "POST",
+        internalPaths.command("server-1"),
+        body,
+      );
+      expect(res.statusCode).toBe(400);
+    }
+    expect(run).not.toHaveBeenCalled();
+    const res = await request("POST", internalPaths.command("server-1"), {
+      command: "help",
+      login: "abc",
+      params: ["two words"],
+    });
+    expect(res.statusCode).toBe(200);
+    expect(run).toHaveBeenCalledWith("help", ["two words"], "abc");
+  });
+
+  it("rejects command execution on a disconnected server", async () => {
+    const { request } = await setup();
+    await request("POST", internalPaths.disconnect("server-1"));
+    const res = await request("POST", internalPaths.command("server-1"), {
+      command: "version",
+      login: "abc",
+    });
+    expect(res.statusCode).toBe(409);
+    expect(res.json().error.code).toBe("ServerNotConnected");
+  });
+
   it("runs a plugin's command and reports when it has none", async () => {
     const { request, h } = await setup();
     const run = vi.spyOn(h.runtime, "runPluginCommand");
@@ -169,6 +236,45 @@ describe("plugin commands", () => {
 });
 
 describe("gbx passthrough", () => {
+  it.each(["call", "multicall"])(
+    "encodes server options in a %s",
+    async (kind) => {
+      const { request, h } = await setup({
+        configure: (s) => s.respond("SetServerOptions", true),
+      });
+      const call = {
+        method: "SetServerOptions",
+        params: [{ CallVoteRatio: 1 }],
+      };
+      const res = await request(
+        "POST",
+        kind === "call"
+          ? internalPaths.gbxCall("server-1")
+          : internalPaths.gbxMulticall("server-1"),
+        kind === "call" ? call : { calls: [call] },
+      );
+      expect(res.statusCode).toBe(200);
+      const params =
+        kind === "call"
+          ? h.session.callsTo("SetServerOptions").at(-1)!.params
+          : h.session.multicalls.at(-1)![0].slice(1);
+      expect(params[0]).toMatchObject({
+        CallVoteRatio: { raw: "1", tagName: "double" },
+      });
+    },
+  );
+
+  it("allows reading the next map", async () => {
+    const { request } = await setup({
+      configure: (s) => s.respond("GetNextMapInfo", { UId: "next-map" }),
+    });
+    const res = await request("POST", internalPaths.gbxCall("server-1"), {
+      method: "GetNextMapInfo",
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().data).toEqual({ UId: "next-map" });
+  });
+
   it("forwards allowlisted calls", async () => {
     const { request, h } = await setup({
       configure: (s) => s.respond("GetChatLines", ["hello"]),

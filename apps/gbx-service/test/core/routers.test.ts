@@ -117,6 +117,49 @@ describe("CommandRouter", () => {
     expect(await router.runAs("plugin-other", "lobby", [], "abc")).toBe(false);
   });
 
+  it("executes structured plugin commands without splitting arguments", async () => {
+    const router = new CommandRouter(
+      silentLogger,
+      async () => {},
+      () => ({
+        enabled: true,
+        provider: helpProvider,
+      }),
+    );
+    const handler = vi.fn();
+    const remove = router.register("example", handler, "plugin-1");
+    expect(
+      await router.execute("EXAMPLE", ["two words", "", "next"], "creator"),
+    ).toBe(true);
+    expect(handler).toHaveBeenCalledWith(["two words", "", "next"], "creator");
+    remove();
+    expect(await router.execute("example", [], "creator")).toBe(false);
+    // Unknown slash commands are still consumed by the chat pipeline.
+    expect(await router.dispatch("/example", "creator")).toBe(true);
+  });
+
+  it("preserves native command precedence and passes the caller to permission checks", async () => {
+    const system = vi.fn(async () => true);
+    const reply = vi.fn(async () => {});
+    const router = new CommandRouter(
+      silentLogger,
+      reply,
+      () => ({
+        enabled: true,
+        provider: helpProvider,
+      }),
+      system,
+    );
+    const handler = vi.fn();
+    router.register("status", handler, "plugin-1");
+    router.register("version", handler, "plugin-1");
+    expect(await router.execute("status", ["value"], "creator")).toBe(true);
+    expect(system).toHaveBeenCalledWith("status", "creator", ["value"]);
+    expect(await router.execute("version", [], "creator")).toBe(true);
+    expect(reply).toHaveBeenCalledWith("creator", `${appName} v${appVersion}`);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
   it("answers /version privately without plugins, even when help is disabled", async () => {
     const h = await createHarness({
       server: { enableHelpCommand: false },

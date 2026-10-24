@@ -48,6 +48,8 @@ const STATUS: Record<string, number> = {
   PluginYanked: 409,
   PluginNameTaken: 409,
   PluginIncompatible: 409,
+  // File manager
+  FileExists: 409,
 };
 
 type Issue = { path: string; message: string };

@@ -218,8 +218,8 @@ describe("v1 files", () => {
     expect(res.status).toBe(413);
   });
 
-  it("creates folders, moves and deletes with absolute paths", async () => {
-    mocks.create.mockResolvedValue(entry("/UserData/Maps/Event", true));
+  it("creates folders, moves and deletes with the file manager's paths", async () => {
+    mocks.create.mockResolvedValue(entry("UserData/Maps/Event", true));
     let res = await foldersRoute.POST(
       req("/servers/server-a/files/folders", {
         method: "POST",
@@ -228,8 +228,9 @@ describe("v1 files", () => {
       onA(),
     );
     expect(res.status).toBe(201);
+    // The file manager's create resolves paths inside UserData, unlike move and delete
     expect(mocks.create).toHaveBeenCalledWith(actor, "server-a", {
-      path: "/UserData/Maps/Event",
+      path: "Maps/Event",
       isDir: true,
     });
     expect((await res.json()).data.path).toBe("Maps/Event");

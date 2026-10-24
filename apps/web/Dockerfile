@@ -12,7 +12,7 @@ COPY apps/gbx-service/package.json ./apps/gbx-service/
 COPY packages/db/package.json ./packages/db/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/plugin-sdk/package.json ./packages/plugin-sdk/
-RUN curl -fsSL https://bun.sh/install | bash \
+RUN curl -fsSL https://bun.sh/install | bash -s -- bun-v1.4.4 \
   && /root/.bun/bin/bun install --frozen-lockfile
 
 FROM base AS builder

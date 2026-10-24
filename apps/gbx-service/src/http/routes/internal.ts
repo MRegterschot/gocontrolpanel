@@ -1,6 +1,7 @@
 import {
   chatConfigBodySchema,
   chatMessageBodySchema,
+  commandBodySchema,
   gbxCallBodySchema,
   gbxMulticallBodySchema,
   mapsBodySchema,
@@ -18,6 +19,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { AppError } from "../../core/errors";
 import { isPassthroughAllowed } from "../../core/gbx/allowlist";
+import { encodePassthroughParams } from "../../core/gbx/params";
 import type { ServerRegistry } from "../../core/server/server-registry";
 import { gbxOperation, parse } from "../errors";
 import { requireServiceToken } from "../service-auth";
@@ -93,6 +95,12 @@ export async function internalRoutes(
     return ok(null);
   });
 
+  app.post("/internal/servers/:id/commands", async (req) => {
+    const runtime = runtimeFor(req.params);
+    const { command, params, login } = parse(commandBodySchema, req.body);
+    return ok(await runtime.executeCommand(command, params, login));
+  });
+
   app.post("/internal/servers/:id/plugin-commands", async (req) => {
     const runtime = runtimeFor(req.params);
     const { pluginId, command, args, login } = parse(
@@ -112,7 +120,11 @@ export async function internalRoutes(
     const runtime = runtimeFor(req.params);
     const { method, params } = parse(gbxCallBodySchema, req.body);
     assertAllowed(method);
-    return ok(await gbxOperation(() => runtime.gbx.call(method, ...params)));
+    return ok(
+      await gbxOperation(() =>
+        runtime.gbx.call(method, ...encodePassthroughParams(method, params)),
+      ),
+    );
   });
 
   app.post("/internal/servers/:id/gbx/multicall", async (req) => {
@@ -122,7 +134,10 @@ export async function internalRoutes(
     return ok(
       await gbxOperation(() =>
         runtime.gbx.multicall(
-          calls.map((call) => [call.method, ...call.params]),
+          calls.map((call) => [
+            call.method,
+            ...encodePassthroughParams(call.method, call.params),
+          ]),
         ),
       ),
     );

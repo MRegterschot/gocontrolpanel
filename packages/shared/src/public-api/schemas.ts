@@ -9,9 +9,10 @@ export const resourceId = z
     example: "3f1c2a9e-8d4b-4c4e-9b7a-1f2e3d4c5b6a",
   });
 
+// Fake players have logins such as *fakeplayer1*
 export const playerLogin = z
   .string()
-  .regex(/^[A-Za-z0-9_-]{1,64}$/)
+  .regex(/^[A-Za-z0-9_*-]{1,64}$/)
   .meta({
     description: "Trackmania account login",
     example: "v8XxSOkeTqy7tw8DGcZd0Q",
@@ -229,6 +230,8 @@ export const ServerSettingsChangesSchema = z
   .partial()
   .refine((changes) => Object.keys(changes).length > 0, {
     message: "Change at least one setting",
+    // Only when the fields themselves are valid, so a bad value isn't reported as no change
+    when: (payload) => payload.issues.length === 0,
   });
 
 const pluginVersion = z.object({

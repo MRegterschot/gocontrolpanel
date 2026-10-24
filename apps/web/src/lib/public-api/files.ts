@@ -7,8 +7,9 @@ export function userDataPath(path: string): string {
   return path ? `/UserData/${path}` : "/UserData";
 }
 
+// Listings give /UserData/..., created entries UserData/...
 function relative(path: string): string {
-  return path.replace(/^\/UserData(\/|$)/, "");
+  return path.replace(/^\/?UserData(\/|$)/, "");
 }
 
 export function toApiFileEntry(entry: FileEntry): ApiFileEntry {

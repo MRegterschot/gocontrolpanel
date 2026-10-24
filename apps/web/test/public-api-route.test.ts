@@ -285,6 +285,12 @@ describe("publicApiRoute", () => {
     ],
     ["a missing record", notFound("Match not found"), 404, "Match not found"],
     [
+      "a folder that already exists",
+      new ServerError("Folder already exists", "FileExists"),
+      409,
+      "Folder already exists",
+    ],
+    [
       "a disconnected server",
       new ServerError("Offline", "ServerNotConnected"),
       503,

@@ -14,7 +14,7 @@ The repository is a Bun workspaces monorepo:
 
 ### Prerequisites
 
-- [Bun](https://bun.sh) and Node.js 22 or newer
+- [Bun](https://bun.sh) 1.4.4 or newer (includes the Brotli CVE-2026-111497 fix) and Node.js 22 or newer
 - Docker with Compose v2 (tested with 2.39)
 - A Trackmania account with two things set up:
   - an OAuth app at the [Nadeo API manager](https://api.trackmania.com/manager), with `http://localhost:3000/api/auth/callback/nadeo` as redirect URL

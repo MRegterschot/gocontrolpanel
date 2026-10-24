@@ -11,6 +11,7 @@ export const API_KEY_SCOPES = [
   "game:write",
   "chat:read",
   "chat:write",
+  "commands:write",
   "settings:read",
   "settings:write",
   "plugins:read",
@@ -35,6 +36,8 @@ export const API_KEY_SCOPE_DESCRIPTIONS: Record<ApiKeyScope, string> = {
     "Restart, skip and pause; game mode, settings, points and script events",
   "chat:read": "Chat history",
   "chat:write": "Send chat messages",
+  "commands:write":
+    "Execute built-in and plugin chat commands as the key's creator",
   "settings:read": "Server settings and the join link, passwords included",
   "settings:write": "Change server settings, passwords included",
   "plugins:read": "Installed plugins and their settings, without secrets",

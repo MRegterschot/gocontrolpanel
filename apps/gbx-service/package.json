@@ -35,6 +35,7 @@
     "quickjs-emscripten-core": "0.32.0",
     "slugid": "^5.0.1",
     "tmtags": "^1.0.3",
+    "xmlrpc": "1.3.2",
     "zod": "^3.25.76"
   },
   "devDependencies": {

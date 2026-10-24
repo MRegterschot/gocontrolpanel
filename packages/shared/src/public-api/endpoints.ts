@@ -593,6 +593,7 @@ export const updateScriptSettings = defineEndpoint({
       .record(z.string().regex(/^S_\w{1,100}$/), scriptSettingValue)
       .refine((settings) => Object.keys(settings).length > 0, {
         message: "Change at least one setting",
+        when: (payload) => payload.issues.length === 0,
       })
       .meta({ example: { S_TimeLimit: 300 } }),
   }),
@@ -790,6 +791,49 @@ export const sendChat = defineEndpoint({
     }),
   }),
   status: 204,
+});
+
+export const executeCommand = defineEndpoint({
+  id: "executeCommand",
+  method: "post",
+  path: "/servers/{serverId}/commands",
+  scope: "commands:write",
+  tag: "Commands",
+  summary: "Execute a built-in or plugin chat command",
+  description:
+    "Runs as the API key's creator, with the command's usual permission checks. Built-in commands take precedence over plugin commands. Captures broadcast replies and private replies to the creator during dispatch; chat delivery is unchanged. handled means a handler was found, not that it succeeded. Plugin handlers may continue asynchronously: outputComplete is false for plugin commands and later replies are not included. Output is capped at 100 messages and 16,384 characters.",
+  params: serverParams,
+  body: z.object({
+    command: z
+      .string()
+      .regex(/^\/?[a-z0-9_-]{1,32}\+?$/i)
+      .transform((name) => name.replace(/^\//, "").toLowerCase())
+      .meta({
+        description: "Command name, with or without the leading slash",
+        example: "help",
+      }),
+    params: z
+      .array(z.string().max(1000))
+      .max(20)
+      .default([])
+      .meta({
+        description: "Command arguments, in order; each entry is passed intact",
+        example: ["match"],
+      }),
+  }),
+  status: 200,
+  response: dataOf(
+    z.object({
+      command: z.string(),
+      login: z.string(),
+      handled: z.boolean(),
+      source: z.enum(["builtin", "plugin"]).nullable(),
+      messages: z.array(z.string()),
+      messagesTruncated: z.boolean(),
+      outputComplete: z.boolean(),
+      durationMs: z.number().nonnegative(),
+    }),
+  ),
 });
 
 export const getSettings = defineEndpoint({
@@ -1192,6 +1236,7 @@ export const publicApiEndpoints = [
   setTeamPoints,
   getChat,
   sendChat,
+  executeCommand,
   getSettings,
   updateSettings,
   getJoinLink,

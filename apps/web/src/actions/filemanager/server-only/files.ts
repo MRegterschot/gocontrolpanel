@@ -272,7 +272,7 @@ export async function deleteEntriesAs(
   }
 }
 
-// Creates a file or folder at an absolute path
+// Creates a file or folder; `request.path` is relative to UserData, such as Maps/Event
 export async function createEntryAs(
   actor: Actor,
   serverId: string,
@@ -305,16 +305,19 @@ export async function createEntryAs(
   });
 
   if (res.status !== 200) {
+    // A body can only be read once
+    const message =
+      res.status === 500 ? "Something went wrong" : await res.text();
     await logAudit(
       actor.userId,
       serverId,
       "server.files.create",
       request,
-      res.status === 500 ? "Something went wrong" : await res.text(),
+      message,
     );
     throw new ServerError(
-      res.status === 500 ? "Something went wrong" : await res.text(),
-      "FileCreateError",
+      message,
+      res.status === 409 ? "FileExists" : "FileCreateError",
     );
   }
 
@@ -411,6 +414,9 @@ export async function readFileBytesAs(
   const res = await fileManagerFetch(fileManagerUrl(fileManager.url!, path), {
     headers: { Authorization: `Bearer ${fileManager.password}` },
   });
+  if (res.status === 404) {
+    throw new ServerError("File not found", "NotFound");
+  }
   if (res.status !== 200) {
     throw new ServerError("Failed to get file", "FileFetchError");
   }
