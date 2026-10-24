@@ -287,6 +287,8 @@ export const permissions: string[] = [
   "plugins:upload",
   "codriver:view",
   "codriver:edit",
+  "api-keys:view",
+  "api-keys:revoke",
 ] as const;
 
 export function hasPermissionSync(

@@ -53,6 +53,14 @@ export type ClaimServerSummary = z.infer<typeof claimServerSummarySchema>;
 
 // Permission sets used for per-server actions; ":id" is replaced by the server id
 export const serverPermissions = {
+  member: [
+    "servers:id:member",
+    "servers:id:moderator",
+    "servers:id:admin",
+    "group:servers:id:member",
+    "group:servers:id:moderator",
+    "group:servers:id:admin",
+  ],
   moderator: [
     "servers:id:moderator",
     "servers:id:admin",

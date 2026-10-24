@@ -1,9 +1,11 @@
 import { doServerActionWithAuth } from "@/lib/actions";
+import { type Actor, actorFromSession, requirePermission } from "@/lib/actor";
 import { getGbxClient } from "@/lib/gbx-service";
 import { getLogger } from "@/lib/logger";
 import { getKeyJukebox, getRedisClient } from "@/lib/redis";
 import { JukeboxMap } from "@/types/map";
 import { ServerError, ServerResponse } from "@/types/responses";
+import { serverPermissions } from "@gcp/shared";
 import "server-only";
 
 export async function getJukebox(
@@ -16,13 +18,20 @@ export async function getJukebox(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async () => {
-      const redis = await getRedisClient();
-      const key = getKeyJukebox(serverId);
-      const items = await redis.lrange(key, 0, -1);
-      return items.map((item) => JSON.parse(item));
-    },
+    (session) => getJukeboxAs(actorFromSession(session), serverId),
   );
+}
+
+// Queued maps for an actor; stored as JSON, so QueuedAt is a string here
+export async function getJukeboxAs(
+  actor: Actor,
+  serverId: string,
+): Promise<JukeboxMap[]> {
+  requirePermission(actor, serverPermissions.moderator, serverId);
+
+  const redis = await getRedisClient();
+  const items = await redis.lrange(getKeyJukebox(serverId), 0, -1);
+  return items.map((item) => JSON.parse(item));
 }
 
 export async function getCurrentMapIndex(

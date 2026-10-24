@@ -1,4 +1,5 @@
 import { doServerActionWithAuth } from "@/lib/actions";
+import { type Actor, requirePermission } from "@/lib/actor";
 import { csvRow } from "@/lib/csv";
 import { getClient } from "@/lib/dbclient";
 import { getLogger } from "@/lib/logger";
@@ -9,6 +10,7 @@ import {
   ServerResponse,
 } from "@/types/responses";
 import { Prisma } from "@gcp/db";
+import { serverPermissions } from "@gcp/shared";
 import { PaginationState } from "@tanstack/react-table";
 import "server-only";
 import slugid from "slugid";
@@ -212,4 +214,65 @@ export async function exportMatchToCSV(
       return csvRows.join("\n");
     },
   );
+}
+
+// Same filter as the matches table: matches with at least one finished record
+const recordedMatches = (serverId: string) => ({
+  deletedAt: null,
+  serverId,
+  records: { some: { deletedAt: null, time: { not: -1 } } },
+});
+
+const matchSummary = Prisma.validator<Prisma.MatchesInclude>()({
+  map: { select: { uid: true, name: true } },
+  _count: { select: { records: { where: { deletedAt: null } } } },
+});
+
+export type MatchSummary = Prisma.MatchesGetPayload<{
+  include: typeof matchSummary;
+}>;
+
+// Recorded matches, newest first, for an actor; page is 1-based
+export async function getMatchesPageAs(
+  actor: Actor,
+  serverId: string,
+  page: number,
+  pageSize: number,
+): Promise<{ matches: MatchSummary[]; total: number }> {
+  requirePermission(actor, serverPermissions.member, serverId);
+
+  const db = getClient();
+  const where = recordedMatches(serverId);
+  const [matches, total] = await Promise.all([
+    db.matches.findMany({
+      where,
+      include: matchSummary,
+      orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    db.matches.count({ where }),
+  ]);
+  return { matches, total };
+}
+
+// One of the server's matches with its records, for an actor; null when it is not this server's
+export async function getMatchAs(
+  actor: Actor,
+  serverId: string,
+  matchId: string,
+) {
+  requirePermission(actor, serverPermissions.member, serverId);
+
+  return getClient().matches.findFirst({
+    where: { id: matchId, serverId, deletedAt: null },
+    include: {
+      ...matchSummary,
+      records: {
+        where: { deletedAt: null },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        include: { user: { select: { nickName: true } } },
+      },
+    },
+  });
 }

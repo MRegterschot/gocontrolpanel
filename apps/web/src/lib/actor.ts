@@ -21,6 +21,8 @@ export interface Actor {
   login: string;
   displayName: string;
   claims: SessionClaims;
+  // Set when acting through a public API key
+  apiKeyId?: string;
 }
 
 export function actorFromSession(session: Session): Actor {

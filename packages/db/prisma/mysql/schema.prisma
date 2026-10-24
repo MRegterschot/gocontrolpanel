@@ -57,6 +57,7 @@ model Users {
   ownedPlugins        Plugins[]
   codriverRules       CodriverAccessRules[]
   codriverRequests    CodriverRequests[]
+  apiKeys             ApiKeys[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -104,6 +105,7 @@ model Groups {
 
   groupServers GroupServers[]
   groupMembers GroupMember[]
+  apiKeys      ApiKeys[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -198,6 +200,7 @@ model Servers {
   records          Records[]
   codriverSettings CodriverSettings?
   codriverRequests CodriverRequests[]
+  apiKeys          ApiKeys[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -409,14 +412,18 @@ model AuditLogs {
   targetId   String
   details    Json?
   error      String?
+  // Set when the change came through the public API
+  apiKeyId   String?
 
-  user Users? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user   Users?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  apiKey ApiKeys? @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   @@index([targetType, targetId])
+  @@index([apiKeyId])
   @@index([deletedAt])
   @@map("audit_logs")
 }
@@ -553,4 +560,35 @@ model CodriverRequests {
   @@index([serverId, createdAt])
   @@index([createdAt])
   @@map("codriver_requests")
+}
+
+// Keys for the public API. Exactly one of serverId and groupId is set; the app enforces it.
+model ApiKeys {
+  id          String    @id @default(uuid())
+  name        String
+  // First characters of the token, to recognise a key in the UI
+  prefix      String    @db.VarChar(16)
+  // sha256 of the token; the token itself is never stored
+  hash        String    @unique @db.VarChar(64)
+  scopes      Json      @default("[]")
+  serverId    String?
+  server      Servers?  @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  groupId     String?
+  group       Groups?   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy   Users     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  expiresAt   DateTime?
+  lastUsedAt  DateTime?
+  revokedAt   DateTime?
+
+  auditLogs AuditLogs[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([serverId])
+  @@index([groupId])
+  @@index([createdById])
+  @@map("api_keys")
 }

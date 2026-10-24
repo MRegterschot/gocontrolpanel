@@ -1,0 +1,40 @@
+// Operations a public API key can be limited to; the web UI and the v1 routes share this list
+export const API_KEY_SCOPES = [
+  "server:read",
+  "players:read",
+  "players:write",
+  "maps:read",
+  "maps:write",
+  "jukebox:read",
+  "jukebox:write",
+  "matches:read",
+] as const;
+
+export type ApiKeyScope = (typeof API_KEY_SCOPES)[number];
+
+export const API_KEY_SCOPE_DESCRIPTIONS: Record<ApiKeyScope, string> = {
+  "server:read": "Server info",
+  "players:read": "Connected players",
+  "players:write": "Kick players",
+  "maps:read": "Map list",
+  "maps:write": "Add maps from Trackmania Exchange",
+  "jukebox:read": "Jukebox contents",
+  "jukebox:write": "Queue maps and clear the jukebox",
+  "matches:read": "Recorded matches",
+};
+
+// Every token starts with this, so leaked keys are easy to recognise and scan for
+export const API_KEY_TOKEN_PREFIX = "gcp_";
+
+export function isApiKeyScope(value: unknown): value is ApiKeyScope {
+  return (
+    typeof value === "string" &&
+    (API_KEY_SCOPES as readonly string[]).includes(value)
+  );
+}
+
+// Stored scopes come from a Json column (MySQL) or a text array (PostgreSQL); unknown entries are dropped
+export function parseApiKeyScopes(stored: unknown): ApiKeyScope[] {
+  if (!Array.isArray(stored)) return [];
+  return [...new Set(stored.filter(isApiKeyScope))];
+}

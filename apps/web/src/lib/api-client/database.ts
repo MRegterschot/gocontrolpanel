@@ -1,3 +1,4 @@
+import type * as ApiKeys from "@/services/database/api-keys";
 import type * as Ecircuitmania from "@/services/database/ecircuitmania";
 import type * as Maps from "@/services/database/maps";
 import type * as Matches from "@/services/database/matches";
@@ -83,3 +84,18 @@ export const getEcmApiKey = (
   signal?: AbortSignal,
 ): ReturnType<typeof Ecircuitmania.getEcmApiKey> =>
   apiGet(`${server(serverId)}/ecm/api-key`, undefined, { signal });
+
+export const getServerApiKeys = (
+  serverId: string,
+  signal?: AbortSignal,
+): ReturnType<typeof ApiKeys.getServerApiKeys> =>
+  apiGet(`${server(serverId)}/api-keys`, undefined, { ...dates, signal });
+
+export const getGroupApiKeys = (
+  groupId: string,
+  signal?: AbortSignal,
+): ReturnType<typeof ApiKeys.getGroupApiKeys> =>
+  apiGet(`/api/groups/${encodeURIComponent(groupId)}/api-keys`, undefined, {
+    ...dates,
+    signal,
+  });

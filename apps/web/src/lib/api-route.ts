@@ -16,7 +16,7 @@ export class ApiValidationError extends Error {
   }
 }
 
-const STATUS_BY_CODE: Record<string, number> = {
+export const STATUS_BY_CODE: Record<string, number> = {
   Unauthorized: 403,
   ValidationError: 400,
   // From the GBX service: the server is unknown to it, or known but not connected right now

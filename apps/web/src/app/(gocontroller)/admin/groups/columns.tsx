@@ -2,6 +2,7 @@
 "use client";
 import { deleteGroup } from "@/actions/database/groups";
 import BooleanDisplay from "@/components/boolean-display";
+import GroupApiKeysModal from "@/components/modals/api-keys/group-api-keys";
 import ConfirmModal from "@/components/modals/confirm-modal";
 import EditGroupModal from "@/components/modals/groups/edit-group";
 import EditGroupThemeModal from "@/components/modals/groups/edit-group-theme";
@@ -83,6 +84,7 @@ export const createColumns = (
       const [isOpen, setIsOpen] = useState(false);
       const [isEditOpen, setIsEditOpen] = useState(false);
       const [isThemeOpen, setIsThemeOpen] = useState(false);
+      const [isKeysOpen, setIsKeysOpen] = useState(false);
 
       const canEdit = hasPermissionSync(
         session,
@@ -92,6 +94,11 @@ export const createColumns = (
       const canDelete = hasPermissionSync(
         session,
         routePermissions.admin.groups.delete,
+        group.id,
+      );
+      const canManageKeys = hasPermissionSync(
+        session,
+        routePermissions.admin.groups.apiKeys,
         group.id,
       );
 
@@ -118,7 +125,7 @@ export const createColumns = (
         });
       };
 
-      if (!canEdit && !canDelete) {
+      if (!canEdit && !canDelete && !canManageKeys) {
         return null;
       }
 
@@ -142,7 +149,14 @@ export const createColumns = (
                   Edit theme
                 </DropdownMenuItem>
               )}
-              {canEdit && canDelete && <DropdownMenuSeparator />}
+              {canManageKeys && (
+                <DropdownMenuItem onClick={() => setIsKeysOpen(true)}>
+                  API keys
+                </DropdownMenuItem>
+              )}
+              {(canEdit || canManageKeys) && canDelete && (
+                <DropdownMenuSeparator />
+              )}
               {canDelete && (
                 <DropdownMenuItem
                   variant="destructive"
@@ -173,6 +187,12 @@ export const createColumns = (
               closeOnBackdropClick={false}
             >
               <EditGroupModal onSubmit={refetch} data={group} />
+            </Modal>
+          )}
+
+          {canManageKeys && (
+            <Modal isOpen={isKeysOpen} setIsOpen={setIsKeysOpen}>
+              <GroupApiKeysModal data={group} />
             </Modal>
           )}
 

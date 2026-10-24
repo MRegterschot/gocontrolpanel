@@ -27,6 +27,7 @@ A Dockerized management panel for dedicated Trackmania servers. Works both stand
     - [Role Management](#role-management)
     - [Server Management](#server-management)
     - [Hetzner Management](#hetzner-management)
+    - [Public API](#public-api)
 - [Architecture](#architecture)
 - [Docker Setup](#docker-setup)
   - [Prerequisites](#prerequisites)
@@ -159,6 +160,10 @@ Manage your Hetzner Cloud servers, networks and volumes. You can create and dele
 ![Hetzner Server Create Page Database Step](https://i.imgur.com/AH4Ixvp.png "Hetzner Server Create Page Database Step")
 ![Hetzner Server Create Page Network Step](https://i.imgur.com/f4mEhuJ.png "Hetzner Server Create Page Network Step")
 ![Hetzner Server Create Page Summary Step](https://i.imgur.com/oPUo7aC.png "Hetzner Server Create Page Summary Step")
+
+#### Public API
+
+Server and group admins create API keys for external tools such as scoreboards, bots and tournament software. A server key reaches its server; a group key reaches every server in the group. Keys are limited to scopes, and stop working when their creator is no longer an admin. The versioned API lives at `/api/v1`, with an OpenAPI document at `/api/v1/openapi.json` and a reference page in the panel. See [the public API guide](docs/public-api.md).
 
 # Architecture
 
@@ -458,6 +463,8 @@ The **GoControlPanel** supports a permission system that allows you to manage us
 - plugins:upload
 - codriver:view
 - codriver:edit
+- api-keys:view
+- api-keys:revoke
 
 ---
 
