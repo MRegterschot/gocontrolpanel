@@ -5,12 +5,6 @@ import { logAudit } from "@/actions/database/server-only/audit-logs";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { actorFromSession } from "@/lib/actor";
 import { getClient } from "@/lib/dbclient";
-import { publishServerEvent } from "@/lib/gbx-service";
-import {
-  downloadMarketplacePackage,
-  findMarketplacePlugin,
-  getMarketplaceIndex,
-} from "@/lib/marketplace";
 import { uploadOwnerFilter } from "@/lib/plugin-access";
 import { routePermissions } from "@/routes";
 import { getInstalledPlugins, storedManifest } from "@/services/plugins";
@@ -18,9 +12,7 @@ import type { UploadResult } from "@/types/plugins/catalog";
 import { ServerError, ServerResponse } from "@/types/responses";
 import type { Prisma } from "@gcp/db";
 import {
-  findVersion,
   isFirstPartySlug,
-  isVersionCompatible,
   PLUGIN_SDK_VERSION,
   type PluginConfig,
 } from "@gcp/shared";
@@ -32,8 +24,16 @@ import {
 import type { Session } from "next-auth";
 import { z } from "zod";
 import {
+  assertConsent,
+  changeMarketplacePluginVersionAs,
+  ensureMarketplaceVersion,
+  installedRow,
+  installMarketplacePluginAs,
+  installVersion,
+  type ResolvedVersion,
   saveServerPluginConfigAs,
   setServerPluginEnabledAs,
+  uninstallServerPluginAs,
 } from "./server-only/plugins";
 
 const serverAdmin = (serverId: string) => [
@@ -50,123 +50,6 @@ function parse<S extends z.ZodTypeAny>(schema: S, value: unknown): z.output<S> {
   if (!result.success)
     throw new ServerError("Invalid request", "ValidationError");
   return result.data;
-}
-
-// The admin saw and accepted every capability the version asks for
-function assertConsent(
-  required: readonly string[],
-  accepted: readonly string[],
-): void {
-  const missing = required.filter(
-    (capability) => !accepted.includes(capability),
-  );
-  if (missing.length > 0) {
-    throw new ServerError(
-      `Accept the plugin's capabilities first (${missing.join(", ")})`,
-      "CapabilitiesNotAccepted",
-    );
-  }
-}
-
-interface ResolvedVersion {
-  pluginId: string;
-  versionId: string;
-  capabilities: string[];
-}
-
-// Makes a marketplace version available on this panel, downloading it when needed
-async function ensureMarketplaceVersion(
-  slug: string,
-  version: string,
-): Promise<ResolvedVersion> {
-  const db = getClient();
-  const index = await getMarketplaceIndex().catch(() => null);
-  const listed = index ? findMarketplacePlugin(index, slug) : null;
-  const entry = listed ? findVersion(listed, version) : null;
-  if (entry?.yanked) {
-    throw new ServerError(
-      `${slug} ${version} was withdrawn from the marketplace${entry.yankReason ? `: ${entry.yankReason}` : ""}`,
-      "PluginYanked",
-    );
-  }
-
-  const row = await db.plugins.findUnique({ where: { name: slug } });
-  if (row && row.source !== "marketplace") {
-    throw new ServerError(
-      `Another plugin on this panel is already called "${slug}"`,
-      "PluginNameTaken",
-    );
-  }
-
-  if (row) {
-    const stored = await db.pluginVersions.findUnique({
-      where: { pluginId_version: { pluginId: row.id, version } },
-      select: { id: true, sha256: true, manifest: true, yanked: true },
-    });
-    if (stored) {
-      if (stored.yanked)
-        throw new ServerError(
-          `${slug} ${version} was withdrawn`,
-          "PluginYanked",
-        );
-      if (entry && entry.sha256 !== stored.sha256) {
-        throw new ServerError(
-          "The stored copy of this version differs from the marketplace",
-          "PluginChecksumMismatch",
-        );
-      }
-      return {
-        pluginId: row.id,
-        versionId: stored.id,
-        capabilities: storedManifest(stored.manifest)?.capabilities ?? [],
-      };
-    }
-  }
-
-  if (!listed || !entry) {
-    throw new ServerError(
-      `${slug} ${version} is not in the marketplace`,
-      "PluginNotFound",
-    );
-  }
-  if (!isVersionCompatible(entry)) {
-    throw new ServerError(
-      `${slug} ${version} needs a newer version of GoControlPanel`,
-      "PluginIncompatible",
-    );
-  }
-
-  const { bytes, pkg } = await downloadMarketplacePackage(listed, entry);
-  const { manifest } = pkg;
-  const details = {
-    displayName: manifest.name,
-    description: manifest.description,
-    author: manifest.author,
-  };
-  const plugin = await db.plugins.upsert({
-    where: { name: slug },
-    create: { name: slug, source: "marketplace", ...details },
-    update: details,
-  });
-  const stored = await db.pluginVersions.upsert({
-    where: { pluginId_version: { pluginId: plugin.id, version } },
-    create: {
-      pluginId: plugin.id,
-      version,
-      sdk: manifest.sdk,
-      sha256: pkg.sha256,
-      size: pkg.size,
-      manifest: manifest as unknown as Prisma.InputJsonValue,
-      package: Buffer.from(bytes),
-    },
-    update: {},
-    select: { id: true },
-  });
-  return {
-    pluginId: plugin.id,
-    versionId: stored.id,
-    capabilities: manifest.capabilities,
-  };
 }
 
 // An uploaded version, if the user may install it
@@ -194,52 +77,6 @@ async function uploadedVersion(
   };
 }
 
-async function installVersion(
-  session: Session,
-  serverId: string,
-  resolved: ResolvedVersion,
-  action: string,
-  details: Prisma.InputJsonValue,
-): Promise<void> {
-  const db = getClient();
-  const installed = {
-    versionId: resolved.versionId,
-    grantedCapabilities: resolved.capabilities,
-    installedById: session.user.id,
-    installedAt: new Date(),
-  };
-  // A new version keeps the enabled flag and the config of the previous one
-  await db.serverPlugins.upsert({
-    where: { serverId_pluginId: { serverId, pluginId: resolved.pluginId } },
-    create: {
-      serverId,
-      pluginId: resolved.pluginId,
-      enabled: true,
-      ...installed,
-    },
-    update: installed,
-  });
-  await publishServerEvent({ type: "server.plugins.updated", serverId });
-  await logAudit(session.user.id, serverId, action, details);
-}
-
-async function installedRow(serverId: string, pluginId: string) {
-  const row = await getClient().serverPlugins.findUnique({
-    where: { serverId_pluginId: { serverId, pluginId } },
-    include: {
-      plugin: { select: { name: true, source: true } },
-      version: { select: { version: true, manifest: true, yanked: true } },
-    },
-  });
-  if (!row || row.plugin.source === "builtin") {
-    throw new ServerError(
-      "The plugin is not installed on this server",
-      "PluginNotFound",
-    );
-  }
-  return row;
-}
-
 export async function installMarketplacePlugin(
   serverId: string,
   slug: string,
@@ -247,26 +84,15 @@ export async function installMarketplacePlugin(
   acceptedCapabilities: string[],
 ): Promise<ServerResponse> {
   assertResourceId(serverId);
-  return doServerActionWithAuth(serverAdmin(serverId), async (session) => {
-    const args = parse(
-      z.object({ slug: id, version: versionString, accepted: capabilityList }),
-      { slug, version, accepted: acceptedCapabilities },
-    );
-    const resolved = await ensureMarketplaceVersion(args.slug, args.version);
-    assertConsent(resolved.capabilities, args.accepted);
-    await installVersion(
-      session,
+  return doServerActionWithAuth(serverAdmin(serverId), (session) =>
+    installMarketplacePluginAs(
+      actorFromSession(session),
       serverId,
-      resolved,
-      "server.plugins.install",
-      {
-        slug: args.slug,
-        version: args.version,
-        source: "marketplace",
-        capabilities: resolved.capabilities,
-      },
-    );
-  });
+      slug,
+      version,
+      acceptedCapabilities,
+    ),
+  );
 }
 
 export async function installUploadedPlugin(
@@ -290,7 +116,7 @@ export async function installUploadedPlugin(
     });
     assertConsent(resolved.capabilities, args.accepted);
     await installVersion(
-      session,
+      actorFromSession(session),
       serverId,
       resolved,
       "server.plugins.install",
@@ -325,16 +151,23 @@ export async function changeServerPluginVersion(
         accepted: acceptedCapabilities,
       },
     );
+    const actor = actorFromSession(session);
     const row = await installedRow(serverId, args.pluginId);
-    const resolved =
-      row.plugin.source === "marketplace"
-        ? await ensureMarketplaceVersion(row.plugin.name, args.version)
-        : await uploadedVersion(session, args.pluginId, {
-            version: args.version,
-          });
+    if (row.plugin.source === "marketplace") {
+      return changeMarketplacePluginVersionAs(
+        actor,
+        serverId,
+        args.pluginId,
+        args.version,
+        args.accepted,
+      );
+    }
 
+    const resolved = await uploadedVersion(session, args.pluginId, {
+      version: args.version,
+    });
     assertConsent(resolved.capabilities, args.accepted);
-    await installVersion(session, serverId, resolved, "server.plugins.update", {
+    await installVersion(actor, serverId, resolved, "server.plugins.update", {
       slug: row.plugin.name,
       from: row.version?.version ?? null,
       to: args.version,
@@ -381,7 +214,7 @@ export async function updateAllServerPlugins(
                 version: update.version,
               });
         await installVersion(
-          session,
+          actorFromSession(session),
           serverId,
           resolved,
           "server.plugins.update",
@@ -423,38 +256,9 @@ export async function uninstallServerPlugin(
   pluginId: string,
 ): Promise<ServerResponse> {
   assertResourceId(serverId);
-  return doServerActionWithAuth(serverAdmin(serverId), async (session) => {
-    const args = parse(z.object({ pluginId: id }), { pluginId });
-    const row = await installedRow(serverId, args.pluginId);
-    const db = getClient();
-
-    await db.$transaction([
-      db.pluginStorage.deleteMany({
-        where: { serverId, pluginId: args.pluginId },
-      }),
-      db.serverPlugins.delete({
-        where: { serverId_pluginId: { serverId, pluginId: args.pluginId } },
-      }),
-    ]);
-    // Marketplace downloads nobody runs any more are dropped; uploads stay in their owner's list
-    // and first-party plugins ship with the service, so they stay installable
-    if (
-      row.plugin.source === "marketplace" &&
-      !isFirstPartySlug(row.plugin.name)
-    ) {
-      const remaining = await db.serverPlugins.count({
-        where: { pluginId: args.pluginId },
-      });
-      if (remaining === 0)
-        await db.plugins.delete({ where: { id: args.pluginId } });
-    }
-
-    await publishServerEvent({ type: "server.plugins.updated", serverId });
-    await logAudit(session.user.id, serverId, "server.plugins.uninstall", {
-      slug: row.plugin.name,
-      version: row.version?.version ?? null,
-    });
-  });
+  return doServerActionWithAuth(serverAdmin(serverId), (session) =>
+    uninstallServerPluginAs(actorFromSession(session), serverId, pluginId),
+  );
 }
 
 export async function saveServerPluginConfig(

@@ -4,6 +4,7 @@ import {
   CurrentMapsSchema,
   dataOf,
   GameSchema,
+  InstalledPluginSchema,
   JukeboxEntrySchema,
   ListedPlayerSchema,
   listFileBody,
@@ -23,6 +24,7 @@ import {
   scriptSettingValue,
   serverParams,
   ServerSchema,
+  ServerScriptPluginSchema,
   ServerSettingsChangesSchema,
   ServerSettingsSchema,
   uidOrderBody,
@@ -795,6 +797,174 @@ export const getJoinLink = defineEndpoint({
   ),
 });
 
+const pluginParams = serverParams.extend({ pluginId: resourceId });
+const capabilities = z
+  .array(z.string().max(300))
+  .max(50)
+  .default([])
+  .meta({ description: "Capabilities you accept, as listed for the version" });
+const pluginVersionString = z
+  .string()
+  .min(1)
+  .max(64)
+  .meta({ example: "1.2.0" });
+const scriptValues = z.record(z.string().max(100), scriptSettingValue);
+
+export const listPlugins = defineEndpoint({
+  id: "listPlugins",
+  method: "get",
+  path: "/servers/{serverId}/plugins",
+  scope: "plugins:read",
+  tag: "Plugins",
+  summary: "List the plugins installed on the server",
+  params: serverParams,
+  status: 200,
+  response: dataOf(z.array(InstalledPluginSchema)),
+});
+
+export const installPlugin = defineEndpoint({
+  id: "installPlugin",
+  method: "post",
+  path: "/servers/{serverId}/plugins",
+  scope: "plugins:write",
+  tag: "Plugins",
+  summary: "Install a plugin from the marketplace",
+  description:
+    "Accept every capability the version asks for, as the panel's install dialog does. Private uploads can only be installed in the panel.",
+  params: serverParams,
+  body: z.object({
+    slug: z.string().min(1).max(100),
+    version: pluginVersionString,
+    acceptedCapabilities: capabilities,
+  }),
+  status: 204,
+});
+
+export const reloadPlugins = defineEndpoint({
+  id: "reloadPlugins",
+  method: "post",
+  path: "/servers/{serverId}/plugins/reload",
+  scope: "plugins:write",
+  tag: "Plugins",
+  summary: "Restart the server's plugins",
+  params: serverParams,
+  status: 204,
+});
+
+export const setPluginEnabled = defineEndpoint({
+  id: "setPluginEnabled",
+  method: "put",
+  path: "/servers/{serverId}/plugins/{pluginId}/enabled",
+  scope: "plugins:write",
+  tag: "Plugins",
+  summary: "Enable or disable a plugin",
+  params: pluginParams,
+  body: z.object({ enabled: z.boolean() }),
+  status: 204,
+});
+
+export const updatePluginConfig = defineEndpoint({
+  id: "updatePluginConfig",
+  method: "put",
+  path: "/servers/{serverId}/plugins/{pluginId}/config",
+  scope: "plugins:write",
+  tag: "Plugins",
+  summary: "Save a plugin's settings",
+  description:
+    "Validated against the plugin's settings schema. Secrets left out keep their value; list them in clearedSecrets to remove them.",
+  params: pluginParams,
+  body: z.object({
+    config: z.record(z.string(), z.unknown()),
+    clearedSecrets: z.array(z.string().max(100)).max(50).default([]),
+  }),
+  status: 204,
+});
+
+export const changePluginVersion = defineEndpoint({
+  id: "changePluginVersion",
+  method: "put",
+  path: "/servers/{serverId}/plugins/{pluginId}/version",
+  scope: "plugins:write",
+  tag: "Plugins",
+  summary: "Update or roll back a marketplace plugin",
+  description:
+    "Keeps the plugin's settings and enabled state. Accept the capabilities of the new version.",
+  params: pluginParams,
+  body: z.object({
+    version: pluginVersionString,
+    acceptedCapabilities: capabilities,
+  }),
+  status: 204,
+});
+
+export const uninstallPlugin = defineEndpoint({
+  id: "uninstallPlugin",
+  method: "delete",
+  path: "/servers/{serverId}/plugins/{pluginId}",
+  scope: "plugins:write",
+  tag: "Plugins",
+  summary: "Uninstall a plugin",
+  description: "Removes its settings and stored data from the server too.",
+  params: pluginParams,
+  status: 204,
+});
+
+export const getServerScriptPlugin = defineEndpoint({
+  id: "getServerScriptPlugin",
+  method: "get",
+  path: "/servers/{serverId}/server-plugin",
+  scope: "plugins:read",
+  tag: "Server script plugin",
+  summary: "Get the dedicated server's script plugin and its settings",
+  description: "The dedicated server's own plugin script, not a panel plugin.",
+  params: serverParams,
+  status: 200,
+  response: dataOf(ServerScriptPluginSchema),
+});
+
+export const setServerScriptPlugin = defineEndpoint({
+  id: "setServerScriptPlugin",
+  method: "put",
+  path: "/servers/{serverId}/server-plugin",
+  scope: "plugins:write",
+  tag: "Server script plugin",
+  summary: "Load a script plugin on the dedicated server",
+  params: serverParams,
+  body: z.object({
+    name: z.string().max(255).meta({ description: "Empty to unload" }),
+    settings: scriptValues.default({}),
+    forceReload: z.boolean().default(false),
+  }),
+  status: 204,
+});
+
+export const setServerScriptPluginVariables = defineEndpoint({
+  id: "setServerScriptPluginVariables",
+  method: "patch",
+  path: "/servers/{serverId}/server-plugin/variables",
+  scope: "plugins:write",
+  tag: "Server script plugin",
+  summary: "Set variables of the script plugin",
+  params: serverParams,
+  body: z.object({ variables: scriptValues }),
+  status: 204,
+});
+
+export const triggerServerScriptPluginEvent = defineEndpoint({
+  id: "triggerServerScriptPluginEvent",
+  method: "post",
+  path: "/servers/{serverId}/server-plugin/events",
+  scope: "plugins:write",
+  tag: "Server script plugin",
+  summary: "Send an event to the script plugin",
+  params: serverParams,
+  body: z.object({
+    name: z.string().regex(/^[\w.]{1,100}$/),
+    params: z.array(z.string().max(1000)).max(50).default([]),
+  }),
+  status: 204,
+});
+
 export const listMatches = defineEndpoint({
   id: "listMatches",
   method: "get",
@@ -876,6 +1046,17 @@ export const publicApiEndpoints = [
   getSettings,
   updateSettings,
   getJoinLink,
+  listPlugins,
+  installPlugin,
+  reloadPlugins,
+  setPluginEnabled,
+  updatePluginConfig,
+  changePluginVersion,
+  uninstallPlugin,
+  getServerScriptPlugin,
+  setServerScriptPlugin,
+  setServerScriptPluginVariables,
+  triggerServerScriptPluginEvent,
   listMatches,
   getMatch,
 ] as const;

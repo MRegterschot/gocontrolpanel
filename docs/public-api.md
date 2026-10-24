@@ -53,9 +53,13 @@ Every key has one or more scopes:
 | `chat:write`     | Sending chat messages, shown as `[Admin] <key name> (API key)`                                                                                       |
 | `settings:read`  | Server settings and the join link, passwords included                                                                                                |
 | `settings:write` | Changing server settings, passwords included                                                                                                         |
+| `plugins:read`   | Installed plugins and their settings, without secrets; the dedicated server's script plugin                                                          |
+| `plugins:write`  | Installing marketplace plugins, enabling, configuring, updating and uninstalling plugins; the dedicated server's script plugin                       |
 | `matches:read`   | Recorded matches and their records                                                                                                                   |
 
 `GET /api/v1/servers` works with any key.
+
+Installing or updating a plugin through the API needs the same consent as the panel: list every capability the version asks for in `acceptedCapabilities`. Private uploaded plugins are installed and updated in the panel only.
 
 ### Managing keys
 

@@ -40,6 +40,14 @@ const STATUS: Record<string, number> = {
   RemoveLastMapError: 409,
   // The dedicated server refused the call; the message carries its reason
   GbxCallFailed: 422,
+  // Plugin installs and settings
+  PluginNotFound: 404,
+  CapabilitiesNotAccepted: 400,
+  PluginNotFromMarketplace: 400,
+  PluginHasNoConfig: 400,
+  PluginYanked: 409,
+  PluginNameTaken: 409,
+  PluginIncompatible: 409,
 };
 
 type Issue = { path: string; message: string };

@@ -231,6 +231,48 @@ export const ServerSettingsChangesSchema = z
     message: "Change at least one setting",
   });
 
+const pluginVersion = z.object({
+  version: z.string(),
+  capabilities: z.array(z.string()).meta({
+    description: "What the version may do; accept them to install it",
+  }),
+  yanked: z.boolean().meta({ description: "Withdrawn from the marketplace" }),
+});
+
+export const InstalledPluginSchema = z
+  .object({
+    id: resourceId,
+    slug: z.string(),
+    name: z.string(),
+    description: z.string().nullable(),
+    author: z.string().nullable(),
+    source: z.enum(["marketplace", "upload"]),
+    version: z.string(),
+    enabled: z.boolean(),
+    yanked: z.boolean(),
+    grantedCapabilities: z.array(z.string()),
+    config: z.record(z.string(), z.unknown()).meta({
+      description: "Secrets are left out",
+    }),
+    setSecrets: z.array(z.string()).meta({
+      description: "Secret settings that have a value",
+    }),
+    update: pluginVersion.nullable().meta({
+      description:
+        "The newest version, when it is newer than the installed one",
+    }),
+    versions: z.array(pluginVersion),
+  })
+  .meta({ id: "InstalledPlugin" });
+
+export const ServerScriptPluginSchema = z
+  .object({
+    name: z.string().meta({ description: "Empty when none is loaded" }),
+    settings: z.array(scriptDescription),
+    values: ScriptSettingsSchema,
+  })
+  .meta({ id: "ServerScriptPlugin" });
+
 export const MatchSchema = z
   .object({
     id: resourceId,
@@ -288,6 +330,8 @@ export type ApiServerSettings = z.output<typeof ServerSettingsSchema>;
 export type ApiServerSettingsChanges = z.output<
   typeof ServerSettingsChangesSchema
 >;
+export type ApiInstalledPlugin = z.output<typeof InstalledPluginSchema>;
+export type ApiServerScriptPlugin = z.output<typeof ServerScriptPluginSchema>;
 export type ApiMatch = z.output<typeof MatchSchema>;
 export type ApiMatchDetail = z.output<typeof MatchDetailSchema>;
 export type ApiErrorBody = z.output<typeof ApiErrorSchema>;

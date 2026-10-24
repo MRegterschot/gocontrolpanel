@@ -13,6 +13,8 @@ export const API_KEY_SCOPES = [
   "chat:write",
   "settings:read",
   "settings:write",
+  "plugins:read",
+  "plugins:write",
   "matches:read",
 ] as const;
 
@@ -33,6 +35,9 @@ export const API_KEY_SCOPE_DESCRIPTIONS: Record<ApiKeyScope, string> = {
   "chat:write": "Send chat messages",
   "settings:read": "Server settings and the join link, passwords included",
   "settings:write": "Change server settings, passwords included",
+  "plugins:read": "Installed plugins and their settings, without secrets",
+  "plugins:write":
+    "Install, configure, update and remove plugins; the dedicated server's script plugin",
   "matches:read": "Recorded matches",
 };
 

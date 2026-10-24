@@ -1,9 +1,12 @@
 import type { getMatchAs, MatchSummary } from "@/services/database/matches";
 import type { ModeScriptInfo } from "@/types/gbx";
+import type { ServerPlugin } from "@/types/gbx/server-plugin";
 import type { JukeboxMap } from "@/types/map";
+import type { InstalledPlugin } from "@/types/plugins/catalog";
 import type { Maps } from "@gcp/db";
 import type { PlayerInfo, SMapInfo } from "@gcp/shared";
 import type {
+  ApiInstalledPlugin,
   ApiJukeboxEntry,
   ApiListedPlayer,
   ApiMap,
@@ -11,6 +14,7 @@ import type {
   ApiMatchDetail,
   ApiPlayer,
   ApiScriptInfo,
+  ApiServerScriptPlugin,
 } from "@gcp/shared/public-api";
 import "server-only";
 
@@ -119,5 +123,46 @@ export function toApiScriptInfo(info: ModeScriptInfo): ApiScriptInfo {
     compatibleMapTypes: info.CompatibleMapTypes,
     settings: (info.ParamDescs ?? []).map(describe),
     commands: (info.CommandDescs ?? []).map(describe),
+  };
+}
+
+export function toApiInstalledPlugin(
+  plugin: InstalledPlugin,
+): ApiInstalledPlugin {
+  const version = (v: InstalledPlugin["versions"][number]) => ({
+    version: v.version,
+    capabilities: v.capabilities,
+    yanked: v.yanked,
+  });
+  return {
+    id: plugin.pluginId,
+    slug: plugin.slug,
+    name: plugin.name,
+    description: plugin.description,
+    author: plugin.author,
+    source: plugin.source,
+    version: plugin.version,
+    enabled: plugin.enabled,
+    yanked: plugin.yanked,
+    grantedCapabilities: plugin.grantedCapabilities,
+    config: plugin.config,
+    setSecrets: plugin.setSecrets,
+    update: plugin.update ? version(plugin.update) : null,
+    versions: plugin.versions.map(version),
+  };
+}
+
+export function toApiServerScriptPlugin(
+  plugin: ServerPlugin,
+): ApiServerScriptPlugin {
+  return {
+    name: plugin.Name,
+    settings: (plugin.SettingsDesc ?? []).map((d) => ({
+      name: d.Name,
+      description: d.Desc,
+      type: d.Type,
+      default: String(d.Default),
+    })),
+    values: plugin.SettingsValues ?? {},
   };
 }

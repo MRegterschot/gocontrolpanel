@@ -107,9 +107,17 @@ import {
   updateServerOptionsAs,
 } from "@/actions/gbx/server-only/server";
 import {
+  setServerPluginAs,
+  setServerPluginVariablesAs,
+  triggerServerPluginEventAs,
+} from "@/actions/gbx/server-only/server-plugin";
+import {
+  changeMarketplacePluginVersionAs,
+  installMarketplacePluginAs,
   reloadServerPluginsAs,
   saveServerPluginConfigAs,
   setServerPluginEnabledAs,
+  uninstallServerPluginAs,
 } from "@/actions/server-only/plugins";
 import {
   addTmxMapToServerAs,
@@ -198,6 +206,12 @@ describe("actor-based cores", () => {
       () => setServerPluginEnabledAs(guest, serverId, "plugin", true),
       () => saveServerPluginConfigAs(guest, serverId, "plugin", {}),
       () => reloadServerPluginsAs(guest, serverId),
+      () => installMarketplacePluginAs(guest, serverId, "x", "1.0.0", []),
+      () => changeMarketplacePluginVersionAs(guest, serverId, "p", "1.0.0", []),
+      () => uninstallServerPluginAs(guest, serverId, "p"),
+      () => setServerPluginAs(guest, serverId, false, "x", {}),
+      () => setServerPluginVariablesAs(guest, serverId, {}),
+      () => triggerServerPluginEventAs(guest, serverId, "x", []),
       () => updateServerOptionsAs(guest, serverId, { Name: "Other" }),
       () => saveServerSettingsAs(guest, serverId, {} as never),
       () => sendChatMessageAs(guest, serverId, "hi"),
@@ -322,6 +336,45 @@ describe("actor-based cores", () => {
       );
     },
   );
+
+  it("plugin changes need a server admin, not a moderator", async () => {
+    // moderatorActor() holds every role that counts as moderator, admin included
+    const mod: Actor = {
+      ...moderatorActor(),
+      claims: sessionClaimsSchema.parse({
+        id: "user-1",
+        login: "mod",
+        displayName: "Mod",
+        admin: false,
+        permissions: [`servers:${serverId}:moderator`],
+      }),
+    };
+    for (const call of [
+      () => installMarketplacePluginAs(mod, serverId, "x", "1.0.0", []),
+      () => uninstallServerPluginAs(mod, serverId, "p"),
+      () => setServerPluginAs(mod, serverId, false, "x", {}),
+    ]) {
+      await expect(call()).rejects.toMatchObject({ name: "Unauthorized" });
+    }
+    expect(mocks.call).not.toHaveBeenCalled();
+  });
+
+  it("changeMarketplacePluginVersionAs refuses a private upload", async () => {
+    mocks.dbFindPlugin.mockResolvedValue({
+      plugin: { name: "mine", source: "upload" },
+      version: { version: "1.0.0", manifest: {}, yanked: false },
+    });
+    await expect(
+      changeMarketplacePluginVersionAs(
+        adminActor(),
+        serverId,
+        "p",
+        "2.0.0",
+        [],
+      ),
+    ).rejects.toMatchObject({ name: "PluginNotFromMarketplace" });
+    expect(mocks.dbUpdatePlugin).not.toHaveBeenCalled();
+  });
 
   it("setServerPluginEnabledAs updates the plugin and audits with the actor", async () => {
     mocks.dbFindPlugin.mockResolvedValue({
