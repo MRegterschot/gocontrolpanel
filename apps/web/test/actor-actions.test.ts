@@ -70,7 +70,14 @@ import {
   setModeScriptSettingsAs,
   setScriptNameAs,
 } from "@/actions/gbx/server-only/game";
-import { addMapAs, jumpToMapIndexAs } from "@/actions/gbx/server-only/map";
+import {
+  addMapAs,
+  addMapsAs,
+  jumpToMapIndexAs,
+  removeFromJukeboxAs,
+  reorderMapsAs,
+  setJukeboxAs,
+} from "@/actions/gbx/server-only/map";
 import {
   addGuestAs,
   banPlayerAs,
@@ -155,6 +162,10 @@ describe("actor-based cores", () => {
       () => pauseMatchAs(guest, serverId, true),
       () => jumpToMapIndexAs(guest, serverId, 2),
       () => addMapAs(guest, serverId, "a.Map.Gbx"),
+      () => addMapsAs(guest, serverId, ["a.Map.Gbx"]),
+      () => reorderMapsAs(guest, serverId, ["a.Map.Gbx"]),
+      () => setJukeboxAs(guest, serverId, []),
+      () => removeFromJukeboxAs(guest, serverId, "map-1"),
       () => uploadFilesAs(guest, serverId, new FormData()),
       () => downloadMapAs(guest, serverId, 1),
       () => addTmxMapToServerAs(guest, serverId, 1),

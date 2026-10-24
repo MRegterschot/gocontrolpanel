@@ -16,10 +16,10 @@ export const API_KEY_SCOPE_DESCRIPTIONS: Record<ApiKeyScope, string> = {
   "server:read": "Server info",
   "players:read": "Connected players, bans, blacklist and guestlist",
   "players:write": "Kick, ban, spectate, blacklist and guestlist",
-  "maps:read": "Map list",
-  "maps:write": "Add maps from Trackmania Exchange",
+  "maps:read": "Map list, current map and map files",
+  "maps:write": "Add, remove and reorder maps, also from Trackmania Exchange",
   "jukebox:read": "Jukebox contents",
-  "jukebox:write": "Queue maps and clear the jukebox",
+  "jukebox:write": "Queue, remove, reorder and clear jukebox maps",
   "matches:read": "Recorded matches",
 };
 

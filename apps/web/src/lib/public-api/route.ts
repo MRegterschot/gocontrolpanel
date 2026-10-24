@@ -34,6 +34,12 @@ const STATUS: Record<string, number> = {
   MissingScope: 403,
   NotFound: 404,
   RateLimited: 429,
+  // From the GBX service
+  BadRequest: 400,
+  PlayerNotFound: 404,
+  RemoveLastMapError: 409,
+  // The dedicated server refused the call; the message carries its reason
+  GbxCallFailed: 422,
 };
 
 type Issue = { path: string; message: string };

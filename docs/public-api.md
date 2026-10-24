@@ -43,10 +43,10 @@ Every key has one or more scopes:
 | `server:read`   | Server info                                                                                            |
 | `players:read`  | Connected players, bans, blacklist and guestlist                                                       |
 | `players:write` | Kicking, banning and forcing players to spectate; managing the blacklist and guestlist and their files |
-| `maps:read`     | The map list                                                                                           |
-| `maps:write`    | Adding maps from Trackmania Exchange                                                                   |
+| `maps:read`     | The map list, the current and next map, and the map files on the server                                |
+| `maps:write`    | Adding, removing and reordering maps, also from Trackmania Exchange                                    |
 | `jukebox:read`  | Jukebox contents                                                                                       |
-| `jukebox:write` | Queueing maps and clearing the jukebox                                                                 |
+| `jukebox:write` | Queueing, removing and reordering maps, and clearing the jukebox                                       |
 | `matches:read`  | Recorded matches and their records                                                                     |
 
 `GET /api/v1/servers` works with any key.
@@ -113,15 +113,17 @@ Errors have one shape:
 }
 ```
 
-| Status | Meaning                                                                     |
-| ------ | --------------------------------------------------------------------------- |
-| 400    | Invalid path, query or body; `issues` lists each problem                    |
-| 401    | Missing, unknown, revoked or expired key, or the key's creator lost access  |
-| 403    | The key lacks the scope, or cannot reach this server                        |
-| 404    | Not found, for example a match of another server or a map not on the server |
-| 413    | Body over 64 KB                                                             |
-| 429    | Rate limited; wait for the number of seconds in `Retry-After`               |
-| 503    | The dedicated server is not connected                                       |
+| Status | Meaning                                                                      |
+| ------ | ---------------------------------------------------------------------------- |
+| 400    | Invalid path, query or body; `issues` lists each problem                     |
+| 401    | Missing, unknown, revoked or expired key, or the key's creator lost access   |
+| 403    | The key lacks the scope, or cannot reach this server                         |
+| 404    | Not found, for example a match of another server or a map not on the server  |
+| 409    | The request conflicts with the server's state, such as removing its last map |
+| 413    | Body over 64 KB                                                              |
+| 422    | The dedicated server refused the call; `message` has its reason              |
+| 429    | Rate limited; wait for the number of seconds in `Retry-After`                |
+| 503    | The dedicated server is not connected                                        |
 
 A server the key cannot reach and a server that does not exist both answer `403`.
 

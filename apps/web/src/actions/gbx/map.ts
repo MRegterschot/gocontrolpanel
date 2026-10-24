@@ -4,19 +4,20 @@ import { assertResourceId } from "@/lib/resource-id";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { actorFromSession } from "@/lib/actor";
 import { gbxService } from "@/lib/gbx-service";
-import { getLogger } from "@/lib/logger";
-import { getKeyJukebox, getRedisClient } from "@/lib/redis";
-import { getErrorMessage } from "@/lib/utils";
 import { JukeboxMap } from "@/types/map";
 import { ServerResponse } from "@/types/responses";
 import { Maps } from "@gcp/db";
-import { logAudit } from "../database/server-only/audit-logs";
 import {
   addMapAs,
+  addMapsAs,
   addMapToJukeboxAs,
   auditMapListChange,
   clearJukeboxAs,
   jumpToMapIndexAs,
+  removeFromJukeboxAs,
+  removeMapsAs,
+  reorderMapsAs,
+  setJukeboxAs,
 } from "./server-only/map";
 
 export async function setJukebox(
@@ -31,20 +32,7 @@ export async function setJukebox(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const redis = await getRedisClient();
-      const key = getKeyJukebox(serverId);
-      await redis.del(key);
-      if (jukebox.length > 0) {
-        await redis.rpush(key, ...jukebox.map((map) => JSON.stringify(map)));
-      }
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.maps.jukebox.set",
-        JSON.parse(JSON.stringify(jukebox)),
-      );
-    },
+    (session) => setJukeboxAs(actorFromSession(session), serverId, jukebox),
   );
 }
 
@@ -89,28 +77,8 @@ export async function removeMapFromJukebox(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const redis = await getRedisClient();
-      const key = getKeyJukebox(serverId);
-      const items = await redis.lrange(key, 0, -1);
-
-      const filtered = items.filter((item) => {
-        const parsed = JSON.parse(item);
-        return parsed.id !== mapId;
-      });
-
-      await redis.del(key);
-      if (filtered.length > 0) {
-        await redis.rpush(key, ...filtered);
-      }
-
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.maps.jukebox.remove",
-        mapId,
-      );
-    },
+    (session) =>
+      removeFromJukeboxAs(actorFromSession(session), serverId, mapId),
   );
 }
 
@@ -158,33 +126,7 @@ export async function addMapList(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const meta = {
-        type: "gbx",
-        module: "game",
-        function: "addMapList",
-      };
-      const log = getLogger(serverId);
-
-      try {
-        const { count } = await gbxService.addMaps(serverId, filenames);
-        await logAudit(session.user.id, serverId, "server.maps.maplist.add", {
-          filenames,
-          addedCount: count,
-        });
-        return count;
-      } catch (error) {
-        await logAudit(
-          session.user.id,
-          serverId,
-          "server.maps.maplist.add",
-          { filenames, addedCount: 0 },
-          getErrorMessage(error),
-        );
-        log.error({ meta, error, filenames }, "Failed to add map list");
-        throw error;
-      }
-    },
+    (session) => addMapsAs(actorFromSession(session), serverId, filenames),
   );
 }
 
@@ -224,15 +166,7 @@ export async function removeMapList(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      await auditMapListChange(
-        session.user.id,
-        serverId,
-        "server.maps.maplist.remove",
-        filenames,
-        () => gbxService.removeMaps(serverId, filenames),
-      );
-    },
+    (session) => removeMapsAs(actorFromSession(session), serverId, filenames),
   );
 }
 
@@ -248,26 +182,6 @@ export async function reorderMapList(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const meta = {
-        type: "gbx",
-        module: "game",
-        function: "reorderMapList",
-      };
-      const log = getLogger(serverId);
-
-      try {
-        await auditMapListChange(
-          session.user.id,
-          serverId,
-          "server.maps.maplist.reorder",
-          filenames,
-          () => gbxService.reorderMaps(serverId, filenames),
-        );
-      } catch (error) {
-        log.error({ meta, error, filenames }, "Failed to reorder map list");
-        throw error;
-      }
-    },
+    (session) => reorderMapsAs(actorFromSession(session), serverId, filenames),
   );
 }

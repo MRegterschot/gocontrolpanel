@@ -291,6 +291,18 @@ describe("publicApiRoute", () => {
       "Offline",
     ],
     [
+      "the dedicated server refusing a call",
+      new ServerError("Login unknown.", "GbxCallFailed"),
+      422,
+      "Login unknown.",
+    ],
+    [
+      "removing the last map",
+      new ServerError("Cannot remove the last map", "RemoveLastMapError"),
+      409,
+      "Cannot remove the last map",
+    ],
+    [
       "an unexpected error",
       new Error("db password is hunter2"),
       500,
@@ -304,6 +316,17 @@ describe("publicApiRoute", () => {
     );
     expect(res.status).toBe(status);
     expect((await res.json()).error.message).toBe(message);
+  });
+
+  it("does not log a call the dedicated server refused", async () => {
+    mocks.logError.mockClear();
+    const { route } = serverRoute(
+      vi.fn(async () =>
+        Promise.reject(new ServerError("Login unknown.", "GbxCallFailed")),
+      ),
+    );
+    await route(req("/servers/server-a"), ctx({ serverId: "server-a" }));
+    expect(mocks.logError).not.toHaveBeenCalled();
   });
 
   it("runs the handler under the key, for audit entries", async () => {

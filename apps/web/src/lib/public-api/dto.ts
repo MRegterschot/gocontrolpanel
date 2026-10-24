@@ -1,7 +1,7 @@
 import type { getMatchAs, MatchSummary } from "@/services/database/matches";
 import type { JukeboxMap } from "@/types/map";
 import type { Maps } from "@gcp/db";
-import type { PlayerInfo } from "@gcp/shared";
+import type { PlayerInfo, SMapInfo } from "@gcp/shared";
 import type {
   ApiJukeboxEntry,
   ApiListedPlayer,
@@ -40,6 +40,23 @@ export function toApiMap(map: Maps): ApiMap {
       gold: map.goldTime,
       silver: map.silverTime,
       bronze: map.bronzeTime,
+    },
+  };
+}
+
+// Map info straight from the dedicated server, for maps the panel may not have stored
+export function toApiMapInfo(map: SMapInfo): ApiMap {
+  return {
+    uid: map.UId,
+    name: map.Name,
+    fileName: map.FileName,
+    author: map.Author,
+    authorNickname: map.AuthorNickname,
+    medals: {
+      author: map.AuthorTime,
+      gold: map.GoldTime,
+      silver: map.SilverTime,
+      bronze: map.BronzeTime,
     },
   };
 }

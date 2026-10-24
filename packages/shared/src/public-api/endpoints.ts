@@ -1,11 +1,14 @@
 import { z } from "zod/v4";
 import { defineEndpoint } from "./endpoint";
 import {
+  CurrentMapsSchema,
   dataOf,
   JukeboxEntrySchema,
   ListedPlayerSchema,
   listFileBody,
+  mapFileName,
   MapSchema,
+  mapUid,
   MatchDetailSchema,
   MatchSchema,
   pageOf,
@@ -15,6 +18,7 @@ import {
   resourceId,
   serverParams,
   ServerSchema,
+  uidOrderBody,
 } from "./schemas";
 
 export const listServers = defineEndpoint({
@@ -301,6 +305,82 @@ export const listMaps = defineEndpoint({
   response: dataOf(z.array(MapSchema)),
 });
 
+export const getCurrentMaps = defineEndpoint({
+  id: "getCurrentMaps",
+  method: "get",
+  path: "/servers/{serverId}/maps/current",
+  scope: "maps:read",
+  tag: "Maps",
+  summary: "Get the map being played and the next one",
+  params: serverParams,
+  status: 200,
+  response: dataOf(CurrentMapsSchema),
+});
+
+export const listMapFiles = defineEndpoint({
+  id: "listMapFiles",
+  method: "get",
+  path: "/servers/{serverId}/maps/files",
+  scope: "maps:read",
+  tag: "Maps",
+  summary: "List the map files in the server's Maps folder",
+  description:
+    "Includes maps that are not on the map list. Needs the server's file manager.",
+  params: serverParams,
+  status: 200,
+  response: dataOf(z.array(MapSchema)),
+});
+
+export const addMaps = defineEndpoint({
+  id: "addMaps",
+  method: "post",
+  path: "/servers/{serverId}/maps",
+  scope: "maps:write",
+  tag: "Maps",
+  summary: "Add map files to the map list",
+  description:
+    "Files come from the server's Maps folder, see listMapFiles. Maps already on the list are skipped.",
+  params: serverParams,
+  body: z.object({
+    fileNames: z.array(mapFileName).min(1).max(100),
+  }),
+  status: 200,
+  response: dataOf(
+    z.object({
+      added: z.int().meta({ description: "Maps the server accepted" }),
+    }),
+  ),
+});
+
+export const removeMaps = defineEndpoint({
+  id: "removeMaps",
+  method: "post",
+  path: "/servers/{serverId}/maps/remove",
+  scope: "maps:write",
+  tag: "Maps",
+  summary: "Remove maps from the map list",
+  description:
+    "The files stay in the Maps folder. The last map cannot be removed.",
+  params: serverParams,
+  body: z.object({
+    uids: z.array(mapUid).min(1).max(1000),
+  }),
+  status: 204,
+});
+
+export const reorderMaps = defineEndpoint({
+  id: "reorderMaps",
+  method: "put",
+  path: "/servers/{serverId}/maps/order",
+  scope: "maps:write",
+  tag: "Maps",
+  summary: "Reorder the map list",
+  description: "List every map on the map list once, in the new order.",
+  params: serverParams,
+  body: uidOrderBody,
+  status: 204,
+});
+
 export const addTmxMap = defineEndpoint({
   id: "addTmxMap",
   method: "post",
@@ -366,6 +446,32 @@ export const clearJukebox = defineEndpoint({
   status: 204,
 });
 
+export const removeFromJukebox = defineEndpoint({
+  id: "removeFromJukebox",
+  method: "delete",
+  path: "/servers/{serverId}/jukebox/{uid}",
+  scope: "jukebox:write",
+  tag: "Jukebox",
+  summary: "Remove a map from the jukebox",
+  description: "Removes every queued entry of the map.",
+  params: serverParams.extend({ uid: mapUid }),
+  status: 204,
+});
+
+export const reorderJukebox = defineEndpoint({
+  id: "reorderJukebox",
+  method: "put",
+  path: "/servers/{serverId}/jukebox/order",
+  scope: "jukebox:write",
+  tag: "Jukebox",
+  summary: "Reorder the jukebox",
+  description:
+    "List the UID of every queued entry once, in the new order; a map queued twice is listed twice.",
+  params: serverParams,
+  body: uidOrderBody,
+  status: 204,
+});
+
 export const listMatches = defineEndpoint({
   id: "listMatches",
   method: "get",
@@ -414,10 +520,17 @@ export const publicApiEndpoints = [
   loadGuestlist,
   saveGuestlist,
   listMaps,
+  getCurrentMaps,
+  listMapFiles,
+  addMaps,
+  removeMaps,
+  reorderMaps,
   addTmxMap,
   getJukebox,
   addToJukebox,
   clearJukebox,
+  removeFromJukebox,
+  reorderJukebox,
   listMatches,
   getMatch,
 ] as const;

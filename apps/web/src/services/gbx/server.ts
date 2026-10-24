@@ -1,5 +1,6 @@
 import { ServerSettingsSchemaType } from "@/forms/server/settings/settings-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
+import { type Actor, actorFromSession, requirePermission } from "@/lib/actor";
 import { getClient } from "@/lib/dbclient";
 import { callEach } from "@/lib/gbx-batch";
 import { getGbxClient } from "@/lib/gbx-service";
@@ -7,7 +8,7 @@ import { getLogger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
 import { LocalMapInfo } from "@/types/map";
 import { ServerError, ServerResponse } from "@/types/responses";
-import { type SMapInfo } from "@gcp/shared";
+import { serverPermissions, type SMapInfo } from "@gcp/shared";
 import path from "path";
 import "server-only";
 
@@ -107,74 +108,82 @@ export async function getLocalMaps(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async () => {
-      const meta = {
-        type: "gbx",
-        module: "map",
-        function: "getLocalMaps",
-      };
-      const log = getLogger(serverId);
-      const client = getGbxClient(serverId);
-
-      const fileManager = await getFileManager(serverId);
-      if (!fileManager?.health) {
-        throw new ServerError(
-          "Could not connect to file manager",
-          "FileManagerNotHealthy",
-        );
-      }
-
-      const res = await fetch(`${fileManager.url}/maps`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${fileManager.password}`,
-        },
-      });
-
-      if (res.status !== 200) {
-        log.error(
-          {
-            meta,
-            response: {
-              status: res.status,
-              statusText: res.statusText,
-              body: await res.text(),
-            },
-          },
-          "Failed to get maps from file manager",
-        );
-        throw new ServerError("Failed to get maps", "GetLocalMapsError");
-      }
-
-      const maps = await res.json();
-      if (!maps) {
-        log.error(
-          { meta },
-          "Failed to get maps from file manager: No maps returned",
-        );
-        throw new ServerError("Failed to get maps", "GetLocalMapsError");
-      }
-
-      const infos = await callEach<SMapInfo>(
-        client,
-        "GetMapInfo",
-        maps.map((map: string) => [map]),
-      );
-      const mapInfoList: LocalMapInfo[] = [];
-
-      infos.forEach((mapInfo, i) => {
-        if (!mapInfo) {
-          log.error({ meta, map: maps[i] }, "Error getting map info");
-          return;
-        }
-        mapInfoList.push({
-          ...mapInfo,
-          Path: path.dirname(maps[i]),
-        } as LocalMapInfo);
-      });
-
-      return mapInfoList;
-    },
+    (session) => getLocalMapsAs(actorFromSession(session), serverId),
   );
+}
+
+// Map files in the server's Maps folder, through its file manager
+export async function getLocalMapsAs(
+  actor: Actor,
+  serverId: string,
+): Promise<LocalMapInfo[]> {
+  requirePermission(actor, serverPermissions.moderator, serverId);
+
+  const meta = {
+    type: "gbx",
+    module: "map",
+    function: "getLocalMaps",
+  };
+  const log = getLogger(serverId);
+  const client = getGbxClient(serverId);
+
+  const fileManager = await getFileManager(serverId);
+  if (!fileManager?.health) {
+    throw new ServerError(
+      "Could not connect to file manager",
+      "FileManagerNotHealthy",
+    );
+  }
+
+  const res = await fetch(`${fileManager.url}/maps`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${fileManager.password}`,
+    },
+  });
+
+  if (res.status !== 200) {
+    log.error(
+      {
+        meta,
+        response: {
+          status: res.status,
+          statusText: res.statusText,
+          body: await res.text(),
+        },
+      },
+      "Failed to get maps from file manager",
+    );
+    throw new ServerError("Failed to get maps", "GetLocalMapsError");
+  }
+
+  const maps = await res.json();
+  if (!maps) {
+    log.error(
+      { meta },
+      "Failed to get maps from file manager: No maps returned",
+    );
+    throw new ServerError("Failed to get maps", "GetLocalMapsError");
+  }
+
+  const infos = await callEach<SMapInfo>(
+    client,
+    "GetMapInfo",
+    maps.map((map: string) => [map]),
+  );
+  const mapInfoList: LocalMapInfo[] = [];
+
+  infos.forEach((mapInfo, i) => {
+    if (!mapInfo) {
+      log.error({ meta, map: maps[i] }, "Error getting map info");
+      return;
+    }
+    mapInfoList.push({
+      ...mapInfo,
+      Path: path.dirname(maps[i]),
+    } as LocalMapInfo);
+  });
+
+  return mapInfoList;
 }

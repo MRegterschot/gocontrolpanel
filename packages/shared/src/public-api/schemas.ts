@@ -17,6 +17,26 @@ export const playerLogin = z
     example: "v8XxSOkeTqy7tw8DGcZd0Q",
   });
 
+export const mapUid = z
+  .string()
+  .regex(/^[A-Za-z0-9_-]{1,64}$/)
+  .meta({ description: "Map UID", example: "Tp9Ozi0W0DMRwv1MJHTtD6cTgw0" });
+
+// A path below the server's Maps folder; the dedicated server resolves it from there
+export const mapFileName = z
+  .string()
+  .max(255)
+  .regex(/^(?!\/)(?!.*(^|\/)\.{1,2}(\/|$))[^\\:*?"<>|]+\.Map\.Gbx$/i)
+  .meta({
+    description: "Path below the server's Maps folder",
+    example: "Downloaded/Spring 2026 - 01.Map.Gbx",
+  });
+
+// A list of map UIDs in a new order; it must hold exactly the current entries
+export const uidOrderBody = z.object({
+  uids: z.array(mapUid).min(1).max(1000),
+});
+
 const time = z.int().meta({ description: "Time in milliseconds; -1 is a DNF" });
 const medal = z.int().meta({ description: "Medal time in milliseconds" });
 
@@ -98,6 +118,10 @@ export const MapSchema = MapSummarySchema.extend({
   }),
 }).meta({ id: "Map" });
 
+export const CurrentMapsSchema = z
+  .object({ current: MapSchema, next: MapSchema })
+  .meta({ id: "CurrentMaps" });
+
 export const JukeboxEntrySchema = z
   .object({
     map: MapSchema,
@@ -155,6 +179,7 @@ export type ApiServer = z.output<typeof ServerSchema>;
 export type ApiPlayer = z.output<typeof PlayerSchema>;
 export type ApiListedPlayer = z.output<typeof ListedPlayerSchema>;
 export type ApiMap = z.output<typeof MapSchema>;
+export type ApiCurrentMaps = z.output<typeof CurrentMapsSchema>;
 export type ApiJukeboxEntry = z.output<typeof JukeboxEntrySchema>;
 export type ApiMatch = z.output<typeof MatchSchema>;
 export type ApiMatchDetail = z.output<typeof MatchDetailSchema>;
