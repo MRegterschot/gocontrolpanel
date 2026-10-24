@@ -46,16 +46,36 @@ export const ServerSchema = z
 export const PlayerSchema = z
   .object({
     login: z.string(),
-    nickName: z
-      .string()
-      .meta({
-        description: "Display name, may contain Trackmania formatting tags",
-      }),
+    nickName: z.string().meta({
+      description: "Display name, may contain Trackmania formatting tags",
+    }),
     playerId: z.int(),
     teamId: z.int().meta({ description: "-1 without teams" }),
     spectator: z.boolean(),
   })
   .meta({ id: "Player" });
+
+export const ListedPlayerSchema = z
+  .object({
+    login: z.string(),
+    nickName: z.string().meta({
+      description:
+        "Display name, or - when the server does not know the player",
+    }),
+  })
+  .meta({ id: "ListedPlayer" });
+
+// Same rule as the web's validateListFilename, which checks it again
+export const listFileBody = z.object({
+  filename: z
+    .string()
+    .max(255)
+    .regex(/^(?!\/)(?!.*(^|\/)\.{1,2}(\/|$))[\w .\/-]+\.(txt|xml)$/i)
+    .meta({
+      description: "Relative .txt or .xml file in the server's config folder",
+      example: "blacklist.txt",
+    }),
+});
 
 export const MapSummarySchema = z
   .object({
@@ -133,6 +153,7 @@ export function pageOf<S extends z.ZodType>(item: S) {
 
 export type ApiServer = z.output<typeof ServerSchema>;
 export type ApiPlayer = z.output<typeof PlayerSchema>;
+export type ApiListedPlayer = z.output<typeof ListedPlayerSchema>;
 export type ApiMap = z.output<typeof MapSchema>;
 export type ApiJukeboxEntry = z.output<typeof JukeboxEntrySchema>;
 export type ApiMatch = z.output<typeof MatchSchema>;

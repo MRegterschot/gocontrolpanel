@@ -4,6 +4,7 @@ import type { Maps } from "@gcp/db";
 import type { PlayerInfo } from "@gcp/shared";
 import type {
   ApiJukeboxEntry,
+  ApiListedPlayer,
   ApiMap,
   ApiMatch,
   ApiMatchDetail,
@@ -21,6 +22,10 @@ export function toApiPlayer(player: PlayerInfo): ApiPlayer {
     teamId: player.teamId,
     spectator: player.spectatorStatus % 10 !== 0,
   };
+}
+
+export function toApiListedPlayer(player: PlayerInfo): ApiListedPlayer {
+  return { login: player.login, nickName: player.nickName };
 }
 
 export function toApiMap(map: Maps): ApiMap {

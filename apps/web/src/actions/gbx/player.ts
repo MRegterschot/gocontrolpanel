@@ -1,18 +1,18 @@
 "use server";
-import { validateListFilename } from "@/lib/list-filename";
 import { assertResourceId } from "@/lib/resource-id";
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { actorFromSession } from "@/lib/actor";
-import { getGbxClient } from "@/lib/gbx-service";
 import { ServerResponse } from "@/types/responses";
-import { logAudit } from "../database/server-only/audit-logs";
 import {
   addGuestAs,
   banPlayerAs,
   blacklistPlayerAs,
+  cleanBanListAs,
+  cleanPlayerListAs,
   forceSpectatorAs,
   kickPlayerAs,
+  playerListFileAs,
   removeGuestAs,
   setPlayerMapPointsAs,
   setPlayerMatchPointsAs,
@@ -67,11 +67,7 @@ export async function cleanBanList(serverId: string): Promise<ServerResponse> {
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("CleanBanList");
-      await logAudit(session.user.id, serverId, "server.players.banlist.clear");
-    },
+    (session) => cleanBanListAs(actorFromSession(session), serverId),
   );
 }
 
@@ -120,16 +116,14 @@ export async function loadBlacklist(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("LoadBlackList", validateListFilename(filename));
-      await logAudit(
-        session.user.id,
+    (session) =>
+      playerListFileAs(
+        actorFromSession(session),
         serverId,
-        "server.players.blacklist.load",
+        "blacklist",
+        "load",
         filename,
-      );
-    },
+      ),
   );
 }
 
@@ -145,16 +139,14 @@ export async function saveBlacklist(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("SaveBlackList", validateListFilename(filename));
-      await logAudit(
-        session.user.id,
+    (session) =>
+      playerListFileAs(
+        actorFromSession(session),
         serverId,
-        "server.players.blacklist.save",
+        "blacklist",
+        "save",
         filename,
-      );
-    },
+      ),
   );
 }
 
@@ -169,15 +161,8 @@ export async function cleanBlacklist(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("CleanBlackList");
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.players.blacklist.clear",
-      );
-    },
+    (session) =>
+      cleanPlayerListAs(actorFromSession(session), serverId, "blacklist"),
   );
 }
 
@@ -225,16 +210,14 @@ export async function loadGuestlist(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("LoadGuestList", validateListFilename(filename));
-      await logAudit(
-        session.user.id,
+    (session) =>
+      playerListFileAs(
+        actorFromSession(session),
         serverId,
-        "server.players.guestlist.load",
+        "guestlist",
+        "load",
         filename,
-      );
-    },
+      ),
   );
 }
 
@@ -250,16 +233,14 @@ export async function saveGuestlist(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("SaveGuestList", validateListFilename(filename));
-      await logAudit(
-        session.user.id,
+    (session) =>
+      playerListFileAs(
+        actorFromSession(session),
         serverId,
-        "server.players.guestlist.save",
+        "guestlist",
+        "save",
         filename,
-      );
-    },
+      ),
   );
 }
 
@@ -274,15 +255,8 @@ export async function cleanGuestlist(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async (session) => {
-      const client = getGbxClient(serverId);
-      await client.call("CleanGuestList");
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.players.guestlist.clear",
-      );
-    },
+    (session) =>
+      cleanPlayerListAs(actorFromSession(session), serverId, "guestlist"),
   );
 }
 

@@ -14,8 +14,8 @@ export type ApiKeyScope = (typeof API_KEY_SCOPES)[number];
 
 export const API_KEY_SCOPE_DESCRIPTIONS: Record<ApiKeyScope, string> = {
   "server:read": "Server info",
-  "players:read": "Connected players",
-  "players:write": "Kick players",
+  "players:read": "Connected players, bans, blacklist and guestlist",
+  "players:write": "Kick, ban, spectate, blacklist and guestlist",
   "maps:read": "Map list",
   "maps:write": "Add maps from Trackmania Exchange",
   "jukebox:read": "Jukebox contents",

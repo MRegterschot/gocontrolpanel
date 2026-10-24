@@ -85,9 +85,32 @@ export async function getPlayerListAs(
   return players;
 }
 
-export async function getBanList(
+const LIST_GETTERS = {
+  banlist: "GetBanList",
+  blacklist: "GetBlackList",
+  guestlist: "GetGuestList",
+} as const;
+
+export type ListedPlayersName = keyof typeof LIST_GETTERS;
+
+// The ban list, blacklist or guestlist for an actor; the panel and the public API both call this
+export async function getListedPlayersAs(
+  actor: Actor,
   serverId: string,
-): Promise<ServerResponse<PlayerInfo[]>> {
+  list: ListedPlayersName,
+): Promise<PlayerInfo[]> {
+  requirePermission(actor, serverPermissions.moderator, serverId);
+
+  const client = getGbxClient(serverId);
+  const entries = await client.call(LIST_GETTERS[list], 1000, 0);
+
+  return getPlayerInfos(
+    client,
+    entries.map((player: { Login: string }) => player.Login),
+  );
+}
+
+function listedPlayers(serverId: string, list: ListedPlayersName) {
   return doServerActionWithAuth(
     [
       `servers:${serverId}:moderator`,
@@ -95,58 +118,24 @@ export async function getBanList(
       `group:servers:${serverId}:moderator`,
       `group:servers:${serverId}:admin`,
     ],
-    async () => {
-      const client = getGbxClient(serverId);
-      const banList = await client.call("GetBanList", 1000, 0);
-
-      return getPlayerInfos(
-        client,
-        banList.map((player: { Login: string }) => player.Login),
-      );
-    },
+    (session) => getListedPlayersAs(actorFromSession(session), serverId, list),
   );
+}
+
+export async function getBanList(
+  serverId: string,
+): Promise<ServerResponse<PlayerInfo[]>> {
+  return listedPlayers(serverId, "banlist");
 }
 
 export async function getBlacklist(
   serverId: string,
 ): Promise<ServerResponse<PlayerInfo[]>> {
-  return doServerActionWithAuth(
-    [
-      `servers:${serverId}:moderator`,
-      `servers:${serverId}:admin`,
-      `group:servers:${serverId}:moderator`,
-      `group:servers:${serverId}:admin`,
-    ],
-    async () => {
-      const client = getGbxClient(serverId);
-      const blacklist = await client.call("GetBlackList", 1000, 0);
-
-      return getPlayerInfos(
-        client,
-        blacklist.map((player: { Login: string }) => player.Login),
-      );
-    },
-  );
+  return listedPlayers(serverId, "blacklist");
 }
 
 export async function getGuestlist(
   serverId: string,
 ): Promise<ServerResponse<PlayerInfo[]>> {
-  return doServerActionWithAuth(
-    [
-      `servers:${serverId}:moderator`,
-      `servers:${serverId}:admin`,
-      `group:servers:${serverId}:moderator`,
-      `group:servers:${serverId}:admin`,
-    ],
-    async () => {
-      const client = getGbxClient(serverId);
-      const guestlist = await client.call("GetGuestList", 1000, 0);
-
-      return getPlayerInfos(
-        client,
-        guestlist.map((player: { Login: string }) => player.Login),
-      );
-    },
-  );
+  return listedPlayers(serverId, "guestlist");
 }

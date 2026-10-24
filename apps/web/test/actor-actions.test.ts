@@ -75,8 +75,11 @@ import {
   addGuestAs,
   banPlayerAs,
   blacklistPlayerAs,
+  cleanBanListAs,
+  cleanPlayerListAs,
   forceSpectatorAs,
   kickPlayerAs,
+  playerListFileAs,
   removeGuestAs,
   setPlayerMapPointsAs,
   setPlayerMatchPointsAs,
@@ -163,6 +166,10 @@ describe("actor-based cores", () => {
       () => unblacklistPlayerAs(guest, serverId, "p"),
       () => addGuestAs(guest, serverId, "p"),
       () => removeGuestAs(guest, serverId, "p"),
+      () => cleanBanListAs(guest, serverId),
+      () => cleanPlayerListAs(guest, serverId, "blacklist"),
+      () =>
+        playerListFileAs(guest, serverId, "guestlist", "save", "guests.txt"),
       () => setPlayerRoundPointsAs(guest, serverId, "p", 1),
       () => setPlayerMapPointsAs(guest, serverId, "p", 1),
       () => setPlayerMatchPointsAs(guest, serverId, "p", 1),
@@ -226,6 +233,50 @@ describe("actor-based cores", () => {
       serverId,
       "server.players.kick",
       { login: "player", reason: "afk" },
+    );
+  });
+
+  it("playerListFileAs picks the list's method and audits the file", async () => {
+    await playerListFileAs(
+      moderatorActor(),
+      serverId,
+      "guestlist",
+      "load",
+      "lists/guests.txt",
+    );
+    expect(mocks.call).toHaveBeenCalledWith(
+      "LoadGuestList",
+      "lists/guests.txt",
+    );
+    expect(mocks.audit).toHaveBeenCalledWith(
+      "user-1",
+      serverId,
+      "server.players.guestlist.load",
+      "lists/guests.txt",
+    );
+  });
+
+  it("playerListFileAs rejects a traversing filename before calling the server", async () => {
+    await expect(
+      playerListFileAs(
+        moderatorActor(),
+        serverId,
+        "blacklist",
+        "save",
+        "../blacklist.txt",
+      ),
+    ).rejects.toMatchObject({ name: "ValidationError" });
+    expect(mocks.call).not.toHaveBeenCalled();
+    expect(mocks.audit).not.toHaveBeenCalled();
+  });
+
+  it("cleanPlayerListAs empties the named list", async () => {
+    await cleanPlayerListAs(moderatorActor(), serverId, "blacklist");
+    expect(mocks.call).toHaveBeenCalledWith("CleanBlackList");
+    expect(mocks.audit).toHaveBeenCalledWith(
+      "user-1",
+      serverId,
+      "server.players.blacklist.clear",
     );
   });
 

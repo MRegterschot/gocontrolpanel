@@ -38,16 +38,16 @@ A key never grants more than its server or group. A key created by a panel admin
 
 Every key has one or more scopes:
 
-| Scope           | Allows                                 |
-| --------------- | -------------------------------------- |
-| `server:read`   | Server info                            |
-| `players:read`  | Connected players                      |
-| `players:write` | Kicking players                        |
-| `maps:read`     | The map list                           |
-| `maps:write`    | Adding maps from Trackmania Exchange   |
-| `jukebox:read`  | Jukebox contents                       |
-| `jukebox:write` | Queueing maps and clearing the jukebox |
-| `matches:read`  | Recorded matches and their records     |
+| Scope           | Allows                                                                                                 |
+| --------------- | ------------------------------------------------------------------------------------------------------ |
+| `server:read`   | Server info                                                                                            |
+| `players:read`  | Connected players, bans, blacklist and guestlist                                                       |
+| `players:write` | Kicking, banning and forcing players to spectate; managing the blacklist and guestlist and their files |
+| `maps:read`     | The map list                                                                                           |
+| `maps:write`    | Adding maps from Trackmania Exchange                                                                   |
+| `jukebox:read`  | Jukebox contents                                                                                       |
+| `jukebox:write` | Queueing maps and clearing the jukebox                                                                 |
+| `matches:read`  | Recorded matches and their records                                                                     |
 
 `GET /api/v1/servers` works with any key.
 

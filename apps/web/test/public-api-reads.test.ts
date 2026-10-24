@@ -35,7 +35,7 @@ import type { Actor } from "@/lib/actor";
 import { apiKeyClaims } from "@/lib/api-keys/authenticate";
 import { getMatchAs, getMatchesPageAs } from "@/services/database/matches";
 import { getJukeboxAs } from "@/services/gbx/map";
-import { getPlayerListAs } from "@/services/gbx/player";
+import { getListedPlayersAs, getPlayerListAs } from "@/services/gbx/player";
 
 const serverA = { id: "server-a", name: "A", description: "" };
 const creator = {
@@ -69,6 +69,10 @@ describe("actor reads with a server key", () => {
   it.each([
     ["players", (serverId: string) => getPlayerListAs(keyActor, serverId)],
     ["jukebox", (serverId: string) => getJukeboxAs(keyActor, serverId)],
+    [
+      "the blacklist",
+      (serverId: string) => getListedPlayersAs(keyActor, serverId, "blacklist"),
+    ],
     [
       "matches",
       (serverId: string) => getMatchesPageAs(keyActor, serverId, 1, 20),
