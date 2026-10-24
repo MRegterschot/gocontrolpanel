@@ -273,6 +273,26 @@ export const ServerScriptPluginSchema = z
   })
   .meta({ id: "ServerScriptPlugin" });
 
+// Relative to the server's UserData folder; never absolute, never leaving it
+export const userDataPath = z
+  .string()
+  .max(1024)
+  .regex(/^(?![\\/])(?!.*\/\/)(?!.*(^|\/)\.{1,2}(\/|$))[^\\]*$/)
+  .meta({
+    description: "Path relative to the server's UserData folder",
+    example: "Maps/Downloaded",
+  });
+
+export const FileEntrySchema = z
+  .object({
+    name: z.string(),
+    path: z.string().meta({ description: "Relative to UserData" }),
+    isDir: z.boolean(),
+    size: z.int().nullable().meta({ description: "Bytes" }),
+    lastModified: z.iso.datetime().nullable(),
+  })
+  .meta({ id: "FileEntry" });
+
 export const MatchSchema = z
   .object({
     id: resourceId,
@@ -332,6 +352,7 @@ export type ApiServerSettingsChanges = z.output<
 >;
 export type ApiInstalledPlugin = z.output<typeof InstalledPluginSchema>;
 export type ApiServerScriptPlugin = z.output<typeof ServerScriptPluginSchema>;
+export type ApiFileEntry = z.output<typeof FileEntrySchema>;
 export type ApiMatch = z.output<typeof MatchSchema>;
 export type ApiMatchDetail = z.output<typeof MatchDetailSchema>;
 export type ApiErrorBody = z.output<typeof ApiErrorSchema>;

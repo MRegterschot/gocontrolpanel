@@ -15,6 +15,8 @@ export const API_KEY_SCOPES = [
   "settings:write",
   "plugins:read",
   "plugins:write",
+  "files:read",
+  "files:write",
   "matches:read",
 ] as const;
 
@@ -38,6 +40,9 @@ export const API_KEY_SCOPE_DESCRIPTIONS: Record<ApiKeyScope, string> = {
   "plugins:read": "Installed plugins and their settings, without secrets",
   "plugins:write":
     "Install, configure, update and remove plugins; the dedicated server's script plugin",
+  "files:read": "Read files on the dedicated server, configs included",
+  "files:write":
+    "Create, change, move and delete files on the dedicated server",
   "matches:read": "Recorded matches",
 };
 

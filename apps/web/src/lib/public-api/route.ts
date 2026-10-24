@@ -124,14 +124,17 @@ function rawQuery(query: URLSearchParams): Record<string, string | string[]> {
   return raw;
 }
 
-async function readBody(req: NextRequest): Promise<unknown> {
+async function readBody(
+  req: NextRequest,
+  maxBytes = MAX_BODY_BYTES,
+): Promise<unknown> {
   const tooLarge = () =>
     new ApiFailure(413, "PayloadTooLarge", "Request body is too large");
-  if (Number(req.headers.get("content-length") ?? 0) > MAX_BODY_BYTES) {
+  if (Number(req.headers.get("content-length") ?? 0) > maxBytes) {
     throw tooLarge();
   }
   const text = await req.text();
-  if (Buffer.byteLength(text) > MAX_BODY_BYTES) {
+  if (Buffer.byteLength(text) > maxBytes) {
     throw tooLarge();
   }
   // A body whose fields all have defaults may be left out
@@ -208,7 +211,11 @@ export function publicApiRoute<E extends ApiEndpoint>(
         ? validate(endpoint.query, rawQuery(req.nextUrl.searchParams), "query")
         : undefined;
       const body = endpoint.body
-        ? validate(endpoint.body, await readBody(req), "body")
+        ? validate(
+            endpoint.body,
+            await readBody(req, endpoint.maxBodyBytes),
+            "body",
+          )
         : undefined;
 
       const { keyId, actor } = principal;

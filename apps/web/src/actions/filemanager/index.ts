@@ -3,10 +3,7 @@ import { fileManagerFetch } from "@/lib/managers/file-manager";
 import { assertResourceId } from "@/lib/resource-id";
 
 import { CreateFileEntrySchemaType } from "@/forms/server/files/create-file-entry-schema";
-import {
-  MoveFileEntriesSchema,
-  MoveFileEntriesSchemaType,
-} from "@/forms/server/files/move-file-entries-schema";
+import { MoveFileEntriesSchemaType } from "@/forms/server/files/move-file-entries-schema";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { actorFromSession } from "@/lib/actor";
 import { fileAuditDetails } from "@/lib/audit-redact";
@@ -15,7 +12,12 @@ import { fileManagerUrl, getFileManager } from "@/lib/managers/file-manager";
 import { FileEntry } from "@/types/filemanager";
 import { ServerError, ServerResponse } from "@/types/responses";
 import { logAudit } from "../database/server-only/audit-logs";
-import { uploadFilesAs } from "./server-only/files";
+import {
+  createEntryAs,
+  deleteEntriesAs,
+  moveEntriesAs,
+  uploadFilesAs,
+} from "./server-only/files";
 
 export async function saveFileText(
   serverId: string,
@@ -93,43 +95,7 @@ export async function deleteEntry(
   assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
-    async (session) => {
-      const fileManager = await getFileManager(serverId);
-      if (!fileManager?.health) {
-        await logAudit(
-          session.user.id,
-          serverId,
-          "server.files.delete",
-          paths,
-          "File manager is not healthy",
-        );
-        throw new ServerError(
-          "Could not connect to file manager",
-          "FileManagerNotHealthy",
-        );
-      }
-
-      const res = await fileManagerFetch(fileManager.url + "/delete", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${fileManager.password}`,
-        },
-        body: JSON.stringify(paths),
-      });
-
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.files.delete",
-        paths,
-        res.status !== 200 ? "Failed to delete item" : undefined,
-      );
-
-      if (res.status !== 200) {
-        throw new ServerError("Failed to delete item", "FileDeleteError");
-      }
-    },
+    (session) => deleteEntriesAs(actorFromSession(session), serverId, paths),
   );
 }
 
@@ -151,64 +117,7 @@ export async function createFileEntry(
   assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
-    async (session) => {
-      const fileManager = await getFileManager(serverId);
-      if (!fileManager?.health) {
-        await logAudit(
-          session.user.id,
-          serverId,
-          "server.files.create",
-          request,
-          "File manager is not healthy",
-        );
-        throw new ServerError(
-          "Could not connect to file manager",
-          "FileManagerNotHealthy",
-        );
-      }
-
-      const res = await fileManagerFetch(fileManager.url + "/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${fileManager.password}`,
-        },
-        body: JSON.stringify(request),
-      });
-
-      if (res.status !== 200) {
-        await logAudit(
-          session.user.id,
-          serverId,
-          "server.files.create",
-          request,
-          res.status === 500 ? "Something went wrong" : await res.text(),
-        );
-        throw new ServerError(
-          res.status === 500 ? "Something went wrong" : await res.text(),
-          "FileCreateError",
-        );
-      }
-
-      const data = await res.json();
-
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.files.create",
-        request,
-        !data ? "Failed to create file entry" : undefined,
-      );
-
-      if (!data) {
-        throw new ServerError("Failed to create file entry", "FileCreateError");
-      }
-
-      return {
-        ...data,
-        lastModified: new Date(data.lastModified),
-      };
-    },
+    (session) => createEntryAs(actorFromSession(session), serverId, request),
   );
 }
 
@@ -219,66 +128,6 @@ export async function moveFileEntries(
   assertResourceId(serverId);
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
-    async (session) => {
-      const parsed = MoveFileEntriesSchema.safeParse(request);
-      if (!parsed.success) {
-        throw new ServerError("Invalid move request", "FileMoveError");
-      }
-
-      const fileManager = await getFileManager(serverId);
-      if (!fileManager?.health) {
-        await logAudit(
-          session.user.id,
-          serverId,
-          "server.files.move",
-          parsed.data,
-          "File manager is not healthy",
-        );
-        throw new ServerError(
-          "Could not connect to file manager",
-          "FileManagerNotHealthy",
-        );
-      }
-
-      const res = await fileManagerFetch(fileManager.url + "/move", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${fileManager.password}`,
-        },
-        body: JSON.stringify(parsed.data),
-      });
-
-      if (res.status !== 200) {
-        const message =
-          res.status === 500 ? "Something went wrong" : await res.text();
-        await logAudit(
-          session.user.id,
-          serverId,
-          "server.files.move",
-          parsed.data,
-          message,
-        );
-        throw new ServerError(message, "FileMoveError");
-      }
-
-      const data = await res.json();
-
-      await logAudit(
-        session.user.id,
-        serverId,
-        "server.files.move",
-        parsed.data,
-      );
-
-      return data.map(
-        (
-          entry: Omit<FileEntry, "lastModified"> & { lastModified: string },
-        ) => ({
-          ...entry,
-          lastModified: new Date(entry.lastModified),
-        }),
-      );
-    },
+    (session) => moveEntriesAs(actorFromSession(session), serverId, request),
   );
 }

@@ -1,4 +1,5 @@
 import { doServerActionWithAuth } from "@/lib/actions";
+import { type Actor, actorFromSession, requirePermission } from "@/lib/actor";
 import { getLogger } from "@/lib/logger";
 import {
   fileManagerFetch,
@@ -8,6 +9,7 @@ import {
 import { gameModesScripts } from "@/lib/scripts";
 import { ContentType, File, FileEntry } from "@/types/filemanager";
 import { ServerError, ServerResponse } from "@/types/responses";
+import { serverPermissions } from "@gcp/shared";
 import "server-only";
 
 export async function getRoute(
@@ -16,70 +18,76 @@ export async function getRoute(
 ): Promise<ServerResponse<FileEntry[]>> {
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
-    async () => {
-      const meta = {
-        type: "filemanager",
-        module: "filemanager",
-        function: "getRoute",
-      };
-      const log = getLogger(serverId);
-      const fileManager = await getFileManager(serverId);
-      if (!fileManager?.health) {
-        throw new ServerError(
-          "Could not connect to file manager",
-          "FileManagerNotHealthy",
-        );
-      }
-
-      const res = await fileManagerFetch(
-        fileManagerUrl(fileManager.url!, path),
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${fileManager.password}`,
-          },
-        },
-      );
-
-      if (res.status !== 200) {
-        log.error(
-          {
-            meta,
-            path,
-            response: {
-              status: res.status,
-              statusText: res.statusText,
-              error: await res.text(),
-            },
-          },
-          "Failed to get files",
-        );
-        throw new ServerError("Failed to get files", "FileFetchError");
-      }
-
-      let data: FileEntry[] | undefined;
-
-      try {
-        data = await res.json();
-      } catch {
-        log.warn({ meta, path }, "Route is a file");
-        throw new ServerError("Route is a file", "RouteIsFile");
-      }
-
-      if (!data) {
-        log.error({ meta, path }, "Failed to get files, no data returned");
-        throw new ServerError("Failed to get files", "FileFetchError");
-      }
-
-      const parsedData = data.map((entry: any) => ({
-        ...entry,
-        lastModified: new Date(entry.lastModified),
-      }));
-
-      return parsedData;
-    },
+    (session) => listDirectoryAs(actorFromSession(session), serverId, path),
   );
+}
+
+// `path` is absolute, such as /UserData/Maps
+export async function listDirectoryAs(
+  actor: Actor,
+  serverId: string,
+  path: string,
+): Promise<FileEntry[]> {
+  requirePermission(actor, serverPermissions.admin, serverId);
+
+  const meta = {
+    type: "filemanager",
+    module: "filemanager",
+    function: "getRoute",
+  };
+  const log = getLogger(serverId);
+  const fileManager = await getFileManager(serverId);
+  if (!fileManager?.health) {
+    throw new ServerError(
+      "Could not connect to file manager",
+      "FileManagerNotHealthy",
+    );
+  }
+
+  const res = await fileManagerFetch(fileManagerUrl(fileManager.url!, path), {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${fileManager.password}`,
+    },
+  });
+
+  if (res.status !== 200) {
+    log.error(
+      {
+        meta,
+        path,
+        response: {
+          status: res.status,
+          statusText: res.statusText,
+          error: await res.text(),
+        },
+      },
+      "Failed to get files",
+    );
+    throw new ServerError("Failed to get files", "FileFetchError");
+  }
+
+  let data: FileEntry[] | undefined;
+
+  try {
+    data = await res.json();
+  } catch {
+    log.warn({ meta, path }, "Route is a file");
+    throw new ServerError("Route is a file", "RouteIsFile");
+  }
+
+  if (!data) {
+    log.error({ meta, path }, "Failed to get files, no data returned");
+    throw new ServerError("Failed to get files", "FileFetchError");
+  }
+
+  const parsedData = data.map((entry: any) => ({
+    ...entry,
+    lastModified: new Date(entry.lastModified),
+  }));
+
+  return parsedData;
 }
 
 export async function getFile(
@@ -88,64 +96,70 @@ export async function getFile(
 ): Promise<ServerResponse<File>> {
   return doServerActionWithAuth(
     [`servers:${serverId}:admin`, `group:servers:${serverId}:admin`],
-    async () => {
-      const meta = {
-        type: "filemanager",
-        module: "filemanager",
-        function: "getFile",
-      };
-      const log = getLogger(serverId);
-      const fileManager = await getFileManager(serverId);
-      if (!fileManager?.health) {
-        throw new ServerError(
-          "Could not connect to file manager",
-          "FileManagerNotHealthy",
-        );
-      }
-
-      const res = await fileManagerFetch(
-        fileManagerUrl(fileManager.url!, path),
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${fileManager.password}`,
-          },
-        },
-      );
-
-      if (res.status !== 200) {
-        log.error(
-          {
-            meta,
-            path,
-            response: {
-              status: res.status,
-              statusText: res.statusText,
-              error: await res.text(),
-            },
-          },
-          "Failed to get file",
-        );
-        throw new ServerError("Failed to get files", "FileFetchError");
-      }
-
-      const contentType = res.headers.get("Content-Type");
-      const fileType: ContentType = contentType
-        ? (contentType.split("/")[0] as ContentType)
-        : "text";
-
-      const data =
-        fileType === "image" || fileType === "video"
-          ? await res.arrayBuffer()
-          : await res.text();
-
-      return {
-        value: data,
-        type: fileType,
-      };
-    },
+    (session) => readFileAs(actorFromSession(session), serverId, path),
   );
+}
+
+// `path` is absolute, such as /UserData/Maps
+export async function readFileAs(
+  actor: Actor,
+  serverId: string,
+  path: string,
+): Promise<File> {
+  requirePermission(actor, serverPermissions.admin, serverId);
+
+  const meta = {
+    type: "filemanager",
+    module: "filemanager",
+    function: "getFile",
+  };
+  const log = getLogger(serverId);
+  const fileManager = await getFileManager(serverId);
+  if (!fileManager?.health) {
+    throw new ServerError(
+      "Could not connect to file manager",
+      "FileManagerNotHealthy",
+    );
+  }
+
+  const res = await fileManagerFetch(fileManagerUrl(fileManager.url!, path), {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${fileManager.password}`,
+    },
+  });
+
+  if (res.status !== 200) {
+    log.error(
+      {
+        meta,
+        path,
+        response: {
+          status: res.status,
+          statusText: res.statusText,
+          error: await res.text(),
+        },
+      },
+      "Failed to get file",
+    );
+    throw new ServerError("Failed to get files", "FileFetchError");
+  }
+
+  const contentType = res.headers.get("Content-Type");
+  const fileType: ContentType = contentType
+    ? (contentType.split("/")[0] as ContentType)
+    : "text";
+
+  const data =
+    fileType === "image" || fileType === "video"
+      ? await res.arrayBuffer()
+      : await res.text();
+
+  return {
+    value: data,
+    type: fileType,
+  };
 }
 
 export async function getScripts(

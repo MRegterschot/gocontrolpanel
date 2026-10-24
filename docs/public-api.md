@@ -55,9 +55,13 @@ Every key has one or more scopes:
 | `settings:write` | Changing server settings, passwords included                                                                                                         |
 | `plugins:read`   | Installed plugins and their settings, without secrets; the dedicated server's script plugin                                                          |
 | `plugins:write`  | Installing marketplace plugins, enabling, configuring, updating and uninstalling plugins; the dedicated server's script plugin                       |
+| `files:read`     | Reading files on the dedicated server, configs included                                                                                              |
+| `files:write`    | Creating, changing, moving and deleting files on the dedicated server                                                                                |
 | `matches:read`   | Recorded matches and their records                                                                                                                   |
 
 `GET /api/v1/servers` works with any key.
+
+`files:write` can rewrite any file below `UserData`, including the dedicated server's config with its passwords. Give it only to tools you trust as much as a server admin.
 
 Installing or updating a plugin through the API needs the same consent as the panel: list every capability the version asks for in `acceptedCapabilities`. Private uploaded plugins are installed and updated in the panel only.
 
@@ -130,7 +134,7 @@ Errors have one shape:
 | 403    | The key lacks the scope, or cannot reach this server                         |
 | 404    | Not found, for example a match of another server or a map not on the server  |
 | 409    | The request conflicts with the server's state, such as removing its last map |
-| 413    | Body over 64 KB                                                              |
+| 413    | Body over 64 KB, or 16 MB for file contents                                  |
 | 422    | The dedicated server refused the call; `message` has its reason              |
 | 429    | Rate limited; wait for the number of seconds in `Retry-After`                |
 | 503    | The dedicated server is not connected                                        |

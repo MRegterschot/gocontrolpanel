@@ -3,6 +3,7 @@ import { defineEndpoint } from "./endpoint";
 import {
   CurrentMapsSchema,
   dataOf,
+  FileEntrySchema,
   GameSchema,
   InstalledPluginSchema,
   JukeboxEntrySchema,
@@ -28,6 +29,7 @@ import {
   ServerSettingsChangesSchema,
   ServerSettingsSchema,
   uidOrderBody,
+  userDataPath,
 } from "./schemas";
 
 const matchSettingsBody = z.object({
@@ -965,6 +967,117 @@ export const triggerServerScriptPluginEvent = defineEndpoint({
   status: 204,
 });
 
+const filePath = userDataPath.min(1);
+
+export const listFiles = defineEndpoint({
+  id: "listFiles",
+  method: "get",
+  path: "/servers/{serverId}/files",
+  scope: "files:read",
+  tag: "Files",
+  summary: "List a folder on the dedicated server",
+  description: "Needs the server's file manager.",
+  params: serverParams,
+  query: z.object({
+    path: userDataPath.default("").meta({
+      description: "Folder relative to UserData; empty for UserData itself",
+    }),
+  }),
+  status: 200,
+  response: dataOf(z.array(FileEntrySchema)),
+});
+
+export const readFile = defineEndpoint({
+  id: "readFile",
+  method: "get",
+  path: "/servers/{serverId}/files/content",
+  scope: "files:read",
+  tag: "Files",
+  summary: "Read a file",
+  description:
+    "Text comes back as utf8, anything else, such as maps, as base64.",
+  params: serverParams,
+  query: z.object({ path: filePath }),
+  status: 200,
+  response: dataOf(
+    z.object({
+      path: z.string(),
+      encoding: z.enum(["utf8", "base64"]),
+      content: z.string(),
+    }),
+  ),
+});
+
+export const writeFile = defineEndpoint({
+  id: "writeFile",
+  method: "put",
+  path: "/servers/{serverId}/files/content",
+  scope: "files:write",
+  tag: "Files",
+  summary: "Create or overwrite a file",
+  description:
+    "Missing folders are created. Send binary files, such as maps, as base64; the body may be up to 16 MB.",
+  params: serverParams,
+  body: z
+    .object({
+      path: filePath,
+      content: z.string(),
+      encoding: z.enum(["utf8", "base64"]).default("utf8"),
+    })
+    .refine(
+      (file) =>
+        file.encoding !== "base64" ||
+        /^[A-Za-z0-9+/]*={0,2}$/.test(file.content),
+      { message: "content is not valid base64", path: ["content"] },
+    ),
+  maxBodyBytes: 16 * 1024 * 1024,
+  status: 204,
+});
+
+export const createFolder = defineEndpoint({
+  id: "createFolder",
+  method: "post",
+  path: "/servers/{serverId}/files/folders",
+  scope: "files:write",
+  tag: "Files",
+  summary: "Create a folder",
+  params: serverParams,
+  body: z.object({ path: filePath }),
+  status: 201,
+  response: dataOf(FileEntrySchema),
+});
+
+export const moveFiles = defineEndpoint({
+  id: "moveFiles",
+  method: "post",
+  path: "/servers/{serverId}/files/move",
+  scope: "files:write",
+  tag: "Files",
+  summary: "Move or rename files and folders",
+  params: serverParams,
+  body: z.object({
+    items: z
+      .array(z.object({ from: filePath, to: filePath }))
+      .min(1)
+      .max(100),
+  }),
+  status: 200,
+  response: dataOf(z.array(FileEntrySchema)),
+});
+
+export const deleteFiles = defineEndpoint({
+  id: "deleteFiles",
+  method: "post",
+  path: "/servers/{serverId}/files/delete",
+  scope: "files:write",
+  tag: "Files",
+  summary: "Delete files and folders",
+  description: "Folders are deleted with everything in them.",
+  params: serverParams,
+  body: z.object({ paths: z.array(filePath).min(1).max(100) }),
+  status: 204,
+});
+
 export const listMatches = defineEndpoint({
   id: "listMatches",
   method: "get",
@@ -1057,6 +1170,12 @@ export const publicApiEndpoints = [
   setServerScriptPlugin,
   setServerScriptPluginVariables,
   triggerServerScriptPluginEvent,
+  listFiles,
+  readFile,
+  writeFile,
+  createFolder,
+  moveFiles,
+  deleteFiles,
   listMatches,
   getMatch,
 ] as const;

@@ -63,7 +63,13 @@ vi.mock("@/actions/database/server-only/audit-logs", () => ({
   logAudit: mocks.audit,
 }));
 
-import { uploadFilesAs } from "@/actions/filemanager/server-only/files";
+import {
+  createEntryAs,
+  deleteEntriesAs,
+  moveEntriesAs,
+  readFileBytesAs,
+  uploadFilesAs,
+} from "@/actions/filemanager/server-only/files";
 import { sendChatMessageAs } from "@/actions/gbx/server-only/advanced";
 import {
   matchSettingsFileAs,
@@ -183,6 +189,14 @@ describe("actor-based cores", () => {
       () => setJukeboxAs(guest, serverId, []),
       () => removeFromJukeboxAs(guest, serverId, "map-1"),
       () => uploadFilesAs(guest, serverId, new FormData()),
+      () => readFileBytesAs(guest, serverId, "/UserData/a.txt"),
+      () =>
+        createEntryAs(guest, serverId, { path: "/UserData/a", isDir: true }),
+      () =>
+        moveEntriesAs(guest, serverId, {
+          items: [{ from: "/UserData/a", to: "/UserData/b" }],
+        }),
+      () => deleteEntriesAs(guest, serverId, ["/UserData/a"]),
       () => downloadMapAs(guest, serverId, 1),
       () => addTmxMapToServerAs(guest, serverId, 1),
       () => kickPlayerAs(guest, serverId, "p", "r"),
