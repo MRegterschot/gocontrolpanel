@@ -1,7 +1,6 @@
 import { ServerApiKeys } from "@/components/api-keys/api-keys-panel";
 import { hasPermission } from "@/lib/auth";
 import { routePermissions, routes } from "@/routes";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 export default async function ServerApiKeysPage({
@@ -22,9 +21,9 @@ export default async function ServerApiKeysPage({
         <h1 className="text-2xl font-bold">API Keys</h1>
         <h4 className="text-muted-foreground">
           Keys let other tools use this server through the{" "}
-          <Link href={routes.apiDocs} className="underline">
+          <a href={routes.apiDocs} className="underline">
             public API
-          </Link>
+          </a>
           . A key stops working when its creator is no longer an admin here.
         </h4>
       </div>

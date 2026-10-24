@@ -55,6 +55,16 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "10mb",
     },
   },
+  // The old reference page; Scalar replaces it
+  async redirects() {
+    return [
+      {
+        source: "/api-docs",
+        destination: "/api/v1/docs",
+        permanent: false,
+      },
+    ];
+  },
   async headers() {
     return [
       {

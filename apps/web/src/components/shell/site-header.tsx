@@ -1,18 +1,50 @@
 "use client";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { generatePath } from "@/lib/utils";
-import { breadCrumbs } from "@/routes";
+import { breadCrumbs, routes } from "@/routes";
 import {
+  IconApi,
   IconBook,
   IconBrandDiscord,
   IconBrandGithub,
   IconCoffee,
+  IconDotsVertical,
 } from "@tabler/icons-react";
-import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Breadcrumbs, { TBreadcrumb } from "./breadcrumbs";
+
+const headerLinks = [
+  {
+    label: "Wiki",
+    href: "https://github.com/MRegterschot/gocontrolpanel/wiki",
+    icon: IconBook,
+  },
+  { label: "API reference", href: routes.apiDocs, icon: IconApi },
+  {
+    label: "Discord",
+    href: "https://discord.gg/NjbtRvbCY8",
+    icon: IconBrandDiscord,
+  },
+  {
+    label: "Ko-fi",
+    href: "https://ko-fi.com/marijnregterschot",
+    icon: IconCoffee,
+  },
+  {
+    label: "GitHub",
+    href: "https://github.com/MRegterschot/gocontrolpanel",
+    icon: IconBrandGithub,
+  },
+];
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -69,26 +101,36 @@ export function SiteHeader() {
 
         <Breadcrumbs crumbs={activeBreadCrumbs} className="min-w-0 flex-1" />
 
-        <div className="ml-auto flex gap-2 lg:gap-4">
-          <Link
-            href="https://github.com/MRegterschot/gocontrolpanel/wiki"
-            target="_blank"
-          >
-            <IconBook />
-          </Link>
-          <Link href="https://discord.gg/NjbtRvbCY8" target="_blank">
-            <IconBrandDiscord />
-          </Link>
-          <Link href="https://ko-fi.com/marijnregterschot" target="_blank">
-            <IconCoffee />
-          </Link>
-          <Link
-            href="https://github.com/MRegterschot/gocontrolpanel"
-            target="_blank"
-          >
-            <IconBrandGithub />
-          </Link>
+        <div className="ml-auto hidden gap-2 md:flex lg:gap-4">
+          {headerLinks.map(({ label, href, icon: Icon }) => (
+            <a key={label} href={href} target="_blank" title={label}>
+              <Icon />
+            </a>
+          ))}
         </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="ml-auto md:hidden"
+              aria-label="Links"
+            >
+              <IconDotsVertical />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {headerLinks.map(({ label, href, icon: Icon }) => (
+              <DropdownMenuItem key={label} asChild>
+                <a href={href} target="_blank">
+                  <Icon />
+                  {label}
+                </a>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

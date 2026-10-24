@@ -103,7 +103,7 @@ interface MultiSelectProps
   /**
    * The modality of the popover. When set to true, interaction with outside elements
    * will be disabled and only popover content will be visible to screen readers.
-   * Optional, defaults to false.
+   * Optional, defaults to true so the list scrolls inside dialogs.
    */
   modalPopover?: boolean;
 
@@ -129,7 +129,7 @@ export const MultiSelect = React.forwardRef<
       placeholder = "Select options",
       animation = 0,
       maxCount = 3,
-      modalPopover = false,
+      modalPopover = true,
       className,
       ...props
     },

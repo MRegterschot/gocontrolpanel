@@ -4,7 +4,6 @@ import { GroupApiKeys } from "@/components/api-keys/api-keys-panel";
 import { ModalContent } from "@/components/modals/modal";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { routes } from "@/routes";
-import Link from "next/link";
 import { DefaultModalProps } from "../default-props";
 
 export default function GroupApiKeysModal({
@@ -20,9 +19,9 @@ export default function GroupApiKeysModal({
       <p className="text-sm text-muted-foreground">
         A group key reaches every server currently in the group. It stops
         working when its creator is no longer an admin of the group. See the{" "}
-        <Link href={routes.apiDocs} className="underline">
+        <a href={routes.apiDocs} className="underline">
           API reference
-        </Link>
+        </a>
         .
       </p>
       <GroupApiKeys groupId={group.id} />

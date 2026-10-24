@@ -2,7 +2,7 @@
 
 GoControlPanel has a versioned HTTP API at `/api/v1` for tools outside the panel: scoreboards, Discord bots, tournament software and scripts. Requests authenticate with an API key that a server or group admin creates in the panel.
 
-The OpenAPI 3.1 description is served at `/api/v1/openapi.json`; import it into Postman, Insomnia or a client generator. The panel shows the same reference under **API Reference**, linked from every API Keys page.
+The OpenAPI 3.1 description is served at `/api/v1/openapi.json`; import it into Postman, Insomnia or a client generator. An interactive reference at `/api/v1/docs` is linked from every API Keys page.
 
 ## API keys
 

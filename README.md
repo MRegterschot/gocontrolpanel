@@ -163,7 +163,7 @@ Manage your Hetzner Cloud servers, networks and volumes. You can create and dele
 
 #### Public API
 
-Server and group admins create API keys for external tools such as scoreboards, bots and tournament software. A server key reaches its server; a group key reaches every server in the group. Keys are limited to scopes, and stop working when their creator is no longer an admin. The versioned API lives at `/api/v1`, with an OpenAPI document at `/api/v1/openapi.json` and a reference page in the panel. See [the public API guide](docs/public-api.md).
+Server and group admins create API keys for external tools such as scoreboards, bots and tournament software. A server key reaches its server; a group key reaches every server in the group. Keys are limited to scopes, and stop working when their creator is no longer an admin. The versioned API lives at `/api/v1`, with an OpenAPI document at `/api/v1/openapi.json` and an interactive reference at `/api/v1/docs`. See [the public API guide](docs/public-api.md).
 
 # Architecture
 
