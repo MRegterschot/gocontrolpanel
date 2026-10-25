@@ -139,8 +139,7 @@ Steps run from least to highest impact. Nothing is deployed from the `release` b
 
 Release boundaries:
 
-- Release A: Steps 1-6 (branding, workspace rename, compatibility readers). Writers are unchanged, so it is safe to roll back to the previous release.
-- Release B: Step 7 (writers), published only after Release A is deployed on every instance, since older releases cannot read the new formats.
+- Steps 1-7 are renamed directly where nothing persisted or shipped on `dev` depends on the old name; see Step 6 for the breaking effect on deployed `release` builds.
 - Steps 9-10 changes (image names, deploy scripts, domain) must be prepared before the release that depends on them, because the release workflow publishes the images and the deploy workflows run from the released version.
 
 ### Step 0: Decisions (blocks everything)
@@ -212,14 +211,14 @@ Identifiers that only exist on `release` (not on `dev`) have no installs to prot
 - [x] Keep the legacy reserved plugin slugs.
 - [x] Tests for the new values.
 
-### Step 7: Switch the writers
+### Step 7: Remaining runtime names
 
-Merge to `release` freely, but only cut the release after Release A is running everywhere.
+Nothing here is persisted or exists on `dev` except the manialink name, so all of it is renamed directly with no compatibility reader.
 
-- [ ] Rename the sandbox bridge (`__gcp`, `__gcpLayouts`, `gcp-runtime.js`) in producer and consumer together; keep `__tmcpRegister`.
-- [ ] Change the `GCP:` manialink name and update snapshots intentionally.
-- [ ] Change the `GoControlPanel-Plugin` User-Agent after checking remote allowlists.
-- [ ] Codriver: add `TM_ReverseCupTMCP.Script.txt` while still supporting the old filename and inheritance references.
+- [x] Sandbox bridge `__gcp`, `__gcpLayouts`, `gcp-runtime.js` to `__tmcp`, `__tmcpLayouts`, `tmcp-runtime.js`, producer and consumer together; `__tmcpRegister` is unchanged.
+- [x] Manialink name `GCP:` to `TMCP:`, snapshots updated.
+- [x] Outbound User-Agent `GoControlPanel-Plugin` to `TMControlPanel-Plugin`. No remote allowlist was checked: confirm none recognises the old string.
+- [x] Codriver prefers and generates from `TM_ReverseCupTMCP.Script.txt`. A server that still has a `TM_ReverseCupGCP*` script keeps working as an ordinary mode script but is no longer preferred; rename the file on the server.
 
 ### Step 8: Plugin registry repository (immutable artifacts)
 

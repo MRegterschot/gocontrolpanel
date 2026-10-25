@@ -25,7 +25,7 @@ const RESERVED_HEADERS = new Set([
 ]);
 
 export class HttpsPluginClient implements PluginHttpClient {
-  constructor(private readonly userAgent = "GoControlPanel-Plugin") {}
+  constructor(private readonly userAgent = "TMControlPanel-Plugin") {}
 
   fetch(input: PluginHttpRequest): Promise<PluginHttpResponse> {
     let url: URL;
