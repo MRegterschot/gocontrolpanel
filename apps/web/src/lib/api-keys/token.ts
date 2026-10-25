@@ -3,7 +3,7 @@ import { createHash, randomBytes } from "node:crypto";
 import "server-only";
 
 const TOKEN_BYTES = 32;
-// gcp_ plus 32 bytes in base64url
+// tmcp_ plus 32 bytes in base64url
 const TOKEN_PATTERN = new RegExp(
   `^${API_KEY_TOKEN_PREFIX}[A-Za-z0-9_-]{${Math.ceil((TOKEN_BYTES * 4) / 3)}}$`,
 );

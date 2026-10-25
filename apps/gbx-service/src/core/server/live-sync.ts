@@ -14,7 +14,7 @@ import type { MatchRecorder } from "./match-recorder";
 import { toPlayerInfo } from "./players";
 import type { ServerEventMap } from "./server-events";
 
-export const RESPONSE_ID = "gocontrolpanel";
+export const RESPONSE_ID = "tmcp";
 
 export interface LiveSyncDeps {
   gbx: GbxConnection;

@@ -112,9 +112,9 @@ beforeEach(() => {
 describe("api key tokens", () => {
   it("generates a prefixed token and stores only its hash", () => {
     const generated = generateApiKeyToken();
-    expect(generated.token).toMatch(/^gcp_[A-Za-z0-9_-]{43}$/);
+    expect(generated.token).toMatch(/^tmcp_[A-Za-z0-9_-]{43}$/);
     expect(generated.token.startsWith(generated.prefix)).toBe(true);
-    expect(generated.prefix).toHaveLength(12);
+    expect(generated.prefix).toHaveLength(13);
     expect(generated.hash).toBe(hashApiKeyToken(generated.token));
     expect(generated.hash).not.toContain(generated.token);
     expect(generateApiKeyToken().token).not.toBe(generated.token);
@@ -126,7 +126,7 @@ describe("api key tokens", () => {
     expect(bearerApiKeyToken(null)).toBeNull();
     expect(bearerApiKeyToken(token)).toBeNull();
     expect(bearerApiKeyToken(`Basic ${token}`)).toBeNull();
-    expect(bearerApiKeyToken("Bearer gcp_short")).toBeNull();
+    expect(bearerApiKeyToken("Bearer tmcp_short")).toBeNull();
     expect(bearerApiKeyToken(`Bearer ${token} extra`)).toBeNull();
   });
 });

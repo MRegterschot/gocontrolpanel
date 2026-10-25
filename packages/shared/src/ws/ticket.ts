@@ -1,8 +1,8 @@
 import { jwtVerify, SignJWT } from "jose";
 import { SessionClaims, sessionClaimsSchema } from "../permissions";
 
-export const WS_TICKET_ISSUER = "gcp-web";
-export const WS_TICKET_AUDIENCE = "gcp-gbx-ws";
+export const WS_TICKET_ISSUER = "tmcp-web";
+export const WS_TICKET_AUDIENCE = "tmcp-gbx-ws";
 export const WS_TICKET_TTL_SECONDS = 60;
 
 export interface VerifiedWsTicket {

@@ -174,7 +174,7 @@ Done in the Step 1 PR. Left for later steps: `@gcp/*` filters in docs (Step 4), 
 - [x] Env examples, Nadeo contact/application names, seed scripts, test-server names.
 - [x] Keep `SITE_URL` on the old domain until Step 10 unless the new domain is live.
 
-Done in the Step 2 PR. Left for later steps: `SITE_URL` (Step 10), the `GoControlPanel-Plugin` User-Agent and the `gocontrolpanel` script response ID (Step 7), `gcp`/`GCP` test-server and seed names (Step 3), database names and Docker image names in the env examples and compose files (Step 9), and fixture authors in tests.
+Done in the Step 2 PR. Left for later steps: `SITE_URL` (Step 10), the `GoControlPanel-Plugin` User-Agent (Step 7; the script response ID went in Step 6), `gcp`/`GCP` test-server and seed names (Step 3), database names and Docker image names in the env examples and compose files (Step 9), and fixture authors in tests.
 
 ### Step 3: Dev and test-only identifiers
 
@@ -203,22 +203,19 @@ Done in the Step 4 PR. The tsup patterns became `/^@tmcontrolpanel\/(?!plugin-sd
 
 Done in the Step 5 PR. Route manifests before and after list the same 164 app routes once the group segment is ignored. If a dev server was running, delete `apps/web/.next/dev/types` once: stale generated types still point at the old path and break `typecheck`.
 
-### Step 6: Compatibility readers (additive, writers unchanged)
+### Step 6: Release-only identifiers and compatibility readers
 
-- [ ] API keys: verify both `gcp_` and `tmcp_`.
-- [ ] Credentials: read both `gcp-server:v1:` and the new marker for dedicated-server and file-manager credentials, same encryption key.
-- [ ] JWT tickets: verifier accepts both `gcp-web`/`gcp-gbx-ws` and the new issuer/audience pair.
-- [ ] Redis: GBX subscribes to both `gcp:server-events` and the new channel, with dedupe so a lifecycle event is not processed twice.
-- [ ] Script response ID: callback matching accepts the old `gocontrolpanel` ID and the new one.
-- [ ] Keep the legacy reserved plugin slugs.
-- [ ] Add tests for old and new formats.
-- [ ] Publish as a GitHub release and deploy to every instance before Step 7 is released.
+Identifiers that only exist on `release` (not on `dev`) have no installs to protect, so they are renamed directly. Only identifiers that already exist on `dev` need a compatibility reader.
+
+- [x] Renamed directly (release-only): `gcp_` API keys to `tmcp_`, `gcp-server:v1:` to `tmcp-server:v1:`, JWT issuer/audience to `tmcp-web`/`tmcp-gbx-ws`, Redis channel to `tmcp:server-events`. Any key, stored credential or in-flight ticket produced by a deployed `release` build stops working: reissue keys and re-run `encrypt:server-credentials` on such instances.
+- [x] Script response ID `gocontrolpanel` to `tmcp`, requests and callback matching together. No reader for the old ID: replies only matter to the process that asked, and every instance is replaced.
+- [x] Keep the legacy reserved plugin slugs.
+- [x] Tests for the new values.
 
 ### Step 7: Switch the writers
 
 Merge to `release` freely, but only cut the release after Release A is running everywhere.
 
-- [ ] Issue `tmcp_` API keys, write the new credential marker, sign the new JWT claims, publish on the new Redis channel, use the new script response ID.
 - [ ] Rename the sandbox bridge (`__gcp`, `__gcpLayouts`, `gcp-runtime.js`) in producer and consumer together; keep `__tmcpRegister`.
 - [ ] Change the `GCP:` manialink name and update snapshots intentionally.
 - [ ] Change the `GoControlPanel-Plugin` User-Agent after checking remote allowlists.

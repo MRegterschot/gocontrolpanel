@@ -25,7 +25,7 @@ export function req(
   return new NextRequest(`http://localhost/api/v1${urlPath}`, {
     method: init.method ?? "GET",
     body: init.body === undefined ? undefined : JSON.stringify(init.body),
-    headers: { authorization: "Bearer gcp_x" },
+    headers: { authorization: "Bearer tmcp_x" },
   });
 }
 

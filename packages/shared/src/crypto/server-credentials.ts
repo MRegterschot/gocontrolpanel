@@ -5,7 +5,7 @@ import {
   randomBytes,
 } from "node:crypto";
 
-export const SERVER_CREDENTIAL_PREFIX = "gcp-server:v1:";
+export const SERVER_CREDENTIAL_PREFIX = "tmcp-server:v1:";
 function key(secret: string): Buffer {
   if (secret.length < 32)
     throw new Error(

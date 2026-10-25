@@ -50,7 +50,7 @@ export const API_KEY_SCOPE_DESCRIPTIONS: Record<ApiKeyScope, string> = {
 };
 
 // Every token starts with this, so leaked keys are easy to recognise and scan for
-export const API_KEY_TOKEN_PREFIX = "gcp_";
+export const API_KEY_TOKEN_PREFIX = "tmcp_";
 
 export function isApiKeyScope(value: unknown): value is ApiKeyScope {
   return (
