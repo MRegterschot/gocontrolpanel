@@ -1,6 +1,6 @@
 "use client";
 
-import { IconDeviceGamepad2 } from "@tabler/icons-react";
+import { BrandMark } from "@/components/brand-mark";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -27,7 +27,7 @@ export default function SigningIn({ redirectTo }: { redirectTo: string }) {
       <div className="relative flex size-20 items-center justify-center">
         <span className="absolute inset-0 rounded-full border-4 border-primary/20" />
         <span className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-t-primary" />
-        <IconDeviceGamepad2 className="size-8 text-primary" />
+        <BrandMark className="size-10" alt="TMControlPanel" />
       </div>
 
       <div className="relative flex flex-col items-center gap-2 text-center">
