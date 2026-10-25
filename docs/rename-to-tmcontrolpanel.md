@@ -197,9 +197,11 @@ Done in the Step 4 PR. The tsup patterns became `/^@tmcontrolpanel\/(?!plugin-sd
 
 ### Step 5: Route group and internal symbols
 
-- [ ] `git mv` `(gocontroller)` to `(panel)` (63 paths, Appendix B) and fix literal imports in tests.
-- [ ] Rename `GoControllerLayout` to `TMControlPanelLayout`.
-- [ ] Gate: public URLs (`/server/[id]`, `/admin`, ...) are unchanged.
+- [x] `git mv` `(gocontroller)` to `(panel)` (63 paths, Appendix B) and fix literal imports in tests.
+- [x] Rename `GoControllerLayout` to `TMControlPanelLayout`.
+- [x] Gate: public URLs (`/server/[id]`, `/admin`, ...) are unchanged.
+
+Done in the Step 5 PR. Route manifests before and after list the same 164 app routes once the group segment is ignored. If a dev server was running, delete `apps/web/.next/dev/types` once: stale generated types still point at the old path and break `typecheck`.
 
 ### Step 6: Compatibility readers (additive, writers unchanged)
 

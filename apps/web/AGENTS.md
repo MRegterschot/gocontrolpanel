@@ -14,7 +14,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 The panel uses Next.js App Router, React, and strict TypeScript. The `@/` alias resolves to `apps/web/src`. Follow the repository guide in `../../AGENTS.md` for workspace commands and the web/GBX service split.
 
-- `src/app`: route layouts, pages, GET API routes, and global Tailwind styles. Authenticated panel pages live under `(gocontroller)`; per-server pages use `server/[id]`.
+- `src/app`: route layouts, pages, GET API routes, and global Tailwind styles. Authenticated panel pages live under `(panel)`; per-server pages use `server/[id]`.
 - `src/components/ui`: the shared shadcn/ui primitives, built on Radix. Reuse these buttons, inputs, dialogs, selects, checkboxes, cards, and tables.
 - `src/components`: reusable domain UI, table wrappers, and modal components.
 - `src/forms`: React Hook Form components and Zod schemas, grouped by feature.
