@@ -31,7 +31,7 @@ import type { Logger } from "../logger";
 import type { ActionRouter } from "../manialink/action-router";
 import type { Clock, PlayerRepository } from "../ports";
 import type { Jukebox } from "./jukebox";
-import { RESPONSE_ID, isOurResponse, type LiveSync } from "./live-sync";
+import { RESPONSE_ID, type LiveSync } from "./live-sync";
 import type { MatchRecorder } from "./match-recorder";
 import { fetchPlayerInfo } from "./players";
 import type { ServerEventMap } from "./server-events";
@@ -428,7 +428,7 @@ export class GameEventHandler {
 
   // Full scoreboard requested by us (responseid) after connect/BeginMatch
   private async onScoresResponse(scores: Scores): Promise<void> {
-    if (!isOurResponse(scores.responseid)) return;
+    if (scores.responseid !== RESPONSE_ID) return;
     const { state, gbx } = this.deps;
 
     if (scores.useteams) {
@@ -476,12 +476,12 @@ export class GameEventHandler {
   }
 
   private onWarmUpStatus(status: WarmUpStatus): void {
-    if (!isOurResponse(status.responseid)) return;
+    if (status.responseid !== RESPONSE_ID) return;
     this.deps.state.liveInfo.isWarmUp = status.active;
   }
 
   private onPauseStatus(status: PauseStatus): void {
-    if (!isOurResponse(status.responseid)) return;
+    if (status.responseid !== RESPONSE_ID) return;
     const { state } = this.deps;
 
     // A pause toggled mid-round restarts that round, so it is not counted twice

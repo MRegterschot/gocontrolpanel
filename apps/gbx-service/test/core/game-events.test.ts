@@ -226,7 +226,7 @@ describe("rounds and scores", () => {
     const h = await createHarness({ players: [player("p1")] });
     await h.script(
       "Trackmania.Scores",
-      scores("", [{ login: "p1", accountid: "acc-1", matchpoints: 20, name: "P1" }], "gocontrolpanel"),
+      scores("", [{ login: "p1", accountid: "acc-1", matchpoints: 20, name: "P1" }], "tmcp"),
     );
     expect(h.runtime.state.getPlayerRound("p1")).toMatchObject({ accountId: "acc-1", matchPoints: 20, connected: true });
     expect(h.runtime.state.liveInfo.activeRound.players.p1.accountId).toBe("acc-1");
@@ -235,17 +235,11 @@ describe("rounds and scores", () => {
   it("undoes the round count when a pause toggles mid-match", async () => {
     const h = await createHarness();
     h.runtime.state.roundNumber = 3;
-    await h.script("Maniaplanet.Pause.Status", { responseid: "gocontrolpanel", available: true, active: true });
+    await h.script("Maniaplanet.Pause.Status", { responseid: "tmcp", available: true, active: true });
     expect(h.runtime.state.roundNumber).toBe(2);
     expect(h.runtime.state.liveInfo).toMatchObject({ isPaused: true, pauseAvailable: true });
 
     await h.script("Maniaplanet.Pause.Status", { responseid: "someone-else", available: true, active: false });
-    expect(h.runtime.state.liveInfo.isPaused).toBe(true);
-  });
-
-  it("accepts pause replies carrying the new response ID", async () => {
-    const h = await createHarness();
-    await h.script("Maniaplanet.Pause.Status", { responseid: "tmcp", available: true, active: true });
     expect(h.runtime.state.liveInfo.isPaused).toBe(true);
   });
 

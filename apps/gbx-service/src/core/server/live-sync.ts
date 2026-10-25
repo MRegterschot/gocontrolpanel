@@ -14,13 +14,7 @@ import type { MatchRecorder } from "./match-recorder";
 import { toPlayerInfo } from "./players";
 import type { ServerEventMap } from "./server-events";
 
-export const RESPONSE_ID = "gocontrolpanel";
-// Replies carrying either ID are ours; requests switch to the new one in a later release
-export const RESPONSE_ID_NEXT = "tmcp";
-
-export function isOurResponse(responseId: string | undefined): boolean {
-  return responseId === RESPONSE_ID || responseId === RESPONSE_ID_NEXT;
-}
+export const RESPONSE_ID = "tmcp";
 
 export interface LiveSyncDeps {
   gbx: GbxConnection;

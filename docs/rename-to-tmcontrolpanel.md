@@ -174,7 +174,7 @@ Done in the Step 1 PR. Left for later steps: `@gcp/*` filters in docs (Step 4), 
 - [x] Env examples, Nadeo contact/application names, seed scripts, test-server names.
 - [x] Keep `SITE_URL` on the old domain until Step 10 unless the new domain is live.
 
-Done in the Step 2 PR. Left for later steps: `SITE_URL` (Step 10), the `GoControlPanel-Plugin` User-Agent and the `gocontrolpanel` script response ID (Step 7), `gcp`/`GCP` test-server and seed names (Step 3), database names and Docker image names in the env examples and compose files (Step 9), and fixture authors in tests.
+Done in the Step 2 PR. Left for later steps: `SITE_URL` (Step 10), the `GoControlPanel-Plugin` User-Agent (Step 7; the script response ID went in Step 6), `gcp`/`GCP` test-server and seed names (Step 3), database names and Docker image names in the env examples and compose files (Step 9), and fixture authors in tests.
 
 ### Step 3: Dev and test-only identifiers
 
@@ -208,15 +208,14 @@ Done in the Step 5 PR. Route manifests before and after list the same 164 app ro
 Identifiers that only exist on `release` (not on `dev`) have no installs to protect, so they are renamed directly. Only identifiers that already exist on `dev` need a compatibility reader.
 
 - [x] Renamed directly (release-only): `gcp_` API keys to `tmcp_`, `gcp-server:v1:` to `tmcp-server:v1:`, JWT issuer/audience to `tmcp-web`/`tmcp-gbx-ws`, Redis channel to `tmcp:server-events`. Any key, stored credential or in-flight ticket produced by a deployed `release` build stops working: reissue keys and re-run `encrypt:server-credentials` on such instances.
-- [x] Script response ID (exists on `dev`): callbacks accept both `gocontrolpanel` and `tmcp`; requests still send the old ID until Step 7.
+- [x] Script response ID `gocontrolpanel` to `tmcp`, requests and callback matching together. No reader for the old ID: replies only matter to the process that asked, and every instance is replaced.
 - [x] Keep the legacy reserved plugin slugs.
-- [x] Tests for the new values and for both response IDs.
+- [x] Tests for the new values.
 
 ### Step 7: Switch the writers
 
 Merge to `release` freely, but only cut the release after Release A is running everywhere.
 
-- [ ] Use the new script response ID for requests (the other four identifiers were switched in Step 6).
 - [ ] Rename the sandbox bridge (`__gcp`, `__gcpLayouts`, `gcp-runtime.js`) in producer and consumer together; keep `__tmcpRegister`.
 - [ ] Change the `GCP:` manialink name and update snapshots intentionally.
 - [ ] Change the `GoControlPanel-Plugin` User-Agent after checking remote allowlists.
