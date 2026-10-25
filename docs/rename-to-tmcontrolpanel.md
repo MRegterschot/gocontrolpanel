@@ -26,40 +26,40 @@ The target GitHub repository/domain/image names below are proposals unless expli
 
 ### Product, website, and API branding
 
-- [ ] `package.json`: change root `name: gocontrolpanel`; `/version` derives its product name from this manifest through `apps/gbx-service/src/core/chat/command-router.ts`.
-- [ ] `apps/web/src/lib/site.ts`: change `SITE_NAME`, `SITE_TITLE`, `SITE_URL` (`https://gocontrolpanel.com`), and `GITHUB_URL`.
-- [ ] `apps/web/src/app/layout.tsx`: metadata and the literal `GoControlPanel` SEO keyword. Metadata consumers include `app/login/page.tsx`, `app/robots.ts`, `app/sitemap.ts`, and landing-page structured data, even where those files contain no old-name literal.
-- [ ] `apps/web/src/components/landing/landing-page.tsx`, `components/shell/app-sidebar.tsx`, and `app/(gocontroller)/page.tsx`: header, footer, accessibility labels, introduction, and welcome text.
-- [ ] `apps/web/src/components/shell/site-header.tsx` and `components/plugins/uploaded-plugins.tsx`: GitHub, wiki, and SDK documentation links.
-- [ ] `apps/web/src/lib/public-api/openapi.ts` and `app/api/v1/docs/route.ts`: OpenAPI title and API reference page title.
-- [ ] `apps/web/src/forms/server/advanced/script-generator-form.tsx`, `actions/plugins.ts`, `actions/server-only/plugins.ts`, `lib/codriver/tools/scripts.ts`, and the Hetzner admin page: user-facing help, validation, and notices.
-- [ ] `apps/gbx-service/src/config.ts`, example environment files, Compose examples, and seed scripts: Nadeo contact/application names and test-server names.
-- [ ] `apps/gbx-service/src/infra/http/plugin-http-client.ts`: outbound `GoControlPanel-Plugin` User-Agent. Review any remote allowlists or dashboards that recognize it.
-- [ ] Review `apps/web/public/logo.svg`, `apps/web/src/app/{favicon.ico,icon.ico,apple-icon.png,opengraph-image.png,twitter-image.png}` and screenshots/marketing art. Images cannot be cleared by text search. The Open Graph image was visually checked and is a controller icon without an old-name wordmark; the Twitter image preview has no readable wordmark. A visual redesign is a separate decision.
+- [x] `package.json`: change root `name: gocontrolpanel`; `/version` derives its product name from this manifest through `apps/gbx-service/src/core/chat/command-router.ts`.
+- [ ] (name, title and `GITHUB_URL` done; `SITE_URL` waits for the domain cutover, Step 10) `apps/web/src/lib/site.ts`: change `SITE_NAME`, `SITE_TITLE`, `SITE_URL` (`https://gocontrolpanel.com`), and `GITHUB_URL`.
+- [x] `apps/web/src/app/layout.tsx`: metadata and the literal `GoControlPanel` SEO keyword. Metadata consumers include `app/login/page.tsx`, `app/robots.ts`, `app/sitemap.ts`, and landing-page structured data, even where those files contain no old-name literal.
+- [x] `apps/web/src/components/landing/landing-page.tsx`, `components/shell/app-sidebar.tsx`, and `app/(gocontroller)/page.tsx`: header, footer, accessibility labels, introduction, and welcome text.
+- [x] `apps/web/src/components/shell/site-header.tsx` and `components/plugins/uploaded-plugins.tsx`: GitHub, wiki, and SDK documentation links.
+- [x] `apps/web/src/lib/public-api/openapi.ts` and `app/api/v1/docs/route.ts`: OpenAPI title and API reference page title.
+- [x] `apps/web/src/forms/server/advanced/script-generator-form.tsx`, `actions/plugins.ts`, `actions/server-only/plugins.ts`, `lib/codriver/tools/scripts.ts`, and the Hetzner admin page: user-facing help, validation, and notices.
+- [x] `apps/gbx-service/src/config.ts`, example environment files, Compose examples, and seed scripts: Nadeo contact/application names and test-server names.
+- [x] `apps/gbx-service/src/infra/http/plugin-http-client.ts`: outbound `GoControlPanel-Plugin` User-Agent. Review any remote allowlists or dashboards that recognize it.
+- [x] Review `apps/web/public/logo.svg`, `apps/web/src/app/{favicon.ico,icon.ico,apple-icon.png,opengraph-image.png,twitter-image.png}` and screenshots/marketing art. Images cannot be cleared by text search. The Open Graph image was visually checked and is a controller icon without an old-name wordmark; the Twitter image preview has no readable wordmark. A visual redesign is a separate decision.
 
 ### Workspaces, imports, build tooling, and developer paths
 
-- [ ] Rename the four private `@gcp/*` workspace names in `apps/*/package.json` and `packages/{db,shared}/package.json`.
-- [ ] Update dependency keys in every workspace, including `packages/plugin-sdk/package.json`, and all TypeScript imports, re-exports, test imports, and type-only imports. The exhaustive file list is in Appendix A.
-- [ ] Update root script `--filter @gcp/...` arguments and workflow/README/contributor-guide commands.
-- [ ] In `packages/plugin-sdk/registry-template/.github/workflows/{check,publish}.yml`, update the main-repository checkout, `.gocontrolpanel` checkout/working-directory paths, and `GOCONTROLPANEL_REF` configuration name. If introducing `TMCONTROLPANEL_REF`, retain a fallback for registries still configuring the old variable. Apply the matching checkout change in the live plugin repository as well.
-- [ ] Update `/^@gcp\//` bundling patterns in `apps/gbx-service/tsup.config.ts` and `packages/plugin-sdk/tsup.config.ts`. Check that the published SDK still bundles private shared code rather than depending on a private workspace.
-- [ ] Regenerate `bun.lock` through Bun after manifest changes. Its workspace names/dependency keys change; unrelated dependency integrity hashes do not.
-- [ ] Rename the `(gocontroller)` route-group directory and update literal imports in tests, plus `GoControllerLayout`. All 63 paths in that group are listed in Appendix B. Keep routes such as `/server/[id]` and `/admin` stable.
+- [x] Rename the four private `@gcp/*` workspace names in `apps/*/package.json` and `packages/{db,shared}/package.json`.
+- [x] Update dependency keys in every workspace, including `packages/plugin-sdk/package.json`, and all TypeScript imports, re-exports, test imports, and type-only imports. The exhaustive file list is in Appendix A.
+- [x] Update root script `--filter @gcp/...` arguments and workflow/README/contributor-guide commands.
+- [x] In `packages/plugin-sdk/registry-template/.github/workflows/{check,publish}.yml`, update the main-repository checkout, `.gocontrolpanel` checkout/working-directory paths, and `GOCONTROLPANEL_REF` configuration name. If introducing `TMCONTROLPANEL_REF`, retain a fallback for registries still configuring the old variable. Apply the matching checkout change in the live plugin repository as well.
+- [x] Update `/^@gcp\//` bundling patterns in `apps/gbx-service/tsup.config.ts` and `packages/plugin-sdk/tsup.config.ts`. Check that the published SDK still bundles private shared code rather than depending on a private workspace.
+- [x] Regenerate `bun.lock` through Bun after manifest changes. Its workspace names/dependency keys change; unrelated dependency integrity hashes do not.
+- [x] Rename the `(gocontroller)` route-group directory and update literal imports in tests, plus `GoControllerLayout`. All 63 paths in that group are listed in Appendix B. Keep routes such as `/server/[id]` and `/admin` stable.
 - [ ] Rename the local checkout/workspace file if desired, then update editor workspace folders, worktree metadata, scripts, shell aliases, run configurations, and any absolute filesystem references. Do not edit Git's worktree metadata with a text replacement; use Git worktree operations.
 - [ ] Review `.claude/settings.local.json` and locally ignored environment files. Appendix E lists matches without copying their values.
 
 ### Docker, deployment, databases, and backups
 
-- [ ] `docker-compose.yml`: Compose service `gocontrolpanel`, `depends_on`, internal `http://gocontrolpanel:3000` host, database/user defaults, and Docker Hub image names.
-- [ ] `docker/{pyplanet,evosc,minicontrol,maniacontrol}/docker-compose.yml`: same changes for each integration example.
-- [ ] Rename the four `docker/*/init/01-create-gocontrolpanel.sql` files and update SQL defaults for new installations. Database names/users are operational data, not Prisma model/table renames. Existing databases should remain usable through `DATABASE_URL` or be migrated explicitly.
-- [ ] `dev/docker-compose.yml`: Compose project `gcp-dev`, MariaDB/Postgres database names and health checks. Changing a Compose project name changes generated container/network/volume names: preserve or explicitly migrate existing volumes.
-- [ ] `apps/gbx-service/e2e/docker-compose.yml`, `e2e/.env.example`, `docker-compose.test.yml`, seed/watch scripts, and CI integration settings: `gcp-e2e`, `GCP e2e`, `gcp_e2e`, `gcp_test`, and test database usernames/password placeholders.
-- [ ] `.github/workflows/docker-publish-on-release.yml`: `DOCKER_IMAGE_NAME` repository variable and the `gocontrolpanel-gbx-service` fallback for `DOCKER_GBX_IMAGE_NAME`. The GitHub variable-name inventory currently exposes `DOCKER_IMAGE_NAME`; values were not copied into this file.
-- [ ] `.github/workflows/deploy-{production,staging}.yml`: remote `/usr/local/bin/deploy-gocontrolpanel` and `deploy-gocontrolpanel-staging` entry points. Update the actual host scripts, sudoers entries, service names, working directories, and deployment configuration together.
-- [ ] `apps/web/hetzner/{server-init.sh.hbs,add-server.sh.hbs,update-containers.sh}` and `actions/hetzner/{server-setup,server-actions}.ts`: `gcp.zip`, GitHub archive URL, extracted `gocontrolpanel-master` directory, and every `/root/gocontrolpanel-master/hetzner` path. Existing provisioned machines still have the old directory; support both paths or migrate them before changing lifecycle actions.
-- [ ] `scripts/backup-db.sh`, `scripts/backup.env.example`, and `docs/backups.md`: backup directory, log name, `gcp-` archive prefix, and local/SSH/rclone retention patterns. Keep retention/restore support for existing backup names; changing only the creation prefix breaks retention consistency.
+- [x] `docker-compose.yml`: Compose service `gocontrolpanel`, `depends_on`, internal `http://gocontrolpanel:3000` host, database/user defaults, and Docker Hub image names.
+- [x] `docker/{pyplanet,evosc,minicontrol,maniacontrol}/docker-compose.yml`: same changes for each integration example.
+- [x] Rename the four `docker/*/init/01-create-gocontrolpanel.sql` files and update SQL defaults for new installations. Database names/users are operational data, not Prisma model/table renames. Existing databases should remain usable through `DATABASE_URL` or be migrated explicitly.
+- [x] `dev/docker-compose.yml`: Compose project `gcp-dev`, MariaDB/Postgres database names and health checks. Changing a Compose project name changes generated container/network/volume names: preserve or explicitly migrate existing volumes.
+- [x] `apps/gbx-service/e2e/docker-compose.yml`, `e2e/.env.example`, `docker-compose.test.yml`, seed/watch scripts, and CI integration settings: `gcp-e2e`, `GCP e2e`, `gcp_e2e`, `gcp_test`, and test database usernames/password placeholders.
+- [ ] (code done in Step 9; the `DOCKER_IMAGE_NAME` repository variable is yours) `.github/workflows/docker-publish-on-release.yml`: `DOCKER_IMAGE_NAME` repository variable and the `gocontrolpanel-gbx-service` fallback for `DOCKER_GBX_IMAGE_NAME`. The GitHub variable-name inventory currently exposes `DOCKER_IMAGE_NAME`; values were not copied into this file.
+- [ ] (waiting for the host scripts, Step 9) `.github/workflows/deploy-{production,staging}.yml`: remote `/usr/local/bin/deploy-gocontrolpanel` and `deploy-gocontrolpanel-staging` entry points. Update the actual host scripts, sudoers entries, service names, working directories, and deployment configuration together.
+- [x] `apps/web/hetzner/{server-init.sh.hbs,add-server.sh.hbs,update-containers.sh}` and `actions/hetzner/{server-setup,server-actions}.ts`: `gcp.zip`, GitHub archive URL, extracted `gocontrolpanel-master` directory, and every `/root/gocontrolpanel-master/hetzner` path. Existing provisioned machines still have the old directory; support both paths or migrate them before changing lifecycle actions.
+- [x] `scripts/backup-db.sh`, `scripts/backup.env.example`, and `docs/backups.md`: backup directory, log name, `gcp-` archive prefix, and local/SSH/rclone retention patterns. Keep retention/restore support for existing backup names; changing only the creation prefix breaks retention consistency.
 
 ### Compatibility-sensitive runtime identifiers
 

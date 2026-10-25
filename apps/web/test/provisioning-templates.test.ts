@@ -18,8 +18,8 @@ describe("provisioning templates", () => {
   it("keeps database values as single shell words", () => {
     const script = template("database-init.sh.hbs")({
       db_type: "postgres",
-      db_user: "gcp",
-      db_name: "gcp",
+      db_user: "tmcp",
+      db_name: "tmcp",
       db_password: hostile,
       db_root_password: hostile,
     });
