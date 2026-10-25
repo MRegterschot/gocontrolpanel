@@ -1,6 +1,6 @@
-![Docker Pulls](https://img.shields.io/docker/pulls/marijnregterschot/gocontrolpanel?logo=docker&link=https%3A%2F%2Fhub.docker.com%2Fr%2Fmarijnregterschot%2Fgocontrolpanel)
-![Docker Image Size](https://img.shields.io/docker/image-size/marijnregterschot/gocontrolpanel?logo=docker&link=https%3A%2F%2Fhub.docker.com%2Fr%2Fmarijnregterschot%2Fgocontrolpanel)
-![Docker Version](https://img.shields.io/docker/v/marijnregterschot/gocontrolpanel?logo=docker&link=https%3A%2F%2Fhub.docker.com%2Fr%2Fmarijnregterschot%2Fgocontrolpanel)
+![Docker Pulls](https://img.shields.io/docker/pulls/marijnregterschot/tmcontrolpanel?logo=docker&link=https%3A%2F%2Fhub.docker.com%2Fr%2Fmarijnregterschot%2Ftmcontrolpanel)
+![Docker Image Size](https://img.shields.io/docker/image-size/marijnregterschot/tmcontrolpanel?logo=docker&link=https%3A%2F%2Fhub.docker.com%2Fr%2Fmarijnregterschot%2Ftmcontrolpanel)
+![Docker Version](https://img.shields.io/docker/v/marijnregterschot/tmcontrolpanel?logo=docker&link=https%3A%2F%2Fhub.docker.com%2Fr%2Fmarijnregterschot%2Ftmcontrolpanel)
 ![Discord Widget](https://img.shields.io/discord/1397578984023261284?logo=discord&link=https%3A%2F%2Fdiscord.gg%2FNjbtRvbCY8)
 ![Github Commits](https://img.shields.io/github/commit-activity/t/mregterschot/tmcontrolpanel?logo=github)
 
@@ -171,8 +171,8 @@ TMControlPanel runs as two containers next to your database and Redis:
 
 | Container        | Image                                          | What it does                                                                                                                                                       |
 | ---------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `gocontrolpanel` | `marijnregterschot/gocontrolpanel`             | The web panel: UI, sign in, database, Nadeo, Trackmania Exchange, Hetzner and file manager. Runs the database migrations on start. Port `3000`.                    |
-| `gbx-service`    | `marijnregterschot/gocontrolpanel-gbx-service` | Holds the connections to your dedicated servers, runs the in-game plugins and widgets, records matches and serves the live WebSockets to the browser. Port `3100`. |
+| `tmcontrolpanel` | `marijnregterschot/tmcontrolpanel`             | The web panel: UI, sign in, database, Nadeo, Trackmania Exchange, Hetzner and file manager. Runs the database migrations on start. Port `3000`.                    |
+| `gbx-service`    | `marijnregterschot/tmcontrolpanel-gbx-service` | Holds the connections to your dedicated servers, runs the in-game plugins and widgets, records matches and serves the live WebSockets to the browser. Port `3100`. |
 
 Both images come in a MariaDB/MySQL and a PostgreSQL (`-postgres` suffix) flavour. The two containers share the database and Redis, and authenticate to each other with `GBX_SERVICE_TOKEN` and `WS_TICKET_SECRET`.
 
@@ -239,12 +239,12 @@ Make sure to update or add the environment variables for the services in your `d
     - `SENTRY_IGNORE_ERRORS` (optional): Comma-separated list of error messages that should not be reported.
 
 - **GBX Service Environment Variables** (`gbx-service` container):
-  - `DATABASE_URL`, `REDIS_URI`: The same values as the `gocontrolpanel` container.
-  - `GBX_SERVICE_TOKEN`, `WS_TICKET_SECRET`: The same values as the `gocontrolpanel` container.
+  - `DATABASE_URL`, `REDIS_URI`: The same values as the `tmcontrolpanel` container.
+  - `GBX_SERVICE_TOKEN`, `WS_TICKET_SECRET`: The same values as the `tmcontrolpanel` container.
   - `WS_ALLOWED_ORIGINS`: The origin(s) of the panel, comma separated, e.g., `https://panel.example.com`. A browser socket from another origin is refused.
-  - `NADEO_SERVER_LOGIN`, `NADEO_SERVER_PASSWORD`, `NADEO_CONTACT`, `NADEO_CLIENT_ID`, `NADEO_CLIENT_SECRET`: The same values as the `gocontrolpanel` container.
+  - `NADEO_SERVER_LOGIN`, `NADEO_SERVER_PASSWORD`, `NADEO_CONTACT`, `NADEO_CLIENT_ID`, `NADEO_CLIENT_SECRET`: The same values as the `tmcontrolpanel` container.
   - `GBX_SERVICE_ENABLED_SERVERS` (optional): Comma-separated server ids this instance manages. Empty manages every server in the database.
-  - `PANEL_INTERNAL_URL`, `PANEL_INTERNAL_TOKEN` (optional): The panel address the service uses for Codriver `/co` commands (`http://gocontrolpanel:3000`), and the same token as the `gocontrolpanel` container. Empty turns `/co` off.
+  - `PANEL_INTERNAL_URL`, `PANEL_INTERNAL_TOKEN` (optional): The panel address the service uses for Codriver `/co` commands (`http://tmcontrolpanel:3000`), and the same token as the `tmcontrolpanel` container. Empty turns `/co` off.
   - `LOG_LEVEL`, `SENTRY_DSN`, `SENTRY_ENVIRONMENT` (optional): Logging and error reporting of the service.
   - `MARKETPLACE_INDEX_URL`, `MARKETPLACE_CHECK_MINUTES` (optional): The plugin marketplace the service checks for withdrawn plugin versions, and how often (default every 30 minutes). Empty URL turns the check off.
 
@@ -279,8 +279,8 @@ First you need to navigate to your existing stack directory. Navigate to the dir
 Paste the following configuration into your existing `docker-compose.yml` file.
 
 ```yaml
-gocontrolpanel:
-  image: marijnregterschot/gocontrolpanel:beta # Use marijnregterschot/gocontrolpanel-postgres:beta if you are using PostgreSQL
+tmcontrolpanel:
+  image: marijnregterschot/tmcontrolpanel:beta # Use marijnregterschot/tmcontrolpanel-postgres:beta if you are using PostgreSQL
   ports:
     - 3000:3000
   restart: unless-stopped
@@ -296,7 +296,7 @@ gocontrolpanel:
     NADEO_SERVER_PASSWORD:
     NADEO_CONTACT: TMControlPanel / <your contact info>
     REDIS_URI: redis://redis:6379
-    DATABASE_URL: mysql://gocontrolpanel:VettePanel123@db:3306/gocontrolpanel
+    DATABASE_URL: mysql://tmcontrolpanel:VettePanel123@db:3306/tmcontrolpanel
     HETZNER_KEY:
     GBX_SERVICE_URL: http://gbx-service:3100
     GBX_SERVICE_WS_URL: ws://localhost:3100 # Must be reachable from the browser
@@ -308,12 +308,12 @@ gocontrolpanel:
     - redis
 
 gbx-service:
-  image: marijnregterschot/gocontrolpanel-gbx-service:beta # Use marijnregterschot/gocontrolpanel-gbx-service-postgres:beta if you are using PostgreSQL
+  image: marijnregterschot/tmcontrolpanel-gbx-service:beta # Use marijnregterschot/tmcontrolpanel-gbx-service-postgres:beta if you are using PostgreSQL
   ports:
     - 3100:3100 # WebSockets for the browser; /internal routes require GBX_SERVICE_TOKEN
   restart: unless-stopped
   environment:
-    DATABASE_URL: mysql://gocontrolpanel:VettePanel123@db:3306/gocontrolpanel
+    DATABASE_URL: mysql://tmcontrolpanel:VettePanel123@db:3306/tmcontrolpanel
     REDIS_URI: redis://redis:6379
     GBX_SERVICE_TOKEN: # Same value as the web app, at least 32 characters
     WS_TICKET_SECRET: # Same value as the web app, at least 32 characters
@@ -327,7 +327,7 @@ gbx-service:
   depends_on:
     - db
     - redis
-    - gocontrolpanel # Runs the database migrations
+    - tmcontrolpanel # Runs the database migrations
 
 filemanager:
   image: marijnregterschot/trackmania-server-fm:latest
@@ -369,14 +369,14 @@ docker exec -it <container-name> mariadb -u root -p
 2. Create a new database:
 
 ```sql
-CREATE DATABASE gocontrolpanel;
+CREATE DATABASE tmcontrolpanel;
 ```
 
 3. Create a new user and grant permissions:
 
 ```sql
-CREATE USER 'gocontrolpanel'@'%' IDENTIFIED BY 'VettePanel123';
-GRANT ALL PRIVILEGES ON gocontrolpanel.* TO 'gocontrolpanel'@'%';
+CREATE USER 'tmcontrolpanel'@'%' IDENTIFIED BY 'VettePanel123';
+GRANT ALL PRIVILEGES ON tmcontrolpanel.* TO 'tmcontrolpanel'@'%';
 FLUSH PRIVILEGES;
 ```
 
@@ -412,7 +412,7 @@ Make sure to update or add the environment variables for the added services in y
     - `SENTRY_NORMALIZE_DEPTH` (optional): Maximum object serialization depth. Defaults to `3`.
     - `SENTRY_IGNORE_ERRORS` (optional): Comma-separated list of error messages that should not be reported.
 
-- **GBX Service Environment Variables** (`gbx-service`): use the same `DATABASE_URL`, `REDIS_URI`, `GBX_SERVICE_TOKEN`, `WS_TICKET_SECRET` and Nadeo values as the `gocontrolpanel` service, and set `WS_ALLOWED_ORIGINS` to the origin of the panel. See [Architecture](#architecture) for what each variable does.
+- **GBX Service Environment Variables** (`gbx-service`): use the same `DATABASE_URL`, `REDIS_URI`, `GBX_SERVICE_TOKEN`, `WS_TICKET_SECRET` and Nadeo values as the `tmcontrolpanel` service, and set `WS_ALLOWED_ORIGINS` to the origin of the panel. See [Architecture](#architecture) for what each variable does.
 
 > **Note:** Make sure you are using the correct service name for the dedicated server. For **PyPlanet**, the service name is usually `dedicated`, and for **EvoSC**, it is `trackmania`.
 
@@ -477,7 +477,7 @@ docker compose pull
 docker compose up -d
 ```
 
-The `gocontrolpanel` container applies database migrations on start. Check the [changelog](CHANGELOG.md) before upgrading across several versions. If you are coming from the single-container setup of the `dev` branch, follow the [migration guide](docs/migrating-from-dev.md).
+The `tmcontrolpanel` container applies database migrations on start. Check the [changelog](CHANGELOG.md) before upgrading across several versions. If you are coming from the single-container setup of the `dev` branch, follow the [migration guide](docs/migrating-from-dev.md).
 
 ---
 
@@ -492,7 +492,7 @@ docker compose logs <service-name>
 For example, to view the logs of the **TMControlPanel** service:
 
 ```bash
-docker compose logs gocontrolpanel
+docker compose logs tmcontrolpanel
 ```
 
 Players can type `/version` in game to receive the control panel app version in a

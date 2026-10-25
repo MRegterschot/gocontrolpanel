@@ -230,12 +230,13 @@ Nothing here is persisted or exists on `dev` except the manialink name, so all o
 
 ### Step 9: Docker, deployment, and operations
 
-- [ ] `docker-compose.yml` service and image names, plus the four `docker/*/docker-compose.yml` examples.
-- [ ] Rename the four `01-create-gocontrolpanel.sql` files; existing databases stay reachable through `DATABASE_URL`.
-- [ ] `docker-publish-on-release.yml`: `DOCKER_IMAGE_NAME` variable and GBX fallback. Publish new image names and keep old tags available.
-- [ ] Hetzner scripts and actions: `gcp.zip`, archive URL, `/root/gocontrolpanel-master/hetzner`. Support both paths or migrate existing machines first.
-- [ ] Backups: new `tmcp-` creation prefix, with retention and restore still matching old `gcp-` archives.
-- [ ] Deploy workflows and host scripts (`deploy-gocontrolpanel`, staging variant): update host scripts, sudoers, service names, and working directories together.
+- [x] `docker-compose.yml` and the four `docker/*/docker-compose.yml`: service `tmcontrolpanel`, images `marijnregterschot/tmcontrolpanel*`, internal host, and database/user defaults. Existing databases keep their name through `DATABASE_URL`; `docs/migrating-from-dev.md` explains this and uses `down --remove-orphans` so the old `gocontrolpanel` container does not keep the GBX connections.
+- [x] The four init SQL files are `01-create-tmcontrolpanel.sql` with the new database and user.
+- [x] `docker-publish-on-release.yml`: fallbacks are `tmcontrolpanel` and `tmcontrolpanel-gbx-service`. Old images stay on Docker Hub, untouched.
+- [ ] **You:** set the GitHub repository variable `DOCKER_IMAGE_NAME` to `tmcontrolpanel` (and `DOCKER_GBX_IMAGE_NAME` if it is set). The variable overrides the fallback, so until then the web image is still published under the old name.
+- [x] Hetzner: new machines extract to `/root/tmcontrolpanel-master` whatever the archive folder is called (`tmcp.zip`). Panel actions, `add-server.sh.hbs` and `update-containers.sh` use that directory when it exists and fall back to `/root/gocontrolpanel-master` on machines provisioned earlier. The archive URL keeps the repository name until Step 10.
+- [x] Backups: `tmcp-` creation prefix; local, rsync and rclone retention match both `tmcp-` and `gcp-` files. Dev database names stay (`dev/docker-compose.yml`, `.env.example`).
+- [ ] **You:** deploy workflows still call `/usr/local/bin/deploy-gocontrolpanel` and `deploy-gocontrolpanel-staging`, and a release triggers the production one automatically. Add the `deploy-tmcontrolpanel*` scripts and sudoers entries on the hosts first, then change the two workflow lines (or keep the old names as symlinks).
 
 ### Step 10: Domain and external cutover
 

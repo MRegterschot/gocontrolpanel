@@ -2,14 +2,19 @@
 
 set -x -e
 
-cd ~/gocontrolpanel-master/hetzner
+# Machines provisioned before the rename keep the old directory
+BASE_DIR=/root/tmcontrolpanel-master
+if [ ! -d "$BASE_DIR" ]; then
+  BASE_DIR=/root/gocontrolpanel-master
+fi
+cd "$BASE_DIR/hetzner"
 
 STACK_NAME={{sh stack_name}}
-STACK_DIR="/root/gocontrolpanel-master/hetzner/$STACK_NAME"
+STACK_DIR="$BASE_DIR/hetzner/$STACK_NAME"
 ENV_FILE="$STACK_DIR/.env"
 mkdir -p "$(dirname "$ENV_FILE")"
 
-COMPOSE_DIR="/root/gocontrolpanel-master/hetzner"
+COMPOSE_DIR="$BASE_DIR/hetzner"
 COMPOSE_FILES="-f $COMPOSE_DIR/docker-compose.yml"
 
 TM_SYSTEM_FORCE_IP_ADDRESS=$(dig +short myip.opendns.com @resolver1.opendns.com)

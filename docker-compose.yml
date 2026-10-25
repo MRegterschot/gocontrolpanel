@@ -1,6 +1,6 @@
 services:
-  gocontrolpanel:
-    image: marijnregterschot/gocontrolpanel:beta # Use marijnregterschot/gocontrolpanel-postgres:beta if you are using PostgreSQL
+  tmcontrolpanel:
+    image: marijnregterschot/tmcontrolpanel:beta # Use marijnregterschot/tmcontrolpanel-postgres:beta if you are using PostgreSQL
     ports:
       - 3000:3000
     restart: unless-stopped
@@ -15,7 +15,7 @@ services:
       NADEO_SERVER_LOGIN:
       NADEO_SERVER_PASSWORD:
       NADEO_CONTACT: TMControlPanel / <your contact info>
-      DATABASE_URL: mysql://gocontrolpanel:${MARIADB_PASSWORD:?Set MARIADB_PASSWORD}@db:3306/gocontrolpanel
+      DATABASE_URL: mysql://tmcontrolpanel:${MARIADB_PASSWORD:?Set MARIADB_PASSWORD}@db:3306/tmcontrolpanel
       REDIS_URI: redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD}@redis:6379
       HETZNER_KEY:
       GBX_SERVICE_URL: http://gbx-service:3100
@@ -32,18 +32,18 @@ services:
 
   # GBX connections, in-game plugins and live WebSockets (see docs/refactor-plan.md)
   gbx-service:
-    image: marijnregterschot/gocontrolpanel-gbx-service:beta # Use marijnregterschot/gocontrolpanel-gbx-service-postgres:beta if you are using PostgreSQL
+    image: marijnregterschot/tmcontrolpanel-gbx-service:beta # Use marijnregterschot/tmcontrolpanel-gbx-service-postgres:beta if you are using PostgreSQL
     ports:
       - "127.0.0.1:3100:3100" # Expose browser WebSockets through a TLS reverse proxy
     restart: unless-stopped
     environment:
-      DATABASE_URL: mysql://gocontrolpanel:${MARIADB_PASSWORD:?Set MARIADB_PASSWORD}@db:3306/gocontrolpanel
+      DATABASE_URL: mysql://tmcontrolpanel:${MARIADB_PASSWORD:?Set MARIADB_PASSWORD}@db:3306/tmcontrolpanel
       SECRETS_KEY: ${SECRETS_KEY:?Set the same SECRETS_KEY in both services}
       REDIS_URI: redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD}@redis:6379
       GBX_SERVICE_TOKEN: # Same value as the web app, at least 32 characters
       WS_TICKET_SECRET: # Same value as the web app, at least 32 characters
       WS_ALLOWED_ORIGINS: http://localhost:3000
-      PANEL_INTERNAL_URL: http://gocontrolpanel:3000 # Optional, for Codriver /co commands
+      PANEL_INTERNAL_URL: http://tmcontrolpanel:3000 # Optional, for Codriver /co commands
       PANEL_INTERNAL_TOKEN: # Same value as the web app, at least 32 characters
       NADEO_SERVER_LOGIN:
       NADEO_SERVER_PASSWORD:
@@ -54,7 +54,7 @@ services:
     depends_on:
       - db
       - redis
-      - gocontrolpanel # Runs the database migrations
+      - tmcontrolpanel # Runs the database migrations
 
   dedicated:
     image: evoesports/trackmania:latest
@@ -80,9 +80,9 @@ services:
     restart: unless-stopped
     environment:
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?Set MARIADB_ROOT_PASSWORD}
-      MARIADB_USER: gocontrolpanel
+      MARIADB_USER: tmcontrolpanel
       MARIADB_PASSWORD: ${MARIADB_PASSWORD:?Set MARIADB_PASSWORD}
-      MARIADB_DATABASE: gocontrolpanel
+      MARIADB_DATABASE: tmcontrolpanel
     volumes:
       - db-data:/var/lib/mysql
 
