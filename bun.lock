@@ -3,7 +3,7 @@
   "configVersion": 0,
   "workspaces": {
     "": {
-      "name": "gocontrolpanel",
+      "name": "tmcontrolpanel",
       "devDependencies": {
         "prettier": "^3.5.3",
         "prettier-plugin-organize-imports": "^4.1.0",

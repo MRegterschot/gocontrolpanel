@@ -55,7 +55,7 @@ services:
       NADEO_REDIRECT_URI: http://localhost:3000/api/auth/callback/nadeo
       NADEO_SERVER_LOGIN: 
       NADEO_SERVER_PASSWORD: 
-      NADEO_CONTACT: GoControlPanel / <your contact info>
+      NADEO_CONTACT: TMControlPanel / <your contact info>
       REDIS_URI: redis://redis:6379
       DATABASE_URL: mysql://gocontrolpanel:VettePanel123@db:3306/gocontrolpanel
       HETZNER_KEY: 
@@ -82,7 +82,7 @@ services:
       WS_ALLOWED_ORIGINS: http://localhost:3000
       NADEO_SERVER_LOGIN: 
       NADEO_SERVER_PASSWORD: 
-      NADEO_CONTACT: GoControlPanel / <your contact info>
+      NADEO_CONTACT: TMControlPanel / <your contact info>
       NADEO_CLIENT_ID: 
       NADEO_CLIENT_SECRET: 
       LOG_LEVEL: info

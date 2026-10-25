@@ -1,7 +1,7 @@
 {
   "name": "@tmcontrolpanel/plugin-sdk",
   "version": "0.1.0",
-  "description": "Types and command line tools for GoControlPanel plugins",
+  "description": "Types and command line tools for TMControlPanel plugins",
   "license": "MIT",
   "private": true,
   "type": "module",

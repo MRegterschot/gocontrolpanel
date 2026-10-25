@@ -55,7 +55,7 @@ function cleanQuery(query: string): string {
   );
 }
 
-// The type GoControlPanel detects from a script name, as the GBX service does
+// The type TMControlPanel detects from a script name, as the GBX service does
 export function detectModeType(script: string): GameModeType | undefined {
   const lower = script.toLowerCase();
   return GAME_MODE_TYPES.find((type) => lower.includes(type));
@@ -289,7 +289,7 @@ export const generateScriptTool = defineTool({
     const detected = detectModeType(baseName(path));
     const note =
       wanted && detected !== wanted
-        ? ` Its name doesn't contain "${wanted}", so GoControlPanel will treat it as ${detected ?? "rounds"}.`
+        ? ` Its name doesn't contain "${wanted}", so TMControlPanel will treat it as ${detected ?? "rounds"}.`
         : "";
     const detail = Object.keys(settings).length
       ? ` with ${describe(settings)}`

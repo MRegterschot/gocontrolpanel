@@ -312,7 +312,7 @@ export async function uploadPluginPackage(
       const { manifest } = pkg;
       if (isFirstPartySlug(manifest.slug)) {
         throw new ServerError(
-          `"${manifest.slug}" is a plugin that ships with GoControlPanel; change the slug`,
+          `"${manifest.slug}" is a plugin that ships with TMControlPanel; change the slug`,
           "PluginNameTaken",
         );
       }

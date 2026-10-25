@@ -219,7 +219,7 @@ export async function ensureMarketplaceVersion(
   }
   if (!isVersionCompatible(entry)) {
     throw new ServerError(
-      `${slug} ${version} needs a newer version of GoControlPanel`,
+      `${slug} ${version} needs a newer version of TMControlPanel`,
       "PluginIncompatible",
     );
   }

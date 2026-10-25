@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Dumps the GoControlPanel database, keeps a copy locally and optionally sends it to another
+# Dumps the TMControlPanel database, keeps a copy locally and optionally sends it to another
 # machine or storage. Meant for cron, for example every night at 03:15:
-#   15 3 * * * /path/to/gocontrolpanel/scripts/backup-db.sh >> /var/log/gcp-backup.log 2>&1
+#   15 3 * * * /path/to/tmcontrolpanel/scripts/backup-db.sh >> /var/log/gcp-backup.log 2>&1
 # See docs/backups.md for the settings and how to restore.
 set -Eeuo pipefail
 
