@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  LEGACY_SERVER_CREDENTIAL_PREFIX,
   SERVER_CREDENTIAL_PREFIX,
   decryptServerCredential,
   encryptServerCredential,
@@ -12,6 +13,13 @@ describe("server credential encryption", () => {
     expect(a).not.toContain("SuperAdmin password");
     expect(a).not.toBe(b);
     expect(decryptServerCredential(a, key)).toBe("SuperAdmin password");
+  });
+  it("still reads credentials stored with the pre-rename marker", () => {
+    const current = encryptServerCredential("pw", key);
+    const legacy =
+      LEGACY_SERVER_CREDENTIAL_PREFIX +
+      current.slice(SERVER_CREDENTIAL_PREFIX.length);
+    expect(decryptServerCredential(legacy, key)).toBe("pw");
   });
   it("fails closed on plaintext, incorrect keys and modified ciphertext", () => {
     expect(() => decryptServerCredential("legacy-secret", key)).toThrow(

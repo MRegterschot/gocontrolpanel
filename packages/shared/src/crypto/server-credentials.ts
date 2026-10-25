@@ -6,6 +6,8 @@ import {
 } from "node:crypto";
 
 export const SERVER_CREDENTIAL_PREFIX = "tmcp-server:v1:";
+// Written by builds from before the rename; still readable, and rewritten by the migration script
+export const LEGACY_SERVER_CREDENTIAL_PREFIX = "gcp-server:v1:";
 function key(secret: string): Buffer {
   if (secret.length < 32)
     throw new Error(
@@ -29,14 +31,15 @@ export function decryptServerCredential(
   stored: string,
   secret: string,
 ): string {
-  if (!stored.startsWith(SERVER_CREDENTIAL_PREFIX))
+  const prefix = [
+    SERVER_CREDENTIAL_PREFIX,
+    LEGACY_SERVER_CREDENTIAL_PREFIX,
+  ].find((p) => stored.startsWith(p));
+  if (!prefix)
     throw new Error(
       "Server credentials need migration; run encrypt:server-credentials before starting the services",
     );
-  const data = Buffer.from(
-    stored.slice(SERVER_CREDENTIAL_PREFIX.length),
-    "base64",
-  );
+  const data = Buffer.from(stored.slice(prefix.length), "base64");
   try {
     const cipher = createDecipheriv(
       "aes-256-gcm",
