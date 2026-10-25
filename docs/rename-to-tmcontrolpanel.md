@@ -203,24 +203,20 @@ Done in the Step 4 PR. The tsup patterns became `/^@tmcontrolpanel\/(?!plugin-sd
 
 Done in the Step 5 PR. Route manifests before and after list the same 164 app routes once the group segment is ignored. If a dev server was running, delete `apps/web/.next/dev/types` once: stale generated types still point at the old path and break `typecheck`.
 
-### Step 6: Compatibility readers (additive, writers unchanged)
+### Step 6: Release-only identifiers and compatibility readers
 
-- [x] API keys: verify both `gcp_` and `tmcp_`.
-- [x] Credentials: read both `gcp-server:v1:` and the new marker for dedicated-server and file-manager credentials, same encryption key.
-- [x] JWT tickets: verifier accepts both `gcp-web`/`gcp-gbx-ws` and the new issuer/audience pair.
-- [x] Redis: GBX subscribes to both `gcp:server-events` and the new channel, with dedupe so a lifecycle event is not processed twice.
-- [x] Script response ID: callback matching accepts the old `gocontrolpanel` ID and the new one.
+Identifiers that only exist on `release` (not on `dev`) have no installs to protect, so they are renamed directly. Only identifiers that already exist on `dev` need a compatibility reader.
+
+- [x] Renamed directly (release-only): `gcp_` API keys to `tmcp_`, `gcp-server:v1:` to `tmcp-server:v1:`, JWT issuer/audience to `tmcp-web`/`tmcp-gbx-ws`, Redis channel to `tmcp:server-events`. Any key, stored credential or in-flight ticket produced by a deployed `release` build stops working: reissue keys and re-run `encrypt:server-credentials` on such instances.
+- [x] Script response ID (exists on `dev`): callbacks accept both `gocontrolpanel` and `tmcp`; requests still send the old ID until Step 7.
 - [x] Keep the legacy reserved plugin slugs.
-- [x] Add tests for old and new formats.
-- [ ] Publish as a GitHub release and deploy to every instance before Step 7 is released.
-
-Done in the Step 6 PR; writers are unchanged. New values readers accept: `tmcp_` keys, `tmcp-server:v1:` credentials, `tmcp-web`/`tmcp-gbx-ws` JWT claims, `tmcp:server-events` channel, `tmcp` script response ID. GBX drops an identical message arriving on both Redis channels within 1s; repeats on one channel are not collapsed.
+- [x] Tests for the new values and for both response IDs.
 
 ### Step 7: Switch the writers
 
 Merge to `release` freely, but only cut the release after Release A is running everywhere.
 
-- [ ] Issue `tmcp_` API keys, write the new credential marker, sign the new JWT claims, publish on the new Redis channel, use the new script response ID.
+- [ ] Use the new script response ID for requests (the other four identifiers were switched in Step 6).
 - [ ] Rename the sandbox bridge (`__gcp`, `__gcpLayouts`, `gcp-runtime.js`) in producer and consumer together; keep `__tmcpRegister`.
 - [ ] Change the `GCP:` manialink name and update snapshots intentionally.
 - [ ] Change the `GoControlPanel-Plugin` User-Agent after checking remote allowlists.

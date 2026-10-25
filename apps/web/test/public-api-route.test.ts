@@ -60,7 +60,7 @@ function req(
   return new NextRequest(`http://localhost/api/v1${path}`, {
     method: init.method ?? "GET",
     body: init.body,
-    headers: { authorization: "Bearer gcp_x", ...init.headers },
+    headers: { authorization: "Bearer tmcp_x", ...init.headers },
   });
 }
 

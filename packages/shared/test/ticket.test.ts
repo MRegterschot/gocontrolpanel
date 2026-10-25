@@ -16,23 +16,6 @@ describe("ws tickets", () => {
     expect(verified.expiresAt).toBeGreaterThan(Date.now());
   });
 
-  it("accepts tickets with the legacy or the new issuer/audience pair", async () => {
-    const claims = makeClaims();
-    for (const [iss, aud] of [
-      ["gcp-web", "gcp-gbx-ws"],
-      ["tmcp-web", "tmcp-gbx-ws"],
-    ]) {
-      const ticket = await new SignJWT({ claims })
-        .setProtectedHeader({ alg: "HS256" })
-        .setIssuer(iss)
-        .setAudience(aud)
-        .setJti("x")
-        .setExpirationTime("1m")
-        .sign(new TextEncoder().encode(secret));
-      expect((await verifyWsTicket(ticket, secret)).claims).toEqual(claims);
-    }
-  });
-
   it("rejects a ticket signed with another secret", async () => {
     const ticket = await signWsTicket(makeClaims(), "b".repeat(32));
     await expect(verifyWsTicket(ticket, secret)).rejects.toThrow();
@@ -41,8 +24,8 @@ describe("ws tickets", () => {
   it("rejects expired tickets", async () => {
     const ticket = await new SignJWT({ claims: makeClaims() })
       .setProtectedHeader({ alg: "HS256" })
-      .setIssuer("gcp-web")
-      .setAudience("gcp-gbx-ws")
+      .setIssuer("tmcp-web")
+      .setAudience("tmcp-gbx-ws")
       .setJti("x")
       .setIssuedAt(Math.floor(Date.now() / 1000) - 120)
       .setExpirationTime(Math.floor(Date.now() / 1000) - 60)
@@ -53,7 +36,7 @@ describe("ws tickets", () => {
   it("rejects tokens meant for another audience", async () => {
     const ticket = await new SignJWT({ claims: makeClaims() })
       .setProtectedHeader({ alg: "HS256" })
-      .setIssuer("gcp-web")
+      .setIssuer("tmcp-web")
       .setAudience("something-else")
       .setJti("x")
       .setExpirationTime("1m")

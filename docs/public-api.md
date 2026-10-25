@@ -79,7 +79,7 @@ Installing or updating a plugin through the API needs the same consent as the pa
 Send the key as a bearer token:
 
 ```sh
-curl -H "Authorization: Bearer gcp_…" https://panel.example.com/api/v1/servers
+curl -H "Authorization: Bearer tmcp_…" https://panel.example.com/api/v1/servers
 ```
 
 The API never uses the panel's session cookie; a request without a valid key gets `401`.
@@ -88,12 +88,12 @@ Bodies are JSON. A body whose fields all have defaults, such as the kick reason,
 
 ```sh
 # Queue a map from the server's map list
-curl -X POST -H "Authorization: Bearer gcp_…" -H "Content-Type: application/json" \
+curl -X POST -H "Authorization: Bearer tmcp_…" -H "Content-Type: application/json" \
   -d '{"uid":"<map uid>"}' \
   https://panel.example.com/api/v1/servers/<server id>/jukebox
 
 # Kick a player
-curl -X POST -H "Authorization: Bearer gcp_…" \
+curl -X POST -H "Authorization: Bearer tmcp_…" \
   https://panel.example.com/api/v1/servers/<server id>/players/<login>/kick
 ```
 

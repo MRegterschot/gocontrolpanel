@@ -5,13 +5,7 @@ import {
   randomBytes,
 } from "node:crypto";
 
-export const SERVER_CREDENTIAL_PREFIX = "gcp-server:v1:";
-// Readable now, written only once every instance can read it
-export const SERVER_CREDENTIAL_PREFIX_NEXT = "tmcp-server:v1:";
-const READABLE_CREDENTIAL_PREFIXES = [
-  SERVER_CREDENTIAL_PREFIX,
-  SERVER_CREDENTIAL_PREFIX_NEXT,
-];
+export const SERVER_CREDENTIAL_PREFIX = "tmcp-server:v1:";
 function key(secret: string): Buffer {
   if (secret.length < 32)
     throw new Error(
@@ -35,12 +29,14 @@ export function decryptServerCredential(
   stored: string,
   secret: string,
 ): string {
-  const prefix = READABLE_CREDENTIAL_PREFIXES.find((p) => stored.startsWith(p));
-  if (!prefix)
+  if (!stored.startsWith(SERVER_CREDENTIAL_PREFIX))
     throw new Error(
       "Server credentials need migration; run encrypt:server-credentials before starting the services",
     );
-  const data = Buffer.from(stored.slice(prefix.length), "base64");
+  const data = Buffer.from(
+    stored.slice(SERVER_CREDENTIAL_PREFIX.length),
+    "base64",
+  );
   try {
     const cipher = createDecipheriv(
       "aes-256-gcm",

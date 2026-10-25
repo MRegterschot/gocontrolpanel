@@ -1,9 +1,7 @@
 import { z } from "zod";
 
 // Redis pub/sub channel the web app publishes to after changing server rows
-export const SERVER_EVENTS_CHANNEL = "gcp:server-events";
-// The subscriber listens on this too; publishers switch to it in a later release
-export const SERVER_EVENTS_CHANNEL_NEXT = "tmcp:server-events";
+export const SERVER_EVENTS_CHANNEL = "tmcp:server-events";
 
 export const serverLifecycleEventSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("server.created"), serverId: z.string() }),
