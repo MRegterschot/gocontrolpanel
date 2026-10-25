@@ -26,8 +26,8 @@ const claims = sessionClaimsSchema.parse({
   id: userId,
   admin: true,
   permissions: ["servers:clients:view"],
-  servers: [{ id: serverId, name: "GCP e2e", role: "Admin" }],
-  groups: [{ id: "e2e", name: "e2e", role: "Admin", servers: [{ id: serverId, name: "GCP e2e" }] }],
+  servers: [{ id: serverId, name: "TMCP e2e", role: "Admin" }],
+  groups: [{ id: "e2e", name: "e2e", role: "Admin", servers: [{ id: serverId, name: "TMCP e2e" }] }],
 });
 
 function summarize(type: string, data: any): string {

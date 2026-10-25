@@ -178,9 +178,11 @@ Done in the Step 2 PR. Left for later steps: `SITE_URL` (Step 10), the `GoContro
 
 ### Step 3: Dev and test-only identifiers
 
-- [ ] `gcp-e2e`, `gcp_e2e`, `gcp_test` in the e2e/test compose files, env examples, and seed/watch scripts.
-- [ ] `gcp-dev` Compose project: keep the project name pinned or migrate volumes.
-- [ ] Test fixtures that hardcode brand strings.
+- [x] `gcp-e2e`, `gcp_e2e`, `gcp_test` in the e2e/test compose files, env examples, and seed/watch scripts.
+- [x] `gcp-dev` Compose project: keep the project name pinned or migrate volumes.
+- [x] Test fixtures that hardcode brand strings.
+
+Done in the Step 3 PR: e2e and test stacks now use `tmcp-e2e`, `tmcp_e2e`, `tmcp_test`, `tmcp-gbx-test`, `TMCP e2e` and the `tmcp` test user. The `gcp-dev` Compose project name and the `gocontrolpanel` development database name were kept on purpose, because renaming the project orphans the `gcp-dev_*` volumes; migrate them separately if wanted (Step 9 covers database names). Existing local `.env.e2e` files and e2e volumes still use the old names and need updating or `down -v`. The `gcp:server-events` channel in the real-server test doc waits for Step 7.
 
 ### Step 4: Workspace rename `@gcp/*` to `@tmcontrolpanel/*`
 

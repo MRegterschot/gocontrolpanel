@@ -20,12 +20,12 @@ bun run --filter @gcp/gbx-service test          # unit + component + HTTP/WS tes
 bun run --filter @gcp/gbx-service typecheck
 
 # Prisma/Redis adapters against real databases
-docker compose -p gcp-gbx-test -f apps/gbx-service/docker-compose.test.yml up -d
-DB=postgres DATABASE_URL=postgresql://gcp:gcp@localhost:55432/gcp_test bun run deploy
-INTEGRATION_DATABASE_URL=postgresql://gcp:gcp@localhost:55432/gcp_test \
+docker compose -p tmcp-gbx-test -f apps/gbx-service/docker-compose.test.yml up -d
+DB=postgres DATABASE_URL=postgresql://tmcp:tmcp@localhost:55432/tmcp_test bun run deploy
+INTEGRATION_DATABASE_URL=postgresql://tmcp:tmcp@localhost:55432/tmcp_test \
 INTEGRATION_REDIS_URL=redis://localhost:56379 \
   bun run --filter @gcp/gbx-service test:integration
-docker compose -p gcp-gbx-test -f apps/gbx-service/docker-compose.test.yml down -v
+docker compose -p tmcp-gbx-test -f apps/gbx-service/docker-compose.test.yml down -v
 DB=mysql bun run generate   # `deploy` regenerated the client for Postgres; switch back if you develop on MySQL
 ```
 

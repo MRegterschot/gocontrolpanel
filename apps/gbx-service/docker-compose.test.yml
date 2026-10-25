@@ -3,9 +3,9 @@ services:
   postgres:
     image: postgres:17-alpine
     environment:
-      POSTGRES_USER: gcp
-      POSTGRES_PASSWORD: gcp
-      POSTGRES_DB: gcp_test
+      POSTGRES_USER: tmcp
+      POSTGRES_PASSWORD: tmcp
+      POSTGRES_DB: tmcp_test
     ports:
       - "55432:5432"
     tmpfs:
