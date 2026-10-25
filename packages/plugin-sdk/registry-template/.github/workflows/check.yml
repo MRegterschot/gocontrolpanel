@@ -13,17 +13,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: MRegterschot/gocontrolpanel
-          ref: ${{ vars.GOCONTROLPANEL_REF || 'master' }}
-          path: .gocontrolpanel
+          ref: ${{ vars.TMCONTROLPANEL_REF || 'master' }}
+          path: .controlpanel
 
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: "1.4.4"
 
       - name: Install the plugin SDK
-        working-directory: .gocontrolpanel
+        working-directory: .controlpanel
         run: bun install --frozen-lockfile
 
       - name: Check every plugin and version
-        working-directory: .gocontrolpanel
+        working-directory: .controlpanel
         run: bun packages/plugin-sdk/src/cli/main.ts registry --registry "$GITHUB_WORKSPACE" --check

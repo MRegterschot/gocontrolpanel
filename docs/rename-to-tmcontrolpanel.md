@@ -222,10 +222,11 @@ Nothing here is persisted or exists on `dev` except the manialink name, so all o
 
 ### Step 8: Plugin registry repository (immutable artifacts)
 
-- [ ] Registry-template workflows: checkout path, `.gocontrolpanel` directory, `TMCONTROLPANEL_REF` with a fallback to `GOCONTROLPANEL_REF`. Apply the same change to the live plugin repository.
-- [ ] Update the 63 plugin-repository files (Appendix C): authors, READMEs, SDK links.
-- [ ] Publish new plugin versions with new hashes; never rewrite an existing ZIP.
-- [ ] Rebuild `_site` output and re-publish the wiki with `scripts/publish-wiki.ts`.
+- [x] Registry-template workflows: `.gocontrolpanel` directory to `.controlpanel` and `GOCONTROLPANEL_REF` to `TMCONTROLPANEL_REF`, no fallback (never deployed). The live plugin repository already used both names. The checkout `repository:` stays `MRegterschot/gocontrolpanel` until the repository is renamed in Step 10.
+- [x] Plugin repository (`tmcontrolpanel-plugins` PR #2): authors, READMEs, registry name, AGENTS.md, wiki home, test import and snapshots.
+- [x] New plugin versions with new hashes: the author is inside the package, so all 11 first-party plugins got a patch version. Existing archives are untouched.
+- [ ] After that PR merges: rebuild `_site` through the publish workflow and re-publish the wiki with `bun run wiki:publish`.
+- [ ] Step 10: repository URLs (`gocontrolpanel` in clone, SDK guide and wiki links) change with the repo rename.
 
 ### Step 9: Docker, deployment, and operations
 
