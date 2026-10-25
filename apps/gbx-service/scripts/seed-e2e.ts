@@ -24,7 +24,7 @@ async function main() {
     },
     create: {
       id: serverId,
-      name: "GCP e2e",
+      name: "TMCP e2e",
       description: "Real server test target",
       host: env.E2E_GBX_HOST ?? "127.0.0.1",
       port: Number(env.E2E_GBX_PORT ?? 5010),
@@ -57,7 +57,7 @@ async function main() {
       update: { deletedAt: null },
       create: {
         id: groupId,
-        name: "GCP e2e",
+        name: "TMCP e2e",
         description: "Real server test group",
       },
     });

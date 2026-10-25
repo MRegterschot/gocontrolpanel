@@ -5,6 +5,7 @@
 #   bun run infra:down         stop everything (data is kept)
 #
 # Everything except the game port only listens on 127.0.0.1: these databases use throwaway passwords.
+# Project name kept so existing gcp-dev_* volumes (database, server files) stay attached.
 name: gcp-dev
 
 services:
