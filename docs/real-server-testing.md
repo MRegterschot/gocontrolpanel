@@ -57,7 +57,7 @@ dce exec db mariadb -utmcp -ptmcp tmcp_e2e -e "select login, round, time, points
 dce exec redis redis-cli lrange jukebox:e2e-server 0 -1
 
 # Lifecycle events, as the web app will publish them
-dce exec redis redis-cli publish gcp:server-events '{"type":"server.plugins.updated","serverId":"e2e-server"}'
+dce exec redis redis-cli publish tmcp:server-events '{"type":"server.plugins.updated","serverId":"e2e-server"}'
 ```
 
 Join the server from the game with `#qjoin=<server login>@Trackmania` (the login is in `tmcp -X POST $TMCP/gbx/call -d '{"method":"GetMainServerPlayerInfo"}'`) or through the server browser.
@@ -144,7 +144,7 @@ Check each widget visually in the game client. Compare with screenshots from the
 | R1 | `dce stop db` during rounds, finish a few times, `dce start db` | Errors logged for records/players, service and sockets keep working; records resume after the database is back |
 | R2 | `dce stop redis` during a match | Jukebox and Nadeo token cache errors logged; live state and sockets unaffected; recovers when Redis is back |
 | R3 | Remove the `NADEO_*` values and restart | Everything works except WR/PB/metadata; widgets show `-`/0 |
-| R4 | Malformed lifecycle message: `redis-cli publish gcp:server-events 'nope'` | Warning logged, nothing else |
+| R4 | Malformed lifecycle message: `redis-cli publish tmcp:server-events 'nope'` | Warning logged, nothing else |
 | R4b | Break the HTTP route: set the web app's `GBX_SERVICE_URL` to a dead port, restart it, then toggle a plugin or delete a server | Web log: `GBX service request failed, event delivered over Redis instead`; the service still applies the change |
 | R5 | Open 20 `ws:watch live` sockets and close them, ten times over | Service memory (`ps -o rss -p <pid>`) returns to its baseline; no errors logged |
 | R6 | Soak: 1 h with fake players and some driving, plus 20 dedicated-server restarts (`for i in $(seq 20); do dce restart dedicated; sleep 40; done`) | Memory of the service process stable (`ps -o rss`), one callback handler per session, records counted once per finish |

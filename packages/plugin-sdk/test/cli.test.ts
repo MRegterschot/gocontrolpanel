@@ -10,7 +10,7 @@ const EXAMPLE = fileURLToPath(new URL("../examples/hello", import.meta.url));
 const dirs: string[] = [];
 
 function temp(): string {
-  const dir = mkdtempSync(join(tmpdir(), "gcp-sdk-"));
+  const dir = mkdtempSync(join(tmpdir(), "tmcp-sdk-"));
   dirs.push(dir);
   return dir;
 }

@@ -483,7 +483,7 @@ describe.skipIf(!url)("Prisma repositories", () => {
         version: "1.0.0",
         sdk: 1,
         description: "Shows the current map.",
-        author: "GoControlPanel",
+        author: "TMControlPanel",
         capabilities: ["ui", "maps:read"],
       }),
       "index.js": "globalThis.__tmcpRegister({ create() { return {}; } });",

@@ -24,7 +24,7 @@ let outDir: string;
 let hello: Uint8Array;
 
 beforeAll(async () => {
-  outDir = mkdtempSync(join(tmpdir(), "gcp-sandbox-"));
+  outDir = mkdtempSync(join(tmpdir(), "tmcp-sandbox-"));
   hello = (await packPlugin(EXAMPLE, { outDir })).bytes;
 });
 
