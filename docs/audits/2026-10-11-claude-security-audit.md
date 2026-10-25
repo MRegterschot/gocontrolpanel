@@ -128,7 +128,7 @@ parseTmTags('$l[" onmouseover="alert(1)]x$l')       -> <a href='" onmouseover="a
 
 **Category:** Secrets / SSRF. **New.** **Status:** URL parsing confirmed by probe.
 
-**Location:** [`services/filemanager/index.ts:30,99`](../../apps/web/src/services/filemanager/index.ts#L30), [`actions/filemanager/index.ts:46`](../../apps/web/src/actions/filemanager/index.ts#L46), and the page [`server/[id]/files/page.tsx`](<../../apps/web/src/app/(gocontroller)/server/[id]/files/page.tsx>), which passes `searchParams.path` to `getRoute`.
+**Location:** [`services/filemanager/index.ts:30,99`](../../apps/web/src/services/filemanager/index.ts#L30), [`actions/filemanager/index.ts:46`](../../apps/web/src/actions/filemanager/index.ts#L46), and the page [`server/[id]/files/page.tsx`](<../../apps/web/src/app/(panel)/server/[id]/files/page.tsx>), which passes `searchParams.path` to `getRoute`.
 
 **Issue:** The code builds `fileManager.url + path` and sends `Authorization: Bearer <filemanagerPassword>`. Nothing checks that `path` starts with `/`. When the stored URL ends in a hostname, for example `http://fm.example.com`, a path of `.attacker.tld/x` produces `http://fm.example.com.attacker.tld/x`. The probe confirmed that `Request` accepts this and targets the attacker's host. When the URL ends in a port, the same trick changes the port on the same host. `@`-userinfo tricks are rejected by `fetch`.
 

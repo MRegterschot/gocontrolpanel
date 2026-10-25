@@ -1,6 +1,6 @@
 "use client";
 
-import { createColumns } from "@/app/(gocontroller)/server/[id]/players/players-columns";
+import { createColumns } from "@/app/(panel)/server/[id]/players/players-columns";
 import useWebSocket from "@/hooks/use-websocket";
 import { PlayerInfo, wsPaths } from "@tmcontrolpanel/shared";
 import { useCallback, useState } from "react";

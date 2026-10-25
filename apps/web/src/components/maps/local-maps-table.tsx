@@ -2,7 +2,7 @@
 
 import { getMapList } from "@/lib/api-client/database";
 import { addMapList } from "@/actions/gbx/map";
-import { createColumns as createLocalMapColumns } from "@/app/(gocontroller)/server/[id]/maps/local-maps-columns";
+import { createColumns as createLocalMapColumns } from "@/app/(panel)/server/[id]/maps/local-maps-columns";
 import { Maps } from "@tmcontrolpanel/db";
 import { getErrorMessage } from "@/lib/utils";
 import { LocalMapInfo } from "@/types/map";
