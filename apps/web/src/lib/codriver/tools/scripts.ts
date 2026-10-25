@@ -23,7 +23,7 @@ const SCRIPT_SUFFIX = /\.Script\.txt$/i;
 // The script a bare mode name starts from when the server has it, over other scripts of
 // that type such as the default reverse cup
 const preferredScripts: Partial<Record<GameModeType, string>> = {
-  reversecup: "TM_ReverseCupGCP.Script.txt",
+  reversecup: "TM_ReverseCupTMCP.Script.txt",
 };
 
 // Short names players use for the Nadeo modes
@@ -35,7 +35,7 @@ const modeAliases: Record<string, string> = {
   tmwt: "TMWTTeams",
 };
 
-// "BNL/TM_ReverseCupGCP_BNL.Script.txt" -> "BNL Reverse Cup GCP BNL"
+// "BNL/TM_ReverseCupTMCP_BNL.Script.txt" -> "BNL Reverse Cup TMCP BNL"
 export function scriptWords(path: string): string {
   return path
     .replace(SCRIPT_SUFFIX, "")
@@ -75,8 +75,8 @@ function nadeoScript(query: string): string | undefined {
 
 const baseName = (path: string) => path.split("/").at(-1)!;
 
-// Of several similar scripts, the one the others extend by name: "Reverse Cup GCP" over
-// "Reverse Cup GCP League". Top-level files win from copies in folders.
+// Of several similar scripts, the one the others extend by name: "Reverse Cup TMCP" over
+// "Reverse Cup TMCP League". Top-level files win from copies in folders.
 function rootScript(paths: string[]): string | undefined {
   const words = (path: string) => normalize(scriptWords(baseName(path)));
   const roots = paths.filter((path) =>

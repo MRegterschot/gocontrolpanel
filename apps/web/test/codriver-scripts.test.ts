@@ -185,12 +185,12 @@ describe("custom script settings", () => {
 
   it("writes values with double quotes in triple quotes", () => {
     expect(
-      generateScript("TM_ReverseCupGCP.Script.txt", {
+      generateScript("TM_ReverseCupTMCP.Script.txt", {
         S_ComplexPointsRepartition: { value: '{"2":[4,8]}', type: "string" },
         S_PointsRepartition: { value: "1,2", type: "string" },
       }),
     ).toBe(
-      '#Extends "Modes/TM_ReverseCupGCP.Script.txt"\n\n#Setting S_ComplexPointsRepartition """{"2":[4,8]}"""\n#Setting S_PointsRepartition "1,2"\n',
+      '#Extends "Modes/TM_ReverseCupTMCP.Script.txt"\n\n#Setting S_ComplexPointsRepartition """{"2":[4,8]}"""\n#Setting S_PointsRepartition "1,2"\n',
     );
   });
 });
@@ -199,13 +199,13 @@ describe("generate_script", () => {
   beforeEach(() => {
     mocks.write.mockReset();
     mocks.scripts = [
-      "TM_ReverseCupGCP.Script.txt",
-      "TM_ReverseCupGCP_League.Script.txt",
-      "Benelux/TM_ReverseCupGCP_Finals.Script.txt",
+      "TM_ReverseCupTMCP.Script.txt",
+      "TM_ReverseCupTMCP_League.Script.txt",
+      "Benelux/TM_ReverseCupTMCP_Finals.Script.txt",
       "TM_Cup.Script.txt",
     ];
     mocks.files = {
-      "Scripts/Modes/TM_ReverseCupGCP.Script.txt": reverseCup,
+      "Scripts/Modes/TM_ReverseCupTMCP.Script.txt": reverseCup,
     };
   });
 
@@ -218,8 +218,8 @@ describe("generate_script", () => {
       ),
     ).toBe("BNL/TM_TimeAttack_BNL.Script.txt");
     expect(
-      targetPath("TM_ReverseCupGCP.Script.txt", undefined, undefined),
-    ).toBe("TM_ReverseCupGCP_Custom.Script.txt");
+      targetPath("TM_ReverseCupTMCP.Script.txt", undefined, undefined),
+    ).toBe("TM_ReverseCupTMCP_Custom.Script.txt");
     expect(targetPath("x.Script.txt", "My Cup", "../a/b")).toBe(
       "a/b/My Cup.Script.txt",
     );
@@ -235,8 +235,8 @@ describe("generate_script", () => {
       ],
     });
     expect(input).toMatchObject({
-      mode: "TM_ReverseCupGCP.Script.txt",
-      name: "TM_ReverseCupGCP_BNL.Script.txt",
+      mode: "TM_ReverseCupTMCP.Script.txt",
+      name: "TM_ReverseCupTMCP_BNL.Script.txt",
       folder: "BNL",
     });
     expect(await generateScriptTool.confirm!(ctx, input)).toBeNull();
@@ -244,15 +244,15 @@ describe("generate_script", () => {
     expect(mocks.write).toHaveBeenCalledWith(
       ctx.actor,
       serverId,
-      "Scripts/Modes/BNL/TM_ReverseCupGCP_BNL.Script.txt",
-      '#Extends "Modes/TM_ReverseCupGCP.Script.txt"\n\n#Setting S_WarmUpNb 1\n#Setting S_DNF_LossPoints 12\n',
+      "Scripts/Modes/BNL/TM_ReverseCupTMCP_BNL.Script.txt",
+      '#Extends "Modes/TM_ReverseCupTMCP.Script.txt"\n\n#Setting S_WarmUpNb 1\n#Setting S_DNF_LossPoints 12\n',
     );
     expect(result.reply).toBe(
-      "Created BNL/TM_ReverseCupGCP_BNL.Script.txt from TM_ReverseCupGCP.Script.txt with S_WarmUpNb 1, S_DNF_LossPoints 12.",
+      "Created BNL/TM_ReverseCupTMCP_BNL.Script.txt from TM_ReverseCupTMCP.Script.txt with S_WarmUpNb 1, S_DNF_LossPoints 12.",
     );
   });
 
-  it("prefers TM_ReverseCupGCP over the default reverse cup script", async () => {
+  it("prefers TM_ReverseCupTMCP over the default reverse cup script", async () => {
     mocks.scripts.push(
       "TM_ReverseCup.Script.txt",
       "TM2020-Gamemodes/TM_ReverseCup.Script.txt",
@@ -260,7 +260,7 @@ describe("generate_script", () => {
     for (const mode of ["reverse cup", "ReverseCup", "the reverse cup mode"])
       expect(
         await generateScriptTool.prepare!(ctx, { mode, folder: "BNL" }),
-      ).toMatchObject({ mode: "TM_ReverseCupGCP.Script.txt" });
+      ).toMatchObject({ mode: "TM_ReverseCupTMCP.Script.txt" });
     // A script asked for by name still wins
     expect(
       await generateScriptTool.prepare!(ctx, {
@@ -342,8 +342,8 @@ describe("match tools", () => {
     mocks.runCommand.mockReset();
     mocks.plugins.mockResolvedValue([row(true)]);
     mocks.scripts = [
-      "TM_ReverseCupGCP.Script.txt",
-      "BNL/TM_ReverseCupGCP_BNL.Script.txt",
+      "TM_ReverseCupTMCP.Script.txt",
+      "BNL/TM_ReverseCupTMCP_BNL.Script.txt",
       "BNL/TM_TimeAttack_BNL.Script.txt",
     ];
     mocks.mapFiles = [
@@ -358,7 +358,7 @@ describe("match tools", () => {
 
   it("sets scripts, maps, the pick and ban order and a random lobby map", async () => {
     const input = await setMatchConfig.prepare!(ctx, {
-      script: "BNL/TM_ReverseCupGCP_BNL.Script.txt",
+      script: "BNL/TM_ReverseCupTMCP_BNL.Script.txt",
       maps: "the BNL maps",
       pick_ban_type: "player",
       order: [
@@ -380,7 +380,7 @@ describe("match tools", () => {
     const saved = mocks.saveConfig.mock.calls[0][3];
     expect(saved).toEqual({
       admins: ["admin-login"],
-      script: "BNL/TM_ReverseCupGCP_BNL.Script.txt",
+      script: "BNL/TM_ReverseCupTMCP_BNL.Script.txt",
       maps: mocks.mapFiles.slice(0, 5),
       pickAndBan: { type: "player", order: "p:1,p:2,p:3,p:4,r" },
       lobby: {
