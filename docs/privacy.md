@@ -4,7 +4,7 @@ Last updated: [date]
 
 <!-- Publishing note: Replace bracketed fields and confirm the enabled features, providers, retention periods, and applicable legal requirements for this deployment before publishing. -->
 
-This notice explains how [operator name] handles personal information when you use [panel name and URL] or play on the Trackmania servers it manages. GoControlPanel is self-hosted software; the operator of this installation determines how it is configured and how information is used.
+This notice explains how [operator name] handles personal information when you use [panel name and URL] or play on the Trackmania servers it manages. TMControlPanel is self-hosted software; the operator of this installation determines how it is configured and how information is used.
 
 For privacy questions or requests, contact [privacy email or contact URL]. Our contact address is [operator address].
 

@@ -1,6 +1,6 @@
-# GoControlPanel contributor guide
+# TMControlPanel contributor guide
 
-GoControlPanel manages dedicated Trackmania servers: server and game settings, maps, players, live matches, recorded results, plugins, and related Nadeo, Trackmania Exchange, file manager, and Hetzner integrations.
+TMControlPanel manages dedicated Trackmania servers: server and game settings, maps, players, live matches, recorded results, plugins, and related Nadeo, Trackmania Exchange, file manager, and Hetzner integrations.
 
 ## Workspace and runtime
 

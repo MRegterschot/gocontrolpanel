@@ -1,6 +1,6 @@
 # First-party plugins
 
-The first-party plugins available to GoControlPanel are ordinary [plugin SDK](./plugin-sdk.md) packages. They run in the same sandbox as marketplace plugins, with only the capabilities they declare. This guide is for contributors who change them or add one.
+The first-party plugins available to TMControlPanel are ordinary [plugin SDK](./plugin-sdk.md) packages. They run in the same sandbox as marketplace plugins, with only the capabilities they declare. This guide is for contributors who change them or add one.
 
 | Plugin | What it does | Capabilities |
 |---|---|---|
