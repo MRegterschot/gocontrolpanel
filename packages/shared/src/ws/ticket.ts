@@ -3,6 +3,9 @@ import { SessionClaims, sessionClaimsSchema } from "../permissions";
 
 export const WS_TICKET_ISSUER = "gcp-web";
 export const WS_TICKET_AUDIENCE = "gcp-gbx-ws";
+// Also accepted by the verifier; the signer switches to these in a later release
+export const WS_TICKET_ISSUER_NEXT = "tmcp-web";
+export const WS_TICKET_AUDIENCE_NEXT = "tmcp-gbx-ws";
 export const WS_TICKET_TTL_SECONDS = 60;
 
 export interface VerifiedWsTicket {
@@ -43,8 +46,8 @@ export async function verifyWsTicket(
   secret: string,
 ): Promise<VerifiedWsTicket> {
   const { payload } = await jwtVerify(ticket, encodeSecret(secret), {
-    issuer: WS_TICKET_ISSUER,
-    audience: WS_TICKET_AUDIENCE,
+    issuer: [WS_TICKET_ISSUER, WS_TICKET_ISSUER_NEXT],
+    audience: [WS_TICKET_AUDIENCE, WS_TICKET_AUDIENCE_NEXT],
     algorithms: ["HS256"],
   });
 

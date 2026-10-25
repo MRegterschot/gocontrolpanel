@@ -129,6 +129,14 @@ describe("api key tokens", () => {
     expect(bearerApiKeyToken("Bearer gcp_short")).toBeNull();
     expect(bearerApiKeyToken(`Bearer ${token} extra`)).toBeNull();
   });
+
+  it("accepts both the legacy gcp_ and the new tmcp_ prefix", () => {
+    const body = generateApiKeyToken().token.slice("gcp_".length);
+    expect(bearerApiKeyToken(`Bearer gcp_${body}`)).toBe(`gcp_${body}`);
+    expect(bearerApiKeyToken(`Bearer tmcp_${body}`)).toBe(`tmcp_${body}`);
+    expect(bearerApiKeyToken(`Bearer other_${body}`)).toBeNull();
+    expect(bearerApiKeyToken("Bearer tmcp_short")).toBeNull();
+  });
 });
 
 describe("authenticateApiKey", () => {

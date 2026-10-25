@@ -16,6 +16,23 @@ describe("ws tickets", () => {
     expect(verified.expiresAt).toBeGreaterThan(Date.now());
   });
 
+  it("accepts tickets with the legacy or the new issuer/audience pair", async () => {
+    const claims = makeClaims();
+    for (const [iss, aud] of [
+      ["gcp-web", "gcp-gbx-ws"],
+      ["tmcp-web", "tmcp-gbx-ws"],
+    ]) {
+      const ticket = await new SignJWT({ claims })
+        .setProtectedHeader({ alg: "HS256" })
+        .setIssuer(iss)
+        .setAudience(aud)
+        .setJti("x")
+        .setExpirationTime("1m")
+        .sign(new TextEncoder().encode(secret));
+      expect((await verifyWsTicket(ticket, secret)).claims).toEqual(claims);
+    }
+  });
+
   it("rejects a ticket signed with another secret", async () => {
     const ticket = await signWsTicket(makeClaims(), "b".repeat(32));
     await expect(verifyWsTicket(ticket, secret)).rejects.toThrow();

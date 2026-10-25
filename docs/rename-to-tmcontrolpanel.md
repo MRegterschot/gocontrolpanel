@@ -205,14 +205,16 @@ Done in the Step 5 PR. Route manifests before and after list the same 164 app ro
 
 ### Step 6: Compatibility readers (additive, writers unchanged)
 
-- [ ] API keys: verify both `gcp_` and `tmcp_`.
-- [ ] Credentials: read both `gcp-server:v1:` and the new marker for dedicated-server and file-manager credentials, same encryption key.
-- [ ] JWT tickets: verifier accepts both `gcp-web`/`gcp-gbx-ws` and the new issuer/audience pair.
-- [ ] Redis: GBX subscribes to both `gcp:server-events` and the new channel, with dedupe so a lifecycle event is not processed twice.
-- [ ] Script response ID: callback matching accepts the old `gocontrolpanel` ID and the new one.
-- [ ] Keep the legacy reserved plugin slugs.
-- [ ] Add tests for old and new formats.
+- [x] API keys: verify both `gcp_` and `tmcp_`.
+- [x] Credentials: read both `gcp-server:v1:` and the new marker for dedicated-server and file-manager credentials, same encryption key.
+- [x] JWT tickets: verifier accepts both `gcp-web`/`gcp-gbx-ws` and the new issuer/audience pair.
+- [x] Redis: GBX subscribes to both `gcp:server-events` and the new channel, with dedupe so a lifecycle event is not processed twice.
+- [x] Script response ID: callback matching accepts the old `gocontrolpanel` ID and the new one.
+- [x] Keep the legacy reserved plugin slugs.
+- [x] Add tests for old and new formats.
 - [ ] Publish as a GitHub release and deploy to every instance before Step 7 is released.
+
+Done in the Step 6 PR; writers are unchanged. New values readers accept: `tmcp_` keys, `tmcp-server:v1:` credentials, `tmcp-web`/`tmcp-gbx-ws` JWT claims, `tmcp:server-events` channel, `tmcp` script response ID. GBX drops an identical message arriving on both Redis channels within 1s; repeats on one channel are not collapsed.
 
 ### Step 7: Switch the writers
 

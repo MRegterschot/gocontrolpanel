@@ -1,11 +1,14 @@
-import { API_KEY_TOKEN_PREFIX } from "@tmcontrolpanel/shared";
+import {
+  ACCEPTED_API_KEY_TOKEN_PREFIXES,
+  API_KEY_TOKEN_PREFIX,
+} from "@tmcontrolpanel/shared";
 import { createHash, randomBytes } from "node:crypto";
 import "server-only";
 
 const TOKEN_BYTES = 32;
-// gcp_ plus 32 bytes in base64url
+// A known prefix plus 32 bytes in base64url
 const TOKEN_PATTERN = new RegExp(
-  `^${API_KEY_TOKEN_PREFIX}[A-Za-z0-9_-]{${Math.ceil((TOKEN_BYTES * 4) / 3)}}$`,
+  `^(?:${ACCEPTED_API_KEY_TOKEN_PREFIXES.join("|")})[A-Za-z0-9_-]{${Math.ceil((TOKEN_BYTES * 4) / 3)}}$`,
 );
 // Enough to tell keys apart in the UI without weakening the rest of the token
 const DISPLAY_PREFIX_LENGTH = API_KEY_TOKEN_PREFIX.length + 8;

@@ -243,6 +243,12 @@ describe("rounds and scores", () => {
     expect(h.runtime.state.liveInfo.isPaused).toBe(true);
   });
 
+  it("accepts pause replies carrying the new response ID", async () => {
+    const h = await createHarness();
+    await h.script("Maniaplanet.Pause.Status", { responseid: "tmcp", available: true, active: true });
+    expect(h.runtime.state.liveInfo.isPaused).toBe(true);
+  });
+
   it("marks eliminated players by account id", async () => {
     const h = await createHarness();
     h.runtime.state.patchPlayer("p1", { login: "p1", accountId: "acc-1" });
