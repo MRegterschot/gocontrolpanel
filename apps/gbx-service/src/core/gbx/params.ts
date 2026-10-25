@@ -1,4 +1,4 @@
-import CustomType from "xmlrpc/lib/customtype";
+import CustomType from "xmlrpc/lib/customtype.js";
 
 // JSON can't tell 1 from 1.0, so whole numbers go out as <int>; these fields only take <double>
 const DOUBLE_FIELDS: Record<string, readonly string[]> = {

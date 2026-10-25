@@ -1,4 +1,4 @@
-declare module "xmlrpc/lib/customtype" {
+declare module "xmlrpc/lib/customtype.js" {
   export default class CustomType {
     constructor(raw: unknown);
     raw: unknown;
