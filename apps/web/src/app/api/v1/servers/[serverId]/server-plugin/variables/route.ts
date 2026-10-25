@@ -1,6 +1,6 @@
 import { setServerPluginVariablesAs } from "@/actions/gbx/server-only/server-plugin";
 import { publicApiRoute } from "@/lib/public-api/route";
-import { setServerScriptPluginVariables } from "@gcp/shared/public-api";
+import { setServerScriptPluginVariables } from "@tmcontrolpanel/shared/public-api";
 
 export const PATCH = publicApiRoute(
   setServerScriptPluginVariables,

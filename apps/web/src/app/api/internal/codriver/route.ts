@@ -5,7 +5,10 @@ import { codriverEventStream } from "@/lib/codriver/stream";
 import { MAX_REQUEST_LENGTH } from "@/lib/codriver/text";
 import config from "@/lib/config";
 import { getClient } from "@/lib/dbclient";
-import { type CodriverProgress, MIN_SECRET_LENGTH } from "@gcp/shared";
+import {
+  type CodriverProgress,
+  MIN_SECRET_LENGTH,
+} from "@tmcontrolpanel/shared";
 import { NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
 import { z } from "zod";

@@ -2,9 +2,9 @@ import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { assertResourceId } from "@/lib/resource-id";
 import { PaginationResponse, ServerResponse } from "@/types/responses";
-import { Prisma } from "@gcp/db";
-import { type ApiKeyScope, parseApiKeyScopes } from "@gcp/shared";
 import { PaginationState } from "@tanstack/react-table";
+import { Prisma } from "@tmcontrolpanel/db";
+import { type ApiKeyScope, parseApiKeyScopes } from "@tmcontrolpanel/shared";
 import "server-only";
 
 export const apiKeyRowSelect = Prisma.validator<Prisma.ApiKeysSelect>()({

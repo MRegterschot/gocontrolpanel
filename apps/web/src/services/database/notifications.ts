@@ -1,7 +1,7 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { ServerResponse } from "@/types/responses";
-import { Notifications } from "@gcp/db";
+import { Notifications } from "@tmcontrolpanel/db";
 import "server-only";
 
 export async function getNotifications(): Promise<

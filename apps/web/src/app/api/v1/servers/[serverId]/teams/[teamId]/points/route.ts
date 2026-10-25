@@ -4,7 +4,7 @@ import {
   setTeamRoundPointsAs,
 } from "@/actions/gbx/server-only/player";
 import { publicApiRoute } from "@/lib/public-api/route";
-import { setTeamPoints } from "@gcp/shared/public-api";
+import { setTeamPoints } from "@tmcontrolpanel/shared/public-api";
 
 const SETTERS = {
   round: setTeamRoundPointsAs,

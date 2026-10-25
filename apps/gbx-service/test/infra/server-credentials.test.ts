@@ -1,4 +1,4 @@
-import { encryptServerCredential } from "@gcp/shared/server-credentials";
+import { encryptServerCredential } from "@tmcontrolpanel/shared/server-credentials";
 import { afterEach, expect, it, vi } from "vitest";
 import { PrismaServerRepository } from "../../src/infra/db/prisma-repositories";
 afterEach(() => vi.unstubAllEnvs());

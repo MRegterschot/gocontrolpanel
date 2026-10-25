@@ -3,7 +3,7 @@ import {
   hasPermission,
   sessionClaimsSchema,
   type SessionClaims,
-} from "@gcp/shared";
+} from "@tmcontrolpanel/shared";
 import type { Session } from "next-auth";
 import "server-only";
 import { getClient } from "./dbclient";

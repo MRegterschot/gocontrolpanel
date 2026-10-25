@@ -5,7 +5,10 @@ import {
 } from "@/actions/server-only/plugins";
 import { getClient } from "@/lib/dbclient";
 import { storedManifest } from "@/services/plugins";
-import { validatePluginConfig, type PluginConfig } from "@gcp/shared";
+import {
+  validatePluginConfig,
+  type PluginConfig,
+} from "@tmcontrolpanel/shared";
 import "server-only";
 import { z } from "zod/v4";
 import { quote } from "../confirm-text";

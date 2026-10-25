@@ -1,4 +1,4 @@
-import { internalPaths } from "@gcp/shared";
+import { internalPaths } from "@tmcontrolpanel/shared";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { serverRecord } from "../fakes/harness";
 import { createApp, SERVICE_TOKEN } from "./app-fixture";

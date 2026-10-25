@@ -7,9 +7,12 @@ import { Form } from "@/components/ui/form";
 import type { ApiKeyTarget } from "@/lib/api-keys/authenticate";
 import { getErrorMessage } from "@/lib/utils";
 import { ServerError } from "@/types/responses";
-import { API_KEY_SCOPE_DESCRIPTIONS, API_KEY_SCOPES } from "@gcp/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconKey } from "@tabler/icons-react";
+import {
+  API_KEY_SCOPE_DESCRIPTIONS,
+  API_KEY_SCOPES,
+} from "@tmcontrolpanel/shared";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import {

@@ -1,5 +1,5 @@
 import { notFound, publicApiRoute } from "@/lib/public-api/route";
-import { getServer } from "@gcp/shared/public-api";
+import { getServer } from "@tmcontrolpanel/shared/public-api";
 
 export const GET = publicApiRoute(getServer, async ({ principal, params }) => {
   // The wrapper already rejected servers the key cannot reach

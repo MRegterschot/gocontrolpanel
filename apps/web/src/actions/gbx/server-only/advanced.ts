@@ -1,6 +1,6 @@
 import { type Actor, requirePermission } from "@/lib/actor";
 import { gbxService, getGbxClient } from "@/lib/gbx-service";
-import { serverPermissions } from "@gcp/shared";
+import { serverPermissions } from "@tmcontrolpanel/shared";
 import "server-only";
 import { logAudit } from "../../database/server-only/audit-logs";
 

@@ -27,7 +27,7 @@ ARG DB_TYPE
 ENV DB=$DB_TYPE
 
 RUN bun run generate
-RUN bun run --filter @gcp/web build
+RUN bun run --filter @tmcontrolpanel/web build
 
 FROM base AS runner
 WORKDIR /app

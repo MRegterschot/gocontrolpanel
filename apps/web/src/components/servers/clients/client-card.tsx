@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getErrorMessage } from "@/lib/utils";
 import { ServerError } from "@/types/responses";
-import { ServerClient } from "@gcp/shared";
 import { IconPlugConnected, IconPlugConnectedX } from "@tabler/icons-react";
+import { ServerClient } from "@tmcontrolpanel/shared";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 

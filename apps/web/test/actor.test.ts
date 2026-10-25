@@ -1,4 +1,4 @@
-import { serverPermissions } from "@gcp/shared";
+import { serverPermissions } from "@tmcontrolpanel/shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({

@@ -1,6 +1,6 @@
 import { ServerError } from "@/types/responses";
-import { Prisma } from "@gcp/db";
-import { MIN_SECRET_LENGTH } from "@gcp/shared";
+import { Prisma } from "@tmcontrolpanel/db";
+import { MIN_SECRET_LENGTH } from "@tmcontrolpanel/shared";
 import crypto from "crypto";
 import "server-only";
 import config from "./config";

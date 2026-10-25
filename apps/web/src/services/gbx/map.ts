@@ -5,7 +5,7 @@ import { getLogger } from "@/lib/logger";
 import { getKeyJukebox, getRedisClient } from "@/lib/redis";
 import { JukeboxMap } from "@/types/map";
 import { ServerError, ServerResponse } from "@/types/responses";
-import { serverPermissions, type SMapInfo } from "@gcp/shared";
+import { serverPermissions, type SMapInfo } from "@tmcontrolpanel/shared";
 import "server-only";
 
 export async function getJukebox(

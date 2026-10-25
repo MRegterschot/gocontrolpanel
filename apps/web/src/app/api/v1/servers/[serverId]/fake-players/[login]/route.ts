@@ -1,6 +1,6 @@
 import { disconnectFakePlayerAs } from "@/actions/gbx/server-only/advanced";
 import { publicApiRoute } from "@/lib/public-api/route";
-import { disconnectFakePlayer } from "@gcp/shared/public-api";
+import { disconnectFakePlayer } from "@tmcontrolpanel/shared/public-api";
 
 export const DELETE = publicApiRoute(
   disconnectFakePlayer,

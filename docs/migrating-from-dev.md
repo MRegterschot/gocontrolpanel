@@ -177,7 +177,7 @@ Never run both at once. Restore the dump only if you made schema changes of your
 ## For developers and forks
 
 - Old paths: `src/**` → `apps/web/src/**`; `src/lib/prisma/{mysql,postgres}` → `packages/db/prisma/{mysql,postgres}`; `Dockerfile` and `start.sh` → `apps/web/`.
-- Imports from `@/lib/prisma/generated` become `@gcp/db`. Live, player, map and server types come from `@gcp/shared`.
+- Imports from `@/lib/prisma/generated` become `@tmcontrolpanel/db`. Live, player, map and server types come from `@tmcontrolpanel/shared`.
 - Removed from the web app: `src/server.ts` (custom server), `next-ws`, `/api/ws`, the `gbxclient`/`plugin`/`manialink` managers, `build:templates` and `@evotm/gbxclient`. The web app reaches dedicated servers only through `apps/web/src/lib/gbx-service.ts`.
 - Commands are now run from the repo root: `bun install`, `bun run infra:up`, `bun run deploy` (migrations), `bun run dev` (web) and `bun run dev:gbx` (service). See [CONTRIBUTING.md](../CONTRIBUTING.md).
 - CI: `workspace-check.yml` typechecks, tests and builds both apps; the release workflow builds and pushes both images (`apps/web/Dockerfile` and `apps/gbx-service/Dockerfile`).

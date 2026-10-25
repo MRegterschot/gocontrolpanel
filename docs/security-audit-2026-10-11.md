@@ -406,9 +406,9 @@ The most consequential chains are player-supplied HTML executing in an operator�
 
 ## Verification performed
 
-- Web unit suite: `bun run --filter @gcp/web test` — **32 files, 350 tests passed**.
-- GBX service unit suite: `bun run --filter @gcp/gbx-service test` — **32 files, 317 tests passed**.
-- Shared package unit suite: `bun run --filter @gcp/shared test` — **9 files, 85 tests passed**.
+- Web unit suite: `bun run --filter @tmcontrolpanel/web test` — **32 files, 350 tests passed**.
+- GBX service unit suite: `bun run --filter @tmcontrolpanel/gbx-service test` — **32 files, 317 tests passed**.
+- Shared package unit suite: `bun run --filter @tmcontrolpanel/shared test` — **9 files, 85 tests passed**.
 - A local Node probe against installed `tmtags` reproduced raw HTML and unsafe link output. The raw-tag reproduction is:
 
   ```js

@@ -17,7 +17,7 @@ import type {
   EndpointParams,
   EndpointQuery,
   EndpointResult,
-} from "@gcp/shared/public-api";
+} from "@tmcontrolpanel/shared/public-api";
 import { NextRequest, NextResponse } from "next/server";
 import "server-only";
 import type { z } from "zod/v4";

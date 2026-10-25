@@ -7,8 +7,8 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "bun run --filter @gcp/web dev",
-    "dev:gbx": "bun run --filter @gcp/gbx-service dev",
+    "dev": "bun run --filter @tmcontrolpanel/web dev",
+    "dev:gbx": "bun run --filter @tmcontrolpanel/gbx-service dev",
     "setup": "bun install && bun run deploy",
     "infra:up": "docker compose --env-file .env -f dev/docker-compose.yml up -d --wait redis mariadb",
     "infra:up:postgres": "docker compose --env-file .env -f dev/docker-compose.yml up -d --wait redis postgres",
@@ -17,11 +17,11 @@
     "build": "bun --env-file=.env run --filter '*' build",
     "test": "bun --env-file=.env run --filter '*' test",
     "typecheck": "bun --env-file=.env run --filter '*' typecheck",
-    "generate": "bun --env-file=.env run --filter @gcp/db generate",
-    "migrate": "bun --env-file=.env run --filter @gcp/db migrate",
-    "migrate:create": "bun --env-file=.env run --filter @gcp/db migrate:create",
-    "deploy": "bun --env-file=.env run --filter @gcp/db deploy",
-    "reset": "bun --env-file=.env run --filter @gcp/db reset",
+    "generate": "bun --env-file=.env run --filter @tmcontrolpanel/db generate",
+    "migrate": "bun --env-file=.env run --filter @tmcontrolpanel/db migrate",
+    "migrate:create": "bun --env-file=.env run --filter @tmcontrolpanel/db migrate:create",
+    "deploy": "bun --env-file=.env run --filter @tmcontrolpanel/db deploy",
+    "reset": "bun --env-file=.env run --filter @tmcontrolpanel/db reset",
     "pretty": "prettier --write \"**/*.{ts,tsx,json,css}\"",
     "encrypt:server-credentials": "bun --env-file=.env scripts/encrypt-server-credentials.ts"
   },

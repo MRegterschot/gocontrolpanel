@@ -24,9 +24,9 @@ import {
 } from "@/lib/scripts";
 import { getErrorMessage } from "@/lib/utils";
 import { ServerError } from "@/types/responses";
-import { GameModeType } from "@gcp/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconFileTextSpark, IconPlus } from "@tabler/icons-react";
+import { GameModeType } from "@tmcontrolpanel/shared";
 import { useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";

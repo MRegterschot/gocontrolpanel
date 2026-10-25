@@ -1,4 +1,8 @@
-import type { ChatConfig, PlayerChat, PlayerInfo } from "@gcp/shared";
+import type {
+  ChatConfig,
+  PlayerChat,
+  PlayerInfo,
+} from "@tmcontrolpanel/shared";
 import { AsyncLocalStorage } from "node:async_hooks";
 import type { GbxConnection } from "../gbx/connection";
 import type { LiveState } from "../live/live-state";

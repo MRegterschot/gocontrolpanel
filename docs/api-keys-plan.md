@@ -81,7 +81,7 @@ model ApiKeys {
 | `jukebox:write` | Queue maps and clear the jukebox  |
 | `matches:read`  | Recorded matches                  |
 
-Scopes live in `@gcp/shared` so the web UI and the route wrapper use the same list. A key needs at least one scope.
+Scopes live in `@tmcontrolpanel/shared` so the web UI and the route wrapper use the same list. A key needs at least one scope.
 
 ## 5. Authentication and permissions (`apps/web/src/lib/api-key.ts`)
 
@@ -123,7 +123,7 @@ The API is defined as Zod schemas before any route exists; the OpenAPI document 
 
 - Schemas use `zod/v4` (bundled with the installed `zod` 3.25), so `.meta()` and JSON Schema output are available without migrating the rest of the codebase off Zod 3.
 - Each endpoint is one `defineEndpoint({ method, path, scope, summary, params, query, body, response })` entry. DTOs are named with `.meta({ id })` so they become reusable OpenAPI components.
-- The contract lives in `@gcp/shared` with no OpenAPI dependency, so a future client SDK or the GBX service can import it.
+- The contract lives in `@tmcontrolpanel/shared` with no OpenAPI dependency, so a future client SDK or the GBX service can import it.
 - `apps/web/src/lib/public-api/openapi.ts` builds the OpenAPI 3.1 document from the endpoint list with `zod-openapi`, including the Bearer security scheme, the scope per operation and the shared error responses.
 - Tests check that the document builds, every endpoint has a scope, paths are unique and every path parameter has a schema.
 

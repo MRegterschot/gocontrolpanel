@@ -1,4 +1,4 @@
-import { chatConfigSchema } from "@gcp/shared";
+import { chatConfigSchema } from "@tmcontrolpanel/shared";
 import { z } from "zod";
 
 // Server-side schemas for the admin Server Actions. TypeScript types don't exist at runtime, so

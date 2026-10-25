@@ -41,7 +41,7 @@ import {
   type MarketplaceVersion,
   type PluginConfig,
   type PluginManifest,
-} from "@gcp/shared";
+} from "@tmcontrolpanel/shared";
 import "server-only";
 
 const serverAdmin = (serverId: string) => [

@@ -1,6 +1,6 @@
 import { forceSpectatorAs } from "@/actions/gbx/server-only/player";
 import { publicApiRoute } from "@/lib/public-api/route";
-import { forceSpectator } from "@gcp/shared/public-api";
+import { forceSpectator } from "@tmcontrolpanel/shared/public-api";
 
 // The dedicated server's ForceSpectator status values
 const STATUS = {

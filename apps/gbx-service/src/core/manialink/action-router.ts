@@ -1,4 +1,4 @@
-import type { PlayerManialinkPageAnswer } from "@gcp/shared";
+import type { PlayerManialinkPageAnswer } from "@tmcontrolpanel/shared";
 import type { Logger } from "../logger";
 
 export type ActionHandler = (

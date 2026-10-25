@@ -1,6 +1,6 @@
 "use client";
 
-import { Maps } from "@gcp/db";
+import { Maps } from "@tmcontrolpanel/db";
 import { useState } from "react";
 import LocalMapsTable from "./local-maps-table";
 import MapOrder from "./map-order";

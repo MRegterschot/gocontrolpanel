@@ -1,7 +1,7 @@
 import { jumpToMapIndexAs } from "@/actions/gbx/server-only/map";
 import { mapListOf } from "@/lib/public-api/maps";
 import { notFound, publicApiRoute } from "@/lib/public-api/route";
-import { jumpToMap } from "@gcp/shared/public-api";
+import { jumpToMap } from "@tmcontrolpanel/shared/public-api";
 
 export const POST = publicApiRoute(
   jumpToMap,

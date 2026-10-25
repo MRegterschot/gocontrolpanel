@@ -1,4 +1,4 @@
-import { type CodriverProgress, encodeSseEvent } from "@gcp/shared";
+import { type CodriverProgress, encodeSseEvent } from "@tmcontrolpanel/shared";
 import "server-only";
 
 const KEEP_ALIVE_MS = 15_000;

@@ -1,6 +1,6 @@
 import { executeCommandAs } from "@/actions/gbx/server-only/commands";
 import { publicApiRoute } from "@/lib/public-api/route";
-import { executeCommand } from "@gcp/shared/public-api";
+import { executeCommand } from "@tmcontrolpanel/shared/public-api";
 
 export const POST = publicApiRoute(
   executeCommand,

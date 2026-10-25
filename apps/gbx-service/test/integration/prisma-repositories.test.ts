@@ -1,9 +1,9 @@
-import { createPrismaClient, type DbClient } from "@gcp/db";
+import { createPrismaClient, type DbClient } from "@tmcontrolpanel/db";
 import {
   createPluginPackage,
   readPluginPackage,
-} from "@gcp/shared/plugin-package";
-import { encryptServerCredential } from "@gcp/shared/server-credentials";
+} from "@tmcontrolpanel/shared/plugin-package";
+import { encryptServerCredential } from "@tmcontrolpanel/shared/server-credentials";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   PrismaFirstPartyRepository,

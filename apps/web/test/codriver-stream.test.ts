@@ -1,4 +1,4 @@
-import { readSseEvents } from "@gcp/shared";
+import { readSseEvents } from "@tmcontrolpanel/shared";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));

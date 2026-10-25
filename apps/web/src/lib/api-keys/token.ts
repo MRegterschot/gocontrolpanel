@@ -1,4 +1,4 @@
-import { API_KEY_TOKEN_PREFIX } from "@gcp/shared";
+import { API_KEY_TOKEN_PREFIX } from "@tmcontrolpanel/shared";
 import { createHash, randomBytes } from "node:crypto";
 import "server-only";
 

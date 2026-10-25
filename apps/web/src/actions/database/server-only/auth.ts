@@ -1,7 +1,7 @@
 import { getClient } from "@/lib/dbclient";
 import { getList } from "@/lib/utils";
 import { MinimalServer } from "@/types/auth";
-import { Prisma, Users } from "@gcp/db";
+import { Prisma, Users } from "@tmcontrolpanel/db";
 import "server-only";
 
 const includeGroupsWithServers = Prisma.validator<Prisma.UsersInclude>()({

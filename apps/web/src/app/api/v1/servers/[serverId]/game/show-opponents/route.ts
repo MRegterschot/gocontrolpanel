@@ -1,6 +1,6 @@
 import { setShowOpponentsAs } from "@/actions/gbx/server-only/game";
 import { publicApiRoute } from "@/lib/public-api/route";
-import { setShowOpponents } from "@gcp/shared/public-api";
+import { setShowOpponents } from "@tmcontrolpanel/shared/public-api";
 
 export const PUT = publicApiRoute(
   setShowOpponents,

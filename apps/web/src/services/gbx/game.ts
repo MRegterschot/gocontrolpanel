@@ -3,7 +3,7 @@ import { type Actor, actorFromSession, requirePermission } from "@/lib/actor";
 import { getGbxClient } from "@/lib/gbx-service";
 import { ModeScriptInfo } from "@/types/gbx";
 import { ServerResponse } from "@/types/responses";
-import { serverPermissions } from "@gcp/shared";
+import { serverPermissions } from "@tmcontrolpanel/shared";
 import "server-only";
 
 type CurrentAndNext<T> = { CurrentValue: T; NextValue: T };

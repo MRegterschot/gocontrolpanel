@@ -1,6 +1,6 @@
 import { playerListFileAs } from "@/actions/gbx/server-only/player";
 import { publicApiRoute } from "@/lib/public-api/route";
-import { loadBlacklist } from "@gcp/shared/public-api";
+import { loadBlacklist } from "@tmcontrolpanel/shared/public-api";
 
 export const POST = publicApiRoute(
   loadBlacklist,

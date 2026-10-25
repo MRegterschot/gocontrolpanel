@@ -17,7 +17,7 @@ import {
 } from "@/services/database/groups";
 import { UserGroup } from "@/types/auth";
 import { ServerError, ServerResponse } from "@/types/responses";
-import { serverPermissions } from "@gcp/shared";
+import { serverPermissions } from "@tmcontrolpanel/shared";
 import { Session } from "next-auth";
 import { withAudit } from "./server-only/audit-logs";
 import { groupServerIds, publishThemeChange } from "./server-only/themes";

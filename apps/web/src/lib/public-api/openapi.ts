@@ -2,12 +2,12 @@ import {
   API_KEY_SCOPE_DESCRIPTIONS,
   API_KEY_SCOPES,
   API_KEY_TOKEN_PREFIX,
-} from "@gcp/shared";
+} from "@tmcontrolpanel/shared";
 import {
   ApiErrorSchema,
   publicApiEndpoints,
   type ApiEndpoint,
-} from "@gcp/shared/public-api";
+} from "@tmcontrolpanel/shared/public-api";
 import {
   createDocument,
   type ZodOpenApiOperationObject,

@@ -3,8 +3,8 @@ import type { ModeScriptInfo } from "@/types/gbx";
 import type { ServerPlugin } from "@/types/gbx/server-plugin";
 import type { JukeboxMap } from "@/types/map";
 import type { InstalledPlugin } from "@/types/plugins/catalog";
-import type { Maps } from "@gcp/db";
-import type { PlayerInfo, SMapInfo } from "@gcp/shared";
+import type { Maps } from "@tmcontrolpanel/db";
+import type { PlayerInfo, SMapInfo } from "@tmcontrolpanel/shared";
 import type {
   ApiInstalledPlugin,
   ApiJukeboxEntry,
@@ -15,7 +15,7 @@ import type {
   ApiPlayer,
   ApiScriptInfo,
   ApiServerScriptPlugin,
-} from "@gcp/shared/public-api";
+} from "@tmcontrolpanel/shared/public-api";
 import "server-only";
 
 // Panel and GBX shapes to the public API's DTOs; the route wrapper strips anything extra

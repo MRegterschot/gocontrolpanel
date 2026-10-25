@@ -13,7 +13,7 @@ import {
 import { parseTmTags } from "@/lib/tmtags";
 import { getErrorMessage } from "@/lib/utils";
 import { ServerError } from "@/types/responses";
-import { Maps } from "@gcp/db";
+import { Maps } from "@tmcontrolpanel/db";
 import { MoreHorizontal } from "lucide-react";
 import { memo, useState, useTransition } from "react";
 import { toast } from "sonner";

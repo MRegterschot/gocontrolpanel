@@ -1,7 +1,7 @@
 import { saveServerPluginConfigAs } from "@/actions/server-only/plugins";
 import { publicApiRoute } from "@/lib/public-api/route";
-import type { PluginConfig } from "@gcp/shared";
-import { updatePluginConfig } from "@gcp/shared/public-api";
+import type { PluginConfig } from "@tmcontrolpanel/shared";
+import { updatePluginConfig } from "@tmcontrolpanel/shared/public-api";
 
 export const PUT = publicApiRoute(
   updatePluginConfig,

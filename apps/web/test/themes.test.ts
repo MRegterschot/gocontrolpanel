@@ -36,7 +36,7 @@ vi.mock("@/actions/database/server-only/audit-logs", () => ({
 }));
 
 import { updateGroupTheme, updateServerTheme } from "@/actions/database/themes";
-import { Prisma } from "@gcp/db";
+import { Prisma } from "@tmcontrolpanel/db";
 
 const palette = {
   foreground: "abc",

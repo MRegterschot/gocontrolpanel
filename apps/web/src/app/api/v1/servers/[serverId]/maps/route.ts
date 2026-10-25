@@ -3,7 +3,7 @@ import { toApiMap } from "@/lib/public-api/dto";
 import { publicApiRoute } from "@/lib/public-api/route";
 import { getMapListAs } from "@/services/database/maps";
 import { ServerError } from "@/types/responses";
-import { addMaps, listMaps } from "@gcp/shared/public-api";
+import { addMaps, listMaps } from "@tmcontrolpanel/shared/public-api";
 
 export const GET = publicApiRoute(
   listMaps,

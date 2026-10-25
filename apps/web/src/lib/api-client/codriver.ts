@@ -1,6 +1,6 @@
 import type * as Codriver from "@/services/codriver";
 import type { CodriverChatReply } from "@/types/codriver";
-import { readSseEvents } from "@gcp/shared";
+import { readSseEvents } from "@tmcontrolpanel/shared";
 import { apiGet } from "./http";
 
 const server = (serverId: string) =>

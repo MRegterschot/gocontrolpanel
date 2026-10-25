@@ -1,4 +1,4 @@
-import type { Scores, Waypoint } from "@gcp/shared";
+import type { Scores, Waypoint } from "@tmcontrolpanel/shared";
 import { describe, expect, it, vi } from "vitest";
 import { createHarness, MAP_B, player, serverRecord } from "../fakes/harness";
 

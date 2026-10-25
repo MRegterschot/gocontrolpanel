@@ -2,7 +2,7 @@ import type { ServerSettingsSchemaType } from "@/forms/server/settings/settings-
 import type {
   ApiServerSettings,
   ApiServerSettingsChanges,
-} from "@gcp/shared/public-api";
+} from "@tmcontrolpanel/shared/public-api";
 import "server-only";
 
 // The settings form names DisableHorns and DisableServiceAnnounces after the checkbox,

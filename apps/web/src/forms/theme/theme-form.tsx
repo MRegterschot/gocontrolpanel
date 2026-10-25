@@ -14,9 +14,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { getErrorMessage } from "@/lib/utils";
 import { ServerError, ServerResponse } from "@/types/responses";
-import type { ManialinkTheme, ThemePalette } from "@gcp/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconDeviceFloppy, IconRestore } from "@tabler/icons-react";
+import type { ManialinkTheme, ThemePalette } from "@tmcontrolpanel/shared";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";

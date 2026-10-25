@@ -1,4 +1,4 @@
-import { getAdminServerIds, type SessionClaims } from "@gcp/shared";
+import { getAdminServerIds, type SessionClaims } from "@tmcontrolpanel/shared";
 import type { Session } from "next-auth";
 import "server-only";
 import { getClient } from "./dbclient";

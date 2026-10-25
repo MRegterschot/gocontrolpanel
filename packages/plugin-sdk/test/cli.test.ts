@@ -1,4 +1,4 @@
-import { createPluginPackage, readPluginPackage, sha256Hex } from "@gcp/shared/plugin-package";
+import { createPluginPackage, readPluginPackage, sha256Hex } from "@tmcontrolpanel/shared/plugin-package";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";

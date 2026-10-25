@@ -1,6 +1,6 @@
 import { cn, formatTime } from "@/lib/utils";
-import { LiveInfo } from "@gcp/shared";
 import { IconHash, IconX } from "@tabler/icons-react";
+import { LiveInfo } from "@tmcontrolpanel/shared";
 import { Badge } from "../ui/badge";
 import {
   Table,

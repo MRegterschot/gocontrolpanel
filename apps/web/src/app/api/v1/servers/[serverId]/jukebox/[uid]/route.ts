@@ -1,7 +1,7 @@
 import { removeFromJukeboxAs } from "@/actions/gbx/server-only/map";
 import { notFound, publicApiRoute } from "@/lib/public-api/route";
 import { getJukeboxAs } from "@/services/gbx/map";
-import { removeFromJukebox } from "@gcp/shared/public-api";
+import { removeFromJukebox } from "@tmcontrolpanel/shared/public-api";
 
 export const DELETE = publicApiRoute(
   removeFromJukebox,

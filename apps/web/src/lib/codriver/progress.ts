@@ -1,4 +1,4 @@
-import type { CodriverProgress } from "@gcp/shared";
+import type { CodriverProgress } from "@tmcontrolpanel/shared";
 import type { PlannedCall } from "./types";
 
 export type ProgressListener = (progress: CodriverProgress) => void;

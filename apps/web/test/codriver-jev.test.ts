@@ -30,7 +30,7 @@ import {
 import { runCodriver } from "@/lib/codriver/runner";
 import { defineTool } from "@/lib/codriver/types";
 import { costMicros } from "@/lib/codriver/usage";
-import { sessionClaimsSchema } from "@gcp/shared";
+import { sessionClaimsSchema } from "@tmcontrolpanel/shared";
 
 const serverId = "server-a";
 

@@ -1,6 +1,6 @@
 import { triggerServerPluginEventAs } from "@/actions/gbx/server-only/server-plugin";
 import { publicApiRoute } from "@/lib/public-api/route";
-import { triggerServerScriptPluginEvent } from "@gcp/shared/public-api";
+import { triggerServerScriptPluginEvent } from "@tmcontrolpanel/shared/public-api";
 
 export const POST = publicApiRoute(
   triggerServerScriptPluginEvent,

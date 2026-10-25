@@ -1,7 +1,7 @@
 import { removeMapsAs } from "@/actions/gbx/server-only/map";
 import { mapListOf } from "@/lib/public-api/maps";
 import { notFound, publicApiRoute } from "@/lib/public-api/route";
-import { removeMaps } from "@gcp/shared/public-api";
+import { removeMaps } from "@tmcontrolpanel/shared/public-api";
 
 export const POST = publicApiRoute(
   removeMaps,

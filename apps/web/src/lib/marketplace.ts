@@ -5,12 +5,12 @@ import {
   type MarketplaceIndex,
   type MarketplacePlugin,
   type MarketplaceVersion,
-} from "@gcp/shared";
+} from "@tmcontrolpanel/shared";
 import {
   readPluginPackage,
   sha256Hex,
   type PluginPackage,
-} from "@gcp/shared/plugin-package";
+} from "@tmcontrolpanel/shared/plugin-package";
 import "server-only";
 import config from "./config";
 import { logger } from "./logger";

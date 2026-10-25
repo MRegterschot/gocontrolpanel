@@ -12,7 +12,7 @@ import type {
   WarmUpStatus,
   Waypoint,
   WaypointEvent,
-} from "@gcp/shared";
+} from "@tmcontrolpanel/shared";
 
 // Typed view of the server callbacks TMControlPanel reacts to
 export type GameEvent =

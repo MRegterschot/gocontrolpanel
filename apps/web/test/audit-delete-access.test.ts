@@ -1,5 +1,5 @@
 import { deleteAuditLogById } from "@/actions/database/audit-logs";
-import { hasPermission, sessionClaimsSchema } from "@gcp/shared";
+import { hasPermission, sessionClaimsSchema } from "@tmcontrolpanel/shared";
 import { beforeEach, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   user: {} as any,

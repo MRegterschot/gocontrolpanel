@@ -4,7 +4,7 @@ import {
   commandBodySchema,
   serverPermissions,
   type CommandResult,
-} from "@gcp/shared";
+} from "@tmcontrolpanel/shared";
 import "server-only";
 import { logAudit } from "../../database/server-only/audit-logs";
 

@@ -1,4 +1,4 @@
-import { hasPermission, sessionClaimsSchema } from "@gcp/shared";
+import { hasPermission, sessionClaimsSchema } from "@tmcontrolpanel/shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({

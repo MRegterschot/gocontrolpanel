@@ -2,7 +2,7 @@
 
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
-import { Notifications } from "@gcp/db";
+import { Notifications } from "@tmcontrolpanel/db";
 import { ServerResponse } from "@/types/responses";
 
 export async function markNotificationAsRead(

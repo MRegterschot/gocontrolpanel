@@ -9,8 +9,8 @@ Branch: `refactor/monorepo-gbx-service`
 | Phase | State |
 |---|---|
 | 0. Plan | Done |
-| 1. Monorepo conversion | Done: web builds from `apps/web`; Prisma lives in `@gcp/db` |
-| 2. Shared contracts | Done: `@gcp/shared` |
+| 1. Monorepo conversion | Done: web builds from `apps/web`; Prisma lives in `@tmcontrolpanel/db` |
+| 2. Shared contracts | Done: `@tmcontrolpanel/shared` |
 | 3. GBX service | Done: `apps/gbx-service`, 234 unit/component/HTTP/WS tests + 10 integration tests (real Postgres/Redis) + adapter tests against a fake GBXRemote 2 server |
 | 4. Web cut-over | Done on `refactor/web-gbx-cutover`, pending the real-server run in [real-server-testing.md](./real-server-testing.md) §9 |
 | 5. Reads → API routes | Done on `refactor/web-read-api`: every read a client component makes is a GET route; Server Actions are left for writes |
@@ -23,11 +23,11 @@ Branch: `refactor/monorepo-gbx-service`
 |---|---|
 | Runtime / framework | Node.js + Fastify 5 |
 | Monorepo tooling | Bun workspaces (`apps/*`, `packages/*`), Node as the runtime for the service |
-| Service → DB | Direct Prisma access through the shared `@gcp/db` package. Next.js owns migrations |
+| Service → DB | Direct Prisma access through the shared `@tmcontrolpanel/db` package. Next.js owns migrations |
 | Next → service, lifecycle | Redis pub/sub channel (`gcp:server-events`) + an equivalent internal HTTP route |
 | Next → service, commands | Internal HTTP API with a bearer service token. Allowlisted GBX passthrough + typed stateful commands |
-| Browser → service, realtime | WebSocket with a short-lived HS256 ticket issued by Next (`@gcp/shared` signs and verifies) |
-| Validation | zod schemas in `@gcp/shared` (source of truth for both apps) |
+| Browser → service, realtime | WebSocket with a short-lived HS256 ticket issued by Next (`@tmcontrolpanel/shared` signs and verifies) |
+| Validation | zod schemas in `@tmcontrolpanel/shared` (source of truth for both apps) |
 | Tests | Vitest. Unit tests on pure modules, component tests with in-memory fakes, HTTP/WS tests through Fastify, opt-in integration tests against real Postgres/Redis |
 | Build | `tsup` bundles the service (workspace packages inlined, npm deps external) |
 
@@ -40,8 +40,8 @@ gocontrolpanel/
 │  ├─ web/                      # the existing Next.js app (moved, behaviour unchanged in phases 1–3)
 │  └─ gbx-service/              # new Fastify service
 ├─ packages/
-│  ├─ db/                       # @gcp/db: Prisma schemas (mysql + postgres), migrations, client factory
-│  └─ shared/                   # @gcp/shared: domain types, permissions, WS + internal API contracts, ticket, lifecycle events
+│  ├─ db/                       # @tmcontrolpanel/db: Prisma schemas (mysql + postgres), migrations, client factory
+│  └─ shared/                   # @tmcontrolpanel/shared: domain types, permissions, WS + internal API contracts, ticket, lifecycle events
 ├─ docs/
 └─ docker-compose.yml           # web + gbx-service + db + redis + dedicated + filemanager
 ```
@@ -99,16 +99,16 @@ Exit: plan and requirements in `docs/`.
 
 ### Phase 1: monorepo conversion
 - Move the Next.js app to `apps/web` (`git mv`, so history follows). Root `package.json` with workspaces and proxy scripts.
-- `@gcp/db`: move the Prisma schemas + migrations out of `src/lib/prisma`. The generator outputs to `@prisma/client`, and web imports switch from `@/lib/prisma/generated` to `@gcp/db`.
+- `@tmcontrolpanel/db`: move the Prisma schemas + migrations out of `src/lib/prisma`. The generator outputs to `@prisma/client`, and web imports switch from `@/lib/prisma/generated` to `@tmcontrolpanel/db`.
 - Web: `transpilePackages`, `outputFileTracingRoot`, Dockerfile, `start.sh` and the CI workflow updated for the new paths.
 
 Exit: `bun install` at the root works, `bun run --filter web build` succeeds, and web behaviour is unchanged.
 
 ### Phase 2: shared contracts
-- `@gcp/shared`: domain types (gbx callbacks, live, player, server, plugin configs), permissions, WS channel/message contract, WS ticket sign/verify, lifecycle event schema, internal API request/response schemas, shared Redis keys (jukebox).
+- `@tmcontrolpanel/shared`: domain types (gbx callbacks, live, player, server, plugin configs), permissions, WS channel/message contract, WS ticket sign/verify, lifecycle event schema, internal API request/response schemas, shared Redis keys (jukebox).
 - Unit tests for permissions, ticket and schemas.
 
-Exit: `bun run --filter @gcp/shared test` is green.
+Exit: `bun run --filter @tmcontrolpanel/shared test` is green.
 
 ### Phase 3: GBX service
 Build in dependency order, with tests alongside each step:
@@ -134,7 +134,7 @@ Exit: `bun run --filter gbx-service typecheck test build` is green, and the serv
 - The browser reconnects to the live channels with a growing delay (1 s up to 30 s). It starts over once a socket has stayed open for 10 s, not on open, because the service can accept a socket and close it at once. Close code 4403 (forbidden) is final. 4404 (server not managed, which is also what a just-created server gets until the service has registered it) is retried five times, about 31 s, and then given up. Every other code, including the 1001 that restarting proxies send, reconnects and resyncs.
 - Lifecycle events go through `POST /internal/server-events` after DB writes (server create/update/delete, including the Hetzner setup flow, plugin enable/config changes, help-command toggle). HTTP goes first because it applies the change before the action returns. If it fails, the event is published on the Redis `gcp:server-events` channel the service subscribes to (best effort, since the web's Redis client doesn't reconnect after a drop); the service handles every event idempotently, so a duplicate is harmless. If both fail, it is logged as an error and sent to Sentry instead of thrown, because the DB write already succeeded and a service that is down reads all servers on start.
 - Deleted from web: `src/server.ts`, `next-ws`, `src/app/api/ws`, `src/lib/managers/{gbxclient,plugin,manialink}-manager.ts`, `src/plugins`, `src/lib/manialink`, the GBX boot in `instrumentation.ts`, the manager-only DB helpers (records, matches, players, notifications), `@evotm/gbxclient`, `handlebars-layouts`, `ws`, `cookie`, `tsx`. `handlebars` stays for the Hetzner cloud-init templates.
-- Web imports live, player, map and server types from `@gcp/shared`. Plugin config types stay in web for now: the forms edit the optional input shape, while the shared ones are zod output types.
+- Web imports live, player, map and server types from `@tmcontrolpanel/shared`. Plugin config types stay in web for now: the forms edit the optional input shape, while the shared ones are zod output types.
 
 ### Phase 5: reads → API routes (branch `refactor/web-read-api`)
 NX-1, NX-2, NX-7 and NX-8 for the reads. Forms and other writes stay Server Actions, which is what they are for: they are tied to a form submit, get CSRF protection and progressive enhancement, and need no client data layer.

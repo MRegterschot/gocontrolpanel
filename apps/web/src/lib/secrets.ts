@@ -1,5 +1,5 @@
 import { ServerError } from "@/types/responses";
-import { MIN_SECRET_LENGTH } from "@gcp/shared";
+import { MIN_SECRET_LENGTH } from "@tmcontrolpanel/shared";
 import crypto from "node:crypto";
 import "server-only";
 import config from "./config";

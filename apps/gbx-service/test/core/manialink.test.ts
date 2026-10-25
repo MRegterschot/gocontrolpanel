@@ -1,4 +1,4 @@
-import { DEFAULT_THEME } from "@gcp/shared";
+import { DEFAULT_THEME } from "@tmcontrolpanel/shared";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { ActionRouter } from "../../src/core/manialink/action-router";

@@ -4,7 +4,7 @@ import { getModeScriptSettingsAs } from "@/services/gbx/game";
 import {
   getScriptSettings,
   updateScriptSettings,
-} from "@gcp/shared/public-api";
+} from "@tmcontrolpanel/shared/public-api";
 
 export const GET = publicApiRoute(
   getScriptSettings,

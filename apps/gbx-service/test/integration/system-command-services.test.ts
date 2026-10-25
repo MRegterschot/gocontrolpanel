@@ -1,4 +1,4 @@
-import { createPrismaClient, type DbClient } from "@gcp/db";
+import { createPrismaClient, type DbClient } from "@tmcontrolpanel/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PrismaSystemCommandServices } from "../../src/infra/db/system-command-services";
 

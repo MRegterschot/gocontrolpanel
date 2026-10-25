@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import config from "@/lib/config";
 import { logger } from "@/lib/logger";
-import { sessionClaimsSchema, signWsTicket } from "@gcp/shared";
+import { sessionClaimsSchema, signWsTicket } from "@tmcontrolpanel/shared";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";

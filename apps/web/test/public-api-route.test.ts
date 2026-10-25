@@ -26,7 +26,7 @@ import {
   kickPlayer,
   listMatches,
   listServers,
-} from "@gcp/shared/public-api";
+} from "@tmcontrolpanel/shared/public-api";
 import { NextRequest } from "next/server";
 
 const server = { id: "server-a", name: "A", description: "a" };

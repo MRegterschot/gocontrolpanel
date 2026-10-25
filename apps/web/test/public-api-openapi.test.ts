@@ -1,6 +1,6 @@
 import { GET } from "@/app/api/v1/openapi.json/route";
 import { buildOpenApiDocument } from "@/lib/public-api/openapi";
-import { publicApiEndpoints } from "@gcp/shared/public-api";
+import { publicApiEndpoints } from "@tmcontrolpanel/shared/public-api";
 import { describe, expect, it } from "vitest";
 
 type Operation = {

@@ -1,8 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { parseTmTags } from "@/lib/tmtags";
 import { cn } from "@/lib/utils";
-import { Maps } from "@gcp/db";
 import { IconPhoto, IconUser } from "@tabler/icons-react";
+import { Maps } from "@tmcontrolpanel/db";
 import Image from "next/image";
 
 export default function ActivityMapCard({ map }: { map: Maps }) {

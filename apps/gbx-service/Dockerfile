@@ -23,7 +23,7 @@ COPY . .
 ARG DB_TYPE
 ENV DB=$DB_TYPE
 RUN bun run generate
-RUN bun run --filter @gcp/gbx-service build
+RUN bun run --filter @tmcontrolpanel/gbx-service build
 
 # Runtime dependencies only; workspace packages are bundled into dist
 FROM base AS prod-deps

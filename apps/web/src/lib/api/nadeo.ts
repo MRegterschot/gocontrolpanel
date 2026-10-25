@@ -20,7 +20,7 @@ import {
   WebIdentity,
 } from "@/types/api/nadeo";
 import { ServerError, ServerResponse } from "@/types/responses";
-import { fetchPublic } from "@gcp/shared/public-fetch";
+import { fetchPublic } from "@tmcontrolpanel/shared/public-fetch";
 import "server-only";
 import { doServerAction } from "../actions";
 import { logger } from "../logger";

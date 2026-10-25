@@ -2,7 +2,7 @@ import { logAudit } from "@/actions/database/server-only/audit-logs";
 import { actorFromSession, actorHasPermission } from "@/lib/actor";
 import { auth } from "@/lib/auth";
 import { fileManagerFetch, getFileManager } from "@/lib/managers/file-manager";
-import { serverPermissions } from "@gcp/shared";
+import { serverPermissions } from "@tmcontrolpanel/shared";
 import { NextRequest, NextResponse } from "next/server";
 
 const fail = (error: string, status: number) =>

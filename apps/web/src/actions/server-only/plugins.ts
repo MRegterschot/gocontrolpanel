@@ -9,7 +9,7 @@ import {
 } from "@/lib/marketplace";
 import { storedManifest } from "@/services/plugins";
 import { ServerError } from "@/types/responses";
-import type { Prisma } from "@gcp/db";
+import type { Prisma } from "@tmcontrolpanel/db";
 import {
   findVersion,
   isFirstPartySlug,
@@ -18,7 +18,7 @@ import {
   serverPermissions,
   validatePluginConfig,
   type PluginConfig,
-} from "@gcp/shared";
+} from "@tmcontrolpanel/shared";
 import "server-only";
 import { z } from "zod";
 

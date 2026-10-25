@@ -1,6 +1,6 @@
 import { banPlayerAs } from "@/actions/gbx/server-only/player";
 import { publicApiRoute } from "@/lib/public-api/route";
-import { banPlayer } from "@gcp/shared/public-api";
+import { banPlayer } from "@tmcontrolpanel/shared/public-api";
 
 export const POST = publicApiRoute(
   banPlayer,

@@ -4,7 +4,7 @@ import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { logger } from "@/lib/logger";
 import { ServerError, ServerResponse } from "@/types/responses";
-import { Prisma } from "@gcp/db";
+import { Prisma } from "@tmcontrolpanel/db";
 import { auditLogData } from "./server-only/audit-logs";
 import { adminAuditScope } from "./server-only/audit-scope";
 

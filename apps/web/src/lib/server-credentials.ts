@@ -1,7 +1,7 @@
 import {
   decryptServerCredential,
   encryptServerCredential,
-} from "@gcp/shared/server-credentials";
+} from "@tmcontrolpanel/shared/server-credentials";
 import "server-only";
 import config from "./config";
 export const encryptServerPassword = (value: string) =>

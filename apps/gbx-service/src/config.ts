@@ -1,4 +1,4 @@
-import { DEFAULT_MARKETPLACE_INDEX_URL, MIN_SECRET_LENGTH } from "@gcp/shared";
+import { DEFAULT_MARKETPLACE_INDEX_URL, MIN_SECRET_LENGTH } from "@tmcontrolpanel/shared";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 

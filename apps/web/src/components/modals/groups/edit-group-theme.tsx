@@ -5,7 +5,7 @@ import { ModalContent } from "@/components/modals/modal";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ThemeForm from "@/forms/theme/theme-form";
 import type { GroupsWithUsersWithServers } from "@/services/database/groups";
-import { DEFAULT_THEME, parseTheme } from "@gcp/shared";
+import { DEFAULT_THEME, parseTheme } from "@tmcontrolpanel/shared";
 import { DefaultModalProps } from "../default-props";
 
 export default function EditGroupThemeModal({

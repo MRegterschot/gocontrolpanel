@@ -5,8 +5,11 @@ import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { publishServerEvent } from "@/lib/gbx-service";
 import { ServerError, ServerResponse } from "@/types/responses";
-import { Prisma } from "@gcp/db";
-import { type ManialinkTheme, manialinkThemeSchema } from "@gcp/shared";
+import { Prisma } from "@tmcontrolpanel/db";
+import {
+  type ManialinkTheme,
+  manialinkThemeSchema,
+} from "@tmcontrolpanel/shared";
 import { logAudit } from "./server-only/audit-logs";
 import { groupServerIds, publishThemeChange } from "./server-only/themes";
 

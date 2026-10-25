@@ -1,4 +1,4 @@
-import { serverPermissions } from "@gcp/shared";
+import { serverPermissions } from "@tmcontrolpanel/shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -130,7 +130,7 @@ import {
   downloadMapAs,
 } from "@/actions/tmx/server-only/maps";
 import { type Actor, guestActor } from "@/lib/actor";
-import { sessionClaimsSchema } from "@gcp/shared";
+import { sessionClaimsSchema } from "@tmcontrolpanel/shared";
 
 const serverId = "server-a";
 

@@ -6,7 +6,7 @@ import {
   MANIFEST_FILE,
   PLUGIN_SDK_VERSION,
   PLUGIN_SLUG,
-} from "@gcp/shared";
+} from "@tmcontrolpanel/shared";
 import { CliError } from "./project";
 
 // Scaffolds a plugin project with a widget, a command and a config field

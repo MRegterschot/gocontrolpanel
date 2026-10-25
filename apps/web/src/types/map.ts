@@ -1,5 +1,5 @@
-import { Maps } from "@gcp/db";
-import { SMapInfo } from "@gcp/shared";
+import { Maps } from "@tmcontrolpanel/db";
+import { SMapInfo } from "@tmcontrolpanel/shared";
 
 export interface LocalMapInfo extends SMapInfo {
   Path: string;

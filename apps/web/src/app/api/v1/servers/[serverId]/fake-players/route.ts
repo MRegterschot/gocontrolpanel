@@ -1,6 +1,6 @@
 import { connectFakePlayerAs } from "@/actions/gbx/server-only/advanced";
 import { publicApiRoute } from "@/lib/public-api/route";
-import { connectFakePlayer } from "@gcp/shared/public-api";
+import { connectFakePlayer } from "@tmcontrolpanel/shared/public-api";
 
 export const POST = publicApiRoute(
   connectFakePlayer,

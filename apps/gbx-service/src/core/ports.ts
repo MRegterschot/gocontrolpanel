@@ -5,7 +5,7 @@ import type {
   JukeboxEntry,
   NotificationDto,
   PlayerInfo,
-} from "@gcp/shared";
+} from "@tmcontrolpanel/shared";
 
 // Persistence and external-service ports used by the core. Implemented in infra/, faked in tests.
 

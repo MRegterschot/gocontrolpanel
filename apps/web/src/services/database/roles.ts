@@ -1,8 +1,8 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { PaginationResponse, ServerResponse } from "@/types/responses";
-import { Prisma, Roles } from "@gcp/db";
 import { PaginationState } from "@tanstack/react-table";
+import { Prisma, Roles } from "@tmcontrolpanel/db";
 import "server-only";
 
 export type RoleMinimal = Pick<Roles, "id" | "name" | "permissions">;

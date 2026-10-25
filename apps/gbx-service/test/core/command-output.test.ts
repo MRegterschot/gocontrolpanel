@@ -1,4 +1,4 @@
-import { createPluginPackage } from "@gcp/shared/plugin-package";
+import { createPluginPackage } from "@tmcontrolpanel/shared/plugin-package";
 import { describe, expect, it } from "vitest";
 import { ChatService } from "../../src/core/chat/chat-service";
 import { LiveState } from "../../src/core/live/live-state";

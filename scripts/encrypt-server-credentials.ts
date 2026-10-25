@@ -1,9 +1,9 @@
-import { createPrismaClient } from "@gcp/db";
+import { createPrismaClient } from "@tmcontrolpanel/db";
 import {
   decryptServerCredential,
   encryptServerCredential,
   SERVER_CREDENTIAL_PREFIX,
-} from "@gcp/shared/server-credentials";
+} from "@tmcontrolpanel/shared/server-credentials";
 
 // Run after the schema migration, with both services stopped and a database backup available.
 const secret = process.env.SECRETS_KEY ?? "";

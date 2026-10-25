@@ -1,4 +1,4 @@
-import type { DbClient } from "@gcp/db";
+import type { DbClient } from "@tmcontrolpanel/db";
 import { describe, expect, it, vi } from "vitest";
 import { PrismaSystemCommandServices } from "../../src/infra/db/system-command-services";
 

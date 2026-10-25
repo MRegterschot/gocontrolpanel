@@ -1,4 +1,4 @@
-import type { DbClient } from "@gcp/db";
+import type { DbClient } from "@tmcontrolpanel/db";
 import type { Redis } from "ioredis";
 import type { SystemCommandServices } from "../../core/chat/system-commands";
 

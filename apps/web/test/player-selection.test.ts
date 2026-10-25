@@ -1,4 +1,7 @@
-import { validatePluginConfig, type PluginConfigSchema } from "@gcp/shared";
+import {
+  validatePluginConfig,
+  type PluginConfigSchema,
+} from "@tmcontrolpanel/shared";
 import { describe, expect, it } from "vitest";
 
 const schema: PluginConfigSchema = {

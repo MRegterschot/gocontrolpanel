@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Roles } from "@gcp/db";
+import { Roles } from "@tmcontrolpanel/db";
 import { getErrorMessage, hasPermissionSync } from "@/lib/utils";
 import { routePermissions } from "@/routes";
 import { ServerError } from "@/types/responses";

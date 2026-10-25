@@ -9,8 +9,8 @@ import {
   validatePluginConfig,
   type PlayerManialinkPageAnswer,
   type PluginConfig,
-} from "@gcp/shared";
-import type { PluginPackage } from "@gcp/shared/plugin-package";
+} from "@tmcontrolpanel/shared";
+import type { PluginPackage } from "@tmcontrolpanel/shared/plugin-package";
 import type {
   Clock,
   InstalledPackageRef,

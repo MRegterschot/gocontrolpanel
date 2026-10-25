@@ -1,11 +1,11 @@
-import type { DbClient, Maps, Notifications, Prisma } from "@gcp/db";
+import type { DbClient, Maps, Notifications, Prisma } from "@tmcontrolpanel/db";
 import {
   resolveTheme,
   type NotificationDto,
   type PlayerInfo,
   type PluginManifest,
-} from "@gcp/shared";
-import { decryptServerCredential } from "@gcp/shared/server-credentials";
+} from "@tmcontrolpanel/shared";
+import { decryptServerCredential } from "@tmcontrolpanel/shared/server-credentials";
 import type {
   FirstPartyInstall,
   FirstPartyRepository,

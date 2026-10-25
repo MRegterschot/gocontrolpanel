@@ -1,7 +1,7 @@
 import { reorderMapsAs } from "@/actions/gbx/server-only/map";
 import { inUidOrder, mapListOf } from "@/lib/public-api/maps";
 import { publicApiRoute } from "@/lib/public-api/route";
-import { reorderMaps } from "@gcp/shared/public-api";
+import { reorderMaps } from "@tmcontrolpanel/shared/public-api";
 
 export const PUT = publicApiRoute(
   reorderMaps,

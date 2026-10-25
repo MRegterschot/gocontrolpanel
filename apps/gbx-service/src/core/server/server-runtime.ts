@@ -4,7 +4,7 @@ import {
   type LiveSnapshot,
   type PluginCustomEvent,
   type ServerClient,
-} from "@gcp/shared";
+} from "@tmcontrolpanel/shared";
 import { ChatService } from "../chat/chat-service";
 import {
   CODRIVER_HELP,
