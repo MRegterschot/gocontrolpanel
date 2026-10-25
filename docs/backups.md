@@ -1,6 +1,6 @@
 # Database backups
 
-`scripts/backup-db.sh` dumps the GoControlPanel database, keeps the dump on the machine and can send a copy to another server or to cloud storage. It is built for cron.
+`scripts/backup-db.sh` dumps the TMControlPanel database, keeps the dump on the machine and can send a copy to another server or to cloud storage. It is built for cron.
 
 It only dumps the application database named in `DATABASE_URL`, not the whole database server, so a restore never touches accounts or system tables. Both supported providers work: MariaDB/MySQL (`mysqldump` or `mariadb-dump`) and PostgreSQL (`pg_dump`).
 
@@ -12,7 +12,7 @@ It only dumps the application database named in `DATABASE_URL`, not the whole da
 4. Add it to cron, for example every night at 03:15:
 
    ```
-   15 3 * * * /path/to/gocontrolpanel/scripts/backup-db.sh >> /var/log/gcp-backup.log 2>&1
+   15 3 * * * /path/to/tmcontrolpanel/scripts/backup-db.sh >> /var/log/gcp-backup.log 2>&1
    ```
 
 The script exits non-zero when anything fails (cron mails that if `MAILTO` is set), and pings `BACKUP_PING_URL/fail` if you configured one. A second run while one is still going is skipped.

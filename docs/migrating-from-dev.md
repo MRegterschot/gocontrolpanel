@@ -1,6 +1,6 @@
 # Migrating from `dev` to the monorepo + GBX service
 
-This guide is for people running GoControlPanel from the `dev` branch (a single Next.js app with a custom server) who want to move to `refactor/monorepo-gbx-service`. For the reasoning behind the split see [refactor-plan.md](./refactor-plan.md).
+This guide is for people running TMControlPanel from the `dev` branch (a single Next.js app with a custom server) who want to move to `refactor/monorepo-gbx-service`. For the reasoning behind the split see [refactor-plan.md](./refactor-plan.md).
 
 ## What changed
 
@@ -62,7 +62,7 @@ gbx-service:
     WS_ALLOWED_ORIGINS: http://localhost:3000  # origin(s) of the web app, comma separated
     NADEO_SERVER_LOGIN:
     NADEO_SERVER_PASSWORD:
-    NADEO_CONTACT: GoControlPanel / <your contact info>
+    NADEO_CONTACT: TMControlPanel / <your contact info>
     NADEO_CLIENT_ID:
     NADEO_CLIENT_SECRET:
     LOG_LEVEL: info

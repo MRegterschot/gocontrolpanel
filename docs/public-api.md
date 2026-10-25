@@ -1,6 +1,6 @@
 # Public API
 
-GoControlPanel has a versioned HTTP API at `/api/v1` for tools outside the panel: scoreboards, Discord bots, tournament software and scripts. Requests authenticate with an API key that a server or group admin creates in the panel.
+TMControlPanel has a versioned HTTP API at `/api/v1` for tools outside the panel: scoreboards, Discord bots, tournament software and scripts. Requests authenticate with an API key that a server or group admin creates in the panel.
 
 The OpenAPI 3.1 description is served at `/api/v1/openapi.json`; import it into Bruno, Postman, Insomnia or a client generator. Its server URL is the address you fetched it from, so imported requests work without editing. An interactive reference at `/api/v1/docs` is linked from every API Keys page.
 

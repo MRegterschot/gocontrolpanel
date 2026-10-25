@@ -2,9 +2,9 @@
 ![Docker Image Size](https://img.shields.io/docker/image-size/marijnregterschot/gocontrolpanel?logo=docker&link=https%3A%2F%2Fhub.docker.com%2Fr%2Fmarijnregterschot%2Fgocontrolpanel)
 ![Docker Version](https://img.shields.io/docker/v/marijnregterschot/gocontrolpanel?logo=docker&link=https%3A%2F%2Fhub.docker.com%2Fr%2Fmarijnregterschot%2Fgocontrolpanel)
 ![Discord Widget](https://img.shields.io/discord/1397578984023261284?logo=discord&link=https%3A%2F%2Fdiscord.gg%2FNjbtRvbCY8)
-![Github Commits](https://img.shields.io/github/commit-activity/t/mregterschot/gocontrolpanel?logo=github)
+![Github Commits](https://img.shields.io/github/commit-activity/t/mregterschot/tmcontrolpanel?logo=github)
 
-# GoControlPanel
+# TMControlPanel
 
 A Dockerized management panel for dedicated Trackmania servers. Works both standalone and with existing stacks like [PyPlanet](#pyplanetevosc-stack-setup) or [EvoSC](#pyplanetevosc-stack-setup) and others.
 
@@ -44,7 +44,7 @@ A Dockerized management panel for dedicated Trackmania servers. Works both stand
 
 # Overview
 
-**GoControlPanel** is a management panel designed for dedicated Trackmania servers. It provides an easy-to-use interface for managing server settings, players and maps. The panel can be run as a standalone service or integrated with other server controllers like **PyPlanet** or **EvoSC**.
+**TMControlPanel** is a management panel designed for dedicated Trackmania servers. It provides an easy-to-use interface for managing server settings, players and maps. The panel can be run as a standalone service or integrated with other server controllers like **PyPlanet** or **EvoSC**.
 
 ## Features
 
@@ -167,7 +167,7 @@ Server and group admins create API keys for external tools such as scoreboards, 
 
 # Architecture
 
-GoControlPanel runs as two containers next to your database and Redis:
+TMControlPanel runs as two containers next to your database and Redis:
 
 | Container        | Image                                          | What it does                                                                                                                                                       |
 | ---------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -182,7 +182,7 @@ Both images come in a MariaDB/MySQL and a PostgreSQL (`-postgres` suffix) flavou
 
 # Docker Setup
 
-This repository provides a **Docker Compose** configuration to set up and run **GoControlPanel** and its dependencies using Docker containers.
+This repository provides a **Docker Compose** configuration to set up and run **TMControlPanel** and its dependencies using Docker containers.
 
 ## Prerequisites
 
@@ -191,7 +191,7 @@ Before using this `docker-compose.yml` file, ensure you have the following insta
 - **Docker**: [Install Docker](https://www.docker.com/get-started)
 - **Docker Compose**: [Install Docker Compose](https://docs.docker.com/compose/install/)
 
-You will also need some credentials for the **Nadeo API** to configure the **GoControlPanel**. You can obtain these credentials from the [Nadeo API manager](https://api.trackmania.com/manager). Additionally, you will need a dedicated server login and password, which can be found in the [dedicated server manager](https://www.trackmania.com/player/dedicated-servers).
+You will also need some credentials for the **Nadeo API** to configure the **TMControlPanel**. You can obtain these credentials from the [Nadeo API manager](https://api.trackmania.com/manager). Additionally, you will need a dedicated server login and password, which can be found in the [dedicated server manager](https://www.trackmania.com/player/dedicated-servers).
 
 ## Getting Started
 
@@ -209,7 +209,7 @@ First, copy the `docker-compose.yml` file from the repository to your desired di
 
 Make sure to update or add the environment variables for the services in your `docker-compose.yml` file:
 
-- **GoControlPanel Environment Variables**:
+- **TMControlPanel Environment Variables**:
   - `NEXTAUTH_URL`, `NEXTAUTH_SECRET`: NextAuth configuration for authentication. `NEXTAUTH_SECRET` can be any random string, e.g., `VettePanel123`.
   - `DEFAULT_ADMINS`: Comma-separated list of default admin logins. Probably your own login, e.g., `v8vgGbx_TuKkBabAyn7nsQ`.
   - `DEFAULT_PERMISSIONS`: Comma-separated list of default permissions for new users. You can find a list of available permissions in the [Permissions](#permissions) section.
@@ -218,9 +218,9 @@ Make sure to update or add the environment variables for the services in your `d
   - **GBX service connection**: `GBX_SERVICE_URL` is the address of the `gbx-service` container (`http://gbx-service:3100`). `GBX_SERVICE_WS_URL` is the address the browser uses to open the live WebSockets, so it must be reachable from your users (for example `ws://<your-host>:3100`, or `wss://...` behind HTTPS). `GBX_SERVICE_TOKEN` and `WS_TICKET_SECRET` are secrets of at least 32 characters (`openssl rand -base64 32`) and must be identical in both containers. The panel refuses to start without them.
   - **Codriver AI assistant (optional)**: the panel operator enables Codriver and stores the Anthropic API keys on the Codriver admin page. `SECRETS_KEY` (at least 32 characters, shared with the GBX service) encrypts those keys and all stored dedicated/file-manager credentials; keep it stable, because changing it makes stored keys unreadable. `ANTHROPIC_API_KEY` is only a fallback for the shared key while none is stored. Optional Jev routing sends request text to TypeSafe and needs its own key, stored on the same page; `TYPESAFE_API_KEY` is its fallback while none is stored, like `ANTHROPIC_API_KEY`. `PANEL_INTERNAL_TOKEN` (at least 32 characters, the same in both containers) authenticates the GBX service when it forwards `/co` chat commands. Leave it empty to turn `/co` off. The server Codriver page provides chat, usage and request history; operator-wide usage is under Admin → Codriver. Apply pending database migrations during upgrades, including the phase 5 model-call tracking column. See [the Codriver plan and evaluation commands](docs/codriver-plan.md).
   - `MARKETPLACE_INDEX_URL` (optional): The plugin marketplace the panel browses. Defaults to the official marketplace; set it to an empty value to turn browsing off. Uploading private plugins works either way.
-  - `LOG_LEVEL`: Set the log level for GoControlPanel. Supported values are `trace`, `debug`, `info`, `warn`, `error` and `fatal`. The default is `info`.
+  - `LOG_LEVEL`: Set the log level for TMControlPanel. Supported values are `trace`, `debug`, `info`, `warn`, `error` and `fatal`. The default is `info`.
   - `PLAUSIBLE_API_HOST`: Set the Plausible API host for analytics, e.g., `analytics.mywebsite.com`. This is optional and can be left empty if you do not want to use Plausible analytics.
-  - **Sentry Configuration (Optional)**: GoControlPanel can send errors, performance traces, session replays and logs to Sentry. No Sentry configuration is required unless you want to enable telemetry.
+  - **Sentry Configuration (Optional)**: TMControlPanel can send errors, performance traces, session replays and logs to Sentry. No Sentry configuration is required unless you want to enable telemetry.
     - `NEXT_PUBLIC_SENTRY_ENABLED`: Set to `true` to enable Sentry.
     - `NEXT_PUBLIC_SENTRY_DSN`: The Sentry DSN. Required when Sentry is enabled.
     - `SENTRY_SERVER_DSN` (optional): Server-side DSN. Defaults to `NEXT_PUBLIC_SENTRY_DSN`.
@@ -249,8 +249,8 @@ Make sure to update or add the environment variables for the services in your `d
   - `MARKETPLACE_INDEX_URL`, `MARKETPLACE_CHECK_MINUTES` (optional): The plugin marketplace the service checks for withdrawn plugin versions, and how often (default every 30 minutes). Empty URL turns the check off.
 
 - **Dedicated Server Environment Variables**:
-  - `TM_MASTERSERVER_LOGIN`: Login for the dedicated server (same as `NADEO_SERVER_LOGIN` in GoControlPanel).
-  - `TM_MASTERSERVER_PASSWORD`: Password for the dedicated server (same as `NADEO_SERVER_PASSWORD` in GoControlPanel).
+  - `TM_MASTERSERVER_LOGIN`: Login for the dedicated server (same as `NADEO_SERVER_LOGIN` in TMControlPanel).
+  - `TM_MASTERSERVER_PASSWORD`: Password for the dedicated server (same as `NADEO_SERVER_PASSWORD` in TMControlPanel).
 
 ### 3. Start the Services
 
@@ -260,15 +260,15 @@ Run the following command to start all services defined in the `docker-compose.y
 docker compose up -d
 ```
 
-### 4. Access the GoControlPanel
+### 4. Access the TMControlPanel
 
-That's it! You can now access your **GoControlPanel** at `http://localhost:3000` or your own configured url.
+That's it! You can now access your **TMControlPanel** at `http://localhost:3000` or your own configured url.
 
 ---
 
 ## PyPlanet/EvoSC Stack Setup
 
-This section will guide you through setting up the **GoControlPanel** with an existing **PyPlanet** or **EvoSC** stack.
+This section will guide you through setting up the **TMControlPanel** with an existing **PyPlanet** or **EvoSC** stack.
 
 ### 1. Navigate to Your Existing Stack Directory
 
@@ -294,7 +294,7 @@ gocontrolpanel:
     NADEO_REDIRECT_URI: http://localhost:3000/api/auth/callback/nadeo
     NADEO_SERVER_LOGIN:
     NADEO_SERVER_PASSWORD:
-    NADEO_CONTACT: GoControlPanel / <your contact info>
+    NADEO_CONTACT: TMControlPanel / <your contact info>
     REDIS_URI: redis://redis:6379
     DATABASE_URL: mysql://gocontrolpanel:VettePanel123@db:3306/gocontrolpanel
     HETZNER_KEY:
@@ -320,7 +320,7 @@ gbx-service:
     WS_ALLOWED_ORIGINS: http://localhost:3000
     NADEO_SERVER_LOGIN:
     NADEO_SERVER_PASSWORD:
-    NADEO_CONTACT: GoControlPanel / <your contact info>
+    NADEO_CONTACT: TMControlPanel / <your contact info>
     NADEO_CLIENT_ID:
     NADEO_CLIENT_SECRET:
     LOG_LEVEL: info
@@ -355,7 +355,7 @@ volumes:
 
 ### 3. Create Database
 
-Create a new database for GoControlPanel in your existing database service. For the default PyPlanet and EvoSC stacks, this is usually a MariaDB database.
+Create a new database for TMControlPanel in your existing database service. For the default PyPlanet and EvoSC stacks, this is usually a MariaDB database.
 The container name is likely something like `<current-folder>-db-1`.
 
 1. Log into the database container.
@@ -384,7 +384,7 @@ FLUSH PRIVILEGES;
 
 Make sure to update or add the environment variables for the added services in your `docker-compose.yml` file:
 
-- **GoControlPanel Environment Variables**:
+- **TMControlPanel Environment Variables**:
   - `NEXTAUTH_URL`, `NEXTAUTH_SECRET`: NextAuth configuration for authentication. `NEXTAUTH_SECRET` can be any random string, e.g., `VettePanel123`.
   - `DEFAULT_ADMINS`: Comma-separated list of default admin logins.
   - `DEFAULT_PERMISSIONS`: Comma-separated list of default permissions for new users. You can find a list of available permissions in the [Permissions](#permissions) section.
@@ -392,9 +392,9 @@ Make sure to update or add the environment variables for the added services in y
   - `HETZNER_KEY`: Required for the Hetzner Cloud integration. Encrypts API tokens and SSH keys before they are stored in the database. Use a random string of at least 32 characters, for example from `openssl rand -hex 32`. When you change it, set the old value as `HETZNER_KEY_PREVIOUS` so stored values can still be decrypted.
   - **GBX service connection**: `GBX_SERVICE_URL` is the address of the `gbx-service` container (`http://gbx-service:3100`). `GBX_SERVICE_WS_URL` is the address the browser uses to open the live WebSockets, so it must be reachable from your users (for example `ws://<your-host>:3100`, or `wss://...` behind HTTPS). `GBX_SERVICE_TOKEN` and `WS_TICKET_SECRET` are secrets of at least 32 characters (`openssl rand -base64 32`) and must be identical in both containers. The panel refuses to start without them.
   - `MARKETPLACE_INDEX_URL` (optional): The plugin marketplace the panel browses. Defaults to the official marketplace; set it to an empty value to turn browsing off. Uploading private plugins works either way.
-  - `LOG_LEVEL`: Set the log level for GoControlPanel. Supported values are `trace`, `debug`, `info`, `warn`, `error` and `fatal`. The default is `info`.
+  - `LOG_LEVEL`: Set the log level for TMControlPanel. Supported values are `trace`, `debug`, `info`, `warn`, `error` and `fatal`. The default is `info`.
   - `PLAUSIBLE_API_HOST`: Set the Plausible API host for analytics, e.g., `analytics.mywebsite.com`. This is optional and can be left empty if you do not want to use Plausible analytics.
-  - **Sentry Configuration (Optional)**: GoControlPanel can send errors, performance traces, session replays and logs to Sentry. No Sentry configuration is required unless you want to enable telemetry.
+  - **Sentry Configuration (Optional)**: TMControlPanel can send errors, performance traces, session replays and logs to Sentry. No Sentry configuration is required unless you want to enable telemetry.
     - `NEXT_PUBLIC_SENTRY_ENABLED`: Set to `true` to enable Sentry.
     - `NEXT_PUBLIC_SENTRY_DSN`: The Sentry DSN. Required when Sentry is enabled.
     - `SENTRY_SERVER_DSN` (optional): Server-side DSN. Defaults to `NEXT_PUBLIC_SENTRY_DSN`.
@@ -424,15 +424,15 @@ Run the following command to start the services.
 docker compose up -d
 ```
 
-### 6. Access the GoControlPanel
+### 6. Access the TMControlPanel
 
-That's it! You can now access your **GoControlPanel** at `http://localhost:3000` or your own configured url.
+That's it! You can now access your **TMControlPanel** at `http://localhost:3000` or your own configured url.
 
 ---
 
 ## Permissions
 
-The **GoControlPanel** supports a permission system that allows you to manage user access to various features. You can set default permissions for new users using the `DEFAULT_PERMISSIONS` environment variable in your `docker-compose.yml` file. Here is a list of available permissions:
+The **TMControlPanel** supports a permission system that allows you to manage user access to various features. You can set default permissions for new users using the `DEFAULT_PERMISSIONS` environment variable in your `docker-compose.yml` file. Here is a list of available permissions:
 
 - users:view
 - users:edit
@@ -489,7 +489,7 @@ If you encounter any issues, check the logs of a specific service by running:
 docker compose logs <service-name>
 ```
 
-For example, to view the logs of the **GoControlPanel** service:
+For example, to view the logs of the **TMControlPanel** service:
 
 ```bash
 docker compose logs gocontrolpanel

@@ -1,6 +1,6 @@
-# GoControlPanel plugins
+# TMControlPanel plugins
 
-The plugin marketplace of [GoControlPanel](https://github.com/MRegterschot/gocontrolpanel). Every panel,
+The plugin marketplace of [TMControlPanel](https://github.com/MRegterschot/tmcontrolpanel). Every panel,
 self-hosted ones included, reads the index published from this repository and installs plugins from it.
 
 - **Panels read** `https://mregterschot.github.io/tmcontrolpanel-plugins/index.json`, built by the
@@ -12,7 +12,7 @@ self-hosted ones included, reads the index published from this repository and in
 ## Publishing a plugin
 
 1. Build the package with the SDK (see the
-   [plugin SDK guide](https://github.com/MRegterschot/gocontrolpanel/blob/master/docs/plugin-sdk.md)):
+   [plugin SDK guide](https://github.com/MRegterschot/tmcontrolpanel/blob/master/docs/plugin-sdk.md)):
 
    ```bash
    tmcp-plugin pack            # dist/<slug>-<version>.zip, prints its sha256
