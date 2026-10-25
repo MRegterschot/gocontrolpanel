@@ -106,7 +106,7 @@ function sameTarget(a: ConnectionTarget, b: ConnectionTarget): boolean {
   );
 }
 
-// Everything GoControlPanel runs for one dedicated server
+// Everything TMControlPanel runs for one dedicated server
 export class ServerRuntime {
   readonly events: TypedEventBus<ServerEventMap>;
   readonly state = new LiveState();

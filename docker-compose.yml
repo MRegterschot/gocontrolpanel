@@ -14,7 +14,7 @@ services:
       NADEO_REDIRECT_URI: http://localhost:3000/api/auth/callback/nadeo
       NADEO_SERVER_LOGIN:
       NADEO_SERVER_PASSWORD:
-      NADEO_CONTACT: GoControlPanel / <your contact info>
+      NADEO_CONTACT: TMControlPanel / <your contact info>
       DATABASE_URL: mysql://gocontrolpanel:${MARIADB_PASSWORD:?Set MARIADB_PASSWORD}@db:3306/gocontrolpanel
       REDIS_URI: redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD}@redis:6379
       HETZNER_KEY:
@@ -47,7 +47,7 @@ services:
       PANEL_INTERNAL_TOKEN: # Same value as the web app, at least 32 characters
       NADEO_SERVER_LOGIN:
       NADEO_SERVER_PASSWORD:
-      NADEO_CONTACT: GoControlPanel / <your contact info>
+      NADEO_CONTACT: TMControlPanel / <your contact info>
       NADEO_CLIENT_ID:
       NADEO_CLIENT_SECRET:
       LOG_LEVEL: info

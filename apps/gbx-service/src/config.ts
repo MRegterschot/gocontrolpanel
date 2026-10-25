@@ -30,7 +30,7 @@ const envSchema = z.object({
   GBX_SERVICE_ENABLED_SERVERS: csv,
   NADEO_SERVER_LOGIN: z.string().default(""),
   NADEO_SERVER_PASSWORD: z.string().default(""),
-  NADEO_CONTACT: z.string().default("GoControlPanel"),
+  NADEO_CONTACT: z.string().default("TMControlPanel"),
   NADEO_CLIENT_ID: z.string().default(""),
   NADEO_CLIENT_SECRET: z.string().default(""),
   // Plugin marketplace index, checked for withdrawn (yanked) versions; empty turns that off

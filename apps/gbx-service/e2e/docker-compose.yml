@@ -1,5 +1,5 @@
 # Isolated stack for testing the GBX service against a real dedicated server.
-# Uses its own ports and volumes so it never touches a running GoControlPanel setup.
+# Uses its own ports and volumes so it never touches a running TMControlPanel setup.
 name: gcp-e2e
 
 services:

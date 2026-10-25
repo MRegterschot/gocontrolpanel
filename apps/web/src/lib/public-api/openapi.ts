@@ -82,7 +82,7 @@ export function buildOpenApiDocument(serverUrl = "/api/v1") {
   return createDocument({
     openapi: "3.1.0",
     info: {
-      title: "GoControlPanel API",
+      title: "TMControlPanel API",
       version: "1.0.0",
       description: [
         "Server and group admins create API keys in the panel. A server key reaches one server; a group key reaches every server currently in its group.",

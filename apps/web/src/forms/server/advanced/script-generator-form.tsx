@@ -196,7 +196,7 @@ export default function ScriptGeneratorForm({
 
         <div className="flex flex-col gap-2 rounded-md border p-3 text-sm">
           <p className="text-muted-foreground">
-            For GoControlPanel to detect the game mode, the script name must
+            For TMControlPanel to detect the game mode, the script name must
             include one of these type strings. Scripts that match none are
             treated as Rounds.
           </p>

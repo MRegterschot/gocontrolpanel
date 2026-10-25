@@ -168,11 +168,13 @@ Done in the Step 1 PR. Left for later steps: `@gcp/*` filters in docs (Step 4), 
 
 ### Step 2: Visible branding strings
 
-- [ ] `site.ts`, `layout.tsx` (including the SEO keyword), landing page, sidebar, site header, uploaded plugins, welcome page, OpenAPI and API docs titles.
-- [ ] Form/action help text, Codriver script text, Hetzner admin page.
-- [ ] Root `package.json` `name`; verify the `/version` chat command output.
-- [ ] Env examples, Nadeo contact/application names, seed scripts, test-server names.
-- [ ] Keep `SITE_URL` on the old domain until Step 10 unless the new domain is live.
+- [x] `site.ts`, `layout.tsx` (including the SEO keyword), landing page, sidebar, site header, uploaded plugins, welcome page, OpenAPI and API docs titles.
+- [x] Form/action help text, Codriver script text, Hetzner admin page.
+- [x] Root `package.json` `name`; verify the `/version` chat command output.
+- [x] Env examples, Nadeo contact/application names, seed scripts, test-server names.
+- [x] Keep `SITE_URL` on the old domain until Step 10 unless the new domain is live.
+
+Done in the Step 2 PR. Left for later steps: `SITE_URL` (Step 10), the `GoControlPanel-Plugin` User-Agent and the `gocontrolpanel` script response ID (Step 7), `gcp`/`GCP` test-server and seed names (Step 3), database names and Docker image names in the env examples and compose files (Step 9), and fixture authors in tests.
 
 ### Step 3: Dev and test-only identifiers
 

@@ -25,7 +25,7 @@ import Breadcrumbs, { TBreadcrumb } from "./breadcrumbs";
 const headerLinks = [
   {
     label: "Wiki",
-    href: "https://github.com/MRegterschot/gocontrolpanel/wiki",
+    href: "https://github.com/MRegterschot/tmcontrolpanel/wiki",
     icon: IconBook,
   },
   { label: "API reference", href: routes.apiDocs, icon: IconApi },
@@ -41,7 +41,7 @@ const headerLinks = [
   },
   {
     label: "GitHub",
-    href: "https://github.com/MRegterschot/gocontrolpanel",
+    href: "https://github.com/MRegterschot/tmcontrolpanel",
     icon: IconBrandGithub,
   },
 ];

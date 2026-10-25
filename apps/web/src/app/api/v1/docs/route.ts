@@ -10,7 +10,7 @@ export const GET = ApiReference(
   async (): Promise<Partial<ApiReferenceConfiguration>> => ({
     url: "/api/v1/openapi.json",
     cdn: `/api/v1/docs/scalar.js?v=${(await scalarBundle()).version}`,
-    pageTitle: "GoControlPanel API",
+    pageTitle: "TMControlPanel API",
     theme: "default",
     telemetry: false,
     withDefaultFonts: false,
