@@ -245,7 +245,7 @@ Merge to `release` freely, but only cut the release after Release A is running e
 - [ ] Nadeo OAuth application: name, redirect URIs for production/staging, contact. Users must log in again.
 - [ ] Update `NEXTAUTH_URL`, `NADEO_REDIRECT_URI`, `GBX_SERVICE_URL`, `GBX_SERVICE_WS_URL`, `WS_ALLOWED_ORIGINS`, `PANEL_INTERNAL_URL`, reverse proxy, and CORS.
 - [ ] Plausible, Sentry, uptime checks, Discord webhook, email sender, Docker Hub descriptions, external bookmarks.
-- [ ] Image assets only if a visual redesign is chosen.
+- [x] Image assets: the Chicane logo set from `feat/rename-to-tmcp` (commit `c2696bb1`) is applied in the branding PR: favicon, icons, Open Graph and Twitter images, `logo.svg`, and `BrandMark` in the landing page, sign-in screen and sidebar. Source files are in `apps/web/branding` and `docs/branding`.
 
 ### Step 11: Local environment (any time after Step 4)
 
