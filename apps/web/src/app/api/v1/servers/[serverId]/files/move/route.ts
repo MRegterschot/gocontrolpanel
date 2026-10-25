@@ -1,7 +1,7 @@
 import { moveEntriesAs } from "@/actions/filemanager/server-only/files";
 import { toApiFileEntry, userDataPath } from "@/lib/public-api/files";
 import { publicApiRoute } from "@/lib/public-api/route";
-import { moveFiles } from "@gcp/shared/public-api";
+import { moveFiles } from "@tmcontrolpanel/shared/public-api";
 
 export const POST = publicApiRoute(
   moveFiles,

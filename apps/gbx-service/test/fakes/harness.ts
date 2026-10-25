@@ -1,5 +1,9 @@
-import { DEFAULT_THEME, type SMapInfo, type SPlayerInfo } from "@gcp/shared";
-import { readPluginPackage } from "@gcp/shared/plugin-package";
+import {
+  DEFAULT_THEME,
+  type SMapInfo,
+  type SPlayerInfo,
+} from "@tmcontrolpanel/shared";
+import { readPluginPackage } from "@tmcontrolpanel/shared/plugin-package";
 import { fileURLToPath } from "node:url";
 import type { CodriverClient } from "../../src/core/chat/codriver-command";
 import type { SystemCommandServices } from "../../src/core/chat/system-commands";

@@ -1,4 +1,4 @@
-import { API_KEY_SCOPES } from "@gcp/shared";
+import { API_KEY_SCOPES } from "@tmcontrolpanel/shared";
 import { z } from "zod";
 
 export const API_KEY_EXPIRY_OPTIONS = [

@@ -1,6 +1,6 @@
 import { matchSettingsFileAs } from "@/actions/gbx/server-only/game";
 import { publicApiRoute } from "@/lib/public-api/route";
-import { loadMatchSettings } from "@gcp/shared/public-api";
+import { loadMatchSettings } from "@tmcontrolpanel/shared/public-api";
 
 export const POST = publicApiRoute(
   loadMatchSettings,

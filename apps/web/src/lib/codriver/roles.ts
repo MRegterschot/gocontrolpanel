@@ -1,5 +1,5 @@
 import { type Actor, actorHasPermission } from "@/lib/actor";
-import { serverPermissions } from "@gcp/shared";
+import { serverPermissions } from "@tmcontrolpanel/shared";
 import "server-only";
 import type { CodriverRole } from "./types";
 

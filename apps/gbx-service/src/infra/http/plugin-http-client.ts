@@ -1,4 +1,7 @@
-import { assertPublicHttpsUrl, publicLookup } from "@gcp/shared/public-fetch";
+import {
+  assertPublicHttpsUrl,
+  publicLookup,
+} from "@tmcontrolpanel/shared/public-fetch";
 import { request } from "node:https";
 import type {
   PluginHttpClient,
@@ -7,8 +10,8 @@ import type {
 } from "../../core/ports";
 
 // Plugins reach only the hosts they declared, and never an address inside the network the
-// service runs in; the address rules live in @gcp/shared/public-fetch
-export { isPrivateAddress } from "@gcp/shared/public-fetch";
+// service runs in; the address rules live in @tmcontrolpanel/shared/public-fetch
+export { isPrivateAddress } from "@tmcontrolpanel/shared/public-fetch";
 
 // Hop-by-hop and routing headers a plugin may not set
 const RESERVED_HEADERS = new Set([

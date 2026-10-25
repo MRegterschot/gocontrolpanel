@@ -8,16 +8,16 @@ export default defineConfig([
     dts: true,
     outDir: "dist",
     clean: true,
-    noExternal: [/^@gcp\//],
+    noExternal: [/^@tmcontrolpanel\/(?!plugin-sdk)/],
   },
   {
-    // The CLI bundles @gcp/shared, so the published package has no private dependencies
+    // The CLI bundles @tmcontrolpanel/shared, so the published package has no private dependencies
     entry: { cli: "src/cli/main.ts" },
     format: ["esm"],
     platform: "node",
     target: "node20",
     outDir: "dist",
-    noExternal: [/^@gcp\//],
+    noExternal: [/^@tmcontrolpanel\/(?!plugin-sdk)/],
     external: ["esbuild"],
     banner: { js: "#!/usr/bin/env node" },
   },

@@ -16,7 +16,7 @@ import {
   toApiKeyRow,
 } from "@/services/database/api-keys";
 import { ServerError, ServerResponse } from "@/types/responses";
-import { API_KEY_SCOPES } from "@gcp/shared";
+import { API_KEY_SCOPES } from "@tmcontrolpanel/shared";
 import type { Session } from "next-auth";
 import { z } from "zod";
 import { withAudit } from "./server-only/audit-logs";

@@ -5,7 +5,7 @@ import {
 } from "@/actions/filemanager/server-only/files";
 import { encodeFile, userDataPath } from "@/lib/public-api/files";
 import { publicApiRoute } from "@/lib/public-api/route";
-import { readFile, writeFile } from "@gcp/shared/public-api";
+import { readFile, writeFile } from "@tmcontrolpanel/shared/public-api";
 import path from "node:path";
 
 export const GET = publicApiRoute(

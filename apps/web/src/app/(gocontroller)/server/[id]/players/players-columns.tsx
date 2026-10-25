@@ -23,9 +23,9 @@ import {
 import { parseTmTags } from "@/lib/tmtags";
 import { getErrorMessage } from "@/lib/utils";
 import { ServerError } from "@/types/responses";
-import { PlayerInfo } from "@gcp/shared";
 import { IconCamera, IconSteeringWheelFilled } from "@tabler/icons-react";
 import { ColumnDef } from "@tanstack/react-table";
+import { PlayerInfo } from "@tmcontrolpanel/shared";
 import { MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";

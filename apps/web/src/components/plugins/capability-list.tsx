@@ -1,15 +1,15 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
-  describeCapability,
-  isHttpCapability,
-  type CapabilityRisk,
-} from "@gcp/shared";
-import {
   IconAlertTriangle,
   IconInfoCircle,
   IconShieldCheck,
 } from "@tabler/icons-react";
+import {
+  describeCapability,
+  isHttpCapability,
+  type CapabilityRisk,
+} from "@tmcontrolpanel/shared";
 
 const riskStyle: Record<CapabilityRisk, string> = {
   low: "text-muted-foreground",

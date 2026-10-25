@@ -5,9 +5,9 @@ import { getNotifications } from "@/lib/api-client/database";
 import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { logger } from "@/lib/logger";
 import { ServerError } from "@/types/responses";
-import { Notifications } from "@gcp/db";
-import { wsPaths } from "@gcp/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Notifications } from "@tmcontrolpanel/db";
+import { wsPaths } from "@tmcontrolpanel/shared";
 import React, {
   createContext,
   useCallback,

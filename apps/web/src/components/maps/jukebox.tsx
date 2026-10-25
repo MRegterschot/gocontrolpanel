@@ -8,7 +8,7 @@ import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { getErrorMessage } from "@/lib/utils";
 import { JukeboxMap } from "@/types/map";
 import { ServerError } from "@/types/responses";
-import { Maps } from "@gcp/db";
+import { Maps } from "@tmcontrolpanel/db";
 import { IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";

@@ -10,7 +10,7 @@ import { parseInput, updateUserInput } from "@/lib/admin-inputs";
 import { getClient } from "@/lib/dbclient";
 import { getList } from "@/lib/utils";
 import { ServerError, ServerResponse } from "@/types/responses";
-import { Users } from "@gcp/db";
+import { Users } from "@tmcontrolpanel/db";
 import { logAudit, withAudit } from "./server-only/audit-logs";
 
 export async function updateUser(

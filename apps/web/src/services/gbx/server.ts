@@ -8,7 +8,7 @@ import { getLogger } from "@/lib/logger";
 import { getFileManager } from "@/lib/managers/file-manager";
 import { LocalMapInfo } from "@/types/map";
 import { ServerError, ServerResponse } from "@/types/responses";
-import { serverPermissions, type SMapInfo } from "@gcp/shared";
+import { serverPermissions, type SMapInfo } from "@tmcontrolpanel/shared";
 import path from "path";
 import "server-only";
 

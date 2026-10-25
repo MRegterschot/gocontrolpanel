@@ -27,7 +27,7 @@ vi.mock("@/actions/database/server-only/audit-logs", () => ({
 
 import { POST } from "@/app/api/v1/servers/[serverId]/commands/route";
 import { ServerError } from "@/types/responses";
-import { serverPermissions } from "@gcp/shared";
+import { serverPermissions } from "@tmcontrolpanel/shared";
 import { actor, ctx, onA, principal, req } from "./helpers/public-api";
 
 const send = (body: unknown) =>

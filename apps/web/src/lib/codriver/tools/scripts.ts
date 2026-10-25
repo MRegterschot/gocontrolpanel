@@ -4,7 +4,7 @@ import {
   writeFileTextAs,
 } from "@/actions/filemanager/server-only/files";
 import { gameModesScripts, generateScript } from "@/lib/scripts";
-import { GAME_MODE_TYPES, type GameModeType } from "@gcp/shared";
+import { GAME_MODE_TYPES, type GameModeType } from "@tmcontrolpanel/shared";
 import "server-only";
 import { z } from "zod/v4";
 import {

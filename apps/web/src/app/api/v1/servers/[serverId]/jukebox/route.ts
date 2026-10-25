@@ -6,7 +6,11 @@ import { toApiJukeboxEntry } from "@/lib/public-api/dto";
 import { mapListOf } from "@/lib/public-api/maps";
 import { notFound, publicApiRoute } from "@/lib/public-api/route";
 import { getJukeboxAs } from "@/services/gbx/map";
-import { addToJukebox, clearJukebox, getJukebox } from "@gcp/shared/public-api";
+import {
+  addToJukebox,
+  clearJukebox,
+  getJukebox,
+} from "@tmcontrolpanel/shared/public-api";
 
 export const GET = publicApiRoute(getJukebox, async ({ actor, params }) => {
   const entries = await getJukeboxAs(actor, params.serverId);

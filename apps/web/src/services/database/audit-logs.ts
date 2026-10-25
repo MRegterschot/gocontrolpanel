@@ -2,8 +2,8 @@ import { adminAuditScope } from "@/actions/database/server-only/audit-scope";
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { PaginationResponse, ServerResponse } from "@/types/responses";
-import { Prisma } from "@gcp/db";
 import { PaginationState } from "@tanstack/react-table";
+import { Prisma } from "@tmcontrolpanel/db";
 import "server-only";
 
 const auditLogsUsersSchema = Prisma.validator<Prisma.AuditLogsInclude>()({

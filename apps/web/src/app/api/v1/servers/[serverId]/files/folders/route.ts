@@ -1,7 +1,7 @@
 import { createEntryAs } from "@/actions/filemanager/server-only/files";
 import { toApiFileEntry } from "@/lib/public-api/files";
 import { publicApiRoute } from "@/lib/public-api/route";
-import { createFolder } from "@gcp/shared/public-api";
+import { createFolder } from "@tmcontrolpanel/shared/public-api";
 
 export const POST = publicApiRoute(
   createFolder,

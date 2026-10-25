@@ -1,4 +1,4 @@
-import type { ChatConfig, ChatConfigResult } from "@gcp/shared";
+import type { ChatConfig, ChatConfigResult } from "@tmcontrolpanel/shared";
 import { describe, expect, it, vi } from "vitest";
 import { saveChatConfig } from "../src/lib/chat-config";
 

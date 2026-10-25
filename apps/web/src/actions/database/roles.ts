@@ -3,7 +3,7 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { parseInput, roleInput } from "@/lib/admin-inputs";
 import { ServerResponse } from "@/types/responses";
-import { Roles } from "@gcp/db";
+import { Roles } from "@tmcontrolpanel/db";
 import { withAudit } from "./server-only/audit-logs";
 
 export async function createRole(

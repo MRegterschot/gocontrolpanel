@@ -1,4 +1,4 @@
-import { Prisma } from "@gcp/db";
+import { Prisma } from "@tmcontrolpanel/db";
 import { Session } from "next-auth";
 import "server-only";
 

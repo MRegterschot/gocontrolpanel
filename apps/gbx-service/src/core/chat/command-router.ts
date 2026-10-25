@@ -1,4 +1,4 @@
-import type { CommandResult } from "@gcp/shared";
+import type { CommandResult } from "@tmcontrolpanel/shared";
 import {
   name as appName,
   version as appVersion,

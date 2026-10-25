@@ -1,4 +1,4 @@
-import { Team } from "@gcp/shared";
+import { Team } from "@tmcontrolpanel/shared";
 import TeamsActions from "./teams-actions";
 
 interface MatchSettingsProps {

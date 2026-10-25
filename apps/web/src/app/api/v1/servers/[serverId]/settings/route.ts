@@ -5,7 +5,7 @@ import {
   toApiServerSettings,
 } from "@/lib/public-api/settings";
 import { getServerSettingsAs } from "@/services/gbx/server";
-import { getSettings, updateSettings } from "@gcp/shared/public-api";
+import { getSettings, updateSettings } from "@tmcontrolpanel/shared/public-api";
 
 export const GET = publicApiRoute(getSettings, async ({ actor, params }) => {
   const settings = await getServerSettingsAs(actor, params.serverId);

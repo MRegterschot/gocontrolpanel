@@ -6,8 +6,8 @@ import {
   ServerError,
   ServerResponse,
 } from "@/types/responses";
-import { Prisma, Servers } from "@gcp/db";
 import { PaginationState } from "@tanstack/react-table";
+import { Prisma, Servers } from "@tmcontrolpanel/db";
 import "server-only";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

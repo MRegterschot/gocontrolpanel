@@ -7,8 +7,8 @@ import { actorFromSession } from "@/lib/actor";
 import { getClient } from "@/lib/dbclient";
 import { publishServerEvent } from "@/lib/gbx-service";
 import { ServerError, ServerResponse } from "@/types/responses";
-import type { Prisma } from "@gcp/db";
-import { isFirstPartySlug } from "@gcp/shared";
+import type { Prisma } from "@tmcontrolpanel/db";
+import { isFirstPartySlug } from "@tmcontrolpanel/shared";
 import { logAudit } from "./server-only/audit-logs";
 
 // Settings from the panel's own forms for the first-party plugins; other plugins

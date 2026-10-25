@@ -1,6 +1,6 @@
 import { changeMarketplacePluginVersionAs } from "@/actions/server-only/plugins";
 import { publicApiRoute } from "@/lib/public-api/route";
-import { changePluginVersion } from "@gcp/shared/public-api";
+import { changePluginVersion } from "@tmcontrolpanel/shared/public-api";
 
 export const PUT = publicApiRoute(
   changePluginVersion,

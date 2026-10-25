@@ -1,12 +1,12 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { MANIFEST_FILE } from "@gcp/shared";
+import { MANIFEST_FILE } from "@tmcontrolpanel/shared";
 import {
   createPluginPackage,
   PluginPackageError,
   readPluginPackage,
   type PluginPackage,
-} from "@gcp/shared/plugin-package";
+} from "@tmcontrolpanel/shared/plugin-package";
 import { buildPlugin } from "./build";
 import { CliError, distEntry, DOC_FILES, listTemplates, readProjectManifest } from "./project";
 

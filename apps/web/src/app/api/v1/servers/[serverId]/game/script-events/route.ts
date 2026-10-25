@@ -1,6 +1,6 @@
 import { triggerModeScriptEventAs } from "@/actions/gbx/server-only/game";
 import { publicApiRoute } from "@/lib/public-api/route";
-import { triggerScriptEvent } from "@gcp/shared/public-api";
+import { triggerScriptEvent } from "@tmcontrolpanel/shared/public-api";
 
 export const POST = publicApiRoute(
   triggerScriptEvent,

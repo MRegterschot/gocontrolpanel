@@ -3,7 +3,7 @@ import { actorFromSession, actorHasPermission } from "@/lib/actor";
 import { auth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/utils";
-import { serverPermissions } from "@gcp/shared";
+import { serverPermissions } from "@tmcontrolpanel/shared";
 import { NextRequest, NextResponse } from "next/server";
 
 // File uploads can be large, so they come here instead of through a Server Action: the session,

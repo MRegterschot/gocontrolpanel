@@ -1,7 +1,7 @@
 import {
   createPluginPackage,
   readPluginPackage,
-} from "@gcp/shared/plugin-package";
+} from "@tmcontrolpanel/shared/plugin-package";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { loadFirstPartyPackages } from "../../src/infra/first-party-packages";
 import { silentLogger } from "../fakes/logger";

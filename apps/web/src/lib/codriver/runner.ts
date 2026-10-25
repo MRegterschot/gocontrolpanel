@@ -1,6 +1,6 @@
 import type { Actor } from "@/lib/actor";
 import { getLogger } from "@/lib/logger";
-import type { CodriverProgress } from "@gcp/shared";
+import type { CodriverProgress } from "@tmcontrolpanel/shared";
 import "server-only";
 import { looksIncomplete, missedAreas } from "./completeness";
 import { confirmQuestion } from "./confirm-text";

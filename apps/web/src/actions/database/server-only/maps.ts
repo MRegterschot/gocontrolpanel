@@ -3,8 +3,8 @@ import { getClient } from "@/lib/dbclient";
 import { callEach } from "@/lib/gbx-batch";
 import { getGbxClient } from "@/lib/gbx-service";
 import { getLogger } from "@/lib/logger";
-import { Maps } from "@gcp/db";
-import { MapInfoMinimal, SMapInfo } from "@gcp/shared";
+import { Maps } from "@tmcontrolpanel/db";
+import { MapInfoMinimal, SMapInfo } from "@tmcontrolpanel/shared";
 import "server-only";
 import { checkAndUpdateMapsInfoIfNeeded } from "./gbx";
 

@@ -2,7 +2,7 @@ import {
   CUSTOM_EVENT_NAME,
   MAX_CUSTOM_EVENT_BYTES,
   type PluginCustomEvent,
-} from "@gcp/shared";
+} from "@tmcontrolpanel/shared";
 import type { ChatService } from "../chat/chat-service";
 import type { CommandRouter } from "../chat/command-router";
 import { CleanupStack, TypedEventBus } from "../events";

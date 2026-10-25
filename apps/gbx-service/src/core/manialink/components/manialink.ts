@@ -1,4 +1,4 @@
-import type { ManialinkTheme } from "@gcp/shared";
+import type { ManialinkTheme } from "@tmcontrolpanel/shared";
 import type { ActionRouter } from "../action-router";
 import type { ManialinkService } from "../manialink-service";
 import type { TemplateRenderer } from "../template-renderer";

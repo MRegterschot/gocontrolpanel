@@ -10,8 +10,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { parseTmTags } from "@/lib/tmtags";
-import { Maps } from "@gcp/db";
 import { ColumnDef } from "@tanstack/react-table";
+import { Maps } from "@tmcontrolpanel/db";
 import { MoreHorizontal } from "lucide-react";
 import { useTransition } from "react";
 

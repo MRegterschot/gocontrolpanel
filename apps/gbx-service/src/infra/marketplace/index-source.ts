@@ -2,7 +2,7 @@ import {
   parseMarketplaceIndex,
   readBodyLimited,
   type MarketplaceIndex,
-} from "@gcp/shared";
+} from "@tmcontrolpanel/shared";
 import type { Logger } from "../../core/logger";
 import type { MarketplaceIndexSource } from "../../core/plugins/marketplace-watcher";
 

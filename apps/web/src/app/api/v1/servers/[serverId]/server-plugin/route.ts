@@ -7,7 +7,7 @@ import { publicApiRoute } from "@/lib/public-api/route";
 import {
   getServerScriptPlugin,
   setServerScriptPlugin,
-} from "@gcp/shared/public-api";
+} from "@tmcontrolpanel/shared/public-api";
 
 export const GET = publicApiRoute(
   getServerScriptPlugin,

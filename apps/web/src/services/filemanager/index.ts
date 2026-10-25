@@ -9,7 +9,7 @@ import {
 import { gameModesScripts } from "@/lib/scripts";
 import { ContentType, File, FileEntry } from "@/types/filemanager";
 import { ServerError, ServerResponse } from "@/types/responses";
-import { serverPermissions } from "@gcp/shared";
+import { serverPermissions } from "@tmcontrolpanel/shared";
 import "server-only";
 
 export async function getRoute(

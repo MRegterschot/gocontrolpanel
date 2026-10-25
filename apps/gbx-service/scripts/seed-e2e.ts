@@ -1,7 +1,7 @@
-import { encryptServerCredential } from "@gcp/shared/server-credentials";
+import { encryptServerCredential } from "@tmcontrolpanel/shared/server-credentials";
 // Creates the e2e server row, an admin user and plugin rows in the e2e database
-import { createPrismaClient } from "@gcp/db";
-import { compareVersions, isFirstPartySlug } from "@gcp/shared";
+import { createPrismaClient } from "@tmcontrolpanel/db";
+import { compareVersions, isFirstPartySlug } from "@tmcontrolpanel/shared";
 
 const env = process.env;
 const serverId = env.E2E_SERVER_ID ?? "e2e-server";

@@ -198,7 +198,7 @@ Keep `DEFAULT_ADMINS` with your login: your first login then turns the seeded us
 
 ```bash
 bun --env-file=.env.e2e run generate                    # MySQL Prisma client
-bun --env-file=.env.e2e run --filter @gcp/web dev       # http://localhost:3000
+bun --env-file=.env.e2e run --filter @tmcontrolpanel/web dev       # http://localhost:3000
 ```
 
 Log in with the account from `E2E_ADMIN_LOGIN` and keep the browser devtools open on Network → WS.

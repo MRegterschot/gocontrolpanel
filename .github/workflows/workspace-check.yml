@@ -33,20 +33,20 @@ jobs:
 
       - name: Typecheck shared packages, plugin SDK and GBX service
         run: |
-          bun run --filter @gcp/shared typecheck
+          bun run --filter @tmcontrolpanel/shared typecheck
           bun run --filter @tmcontrolpanel/plugin-sdk typecheck
-          bun run --filter @gcp/gbx-service typecheck
+          bun run --filter @tmcontrolpanel/gbx-service typecheck
 
       - name: Unit tests
         run: |
-          bun run --filter @gcp/shared test
+          bun run --filter @tmcontrolpanel/shared test
           bun run --filter @tmcontrolpanel/plugin-sdk test
-          bun run --filter @gcp/gbx-service test
-          bun run --filter @gcp/web test
+          bun run --filter @tmcontrolpanel/gbx-service test
+          bun run --filter @tmcontrolpanel/web test
 
       - name: Build GBX service and plugin SDK
         run: |
-          bun run --filter @gcp/gbx-service build
+          bun run --filter @tmcontrolpanel/gbx-service build
           bun run --filter @tmcontrolpanel/plugin-sdk build
 
       # The example registry must keep validating with the current package format
@@ -91,4 +91,4 @@ jobs:
         run: bun run deploy
 
       - name: Integration tests
-        run: bun run --filter @gcp/gbx-service test:integration
+        run: bun run --filter @tmcontrolpanel/gbx-service test:integration

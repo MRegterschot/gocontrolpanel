@@ -9,9 +9,9 @@ import {
   ServerError,
   ServerResponse,
 } from "@/types/responses";
-import { Prisma } from "@gcp/db";
-import { serverPermissions } from "@gcp/shared";
 import { PaginationState } from "@tanstack/react-table";
+import { Prisma } from "@tmcontrolpanel/db";
+import { serverPermissions } from "@tmcontrolpanel/shared";
 import "server-only";
 import slugid from "slugid";
 

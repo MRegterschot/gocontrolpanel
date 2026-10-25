@@ -1,5 +1,5 @@
 import type { FileEntry } from "@/types/filemanager";
-import type { ApiFileEntry } from "@gcp/shared/public-api";
+import type { ApiFileEntry } from "@tmcontrolpanel/shared/public-api";
 import "server-only";
 
 // The API speaks paths relative to UserData; the file manager wants them absolute

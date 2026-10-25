@@ -11,9 +11,9 @@ import {
   ServerError,
   ServerResponse,
 } from "@/types/responses";
-import { Maps, Prisma } from "@gcp/db";
-import { MapInfoMinimal, serverPermissions } from "@gcp/shared";
 import { PaginationState } from "@tanstack/react-table";
+import { Maps, Prisma } from "@tmcontrolpanel/db";
+import { MapInfoMinimal, serverPermissions } from "@tmcontrolpanel/shared";
 import "server-only";
 
 const mapsRecordsSchema = (serverId?: string) =>

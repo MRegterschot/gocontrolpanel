@@ -6,7 +6,7 @@ import {
   serverPermissions,
   type SessionClaims,
   type WsMessage,
-} from "@gcp/shared";
+} from "@tmcontrolpanel/shared";
 import type { ServerEventMap } from "../../core/server/server-events";
 import type { ServerRegistry } from "../../core/server/server-registry";
 import type { ServerRuntime } from "../../core/server/server-runtime";

@@ -4,8 +4,8 @@ import { getLogger } from "@/lib/logger";
 import { getKeyJukebox, getRedisClient } from "@/lib/redis";
 import { getErrorMessage } from "@/lib/utils";
 import { JukeboxMap } from "@/types/map";
-import { Maps, Prisma } from "@gcp/db";
-import { serverPermissions } from "@gcp/shared";
+import { Maps, Prisma } from "@tmcontrolpanel/db";
+import { serverPermissions } from "@tmcontrolpanel/shared";
 import "server-only";
 import { logAudit } from "../../database/server-only/audit-logs";
 

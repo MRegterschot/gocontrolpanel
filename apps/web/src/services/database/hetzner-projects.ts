@@ -3,8 +3,8 @@ import { getClient } from "@/lib/dbclient";
 import { decryptHetznerToken } from "@/lib/hetzner";
 import { getList, hasPermissionSync } from "@/lib/utils";
 import { PaginationResponse, ServerResponse } from "@/types/responses";
-import { Prisma } from "@gcp/db";
 import { PaginationState } from "@tanstack/react-table";
+import { Prisma } from "@tmcontrolpanel/db";
 import "server-only";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

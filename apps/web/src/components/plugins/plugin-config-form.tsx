@@ -21,12 +21,6 @@ import { getScripts } from "@/lib/api-client/filemanager";
 import { getLocalMaps } from "@/lib/api-client/gbx";
 import { queryKeys, unwrap } from "@/lib/api-client/query";
 import { getErrorMessage } from "@/lib/utils";
-import {
-  validatePluginConfig,
-  type ConfigField,
-  type PluginConfig,
-  type PluginConfigSchema,
-} from "@gcp/shared";
 import { Root as Tabs } from "@radix-ui/react-tabs";
 import {
   IconDeviceFloppy,
@@ -36,6 +30,12 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
+import {
+  validatePluginConfig,
+  type ConfigField,
+  type PluginConfig,
+  type PluginConfigSchema,
+} from "@tmcontrolpanel/shared";
 import { useSession } from "next-auth/react";
 import Papa from "papaparse";
 import { useId, useRef, useState } from "react";

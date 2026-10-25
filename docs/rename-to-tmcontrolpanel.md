@@ -186,12 +186,14 @@ Done in the Step 3 PR: e2e and test stacks now use `tmcp-e2e`, `tmcp_e2e`, `tmcp
 
 ### Step 4: Workspace rename `@gcp/*` to `@tmcontrolpanel/*`
 
-- [ ] Rename the four private workspace names and every dependency key (including `packages/plugin-sdk`).
-- [ ] Update all imports, re-exports, test imports, and type-only imports (Appendix A).
-- [ ] Update root `--filter` arguments, workflows, Dockerfiles, and contributor commands.
-- [ ] Update the `/^@gcp\//` patterns in `apps/gbx-service/tsup.config.ts` and `packages/plugin-sdk/tsup.config.ts`; confirm the SDK still bundles shared code.
-- [ ] Regenerate `bun.lock` with `bun install`.
-- [ ] Gate: typecheck, test, and build for the workspace with both `DB=mysql` and `DB=postgres`.
+- [x] Rename the four private workspace names and every dependency key (including `packages/plugin-sdk`).
+- [x] Update all imports, re-exports, test imports, and type-only imports (Appendix A).
+- [x] Update root `--filter` arguments, workflows, Dockerfiles, and contributor commands.
+- [x] Update the `/^@gcp\//` patterns in `apps/gbx-service/tsup.config.ts` and `packages/plugin-sdk/tsup.config.ts`; confirm the SDK still bundles shared code.
+- [x] Regenerate `bun.lock` with `bun install`.
+- [x] Gate: typecheck, test, and build for the workspace with both `DB=mysql` and `DB=postgres`.
+
+Done in the Step 4 PR. The tsup patterns became `/^@tmcontrolpanel\/(?!plugin-sdk)/`: the public `@tmcontrolpanel/plugin-sdk` must stay external, and a plain scope match would bundle it. `bun.lock` was edited for the renamed workspace entries only (no dependency changes) and accepted by `bun install --frozen-lockfile`. Historical plans and audits still mention `@gcp/*`.
 
 ### Step 5: Route group and internal symbols
 

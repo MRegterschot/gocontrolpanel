@@ -2,7 +2,7 @@ import { doServerActionWithAuth } from "@/lib/actions";
 import { type Actor, actorFromSession, requirePermission } from "@/lib/actor";
 import { getGbxClient } from "@/lib/gbx-service";
 import { ServerResponse } from "@/types/responses";
-import { serverPermissions, SPlayerInfo } from "@gcp/shared";
+import { serverPermissions, SPlayerInfo } from "@tmcontrolpanel/shared";
 import "server-only";
 
 export async function getJoinLink(

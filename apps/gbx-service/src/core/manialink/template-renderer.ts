@@ -1,4 +1,4 @@
-import { DEFAULT_THEME, type ManialinkTheme } from "@gcp/shared";
+import { DEFAULT_THEME, type ManialinkTheme } from "@tmcontrolpanel/shared";
 import Handlebars from "handlebars";
 import layouts from "handlebars-layouts";
 

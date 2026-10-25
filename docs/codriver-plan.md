@@ -297,7 +297,7 @@ Controls: fast path, keyword tool routing, templated replies, one call per comma
 
 - Dataset of 50 to 100 cases in `apps/web/src/lib/codriver/eval/cases.json`: text, caller role, server state, expected tool and arguments (or expected refusal or clarification). English only. Include typos, slang ("snow map", "rpg map", "cup 100"), multi-intent, ambiguous names, non-admins asking for admin actions, and injection attempts in text.
 - Grader in code: exact match on tool name and normalized arguments; no LLM judge.
-- Script `bun run --filter @gcp/web codriver:eval --model haiku|sonnet --effort low|medium` prints accuracy, cost and latency. It spends money, so it runs manually, not in CI.
+- Script `bun run --filter @tmcontrolpanel/web codriver:eval --model haiku|sonnet --effort low|medium` prints accuracy, cost and latency. It spends money, so it runs manually, not in CI.
 - Choose the default model from these results; add failing real requests (opt-in from the history view) to the dataset.
 
 ## 17. Testing
@@ -345,14 +345,14 @@ History supports status, player-login and free-text filters. “Export draft” 
 The evaluation dataset contains 62 English cases covering exact commands, slang, typos, multiple operations, missing targets, permissions and injection attempts. Validate locally without model calls:
 
 ```sh
-bun run --filter @gcp/web codriver:eval --validate-only
+bun run --filter @tmcontrolpanel/web codriver:eval --validate-only
 ```
 
 Run paid evaluations manually with `ANTHROPIC_API_KEY` set:
 
 ```sh
-bun run --filter @gcp/web codriver:eval --model haiku --effort low --output /tmp/codriver-haiku.json
-bun run --filter @gcp/web codriver:eval --model sonnet --effort medium --output /tmp/codriver-sonnet.json
+bun run --filter @tmcontrolpanel/web codriver:eval --model haiku --effort low --output /tmp/codriver-haiku.json
+bun run --filter @tmcontrolpanel/web codriver:eval --model sonnet --effort medium --output /tmp/codriver-sonnet.json
 ```
 
 Use `--filter <case-id-substring>` for a subset or `--cases <file>` for a reviewed dataset. The harness uses the real tool schemas, routing, role checks and planner with fixed server-state fixtures. It never prepares targets or executes operations. Tool calls are graded in order with normalized arguments; no-tool refusals and clarifications are checked without an LLM judge. Refusals and clarifications both use the planner's `unclear` status, so their exact wording is not graded. Accuracy, estimated cost, mean/p95 latency and the number of fast-path cases are reported; output files include per-case results. A failed case produces a nonzero exit status. Paid accuracy and latency results are needed before changing the default model.
@@ -400,7 +400,7 @@ Each call has a 1.5 s timeout and no retries; any error keeps today's behaviour.
 Check routing and the fast path without Claude calls (needs `TYPESAFE_API_KEY`):
 
 ```sh
-bun run --filter @gcp/web codriver:eval --jev --output /tmp/codriver-jev.json
+bun run --filter @tmcontrolpanel/web codriver:eval --jev --output /tmp/codriver-jev.json
 ```
 
 It compares the categories of each case's expected tools with the keyword route, the Jev route and the combination the runner uses, and counts fast-path false positives (a command chosen where the case expects something else); it exits nonzero when there are any.

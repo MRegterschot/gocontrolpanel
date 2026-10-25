@@ -13,7 +13,7 @@ import {
 } from "@/lib/managers/file-manager";
 import { FileEntry } from "@/types/filemanager";
 import { ServerError } from "@/types/responses";
-import { serverPermissions } from "@gcp/shared";
+import { serverPermissions } from "@tmcontrolpanel/shared";
 import "server-only";
 import { logAudit } from "../../database/server-only/audit-logs";
 

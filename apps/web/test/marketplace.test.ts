@@ -1,4 +1,4 @@
-import { createPluginPackage, sha256Hex } from "@gcp/shared/plugin-package";
+import { createPluginPackage, sha256Hex } from "@tmcontrolpanel/shared/plugin-package";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";

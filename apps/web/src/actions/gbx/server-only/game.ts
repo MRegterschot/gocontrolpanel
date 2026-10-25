@@ -4,7 +4,7 @@ import { validateListFilename } from "@/lib/list-filename";
 import { getLogger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/utils";
 import { ServerError } from "@/types/responses";
-import { serverPermissions } from "@gcp/shared";
+import { serverPermissions } from "@tmcontrolpanel/shared";
 import "server-only";
 import { logAudit } from "../../database/server-only/audit-logs";
 

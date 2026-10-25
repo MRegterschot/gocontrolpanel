@@ -28,7 +28,6 @@ import { useServers } from "@/providers/servers-provider";
 import { connectionRoutes, routePermissions, routes } from "@/routes";
 import { UserGroup } from "@/types/auth";
 import { ServerError } from "@/types/responses";
-import { ServerInfo } from "@gcp/shared";
 import {
   IconActivity,
   IconAdjustmentsAlt,
@@ -46,6 +45,7 @@ import {
   IconStopwatch,
   IconUsers,
 } from "@tabler/icons-react";
+import { ServerInfo } from "@tmcontrolpanel/shared";
 import { ChevronRight } from "lucide-react";
 import { Session } from "next-auth";
 import { useSession } from "next-auth/react";

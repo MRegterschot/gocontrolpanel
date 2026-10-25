@@ -1,8 +1,8 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { PaginationResponse, ServerResponse } from "@/types/responses";
-import { Prisma, Users } from "@gcp/db";
 import { PaginationState } from "@tanstack/react-table";
+import { Prisma, Users } from "@tmcontrolpanel/db";
 import "server-only";
 import { z } from "zod";
 

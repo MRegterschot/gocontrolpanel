@@ -1,6 +1,6 @@
 import { playerListFileAs } from "@/actions/gbx/server-only/player";
 import { publicApiRoute } from "@/lib/public-api/route";
-import { saveGuestlist } from "@gcp/shared/public-api";
+import { saveGuestlist } from "@tmcontrolpanel/shared/public-api";
 
 export const POST = publicApiRoute(
   saveGuestlist,

@@ -3,7 +3,10 @@ import {
   unblacklistPlayerAs,
 } from "@/actions/gbx/server-only/player";
 import { publicApiRoute } from "@/lib/public-api/route";
-import { addToBlacklist, removeFromBlacklist } from "@gcp/shared/public-api";
+import {
+  addToBlacklist,
+  removeFromBlacklist,
+} from "@tmcontrolpanel/shared/public-api";
 
 export const PUT = publicApiRoute(addToBlacklist, async ({ actor, params }) => {
   await blacklistPlayerAs(actor, params.serverId, params.login);

@@ -1,5 +1,5 @@
 import { guestActor, type Actor } from "@/lib/actor";
-import { sessionClaimsSchema } from "@gcp/shared";
+import { sessionClaimsSchema } from "@tmcontrolpanel/shared";
 import type { CodriverModel } from "../model";
 import { scriptForMode } from "../modes";
 import { runCodriver } from "../runner";

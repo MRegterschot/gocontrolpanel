@@ -1,5 +1,4 @@
 import { formatTime } from "@/lib/utils";
-import { PlayerRound, Team } from "@gcp/shared";
 import {
   IconFlag2,
   IconHash,
@@ -7,6 +6,7 @@ import {
   IconTrophyFilled,
   IconX,
 } from "@tabler/icons-react";
+import { PlayerRound, Team } from "@tmcontrolpanel/shared";
 import { Badge } from "../ui/badge";
 import { Card } from "../ui/card";
 import {

@@ -9,7 +9,7 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   // Workspace packages ship TypeScript source, so they are bundled in
-  noExternal: [/^@gcp\//],
+  noExternal: [/^@tmcontrolpanel\/(?!plugin-sdk)/],
   // Prisma loads its engine relative to its own package
   external: ["@prisma/client", ".prisma/client"],
 });

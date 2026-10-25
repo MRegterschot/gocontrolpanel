@@ -9,22 +9,22 @@ cp .env.example .env     # the root .env is read from any folder; apps/gbx-servi
 bun run dev:gbx            # from the repo root, or `bun run dev` inside apps/gbx-service
 ```
 
-The service needs the same database and Redis as the web app. Migrations are owned by the web app/`@gcp/db` (`bun run deploy`).
+The service needs the same database and Redis as the web app. Migrations are owned by the web app/`@tmcontrolpanel/db` (`bun run deploy`).
 
 While the web app still opens its own GBX connections (until phase 4), set `GBX_SERVICE_ENABLED_SERVERS` to a test server's id. Otherwise both will control the same dedicated servers.
 
 ## Testing
 
 ```bash
-bun run --filter @gcp/gbx-service test          # unit + component + HTTP/WS tests, no infrastructure needed
-bun run --filter @gcp/gbx-service typecheck
+bun run --filter @tmcontrolpanel/gbx-service test          # unit + component + HTTP/WS tests, no infrastructure needed
+bun run --filter @tmcontrolpanel/gbx-service typecheck
 
 # Prisma/Redis adapters against real databases
 docker compose -p tmcp-gbx-test -f apps/gbx-service/docker-compose.test.yml up -d
 DB=postgres DATABASE_URL=postgresql://tmcp:tmcp@localhost:55432/tmcp_test bun run deploy
 INTEGRATION_DATABASE_URL=postgresql://tmcp:tmcp@localhost:55432/tmcp_test \
 INTEGRATION_REDIS_URL=redis://localhost:56379 \
-  bun run --filter @gcp/gbx-service test:integration
+  bun run --filter @tmcontrolpanel/gbx-service test:integration
 docker compose -p tmcp-gbx-test -f apps/gbx-service/docker-compose.test.yml down -v
 DB=mysql bun run generate   # `deploy` regenerated the client for Postgres; switch back if you develop on MySQL
 ```

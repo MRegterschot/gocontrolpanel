@@ -10,17 +10,17 @@ import { routePermissions } from "@/routes";
 import { getInstalledPlugins, storedManifest } from "@/services/plugins";
 import type { UploadResult } from "@/types/plugins/catalog";
 import { ServerError, ServerResponse } from "@/types/responses";
-import type { Prisma } from "@gcp/db";
+import type { Prisma } from "@tmcontrolpanel/db";
 import {
   isFirstPartySlug,
   PLUGIN_SDK_VERSION,
   type PluginConfig,
-} from "@gcp/shared";
+} from "@tmcontrolpanel/shared";
 import {
   PACKAGE_LIMITS,
   PluginPackageError,
   readPluginPackage,
-} from "@gcp/shared/plugin-package";
+} from "@tmcontrolpanel/shared/plugin-package";
 import type { Session } from "next-auth";
 import { z } from "zod";
 import {

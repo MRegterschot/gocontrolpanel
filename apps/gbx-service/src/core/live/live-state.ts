@@ -10,7 +10,7 @@ import {
   PlayerWaypoint,
   SPlayerInfo,
   Team,
-} from "@gcp/shared";
+} from "@tmcontrolpanel/shared";
 import type { MapRecord, ServerPluginRecord } from "../ports";
 import { ParsedScriptSettings } from "./modes";
 import { isEliminated, isFinalist, isLastChance } from "./points";

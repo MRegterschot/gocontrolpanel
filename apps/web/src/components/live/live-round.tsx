@@ -1,6 +1,6 @@
 import { cn, formatTime } from "@/lib/utils";
-import { ActiveRound, PlayerInfo } from "@gcp/shared";
 import { IconFlag, IconHash, IconPennant, IconX } from "@tabler/icons-react";
+import { ActiveRound, PlayerInfo } from "@tmcontrolpanel/shared";
 import { Badge } from "../ui/badge";
 import { Card } from "../ui/card";
 import {

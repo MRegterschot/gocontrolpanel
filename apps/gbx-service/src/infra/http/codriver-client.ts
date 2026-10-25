@@ -1,4 +1,4 @@
-import { readSseEvents } from "@gcp/shared";
+import { readSseEvents } from "@tmcontrolpanel/shared";
 import type {
   CodriverAnswer,
   CodriverClient,

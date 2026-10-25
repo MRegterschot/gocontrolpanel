@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   // Trace from the monorepo root so workspace packages end up in the standalone build
   outputFileTracingRoot: path.join(__dirname, "../../"),
-  transpilePackages: ["@gcp/db", "@gcp/shared"],
+  transpilePackages: ["@tmcontrolpanel/db", "@tmcontrolpanel/shared"],
   images: {
     remotePatterns: [
       {

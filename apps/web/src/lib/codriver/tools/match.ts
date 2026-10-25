@@ -2,7 +2,10 @@ import { listMapFilesAs } from "@/actions/filemanager/server-only/files";
 import { saveServerPluginConfigAs } from "@/actions/server-only/plugins";
 import { gbxService } from "@/lib/gbx-service";
 import { storedManifest } from "@/services/plugins";
-import { validatePluginConfig, type PluginConfig } from "@gcp/shared";
+import {
+  validatePluginConfig,
+  type PluginConfig,
+} from "@tmcontrolpanel/shared";
 import "server-only";
 import { z } from "zod/v4";
 import { quote } from "../confirm-text";

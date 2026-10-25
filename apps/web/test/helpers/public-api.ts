@@ -1,4 +1,4 @@
-import { API_KEY_SCOPES, type ApiKeyScope } from "@gcp/shared";
+import { API_KEY_SCOPES, type ApiKeyScope } from "@tmcontrolpanel/shared";
 import { NextRequest } from "next/server";
 
 // Shared fixtures for v1 handler tests; each test file mocks authenticateApiKey itself

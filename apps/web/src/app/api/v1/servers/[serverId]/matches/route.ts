@@ -1,7 +1,7 @@
 import { toApiMatch } from "@/lib/public-api/dto";
 import { publicApiRoute } from "@/lib/public-api/route";
 import { getMatchesPageAs } from "@/services/database/matches";
-import { listMatches } from "@gcp/shared/public-api";
+import { listMatches } from "@tmcontrolpanel/shared/public-api";
 
 export const GET = publicApiRoute(
   listMatches,

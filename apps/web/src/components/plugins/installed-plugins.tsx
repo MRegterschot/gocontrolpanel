@@ -35,7 +35,6 @@ import { generatePath, getErrorMessage } from "@/lib/utils";
 import { routes } from "@/routes";
 import type { AvailablePlugin, InstalledPlugin } from "@/types/plugins/catalog";
 import { ServerError } from "@/types/responses";
-import type { PluginConfig } from "@gcp/shared";
 import {
   IconAlertTriangle,
   IconArrowUp,
@@ -46,6 +45,7 @@ import {
   IconSettings,
   IconTrash,
 } from "@tabler/icons-react";
+import type { PluginConfig } from "@tmcontrolpanel/shared";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

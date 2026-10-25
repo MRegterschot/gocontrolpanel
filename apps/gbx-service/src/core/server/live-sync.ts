@@ -1,4 +1,4 @@
-import type { MainServerPlayerInfo, SMapInfo, SPlayerInfo, ScriptName } from "@gcp/shared";
+import type { MainServerPlayerInfo, SMapInfo, SPlayerInfo, ScriptName } from "@tmcontrolpanel/shared";
 import { TypedEventBus } from "../events";
 import type { GbxConnection } from "../gbx/connection";
 import type { LiveState } from "../live/live-state";

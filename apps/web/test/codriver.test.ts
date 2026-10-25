@@ -34,7 +34,7 @@ import { executeCalls, runCodriver } from "@/lib/codriver/runner";
 import { countOptional, limitStrict, toApiTool } from "@/lib/codriver/schema";
 import { chatSafe, fuzzyFind, stripFormatting } from "@/lib/codriver/text";
 import { CodriverError, defineTool } from "@/lib/codriver/types";
-import { sessionClaimsSchema } from "@gcp/shared";
+import { sessionClaimsSchema } from "@tmcontrolpanel/shared";
 
 const serverId = "server-a";
 const cupScript = "Trackmania/TM_Cup_Online.Script.txt";

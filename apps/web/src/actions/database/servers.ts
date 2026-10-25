@@ -25,7 +25,7 @@ import {
 } from "@/services/database/servers";
 import { HetznerServerCache } from "@/types/api/hetzner/servers";
 import { ServerError, ServerResponse } from "@/types/responses";
-import { Servers } from "@gcp/db";
+import { Servers } from "@tmcontrolpanel/db";
 import { logAudit, withAudit } from "./server-only/audit-logs";
 
 function redactSecrets<

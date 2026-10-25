@@ -1,6 +1,6 @@
 import { currentApiKeyId } from "@/lib/api-keys/context";
 import { getClient } from "@/lib/dbclient";
-import { Prisma } from "@gcp/db";
+import { Prisma } from "@tmcontrolpanel/db";
 import "server-only";
 
 export function auditLogData(

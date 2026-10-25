@@ -2,7 +2,7 @@
 
 import { createColumns } from "@/app/(gocontroller)/server/[id]/players/players-columns";
 import useWebSocket from "@/hooks/use-websocket";
-import { PlayerInfo, wsPaths } from "@gcp/shared";
+import { PlayerInfo, wsPaths } from "@tmcontrolpanel/shared";
 import { useCallback, useState } from "react";
 import { DataTable } from "../table/data-table";
 

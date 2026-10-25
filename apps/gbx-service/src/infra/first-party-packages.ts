@@ -1,5 +1,11 @@
-import { isFirstPartySlug, resolveMarketplaceUrl } from "@gcp/shared";
-import { readPluginPackage, sha256Hex } from "@gcp/shared/plugin-package";
+import {
+  isFirstPartySlug,
+  resolveMarketplaceUrl,
+} from "@tmcontrolpanel/shared";
+import {
+  readPluginPackage,
+  sha256Hex,
+} from "@tmcontrolpanel/shared/plugin-package";
 import type { Logger } from "../core/logger";
 import type { FirstPartyPackage } from "../core/plugins/first-party";
 import { HttpMarketplaceIndexSource } from "./marketplace/index-source";

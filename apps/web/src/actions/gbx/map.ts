@@ -6,7 +6,7 @@ import { actorFromSession } from "@/lib/actor";
 import { gbxService } from "@/lib/gbx-service";
 import { JukeboxMap } from "@/types/map";
 import { ServerResponse } from "@/types/responses";
-import { Maps } from "@gcp/db";
+import { Maps } from "@tmcontrolpanel/db";
 import {
   addMapAs,
   addMapsAs,

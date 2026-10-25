@@ -10,8 +10,8 @@ import {
   type MarketplaceIndex,
   type MarketplacePlugin,
   type MarketplaceVersion,
-} from "@gcp/shared";
-import { PluginPackageError, readPluginPackage, sha256Hex, type PluginPackage } from "@gcp/shared/plugin-package";
+} from "@tmcontrolpanel/shared";
+import { PluginPackageError, readPluginPackage, sha256Hex, type PluginPackage } from "@tmcontrolpanel/shared/plugin-package";
 import { z } from "zod";
 
 // Builds the marketplace site from a registry repository:

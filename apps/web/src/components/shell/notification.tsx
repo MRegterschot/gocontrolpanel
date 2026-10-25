@@ -1,4 +1,4 @@
-import { Notifications } from "@gcp/db";
+import { Notifications } from "@tmcontrolpanel/db";
 
 export default function Notification({
   notification,

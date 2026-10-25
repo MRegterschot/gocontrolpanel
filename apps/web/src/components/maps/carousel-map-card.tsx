@@ -3,7 +3,6 @@ import { jumpToMap } from "@/actions/gbx/map";
 import { parseTmTags, stripTmTags } from "@/lib/tmtags";
 import { cn, getErrorMessage } from "@/lib/utils";
 import { ServerError } from "@/types/responses";
-import { Maps } from "@gcp/db";
 import {
   IconBounceRight,
   IconPhoto,
@@ -12,6 +11,7 @@ import {
   IconRotateClockwise,
   IconUser,
 } from "@tabler/icons-react";
+import { Maps } from "@tmcontrolpanel/db";
 import Image from "next/image";
 import { toast } from "sonner";
 import { Badge } from "../ui/badge";

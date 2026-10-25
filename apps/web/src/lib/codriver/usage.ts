@@ -1,6 +1,6 @@
 import { getClient } from "@/lib/dbclient";
 import { getLogger } from "@/lib/logger";
-import type { Prisma } from "@gcp/db";
+import type { Prisma } from "@tmcontrolpanel/db";
 import "server-only";
 import type { Budget, BudgetScope } from "./access";
 import { CODRIVER_MODELS, JEV_MODEL, type ModelUsage } from "./model";

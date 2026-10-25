@@ -3,7 +3,7 @@ import {
   HetznerProjectRole,
   Servers,
   UserServerRole,
-} from "@gcp/db";
+} from "@tmcontrolpanel/db";
 
 export type MinimalServer = Pick<Servers, "id" | "name" | "description"> & {
   hasFileManager: boolean;

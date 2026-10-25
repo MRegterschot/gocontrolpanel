@@ -1,7 +1,11 @@
 import { doServerActionWithAuth } from "@/lib/actions";
 import { getClient } from "@/lib/dbclient";
 import { ServerError, ServerResponse } from "@/types/responses";
-import { DEFAULT_THEME, type ManialinkTheme, parseTheme } from "@gcp/shared";
+import {
+  DEFAULT_THEME,
+  type ManialinkTheme,
+  parseTheme,
+} from "@tmcontrolpanel/shared";
 import "server-only";
 
 export interface ServerThemeOverview {

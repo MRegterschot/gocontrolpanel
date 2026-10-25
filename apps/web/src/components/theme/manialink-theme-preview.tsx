@@ -1,4 +1,4 @@
-import type { ManialinkTheme } from "@gcp/shared";
+import type { ManialinkTheme } from "@tmcontrolpanel/shared";
 import Flag from "react-world-flags";
 
 const css = (hex: string) => `#${hex}`;

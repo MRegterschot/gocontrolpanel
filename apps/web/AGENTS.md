@@ -51,7 +51,7 @@ For browser data fetching, use this flow:
 
 Do not introduce manual `useEffect` fetch/loading/error state for reads or use Server Actions as the browser's read transport. Effects can synchronize fetched defaults into forms, but should preserve fields the user has already edited. For an example, see `use-ecm-api-key.ts`, the ECM GET route, and `send-ecm.tsx`.
 
-Live server data uses the existing WebSocket hooks/providers and contracts from `@gcp/shared`, rather than replacing live streams with polling. Route dedicated-server operations through the web's GBX service client helpers.
+Live server data uses the existing WebSocket hooks/providers and contracts from `@tmcontrolpanel/shared`, rather than replacing live streams with polling. Route dedicated-server operations through the web's GBX service client helpers.
 
 ## Writes: forms and Server Actions
 
@@ -63,4 +63,4 @@ Keep database writes scoped to the server and validate ownership of related IDs.
 
 ## Checks
 
-From the repository root, run `bun run --filter @gcp/web typecheck` and `bun run --filter @gcp/web test` for web behavior changes. Format only changed files with Prettier and run `git diff --check`. Existing tests cover API transport, query validation, service requests, plugin configuration, and ECM submission. Add meaningful regression coverage when changing these behaviors. Browser checks need an authenticated panel and any infrastructure used by the page; report when they were unavailable.
+From the repository root, run `bun run --filter @tmcontrolpanel/web typecheck` and `bun run --filter @tmcontrolpanel/web test` for web behavior changes. Format only changed files with Prettier and run `git diff --check`. Existing tests cover API transport, query validation, service requests, plugin configuration, and ECM submission. Add meaningful regression coverage when changing these behaviors. Browser checks need an authenticated panel and any infrastructure used by the page; report when they were unavailable.

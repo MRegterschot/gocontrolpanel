@@ -30,8 +30,8 @@ import type {
   CodriverServerOverview,
 } from "@/types/codriver";
 import { PaginationResponse, ServerResponse } from "@/types/responses";
-import type { Prisma } from "@gcp/db";
 import { PaginationState } from "@tanstack/react-table";
+import type { Prisma } from "@tmcontrolpanel/db";
 import "server-only";
 
 export const serverAdminPermissions = (serverId: string) => [

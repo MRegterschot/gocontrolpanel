@@ -3,7 +3,7 @@ import { actorFromSession, requirePermission, type Actor } from "@/lib/actor";
 import { callEach } from "@/lib/gbx-batch";
 import { getGbxClient, type GbxClient } from "@/lib/gbx-service";
 import { ServerResponse } from "@/types/responses";
-import { PlayerInfo, serverPermissions } from "@gcp/shared";
+import { PlayerInfo, serverPermissions } from "@tmcontrolpanel/shared";
 import "server-only";
 
 // One round trip for the whole list; a player the server no longer knows is shown by login only

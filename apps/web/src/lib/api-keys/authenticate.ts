@@ -7,7 +7,7 @@ import {
   parseApiKeyScopes,
   serverPermissions,
   sessionClaimsSchema,
-} from "@gcp/shared";
+} from "@tmcontrolpanel/shared";
 import "server-only";
 import { bearerApiKeyToken, hashApiKeyToken } from "./token";
 

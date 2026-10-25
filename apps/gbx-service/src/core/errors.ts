@@ -1,4 +1,4 @@
-import type { ErrorCode } from "@gcp/shared";
+import type { ErrorCode } from "@tmcontrolpanel/shared";
 
 const statusByCode: Partial<Record<ErrorCode, number>> = {
   BadRequest: 400,

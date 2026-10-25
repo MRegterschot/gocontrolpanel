@@ -1,4 +1,4 @@
-import type { GameModeType, PluginConfig, PluginConfigSchema } from "@gcp/shared";
+import type { GameModeType, PluginConfig, PluginConfigSchema } from "@tmcontrolpanel/shared";
 
 // What the plugin pages show; plain JSON so server components can hand it to client ones
 

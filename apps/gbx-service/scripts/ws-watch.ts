@@ -1,6 +1,6 @@
 // Prints a live WebSocket channel of a locally running GBX service.
 // Usage: ws-watch <servers|clients|notifications|live|map|players> [serverId] [--user <id>] [--full]
-import { signWsTicket, sessionClaimsSchema } from "@gcp/shared";
+import { signWsTicket, sessionClaimsSchema } from "@tmcontrolpanel/shared";
 import WebSocket from "ws";
 
 const args = process.argv.slice(2);

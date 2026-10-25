@@ -1,6 +1,6 @@
 import { TMXMappackSearch, TMXMapSearch } from "@/types/api/tmx";
 import { ServerError } from "@/types/responses";
-import { readBodyLimited } from "@gcp/shared";
+import { readBodyLimited } from "@tmcontrolpanel/shared";
 import "server-only";
 import config from "../config";
 import { logger } from "../logger";
