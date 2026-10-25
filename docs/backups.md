@@ -12,14 +12,14 @@ It only dumps the application database named in `DATABASE_URL`, not the whole da
 4. Add it to cron, for example every night at 03:15:
 
    ```
-   15 3 * * * /path/to/tmcontrolpanel/scripts/backup-db.sh >> /var/log/gcp-backup.log 2>&1
+   15 3 * * * /path/to/tmcontrolpanel/scripts/backup-db.sh >> /var/log/tmcp-backup.log 2>&1
    ```
 
 The script exits non-zero when anything fails (cron mails that if `MAILTO` is set), and pings `BACKUP_PING_URL/fail` if you configured one. A second run while one is still going is skipped.
 
 ## Docker
 
-With the compose setup the database host in `DATABASE_URL` is `db`, which only exists inside Docker. Set `BACKUP_DB_CONTAINER` to the database container name (`docker compose ps`, for example `gocontrolpanel-db-1`). The dump then runs inside that container and the user, password and database name come from `DATABASE_URL`. Use a user with access to that database. The `gocontrolpanel` user from the compose file works.
+With the compose setup the database host in `DATABASE_URL` is `db`, which only exists inside Docker. Set `BACKUP_DB_CONTAINER` to the database container name (`docker compose ps`, for example `tmcontrolpanel-db-1`). The dump then runs inside that container and the user, password and database name come from `DATABASE_URL`. Use a user with access to that database. The `tmcontrolpanel` user from the compose file works.
 
 ## Settings
 
@@ -31,12 +31,12 @@ With the compose setup the database host in `DATABASE_URL` is `db`, which only e
 | `BACKUP_UPLOAD`                     | `none`           | `none`, `rsync` or `rclone`                     |
 | `BACKUP_RSYNC_TARGET`               |                  | `user@host:/path/` for rsync over SSH           |
 | `BACKUP_SSH_KEY`, `BACKUP_SSH_PORT` |                  | SSH key and port for rsync                      |
-| `BACKUP_RCLONE_TARGET`              |                  | An rclone remote, such as `s3:bucket/gcp`       |
+| `BACKUP_RCLONE_TARGET`              |                  | An rclone remote, such as `s3:bucket/tmcp`       |
 | `BACKUP_REMOTE_KEEP_DAYS`           | empty            | Delete uploaded backups older than this         |
 | `BACKUP_ENCRYPT_PASSFILE`           | empty            | Encrypt with AES-256, passphrase from this file |
 | `BACKUP_PING_URL`                   | empty            | Success/failure ping (healthchecks.io style)    |
 
-Each backup is `gcp-<database>-<UTC timestamp>.sql.gz` (plus `.enc` when encrypted) with a `.sha256` file next to it. The dump is checked before it is kept: it must be valid gzip and end with the dump tool's completion line. A failed upload leaves the local copy in place.
+Each backup is `tmcp-<database>-<UTC timestamp>.sql.gz` (plus `.enc` when encrypted) with a `.sha256` file next to it. The dump is checked before it is kept: it must be valid gzip and end with the dump tool's completion line. A failed upload leaves the local copy in place. Retention also removes expired backups named `gcp-…` from before the rename.
 
 The dump contains everything in the database, including user records and tokens. Encrypt it if it leaves your machine, restrict who can read the backup server, and do not put `backup.sql` or `backups/` in git (both are ignored here).
 
@@ -46,19 +46,19 @@ Make sure the target is the database you mean, and stop the panel and GBX servic
 
 ```bash
 # verify the copy you downloaded
-sha256sum -c gcp-gocontrolpanel-20261008-204405Z.sql.gz.enc.sha256
+sha256sum -c tmcp-tmcontrolpanel-20261008-204405Z.sql.gz.enc.sha256
 
 # decrypt (only if you used BACKUP_ENCRYPT_PASSFILE)
 openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass file:/path/to/passfile \
-  -in gcp-gocontrolpanel-20261008-204405Z.sql.gz.enc -out dump.sql.gz
+  -in tmcp-tmcontrolpanel-20261008-204405Z.sql.gz.enc -out dump.sql.gz
 
 # MariaDB / MySQL, into an existing empty database
-gunzip -c dump.sql.gz | mariadb -u gocontrolpanel -p gocontrolpanel
+gunzip -c dump.sql.gz | mariadb -u tmcontrolpanel -p tmcontrolpanel
 # in Docker
-gunzip -c dump.sql.gz | docker exec -i gocontrolpanel-db-1 mariadb -u gocontrolpanel -pPASSWORD gocontrolpanel
+gunzip -c dump.sql.gz | docker exec -i tmcontrolpanel-db-1 mariadb -u tmcontrolpanel -pPASSWORD tmcontrolpanel
 
 # PostgreSQL (the dump drops and recreates the tables)
-gunzip -c dump.sql.gz | psql -U gocontrolpanel -d gocontrolpanel
+gunzip -c dump.sql.gz | psql -U tmcontrolpanel -d tmcontrolpanel
 ```
 
 To look at a backup without risking the live data, restore it into a new database with another name and point a query tool at that.

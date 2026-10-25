@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Dumps the TMControlPanel database, keeps a copy locally and optionally sends it to another
 # machine or storage. Meant for cron, for example every night at 03:15:
-#   15 3 * * * /path/to/tmcontrolpanel/scripts/backup-db.sh >> /var/log/gcp-backup.log 2>&1
+#   15 3 * * * /path/to/tmcontrolpanel/scripts/backup-db.sh >> /var/log/tmcp-backup.log 2>&1
 # See docs/backups.md for the settings and how to restore.
 set -Eeuo pipefail
 
@@ -130,7 +130,7 @@ conn_args() {
 }
 
 STAMP="$(date -u '+%Y%m%d-%H%M%SZ')"
-BASE="gcp-${DB_NAME}-${STAMP}"
+BASE="tmcp-${DB_NAME}-${STAMP}"
 DUMP="$TMP_DIR/$BASE.sql.gz"
 
 mapfile -t CONN < <(conn_args)
@@ -182,7 +182,7 @@ case "$BACKUP_UPLOAD" in
     if [ -n "$BACKUP_REMOTE_KEEP_DAYS" ] && [[ "$BACKUP_RSYNC_TARGET" == *:* ]]; then
       host="${BACKUP_RSYNC_TARGET%%:*}"; path="${BACKUP_RSYNC_TARGET#*:}"
       log "Removing remote backups older than $BACKUP_REMOTE_KEEP_DAYS days"
-      "${SSH_CMD[@]}" "$host" "find '$path' -maxdepth 1 -name 'gcp-*.sql.gz*' -mtime +$BACKUP_REMOTE_KEEP_DAYS -delete"
+      "${SSH_CMD[@]}" "$host" "find '$path' -maxdepth 1 \( -name 'tmcp-*.sql.gz*' -o -name 'gcp-*.sql.gz*' \) -mtime +$BACKUP_REMOTE_KEEP_DAYS -delete"
     fi
     ;;
   rclone)
@@ -195,13 +195,13 @@ case "$BACKUP_UPLOAD" in
     rclone copyto --no-check-dest "$BACKUP_DIR/$NAME.sha256" "$target/$NAME.sha256"
     if [ -n "$BACKUP_REMOTE_KEEP_DAYS" ]; then
       log "Removing remote backups older than $BACKUP_REMOTE_KEEP_DAYS days"
-      rclone delete "$target" --min-age "${BACKUP_REMOTE_KEEP_DAYS}d" --include 'gcp-*.sql.gz*'
+      rclone delete "$target" --min-age "${BACKUP_REMOTE_KEEP_DAYS}d" --include 'tmcp-*.sql.gz*' --include 'gcp-*.sql.gz*'
     fi
     ;;
 esac
 
 # --- Local retention ---
-find "$BACKUP_DIR" -maxdepth 1 -type f -name 'gcp-*.sql.gz*' -mtime "+$BACKUP_KEEP_DAYS" -print -delete |
+find "$BACKUP_DIR" -maxdepth 1 -type f \( -name 'tmcp-*.sql.gz*' -o -name 'gcp-*.sql.gz*' \) -mtime "+$BACKUP_KEEP_DAYS" -print -delete |
   while read -r old; do log "Removed old backup $(basename "$old")"; done
 
 log "Backup finished"

@@ -12,6 +12,10 @@ import { ServerError } from "@/types/responses";
 import { AxiosResponse } from "axios";
 import "server-only";
 
+// Machines provisioned before the rename keep the old extract directory; new ones use the new one
+export const HETZNER_DIR_SHELL =
+  "$([ -d /root/tmcontrolpanel-master ] && echo /root/tmcontrolpanel-master || echo /root/gocontrolpanel-master)/hetzner";
+
 export async function getApiToken(projectId: string): Promise<string> {
   const project = await getHetznerProject(projectId);
   const apiTokens = getList<string>(project?.apiTokens);

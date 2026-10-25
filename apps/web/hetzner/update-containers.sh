@@ -8,7 +8,9 @@ set -Eeuo pipefail
 
 main() {
   TARGET=""
-  STACKS_DIR="/root/gocontrolpanel-master/hetzner"
+  # Machines provisioned before the rename keep the old directory
+  STACKS_DIR="/root/tmcontrolpanel-master/hetzner"
+  [ -d "$STACKS_DIR" ] || STACKS_DIR="/root/gocontrolpanel-master/hetzner"
   TAG="latest"
   DRY_RUN=0
 

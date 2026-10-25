@@ -41,6 +41,7 @@ import {
   updateHetznerServer,
 } from "./servers";
 import {
+  HETZNER_DIR_SHELL,
   createHetznerSSHKey,
   getApiToken,
   getHetznerServer,
@@ -1034,7 +1035,7 @@ export async function deleteTrackmaniaServer(
         );
       }
 
-      const script = `docker compose -p stack-${tmServerNumber} -f /root/gocontrolpanel-master/hetzner/docker-compose.yml down -v`;
+      const script = `docker compose -p stack-${tmServerNumber} -f ${HETZNER_DIR_SHELL}/docker-compose.yml down -v`;
 
       const sshConn = await connectToSSHServer(
         hetznerServer.public_net.ipv4?.ip || "",
