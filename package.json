@@ -23,7 +23,8 @@
     "deploy": "bun --env-file=.env run --filter @tmcontrolpanel/db deploy",
     "reset": "bun --env-file=.env run --filter @tmcontrolpanel/db reset",
     "pretty": "prettier --write \"**/*.{ts,tsx,json,css}\"",
-    "encrypt:server-credentials": "bun --env-file=.env scripts/encrypt-server-credentials.ts"
+    "encrypt:server-credentials": "bun --env-file=.env scripts/encrypt-server-credentials.ts",
+    "rotate:encryption-keys": "bun scripts/rotate-encryption-keys.ts"
   },
   "overrides": {
     "@radix-ui/react-focus-scope": "1.1.7",

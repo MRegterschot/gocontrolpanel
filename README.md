@@ -477,7 +477,7 @@ docker compose pull
 docker compose up -d
 ```
 
-The `tmcontrolpanel` container applies database migrations on start. Check the [changelog](CHANGELOG.md) before upgrading across several versions. If you are coming from the single-container setup of the `dev` branch, follow the [migration guide](docs/migrating-from-dev.md).
+The `tmcontrolpanel` container applies database migrations on start. Check the [changelog](CHANGELOG.md) before upgrading across several versions. If you are coming from the single-container setup of the `dev` branch, follow the [migration guide](docs/migrating-from-dev.md). To move a database to a new deployment with new `SECRETS_KEY` and `HETZNER_KEY` values, see [Moving a database to a new deployment](docs/migrating-database.md).
 
 ---
 
