@@ -1,6 +1,6 @@
 # Moving a database to a new deployment with new keys
 
-This guide moves the database of an existing TMControlPanel deployment into a new one, for example a new Coolify stack. The new deployment uses its own `SECRETS_KEY` and `HETZNER_KEY`, so the stored secrets are re-encrypted on the way.
+This guide moves the database of an existing TMControlPanel deployment into a new one, for example a fresh Docker Compose stack on another host. The new deployment uses its own `SECRETS_KEY` and `HETZNER_KEY`, so the stored secrets are re-encrypted on the way.
 
 If you would rather keep the old keys, skip the re-encryption: copy the old `SECRETS_KEY` and `HETZNER_KEY` into the new deployment before its first start and import the dump as is.
 
@@ -28,7 +28,7 @@ Redis isn't copied. It holds caches, rate limits and short-lived Hetzner setup s
 
 - **Only one GBX service may control a dedicated server.** Stop the old panel and GBX service before the new GBX service starts with the imported data. If you import a production database into staging, staging will connect to the production servers.
 - Have the old `SECRETS_KEY` and `HETZNER_KEY` at hand. If the old deployment also had `HETZNER_KEY_PREVIOUS` set, you need that too.
-- Have the new keys. On Coolify, they're the values of `SERVICE_PASSWORD_64_SECRETS` and `SERVICE_PASSWORD_64_HETZNER` in the stack's environment variables. Start the new stack once so Coolify generates them, and save a copy somewhere safe.
+- Have the new keys: the `SECRETS_KEY` and `HETZNER_KEY` the new deployment will run with. Generate them (for example `openssl rand -base64 48`) or copy the ones your platform generated, and save a copy somewhere safe.
 - Check out the repository at the version the new deployment runs, for example the `release` branch for the `release` image, then run `bun install`. You need Docker and Bun on that machine.
 
 The re-encryption runs on a throwaway copy of the database on your own machine. The new deployment's database never has to be reachable from outside.
@@ -101,7 +101,7 @@ docker exec tmcp-rekey mariadb-dump -uroot -prekey --single-transaction tmcontro
 
 ## 6. Import into the new deployment
 
-On the new deployment's server, stop the web and GBX containers but leave the database running. On Coolify, the container names end in the stack UUID and a timestamp (`docker ps --filter name=<stack uuid>`).
+On the new deployment's server, stop the web and GBX containers but leave the database running. Look up the container names with `docker ps`.
 
 ```bash
 docker stop <new tmcontrolpanel container> <new gbx-service container>
@@ -112,8 +112,6 @@ docker exec <new db container> mariadb -uroot -p'<new root password>' \
 gunzip -c rekeyed.sql.gz | docker exec -i <new db container> \
   mariadb -u tmcontrolpanel -p'<new db password>' tmcontrolpanel
 ```
-
-On Coolify the passwords are `SERVICE_PASSWORD_MARIADBROOT` and `SERVICE_PASSWORD_MARIADB`.
 
 Then redeploy or restart the stack. The web container applies pending migrations on start; there shouldn't be any after step 3.
 
@@ -134,4 +132,4 @@ shred -u old.sql.gz rekeyed.sql.gz
 
 `old.sql.gz` together with the old keys exposes every stored secret, so delete it once the new deployment works, or keep it only in an encrypted backup. Remove the old deployment's volumes when you no longer need a way back. Unset the `OLD_*` and new key variables in your shell.
 
-On Coolify, don't delete and recreate the stack after the import. That generates new keys, and the imported secrets become unreadable.
+Don't recreate the new deployment from scratch after the import if that regenerates its keys: the imported secrets become unreadable.
