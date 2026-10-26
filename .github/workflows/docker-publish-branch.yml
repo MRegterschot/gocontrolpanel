@@ -63,4 +63,4 @@ jobs:
           WEBHOOK: ${{ github.ref_name == 'dev' && secrets.COOLIFY_WEBHOOK_DEV || secrets.COOLIFY_WEBHOOK_RELEASE }}
         run: |
           # Coolify doesn't notice a new image under the same tag by itself
-          curl --fail --silent --show-error -H "Authorization: Bearer $COOLIFY_TOKEN" "$WEBHOOK"
+          curl --fail --silent --show-error -X POST -H "Authorization: Bearer $COOLIFY_TOKEN" "$WEBHOOK"
