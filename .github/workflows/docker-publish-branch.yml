@@ -51,3 +51,16 @@ jobs:
             docker build -f $DOCKERFILE -t $IMAGE:$IMAGE_TAG . --build-arg DB_TYPE=${{ matrix.db.name }}
             docker push $IMAGE:$IMAGE_TAG
           done
+
+  redeploy:
+    needs: build-and-push
+    if: github.ref_name == 'dev' || github.ref_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Coolify deploy
+        env:
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          WEBHOOK: ${{ github.ref_name == 'dev' && secrets.COOLIFY_WEBHOOK_DEV || secrets.COOLIFY_WEBHOOK_RELEASE }}
+        run: |
+          # Coolify doesn't notice a new image under the same tag by itself
+          curl --fail --silent --show-error -H "Authorization: Bearer $COOLIFY_TOKEN" "$WEBHOOK"
