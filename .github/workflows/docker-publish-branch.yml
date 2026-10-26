@@ -31,13 +31,9 @@ jobs:
 
       - name: Resolve image tag
         run: |
-          # release -> latest, other branches -> sanitized branch name
-          BRANCH=${GITHUB_REF_NAME}
-          if [ "$BRANCH" = "release" ]; then
-            TAG=latest
-          else
-            TAG=$(echo "$BRANCH" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_.-]/-/g' | cut -c1-128)
-          fi
+          # Sanitized branch name; latest/beta stay reserved for the release workflow
+          TAG=$(echo "$GITHUB_REF_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_.-]/-/g' | cut -c1-128)
+          case "$TAG" in latest|beta) TAG="branch-$TAG" ;; esac
           echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
 
       - name: Build and push images
