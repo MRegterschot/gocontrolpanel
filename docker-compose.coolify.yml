@@ -4,6 +4,8 @@
 # Set real HTTPS domains on both services (a sslip.io http domain breaks wss://), and register
 # https://<web domain>/api/auth/callback/nadeo with Nadeo for each environment.
 # SECRETS_KEY and HETZNER_KEY are generated: don't recreate the resource, or stored keys become unreadable.
+# NPM reaches the web and gbx containers on its network as tmcontrolpanel-<STACK_NAME>:3000 and
+# gbx-service-<STACK_NAME>:3100; set STACK_NAME per environment so the aliases don't collide.
 services:
   tmcontrolpanel:
     image: marijnregterschot/tmcontrolpanel:${IMAGE_TAG:-latest}
@@ -31,6 +33,11 @@ services:
       - SECRETS_KEY=${SERVICE_PASSWORD_64_SECRETS}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - LOG_LEVEL=${LOG_LEVEL:-info}
+    networks:
+      default:
+      npm:
+        aliases:
+          - tmcontrolpanel-${STACK_NAME:-production}
     healthcheck:
       # Healthy once the server answers, which is after the migrations have run
       test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:3000/',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"]
@@ -64,6 +71,11 @@ services:
       - NADEO_CLIENT_ID=${NADEO_CLIENT_ID:?}
       - NADEO_CLIENT_SECRET=${NADEO_CLIENT_SECRET:?}
       - LOG_LEVEL=${LOG_LEVEL:-info}
+    networks:
+      default:
+      npm:
+        aliases:
+          - gbx-service-${STACK_NAME:-production}
     depends_on:
       db:
         condition: service_healthy
@@ -105,3 +117,8 @@ services:
 volumes:
   db-data:
   redis-data:
+
+networks:
+  npm:
+    external: true
+    name: ${NPM_NETWORK:-nginxproxymanager_default}
