@@ -47,6 +47,8 @@ export const queryKeys = {
   users: (field: string, ids: string[]) => ["users", field, ...ids] as const,
   hetzner: (projectId: string, what: string) =>
     ["hetzner", projectId, what] as const,
+  dashboard: (what: "hetzner" | "activity" | "admin") =>
+    ["dashboard", what] as const,
   club: (clubId: number, what: string, ...rest: (string | number)[]) =>
     ["nadeo", "clubs", clubId, what, ...rest] as const,
   paginated: (
