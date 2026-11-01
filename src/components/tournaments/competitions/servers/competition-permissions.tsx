@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useSpacetimeProcedure } from "@/hooks/tournaments/use-spacetime-procedure";
 import { procedures, tables } from "@/lib/server-manager";
 import { useProcedure, useTable } from "spacetimedb/react";
+import { useUsers } from "@/providers/users-provider";
 import Permissions from "../../permissions";
 
 
@@ -22,9 +23,9 @@ export default function CompetitionPermissions({
     const [userPermissions, isUserReady] = useTable(tables.tabCompetitionMember)//.where((row) => row.competitionId.eq(id)))
     const [competitionRoles, isRolesReady] = useTable(tables.tabCompetitionRole.where((row) => row.competitionId.eq(id)))
     //const [competitionRoleMembers, isRoleMemberrsReady] = useTable(tables.tabCompetitionRoleMember.where((row) => row..eq(id))
-    const [userTable, userReady] = useTable(tables.tabUser)
+    const users = useUsers()
 
-    if (!(isUserReady && isRolesReady && userReady)) {
+    if (!(isUserReady && isRolesReady)) {
         return <div>Loading...</div>
     }
 
@@ -45,7 +46,7 @@ export default function CompetitionPermissions({
                 <TableBody>
                     {userPermissions.map((user) => (
                         <TableRow key={user.id}>
-                            <TableCell>{userTable.find((rawUser) => user.userId === rawUser.id)?.name}</TableCell>
+                            <TableCell>{users.get(user.userId)?.name}</TableCell>
                             <TableCell className="font-medium"><Permissions permissions={user.permissions} /></TableCell>
                         </TableRow>
                     ))}

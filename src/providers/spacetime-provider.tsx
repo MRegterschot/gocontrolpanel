@@ -4,6 +4,7 @@ import { getDbConnectionBuilder } from "@/lib/spacetimedb/connection-builder";
 import { useEffect, useState } from "react";
 import { useAuth, useAutoSignin } from "react-oidc-context";
 import { SpacetimeDBProvider as Provider } from "spacetimedb/react";
+import UsersProvider from "./users-provider";
 
 export default function SpacetimeDBProvider({
   children,
@@ -26,5 +27,9 @@ export default function SpacetimeDBProvider({
 
   if (!builder) return null;
 
-  return <Provider connectionBuilder={builder}>{children}</Provider>;
+  return (
+    <Provider connectionBuilder={builder}>
+      <UsersProvider>{children}</UsersProvider>
+    </Provider>
+  );
 }
