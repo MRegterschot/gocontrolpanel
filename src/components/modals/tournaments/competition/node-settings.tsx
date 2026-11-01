@@ -1,0 +1,71 @@
+"use client";
+import ConfirmModal from "@/components/modals/confirm-modal";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useServerAction } from "@/hooks/tournaments/use-server-action";
+import { reducers } from "@/lib/server-manager";
+import { NodeHandle } from "@/lib/server-manager/types";
+import { IconDeviceFloppy, IconTrash, IconX } from "@tabler/icons-react";
+import { useState } from "react";
+import { useReducer } from "spacetimedb/react";
+import { DefaultModalProps } from "../../default-props";
+
+// General settings shared by every node type. Type specific settings get added below.
+export default function NodeSettingsModal({
+  data,
+  closeModal,
+}: DefaultModalProps<{ handle: NodeHandle; name: string }>) {
+  const [name, setName] = useState(data?.name ?? "");
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const rename = useServerAction(useReducer(reducers.nodeNameEdit), "Failed to rename node", "Node renamed");
+  const remove = useServerAction(useReducer(reducers.nodeDelete), "Failed to delete node", "Node deleted");
+
+  if (!data) return null;
+
+  return (
+    <Card
+      onClick={(e) => e.stopPropagation()}
+      className="p-6 gap-4 sm:min-w-100 max-sm:w-full max-h-[90vh] overflow-y-auto"
+    >
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold">{data.name}</h1>
+        <IconX className="h-6 w-6 cursor-pointer text-muted-foreground" onClick={closeModal} />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label>Name</Label>
+        <div className="flex gap-2">
+          <Input value={name} onChange={(e) => setName(e.target.value)} />
+          <Button
+            disabled={!name || name === data.name}
+            onClick={() => rename({ node: data.handle, name })}
+          >
+            <IconDeviceFloppy />
+            Save
+          </Button>
+        </div>
+      </div>
+
+      <Button variant="destructive" className="self-start mt-2" onClick={() => setIsDeleteOpen(true)}>
+        <IconTrash />
+        Delete
+      </Button>
+
+      <ConfirmModal
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={async () => {
+          setIsDeleteOpen(false);
+          if (await remove({ node: data.handle })) closeModal?.();
+        }}
+        title="Delete node"
+        description={`Are you sure you want to delete ${data.name}? Its connections are removed as well.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+      />
+    </Card>
+  );
+}

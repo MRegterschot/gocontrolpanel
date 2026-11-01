@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MatchV1 } from "@/lib/server-manager/types";
-import { IconChevronDown, IconExternalLink, IconFileSymlink, IconSettings } from "@tabler/icons-react";
+import { IconChevronDown, IconExternalLink, IconFileSymlink } from "@tabler/icons-react";
 import { Handle, Node, NodeProps, NodeToolbar, Position } from "@xyflow/react";
 import Link from "next/link";
+import NodeSettingsButton from "./node-settings-button";
 import { memo } from "react";
 
 export type MatchV1NodeType = Node<MatchV1>;
@@ -21,7 +22,7 @@ function MatchV1Node(props: NodeProps<MatchV1NodeType>) {
         <p className="font-bold">
           {props.data.name}
         </p>
-        <IconSettings className="pl-2 h-[1em] items-center text-inherit leading-none self-center align-middle bg-none p-0 m-0 " />
+        <NodeSettingsButton id={props.id} />
       </div>
       <Handle type="source" position={Position.Right} className="h-5! rounded-sm!" />
       <Handle type="target" position={Position.Left} className="h-5! rounded-sm!" />

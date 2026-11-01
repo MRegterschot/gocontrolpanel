@@ -3,8 +3,9 @@
 import { Card } from "@/components/ui/card";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { LeaderboardV2 } from "@/lib/server-manager/types";
-import { IconChevronDown, IconSettings } from "@tabler/icons-react";
+import { IconChevronDown } from "@tabler/icons-react";
 import { Handle, Node, NodeProps, Position } from "@xyflow/react";
+import NodeSettingsButton from "./node-settings-button";
 import { memo, useRef, useState } from "react";
 import LeaderboardPreview from "./leaderboard-preview";
 
@@ -37,7 +38,7 @@ export type LeaderboardV2NodeType = Node<LeaderboardV2>;
           <p className="font-bold">
             {props.data.name}
           </p>
-          <IconSettings className="pl-2 h-[1em] items-center text-inherit leading-none self-center align-middle bg-none p-0 m-0 " />
+          <NodeSettingsButton id={props.id} />
         </div>
 
         <Handle type="target" position={Position.Left} className="h-5! rounded-sm!" />

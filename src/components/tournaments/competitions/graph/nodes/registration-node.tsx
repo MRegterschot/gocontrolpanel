@@ -2,8 +2,9 @@
 
 import { Card } from "@/components/ui/card";
 import { Registration } from "@/lib/server-manager/types";
-import { IconChevronDown, IconSettings } from "@tabler/icons-react";
+import { IconChevronDown } from "@tabler/icons-react";
 import { Handle, Node, NodeProps, Position } from "@xyflow/react";
+import NodeSettingsButton from "./node-settings-button";
 import { memo } from "react";
 
 export type RegistrationV1NodeType = Node<Registration>;
@@ -17,7 +18,7 @@ function RegistrationV1Node(props: NodeProps<RegistrationV1NodeType>) {
         <p className="font-bold">
           {props.data.name}
         </p>
-        <IconSettings className="pl-2 h-[1em] items-center text-inherit leading-none self-center align-middle bg-none p-0 m-0 " />
+        <NodeSettingsButton id={props.id} />
       </div>
       <Handle type="source" position={Position.Right} className="h-5! rounded-sm!" />
       {/* <Handle type="target" position={Position.Left} /> */}

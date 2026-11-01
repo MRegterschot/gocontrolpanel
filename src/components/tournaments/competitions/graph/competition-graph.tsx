@@ -2,6 +2,7 @@
 import Modal from "@/components/modals/modal";
 import CreateConnectionModal from "@/components/modals/tournaments/competition/create-connection";
 import EdgeSettingsModal from "@/components/modals/tournaments/competition/edge-settings";
+import NodeSettingsModal from "@/components/modals/tournaments/competition/node-settings";
 import { Card } from "@/components/ui/card";
 import { useCompetitionGraph as useCompetitionGraph } from "@/hooks/tournaments/competitions/use-competition-graph";
 import { toNodeHandle } from "@/lib/node-handle";
@@ -187,7 +188,12 @@ export default function CompetitionGraph({
 
   const [settingsEdgeId, setSettingsEdgeId] = useState<number | null>(null);
   const settingsEdge = graph.connections.find((c) => c.id === settingsEdgeId);
-  const graphActions = useMemo(() => ({ openEdgeSettings: setSettingsEdgeId }), []);
+  const [settingsNodeId, setSettingsNodeId] = useState<string | null>(null);
+  const settingsNode = nodes.find((n) => n.id === settingsNodeId);
+  const graphActions = useMemo(
+    () => ({ openEdgeSettings: setSettingsEdgeId, openNodeSettings: setSettingsNodeId }),
+    [],
+  );
 
   const [menu, setMenu] = useState<{ x: number, y: number } | null>(null);
   const onContextMenu = useCallback((event: globalThis.MouseEvent | MouseEvent) => {
@@ -257,6 +263,17 @@ export default function CompetitionGraph({
         <EdgeSettingsModal
           data={settingsEdge}
           closeModal={() => setSettingsEdgeId(null)}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={settingsNode !== undefined}
+        setIsOpen={() => setSettingsNodeId(null)}
+      >
+        <NodeSettingsModal
+          key={settingsNodeId}
+          data={settingsNode && { handle: toNodeHandle(settingsNode.id), name: settingsNode.data.name }}
+          closeModal={() => setSettingsNodeId(null)}
         />
       </Modal>
     </div>
