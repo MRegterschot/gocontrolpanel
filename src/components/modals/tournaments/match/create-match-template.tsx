@@ -2,13 +2,14 @@
 import { Card } from "@/components/ui/card";
 import CreateMatchTemplateForm from "@/forms/tournaments/match/match-template/create-match-template-form";
 import { IconX } from "@tabler/icons-react";
+import { RawServerConfigV2 } from "@/lib/server-manager/types";
 import { DefaultModalProps } from "../../default-props";
 
 export default function CreateMatchTemplateModal({
   closeModal,
-  data: competitionId,
-}: DefaultModalProps<number>) {
-  if (competitionId === undefined) return null;
+  data,
+}: DefaultModalProps<{ competitionId: number; config?: RawServerConfigV2 }>) {
+  if (!data) return null;
 
   const stopPropagation = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -20,14 +21,14 @@ export default function CreateMatchTemplateModal({
       className="p-6 gap-6 sm:min-w-[400px] max-sm:w-full max-h-[90vh] overflow-y-auto"
     >
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Create Match Template</h1>
+        <h1 className="text-xl font-bold">{data.config ? `Edit ${data.config.name}` : "Create Match Template"}</h1>
         <IconX
           className="h-6 w-6 cursor-pointer text-muted-foreground"
           onClick={closeModal}
         />
       </div>
 
-      <CreateMatchTemplateForm callback={closeModal} competitionId={competitionId} />
+      <CreateMatchTemplateForm callback={closeModal} competitionId={data.competitionId} initial={data.config} />
     </Card>
   );
 }

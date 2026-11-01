@@ -4,7 +4,8 @@ import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { IconArrowNarrowRight } from "@tabler/icons-react";
 
-export default function GeneralForm({ onNext }: { onNext: () => void }) {
+// The server cannot rename a shared config yet, so the name is locked when editing.
+export default function GeneralForm({ onNext, isEditing }: { onNext: () => void; isEditing?: boolean }) {
   return (
     <form className="flex flex-col gap-4">
       <FormElement
@@ -12,6 +13,7 @@ export default function GeneralForm({ onNext }: { onNext: () => void }) {
         label="Template Name"
         placeholder="Enter match template name"
         isRequired
+        isDisabled={isEditing}
       />
 
       <div className="flex justify-end">

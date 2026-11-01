@@ -4,7 +4,7 @@ import BooleanDisplay from "@/components/boolean-display";
 import { Button } from "@/components/ui/button";
 import { reducers } from "@/lib/server-manager";
 import { getErrorMessage } from "@/lib/utils";
-import { IconArrowNarrowLeft, IconPlus } from "@tabler/icons-react";
+import { IconArrowNarrowLeft, IconDeviceFloppy, IconPlus } from "@tabler/icons-react";
 import { UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { useReducer } from "spacetimedb/react";
@@ -14,21 +14,26 @@ import MatchTemplateRoundsSummary from "./modes/rounds-summary";
 export default function MatchTemplateSummary({
   form,
   competitionId,
+  configId,
   onBack,
   callback,
 }: {
   form: UseFormReturn<CreateMatchTemplateSchemaType>;
   competitionId: number;
+  configId?: number;
   onBack: () => void;
   callback?: () => void;
 }) {
   const createSharedConfig = useReducer(reducers.rawServerConfigSharedNew);
+  const updateSharedConfig = useReducer(reducers.rawServerConfigSharedUpdate);
 
   async function onSubmit({ name, config }: CreateMatchTemplateSchemaType) {
     try {
-      await createSharedConfig({ name, competitionId, config });
+      // The server keeps the name of an existing config, only the config itself is updated.
+      if (configId) await updateSharedConfig({ configId, config });
+      else await createSharedConfig({ name, competitionId, config });
 
-      toast.success("Match template successfully created");
+      toast.success(configId ? "Config successfully updated" : "Match template successfully created");
       callback?.();
     } catch (error) {
       toast.error("Failed to create match template", {
@@ -220,8 +225,8 @@ export default function MatchTemplateSummary({
             disabled={!form.formState.isValid || form.formState.isSubmitting}
             type="submit"
           >
-            <IconPlus />
-            Create Config
+            {configId ? <IconDeviceFloppy /> : <IconPlus />}
+            {configId ? "Save Config" : "Create Config"}
           </Button>
         </div>
       </div>

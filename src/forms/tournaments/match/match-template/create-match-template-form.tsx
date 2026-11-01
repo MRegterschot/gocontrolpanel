@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { RawServerConfigV2 } from "@/lib/server-manager/types";
 import CommonForm, { DEFAULT_COMMON_CONFIG } from "./common-form";
 import {
   CreateMatchTemplateSchema,
@@ -21,15 +22,17 @@ type Steps = "general" | "server" | "common" | "mode" | "maps" | "summary";
 export default function CreateMatchTemplateForm({
   callback,
   competitionId,
+  initial,
 }: {
   callback?: () => void;
   competitionId: number;
+  initial?: RawServerConfigV2;
 }) {
   const [step, setStep] = useState<Steps>("general");
 
   const form = useForm<CreateMatchTemplateSchemaType>({
     resolver: zodResolver(CreateMatchTemplateSchema),
-    defaultValues: {
+    defaultValues: initial ? { name: initial.name, config: initial.config as CreateMatchTemplateSchemaType["config"] } : {
       name: "",
       config: {
         options: {},
@@ -121,7 +124,7 @@ export default function CreateMatchTemplateForm({
       </TabsList>
       <Form {...form}>
         <TabsContent value="general">
-          <GeneralForm onNext={nextStep} />
+          <GeneralForm onNext={nextStep} isEditing={!!initial} />
         </TabsContent>
         <TabsContent value="server">
           <ServerForm onNext={nextStep} onBack={previousStep} />
@@ -139,6 +142,7 @@ export default function CreateMatchTemplateForm({
           <MatchTemplateSummary
             form={form}
             competitionId={competitionId}
+            configId={initial?.id}
             onBack={previousStep}
             callback={callback}
           />
