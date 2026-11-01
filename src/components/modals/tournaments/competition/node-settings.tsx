@@ -11,6 +11,7 @@ import { MasterNodeEnumType } from "@/components/tournaments/competitions/graph/
 import { LeaderboardV2NodeType } from "@/components/tournaments/competitions/graph/nodes/leaderboard-node";
 import { MatchV1NodeType } from "@/components/tournaments/competitions/graph/nodes/match-node";
 import { RegistrationV1NodeType } from "@/components/tournaments/competitions/graph/nodes/registration-node";
+import { ServerV1NodeType } from "@/components/tournaments/competitions/graph/nodes/server-node";
 import { IconDeviceFloppy, IconTrash, IconX } from "@tabler/icons-react";
 import { useState } from "react";
 import { useReducer } from "spacetimedb/react";
@@ -18,6 +19,7 @@ import { DefaultModalProps } from "../../default-props";
 import LeaderboardSettings from "./settings/leaderboard-settings";
 import MatchSettings from "./settings/match-settings";
 import RegistrationSettings from "./settings/registration-settings";
+import ServerSettings from "./settings/server-settings";
 
 // General settings shared by every node type, followed by the type specific ones.
 export default function NodeSettingsModal({
@@ -59,6 +61,7 @@ export default function NodeSettingsModal({
       {node.type === "MatchV1" && <MatchSettings match={(node as MatchV1NodeType).data} />}
       {node.type === "RegistrationV1" && <RegistrationSettings registration={(node as RegistrationV1NodeType).data} />}
       {node.type === "LeaderboardV2" && <LeaderboardSettings leaderboard={(node as LeaderboardV2NodeType).data} />}
+      {node.type === "ServerV1" && <ServerSettings server={(node as ServerV1NodeType).data} />}
 
       <Button variant="destructive" className="self-start mt-2" onClick={() => setIsDeleteOpen(true)}>
         <IconTrash />

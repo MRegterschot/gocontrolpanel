@@ -22,6 +22,7 @@ export default function ContextMenu({ x, y, competitionId, onClose }: ContextMen
     const createLeaderboard = useReducer(reducers.leaderboardCreate);
     const createInput = useReducer(reducers.inputCreate);
     const createOutput = useReducer(reducers.outputCreate);
+    const createServer = useReducer(reducers.serverCreate);
 
     const base = { parentId: competitionId, position: screenToFlowPosition({ x, y }), withTemplate: 0 };
     const node = { ...base, asTemplate: false };
@@ -32,6 +33,7 @@ export default function ContextMenu({ x, y, competitionId, onClose }: ContextMen
         Leaderboard: () => createLeaderboard({ ...node, name: "New Leaderboard" }),
         Input: () => createInput({ ...node, name: "New Input" }),
         Output: () => createOutput({ ...node, name: "New Output" }),
+        Server: () => createServer({ ...node, name: "New Server" }),
     };
 
     const create = useServerAction(

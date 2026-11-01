@@ -34,6 +34,7 @@ import LeaderboardV2Node, { LeaderboardV2NodeType } from "./nodes/leaderboard-no
 import OutputV1Node, { OutputV1NodeType } from "./nodes/output-node";
 import RegistrationV1Node, { RegistrationV1NodeType } from "./nodes/registration-node";
 import InputV1Node, { InputV1NodeType } from "./nodes/input-node";
+import ServerV1Node, { ServerV1NodeType } from "./nodes/server-node";
 import { GraphActionsContext } from "./graph-context";
 import ContextMenu from "./graph-context-menu";
 
@@ -43,10 +44,11 @@ const nodeTypes = {
   LeaderboardV2: LeaderboardV2Node,
   InputV1: InputV1Node,
   OutputV1: OutputV1Node,
-  RegistrationV1: RegistrationV1Node
+  RegistrationV1: RegistrationV1Node,
+  ServerV1: ServerV1Node,
 };
 
-export type MasterNodeEnumType = (MatchV1NodeType | CompetitionV1NodeType | InputV1NodeType | OutputV1NodeType | LeaderboardV2NodeType | RegistrationV1NodeType);
+export type MasterNodeEnumType = (MatchV1NodeType | CompetitionV1NodeType | InputV1NodeType | OutputV1NodeType | LeaderboardV2NodeType | RegistrationV1NodeType | ServerV1NodeType);
 
 const edgeTypes = {
   Data: DataEdge,
@@ -130,6 +132,17 @@ export default function CompetitionGraph({
         }
       }),
 
+      ...graph.nServerV1.map((n) => {
+        const handle = NodeHandle.ServerV1(n.id);
+        const position = graph.nodePositions.find((row) => row.node.tag == handle.tag && row.node.value == handle.value)?.position ?? { x: 0, y: 0 };
+        return {
+          id: `ServerV1-${n.id}`,
+          type: "ServerV1",
+          data: n,
+          position,
+        }
+      }),
+
       ...graph.nInputV1.map((n) => {
         const handle = NodeHandle.InputV1(n.id);
         const position = graph.nodePositions.find((row) => row.node.tag == handle.tag && row.node.value == handle.value)?.position ?? { x: 0, y: 0 };
@@ -143,7 +156,7 @@ export default function CompetitionGraph({
     ]
 
     setNodes(transformedNodes);
-  }, [graph.nMatchV1, graph.nCompetitionV1, graph.nodePositions, graph.nLeaderboardV2, graph.nInputV1, graph.nOutputV1, graph.nRegistrationV1]);
+  }, [graph.nMatchV1, graph.nCompetitionV1, graph.nodePositions, graph.nLeaderboardV2, graph.nInputV1, graph.nOutputV1, graph.nRegistrationV1, graph.nServerV1]);
 
   useMemo(() => {
     const transformedEdges = [

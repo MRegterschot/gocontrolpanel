@@ -8,6 +8,7 @@ import {
   MatchV1,
   OutputV1,
   Registration,
+  ServerV1,
 } from "@/lib/server-manager/types";
 import { useMemo } from "react";
 import { useTable } from "spacetimedb/react";
@@ -21,6 +22,7 @@ export type Graph = {
   nLeaderboardV2: readonly LeaderboardV2[],
   nInputV1: readonly InputV1[],
   nOutputV1: readonly OutputV1[],
+  nServerV1: readonly ServerV1[],
   connections: readonly CompetitionConnection[],
   nodePositions: readonly CompetitionNodePosition[]
 };
@@ -59,8 +61,12 @@ export function useCompetitionGraph(competition: CompetitionV1) {
     tables.competitionLeaderboards({ competitionId: competition.id })
   );
 
+  const [nServerV1, nServerV1Ready] = useTable(
+    tables.competitionServers({ competitionId: competition.id })
+  );
+
   const graph = useMemo<Graph>(() => {
-    const allReady = nMatchV1Ready && connectionsReady && positionsReady && nRegistrationV1Ready && nCompetitionV1Ready && nInputV1Ready && nOutputV1Ready && nLeaderboardV2Ready;
+    const allReady = nMatchV1Ready && connectionsReady && positionsReady && nRegistrationV1Ready && nCompetitionV1Ready && nInputV1Ready && nOutputV1Ready && nLeaderboardV2Ready && nServerV1Ready;
 
     if (!allReady) {
       return {
@@ -70,13 +76,14 @@ export function useCompetitionGraph(competition: CompetitionV1) {
         nLeaderboardV2: [],
         nOutputV1: [],
         nRegistrationV1: [],
+        nServerV1: [],
         connections: [],
         nodePositions: [],
       };
     }
 
-    return { nMatchV1, connections, nodePositions, nCompetitionV1, nRegistrationV1, nLeaderboardV2, nOutputV1, nInputV1 };
-  }, [connections, nodePositions, nMatchV1, nMatchV1Ready, nRegistrationV1, nCompetitionV1, nInputV1, nOutputV1, nLeaderboardV2, nOutputV1, nInputV1,
+    return { nMatchV1, connections, nodePositions, nCompetitionV1, nRegistrationV1, nLeaderboardV2, nOutputV1, nInputV1, nServerV1 };
+  }, [connections, nodePositions, nMatchV1, nMatchV1Ready, nRegistrationV1, nCompetitionV1, nInputV1, nOutputV1, nLeaderboardV2, nOutputV1, nInputV1, nServerV1, nServerV1Ready,
     connectionsReady, positionsReady, nMatchV1Ready, nRegistrationV1Ready, nCompetitionV1Ready, nInputV1Ready, nOutputV1Ready, nLeaderboardV2Ready]);
 
   return graph;
