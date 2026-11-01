@@ -166,18 +166,20 @@ function DataOptionForm({
         />
       )}
       {option.tag === "FirstOffsetN" && (
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+          <Label htmlFor="offset" className="text-xs text-muted-foreground">Skip first</Label>
+          <Label htmlFor="take" className="text-xs text-muted-foreground">Then take</Label>
           <Input
+            id="offset"
             type="number"
             disabled={disabled}
-            placeholder="Offset"
             value={option.value.offset}
             onChange={(e) => setOption({ tag: "FirstOffsetN", value: { ...option.value, offset: toU8(e.target.value) } })}
           />
           <Input
+            id="take"
             type="number"
             disabled={disabled}
-            placeholder="Take"
             value={option.value.take}
             onChange={(e) => setOption({ tag: "FirstOffsetN", value: { ...option.value, take: toU8(e.target.value) } })}
           />
