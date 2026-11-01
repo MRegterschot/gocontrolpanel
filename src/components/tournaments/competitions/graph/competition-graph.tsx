@@ -3,9 +3,9 @@ import Modal from "@/components/modals/modal";
 import CreateConnectionModal from "@/components/modals/tournaments/competition/create-connection";
 import { Card } from "@/components/ui/card";
 import { useCompetitionGraph as useCompetitionGraph } from "@/hooks/tournaments/competitions/use-competition-graph";
+import { toNodeHandle } from "@/lib/node-handle";
 import { CompetitionV1, NodeHandle } from "@/lib/server-manager/types";
 import {
-  addEdge,
   applyEdgeChanges,
   applyNodeChanges,
   Background,
@@ -174,25 +174,10 @@ export default function CompetitionGraph({
     [setEdges],
   ); */
 
-  /* const onConnect: OnConnect = useCallback(
-    (params) => {
-      setCreatedEdge({
-        from: parseInt(params.target),
-        to: parseInt(params.source),
-      });
-   
-      setEdges((edgesSnapshot) =>
-        addEdge(
-          {
-            ...params,
-            type: "matchEdge",
-          },
-          edgesSnapshot,
-        ),
-      );
-    },
-    [setEdges],
-  ); */
+  // The edge shows up once the server has created the connection.
+  const onConnect: OnConnect = useCallback(({ source, target }) => {
+    setCreatedEdge({ origin: toNodeHandle(source), target: toNodeHandle(target) });
+  }, []);
 
   const onNodeClick = useCallback((_: MouseEvent, node: MasterNodeEnumType) => {
     setSelectedNode((prev) => (prev?.id === node.id ? null : node));
@@ -203,9 +188,6 @@ export default function CompetitionGraph({
     console.log("edge clicked", edge);
   }, []);
 
-  // const onCreateConnectionCallback = useCallback(() => {
-  //   setCreatedEdge(null);
-  // }, []);
 
 
   const [menu, setMenu] = useState<{ x: number, y: number } | null>(null);
@@ -226,7 +208,7 @@ export default function CompetitionGraph({
           //onEdgesChange={onEdgesChange}
           onNodeClick={onNodeClick}
           onEdgeClick={onEdgeClick}
-          //onConnect={onConnect}
+          onConnect={onConnect}
           snapGrid={[10, 10]}
           snapToGrid={true}
           minZoom={0.25}
