@@ -6,23 +6,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useServerAction } from "@/hooks/tournaments/use-server-action";
 import { reducers } from "@/lib/server-manager";
-import { NodeHandle } from "@/lib/server-manager/types";
+import { toNodeHandle } from "@/lib/node-handle";
+import { MasterNodeEnumType } from "@/components/tournaments/competitions/graph/competition-graph";
+import { MatchV1NodeType } from "@/components/tournaments/competitions/graph/nodes/match-node";
 import { IconDeviceFloppy, IconTrash, IconX } from "@tabler/icons-react";
 import { useState } from "react";
 import { useReducer } from "spacetimedb/react";
 import { DefaultModalProps } from "../../default-props";
+import MatchSettings from "./settings/match-settings";
 
-// General settings shared by every node type. Type specific settings get added below.
+// General settings shared by every node type, followed by the type specific ones.
 export default function NodeSettingsModal({
-  data,
+  data: node,
   closeModal,
-}: DefaultModalProps<{ handle: NodeHandle; name: string }>) {
-  const [name, setName] = useState(data?.name ?? "");
+}: DefaultModalProps<MasterNodeEnumType>) {
+  const [name, setName] = useState(node?.data.name ?? "");
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const rename = useServerAction(useReducer(reducers.nodeNameEdit), "Failed to rename node", "Node renamed");
   const remove = useServerAction(useReducer(reducers.nodeDelete), "Failed to delete node", "Node deleted");
 
-  if (!data) return null;
+  if (!node) return null;
+  const data = { handle: toNodeHandle(node.id), name: node.data.name };
 
   return (
     <Card
@@ -47,6 +51,8 @@ export default function NodeSettingsModal({
           </Button>
         </div>
       </div>
+
+      {node.type === "MatchV1" && <MatchSettings match={(node as MatchV1NodeType).data} />}
 
       <Button variant="destructive" className="self-start mt-2" onClick={() => setIsDeleteOpen(true)}>
         <IconTrash />

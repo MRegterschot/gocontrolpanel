@@ -28,7 +28,6 @@ import MatchNode, { type MatchV1NodeType } from "./nodes/match-node";
 import AddMatchButton from "./panel/add-match";
 import CalculatePositionsButton from "./panel/calculate-positions";
 import SaveLayoutButton from "./panel/save-layout";
-import SelectedMatchPanel from "./panel/selected-match";
 import ToggleWaitingEdgesButton from "./panel/toggle-waiting-edges";
 import CompetitionV1Node, { CompetitionV1NodeType } from "./nodes/competition-node";
 import LeaderboardV2Node, { LeaderboardV2NodeType } from "./nodes/leaderboard-node";
@@ -68,8 +67,6 @@ export default function CompetitionGraph({
 
   const [nodes, setNodes] = useState<MasterNodeEnumType[]>([]);
   const [edges, setEdges] = useState<DataEdgeType[]>([]);
-
-  const [selectedNode, setSelectedNode] = useState<MasterNodeEnumType | null>(null);
 
   const [createdEdge, setCreatedEdge] = useState<{
     origin: NodeHandle;
@@ -182,10 +179,6 @@ export default function CompetitionGraph({
     setCreatedEdge({ origin: toNodeHandle(source), target: toNodeHandle(target) });
   }, []);
 
-  const onNodeClick = useCallback((_: MouseEvent, node: MasterNodeEnumType) => {
-    setSelectedNode((prev) => (prev?.id === node.id ? null : node));
-  }, []);
-
   const [settingsEdgeId, setSettingsEdgeId] = useState<number | null>(null);
   const settingsEdge = graph.connections.find((c) => c.id === settingsEdgeId);
   const [settingsNodeId, setSettingsNodeId] = useState<string | null>(null);
@@ -212,7 +205,6 @@ export default function CompetitionGraph({
           edgeTypes={edgeTypes}
           onNodesChange={onNodesChange}
           //onEdgesChange={onEdgesChange}
-          onNodeClick={onNodeClick}
           onConnect={onConnect}
           snapGrid={[10, 10]}
           snapToGrid={true}
@@ -230,9 +222,6 @@ export default function CompetitionGraph({
           className="absolute"
         >
           <Background />
-          <Panel position="top-left">
-            {selectedNode?.type === "MatchV1" && <SelectedMatchPanel match={selectedNode as MatchV1NodeType} />}
-          </Panel>
           <Panel position="bottom-left">
             <ToggleWaitingEdgesButton />
           </Panel>
@@ -272,7 +261,7 @@ export default function CompetitionGraph({
       >
         <NodeSettingsModal
           key={settingsNodeId}
-          data={settingsNode && { handle: toNodeHandle(settingsNode.id), name: settingsNode.data.name }}
+          data={settingsNode}
           closeModal={() => setSettingsNodeId(null)}
         />
       </Modal>
