@@ -155,7 +155,7 @@ export default function CompetitionGraph({
         source: `${e.origin.tag}-${e.origin.value}`,
         target: `${e.target.tag}-${e.target.value}`,
         type: e.kind.tag,
-        className: `${e.kind.tag.toLowerCase()}-edge`,
+        className: `${e.kind.tag.toLowerCase()}-edge ${e.status.tag.toLowerCase()}-edge`,
         data: e,
       }))
     ]

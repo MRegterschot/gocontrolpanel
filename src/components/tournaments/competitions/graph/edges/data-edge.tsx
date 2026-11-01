@@ -8,6 +8,12 @@ import { useGraphActions } from "../graph-context";
 
 export type DataEdgeType = Edge<CompetitionConnection>;
 
+const STATUS_COLORS = {
+  Configuring: "bg-red-500 hover:bg-red-700",
+  Configured: "bg-yellow-500 hover:bg-yellow-700",
+  Resolved: "bg-green-500 hover:bg-green-700",
+} as const;
+
 function DataEdge({
   id,
   sourceX,
@@ -33,7 +39,7 @@ function DataEdge({
       <EdgeToolbar edgeId={id} x={centerX} y={centerY} isVisible>
         <div style={{ scale: .5 * zoom }}>
 
-          <Button className="nodrag nopan" onClick={() => data && openEdgeSettings(data.id)}>
+          <Button className={`nodrag nopan text-white ${data && STATUS_COLORS[data.status.tag]}`} onClick={() => data && openEdgeSettings(data.id)}>
             <IconSettings />
           </Button>
         </div>

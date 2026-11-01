@@ -1,17 +1,25 @@
-.data-edge .react-flow__edge-path {
-  stroke: var(--color-green-500);
+.configuring-edge .react-flow__edge-path {
+  stroke: var(--color-red-500);
 }
 
-.data-edge.selected:is(:focus, :not(:focus)) .react-flow__edge-path {
-  stroke: var(--color-green-700);
+.configuring-edge.selected:is(:focus, :not(:focus)) .react-flow__edge-path {
+  stroke: var(--color-red-700);
 }
 
-.wait-edge .react-flow__edge-path {
+.configured-edge .react-flow__edge-path {
   stroke: var(--color-yellow-500);
 }
 
-.wait-edge.selected:is(:focus, :not(:focus)) .react-flow__edge-path {
+.configured-edge.selected:is(:focus, :not(:focus)) .react-flow__edge-path {
   stroke: var(--color-yellow-700);
+}
+
+.resolved-edge .react-flow__edge-path {
+  stroke: var(--color-green-500);
+}
+
+.resolved-edge.selected:is(:focus, :not(:focus)) .react-flow__edge-path {
+  stroke: var(--color-green-700);
 }
 
 .wait-edge .react-flow__edge-path {
