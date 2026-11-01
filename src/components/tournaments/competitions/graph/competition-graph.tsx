@@ -209,22 +209,10 @@ export default function CompetitionGraph({
 
 
   const [menu, setMenu] = useState<{ x: number, y: number } | null>(null);
-  //const ref = useRef(null);
   const onContextMenu = useCallback((event: globalThis.MouseEvent | MouseEvent) => {
-    console.log(event)
     event.preventDefault();
-
-    // Calculate position of the context menu. We want to make sure it
-    // doesn't get positioned off-screen.
-    // const pane = ref.current.getBoundingClientRect();
-    setMenu({
-      //id: 500,
-      x: event.clientX,
-      y: event.clientY,
-    });
-  },
-    [setMenu],
-  );
+    setMenu({ x: event.clientX, y: event.clientY });
+  }, []);
 
   return (
     <div className="flex-1 min-h-0 w-full h-full flex flex-col">
@@ -243,6 +231,7 @@ export default function CompetitionGraph({
           snapToGrid={true}
           minZoom={0.25}
           onPaneContextMenu={onContextMenu}
+          onPaneClick={() => setMenu(null)}
           fitView
           colorMode={theme as ColorMode}
           connectionLineType={ConnectionLineType.SmoothStep}
@@ -266,7 +255,7 @@ export default function CompetitionGraph({
             <AddMatchButton competitionId={competition.id} />
           </Panel>
 
-          {menu && <ContextMenu /* onClick={onPaneClick} */ {...menu} />}
+          {menu && <ContextMenu {...menu} competitionId={competition.id} onClose={() => setMenu(null)} />}
         </ReactFlow>
       </Card>
 
