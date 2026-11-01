@@ -2,18 +2,11 @@
 import { Button } from "@/components/ui/button";
 import { CompetitionConnection } from "@/lib/server-manager/types";
 import { IconSettings } from "@tabler/icons-react";
-import { BaseEdge, Edge, EdgeToolbar, getSimpleBezierPath, Position, useViewport } from "@xyflow/react";
+import { BaseEdge, Edge, EdgeProps, EdgeToolbar, getSimpleBezierPath, Position, useViewport } from "@xyflow/react";
 import { memo } from "react";
+import { useGraphActions } from "../graph-context";
 
 export type DataEdgeType = Edge<CompetitionConnection>;
-
-interface DataEdgeProps {
-  id: string;
-  sourceX: number;
-  sourceY: number;
-  targetX: number;
-  targetY: number;
-}
 
 function DataEdge({
   id,
@@ -21,8 +14,10 @@ function DataEdge({
   sourceY,
   targetX,
   targetY,
-}: DataEdgeProps) {
+  data,
+}: EdgeProps<DataEdgeType>) {
   const { zoom } = useViewport();
+  const { openEdgeSettings } = useGraphActions();
 
   const [edgePath, centerX, centerY] = getSimpleBezierPath({
     sourceX,
@@ -38,7 +33,7 @@ function DataEdge({
       <EdgeToolbar edgeId={id} x={centerX} y={centerY} isVisible>
         <div style={{ scale: .5 * zoom }}>
 
-          <Button>
+          <Button className="nodrag nopan" onClick={() => data && openEdgeSettings(data.id)}>
             <IconSettings />
           </Button>
         </div>

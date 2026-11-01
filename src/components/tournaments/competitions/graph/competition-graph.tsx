@@ -1,6 +1,7 @@
 "use client";
 import Modal from "@/components/modals/modal";
 import CreateConnectionModal from "@/components/modals/tournaments/competition/create-connection";
+import EdgeSettingsModal from "@/components/modals/tournaments/competition/edge-settings";
 import { Card } from "@/components/ui/card";
 import { useCompetitionGraph as useCompetitionGraph } from "@/hooks/tournaments/competitions/use-competition-graph";
 import { toNodeHandle } from "@/lib/node-handle";
@@ -33,6 +34,7 @@ import LeaderboardV2Node, { LeaderboardV2NodeType } from "./nodes/leaderboard-no
 import OutputV1Node, { OutputV1NodeType } from "./nodes/output-node";
 import RegistrationV1Node, { RegistrationV1NodeType } from "./nodes/registration-node";
 import InputV1Node, { InputV1NodeType } from "./nodes/input-node";
+import { GraphActionsContext } from "./graph-context";
 import ContextMenu from "./graph-context-menu";
 
 const nodeTypes = {
@@ -183,12 +185,9 @@ export default function CompetitionGraph({
     setSelectedNode((prev) => (prev?.id === node.id ? null : node));
   }, []);
 
-  const onEdgeClick = useCallback((_: MouseEvent, edge: DataEdgeType) => {
-    if (edge.selected) return;
-    console.log("edge clicked", edge);
-  }, []);
-
-
+  const [settingsEdgeId, setSettingsEdgeId] = useState<number | null>(null);
+  const settingsEdge = graph.connections.find((c) => c.id === settingsEdgeId);
+  const graphActions = useMemo(() => ({ openEdgeSettings: setSettingsEdgeId }), []);
 
   const [menu, setMenu] = useState<{ x: number, y: number } | null>(null);
   const onContextMenu = useCallback((event: globalThis.MouseEvent | MouseEvent) => {
@@ -197,6 +196,7 @@ export default function CompetitionGraph({
   }, []);
 
   return (
+    <GraphActionsContext.Provider value={graphActions}>
     <div className="flex-1 min-h-0 w-full h-full flex flex-col">
       <Card className="w-full flex-1 min-h-0 relative rounded-[calc(var(--radius)+4px)] overflow-hidden">
         <ReactFlow
@@ -207,7 +207,6 @@ export default function CompetitionGraph({
           onNodesChange={onNodesChange}
           //onEdgesChange={onEdgesChange}
           onNodeClick={onNodeClick}
-          onEdgeClick={onEdgeClick}
           onConnect={onConnect}
           snapGrid={[10, 10]}
           snapToGrid={true}
@@ -250,6 +249,17 @@ export default function CompetitionGraph({
           closeModal={() => setCreatedEdge(null)}
         />
       </Modal>
+
+      <Modal
+        isOpen={settingsEdge !== undefined}
+        setIsOpen={() => setSettingsEdgeId(null)}
+      >
+        <EdgeSettingsModal
+          data={settingsEdge}
+          closeModal={() => setSettingsEdgeId(null)}
+        />
+      </Modal>
     </div>
+    </GraphActionsContext.Provider>
   );
 }
