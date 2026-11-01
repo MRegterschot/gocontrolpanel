@@ -1,7 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { toNodeHandle } from "@/lib/node-handle";
 import { reducers } from "@/lib/server-manager";
+import { getErrorMessage } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
 import { ComponentProps } from "react";
 import { toast } from "sonner";
@@ -11,28 +13,21 @@ import { MasterNodeEnumType } from "../competition-graph";
 export default function SaveLayoutButton({
   ...props
 }: ComponentProps<"button">) {
-  const updateNodePosition = useReducer(reducers.competitionNodePositionUpdate);
+  const updateNodePositions = useReducer(reducers.competitionNodePositionsUpdate);
   const { getNodes } = useReactFlow<MasterNodeEnumType>();
 
-  const onSaveLayout = () => {
-    const nodes = getNodes();
+  const onSaveLayout = async () => {
+    const positions = getNodes().map(({ id, position: { x, y } }) => ({
+      node: toNodeHandle(id),
+      position: { x, y },
+    }));
 
-    nodes.forEach((node) => {
-      if (
-        !node.id ||
-        (node.position.x === node.position.x &&
-          node.position.y === node.position.y)
-      )
-        return;
-
-      const nodeId = parseInt(node.id, 10);
-      updateNodePosition({
-        node: { tag: "MatchV1", value: nodeId },
-        position: { x: node.position.x, y: node.position.y },
-      });
-    });
-
-    toast.success("Layout successfully saved");
+    try {
+      await updateNodePositions({ positions });
+      toast.success("Layout successfully saved");
+    } catch (error) {
+      toast.error("Failed to save layout", { description: getErrorMessage(error) });
+    }
   };
 
   return (
