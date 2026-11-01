@@ -8,7 +8,7 @@ export default function NodeSettingsButton({ id }: { id: string }) {
 
   return (
     <IconSettings
-      className="nodrag pl-2 h-[1em] cursor-pointer self-center"
+      className="nodrag ml-auto shrink-0 h-[1em] cursor-pointer self-center"
       onClick={(e) => {
         e.stopPropagation();
         openNodeSettings(id);
