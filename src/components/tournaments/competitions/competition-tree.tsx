@@ -3,19 +3,21 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { CompetitionNode } from "@/hooks/tournaments/competitions/use-competition-tree";
+import { useCompetition } from "@/hooks/tournaments/competitions/use-competition";
+import { tables } from "@/lib/server-manager";
 import { cn, generatePath } from "@/lib/utils";
 import { routes } from "@/routes";
 import { IconChevronUp } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTable } from "spacetimedb/react";
 //import CompetitionStatusBadge from "../status/competition-status-badge";
-import MatchStatusBadge from "../status/match-status-badge";
+import MatchStatusBadge from "../match/match-status-badge";
 import CompetitionActions from "./competition-actions";
 
 interface CompetitionTreeProps {
   tournamentId: number;
-  tree: CompetitionNode;
+  competitionId: number;
   sectionIndex: number;
   subsectionIndex?: number;
   isLast?: boolean;
@@ -23,15 +25,21 @@ interface CompetitionTreeProps {
 
 export default function CompetitionTree({
   tournamentId,
-  tree,
+  competitionId,
   sectionIndex,
   subsectionIndex = 0,
   isLast = true,
 }: CompetitionTreeProps) {
   const router = useRouter();
+  const { competition: tree } = useCompetition(competitionId);
+  const [childRows] = useTable(tables.competitionCompetitions({ competitionId }));
+  const [matches] = useTable(tables.competitionMatches({ competitionId }));
+  const children = [...childRows].sort((a, b) => a.id - b.id);
 
   // Stage children toggle
   const [isOpen, setIsOpen] = useState(sectionIndex === 0);
+
+  if (!tree) return null;
 
   return (
     <div>
@@ -111,13 +119,13 @@ export default function CompetitionTree({
 
           <Separator />
 
-          {tree.matches.length === 0 ? (
+          {matches.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               No matches in this stage.
             </p>
           ) : (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-2">
-              {tree.matches.map((match, i) => (
+              {matches.map((match, i) => (
                 <Card
                   key={match.id}
                   onClick={(e) => {
@@ -137,7 +145,7 @@ export default function CompetitionTree({
         </Card>
       </div>
 
-      {tree.children.length > 0 && (
+      {children.length > 0 && (
         <div className="flex gap-4 w-full">
           {!isLast && !isOpen && (
             <div className="flex flex-col items-center w-12">
@@ -148,14 +156,14 @@ export default function CompetitionTree({
           <div className="flex flex-1 flex-col">
             <div className="flex flex-col mb-4">
               {isOpen &&
-                tree.children.map((child, i) => (
+                children.map((child, i) => (
                   <CompetitionTree
                     key={child.id}
                     tournamentId={tournamentId}
-                    tree={child}
+                    competitionId={child.id}
                     sectionIndex={sectionIndex + 1}
                     subsectionIndex={i}
-                    isLast={i === tree.children.length - 1}
+                    isLast={i === children.length - 1}
                   />
                 ))}
 

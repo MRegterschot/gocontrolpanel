@@ -9,26 +9,11 @@ export type Competition = {
 } & CompetitionV1;
 
 export function useCompetition(competitionId: number) {
-  const [competitionRows, isReady] = useTable(
-    tables.competition.where((row) => row.id.eq(competitionId)),
-  );
+  const [[competition], isReady] = useTable(tables.competition({ competitionId }));
+  const [[registration]] = useTable(tables.competitionRegistrations({ competitionId }));
 
-  const [registrationRows] = useTable(
-    tables.unstable_registration.where((row) => row.parentId.eq(competitionId)),
-  );
-
-  const competition = competitionRows[0];
-  const registration = registrationRows[0];
-
-  if (competition && registration) {
-    return {
-      competition: {
-        ...competition,
-        registration,
-      },
-      isReady,
-    };
-  }
-
-  return { competition, isReady };
+  return {
+    competition: competition && ({ ...competition, registration } as Competition),
+    isReady,
+  };
 }
