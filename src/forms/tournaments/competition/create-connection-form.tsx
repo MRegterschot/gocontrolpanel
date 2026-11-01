@@ -3,12 +3,11 @@ import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { procedures } from "@/lib/server-manager";
+import { useServerAction } from "@/hooks/tournaments/use-server-action";
 import { NodeHandle } from "@/lib/server-manager/types";
-import { getErrorMessage } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus } from "@tabler/icons-react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { useProcedure } from "spacetimedb/react";
 import {
   CreateConnectionSchema,
@@ -30,7 +29,11 @@ export default function CreateConnectionForm({
   target: NodeHandle;
   callback?: () => void;
 }) {
-  const createConnection = useProcedure(procedures.connectionCreate);
+  const createConnection = useServerAction(
+    useProcedure(procedures.connectionCreate),
+    "Failed to create connection",
+    "Connection successfully created",
+  );
 
   const form = useForm<CreateConnectionSchemaType>({
     resolver: zodResolver(CreateConnectionSchema),
@@ -38,16 +41,7 @@ export default function CreateConnectionForm({
   });
 
   async function onSubmit({ kind }: CreateConnectionSchemaType) {
-    try {
-      const result = await createConnection({ origin, target, kind });
-      if ("err" in result) throw new Error(result.err.tag);
-      toast.success("Connection successfully created");
-      callback?.();
-    } catch (error) {
-      toast.error("Failed to create connection", {
-        description: getErrorMessage(error),
-      });
-    }
+    if (await createConnection({ origin, target, kind })) callback?.();
   }
 
   return (
