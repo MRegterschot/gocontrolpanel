@@ -9,11 +9,13 @@ import { reducers } from "@/lib/server-manager";
 import { toNodeHandle } from "@/lib/node-handle";
 import { MasterNodeEnumType } from "@/components/tournaments/competitions/graph/competition-graph";
 import { MatchV1NodeType } from "@/components/tournaments/competitions/graph/nodes/match-node";
+import { RegistrationV1NodeType } from "@/components/tournaments/competitions/graph/nodes/registration-node";
 import { IconDeviceFloppy, IconTrash, IconX } from "@tabler/icons-react";
 import { useState } from "react";
 import { useReducer } from "spacetimedb/react";
 import { DefaultModalProps } from "../../default-props";
 import MatchSettings from "./settings/match-settings";
+import RegistrationSettings from "./settings/registration-settings";
 
 // General settings shared by every node type, followed by the type specific ones.
 export default function NodeSettingsModal({
@@ -53,6 +55,7 @@ export default function NodeSettingsModal({
       </div>
 
       {node.type === "MatchV1" && <MatchSettings match={(node as MatchV1NodeType).data} />}
+      {node.type === "RegistrationV1" && <RegistrationSettings registration={(node as RegistrationV1NodeType).data} />}
 
       <Button variant="destructive" className="self-start mt-2" onClick={() => setIsDeleteOpen(true)}>
         <IconTrash />
