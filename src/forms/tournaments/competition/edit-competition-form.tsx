@@ -2,13 +2,12 @@
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
+import { useServerAction } from "@/hooks/tournaments/use-server-action";
 import { reducers } from "@/lib/server-manager";
-import { CompetitionV1 } from "@/lib/server-manager/types";
-import { getErrorMessage } from "@/lib/utils";
+import { CompetitionV1, NodeHandle } from "@/lib/server-manager/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconDeviceFloppy } from "@tabler/icons-react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { useReducer } from "spacetimedb/react";
 import {
   EditCompetitionSchema,
@@ -22,7 +21,12 @@ export default function EditCompetitionForm({
   competition: CompetitionV1;
   callback?: () => void;
 }) {
-  // const editCompetitionName = useReducer(reducers.competitionEditName);
+  // competition_edit_name is commented out on the server, node_name_edit covers competitions too.
+  const editName = useServerAction(
+    useReducer(reducers.nodeNameEdit),
+    "Failed to update stage name",
+    "Stage successfully updated",
+  );
 
   const form = useForm<EditCompetitionSchemaType>({
     resolver: zodResolver(EditCompetitionSchema),
@@ -31,22 +35,9 @@ export default function EditCompetitionForm({
     },
   });
 
-  async function onSubmit(values: EditCompetitionSchemaType) {
-    if (competition.name !== values.name) {
-      try {
-        // editCompetitionName({
-        //   name: values.name,
-        //   competitionId: competition.id,
-        // });
-      } catch (error) {
-        toast.error("Failed to update stage name", {
-          description: getErrorMessage(error),
-        });
-      }
-    }
-
-    toast.success("Stage successfully updated");
-    callback?.();
+  async function onSubmit({ name }: EditCompetitionSchemaType) {
+    if (name === competition.name) return callback?.();
+    if (await editName({ node: NodeHandle.CompetitionV1(competition.id), name })) callback?.();
   }
 
   return (
