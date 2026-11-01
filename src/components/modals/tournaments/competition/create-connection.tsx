@@ -1,6 +1,7 @@
 "use client";
 import { Card } from "@/components/ui/card";
 import CreateConnectionForm from "@/forms/tournaments/competition/create-connection-form";
+import { NodeHandle } from "@/lib/server-manager/types";
 import { IconX } from "@tabler/icons-react";
 import { DefaultModalProps } from "../../default-props";
 
@@ -8,8 +9,8 @@ export default function CreateConnectionModal({
   data,
   closeModal,
 }: DefaultModalProps<{
-  originId: number;
-  targetId: number;
+  origin: NodeHandle;
+  target: NodeHandle;
 }>) {
   if (!data) return null;
 

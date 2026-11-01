@@ -2,13 +2,14 @@
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { reducers } from "@/lib/server-manager";
+import { procedures } from "@/lib/server-manager";
+import { NodeHandle } from "@/lib/server-manager/types";
 import { getErrorMessage } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus } from "@tabler/icons-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { useReducer } from "spacetimedb/react";
+import { useProcedure } from "spacetimedb/react";
 import {
   CreateConnectionSchema,
   CreateConnectionSchemaType,
@@ -21,36 +22,25 @@ const CONNECTION_OPTIONS =
   }));
 
 export default function CreateConnectionForm({
-  originId,
-  targetId,
+  origin,
+  target,
   callback,
 }: {
-  originId: number;
-  targetId: number;
+  origin: NodeHandle;
+  target: NodeHandle;
   callback?: () => void;
 }) {
-  const createConnection = useReducer(reducers.connectionCreate);
+  const createConnection = useProcedure(procedures.connectionCreate);
 
   const form = useForm<CreateConnectionSchemaType>({
     resolver: zodResolver(CreateConnectionSchema),
-    defaultValues: {
-      origin: {
-        tag: "MatchV1",
-        value: originId,
-      },
-      target: {
-        tag: "MatchV1",
-        value: targetId,
-      },
-      kind: {
-        tag: "Wait",
-      },
-    },
+    defaultValues: { kind: { tag: "Wait" } },
   });
 
-  async function onSubmit(values: CreateConnectionSchemaType) {
+  async function onSubmit({ kind }: CreateConnectionSchemaType) {
     try {
-      await createConnection(values);
+      const result = await createConnection({ origin, target, kind });
+      if ("err" in result) throw new Error(result.err.tag);
       toast.success("Connection successfully created");
       callback?.();
     } catch (error) {

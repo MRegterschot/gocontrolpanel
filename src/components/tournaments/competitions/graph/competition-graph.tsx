@@ -69,8 +69,8 @@ export default function CompetitionGraph({
   const [selectedNode, setSelectedNode] = useState<MasterNodeEnumType | null>(null);
 
   const [createdEdge, setCreatedEdge] = useState<{
-    from: number;
-    to: number;
+    origin: NodeHandle;
+    target: NodeHandle;
   } | null>(null);
   useMemo(() => {
     const transformedNodes = [
@@ -275,10 +275,7 @@ export default function CompetitionGraph({
         setIsOpen={() => setCreatedEdge(null)}
       >
         <CreateConnectionModal
-          data={{
-            originId: createdEdge?.from || 0,
-            targetId: createdEdge?.to || 0,
-          }}
+          data={createdEdge ?? undefined}
           closeModal={() => setCreatedEdge(null)}
         />
       </Modal>
