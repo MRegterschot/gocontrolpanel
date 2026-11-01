@@ -33,13 +33,6 @@ export default function MatchTemplateRoundsSummary({
         </div>
 
         <div className="flex flex-col">
-          <span className="font-semibold">Use Custom Points Repartition</span>
-          <span>
-            <BooleanDisplay value={mode.useCustomPointsRepartition} size={20} />
-          </span>
-        </div>
-
-        <div className="flex flex-col">
           <span className="font-semibold">Points Repartition</span>
           <span>{mode.pointsRepartition.join(", ")}</span>
         </div>

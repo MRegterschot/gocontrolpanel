@@ -1,10 +1,10 @@
 "use client";
 import { Card } from "@/components/ui/card";
-import { MatchNodeType } from "../nodes/match-node";
+import { MatchV1NodeType } from "../nodes/match-node";
 import { Button } from "@/components/ui/button";
 
 interface SelectedMatchProps {
-  match: MatchNodeType;
+  match: MatchV1NodeType;
 }
 
 export default function SelectedMatchPanel({
@@ -14,7 +14,7 @@ export default function SelectedMatchPanel({
     <Card className="p-2 gap-2">
       <h3 className="font-semibold">Match Details</h3>
       <p>Match ID: {match.id}</p>
-      <p>Match Name: {match.data.label}</p>
+      <p>Match Name: {match.data.name}</p>
       <Button variant="outline">
         Mark Configured
       </Button>

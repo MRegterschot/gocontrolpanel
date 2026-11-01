@@ -1,17 +1,14 @@
 "use client";
 import FormElement from "@/components/form/form-element";
-import Modal from "@/components/modals/modal";
-import CreateMatchTemplateModal from "@/components/modals/tournaments/match/create-match-template";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { reducers, tables } from "@/lib/server-manager";
+import { reducers } from "@/lib/server-manager";
 import { getErrorMessage } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus } from "@tabler/icons-react";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { useReducer, useTable } from "spacetimedb/react";
+import { useReducer } from "spacetimedb/react";
 import {
   CreateMatchSchema,
   CreateMatchSchemaType,
@@ -26,30 +23,17 @@ export default function CreateMatchForm({
 }) {
   const createMatch = useReducer(reducers.matchCreate);
 
-  const [isCreateMatchTemplateModalOpen, setIsCreateMatchTemplateModalOpen] =
-    useState(false);
-
-  //const [matchTemplateRows] = useTable(tables.my_match_template);
-
   const form = useForm<CreateMatchSchemaType>({
     resolver: zodResolver(CreateMatchSchema),
-    defaultValues: {
-      parentId: parentId,
-      withTemplate: 0,
-    },
+    defaultValues: { name: "" },
   });
 
-  async function onSubmit(values: CreateMatchSchemaType) {
+  async function onSubmit({ name }: CreateMatchSchemaType) {
     try {
-      /* createMatch({
-        ...values,
-        withTemplate: values.withTemplate,
-      }); */
-
+      // Templates are not implemented on the server yet (`with_template != 0` is a todo).
+      await createMatch({ name, parentId, position: { x: 0, y: 0 }, withTemplate: 0, asTemplate: false });
       toast.success("Match successfully created");
-      if (callback) {
-        callback();
-      }
+      callback?.();
     } catch (error) {
       toast.error("Failed to create match", {
         description: getErrorMessage(error),
@@ -58,59 +42,27 @@ export default function CreateMatchForm({
   }
 
   return (
-    <>
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="flex flex-col gap-4"
-        >
-          <FormElement
-            name="name"
-            label="Config Name"
-            type="text"
-            placeholder="Enter config name"
-          />
-
-          <div className="flex flex-1 gap-2 items-end">
-            <FormElement
-              name="withTemplate"
-              label="Match Template"
-              type="select"
-              rootClassName="flex-1"
-              placeholder="Select template"
-              className="w-full"
-              options={matchTemplateRows.map((template) => ({
-                label: template.name,
-                value: template.id.toString(),
-              }))}
-            />
-            <Button
-              type="button"
-              size={"icon"}
-              variant="outline"
-              onClick={() => setIsCreateMatchTemplateModalOpen(true)}
-            >
-              <IconPlus />
-            </Button>
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full mt-4"
-            disabled={form.formState.isSubmitting}
-          >
-            <IconPlus />
-            Create Match
-          </Button>
-        </form>
-      </Form>
-
-      <Modal
-        isOpen={isCreateMatchTemplateModalOpen}
-        setIsOpen={setIsCreateMatchTemplateModalOpen}
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="flex flex-col gap-4"
       >
-        <CreateMatchTemplateModal />
-      </Modal>
-    </>
+        <FormElement
+          name="name"
+          label="Match Name"
+          type="text"
+          placeholder="Enter match name"
+        />
+
+        <Button
+          type="submit"
+          className="w-full mt-4"
+          disabled={form.formState.isSubmitting}
+        >
+          <IconPlus />
+          Create Match
+        </Button>
+      </form>
+    </Form>
   );
 }

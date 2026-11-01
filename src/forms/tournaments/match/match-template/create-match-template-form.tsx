@@ -20,10 +20,10 @@ type Steps = "general" | "server" | "common" | "mode" | "maps" | "summary";
 
 export default function CreateMatchTemplateForm({
   callback,
-  compeitionId
+  competitionId,
 }: {
   callback?: () => void;
-  compeitionId: number
+  competitionId: number;
 }) {
   const [step, setStep] = useState<Steps>("general");
 
@@ -138,6 +138,7 @@ export default function CreateMatchTemplateForm({
         <TabsContent value="summary">
           <MatchTemplateSummary
             form={form}
+            competitionId={competitionId}
             onBack={previousStep}
             callback={callback}
           />

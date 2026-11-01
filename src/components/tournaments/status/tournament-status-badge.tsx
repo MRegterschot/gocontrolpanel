@@ -1,4 +1,4 @@
-import { TournamentStatus } from "@/lib/server-manager";
+import { ProjectStatus } from "@/lib/server-manager/types";
 import {
   Icon,
   IconCalendarEventFilled,
@@ -10,7 +10,7 @@ import { Infer } from "spacetimedb";
 import { Badge } from "../../ui/badge";
 
 interface TournamentStatusBadgeProps {
-  status: Infer<typeof TournamentStatus>;
+  status: Infer<typeof ProjectStatus>;
 }
 
 export default function TournamentStatusBadge({

@@ -4,19 +4,19 @@ import { Button } from "@/components/ui/button";
 import { useReactFlow } from "@xyflow/react";
 import { ComponentProps, useEffect, useState } from "react";
 import { DataEdgeType } from "../edges/data-edge";
-import { MatchNodeType } from "../nodes/match-node";
+import { MatchV1NodeType } from "../nodes/match-node";
 
 export default function ToggleWaitingEdgesButton({
   ...props
 }: ComponentProps<"button">) {
-  const { getEdges, setEdges } = useReactFlow<MatchNodeType, DataEdgeType>();
+  const { getEdges, setEdges } = useReactFlow<MatchV1NodeType, DataEdgeType>();
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     const edges = getEdges();
 
     const updatedEdges = edges.map((edge) => {
-      if (edge.data?.type === "Wait") {
+      if (edge.data?.kind.tag === "Wait") {
         return {
           ...edge,
           hidden: !isVisible,

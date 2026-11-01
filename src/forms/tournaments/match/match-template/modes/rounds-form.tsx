@@ -10,7 +10,6 @@ export const DEFAULT_ROUNDS_CONFIG: ConfigRoundsSchemaType = {
   pointsLimit: { tag: "PointsLimit", value: 50 },
   pointsRepartition: [10, 6, 4, 3, 2, 1],
   roundsPerMap: { tag: "Unlimited" },
-  useCustomPointsRepartition: false,
   useTieBreaker: true,
 };
 
@@ -118,13 +117,6 @@ export default function RoundsForm({
           name="config.mode.value.useTieBreaker"
           label="Use Tie Breaker"
           type="checkbox"
-        />
-
-        <FormElement
-          name="config.mode.value.useCustomPointsRepartition"
-          label="Use Custom Points Repartition"
-          type="checkbox"
-          isRequired
         />
       </div>
       <div className="flex flex-col gap-4">

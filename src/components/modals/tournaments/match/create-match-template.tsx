@@ -6,8 +6,10 @@ import { DefaultModalProps } from "../../default-props";
 
 export default function CreateMatchTemplateModal({
   closeModal,
-  competitionId
-}: DefaultModalProps & { competitionId: number }) {
+  data: competitionId,
+}: DefaultModalProps<number>) {
+  if (competitionId === undefined) return null;
+
   const stopPropagation = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
@@ -25,7 +27,7 @@ export default function CreateMatchTemplateModal({
         />
       </div>
 
-      <CreateMatchTemplateForm callback={closeModal} compeitionId={competitionId} />
+      <CreateMatchTemplateForm callback={closeModal} competitionId={competitionId} />
     </Card>
   );
 }

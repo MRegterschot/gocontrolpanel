@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { useReactFlow } from "@xyflow/react";
 import { useCallback } from "react";
 
-export default function ContextMenu({ x, y, ...props }) {
+export default function ContextMenu({ x, y }: { x: number; y: number }) {
     const { getNode, setNodes, addNodes, setEdges } = useReactFlow();
     /* const duplicateNode = useCallback(() => {
         //const node = getNode(id);

@@ -37,6 +37,7 @@ export default function TournamentInfo({
   );
 
   const tournament = tournaments[0];
+  const [[creator]] = useTable(tables.tabUser.where((u) => u.id.eq(tournament?.userId ?? 0)));
 
   if (!isReady) {
     return null;
@@ -158,7 +159,7 @@ export default function TournamentInfo({
             {
               <div className="flex gap-2 text-muted-foreground text-sm">
                 <IconUser size={16} />
-                {tournament.creatorName}
+                {creator?.name}
               </div>
             }
           </div>

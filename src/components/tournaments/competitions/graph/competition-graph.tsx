@@ -210,7 +210,7 @@ export default function CompetitionGraph({
 
   const [menu, setMenu] = useState<{ x: number, y: number } | null>(null);
   //const ref = useRef(null);
-  const onContextMenu = useCallback((event: MouseEvent | React.MouseEvent<Element, MouseEvent>) => {
+  const onContextMenu = useCallback((event: globalThis.MouseEvent | MouseEvent) => {
     console.log(event)
     event.preventDefault();
 
@@ -255,7 +255,7 @@ export default function CompetitionGraph({
         >
           <Background />
           <Panel position="top-left">
-            {selectedNode && <SelectedMatchPanel match={selectedNode} />}
+            {selectedNode?.type === "MatchV1" && <SelectedMatchPanel match={selectedNode as MatchV1NodeType} />}
           </Panel>
           <Panel position="bottom-left">
             <ToggleWaitingEdgesButton />

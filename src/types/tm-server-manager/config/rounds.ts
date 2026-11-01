@@ -10,7 +10,6 @@ export const ConfigRoundsSchema = z.object({
   finishTimeout: ConfigFinishTimeoutSchema,
   mapsPerMatch: ConfigMapsPerMatchSchema,
   pointsLimit: ConfigPointsLimitSchema,
-  useCustomPointsRepartition: z.boolean(),
   pointsRepartition: z.array(z.coerce.number().int().nonnegative()),
   roundsPerMap: ConfigRoundsPerMapSchema,
   useTieBreaker: z.boolean(),

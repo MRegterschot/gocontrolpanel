@@ -91,17 +91,19 @@ export default function CompetitionActions({
     registrationActions.end.canRun ||
     canEditRegistration;
 
-  const handleEnableRegistration = () => {
+  const handleEnableRegistration = async () => {
     if (competition.registration) {
       toast.error("Registration already enabled for this competition");
       return;
     }
 
     try {
-      createRegistration({
+      await createRegistration({
         name: `${competition.name} Registration`,
         parentId: competition.id,
+        position: { x: 0, y: 0 },
         withTemplate: 0,
+        asTemplate: false,
       });
       toast.success("Registration enabled successfully");
     } catch (error) {

@@ -10,22 +10,23 @@ import { toast } from "sonner";
 import { useReducer } from "spacetimedb/react";
 import { CreateMatchTemplateSchemaType } from "./create-match-template-schema";
 import MatchTemplateRoundsSummary from "./modes/rounds-summary";
-import { RawServerConfigV2 } from "@/lib/server-manager/types";
 
 export default function MatchTemplateSummary({
   form,
+  competitionId,
   onBack,
   callback,
 }: {
-  form: UseFormReturn<RawServerConfigV2>;
+  form: UseFormReturn<CreateMatchTemplateSchemaType>;
+  competitionId: number;
   onBack: () => void;
   callback?: () => void;
 }) {
   const createSharedConfig = useReducer(reducers.rawServerConfigSharedNew);
 
-  async function onSubmit(values: RawServerConfigV2) {
+  async function onSubmit({ name, config }: CreateMatchTemplateSchemaType) {
     try {
-      createSharedConfig(values);
+      await createSharedConfig({ name, competitionId, config });
 
       toast.success("Match template successfully created");
       callback?.();
