@@ -112,7 +112,7 @@ function ActionSettings({ connection, disabled }: { connection: CompetitionConne
         }
       >
         <SelectTrigger className="w-full"><SelectValue placeholder="Select action" /></SelectTrigger>
-        <SelectContent>
+        <SelectContent className="z-[9999]">
           {ACTIONS[target].map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
         </SelectContent>
       </Select>
@@ -152,7 +152,7 @@ function DataOptionForm({
         onValueChange={(tag) => setOption(defaultOption(tag as DataOptionTag))}
       >
         <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-        <SelectContent>
+        <SelectContent className="z-[9999]">
           {Object.entries(DATA_OPTIONS).map(([tag, label]) => <SelectItem key={tag} value={tag}>{label}</SelectItem>)}
         </SelectContent>
       </Select>
