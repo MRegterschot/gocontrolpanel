@@ -19,6 +19,7 @@ export const routes = {
     competition: "/competitions/:id",
     stage: "/tournaments/:id/stages/:stageId",
     registrations: "/tournaments/:id/stages/:stageId/registrations",
+    myServers: "/my-servers",
   },
   admin: {
     users: "/admin/users",
