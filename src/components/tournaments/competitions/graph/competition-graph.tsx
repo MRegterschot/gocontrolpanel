@@ -5,7 +5,7 @@ import EdgeSettingsModal from "@/components/modals/tournaments/competition/edge-
 import NodeSettingsModal from "@/components/modals/tournaments/competition/node-settings";
 import { Card } from "@/components/ui/card";
 import { useCompetitionGraph as useCompetitionGraph } from "@/hooks/tournaments/competitions/use-competition-graph";
-import { toNodeHandle } from "@/lib/node-handle";
+import { toNodeHandle, toNodeId } from "@/lib/node-handle";
 import { CompetitionV1, NodeHandle } from "@/lib/server-manager/types";
 import {
   applyEdgeChanges,
@@ -81,85 +81,21 @@ export default function CompetitionGraph({
   // This keeps an unsaved auto layout and the node being dragged in place.
   const serverPositions = useRef(new Map<string, XYPosition>());
   useEffect(() => {
-    const transformedNodes = [
-      ...graph.nMatchV1.map((n) => {
-        const handle = NodeHandle.MatchV1(n.id);
-        const position = graph.nodePositions.find((row) => row.node.tag == handle.tag && row.node.value == handle.value)?.position ?? { x: 0, y: 0 };
-        return {
-          id: `MatchV1-${n.id}`,
-          type: "MatchV1",
-          data: n,
-          position,
-        }
-      }),
-
-      ...graph.nCompetitionV1.map((n) => {
-        const handle = NodeHandle.CompetitionV1(n.id);
-        const position = graph.nodePositions.find((row) => row.node.tag == handle.tag && row.node.value == handle.value)?.position ?? { x: 0, y: 0 };
-        return {
-          id: `CompetitionV1-${n.id}`,
-          type: "CompetitionV1",
-          data: n,
-          position,
-        }
-      }),
-
-      ...graph.nRegistrationV1.map((n) => {
-        const handle = NodeHandle.RegistrationV1(n.id);
-        const position = graph.nodePositions.find((row) => row.node.tag == handle.tag && row.node.value == handle.value)?.position ?? { x: 0, y: 0 };
-        return {
-          id: `RegistrationV1-${n.id}`,
-          type: "RegistrationV1",
-          data: n,
-          position,
-        }
-      }),
-
-      ...graph.nLeaderboardV2.map((n) => {
-        // This is a fuck up on my (kistz) part because NodeHandle has no LeaderboardV2 xdd so this is indeed correct.
-        const handle = NodeHandle.LeaderboardV1(n.id);
-        const position = graph.nodePositions.find((row) => row.node.tag == handle.tag && row.node.value == handle.value)?.position ?? { x: 0, y: 0 };
-        return {
-          id: `LeaderboardV1-${n.id}`,
-          type: "LeaderboardV2",
-          data: n,
-          position,
-        }
-      }),
-
-      ...graph.nOutputV1.map((n) => {
-        const handle = NodeHandle.OutputV1(n.id);
-        const position = graph.nodePositions.find((row) => row.node.tag == handle.tag && row.node.value == handle.value)?.position ?? { x: 0, y: 0 };
-        return {
-          id: `OutputV1-${n.id}`,
-          type: "OutputV1",
-          data: n,
-          position,
-        }
-      }),
-
-      ...graph.nServerV1.map((n) => {
-        const handle = NodeHandle.ServerV1(n.id);
-        const position = graph.nodePositions.find((row) => row.node.tag == handle.tag && row.node.value == handle.value)?.position ?? { x: 0, y: 0 };
-        return {
-          id: `ServerV1-${n.id}`,
-          type: "ServerV1",
-          data: n,
-          position,
-        }
-      }),
-
-      ...graph.nInputV1.map((n) => {
-        const handle = NodeHandle.InputV1(n.id);
-        const position = graph.nodePositions.find((row) => row.node.tag == handle.tag && row.node.value == handle.value)?.position ?? { x: 0, y: 0 };
-        return {
-          id: `InputV1-${n.id}`,
-          type: "InputV1",
-          data: n,
-          position,
-        }
-      })
-    ]
+    const positions = new Map(graph.nodePositions.map((row) => [toNodeId(row.node), row.position]));
+    // The handle tag is the id prefix, only leaderboards have a different node type.
+    const sources: [NodeHandle["tag"], MasterNodeEnumType["type"], readonly { id: number }[]][] = [
+      ["MatchV1", "MatchV1", graph.nMatchV1],
+      ["CompetitionV1", "CompetitionV1", graph.nCompetitionV1],
+      ["RegistrationV1", "RegistrationV1", graph.nRegistrationV1],
+      ["LeaderboardV1", "LeaderboardV2", graph.nLeaderboardV2],
+      ["OutputV1", "OutputV1", graph.nOutputV1],
+      ["ServerV1", "ServerV1", graph.nServerV1],
+      ["InputV1", "InputV1", graph.nInputV1],
+    ];
+    const transformedNodes = sources.flatMap(([tag, type, rows]) => rows.map((data) => {
+      const id = `${tag}-${data.id}`;
+      return { id, type, data, position: positions.get(id) ?? { x: 0, y: 0 } } as MasterNodeEnumType;
+    }));
 
     const seen = serverPositions.current;
     const moved = new Set(transformedNodes
@@ -171,12 +107,17 @@ export default function CompetitionGraph({
       .map(({ id }) => id));
     serverPositions.current = new Map(transformedNodes.map(({ id, position }) => [id, position]));
 
-    setNodes((current) => transformedNodes.map((node) => {
-      const local = current.find((n) => n.id === node.id);
-      if (!local) return node;
-      const position = moved.has(node.id) && !local.dragging ? node.position : local.position;
-      return { ...local, data: node.data, position } as MasterNodeEnumType;
-    }));
+    setNodes((current) => {
+      const locals = new Map(current.map((n) => [n.id, n]));
+      return transformedNodes.map((node) => {
+        const local = locals.get(node.id);
+        if (!local) return node;
+        const position = moved.has(node.id) && !local.dragging ? node.position : local.position;
+        // Unchanged nodes keep their object, so their memoized component doesn't re-render.
+        if (local.data === node.data && local.position === position) return local;
+        return { ...local, data: node.data, position } as MasterNodeEnumType;
+      });
+    });
   }, [accepts, graph.nMatchV1, graph.nCompetitionV1, graph.nodePositions, graph.nLeaderboardV2, graph.nInputV1, graph.nOutputV1, graph.nRegistrationV1, graph.nServerV1]);
 
   useMemo(() => {

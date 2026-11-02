@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { CompetitionConnection } from "@/lib/server-manager/types";
 import { IconSettings } from "@tabler/icons-react";
-import { BaseEdge, Edge, EdgeProps, EdgeToolbar, getSimpleBezierPath, Position, useViewport } from "@xyflow/react";
+import { BaseEdge, Edge, EdgeLabelRenderer, EdgeProps, getSimpleBezierPath, Position } from "@xyflow/react";
 import { memo } from "react";
 import { useGraphActions } from "../graph-context";
 
@@ -22,7 +22,6 @@ function DataEdge({
   targetY,
   data,
 }: EdgeProps<DataEdgeType>) {
-  const { zoom } = useViewport();
   const { openEdgeSettings } = useGraphActions();
 
   const [edgePath, centerX, centerY] = getSimpleBezierPath({
@@ -36,14 +35,17 @@ function DataEdge({
   return (
     <>
       <BaseEdge id={id} path={edgePath} />
-      <EdgeToolbar edgeId={id} x={centerX} y={centerY} isVisible>
-        <div style={{ scale: .5 * zoom }}>
-
-          <Button className={`nodrag nopan text-white ${data && STATUS_COLORS[data.status.tag]}`} onClick={() => data && openEdgeSettings(data.id)}>
+      {/* The label layer zooms with the graph, so the button doesn't re-render on every pan or zoom. */}
+      <EdgeLabelRenderer>
+        <div
+          className="nodrag nopan absolute pointer-events-auto"
+          style={{ transform: `translate(-50%, -50%) translate(${centerX}px, ${centerY}px) scale(.5)` }}
+        >
+          <Button className={`text-white ${data && STATUS_COLORS[data.status.tag]}`} onClick={() => data && openEdgeSettings(data.id)}>
             <IconSettings />
           </Button>
         </div>
-      </EdgeToolbar>
+      </EdgeLabelRenderer>
     </>
   );
 }
