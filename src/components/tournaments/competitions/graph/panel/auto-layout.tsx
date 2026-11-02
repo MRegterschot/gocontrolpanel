@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useReactFlow } from "@xyflow/react";
-import ELK from 'elkjs/lib/elk.bundled.js';
+import ELK, { ElkNode } from 'elkjs/lib/elk.bundled.js';
 import { ComponentProps } from "react";
 import { MasterNodeEnumType } from "../competition-graph";
 import { DataEdgeType } from "../edges/data-edge";
@@ -37,7 +37,7 @@ export default function AutoLayoutButton({
     const nodes = getNodes();
     const edges = getEdges();
 
-    const graph = {
+    const graph: ElkNode = {
       id: 'root',
       layoutOptions: elkOptions,
       children: nodes.map((node) => {
