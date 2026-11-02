@@ -15,7 +15,7 @@ export default __t.row({
   serverAccountId: __t.uuid().name("server_account_id"),
   lastConnection: __t.timestamp().name("last_connection"),
   userId: __t.u32().name("user_id"),
-  id: __t.u32().primaryKey(),
+  id: __t.u32(),
   online: __t.bool(),
   verified: __t.bool(),
 });

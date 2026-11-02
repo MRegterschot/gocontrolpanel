@@ -100,6 +100,16 @@ export const CompetitionNodePosition = __t.object("CompetitionNodePosition", {
 });
 export type CompetitionNodePosition = __Infer<typeof CompetitionNodePosition>;
 
+export const CompetitionRawServer = __t.object("CompetitionRawServer", {
+  serverId: __t.u32(),
+  serverLogin: __t.string(),
+  online: __t.bool(),
+  get occupiedBy() {
+    return __t.option(NodeHandle);
+  },
+});
+export type CompetitionRawServer = __Infer<typeof CompetitionRawServer>;
+
 export const CompetitionRole = __t.object("CompetitionRole", {
   name: __t.string(),
   id: __t.u32(),

@@ -16,10 +16,8 @@ interface CompetitionServerPoolProps {
 export default function CompetitionServerPool({
   id: competitionId,
 }: CompetitionServerPoolProps) {
-  const [[me]] = useTable(tables.myUser);
-  const [servers, isReady] = useTable(tables.tabRawServer);
-  const [lendings] = useTable(tables.tabCompetitionRawServer.where((r) => r.competitionId.eq(competitionId)));
-  const [occupations] = useTable(tables.tabRawServerOccupation);
+  const [myServers] = useTable(tables.myRawServers);
+  const [lent, isReady] = useTable(tables.competitionRawServers({ competitionId }));
   // Includes the servers lent to the competitions above, but only free, verified and online ones.
   const [available] = useTable(tables.competitionAvailableServerPool({ competitionId }));
   const add = useServerAction(useReducer(reducers.rawServerAdd), "Failed to lend server", "Server lent");
@@ -27,8 +25,7 @@ export default function CompetitionServerPool({
 
   if (!isReady) return <p className="text-muted-foreground">Loading servers...</p>;
 
-  const lent = servers.filter((s) => lendings.some((l) => l.serverId === s.id));
-  const lendable = servers.filter((s) => s.userId === me?.id && s.verified && !lent.includes(s));
+  const lendable = myServers.filter((s) => s.verified && !lent.some((l) => l.serverId === s.id));
 
   return (
     <div className="flex flex-col gap-4">
@@ -55,14 +52,14 @@ export default function CompetitionServerPool({
         </TableHeader>
         <TableBody>
           {lent.map((server) => (
-            <TableRow key={server.id}>
+            <TableRow key={server.serverId}>
               <TableCell className="font-medium">{server.serverLogin}</TableCell>
               <TableCell>
                 <Badge variant={server.online ? "default" : "secondary"}>{server.online ? "Online" : "Offline"}</Badge>
               </TableCell>
-              <TableCell>{occupations.some((o) => o.serverId === server.id) ? "Yes" : "No"}</TableCell>
+              <TableCell>{server.occupiedBy ? "Yes" : "No"}</TableCell>
               <TableCell className="text-right">
-                <Button variant="ghost" size="icon" onClick={() => remove({ serverId: server.id, competitionId })}>
+                <Button variant="ghost" size="icon" onClick={() => remove({ serverId: server.serverId, competitionId })}>
                   <IconX />
                 </Button>
               </TableCell>

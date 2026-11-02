@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useServerAction } from "@/hooks/tournaments/use-server-action";
-import { isNode } from "@/lib/node-handle";
+import { isSameNode } from "@/lib/node-handle";
 import { reducers, tables } from "@/lib/server-manager";
 import { NodeHandle, ServerV1 } from "@/lib/server-manager/types";
 import { IconX } from "@tabler/icons-react";
@@ -11,8 +11,7 @@ import { useReducer, useTable } from "spacetimedb/react";
 import SharedConfigs from "./shared-configs";
 
 export default function ServerSettings({ server }: { server: ServerV1 }) {
-  const [rawServers] = useTable(tables.tabRawServer);
-  const [occupations] = useTable(tables.tabRawServerOccupation);
+  const [occupied] = useTable(tables.competitionOccupiedServers({ competitionId: server.parentId }));
   const [available] = useTable(tables.competitionAvailableServerPool({ competitionId: server.parentId }));
 
   const assign = useServerAction(useReducer(reducers.serverAssignRawServer), "Failed to assign server", "Server assigned");
@@ -21,8 +20,7 @@ export default function ServerSettings({ server }: { server: ServerV1 }) {
   const configured = useServerAction(useReducer(reducers.serverConfigured), "Failed to start server", "Server started");
   const configuring = useServerAction(useReducer(reducers.serverConfiguring), "Failed to stop server", "Server back in configuring");
 
-  const rawServerId = occupations.find((o) => isNode(NodeHandle.ServerV1(server.id), o))?.serverId;
-  const rawServer = rawServers.find((s) => s.id === rawServerId);
+  const rawServer = occupied.find((s) => isSameNode(s.occupiedBy, NodeHandle.ServerV1(server.id)));
   const configuringNow = server.status.tag === "Configuring";
 
   return (
@@ -31,9 +29,9 @@ export default function ServerSettings({ server }: { server: ServerV1 }) {
 
       <div className="flex flex-col gap-1">
         <Label className="text-xs text-muted-foreground">Server</Label>
-        {rawServerId !== undefined ? (
+        {rawServer ? (
           <div className="flex items-center gap-2">
-            <span className="flex-1 text-sm font-medium">{rawServer?.serverLogin ?? `Server ${rawServerId}`}</span>
+            <span className="flex-1 text-sm font-medium">{rawServer.serverLogin}</span>
             <Button variant="ghost" size="icon" onClick={() => remove({ serverId: server.id })}><IconX /></Button>
           </div>
         ) : (

@@ -9,9 +9,16 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
+import {
+  NodeHandle,
+} from "./types";
+
 
 export default __t.row({
-  serverId: __t.u32().primaryKey().name("server_id"),
-  nodeId: __t.u32().name("node_id"),
-  nodeVariant: __t.u8().name("node_variant"),
+  serverId: __t.u32().name("server_id"),
+  serverLogin: __t.string().name("server_login"),
+  online: __t.bool(),
+  get occupiedBy() {
+    return __t.option(NodeHandle).name("occupied_by");
+  },
 });

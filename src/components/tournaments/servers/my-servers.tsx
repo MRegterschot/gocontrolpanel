@@ -21,12 +21,9 @@ function Lending({ serverId, competitionId }: { serverId: number; competitionId:
 }
 
 export default function MyServers() {
-  const [[me]] = useTable(tables.myUser);
-  const [servers, isReady] = useTable(tables.tabRawServer);
-  const [lendings] = useTable(tables.tabCompetitionRawServer);
+  const [myServers, isReady] = useTable(tables.myRawServers);
+  const [lendings] = useTable(tables.myRawServerLendings);
   const verify = useServerAction(useReducer(reducers.rawServerVerify), "Failed to verify server", "Server verified");
-
-  const myServers = servers.filter((s) => s.userId === me?.id);
 
   if (!isReady) return <p className="text-muted-foreground">Loading servers...</p>;
   if (myServers.length === 0) {

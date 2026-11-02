@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import ConfigForm from "@/forms/tournaments/config/config-form";
 import { ConfigFormSchemaType } from "@/forms/tournaments/config/config-schema";
 import { useServerAction } from "@/hooks/tournaments/use-server-action";
-import { isNode } from "@/lib/node-handle";
+import { isSameNode } from "@/lib/node-handle";
 import { reducers, tables } from "@/lib/server-manager";
 import { MatchStatus, MatchV1, NodeHandle, ServerConfigV2 } from "@/lib/server-manager/types";
 import { IconPencil, IconX } from "@tabler/icons-react";
@@ -82,22 +82,20 @@ function ConfigSelect({ label, value, configs, sharedDisabled, inlineDisabled, o
 }
 
 function MatchServer({ match }: { match: MatchV1 }) {
-  const [servers] = useTable(tables.tabRawServer);
-  const [occupations] = useTable(tables.tabRawServerOccupation);
+  const [occupied] = useTable(tables.competitionOccupiedServers({ competitionId: match.parentId }));
   const [available] = useTable(tables.competitionAvailableServerPool({ competitionId: match.parentId }));
   const assign = useServerAction(useReducer(reducers.matchAssignServer), "Failed to assign server", "Server assigned");
   const revoke = useServerAction(useReducer(reducers.matchServerRevoke), "Failed to revoke server", "Server revoked");
 
-  const serverId = occupations.find((o) => isNode(NodeHandle.MatchV1(match.id), o))?.serverId;
-  const server = servers.find((s) => s.id === serverId);
+  const server = occupied.find((s) => isSameNode(s.occupiedBy, NodeHandle.MatchV1(match.id)));
   const changeable = SERVER_CHANGEABLE.includes(match.status.tag);
 
   return (
     <div className="flex flex-col gap-1">
       <Label className="text-xs text-muted-foreground">Server</Label>
-      {serverId !== undefined ? (
+      {server ? (
         <div className="flex items-center gap-2">
-          <span className="flex-1 text-sm font-medium">{server?.serverLogin ?? `Server ${serverId}`}</span>
+          <span className="flex-1 text-sm font-medium">{server.serverLogin}</span>
           <Button variant="ghost" size="icon" disabled={!changeable} onClick={() => revoke({ matchId: match.id })}><IconX /></Button>
         </div>
       ) : (
