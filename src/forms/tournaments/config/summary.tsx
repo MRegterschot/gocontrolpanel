@@ -2,46 +2,22 @@
 
 import BooleanDisplay from "@/components/boolean-display";
 import { Button } from "@/components/ui/button";
-import { reducers } from "@/lib/server-manager";
-import { getErrorMessage } from "@/lib/utils";
-import { IconArrowNarrowLeft, IconDeviceFloppy, IconPlus } from "@tabler/icons-react";
+import { IconArrowNarrowLeft, IconDeviceFloppy } from "@tabler/icons-react";
 import { UseFormReturn } from "react-hook-form";
-import { toast } from "sonner";
-import { useReducer } from "spacetimedb/react";
-import { CreateMatchTemplateSchemaType } from "./create-match-template-schema";
-import MatchTemplateRoundsSummary from "./modes/rounds-summary";
+import { ConfigFormSchemaType } from "./config-schema";
+import RoundsSummary from "./modes/rounds-summary";
 
-export default function MatchTemplateSummary({
+export default function ConfigSummary({
   form,
-  competitionId,
-  configId,
+  submitLabel,
+  onSubmit,
   onBack,
-  callback,
 }: {
-  form: UseFormReturn<CreateMatchTemplateSchemaType>;
-  competitionId: number;
-  configId?: number;
+  form: UseFormReturn<ConfigFormSchemaType>;
+  submitLabel: string;
+  onSubmit: (values: ConfigFormSchemaType) => Promise<unknown>;
   onBack: () => void;
-  callback?: () => void;
 }) {
-  const createSharedConfig = useReducer(reducers.rawServerConfigSharedNew);
-  const updateSharedConfig = useReducer(reducers.rawServerConfigSharedUpdate);
-
-  async function onSubmit({ name, config }: CreateMatchTemplateSchemaType) {
-    try {
-      // The server keeps the name of an existing config, only the config itself is updated.
-      if (configId) await updateSharedConfig({ configId, config });
-      else await createSharedConfig({ name, competitionId, config });
-
-      toast.success(configId ? "Config successfully updated" : "Match template successfully created");
-      callback?.();
-    } catch (error) {
-      toast.error("Failed to create match template", {
-        description: getErrorMessage(error),
-      });
-    }
-  }
-
   const name = form.watch("name");
   const common = form.watch("config.common");
   const mode = form.watch("config.mode");
@@ -50,28 +26,11 @@ export default function MatchTemplateSummary({
   return (
     <form onSubmit={form.handleSubmit(onSubmit)}>
       <div className="flex flex-col gap-4">
-        <div className="gap-2 space-y-2 grid sm:grid-cols-2 text-sm">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <h4 className="text-muted-foreground">General</h4>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="flex flex-col">
-                  <span className="font-semibold">Name</span>
-                  <span className="truncate">{name}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <h4 className="text-muted-foreground">Server</h4>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="flex flex-col">
-                  <span className="truncate">-</span>
-                </div>
-              </div>
-            </div>
+        <div className="flex flex-col gap-2 text-sm">
+          <h4 className="text-muted-foreground">General</h4>
+          <div className="flex flex-col">
+            <span className="font-semibold">Name</span>
+            <span className="truncate">{name}</span>
           </div>
         </div>
 
@@ -193,7 +152,7 @@ export default function MatchTemplateSummary({
           <h4 className="text-muted-foreground">Mode: {mode.tag}</h4>
 
           {mode.tag === "Rounds" && (
-            <MatchTemplateRoundsSummary mode={mode.value} />
+            <RoundsSummary mode={mode.value} />
           )}
         </div>
 
@@ -214,6 +173,7 @@ export default function MatchTemplateSummary({
         <div className="flex gap-2 justify-between">
           <Button
             className="flex-1 max-w-32"
+            type="button"
             variant="outline"
             onClick={onBack}
           >
@@ -225,8 +185,8 @@ export default function MatchTemplateSummary({
             disabled={!form.formState.isValid || form.formState.isSubmitting}
             type="submit"
           >
-            {configId ? <IconDeviceFloppy /> : <IconPlus />}
-            {configId ? "Save Config" : "Create Config"}
+            <IconDeviceFloppy />
+            {submitLabel}
           </Button>
         </div>
       </div>

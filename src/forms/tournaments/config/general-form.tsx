@@ -10,8 +10,8 @@ export default function GeneralForm({ onNext, isEditing }: { onNext: () => void;
     <form className="flex flex-col gap-4">
       <FormElement
         name={"name"}
-        label="Template Name"
-        placeholder="Enter match template name"
+        label="Config Name"
+        placeholder="Enter config name"
         isRequired
         isDisabled={isEditing}
       />

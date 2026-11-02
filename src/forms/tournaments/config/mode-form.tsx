@@ -4,7 +4,7 @@ import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { IconArrowNarrowLeft, IconArrowNarrowRight } from "@tabler/icons-react";
 import { UseFormReturn } from "react-hook-form";
-import { CreateMatchTemplateSchemaType } from "./create-match-template-schema";
+import { ConfigFormSchemaType } from "./config-schema";
 import RoundsForm from "./modes/rounds-form";
 import { ModeConfigSchema } from "@/types/tm-server-manager/config";
 
@@ -18,7 +18,7 @@ export default function ModeForm({
   onNext,
   onBack,
 }: {
-  form: UseFormReturn<CreateMatchTemplateSchemaType>;
+  form: UseFormReturn<ConfigFormSchemaType>;
   onNext: () => void;
   onBack: () => void;
 }) {

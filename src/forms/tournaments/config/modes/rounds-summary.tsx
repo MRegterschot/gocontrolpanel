@@ -1,7 +1,7 @@
 import BooleanDisplay from "@/components/boolean-display";
 import { ConfigRoundsSchemaType } from "@/types/tm-server-manager/config/rounds";
 
-export default function MatchTemplateRoundsSummary({
+export default function RoundsSummary({
   mode,
 }: {
   mode: ConfigRoundsSchemaType;

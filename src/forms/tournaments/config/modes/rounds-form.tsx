@@ -1,6 +1,6 @@
 import FormElement from "@/components/form/form-element";
 import { UseFormReturn } from "react-hook-form";
-import { CreateMatchTemplateSchemaType } from "../create-match-template-schema";
+import { ConfigFormSchemaType } from "../config-schema";
 import { ConfigRoundsSchemaType } from "@/types/tm-server-manager/config/rounds";
 import { ConfigFinishTimeoutSchema, ConfigMapsPerMatchSchema, ConfigPointsLimitSchema, ConfigRoundsPerMapSchema } from "@/types/tm-server-manager/config/enums";
 
@@ -57,7 +57,7 @@ const POINTS_LIMIT_DESCRIPTIONS = {
 export default function RoundsForm({
   form,
 }: {
-  form: UseFormReturn<CreateMatchTemplateSchemaType>;
+  form: UseFormReturn<ConfigFormSchemaType>;
 }) {
   const finishTimeout = form.watch("config.mode.value.finishTimeout.tag");
   const roundsPerMap = form.watch("config.mode.value.roundsPerMap.tag");

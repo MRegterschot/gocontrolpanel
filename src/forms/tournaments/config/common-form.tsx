@@ -4,7 +4,7 @@ import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { IconArrowNarrowLeft, IconArrowNarrowRight } from "@tabler/icons-react";
 import { UseFormReturn } from "react-hook-form";
-import { CreateMatchTemplateSchemaType } from "./create-match-template-schema";
+import { ConfigFormSchemaType } from "./config-schema";
 import { ConfigCommonSchemaType } from "@/types/tm-server-manager/config/common";
 import { ConfigLapsNumberSchema, ConfigRespawnBehaviourSchema, ConfigWarmupDurationSchema, ConfigWarmupTimeoutSchema } from "@/types/tm-server-manager/config/enums";
 
@@ -89,7 +89,7 @@ export default function CommonForm({
   onNext,
   onBack,
 }: {
-  form: UseFormReturn<CreateMatchTemplateSchemaType>;
+  form: UseFormReturn<ConfigFormSchemaType>;
   onNext: () => void;
   onBack: () => void;
 }) {
