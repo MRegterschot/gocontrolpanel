@@ -8,8 +8,10 @@ import { IconCheck, IconX } from "@tabler/icons-react";
 import { useReducer, useTable } from "spacetimedb/react";
 
 // A lending of a server to a competition, the stages below it can use the server as well.
+// The client cache merges the rows of a view for all args, so the competition is looked up by id.
 function Lending({ serverId, competitionId }: { serverId: number; competitionId: number }) {
-  const [[competition]] = useTable(tables.competition({ competitionId }));
+  const [competitions] = useTable(tables.competition({ competitionId }));
+  const competition = competitions.find((c) => c.id === competitionId);
   const remove = useServerAction(useReducer(reducers.rawServerRemove), "Failed to remove server", "Server removed");
 
   return (

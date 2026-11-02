@@ -13,7 +13,8 @@ interface CompetitionSharedConfigsProps {
 export default function CompetitionSharedConfigs({
   competitionId,
 }: CompetitionSharedConfigsProps) {
-  const [configs, isReady] = useTable(tables.competitionSharedConfigs({ competitionId }));
+  const [rows, isReady] = useTable(tables.competitionSharedConfigs({ competitionId }));
+  const configs = rows.filter((c) => c.competitionId === competitionId);
 
   if (!isReady) return <p className="text-muted-foreground">Loading configs...</p>;
 

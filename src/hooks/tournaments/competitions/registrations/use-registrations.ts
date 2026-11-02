@@ -10,7 +10,8 @@ export type Registration = {
 } & RegisterationPlayer;
 
 export function useRegistrationsByCompetitionId(competitionId: number) {
-  const [[registration]] = useTable(tables.competitionRegistrations({ competitionId }));
+  const [rows] = useTable(tables.competitionRegistrations({ competitionId }));
+  const registration = rows.find((r) => r.parentId === competitionId);
   const [players] = useTable(
     tables.tabRegisterationPlayer.where((r) => r.registrationId.eq(registration?.id ?? 0)),
   );

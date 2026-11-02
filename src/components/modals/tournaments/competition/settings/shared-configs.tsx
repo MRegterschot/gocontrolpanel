@@ -11,9 +11,11 @@ export default function SharedConfigs({ competitionId, children }: {
   competitionId: number;
   children: (configs: SharedConfig[]) => ReactNode;
 }) {
+  // The client cache merges the rows of a view for all args, so they are filtered by competition.
   const [configs] = useTable(tables.competitionSharedConfigs({ competitionId }));
-  const [[competition]] = useTable(tables.competition({ competitionId }));
-  const own = configs.map((c) => ({ ...c, competitionName: competition?.name }));
+  const [competitions] = useTable(tables.competition({ competitionId }));
+  const competition = competitions.find((c) => c.id === competitionId);
+  const own = configs.filter((c) => c.competitionId === competitionId).map((c) => ({ ...c, competitionName: competition?.name }));
 
   if (!competition || competition.parentId === 0) return children(own);
   return (

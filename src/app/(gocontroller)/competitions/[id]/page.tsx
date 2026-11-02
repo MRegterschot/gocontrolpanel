@@ -16,12 +16,12 @@ import { useProcedure, useTable } from "spacetimedb/react";
 export default function CompetitionPage({
   params
 }: {
-  params: Promise<{ id: number }>;
+  params: Promise<{ id: string }>;
 }) {
-  const { id: competitionId } = React.use(params);
+  const competitionId = Number(React.use(params).id);
 
   const [competitionTable, competitionReady] = useTable(tables.competition({ competitionId }))
-  const comp = competitionTable[0];
+  const comp = competitionTable.find((c) => c.id === competitionId);
 
 
   if (!competitionReady) {

@@ -32,9 +32,11 @@ export default function CompetitionTree({
 }: CompetitionTreeProps) {
   const router = useRouter();
   const { competition: tree } = useCompetition(competitionId);
+  // The client cache merges the rows of a view for all args, so they are filtered by parent.
   const [childRows] = useTable(tables.competitionCompetitions({ competitionId }));
-  const [matches] = useTable(tables.competitionMatches({ competitionId }));
-  const children = [...childRows].sort((a, b) => a.id - b.id);
+  const [matchRows] = useTable(tables.competitionMatches({ competitionId }));
+  const children = childRows.filter((c) => c.parentId === competitionId).sort((a, b) => a.id - b.id);
+  const matches = matchRows.filter((m) => m.parentId === competitionId);
 
   // Stage children toggle
   const [isOpen, setIsOpen] = useState(sectionIndex === 0);
