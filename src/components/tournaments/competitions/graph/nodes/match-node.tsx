@@ -5,6 +5,7 @@ import { MatchV1 } from "@/lib/server-manager/types";
 import { IconSwords } from "@tabler/icons-react";
 import { Handle, Node, NodeProps, Position } from "@xyflow/react";
 import { memo } from "react";
+import MatchConfigField from "./match-config-field";
 import NodeCard, { NodeFlag, NodeRow } from "./node-card";
 
 export type MatchV1NodeType = Node<MatchV1>;
@@ -17,6 +18,10 @@ function MatchV1Node(props: NodeProps<MatchV1NodeType>) {
       <NodeRow label="Status"><MatchStatusBadge status={props.data.status} /></NodeRow>
       <NodeRow label="Auto provision"><NodeFlag value={props.data.autoProvisionServer} /></NodeRow>
       <NodeRow label="Open"><NodeFlag value={props.data.open} /></NodeRow>
+      <div className="flex gap-1.5 pt-1">
+        <MatchConfigField label="Pre-config" configId={props.data.preConfig} />
+        <MatchConfigField label="Config" configId={props.data.config} />
+      </div>
     </NodeCard>
   );
 }

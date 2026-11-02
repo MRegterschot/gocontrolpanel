@@ -6,6 +6,7 @@ import NodeSettingsModal from "@/components/modals/tournaments/competition/node-
 import { Card } from "@/components/ui/card";
 import { useCompetitionGraph as useCompetitionGraph } from "@/hooks/tournaments/competitions/use-competition-graph";
 import { toNodeHandle, toNodeId } from "@/lib/node-handle";
+import { tables } from "@/lib/server-manager";
 import { CompetitionV1, NodeHandle } from "@/lib/server-manager/types";
 import {
   applyEdgeChanges,
@@ -22,6 +23,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useTheme } from "next-themes";
+import { useTable } from "spacetimedb/react";
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import "./graph.css";
 import DataEdge, { DataEdgeType } from "./edges/data-edge";
@@ -35,7 +37,7 @@ import OutputV1Node, { OutputV1NodeType } from "./nodes/output-node";
 import RegistrationV1Node, { RegistrationV1NodeType } from "./nodes/registration-node";
 import InputV1Node, { InputV1NodeType } from "./nodes/input-node";
 import ServerV1Node, { ServerV1NodeType } from "./nodes/server-node";
-import { GraphActionsContext } from "./graph-context";
+import { GraphActionsContext, MatchConfigsContext } from "./graph-context";
 import ContextMenu from "./graph-context-menu";
 import { useAutosavePositions } from "./use-autosave-positions";
 
@@ -167,6 +169,10 @@ export default function CompetitionGraph({
   const settingsEdge = graph.connections.find((c) => c.id === settingsEdgeId);
   const [settingsNodeId, setSettingsNodeId] = useState<string | null>(null);
   const settingsNode = nodes.find((n) => n.id === settingsNodeId);
+  // Configs are looked up by id, so rows cached for other competitions do no harm.
+  const [configRows] = useTable(tables.competitionMatchConfigs({ competitionId: competition.id }));
+  const matchConfigs = useMemo(() => new Map(configRows.map((c) => [c.id, c])), [configRows]);
+
   const graphActions = useMemo(
     () => ({ openEdgeSettings: setSettingsEdgeId, openNodeSettings: setSettingsNodeId }),
     [],
@@ -180,6 +186,7 @@ export default function CompetitionGraph({
 
   return (
     <GraphActionsContext.Provider value={graphActions}>
+    <MatchConfigsContext.Provider value={matchConfigs}>
     <div className="flex-1 min-h-0 w-full h-full flex flex-col">
       <Card className="w-full flex-1 min-h-0 relative rounded-[calc(var(--radius)+4px)] overflow-hidden">
         <ReactFlow
@@ -250,6 +257,7 @@ export default function CompetitionGraph({
         />
       </Modal>
     </div>
+    </MatchConfigsContext.Provider>
     </GraphActionsContext.Provider>
   );
 }
