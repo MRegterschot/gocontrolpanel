@@ -18,10 +18,11 @@ import {
   OnNodesChange,
   Panel,
   ReactFlow,
+  XYPosition,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useTheme } from "next-themes";
-import { useCallback, useEffect, useMemo, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import "./graph.css";
 import DataEdge, { DataEdgeType } from "./edges/data-edge";
 import MatchNode, { type MatchV1NodeType } from "./nodes/match-node";
@@ -36,6 +37,7 @@ import InputV1Node, { InputV1NodeType } from "./nodes/input-node";
 import ServerV1Node, { ServerV1NodeType } from "./nodes/server-node";
 import { GraphActionsContext } from "./graph-context";
 import ContextMenu from "./graph-context-menu";
+import { useAutosavePositions } from "./use-autosave-positions";
 
 const nodeTypes = {
   MatchV1: MatchNode,
@@ -73,7 +75,12 @@ export default function CompetitionGraph({
     origin: NodeHandle;
     target: NodeHandle;
   } | null>(null);
-  useMemo(() => {
+
+  const { track, accepts } = useAutosavePositions();
+  // The server positions seen last, so a node only moves when its own server position changed.
+  // This keeps an unsaved auto layout and the node being dragged in place.
+  const serverPositions = useRef(new Map<string, XYPosition>());
+  useEffect(() => {
     const transformedNodes = [
       ...graph.nMatchV1.map((n) => {
         const handle = NodeHandle.MatchV1(n.id);
@@ -154,8 +161,23 @@ export default function CompetitionGraph({
       })
     ]
 
-    setNodes(transformedNodes);
-  }, [graph.nMatchV1, graph.nCompetitionV1, graph.nodePositions, graph.nLeaderboardV2, graph.nInputV1, graph.nOutputV1, graph.nRegistrationV1, graph.nServerV1]);
+    const seen = serverPositions.current;
+    const moved = new Set(transformedNodes
+      .filter(({ id, position }) => {
+        const last = seen.get(id);
+        return !last || last.x !== position.x || last.y !== position.y;
+      })
+      .filter(({ id, position }) => accepts(id, position))
+      .map(({ id }) => id));
+    serverPositions.current = new Map(transformedNodes.map(({ id, position }) => [id, position]));
+
+    setNodes((current) => transformedNodes.map((node) => {
+      const local = current.find((n) => n.id === node.id);
+      if (!local) return node;
+      const position = moved.has(node.id) && !local.dragging ? node.position : local.position;
+      return { ...local, data: node.data, position } as MasterNodeEnumType;
+    }));
+  }, [accepts, graph.nMatchV1, graph.nCompetitionV1, graph.nodePositions, graph.nLeaderboardV2, graph.nInputV1, graph.nOutputV1, graph.nRegistrationV1, graph.nServerV1]);
 
   useMemo(() => {
     const transformedEdges = [
@@ -173,9 +195,11 @@ export default function CompetitionGraph({
   }, [graph.connections]);
 
   const onNodesChange: OnNodesChange<MasterNodeEnumType> = useCallback(
-    (changes) =>
-      setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
-    [setNodes],
+    (changes) => {
+      setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot));
+      track(changes);
+    },
+    [track],
   );
 
   /*
