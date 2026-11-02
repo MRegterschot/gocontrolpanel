@@ -25,8 +25,7 @@ import { useCallback, useEffect, useMemo, useState, type MouseEvent } from "reac
 import "./graph.css";
 import DataEdge, { DataEdgeType } from "./edges/data-edge";
 import MatchNode, { type MatchV1NodeType } from "./nodes/match-node";
-import AddMatchButton from "./panel/add-match";
-import CalculatePositionsButton from "./panel/calculate-positions";
+import AutoLayoutButton from "./panel/auto-layout";
 import SaveLayoutButton from "./panel/save-layout";
 import ToggleWaitingEdgesButton from "./panel/toggle-waiting-edges";
 import CompetitionV1Node, { CompetitionV1NodeType } from "./nodes/competition-node";
@@ -240,8 +239,7 @@ export default function CompetitionGraph({
           </Panel>
           <Panel position="top-right" className="flex flex-col gap-2">
             <SaveLayoutButton />
-            <CalculatePositionsButton />
-            <AddMatchButton competitionId={competition.id} />
+            <AutoLayoutButton />
           </Panel>
 
           {menu && <ContextMenu {...menu} competitionId={competition.id} onClose={() => setMenu(null)} />}

@@ -20,12 +20,12 @@ const elkOptions = {
   'elk.spacing.nodeNode': '80',
 };
 
-export default function CalculatePositionsButton({
+export default function AutoLayoutButton({
   ...props
 }: ComponentProps<"button">) {
   const { getNodes, setNodes, getEdges, fitView } = useReactFlow<MasterNodeEnumType>();
 
-  const onCalculatePositions = async () => {
+  const onAutoLayout = async () => {
     const nodes = getNodes();
     const edges = getEdges();
 
@@ -76,10 +76,10 @@ export default function CalculatePositionsButton({
     <Button
       variant="outline"
       className="dark:bg-card hover:dark:bg-muted"
-      onClick={onCalculatePositions}
+      onClick={onAutoLayout}
       {...props}
     >
-      Calculate Positions
+      Auto Layout
     </Button>
   );
 }
