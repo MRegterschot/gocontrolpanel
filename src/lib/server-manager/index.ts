@@ -139,6 +139,7 @@ import CompetitionRegistrationsRow from "./competition_registrations_table";
 import CompetitionRoleMembersRow from "./competition_role_members_table";
 import CompetitionRolesRow from "./competition_roles_table";
 import CompetitionServersRow from "./competition_servers_table";
+import CompetitionMatchConfigsRow from "./competition_match_configs_table";
 import CompetitionSharedConfigsRow from "./competition_shared_configs_table";
 import EventRawServerMethodRow from "./event_raw_server_method_table";
 import EventRawServerStateRow from "./event_raw_server_state_table";
@@ -459,6 +460,15 @@ const tablesSchema = __schema({
   }, CompetitionServersRow), {
     competitionId: __t.u32(),
   }),
+  competitionMatchConfigs: __withViewParams(__table({
+    name: 'competition_match_configs',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, CompetitionMatchConfigsRow), {
+    competitionId: __t.u32(),
+  }),
   competitionSharedConfigs: __withViewParams(__table({
     name: 'competition_shared_configs',
     indexes: [
@@ -676,6 +686,8 @@ type __SchemaWithTableAccessorAliases = Omit<typeof tablesSchema.schemaType, "ta
     readonly "competition_roles": Omit<typeof tablesSchema.schemaType.tables["competitionRoles"], "accessorName"> & { readonly accessorName: "competition_roles" };
     /** @deprecated Use `competitionServers` instead. This alias will be removed in the next major version. */
     readonly "competition_servers": Omit<typeof tablesSchema.schemaType.tables["competitionServers"], "accessorName"> & { readonly accessorName: "competition_servers" };
+    /** @deprecated Use `competitionMatchConfigs` instead. This alias will be removed in the next major version. */
+    readonly "competition_match_configs": Omit<typeof tablesSchema.schemaType.tables["competitionMatchConfigs"], "accessorName"> & { readonly accessorName: "competition_match_configs" };
     /** @deprecated Use `competitionSharedConfigs` instead. This alias will be removed in the next major version. */
     readonly "competition_shared_configs": Omit<typeof tablesSchema.schemaType.tables["competitionSharedConfigs"], "accessorName"> & { readonly accessorName: "competition_shared_configs" };
     /** @deprecated Use `matchState` instead. This alias will be removed in the next major version. */
