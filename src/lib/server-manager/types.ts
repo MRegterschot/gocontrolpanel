@@ -918,6 +918,12 @@ export const ModeSettingsV2 = __t.enum("ModeSettingsV2", {
 });
 export type ModeSettingsV2 = __Infer<typeof ModeSettingsV2>;
 
+export const MyCompetitionPermissions = __t.object("MyCompetitionPermissions", {
+  competitionId: __t.u32(),
+  permissions: __t.u64(),
+});
+export type MyCompetitionPermissions = __Infer<typeof MyCompetitionPermissions>;
+
 // The tagged union or sum type for the algebraic type `NodeHandle`.
 export const NodeHandle = __t.enum("NodeHandle", {
   MatchV1: __t.u32(),

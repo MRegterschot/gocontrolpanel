@@ -11,8 +11,6 @@ import {
 } from "spacetimedb";
 
 export default __t.row({
-  permissions: __t.u64(),
-  id: __t.u32().primaryKey(),
   competitionId: __t.u32().name("competition_id"),
-  userId: __t.u32().name("user_id"),
+  permissions: __t.u64(),
 });

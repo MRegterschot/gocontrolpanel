@@ -12,7 +12,7 @@ import {
 
 export default __t.row({
   name: __t.string(),
-  id: __t.u32().primaryKey(),
+  id: __t.u32(),
   competitionId: __t.u32().name("competition_id"),
   permissions: __t.u64(),
 });
