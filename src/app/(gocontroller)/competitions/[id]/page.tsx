@@ -1,6 +1,6 @@
 'use client'
 import CompetitionGraph from "@/components/tournaments/competitions/graph/competition-graph";
-import CompetitionPermissions from "@/components/tournaments/competitions/servers/competition-permissions";
+import CompetitionPermissions from "@/components/tournaments/competitions/permissions/competition-permissions";
 import CompetitionServerPool from "@/components/tournaments/competitions/servers/competition-server-pool";
 import CompetitionSharedConfigs from "@/components/tournaments/competitions/servers/competition-shared-configs";
 import { Button } from "@/components/ui/button";
@@ -92,7 +92,7 @@ export default function CompetitionPage({
             </Button>
           </DialogTrigger>
 
-          <DialogContent className="rounded-lg shadow-xl">
+          <DialogContent className="rounded-lg shadow-xl sm:max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-lg font-bold">Competition Permissions</DialogTitle>
               <DialogDescription className="text-sm text-muted-foreground">
