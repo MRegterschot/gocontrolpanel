@@ -190,6 +190,7 @@ export default function CompetitionGraph({
           onNodesChange={onNodesChange}
           //onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onEdgeClick={(_, edge) => edge.data && setSettingsEdgeId(edge.data.id)}
           snapGrid={[10, 10]}
           snapToGrid={true}
           minZoom={0.25}
