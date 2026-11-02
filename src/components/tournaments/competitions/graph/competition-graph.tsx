@@ -120,8 +120,8 @@ export default function CompetitionGraph({
     });
   }, [accepts, graph.nMatchV1, graph.nCompetitionV1, graph.nodePositions, graph.nLeaderboardV2, graph.nInputV1, graph.nOutputV1, graph.nRegistrationV1, graph.nServerV1]);
 
-  useMemo(() => {
-    const transformedEdges = [
+  useEffect(() => {
+    const transformedEdges: DataEdgeType[] = [
       ...graph.connections.map((e) => ({
         id: `edge-${e.origin.tag}-${e.origin.value}-${e.target.tag}-${e.target.value}`,
         source: `${e.origin.tag}-${e.origin.value}`,
@@ -132,7 +132,14 @@ export default function CompetitionGraph({
       }))
     ]
 
-    setEdges(transformedEdges);
+    // Routes from the last auto layout and hidden waiting edges are local, so they are kept.
+    setEdges((current) => {
+      const locals = new Map(current.map((e) => [e.id, e]));
+      return transformedEdges.map((edge) => {
+        const local = locals.get(edge.id);
+        return local ? { ...edge, hidden: local.hidden, data: { ...edge.data!, route: local.data?.route } } : edge;
+      });
+    });
   }, [graph.connections]);
 
   const onNodesChange: OnNodesChange<MasterNodeEnumType> = useCallback(
