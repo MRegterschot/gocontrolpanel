@@ -22,27 +22,31 @@ export const DEFAULT_CONFIG: ConfigFormSchemaType["config"] = {
   maps: { start: 0, mapUids: ["olsKnq_qAghcVAnEkoeUnVHFZei"] },
 };
 
+// Inline configs have no name, so their form starts at the common step.
 export default function ConfigForm({
   initial,
   isEditing,
+  inline,
   submitLabel,
   onSubmit,
 }: {
   initial?: ConfigFormSchemaType;
   isEditing?: boolean;
+  inline?: boolean;
   submitLabel: string;
   onSubmit: (values: ConfigFormSchemaType) => Promise<unknown>;
 }) {
-  const [step, setStep] = useState<Step>("general");
+  const steps = inline ? STEPS.slice(1) : STEPS;
+  const [step, setStep] = useState<Step>(steps[0]);
 
   const form = useForm<ConfigFormSchemaType>({
     resolver: zodResolver(ConfigFormSchema),
-    defaultValues: initial ?? { name: "", config: DEFAULT_CONFIG },
+    defaultValues: { name: inline ? "Inline" : "", config: DEFAULT_CONFIG, ...initial },
   });
 
   const move = async (by: number) => {
     if (step !== "summary" && !(await form.trigger())) return;
-    setStep(STEPS[Math.min(Math.max(STEPS.indexOf(step) + by, 0), STEPS.length - 1)]);
+    setStep(steps[Math.min(Math.max(steps.indexOf(step) + by, 0), steps.length - 1)]);
   };
   const onNext = () => move(1);
   const onBack = () => move(-1);
@@ -50,7 +54,7 @@ export default function ConfigForm({
   return (
     <Tabs value={step} onValueChange={() => { }} className="w-full gap-3">
       <TabsList className="w-full">
-        {STEPS.map((s) => (
+        {steps.map((s) => (
           <TabsTrigger key={s} value={s} className="cursor-default capitalize">{s}</TabsTrigger>
         ))}
       </TabsList>
@@ -68,7 +72,7 @@ export default function ConfigForm({
           <MapsForm form={form} onNext={onNext} onBack={onBack} />
         </TabsContent>
         <TabsContent value="summary">
-          <ConfigSummary form={form} submitLabel={submitLabel} onSubmit={onSubmit} onBack={onBack} />
+          <ConfigSummary form={form} inline={inline} submitLabel={submitLabel} onSubmit={onSubmit} onBack={onBack} />
         </TabsContent>
       </Form>
     </Tabs>

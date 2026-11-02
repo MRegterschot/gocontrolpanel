@@ -8,12 +8,12 @@ import { reducers, tables } from "@/lib/server-manager";
 import { NodeHandle, ServerV1 } from "@/lib/server-manager/types";
 import { IconX } from "@tabler/icons-react";
 import { useReducer, useTable } from "spacetimedb/react";
+import SharedConfigs from "./shared-configs";
 
 export default function ServerSettings({ server }: { server: ServerV1 }) {
   const [rawServers] = useTable(tables.tabRawServer);
   const [occupations] = useTable(tables.tabRawServerOccupation);
   const [available] = useTable(tables.competitionAvailableServerPool({ competitionId: server.parentId }));
-  const [configs] = useTable(tables.competitionSharedConfigs({ competitionId: server.parentId }));
 
   const assign = useServerAction(useReducer(reducers.serverAssignRawServer), "Failed to assign server", "Server assigned");
   const remove = useServerAction(useReducer(reducers.serverRemoveRawServer), "Failed to remove server", "Server removed");
@@ -49,18 +49,24 @@ export default function ServerSettings({ server }: { server: ServerV1 }) {
       {/* Servers have no shared config of their own, the chosen one is copied onto the server. */}
       <div className="flex flex-col gap-1">
         <Label className="text-xs text-muted-foreground">Config {server.config ? "" : "(none yet)"}</Label>
-        <Select
-          value=""
-          onValueChange={(v) => {
-            const config = configs.find((c) => c.id === Number(v));
-            if (config) override({ to: server.id, config: config.config });
-          }}
-        >
-          <SelectTrigger className="w-full"><SelectValue placeholder="Copy a shared config" /></SelectTrigger>
-          <SelectContent className="z-[9999]">
-            {configs.map((c) => <SelectItem key={c.id} value={c.id.toString()}>{c.name || `Config ${c.id}`}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <SharedConfigs competitionId={server.parentId}>
+          {(configs) => (
+            <Select
+              value=""
+              onValueChange={(v) => {
+                const config = configs.find((c) => c.id === Number(v));
+                if (config) override({ to: server.id, config: config.config });
+              }}
+            >
+              <SelectTrigger className="w-full"><SelectValue placeholder="Copy a shared config" /></SelectTrigger>
+              <SelectContent className="z-[9999]">
+                {configs.map((c) => (
+                  <SelectItem key={c.id} value={c.id.toString()}>{c.name || `Config ${c.id}`} · {c.competitionName}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </SharedConfigs>
       </div>
 
       <Button

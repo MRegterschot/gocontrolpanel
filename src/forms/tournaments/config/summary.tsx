@@ -10,11 +10,13 @@ import RoundsSummary from "./modes/rounds-summary";
 export default function ConfigSummary({
   form,
   submitLabel,
+  inline,
   onSubmit,
   onBack,
 }: {
   form: UseFormReturn<ConfigFormSchemaType>;
   submitLabel: string;
+  inline?: boolean;
   onSubmit: (values: ConfigFormSchemaType) => Promise<unknown>;
   onBack: () => void;
 }) {
@@ -26,13 +28,13 @@ export default function ConfigSummary({
   return (
     <form onSubmit={form.handleSubmit(onSubmit)}>
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2 text-sm">
+        {!inline && (<div className="flex flex-col gap-2 text-sm">
           <h4 className="text-muted-foreground">General</h4>
           <div className="flex flex-col">
             <span className="font-semibold">Name</span>
             <span className="truncate">{name}</span>
           </div>
-        </div>
+        </div>)}
 
         <div className="flex flex-col gap-2 text-sm">
           <h4 className="text-muted-foreground">Common</h4>
