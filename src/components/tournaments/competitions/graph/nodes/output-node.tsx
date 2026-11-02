@@ -1,33 +1,20 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
 import { OutputV1 } from "@/lib/server-manager/types";
-import { IconChevronDown } from "@tabler/icons-react";
+import { IconLogout2 } from "@tabler/icons-react";
 import { Handle, Node, NodeProps, Position } from "@xyflow/react";
-import NodeSettingsButton from "./node-settings-button";
 import { memo } from "react";
+import NodeCard from "./node-card";
 
 export type OutputV1NodeType = Node<OutputV1>;
 
 function OutputV1Node(props: NodeProps<OutputV1NodeType>) {
   return (
-
-    <Card>
-      <div className=" bg-pink-300 rounded-t-lg flex">
-        <IconChevronDown className="h-[1em] items-center text-inherit leading-none self-center align-middle bg-none p-0 m-0 " />
-        <p className="font-bold">
-          {props.data.name}
-        </p>
-        <NodeSettingsButton id={props.id} />
-      </div>
-      {/* <Handle type="source" position={Position.Right} /> */}
+    <NodeCard id={props.id} name={props.data.name} icon={IconLogout2} color="bg-pink-700">
       <Handle type="target" position={Position.Left} className="h-5! rounded-sm!" />
-
-      <div>
-        hafhhafahf
-      </div>
-    </Card>
+      <p className="text-muted-foreground">Players leaving this stage</p>
+    </NodeCard>
   );
 }
 
-export default memo(OutputV1Node)
+export default memo(OutputV1Node);

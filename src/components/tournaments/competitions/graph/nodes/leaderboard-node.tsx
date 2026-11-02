@@ -1,19 +1,38 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
-import { LeaderboardV2 } from "@/lib/server-manager/types";
-import { IconChevronDown } from "@tabler/icons-react";
+import { LeaderboardV2, LbSettingsV2 } from "@/lib/server-manager/types";
+import { IconListNumbers } from "@tabler/icons-react";
 import { Handle, Node, NodeProps, Position } from "@xyflow/react";
-import NodeSettingsButton from "./node-settings-button";
 import { memo, useRef, useState } from "react";
 import LeaderboardPreview from "./leaderboard-preview";
+import NodeCard from "./node-card";
+
+const OPERATIONS = {
+  Add: (o: string, v: number) => `${o} + ${v}`,
+  SubtractLhs: (o: string, v: number) => `${o} - ${v}`,
+  SubtractRhs: (o: string, v: number) => `${v} - ${o}`,
+  Multiply: (o: string, v: number) => `${o} × ${v}`,
+  DivideLhs: (o: string, v: number) => `${o} / ${v}`,
+  DivideRhs: (o: string, v: number) => `${v} / ${o}`,
+};
+
+function describeStep(setting: LbSettingsV2) {
+  switch (setting.tag) {
+    case "Filter": return setting.value.kind.tag;
+    case "Merge": return `${setting.value.kind.tag}, ${setting.value.action.tag} ${setting.value.param.tag}`;
+    case "Remap": {
+      const { origin, target, manipulation, manipulationValue } = setting.value;
+      return `${target.tag} = ${OPERATIONS[manipulation.tag](origin.tag, manipulationValue)}`;
+    }
+    case "Finalize": return "";
+  }
+}
 
 export type LeaderboardV2NodeType = Node<LeaderboardV2>;
 
  function LeaderboardV2Node(props: NodeProps<LeaderboardV2NodeType>) {
   const [isOutputHovered, setOutputIsHovered] = useState(false);
-  const [hasHoveredBefore, setHasHoveredBefore] = useState(false);
 
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const handleMouseEnter = () => {
@@ -31,16 +50,7 @@ export type LeaderboardV2NodeType = Node<LeaderboardV2>;
   };
 
   return (
-    <>
-      <Card>
-        <div className=" bg-yellow-300 rounded-t-lg flex">
-          <IconChevronDown className="h-[1em] items-center text-inherit leading-none self-center align-middle bg-none p-0 m-0 " />
-          <p className="font-bold">
-            {props.data.name}
-          </p>
-          <NodeSettingsButton id={props.id} />
-        </div>
-
+      <NodeCard id={props.id} name={props.data.name} icon={IconListNumbers} color="bg-yellow-700">
         <Handle type="target" position={Position.Left} className="h-5! rounded-sm!" />
         <Popover open={isOutputHovered}>
           <PopoverAnchor asChild>
@@ -54,38 +64,18 @@ export type LeaderboardV2NodeType = Node<LeaderboardV2>;
             </div>
           </PopoverContent>
         </Popover>
-        <div className="m-2">
-          {props.data.settings.map((setting, idx) => {
-            switch (setting.tag) {
-              case "Filter":
-                return <div className="flex" key={idx}>{idx + 1}. Filter {setting.value.kind.tag}</div>
-              case "Merge":
-                return <div className="flex" key={idx}>{idx + 1}. Merge <span className="underline">{setting.value.kind.tag} </span> and <span className="underline">{setting.value.action.tag}</span> the <span className="underline">{setting.value.param.tag}</span></div>
-              case "Remap":
-                return <div className="flex" key={idx}>{idx + 1}. Remap
-                  <span className="underline">  {setting.value.origin.tag} </span>
-                  to <span className="underline">{setting.value.target.tag}</span>
-                  and do <span className="underline">
-                    {(() => {
-                      switch (setting.value.manipulation.tag) {
-                        case "Add": return <div> {setting.value.origin.tag} + {setting.value.manipulationValue}  </div>
-                        case "DivideLhs": return <div> {setting.value.origin.tag} / {setting.value.manipulationValue} </div>
-                        case "DivideRhs": return <div>{setting.value.manipulationValue} / {setting.value.origin.tag}</div>
-                        case "Multiply": return <div> {setting.value.origin.tag} * {setting.value.manipulationValue} </div>
-                        case "SubtractLhs": return <div>{setting.value.origin.tag} - {setting.value.manipulationValue} </div>
-                        case "SubtractRhs": return <div> {setting.value.manipulationValue} - {setting.value.origin.tag}</div>
-                      }
-                    })()}</span>
-                </div>
-              case "Finalize":
-                return <div key={idx}>{idx + 1}. Finalize Leaderboard</div>
-            }
-          })}
-        </div>
-      </Card>
+        {props.data.settings.length === 0 && <p className="text-muted-foreground">No steps</p>}
+        <ol className="flex flex-col gap-1">
+          {props.data.settings.map((setting, idx) => (
+            <li key={idx} className="flex items-baseline gap-2">
+              <span className="text-muted-foreground tabular-nums">{idx + 1}</span>
+              <span className="font-medium">{setting.tag}</span>
+              <span className="text-muted-foreground">{describeStep(setting)}</span>
+            </li>
+          ))}
+        </ol>
+      </NodeCard>
 
-
-    </>
   );
 }
 

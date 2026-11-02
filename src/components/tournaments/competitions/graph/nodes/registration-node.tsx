@@ -1,34 +1,23 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Registration } from "@/lib/server-manager/types";
-import { IconChevronDown } from "@tabler/icons-react";
+import { IconClipboardList } from "@tabler/icons-react";
 import { Handle, Node, NodeProps, Position } from "@xyflow/react";
-import NodeSettingsButton from "./node-settings-button";
 import { memo } from "react";
+import NodeCard, { NodeRow } from "./node-card";
 
 export type RegistrationV1NodeType = Node<Registration>;
 
 function RegistrationV1Node(props: NodeProps<RegistrationV1NodeType>) {
   return (
-
-    <Card>
-      <div className=" bg-blue-300 rounded-t-lg flex">
-        <IconChevronDown className="h-[1em] items-center text-inherit leading-none self-center align-middle bg-none p-0 m-0 " />
-        <p className="font-bold">
-          {props.data.name}
-        </p>
-        <NodeSettingsButton id={props.id} />
-      </div>
+    <NodeCard id={props.id} name={props.data.name} icon={IconClipboardList} color="bg-blue-700">
       <Handle type="source" position={Position.Right} className="h-5! rounded-sm!" />
-      {/* <Handle type="target" position={Position.Left} /> */}
-
-      <div className="px-2 flex flex-col gap-2">
-        <div > Status: {props.data.status.tag}</div>
-        <div>Registering: {props.data.settings.tag}s Max: {props.data.settings.value.playerLimit} </div>
-      </div>
-    </Card>
+      <NodeRow label="Status"><Badge variant="outline">{props.data.status.tag}</Badge></NodeRow>
+      <NodeRow label="Registering">{props.data.settings.tag}s</NodeRow>
+      <NodeRow label="Limit">{props.data.settings.value.playerLimit}</NodeRow>
+    </NodeCard>
   );
 }
 
-export default memo(RegistrationV1Node)
+export default memo(RegistrationV1Node);
