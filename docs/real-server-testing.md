@@ -243,6 +243,12 @@ Copy per test run.
 
 ## Worker failover
 
+Run the automated three-server suite from `apps/gbx-service` with the existing `e2e/.env`:
+1. `npm run e2e:cluster:up` starts three dedicated servers, MariaDB and Redis.
+2. `npm run e2e:cluster:seed` seeds all three targets (run `e2e:migrate` first on a fresh database).
+3. `npm run e2e:cluster` checks worker crash/hang, node handoff, Redis fencing and single-process mode; logs go to `/tmp/tmcp-cluster-e2e-*`.
+4. `npm run e2e:cluster:down` stops the stack when finished; the runner itself leaves Docker running.
+
 Use `GBX_WORKERS=2` or more and several dedicated servers. Open their live pages before testing.
 
 - Find a worker PID with `ps -eo pid,ppid,args` or `docker top <container>`. Run `kill -9 <worker-pid>` (inside the container if using its PID namespace). Other servers' live pages must keep updating. The killed worker's servers should return within about 5s.
