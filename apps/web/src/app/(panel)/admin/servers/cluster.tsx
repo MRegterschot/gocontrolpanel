@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getClusterOverview } from "@/lib/api-client/cluster";
 import { unwrap } from "@/lib/api-client/query";
+import { formatDuration } from "@/lib/utils";
 import type { ServerResponse } from "@/types/responses";
 import { useQuery } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
@@ -245,7 +246,7 @@ export default function AdminClusterPage({
                       Uptime:{" "}
                       {w.startedAt === null
                         ? "—"
-                        : `${Math.max(0, Math.floor((Date.now() - w.startedAt) / 1000))}s`}
+                        : formatDuration(Date.now() - w.startedAt)}
                     </span>
                     <span>{w.servers.length} servers</span>
                     <Button

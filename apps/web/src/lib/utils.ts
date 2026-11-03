@@ -106,6 +106,24 @@ export function formatBytes(bytes: number, decimals = 2): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
 }
 
+// Compact duration such as "3d 4h", "2h 5m", "4m 12s" or "12s"; shows the two largest units
+export function formatDuration(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const parts: [number, string][] = [
+    [Math.floor(total / 86400), "d"],
+    [Math.floor((total % 86400) / 3600), "h"],
+    [Math.floor((total % 3600) / 60), "m"],
+    [total % 60, "s"],
+  ];
+  const first = parts.findIndex(([value]) => value > 0);
+  if (first === -1) return "0s";
+  return parts
+    .slice(first, first + 2)
+    .filter(([value]) => value > 0)
+    .map(([value, unit]) => `${value}${unit}`)
+    .join(" ");
+}
+
 export function formatTimeToAgo(date: Date): string {
   const now = new Date();
   const diff = (date.getTime() - now.getTime()) / 1000; // in seconds
