@@ -156,7 +156,9 @@ describe("WorkerNode", () => {
     );
     await flush();
     expect(dispose).toHaveBeenCalledOnce();
-    expect(dispose).toHaveBeenCalledWith("Server removed from TMControlPanel");
+    expect(dispose).toHaveBeenCalledWith(
+      "Server removed from TMControlPanel, chat commands and widgets are now off",
+    );
     expect(await store.owners([clusterKeys.lastOwner(SERVER_ID)])).toEqual([
       null,
     ]);
@@ -302,13 +304,13 @@ describe("WorkerNode takeovers", () => {
           .callsTo("ChatSendServerMessage")
           .map((c) => c.params[0]);
         if (scenario === "hold")
-          expect(chat).toEqual(["$<$0cfTMControlPanel$>: Connected"]);
+          expect(chat).toEqual(["$<$0cfTMControlPanel$>: Connected."]);
         if (scenario === "move") {
-          expect(chat.join(" ")).toContain("Took over from another worker.");
+          expect(chat.join(" ")).toMatch(/Moved here from .+ by an admin\./);
           expect(
             a.session.callsTo("ChatSendServerMessage").map((c) => c.params[0]),
           ).toContain(
-            "$<$0cfTMControlPanel$>: Disconnecting: Moving to another worker, back in a few seconds",
+            "$<$0cfTMControlPanel$>: Disconnecting: An admin is moving this server to another worker, back in a few seconds",
           );
         }
       } finally {

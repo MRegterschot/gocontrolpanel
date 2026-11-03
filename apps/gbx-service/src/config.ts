@@ -48,6 +48,8 @@ const envSchema = z
     GBX_LEASE_TTL_MS: z.coerce.number().int().min(6000).default(15_000),
     // Set by the front for the worker processes it starts
     GBX_WORKER_ID: z.string().optional(),
+    // Commit the image was built from, shown in the in-game connect notice
+    APP_REVISION: z.string().optional(),
     NADEO_SERVER_LOGIN: z.string().default(""),
     NADEO_SERVER_PASSWORD: z.string().default(""),
     NADEO_CONTACT: z.string().default("TMControlPanel"),

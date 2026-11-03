@@ -119,7 +119,11 @@ export class ServerRegistry {
 
   async shutdown(): Promise<void> {
     await Promise.all(
-      this.list().map((runtime) => runtime.dispose("Controller shutting down")),
+      this.list().map((runtime) =>
+        runtime.dispose(
+          "Controller shutting down, chat commands and widgets are off until it restarts",
+        ),
+      ),
     );
     this.runtimes.clear();
   }

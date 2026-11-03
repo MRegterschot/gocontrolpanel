@@ -64,6 +64,8 @@ import type { ServerEventMap } from "./server-events";
 // Shared, server-independent dependencies; one set per process
 export interface RuntimeDependencies {
   log: Logger;
+  // Version shown in the connect notice
+  controller?: string;
   clock: Clock;
   sessionFactory: GbxSessionFactory;
   renderer: TemplateRenderer;
@@ -344,7 +346,9 @@ export class ServerRuntime {
   }
 
   // Manual disconnect: stays offline until reconnect() is called
-  async disconnect(reason = "Disconnected by an admin"): Promise<void> {
+  async disconnect(
+    reason = "Disconnected by an admin, chat commands and widgets are off until it reconnects",
+  ): Promise<void> {
     this.supervisor.stop();
     await this.closeSession(reason);
   }
@@ -582,7 +586,8 @@ export class ServerRuntime {
     this.events.emit("connect");
     const note = this.connectNote;
     this.connectNote = null;
-    void this.notice(note ? `Connected. ${note}` : "Connected");
+    const about = this.deps.controller ? ` (${this.deps.controller})` : "";
+    void this.notice(`Connected${about}.${note ? ` ${note}` : ""}`);
     // Pages were cleared for the new session; plugins add their buttons as they load
     this.codriverWindows?.showButton();
 

@@ -380,7 +380,19 @@ describe("ServerRuntime updates", () => {
 
 describe("ServerRuntime notices", () => {
   const prefix = "$<$0cfTMControlPanel$>: ";
-  it.each([null, "Took over from another worker."])(
+  it("names the controller version when connecting", async () => {
+    const h = await createHarness({
+      connect: false,
+      controller: "v1.2.3 abc1234",
+    });
+    await h.runtime.start();
+    expect(
+      h.session.callsTo("ChatSendServerMessage").map((c) => c.params[0]),
+    ).toContain(prefix + "Connected (v1.2.3 abc1234).");
+    await h.runtime.dispose();
+  });
+
+  it.each([null, "Moved here from another worker by an admin."])(
     "announces connection with note %s",
     async (note) => {
       const h = await createHarness({ connect: false });
@@ -388,7 +400,7 @@ describe("ServerRuntime notices", () => {
       await h.runtime.start();
       expect(
         h.session.callsTo("ChatSendServerMessage").map((c) => c.params[0]),
-      ).toContain(prefix + (note ? `Connected. ${note}` : "Connected"));
+      ).toContain(prefix + (note ? `Connected. ${note}` : "Connected."));
       h.runtime.setConnectNote("Already connected");
       await flush();
       expect(h.session.callsTo("ChatSendServerMessage").at(-1)?.params).toEqual(
@@ -420,7 +432,10 @@ describe("ServerRuntime notices", () => {
       });
       await h.runtime.disconnect(reason);
       expect(order).toEqual([
-        prefix + "Disconnecting: " + (reason ?? "Disconnected by an admin"),
+        prefix +
+          "Disconnecting: " +
+          (reason ??
+            "Disconnected by an admin, chat commands and widgets are off until it reconnects"),
         "unload",
       ]);
     },

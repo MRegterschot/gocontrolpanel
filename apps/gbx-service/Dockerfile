@@ -47,6 +47,9 @@ COPY --from=builder /app/apps/gbx-service/templates ./templates
 
 USER gbx
 ENV PORT=3100
+# Commit shown in the in-game connect notice
+ARG APP_REVISION
+ENV APP_REVISION=$APP_REVISION
 EXPOSE 3100
 
 CMD ["node", "--enable-source-maps", "dist/main.js"]

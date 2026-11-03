@@ -42,7 +42,7 @@ jobs:
             DOCKERFILE=${target%%=*}
             IMAGE=${{ secrets.DOCKER_USERNAME }}/${target#*=}${{ matrix.db.suffix }}
 
-            docker build -f $DOCKERFILE -t $IMAGE:${{ env.RELEASE_TAG }} . --build-arg DB_TYPE=${{ matrix.db.name }}
+            docker build -f $DOCKERFILE -t $IMAGE:${{ env.RELEASE_TAG }} . --build-arg DB_TYPE=${{ matrix.db.name }} --build-arg APP_REVISION=${{ github.sha }}
 
             if [ "${{ env.IS_PRERELEASE }}" = "true" ]; then
               docker tag $IMAGE:${{ env.RELEASE_TAG }} $IMAGE:beta

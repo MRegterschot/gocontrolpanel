@@ -30,12 +30,14 @@ const HANDOVER_TTL_MS = 24 * 60 * 60 * 1000;
 
 // In-game reason the old owner gives before it disconnects
 const goodbye: Record<HandoverReason | "removed", string> = {
-  move: "Moving to another worker, back in a few seconds",
-  rebalance: "Moving to another worker, back in a few seconds",
-  hold: "Paused by an admin",
-  shutdown: "Controller restarting, back in a few seconds",
-  lease: "Lost the cluster lease, another worker takes over",
-  removed: "Server removed from TMControlPanel",
+  move: "An admin is moving this server to another worker, back in a few seconds",
+  rebalance:
+    "Moving to a less busy worker to spread the load, back in a few seconds",
+  hold: "Paused by an admin, chat commands and widgets are off until it resumes",
+  shutdown: "Controller restarting, another worker takes over in a few seconds",
+  lease: "Lost contact with Redis, another worker takes over shortly",
+  removed:
+    "Server removed from TMControlPanel, chat commands and widgets are now off",
 };
 
 // What the new owner reports, by the reason the old owner left (or "crash" if it gave none)
@@ -43,20 +45,23 @@ const takeover: Record<
   HandoverReason | "crash",
   { kind: HandoverKind; note: string | null }
 > = {
-  move: { kind: "moved", note: "Took over from another worker." },
-  rebalance: { kind: "moved", note: "Took over from another worker." },
+  move: { kind: "moved", note: "Moved here from another worker by an admin." },
+  rebalance: {
+    kind: "moved",
+    note: "Moved here from another worker to spread the load.",
+  },
   hold: { kind: "resumed", note: null },
   shutdown: {
     kind: "restarted",
-    note: "Took over after a controller restart.",
+    note: "Took over from another worker, which was restarting.",
   },
   lease: {
     kind: "lease",
-    note: "Took over after the previous worker lost its Redis connection.",
+    note: "Took over from another worker after it lost its Redis connection.",
   },
   crash: {
     kind: "crashed",
-    note: "Recovered after a controller crash; the round in progress was not recorded.",
+    note: "Took over from another worker after it stopped unexpectedly; the round in progress was not recorded.",
   },
 };
 

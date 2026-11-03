@@ -11,6 +11,7 @@ import {
   ServerRuntime,
   type RuntimeDependencies,
 } from "./core/server/server-runtime";
+import { controllerLabel } from "./core/version";
 import { TicketVerifier } from "./http/ws/ticket-verifier";
 import {
   PrismaFirstPartyRepository,
@@ -126,6 +127,7 @@ export async function createContainer(
 
   const runtimeDeps: RuntimeDependencies = {
     log,
+    controller: controllerLabel(config.APP_REVISION),
     clock: systemClock,
     sessionFactory: () => new EvotmGbxSession(log.child({ module: "gbx" })),
     renderer: new TemplateRenderer(loadTemplateSources(config.templatesDir)),
