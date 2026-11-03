@@ -1,6 +1,8 @@
 import {
   chatConfigBodySchema,
   chatMessageBodySchema,
+  clusterClaimBodySchema,
+  clusterMoveBodySchema,
   commandBodySchema,
   gbxCallBodySchema,
   gbxMulticallBodySchema,
@@ -46,6 +48,34 @@ export async function internalRoutes(
 ) {
   const { gateway } = opts;
   app.addHook("onRequest", requireServiceToken(opts.serviceToken));
+  app.get("/internal/cluster", async () => ok(await gateway.overview()));
+  app.post("/internal/cluster/servers/:id/move", async (req) => {
+    const { id } = parse(serverParams, req.params);
+    const { workerId } = parse(clusterMoveBodySchema, req.body);
+    await gateway.control({ action: "move", serverId: id, workerId });
+    return ok(null);
+  });
+  app.post("/internal/cluster/servers/:id/claim", async (req) => {
+    const { id } = parse(serverParams, req.params);
+    const { workerId } = parse(clusterClaimBodySchema, req.body ?? {});
+    await gateway.control({ action: "claim", serverId: id, workerId });
+    return ok(null);
+  });
+  for (const action of ["hold", "unhold"] as const) {
+    app.post(`/internal/cluster/servers/:id/${action}`, async (req) => {
+      const { id } = parse(serverParams, req.params);
+      await gateway.control({ action, serverId: id });
+      return ok(null);
+    });
+  }
+  app.post("/internal/cluster/workers/:workerId/restart", async (req) => {
+    const { workerId } = parse(
+      z.object({ workerId: z.string().min(1) }),
+      req.params,
+    );
+    await gateway.control({ action: "restartWorker", workerId });
+    return ok(null);
+  });
   app.get("/internal/servers", async () => ok(await gateway.list()));
   app.get("/internal/servers/:id", async (req) => {
     const { id } = parse(serverParams, req.params);

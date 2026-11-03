@@ -5,6 +5,7 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   clusterKeys,
+  RELEASE_OP,
   type RpcReply,
   type RpcRequest,
 } from "../../src/core/cluster/protocol";
@@ -155,6 +156,10 @@ describe("WorkerNode", () => {
     );
     await flush();
     expect(dispose).toHaveBeenCalledOnce();
+    expect(dispose).toHaveBeenCalledWith("Server removed from TMControlPanel");
+    expect(await store.owners([clusterKeys.lastOwner(SERVER_ID)])).toEqual([
+      null,
+    ]);
     expect(registry.find(SERVER_ID)).toBeUndefined();
     expect(worker.ownership.owns(SERVER_ID)).toBe(false);
     expect(messages).toContainEqual({
@@ -172,4 +177,144 @@ describe("WorkerNode", () => {
     await flush();
     expect(forwarded).toEqual([]);
   });
+  it.each([true, false])("handles release RPC ownership=%s", async (owned) => {
+    const { h, store, registry, worker, workerId } = await setup();
+    if (owned) await worker.ownership.claimSoon();
+    const dispose = vi.spyOn(h.runtime, "dispose");
+    const replies: RpcReply[] = [];
+    await store.subscribe("release:reply", (raw) =>
+      replies.push(JSON.parse(raw)),
+    );
+    await store.publish(
+      clusterKeys.rpc(workerId),
+      JSON.stringify({
+        id: "release",
+        op: RELEASE_OP,
+        serverId: SERVER_ID,
+        args: null,
+        replyTo: "release:reply",
+      }),
+    );
+    await flush();
+    expect(replies).toEqual([
+      expect.objectContaining(
+        owned
+          ? { id: "release", ok: true }
+          : { id: "release", ok: false, notOwner: true },
+      ),
+    ]);
+    expect(dispose).toHaveBeenCalledTimes(owned ? 1 : 0);
+    expect(registry.find(SERVER_ID)).toBeUndefined();
+    expect(await store.owners([clusterKeys.lease(SERVER_ID)])).toEqual([null]);
+  });
+
+  it("claims an assignment immediately on a control message", async () => {
+    const { store, worker, workerId } = await setup();
+    await store.setFlag(clusterKeys.assign(SERVER_ID), workerId, 15000);
+    expect(worker.ownership.owns(SERVER_ID)).toBe(false);
+    await store.publish(
+      clusterKeys.control,
+      JSON.stringify({ action: "claim" }),
+    );
+    await flush();
+    expect(worker.ownership.owns(SERVER_ID)).toBe(true);
+    expect(await store.owners([clusterKeys.assign(SERVER_ID)])).toEqual([null]);
+  });
+});
+
+describe("WorkerNode takeovers", () => {
+  it.each(["move", "hold", "crash", "shutdown", "same"] as const)(
+    "handles %s",
+    async (scenario) => {
+      const a = await createHarness({ connect: false });
+      const b = await createHarness({ connect: false });
+      const store = new MemoryClusterStore(a.clock);
+      const messages: Record<string, unknown>[] = [];
+      await store.subscribe(clusterKeys.globalEvents, (raw) =>
+        messages.push(JSON.parse(raw)),
+      );
+      const make = (h: typeof a, workerId: string) =>
+        new WorkerNode({
+          workerId,
+          store,
+          registry: new ServerRegistry({
+            servers: h.servers,
+            createRuntime: () => h.runtime,
+            log: silentLogger,
+          }),
+          listServers: () => h.servers.listActiveIds(),
+          clock: h.clock,
+          log: silentLogger,
+          ttlMs: 15000,
+        });
+      const first = make(a, "a");
+      const second = make(b, scenario === "same" ? "a" : "b");
+      await first.start();
+      await first.ownership.claimSoon();
+      await flush();
+      expect(messages.filter((m) => m.event === "handover")).toEqual([]);
+      try {
+        if (scenario === "shutdown" || scenario === "same") await first.stop();
+        else if (scenario === "crash") await store.releaseServersOwnedBy("a");
+        else {
+          await store.publish(
+            clusterKeys.rpc("a"),
+            JSON.stringify({
+              id: "release",
+              op: "release",
+              serverId: SERVER_ID,
+              args: { reason: scenario },
+              replyTo: "reply",
+            }),
+          );
+          await flush();
+          expect(await store.owners([clusterKeys.handover(SERVER_ID)])).toEqual(
+            [scenario],
+          );
+        }
+        await second.start();
+        await second.ownership.claimSoon();
+        await flush();
+        const handovers = messages.filter((m) => m.event === "handover");
+        if (scenario === "same") expect(handovers).toEqual([]);
+        else
+          expect(handovers).toEqual([
+            {
+              event: "handover",
+              serverId: SERVER_ID,
+              workerId: "b",
+              previous: "a",
+              kind: {
+                move: "moved",
+                hold: "resumed",
+                crash: "crashed",
+                shutdown: "restarted",
+              }[scenario],
+            },
+          ]);
+        expect(
+          await store.owners([
+            clusterKeys.lastOwner(SERVER_ID),
+            clusterKeys.handover(SERVER_ID),
+          ]),
+        ).toEqual([scenario === "same" ? "a" : "b", null]);
+        const chat = b.session
+          .callsTo("ChatSendServerMessage")
+          .map((c) => c.params[0]);
+        if (scenario === "hold")
+          expect(chat).toEqual(["$<$0cfTMControlPanel$>: Connected"]);
+        if (scenario === "move") {
+          expect(chat.join(" ")).toContain("Took over from another worker.");
+          expect(
+            a.session.callsTo("ChatSendServerMessage").map((c) => c.params[0]),
+          ).toContain(
+            "$<$0cfTMControlPanel$>: Disconnecting: Moving to another worker, back in a few seconds",
+          );
+        }
+      } finally {
+        await second.stop();
+        await first.stop();
+      }
+    },
+  );
 });

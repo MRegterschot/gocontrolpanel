@@ -48,6 +48,29 @@ describe.skipIf(!url)("RedisClusterStore", () => {
     }
   });
 
+  it("lists heartbeat metadata, leases and persistent or expiring flags", async () => {
+    const workerId = id("metadata");
+    const info = { nodeId: "node", pid: 123, startedAt: 100 };
+    await store.heartbeat(workerId, 15000, info);
+    expect(await store.workers()).toContainEqual({ id: workerId, info });
+    await store.heartbeat(workerId, 15000);
+    expect(await store.workers()).toContainEqual({ id: workerId, info: null });
+    const serverId = id("overview");
+    await store.claim(clusterKeys.lease(serverId), workerId, 15000);
+    expect(await store.leases()).toContainEqual({
+      serverId,
+      owner: workerId,
+      ttlMs: expect.any(Number),
+    });
+    await store.setFlag(clusterKeys.hold(serverId), "1");
+    expect(await redis.pttl(clusterKeys.hold(serverId))).toBe(-1);
+    expect(await store.heldServers()).toContain(serverId);
+    await store.setFlag(clusterKeys.assign(serverId), workerId, 15000);
+    expect(await redis.pttl(clusterKeys.assign(serverId))).toBeGreaterThan(0);
+    await store.deleteFlag(clusterKeys.hold(serverId));
+    expect(await store.heldServers()).not.toContain(serverId);
+  });
+
   it("claims exclusively with NX and exposes owners", async () => {
     const key = clusterKeys.lease(id("exclusive"));
     expect(

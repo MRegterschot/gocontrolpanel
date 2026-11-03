@@ -10,6 +10,7 @@ import {
 } from "./container";
 import { ClusterGateway } from "./core/cluster/cluster-gateway";
 import { LocalGateway, type ServerGateway } from "./core/cluster/gateway";
+import { clusterKeys, type ControlMessage } from "./core/cluster/protocol";
 import { runExclusive, SingletonJob } from "./core/cluster/singleton";
 import { WorkerSupervisor } from "./core/cluster/supervisor";
 import { AppError } from "./core/errors";
@@ -120,6 +121,16 @@ async function startFront(config: Config) {
     log: log.child({ module: "supervisor" }),
   });
   supervisor.start();
+  // Restart requests go to every front; only the one running that worker acts on it
+  const stopControl = await cluster.subscribe(clusterKeys.control, (raw) => {
+    try {
+      const message = JSON.parse(raw) as ControlMessage;
+      if (message.action === "restartWorker")
+        supervisor.restart(message.workerId);
+    } catch {
+      log.warn("Ignoring malformed cluster control message");
+    }
+  });
 
   const app = await listen(config, base, gateway);
   const marketplaceJob = marketplace
@@ -143,6 +154,7 @@ async function startFront(config: Config) {
   return async () => {
     await app.close();
     await marketplaceJob?.stop();
+    await stopControl().catch(() => undefined);
     await supervisor.stop();
     await gateway.stop();
     await base.close();

@@ -2,6 +2,8 @@ import type { ServerClient } from "@tmcontrolpanel/shared";
 import {
   clusterKeys,
   type ClusterStore,
+  type LeaseEntry,
+  type WorkerInfo,
 } from "../../src/core/cluster/protocol";
 import type { Clock } from "../../src/core/ports";
 
@@ -51,9 +53,17 @@ export class MemoryClusterStore implements ClusterStore {
     }
     return released;
   }
-  async heartbeat(workerId: string, ttlMs: number): Promise<void> {
+  async heartbeat(
+    workerId: string,
+    ttlMs: number,
+    info?: WorkerInfo,
+  ): Promise<void> {
     this.check();
-    this.set(clusterKeys.worker(workerId), workerId, ttlMs);
+    this.set(
+      clusterKeys.worker(workerId),
+      info ? JSON.stringify(info) : workerId,
+      ttlMs,
+    );
   }
   async dropWorker(workerId: string): Promise<void> {
     this.check();
@@ -63,6 +73,38 @@ export class MemoryClusterStore implements ClusterStore {
     this.check();
     return this.keys(clusterKeys.worker("")).map((key) =>
       key.slice(clusterKeys.worker("").length),
+    );
+  }
+  async workers(): Promise<{ id: string; info: WorkerInfo | null }[]> {
+    this.check();
+    return this.keys(clusterKeys.worker("")).map((key) => {
+      let info: WorkerInfo | null = null;
+      try {
+        info = JSON.parse(this.get(key)!) as WorkerInfo;
+      } catch {}
+      return { id: key.slice(clusterKeys.worker("").length), info };
+    });
+  }
+  async leases(): Promise<LeaseEntry[]> {
+    this.check();
+    return this.keys(clusterKeys.lease("")).map((key) => ({
+      serverId: key.slice(clusterKeys.lease("").length),
+      owner: this.get(key)!,
+      ttlMs: this.values.get(key)!.expiresAt - this.clock.now(),
+    }));
+  }
+  async setFlag(key: string, value: string, ttlMs?: number): Promise<void> {
+    this.check();
+    this.set(key, value, ttlMs ?? Infinity);
+  }
+  async deleteFlag(key: string): Promise<void> {
+    this.check();
+    this.values.delete(key);
+  }
+  async heldServers(): Promise<string[]> {
+    this.check();
+    return this.keys(clusterKeys.hold("")).map((key) =>
+      key.slice(clusterKeys.hold("").length),
     );
   }
   async writeStatus(status: ServerClient, ttlMs: number): Promise<void> {

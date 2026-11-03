@@ -1,6 +1,11 @@
 import type { ServerClient } from "@tmcontrolpanel/shared";
 import type { Redis } from "ioredis";
-import { clusterKeys, type ClusterStore } from "../../core/cluster/protocol";
+import {
+  clusterKeys,
+  type ClusterStore,
+  type LeaseEntry,
+  type WorkerInfo,
+} from "../../core/cluster/protocol";
 
 const renewScript = `if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('PEXPIRE', KEYS[1], ARGV[2]) end return 0`;
 const releaseScript = `if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) end return 0`;
@@ -55,8 +60,17 @@ export class RedisClusterStore implements ClusterStore {
     }
     return released;
   }
-  async heartbeat(workerId: string, ttlMs: number): Promise<void> {
-    await this.redis.set(clusterKeys.worker(workerId), workerId, "PX", ttlMs);
+  async heartbeat(
+    workerId: string,
+    ttlMs: number,
+    info?: WorkerInfo,
+  ): Promise<void> {
+    await this.redis.set(
+      clusterKeys.worker(workerId),
+      info ? JSON.stringify(info) : workerId,
+      "PX",
+      ttlMs,
+    );
   }
   async dropWorker(workerId: string): Promise<void> {
     await this.redis.del(clusterKeys.worker(workerId));
@@ -64,6 +78,54 @@ export class RedisClusterStore implements ClusterStore {
   async liveWorkers(): Promise<string[]> {
     return (await this.scan(clusterKeys.workerPattern)).map((key) =>
       key.slice(clusterKeys.worker("").length),
+    );
+  }
+  async workers(): Promise<{ id: string; info: WorkerInfo | null }[]> {
+    const keys = await this.scan(clusterKeys.workerPattern);
+    const values = await this.owners(keys);
+    return keys.map((key, i) => {
+      let info: WorkerInfo | null = null;
+      try {
+        info = JSON.parse(values[i]!) as WorkerInfo;
+      } catch {}
+      return { id: key.slice(clusterKeys.worker("").length), info };
+    });
+  }
+  async leases(): Promise<LeaseEntry[]> {
+    const keys = await this.scan(clusterKeys.leasePattern);
+    if (!keys.length) return [];
+    const pipeline = this.redis.pipeline();
+    for (const key of keys) {
+      pipeline.get(key);
+      pipeline.pttl(key);
+    }
+    const results = await pipeline.exec();
+    if (!results) return [];
+    const leases: LeaseEntry[] = [];
+    keys.forEach((key, i) => {
+      const [error, owner] = results[i * 2]!;
+      const [ttlError, ttl] = results[i * 2 + 1]!;
+      if (error) throw error;
+      if (ttlError) throw ttlError;
+      if (typeof owner === "string" && typeof ttl === "number" && ttl !== -2)
+        leases.push({
+          serverId: key.slice(clusterKeys.lease("").length),
+          owner,
+          ttlMs: ttl,
+        });
+    });
+    return leases;
+  }
+  async setFlag(key: string, value: string, ttlMs?: number): Promise<void> {
+    if (ttlMs === undefined) await this.redis.set(key, value);
+    else await this.redis.set(key, value, "PX", ttlMs);
+  }
+  async deleteFlag(key: string): Promise<void> {
+    await this.redis.del(key);
+  }
+  async heldServers(): Promise<string[]> {
+    return (await this.scan(clusterKeys.holdPattern)).map((key) =>
+      key.slice(clusterKeys.hold("").length),
     );
   }
   async writeStatus(status: ServerClient, ttlMs: number): Promise<void> {

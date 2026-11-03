@@ -110,6 +110,32 @@ async function setup(available = true) {
 }
 
 describe("WebSocket channels over ClusterGateway", () => {
+  it("forwards handovers only for visible servers", async () => {
+    const { store, base } = await setup();
+    const connection = connect(
+      `${base}/ws/servers?ticket=${await ticketFor({ groups: [{ id: "g", name: "Group", role: "Member", servers: [{ id: SERVER_ID, name: "Test Server" }] }] })}`,
+    );
+    await connection.next();
+    const data = {
+      serverId: SERVER_ID,
+      kind: "moved",
+      workerId: "b",
+      previous: "a",
+    };
+    await store.publish(
+      clusterKeys.globalEvents,
+      JSON.stringify({ event: "handover", ...data, serverId: "hidden" }),
+    );
+    await store.publish(
+      clusterKeys.globalEvents,
+      JSON.stringify({ event: "handover", ...data }),
+    );
+    expect(await connection.next()).toEqual({ type: "handover", data });
+    expect(
+      connection.messages.filter((message) => message.type === "handover"),
+    ).toHaveLength(1);
+  });
+
   it("sends the player snapshot before live events from the worker", async () => {
     const { h, base } = await setup();
     const connection = connect(

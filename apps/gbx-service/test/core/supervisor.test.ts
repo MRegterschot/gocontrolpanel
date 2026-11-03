@@ -163,4 +163,33 @@ describe("WorkerSupervisor", () => {
     await vi.advanceTimersByTimeAsync(60000);
     expect(spawn).toHaveBeenCalledTimes(1);
   });
+  it("restarts only the selected slot with a fresh id and constant backoff", async () => {
+    const { supervisor, spawn, children } = setup({ count: 2 });
+    expect(supervisor.restart("missing")).toBe(false);
+    for (let round = 0; round < 3; round++) {
+      const index = round === 0 ? 0 : round + 1;
+      const id = spawn.mock.calls[index][1].GBX_WORKER_ID!;
+      expect(supervisor.restart(id)).toBe(true);
+      expect(children[index].kill).toHaveBeenCalledExactlyOnceWith("SIGTERM");
+      expect(children[1].kill).not.toHaveBeenCalled();
+      await settle();
+      await vi.advanceTimersByTimeAsync(999);
+      expect(spawn).toHaveBeenCalledTimes(round + 2);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(spawn).toHaveBeenCalledTimes(round + 3);
+      expect(spawn.mock.calls[round + 2][1].GBX_WORKER_ID).not.toBe(id);
+    }
+  });
+
+  it("kills a manually restarted child after the grace period", async () => {
+    const { supervisor, spawn, children } = setup({ stopTimeoutMs: 2500 });
+    children[0].ignoreTerm = true;
+    supervisor.restart(spawn.mock.calls[0][1].GBX_WORKER_ID!);
+    await vi.advanceTimersByTimeAsync(2499);
+    expect(children[0].kill.mock.calls).toEqual([["SIGTERM"]]);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(children[0].kill.mock.calls).toEqual([["SIGTERM"], ["SIGKILL"]]);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(spawn).toHaveBeenCalledTimes(2);
+  });
 });

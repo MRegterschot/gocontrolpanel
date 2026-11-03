@@ -1,6 +1,8 @@
 import {
   encodeServerLifecycleEvent,
   SERVER_EVENTS_CHANNEL,
+  type ClusterCommand,
+  type ClusterOverview,
   type NotificationDto,
   type ServerClient,
   type ServerLifecycleEvent,
@@ -24,12 +26,18 @@ import {
 } from "./ops";
 import {
   clusterKeys,
+  RELEASE_OP,
   type ClusterStore,
+  type ControlMessage,
   type GlobalEventMessage,
+  type HandoverReason,
   type RpcReply,
   type RpcRequest,
   type ServerEventMessage,
 } from "./protocol";
+
+// Long enough for the old owner to let go; short enough that a dead target doesn't block the server
+const ASSIGN_TTL_MS = 30_000;
 
 interface Pending {
   resolve: (reply: RpcReply) => void;
@@ -156,6 +164,149 @@ export class ClusterGateway implements ServerGateway {
     }
   }
 
+  async overview(): Promise<ClusterOverview> {
+    const { store } = this.options;
+    const [workers, leases, statuses, holds] = await Promise.all([
+      store.workers(),
+      store.leases(),
+      store.listStatus(),
+      store.heldServers(),
+    ]);
+    const leaseOf = new Map(leases.map((lease) => [lease.serverId, lease]));
+    const statusOf = new Map(
+      statuses.map((status) => [status.serverId, status]),
+    );
+    const held = new Set(holds);
+    const ids = new Set([...leaseOf.keys(), ...statusOf.keys(), ...held]);
+
+    return {
+      mode: "cluster",
+      workers: workers
+        .map(({ id, info }) => ({
+          id,
+          nodeId: info?.nodeId ?? id.slice(0, id.lastIndexOf(":")),
+          pid: info?.pid ?? null,
+          startedAt: info?.startedAt ?? null,
+          servers: leases
+            .filter((lease) => lease.owner === id)
+            .map((lease) => lease.serverId),
+        }))
+        .sort((a, b) => a.id.localeCompare(b.id)),
+      servers: [...ids].map((serverId) => ({
+        serverId,
+        owner: leaseOf.get(serverId)?.owner ?? null,
+        leaseTtlMs: leaseOf.get(serverId)?.ttlMs ?? null,
+        held: held.has(serverId),
+        status: statusOf.get(serverId) ?? null,
+      })),
+    };
+  }
+
+  async control(command: ClusterCommand): Promise<void> {
+    const { store, frontId } = this.options;
+    switch (command.action) {
+      case "move": {
+        const { serverId, workerId } = command;
+        const owner = await this.ownerOf(serverId);
+        if (!owner)
+          throw new AppError(
+            "BadRequest",
+            `Server ${serverId} has no owner; claim it instead`,
+          );
+        if (owner === workerId) return;
+        await this.requireWorker(workerId);
+        // Assigned before the release, so the old owner's next claim pass already skips it
+        await store.setFlag(
+          clusterKeys.assign(serverId),
+          workerId,
+          ASSIGN_TTL_MS,
+        );
+        await this.releaseOn(owner, serverId, "move");
+        return this.wake();
+      }
+      case "claim": {
+        const { serverId } = command;
+        const owner = await this.ownerOf(serverId);
+        if (owner)
+          throw new AppError(
+            "BadRequest",
+            `Server ${serverId} is already owned by ${owner}`,
+          );
+        const target = command.workerId ?? (await this.leastLoadedWorker());
+        await this.requireWorker(target);
+        await store.deleteFlag(clusterKeys.hold(serverId));
+        await store.setFlag(
+          clusterKeys.assign(serverId),
+          target,
+          ASSIGN_TTL_MS,
+        );
+        return this.wake();
+      }
+      case "hold": {
+        const { serverId } = command;
+        await store.setFlag(clusterKeys.hold(serverId), frontId);
+        const owner = await this.ownerOf(serverId);
+        if (owner) await this.releaseOn(owner, serverId, "hold");
+        return;
+      }
+      case "unhold":
+        await store.deleteFlag(clusterKeys.hold(command.serverId));
+        return this.wake();
+      case "restartWorker":
+        // The front that supervises it does the restart; see main.ts
+        await this.requireWorker(command.workerId);
+        await this.publishControl({
+          action: "restartWorker",
+          workerId: command.workerId,
+        });
+        return;
+    }
+  }
+
+  private async ownerOf(serverId: string): Promise<string | null> {
+    return (await this.options.store.owners([clusterKeys.lease(serverId)]))[0];
+  }
+
+  private async requireWorker(workerId: string) {
+    if (!(await this.options.store.liveWorkers()).includes(workerId))
+      throw new AppError("NotFound", `Worker ${workerId} is not running`);
+  }
+
+  private async leastLoadedWorker(): Promise<string> {
+    const { store } = this.options;
+    const [workers, leases] = await Promise.all([
+      store.liveWorkers(),
+      store.leases(),
+    ]);
+    if (workers.length === 0)
+      throw new AppError("ServerUnavailable", "No GBX worker is running");
+    const load = (id: string) =>
+      leases.filter((lease) => lease.owner === id).length;
+    return workers.reduce((best, id) => (load(id) < load(best) ? id : best));
+  }
+
+  // A dead or confused owner is fine: its lease expires, or its claim pass notices the hold
+  private async releaseOn(
+    owner: string,
+    serverId: string,
+    reason: HandoverReason,
+  ) {
+    const outcome = await this.send(owner, serverId, RELEASE_OP, { reason });
+    if (outcome === "undelivered" || outcome.ok || outcome.notOwner) return;
+    throw new AppError(outcome.code, outcome.message);
+  }
+
+  private wake() {
+    return this.publishControl({ action: "claim" });
+  }
+
+  private async publishControl(message: ControlMessage) {
+    await this.options.store.publish(
+      clusterKeys.control,
+      JSON.stringify(message),
+    );
+  }
+
   private async send(
     owner: string,
     serverId: string,
@@ -256,6 +407,15 @@ export class ClusterGateway implements ServerGateway {
         return this.events.emit("owned", serverId);
       case "removed":
         return this.events.emit("removed", serverId);
+      case "handover": {
+        const { kind, workerId, previous } = message;
+        return this.events.emit("handover", {
+          serverId,
+          kind,
+          workerId,
+          previous,
+        });
+      }
       case "released":
         // The next owner announces itself; until then the server shows as disconnected
         return this.events.emit("disconnect", serverId);

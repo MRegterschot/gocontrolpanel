@@ -1,4 +1,7 @@
 import type {
+  ClusterCommand,
+  ClusterOverview,
+  HandoverEvent,
   NotificationDto,
   ServerClient,
   ServerLifecycleEvent,
@@ -20,6 +23,8 @@ export type GatewayEventMap = {
   owned: [serverId: string];
   // The server was deleted; its sockets close
   removed: [serverId: string];
+  // Another worker took the server over (cluster mode only)
+  handover: [event: HandoverEvent];
 };
 
 export type ServerEventListener = (
@@ -47,6 +52,9 @@ export interface ServerGateway {
   watch(serverId: string, listener: ServerEventListener): Promise<() => void>;
   handleLifecycleEvent(event: ServerLifecycleEvent): Promise<void>;
   health(): Promise<GatewayHealth>;
+  // Workers, leases and holds for the cluster page
+  overview(): Promise<ClusterOverview>;
+  control(command: ClusterCommand): Promise<void>;
 }
 
 // Serves the servers of the registry in this process (GBX_WORKERS=0 and tests)
@@ -101,6 +109,30 @@ export class LocalGateway implements ServerGateway {
 
   handleLifecycleEvent(event: ServerLifecycleEvent): Promise<void> {
     return this.registry.handleLifecycleEvent(event);
+  }
+
+  async overview(): Promise<ClusterOverview> {
+    return {
+      mode: "single",
+      workers: [],
+      servers: this.registry.list().map((runtime) => {
+        const status = runtime.status();
+        return {
+          serverId: status.serverId,
+          owner: null,
+          leaseTtlMs: null,
+          held: false,
+          status,
+        };
+      }),
+    };
+  }
+
+  async control(): Promise<void> {
+    throw new AppError(
+      "BadRequest",
+      "Cluster controls need GBX_WORKERS of 1 or more",
+    );
   }
 
   async health(): Promise<GatewayHealth> {

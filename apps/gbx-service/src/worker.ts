@@ -43,6 +43,11 @@ async function main() {
     clock: systemClock,
     log: log.child({ module: "worker" }),
     ttlMs: config.GBX_LEASE_TTL_MS,
+    info: {
+      nodeId: config.GBX_NODE_ID,
+      pid: process.pid,
+      startedAt: Date.now(),
+    },
   });
   await node.start();
   log.info({ workerId }, "GBX worker started");

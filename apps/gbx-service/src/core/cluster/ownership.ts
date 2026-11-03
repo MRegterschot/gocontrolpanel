@@ -1,7 +1,7 @@
 import { errorMessage } from "../errors";
 import type { Logger } from "../logger";
 import type { Clock } from "../ports";
-import { clusterKeys, type ClusterStore } from "./protocol";
+import { clusterKeys, type ClusterStore, type WorkerInfo } from "./protocol";
 
 export type LossReason =
   | "lost"
@@ -16,6 +16,8 @@ export interface OwnershipOptions {
   clock: Clock;
   log: Logger;
   ttlMs: number;
+  // Shown on the cluster page next to the worker
+  info?: WorkerInfo;
   listServers: () => Promise<string[]>;
   isEligible: (serverId: string) => boolean;
   playerCount: (serverId: string) => number;
@@ -34,6 +36,8 @@ export interface OwnershipOptions {
 interface Owned {
   renewedAt: number;
   fence: unknown;
+  // Placed here by an admin; rebalancing leaves it alone
+  assigned: boolean;
 }
 
 // Claims, renews and gives up server leases for one worker. A runtime only runs while its lease
@@ -73,6 +77,7 @@ export class OwnershipManager {
     await this.options.store.heartbeat(
       this.options.workerId,
       this.options.ttlMs,
+      this.options.info,
     );
     this.scheduleRenew();
     // The first pass waits one interval, so workers started together see each other first
@@ -164,11 +169,36 @@ export class OwnershipManager {
     const workers = await store.liveWorkers();
     if (!workers.includes(workerId)) workers.push(workerId);
     const fairShare = Math.ceil(ids.length / workers.length);
-    const owners = await store.owners(ids.map(clusterKeys.lease));
+    const [owners, holds, assigns] = await Promise.all([
+      store.owners(ids.map(clusterKeys.lease)),
+      store.owners(ids.map(clusterKeys.hold)),
+      store.owners(ids.map(clusterKeys.assign)),
+    ]);
+
+    // Normally the hold request releases it; this covers a missed request
+    for (const [i, id] of ids.entries()) {
+      if (holds[i] !== null && this.owned.has(id))
+        await this.release(id, "released");
+    }
 
     const now = clock.now();
+    const claimable = (i: number) => owners[i] === null && holds[i] === null;
+
+    // Assignments go first and ignore the fair share: an admin asked for this placement
+    for (const [i, id] of ids.entries()) {
+      if (this.stopped || !claimable(i) || assigns[i] !== workerId) continue;
+      const startedAt = clock.now();
+      if (await store.claim(clusterKeys.lease(id), workerId, ttlMs)) {
+        this.take(id, startedAt, true);
+        await store.deleteFlag(clusterKeys.assign(id)).catch(() => undefined);
+      }
+    }
+
     const free = ids.filter(
-      (id, i) => owners[i] === null && (this.cooldown.get(id) ?? 0) <= now,
+      (id, i) =>
+        claimable(i) &&
+        assigns[i] === null &&
+        (this.cooldown.get(id) ?? 0) <= now,
     );
     for (const id of this.shuffle(free)) {
       if (this.stopped || this.owned.size >= fairShare) break;
@@ -203,7 +233,10 @@ export class OwnershipManager {
     if (counts.size === 0 || this.owned.size - leastLoaded < 2) return;
 
     const idle = ids.find(
-      (id) => this.owned.has(id) && this.options.playerCount(id) === 0,
+      (id) =>
+        this.owned.has(id) &&
+        !this.owned.get(id)!.assigned &&
+        this.options.playerCount(id) === 0,
     );
     if (!idle) return;
 
@@ -221,7 +254,7 @@ export class OwnershipManager {
     const { store, workerId, clock, ttlMs, log } = this.options;
     try {
       await store
-        .heartbeat(workerId, ttlMs)
+        .heartbeat(workerId, ttlMs, this.options.info)
         .catch((error) =>
           log.warn({ err: errorMessage(error) }, "Worker heartbeat failed"),
         );
@@ -253,8 +286,8 @@ export class OwnershipManager {
     }
   }
 
-  private take(serverId: string, claimedAt: number) {
-    this.owned.set(serverId, { renewedAt: claimedAt, fence: null });
+  private take(serverId: string, claimedAt: number, assigned = false) {
+    this.owned.set(serverId, { renewedAt: claimedAt, fence: null, assigned });
     this.renewed(serverId, claimedAt);
     this.options.log.info({ serverId }, "Claimed server");
     this.options.onOwned(serverId);

@@ -3,6 +3,7 @@ import {
   internalPaths,
   sessionClaimsSchema,
   signWsTicket,
+  type ClusterOverview,
   type ServerClient,
 } from "@tmcontrolpanel/shared";
 import { Redis } from "ioredis";
@@ -154,6 +155,8 @@ async function api<T>(front: Front, path: string, body?: unknown): Promise<T> {
     headers: {
       authorization: `Bearer ${process.env.GBX_SERVICE_TOKEN}`,
       "content-type": "application/json",
+      // Node 26's fetch stalls for seconds when it reuses an idle keep-alive socket
+      connection: "close",
     },
     body: body ? JSON.stringify(body) : undefined,
   });
@@ -175,6 +178,16 @@ async function worker(front: Front, id: string) {
   const pid = front.workers.get(owner);
   assert(pid, `no Started GBX worker log for ${owner}`);
   return { owner, pid };
+}
+// Waits until the dedicated server's chat shows a line containing text (read through any front)
+async function chatShows(front: Front, id: string, text: string) {
+  await poll(`chat on ${id}: ${text}`, TIMEOUT.takeover, async () => {
+    const lines = await api<string[]>(front, internalPaths.gbxCall(id), {
+      method: "GetChatLines",
+      params: [],
+    });
+    return lines.some((line) => line.includes(text));
+  });
 }
 async function openSocket(front: Front, path: string): Promise<Socket> {
   const claims = sessionClaimsSchema.parse({
@@ -212,50 +225,59 @@ async function openSocket(front: Front, path: string): Promise<Socket> {
 }
 async function duplicates(front: Front, label: string) {
   await check(`${label}: exactly one match per NextMap`, async () => {
-    // Compare IDs as well as timestamps because database timestamps may have only second precision.
-    const before = await Promise.all(
-      ids.map((serverId) =>
-        db.matches.findMany({ where: { serverId }, select: { id: true } }),
+    // A new owner records a fresh match when it connects mid-map, so a rebalance inside the
+    // window adds a legitimate row; only a window without owner changes counts
+    for (let attempt = 1; ; attempt++) {
+      const leasesBefore = await owners();
+      const counts = await nextMapCounts(front);
+      const moved = (await owners()).some((o, i) => o !== leasesBefore[i]);
+      if (moved && attempt < 3) continue;
+      assert.deepEqual(
+        counts,
+        [1, 1, 1],
+        `new matches by server: ${counts.join(", ")}${moved ? " (owners changed)" : ""}`,
+      );
+      return attempt > 1 ? `retried ${attempt - 1}x after an owner change` : "";
+    }
+  });
+}
+async function nextMapCounts(front: Front) {
+  // Compare IDs as well as timestamps because database timestamps may have only second precision.
+  const before = await Promise.all(
+    ids.map((serverId) =>
+      db.matches.findMany({ where: { serverId }, select: { id: true } }),
+    ),
+  );
+  const calls = await Promise.all(
+    ids.map(async (id) => {
+      const at = new Date();
+      await api(front, internalPaths.gbxCall(id), {
+        method: "NextMap",
+        params: [],
+      });
+      return at;
+    }),
+  );
+  const countNew = () =>
+    Promise.all(
+      ids.map((serverId, index) =>
+        db.matches.count({
+          where: {
+            serverId,
+            id: { notIn: before[index]!.map((row) => row.id) },
+            createdAt: {
+              gte: new Date(Math.floor(calls[index]!.getTime() / 1000) * 1000),
+            },
+          },
+        }),
       ),
     );
-    const calls = await Promise.all(
-      ids.map(async (id) => {
-        const at = new Date();
-        await api(front, internalPaths.gbxCall(id), {
-          method: "NextMap",
-          params: [],
-        });
-        return at;
-      }),
-    );
-    const countNew = () =>
-      Promise.all(
-        ids.map((serverId, index) =>
-          db.matches.count({
-            where: {
-              serverId,
-              id: { notIn: before[index]!.map((row) => row.id) },
-              createdAt: {
-                gte: new Date(
-                  Math.floor(calls[index]!.getTime() / 1000) * 1000,
-                ),
-              },
-            },
-          }),
-        ),
-      );
-    // NextMap may spend longer than eight seconds in the dedicated server's podium transition.
-    await poll("NextMap begin-match rows", TIMEOUT.mapTransition, async () =>
-      (await countNew()).every((count) => count >= 1),
-    );
-    await sleep(TIMEOUT.duplicate);
-    const counts = await countNew();
-    assert.deepEqual(
-      counts,
-      [1, 1, 1],
-      `new matches by server: ${counts.join(", ")}`,
-    );
-  });
+  // NextMap may spend longer than eight seconds in the dedicated server's podium transition.
+  await poll("NextMap begin-match rows", TIMEOUT.mapTransition, async () =>
+    (await countNew()).every((count) => count >= 1),
+  );
+  await sleep(TIMEOUT.duplicate);
+  return countNew();
 }
 async function stop(front: Front) {
   if (!front.exit) {
@@ -317,6 +339,107 @@ process.once("exit", () => {
       } catch {}
     }
 });
+
+// Admin controls from the Cluster tab, issued through front A while both nodes run
+async function clusterControls(a: Front, b: Front) {
+  const overview = () => api<ClusterOverview>(a, "/internal/cluster");
+  const owner = (id: string) => redis.get(`gbx:lease:${id}`);
+  const nodeB = async () =>
+    (await overview()).workers
+      .filter((w) => w.nodeId === "node-b")
+      .map((w) => w.id);
+
+  await check("i: overview lists both nodes and every server", async () => {
+    await poll("five workers", TIMEOUT.startup, async () => {
+      const { mode, workers, servers } = await overview();
+      return (
+        mode === "cluster" &&
+        workers.length === 5 &&
+        ids.every((id) => servers.some((s) => s.serverId === id && s.owner))
+      );
+    });
+  });
+
+  let moved = "";
+  await check("i: move a server to a worker on the other node", async () => {
+    const [target] = await nodeB();
+    assert(target, "no node-b worker");
+    moved = target;
+    await api(a, `/internal/cluster/servers/${ids[0]}/move`, {
+      workerId: target,
+    });
+    await poll(
+      "moved",
+      TIMEOUT.takeover,
+      async () => (await owner(ids[0]!)) === target && (await connected(a)),
+    );
+    await chatShows(a, ids[0]!, "Disconnecting: Moving to another worker");
+    await chatShows(a, ids[0]!, "Connected. Took over from another worker.");
+  });
+  await duplicates(a, "i move");
+
+  await check("i: hold keeps a server unowned until released", async () => {
+    await api(a, `/internal/cluster/servers/${ids[1]}/hold`, {});
+    await poll("held", TIMEOUT.takeover, async () => !(await owner(ids[1]!)));
+    // Several claim intervals: nobody may pick it up while it is held
+    const deadline = Date.now() + TIMEOUT.standby;
+    while (Date.now() < deadline) {
+      assert.equal(await owner(ids[1]!), null, "held server was claimed");
+      await sleep(TIMEOUT.poll);
+    }
+    const state = (await overview()).servers.find((s) => s.serverId === ids[1]);
+    assert(state?.held && !state.status, "overview does not show the hold");
+    await api(a, `/internal/cluster/servers/${ids[1]}/unhold`, {});
+    await poll(
+      "released hold",
+      TIMEOUT.takeover,
+      async () => !!(await owner(ids[1]!)) && (await connected(a)),
+    );
+    await chatShows(a, ids[1]!, "Disconnecting: Paused by an admin");
+  });
+
+  await check("i: claim puts a held server on the chosen worker", async () => {
+    await api(a, `/internal/cluster/servers/${ids[2]}/hold`, {});
+    await poll("held", TIMEOUT.takeover, async () => !(await owner(ids[2]!)));
+    const target = (await nodeB()).find((id) => id !== moved);
+    assert(target, "no second node-b worker");
+    await api(a, `/internal/cluster/servers/${ids[2]}/claim`, {
+      workerId: target,
+    });
+    await poll(
+      "claimed",
+      TIMEOUT.takeover,
+      async () => (await owner(ids[2]!)) === target && (await connected(a)),
+    );
+    assert.equal(await redis.exists(`gbx:hold:${ids[2]}`), 0, "hold remains");
+  });
+
+  await check("i: restart a worker of node B through front A", async () => {
+    const at = Date.now();
+    await api(
+      a,
+      `/internal/cluster/workers/${encodeURIComponent(moved)}/restart`,
+      {},
+    );
+    await poll("restarted", TIMEOUT.takeover, async () => {
+      const { workers } = await overview();
+      return (
+        b.logs.some(
+          (l) =>
+            l.time >= at &&
+            l.workerId === moved &&
+            l.msg === "Restarting GBX worker on request",
+        ) &&
+        !workers.some((w) => w.id === moved) &&
+        workers.length === 5 &&
+        !!(await owner(ids[0]!)) &&
+        (await owner(ids[0]!)) !== moved &&
+        (await connected(a))
+      );
+    });
+  });
+  await duplicates(a, "i");
+}
 
 async function main() {
   console.log(`Started ${startedAt.toISOString()}; logs: ${logDir}`);
@@ -382,6 +505,7 @@ async function main() {
         assert.equal(leases[index], before[index], "unaffected lease changed");
       return !!leases[1] && leases[1] !== target.owner && (await connected(a));
     });
+    await chatShows(a, ids[1]!, "Recovered after a controller crash");
     await poll("new beginMatch after crash", TIMEOUT.socket, () =>
       socket.messages.slice(messageIndex).some((m) => m.type === "beginMatch"),
     );
@@ -454,6 +578,7 @@ async function main() {
       await sleep(TIMEOUT.poll);
     }
   });
+  await clusterControls(a, b);
   await check("f: A exits cleanly", () => stop(a));
   await check("f: B takes all leases", async () => {
     await poll(

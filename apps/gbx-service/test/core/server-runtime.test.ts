@@ -1,7 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 import { definePlugin } from "../../src/core/plugins/sdk";
 import { flush } from "../fakes/clock";
-import { createHarness, MAP_A, player, pluginRecord, SERVER_ID, serverRecord } from "../fakes/harness";
+import {
+  createHarness,
+  MAP_A,
+  player,
+  pluginRecord,
+  SERVER_ID,
+  serverRecord,
+} from "../fakes/harness";
 
 describe("ServerRuntime connect sequence", () => {
   it("authenticates, enables callbacks and syncs live state", async () => {
@@ -9,16 +16,30 @@ describe("ServerRuntime connect sequence", () => {
     const methods = h.session.calls.map((c) => c.method);
 
     expect(h.session.connectedTo).toEqual({ host: "127.0.0.1", port: 5000 });
-    expect(h.session.calls[0]).toEqual({ method: "Authenticate", params: ["SuperAdmin", "secret"] });
+    expect(h.session.calls[0]).toEqual({
+      method: "Authenticate",
+      params: ["SuperAdmin", "secret"],
+    });
     expect(methods).toEqual(
-      expect.arrayContaining(["SetApiVersion", "EnableCallbacks", "ChatEnableManualRouting"]),
+      expect.arrayContaining([
+        "SetApiVersion",
+        "EnableCallbacks",
+        "ChatEnableManualRouting",
+      ]),
     );
     expect(h.session.scriptCalls.map((c) => c.method)).toEqual(
-      expect.arrayContaining(["XmlRpc.EnableCallbacks", "Trackmania.Event.SetCurRaceCheckpointsMode"]),
+      expect.arrayContaining([
+        "XmlRpc.EnableCallbacks",
+        "Trackmania.Event.SetCurRaceCheckpointsMode",
+      ]),
     );
 
     const { state } = h.runtime;
-    expect(h.runtime.status()).toMatchObject({ serverId: SERVER_ID, name: "Test Server", isConnected: true });
+    expect(h.runtime.status()).toMatchObject({
+      serverId: SERVER_ID,
+      name: "Test Server",
+      isConnected: true,
+    });
     expect(state.liveInfo.type).toBe("rounds");
     expect(state.liveInfo.pointsLimit).toBe(50);
     expect(state.liveInfo.maps).toEqual(["map-a-uid", "map-b-uid"]);
@@ -39,7 +60,9 @@ describe("ServerRuntime connect sequence", () => {
 
   it("emits connect only after the session is fully initialised", async () => {
     const h = await createHarness({ connect: false });
-    const connected = vi.fn(() => expect(h.runtime.state.liveInfo.maps.length).toBeGreaterThan(0));
+    const connected = vi.fn(() =>
+      expect(h.runtime.state.liveInfo.maps.length).toBeGreaterThan(0),
+    );
     h.runtime.events.on("connect", connected);
     await h.runtime.start();
     expect(connected).toHaveBeenCalledTimes(1);
@@ -186,19 +209,27 @@ describe("ServerRuntime updates", () => {
   });
 
   describe("the stored chat config changes", () => {
-    const stored = (overrides: Partial<ReturnType<typeof serverRecord>["chat"]>) =>
-      serverRecord({ chat: { ...serverRecord().chat, ...overrides } });
+    const stored = (
+      overrides: Partial<ReturnType<typeof serverRecord>["chat"]>,
+    ) => serverRecord({ chat: { ...serverRecord().chat, ...overrides } });
 
     it("is picked up without touching the connection", async () => {
       const h = await createHarness();
       h.session.calls.length = 0;
-      h.servers.add(stored({ connectMessage: "Hello {nickName}", manualRouting: true }));
+      h.servers.add(
+        stored({ connectMessage: "Hello {nickName}", manualRouting: true }),
+      );
 
       await h.runtime.applyServerUpdate();
       await flush();
 
-      expect(h.runtime.state.chat).toMatchObject({ connectMessage: "Hello {nickName}", manualRouting: true });
-      expect(h.session.callsTo("ChatEnableManualRouting")[0].params).toEqual([true]);
+      expect(h.runtime.state.chat).toMatchObject({
+        connectMessage: "Hello {nickName}",
+        manualRouting: true,
+      });
+      expect(h.session.callsTo("ChatEnableManualRouting")[0].params).toEqual([
+        true,
+      ]);
       expect(h.sessions).toHaveLength(1);
     });
 
@@ -220,7 +251,10 @@ describe("ServerRuntime updates", () => {
 
       await expect(h.runtime.applyServerUpdate()).resolves.toBeUndefined();
 
-      expect(h.runtime.state.chat).toMatchObject({ connectMessage: "Hello", manualRouting: true });
+      expect(h.runtime.state.chat).toMatchObject({
+        connectMessage: "Hello",
+        manualRouting: true,
+      });
     });
 
     it("survives the game server refusing manual routing", async () => {
@@ -248,7 +282,10 @@ describe("ServerRuntime updates", () => {
 
     expect(h.sessions).toHaveLength(1);
     expect(h.runtime.isConnected).toBe(false);
-    expect(h.runtime.status()).toMatchObject({ name: "Renamed", isReconnecting: false });
+    expect(h.runtime.status()).toMatchObject({
+      name: "Renamed",
+      isReconnecting: false,
+    });
     expect(h.runtime.state.enableHelpCommand).toBe(false);
   });
 
@@ -269,14 +306,19 @@ describe("ServerRuntime updates", () => {
 
   describe("a server that rejects the stored password", () => {
     // Authentication only succeeds with the password the admin fixes it to
-    const wrongPassword = (session: { respond: (m: string, h: unknown) => unknown }) =>
+    const wrongPassword = (session: {
+      respond: (m: string, h: unknown) => unknown;
+    }) =>
       session.respond("Authenticate", (_user: string, password: string) => {
         if (password !== "fixed") throw new Error("Invalid password");
         return true;
       });
 
     it("connects right away once the password is corrected", async () => {
-      const h = await createHarness({ connect: false, configure: wrongPassword });
+      const h = await createHarness({
+        connect: false,
+        configure: wrongPassword,
+      });
       expect(await h.runtime.start()).toBe(false);
 
       h.servers.add(serverRecord({ password: "fixed" }));
@@ -288,7 +330,10 @@ describe("ServerRuntime updates", () => {
     });
 
     it("does not force a retry when only the name changes", async () => {
-      const h = await createHarness({ connect: false, configure: wrongPassword });
+      const h = await createHarness({
+        connect: false,
+        configure: wrongPassword,
+      });
       await h.runtime.start();
 
       h.servers.add(serverRecord({ name: "Renamed" }));
@@ -330,5 +375,75 @@ describe("ServerRuntime updates", () => {
     await h.runtime.refreshPlugins();
 
     expect(h.runtime.plugins.loadedIds()).toEqual(["probe"]);
+  });
+});
+
+describe("ServerRuntime notices", () => {
+  const prefix = "$<$0cfTMControlPanel$>: ";
+  it.each([null, "Took over from another worker."])(
+    "announces connection with note %s",
+    async (note) => {
+      const h = await createHarness({ connect: false });
+      if (note) h.runtime.setConnectNote(note);
+      await h.runtime.start();
+      expect(
+        h.session.callsTo("ChatSendServerMessage").map((c) => c.params[0]),
+      ).toContain(prefix + (note ? `Connected. ${note}` : "Connected"));
+      h.runtime.setConnectNote("Already connected");
+      await flush();
+      expect(h.session.callsTo("ChatSendServerMessage").at(-1)?.params).toEqual(
+        [prefix + "Already connected"],
+      );
+      await h.runtime.dispose();
+    },
+  );
+
+  it.each([undefined, "Moving to another worker..."])(
+    "sends goodbye before unloading plugins: %s",
+    async (reason) => {
+      const order: string[] = [];
+      const plugin = definePlugin({
+        id: "notice-probe",
+        create: () => ({
+          stop: () => {
+            order.push("unload");
+          },
+        }),
+      });
+      const h = await createHarness({
+        plugins: [plugin],
+        server: { plugins: [pluginRecord("notice-probe")] },
+      });
+      h.session.respond("ChatSendServerMessage", (message: string) => {
+        order.push(message);
+        return true;
+      });
+      await h.runtime.disconnect(reason);
+      expect(order).toEqual([
+        prefix + "Disconnecting: " + (reason ?? "Disconnected by an admin"),
+        "unload",
+      ]);
+    },
+  );
+
+  it("cuts off a hanging goodbye after one second", async () => {
+    const h = await createHarness();
+    vi.useFakeTimers();
+    try {
+      h.session.respond("ChatSendServerMessage", () => new Promise(() => {}));
+      let done = false;
+      const disposed = h.runtime
+        .dispose("Controller shutting down")
+        .then(() => {
+          done = true;
+        });
+      await vi.advanceTimersByTimeAsync(999);
+      expect(done).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      await disposed;
+      expect(h.session.disconnected).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

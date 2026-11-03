@@ -88,7 +88,7 @@ Memory is roughly 80–150 MB per worker, plus the front.
 
 - Workers publish runtime events to `gbx:ev:<serverId>`: the live, map and players channel events that `channels.ts` forwards today.
 - They publish registry-level events to `gbx:ev:global`: connect, disconnect, reconnect, adminCommand, owned and released.
-- Workers also write a status snapshot (`runtime.status()`) to `gbx:status:<serverId>` on every change, with a TTL tied to the lease. `/internal/servers`, `/ws/servers` and `/ws/clients` read these snapshots, so they cover every server on every host.
+- Workers also write a status snapshot (`runtime.status()`) to `gbx:status:<serverId>` on every change, with a TTL tied to the lease. `/internal/servers`, `/internal/cluster` and `/ws/servers` read these snapshots, so they cover every server on every host.
 - WebSocket channels in the front use ref-counted subscriptions: subscribe to `gbx:ev:<id>` while at least one socket watches the server. On open, the front subscribes first, fetches the initial state (`liveInfo`, `activeMapUid`, `activePlayers`) by RPC, and buffers events until that state arrives, so nothing is lost between the snapshot and the stream.
 - When ownership moves, the global channel announces `released` / `owned`. Open per-server sockets stay open and get a fresh snapshot from the new owner, instead of the current "Server removed" close.
 - Volume: checkpoints and chat per server are small, and pub/sub only sends to fronts that are subscribed.
@@ -110,6 +110,16 @@ Memory is roughly 80–150 MB per worker, plus the front.
 - The time a failover takes: about 3–5s on a worker crash or clean shutdown (leases are released straight away), and up to TTL + claim interval (about 20s) on a host crash or network split.
 - In-memory match state for the round in progress. The recorder starts again at the next round or map.
 - In-memory plugin state. Plugins reload on the new owner; plugin storage in the database survives.
+
+### Admin controls
+
+The Cluster tab on the admin Servers page (`GET /internal/cluster`) shows every worker per node and every server with its owner, lease time left and connection state. It needs `servers:clients:view`; the actions need `servers:clients:manage`.
+
+- **Move to worker**: sets `gbx:assign:<serverId>` (30s) to the target and sends a `release` RPC to the owner. The target claims it on its next pass, even above its fair share, and rebalancing leaves it there.
+- **Claim**: for a server nobody runs. It assigns it to the chosen or least-loaded worker and wakes the claim loops through `gbx:ctl`.
+- **Hold / Release hold**: `gbx:hold:<serverId>` has no TTL. The owner releases the server and no worker claims it until the hold is deleted. Holds live in Redis, so a Redis without persistence forgets them on restart.
+- **Messages**: the runtime says "Connected" and "Disconnecting: <reason>" in the in-game chat. A clean release writes `gbx:handover:<serverId>` with its reason; the next owner compares it with `gbx:last-owner:<serverId>`. With no handover entry, the old worker crashed or hung, and the chat says the round in progress was not recorded. The same handover goes to the dashboard over `/ws/servers` as a toast.
+- **Restart worker**: published on `gbx:ctl`; the front that supervises the worker sends it SIGTERM, so it hands its servers back before the supervisor starts a fresh one.
 
 ### Web app
 

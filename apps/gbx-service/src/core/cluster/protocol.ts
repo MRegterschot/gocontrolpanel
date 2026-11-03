@@ -1,4 +1,8 @@
-import type { ErrorCode, ServerClient } from "@tmcontrolpanel/shared";
+import type {
+  ErrorCode,
+  HandoverEvent,
+  ServerClient,
+} from "@tmcontrolpanel/shared";
 import type { ServerEventMap } from "../server/server-events";
 
 // Redis keys and channels shared by fronts and workers
@@ -14,7 +18,44 @@ export const clusterKeys = {
   reply: (frontId: string) => `gbx:reply:${frontId}`,
   serverEvents: (serverId: string) => `gbx:ev:${serverId}`,
   globalEvents: "gbx:ev:global",
+  // Admin park flag; no TTL, so it survives restarts of every process
+  hold: (serverId: string) => `gbx:hold:${serverId}`,
+  holdPattern: "gbx:hold:*",
+  // Short-lived hint telling one worker to claim this server next
+  assign: (serverId: string) => `gbx:assign:${serverId}`,
+  // Cluster control messages (claim passes, worker restarts) for every worker and front
+  control: "gbx:ctl",
+  // Last worker that claimed the server, and the reason it gave when it let go cleanly
+  lastOwner: (serverId: string) => `gbx:last-owner:${serverId}`,
+  handover: (serverId: string) => `gbx:handover:${serverId}`,
 };
+
+// Written by the old owner on a clean release; a missing entry means it crashed
+export type HandoverReason =
+  | "move"
+  | "hold"
+  | "rebalance"
+  | "shutdown"
+  | "lease";
+
+// Handled by the worker itself instead of the runtime: frees the server for another worker
+export const RELEASE_OP = "release";
+
+export interface WorkerInfo {
+  nodeId: string;
+  pid: number;
+  startedAt: number;
+}
+
+export interface LeaseEntry {
+  serverId: string;
+  owner: string;
+  ttlMs: number;
+}
+
+export type ControlMessage =
+  | { action: "claim" }
+  | { action: "restartWorker"; workerId: string };
 
 // Lease, status and pub/sub primitives; Redis in production, in memory in tests
 export interface ClusterStore {
@@ -26,9 +67,17 @@ export interface ClusterStore {
   // Drops every lease held by the owner, with its status entry; returns the server ids
   releaseServersOwnedBy(owner: string): Promise<string[]>;
 
-  heartbeat(workerId: string, ttlMs: number): Promise<void>;
+  heartbeat(workerId: string, ttlMs: number, info?: WorkerInfo): Promise<void>;
   dropWorker(workerId: string): Promise<void>;
   liveWorkers(): Promise<string[]>;
+  // Live workers with the info of their last heartbeat (null when sent without info)
+  workers(): Promise<{ id: string; info: WorkerInfo | null }[]>;
+  leases(): Promise<LeaseEntry[]>;
+
+  // Plain flags (holds, assignments); ttlMs omitted means no expiry
+  setFlag(key: string, value: string, ttlMs?: number): Promise<void>;
+  deleteFlag(key: string): Promise<void>;
+  heldServers(): Promise<string[]>;
 
   writeStatus(status: ServerClient, ttlMs: number): Promise<void>;
   dropStatus(serverId: string): Promise<void>;
@@ -115,4 +164,5 @@ export type GlobalEventMessage =
       event: "owned" | "released" | "removed";
       serverId: string;
       workerId: string;
-    };
+    }
+  | ({ event: "handover" } & HandoverEvent);

@@ -68,6 +68,23 @@ export class WorkerSupervisor {
     return this.slots.filter((slot) => slot.child).length;
   }
 
+  // Graceful restart of one worker (it hands its servers back first); false if not on this node
+  restart(workerId: string): boolean {
+    const slot = this.slots.find((s) => s.workerId === workerId && s.child);
+    if (!slot || this.stopping) return false;
+    const child = slot.child!;
+    this.options.log.info({ workerId }, "Restarting GBX worker on request");
+    // A requested restart isn't a crash; it shouldn't push the backoff up
+    slot.failures = 0;
+    child.kill("SIGTERM");
+    const timer = setTimeout(
+      () => child.kill("SIGKILL"),
+      this.options.stopTimeoutMs ?? 8000,
+    );
+    child.once("exit", () => clearTimeout(timer));
+    return true;
+  }
+
   // Asks every worker to hand its servers back, then kills whatever is left
   async stop(): Promise<void> {
     this.stopping = true;

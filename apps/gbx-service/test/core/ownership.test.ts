@@ -47,6 +47,37 @@ describe("OwnershipManager", () => {
     await Promise.all(managers.splice(0).map((node) => node.stop()));
   });
 
+  it("skips held servers and releases an owned server when held", async () => {
+    setup();
+    await store.setFlag(clusterKeys.hold("s1"), "1");
+    const { node } = manager("a");
+    await node.start();
+    await node.claimSoon();
+    expect(node.owns("s1")).toBe(false);
+    await store.setFlag(clusterKeys.hold("s2"), "1");
+    await node.claimSoon();
+    expect(node.owns("s2")).toBe(false);
+    expect(await store.owners([clusterKeys.lease("s2")])).toEqual([null]);
+  });
+
+  it("honors assignments above fair share and skips another worker's assignment", async () => {
+    setup();
+    await store.heartbeat("b", 15000);
+    for (const id of ["s1", "s2", "s3"])
+      await store.setFlag(clusterKeys.assign(id), "a", 15000);
+    const b = manager("b").node;
+    await b.start();
+    await b.claimSoon();
+    expect(b.ownedIds()).toEqual([]);
+    const a = manager("a").node;
+    await a.start();
+    await a.claimSoon();
+    expect(a.ownedIds()).toHaveLength(3);
+    expect(
+      await store.owners(["s1", "s2", "s3"].map(clusterKeys.assign)),
+    ).toEqual([null, null, null]);
+  });
+
   it("waits one claim interval and claims only its rounded-up fair share", async () => {
     setup();
     await store.heartbeat("b", 15000);
@@ -179,5 +210,22 @@ describe("OwnershipManager", () => {
     await clock.advance(3000);
     expect(onLost).toHaveBeenCalledWith("s1", "removed");
     expect(await store.owners([clusterKeys.lease("s1")])).toEqual([null]);
+  });
+  it("keeps an assigned idle server during rebalancing", async () => {
+    setup();
+    await store.setFlag(clusterKeys.assign("s1"), "a", 15000);
+    const a = manager("a", undefined, {
+      rebalanceIntervalMs: 12000,
+      playerCount: (id) => (id === "s1" ? 0 : 1),
+    });
+    await a.node.start();
+    await a.node.claimSoon();
+    expect(a.node.ownedIds()).toHaveLength(3);
+    const b = manager("b");
+    await b.node.start();
+    await clock.advance(12000);
+    expect(a.node.owns("s1")).toBe(true);
+    expect(a.onLost).not.toHaveBeenCalled();
+    expect(b.node.ownedIds()).toEqual([]);
   });
 });

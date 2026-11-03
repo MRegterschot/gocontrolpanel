@@ -55,6 +55,44 @@ describe("ClusterGateway", () => {
     return { h, store, gateway, worker };
   }
 
+  it("emits global handovers", async () => {
+    const { store, gateway } = await setup();
+    const received = vi.fn();
+    gateway.events.on("handover", received);
+    const data = {
+      serverId: SERVER_ID,
+      kind: "moved",
+      workerId: "b",
+      previous: "a",
+    };
+    await store.publish(
+      clusterKeys.globalEvents,
+      JSON.stringify({ event: "handover", ...data }),
+    );
+    await flush();
+    expect(received).toHaveBeenCalledWith(data);
+  });
+
+  it.each(["move", "hold"] as const)(
+    "passes %s to release RPC",
+    async (action) => {
+      const { store, gateway } = await setup();
+      await store.heartbeat("target", 15000);
+      const publish = vi.spyOn(store, "publish");
+      await gateway.control(
+        action === "move"
+          ? { action, serverId: SERVER_ID, workerId: "target" }
+          : { action, serverId: SERVER_ID },
+      );
+      const requests = publish.mock.calls
+        .filter(([channel]) => channel === clusterKeys.rpc("worker-a"))
+        .map(([, raw]) => JSON.parse(raw));
+      expect(requests).toContainEqual(
+        expect.objectContaining({ op: "release", args: { reason: action } }),
+      );
+    },
+  );
+
   it("returns status from the owning worker", async () => {
     const { h, gateway } = await setup();
     expect(await gateway.call(SERVER_ID, "status")).toEqual(h.runtime.status());
@@ -218,5 +256,152 @@ describe("ClusterGateway", () => {
       connected: 0,
       workers: 0,
     });
+  });
+  it("merges worker metadata, leases, statuses and unleased holds", async () => {
+    const { h, store, gateway } = await setup();
+    await store.heartbeat("node-b:1", 15000);
+    await store.heartbeat("node-c:1", 15000, {
+      nodeId: "node-c",
+      pid: 42,
+      startedAt: 100,
+    });
+    await store.setFlag(clusterKeys.hold("parked"), "front");
+    await store.setFlag(clusterKeys.hold(SERVER_ID), "front");
+    const overview = await gateway.overview();
+    expect(overview.workers).toContainEqual({
+      id: "node-b:1",
+      nodeId: "node-b",
+      pid: null,
+      startedAt: null,
+      servers: [],
+    });
+    expect(overview.workers).toContainEqual({
+      id: "node-c:1",
+      nodeId: "node-c",
+      pid: 42,
+      startedAt: 100,
+      servers: [],
+    });
+    expect(overview.servers).toContainEqual({
+      serverId: SERVER_ID,
+      owner: "worker-a",
+      leaseTtlMs: 15000,
+      held: true,
+      status: h.runtime.status(),
+    });
+    expect(overview.servers).toContainEqual({
+      serverId: "parked",
+      owner: null,
+      leaseTtlMs: null,
+      held: true,
+      status: null,
+    });
+  });
+
+  it("moves through assignment, release and a claim wakeup", async () => {
+    const { store, gateway, worker } = await setup();
+    await store.heartbeat("target", 15000);
+    const publish = vi.spyOn(store, "publish");
+    const flag = vi.spyOn(store, "setFlag");
+    await gateway.control({
+      action: "move",
+      serverId: SERVER_ID,
+      workerId: "target",
+    });
+    expect(flag).toHaveBeenCalledWith(
+      clusterKeys.assign(SERVER_ID),
+      "target",
+      expect.any(Number),
+    );
+    expect(publish).toHaveBeenCalledWith(
+      clusterKeys.rpc("worker-a"),
+      expect.stringContaining('"op":"release"'),
+    );
+    expect(publish).toHaveBeenCalledWith(
+      clusterKeys.control,
+      JSON.stringify({ action: "claim" }),
+    );
+    expect(worker.ownership.owns(SERVER_ID)).toBe(false);
+    expect(await store.owners([clusterKeys.assign(SERVER_ID)])).toEqual([
+      "target",
+    ]);
+  });
+
+  it("validates moves and leaves an existing placement alone", async () => {
+    const { store, gateway } = await setup();
+    const publish = vi.spyOn(store, "publish");
+    await gateway.control({
+      action: "move",
+      serverId: SERVER_ID,
+      workerId: "worker-a",
+    });
+    expect(publish).not.toHaveBeenCalled();
+    await expect(
+      gateway.control({
+        action: "move",
+        serverId: "free",
+        workerId: "worker-a",
+      }),
+    ).rejects.toMatchObject({ code: "BadRequest" });
+    await expect(
+      gateway.control({
+        action: "move",
+        serverId: SERVER_ID,
+        workerId: "missing",
+      }),
+    ).rejects.toMatchObject({ code: "NotFound" });
+    await expect(
+      gateway.control({ action: "claim", serverId: SERVER_ID }),
+    ).rejects.toMatchObject({ code: "BadRequest" });
+  });
+
+  it("claims on the least loaded worker and clears the hold", async () => {
+    const { store, gateway } = await setup();
+    await store.heartbeat("empty", 15000);
+    await store.setFlag(clusterKeys.hold("free"), "front");
+    await gateway.control({ action: "claim", serverId: "free" });
+    expect(
+      await store.owners([
+        clusterKeys.hold("free"),
+        clusterKeys.assign("free"),
+      ]),
+    ).toEqual([null, "empty"]);
+    await store.dropWorker("worker-a");
+    await store.dropWorker("empty");
+    await expect(
+      gateway.control({ action: "claim", serverId: "other" }),
+    ).rejects.toMatchObject({ code: "ServerUnavailable" });
+  });
+
+  it("holds owned, unowned and unreachable servers and wakes on unhold", async () => {
+    const { store, gateway, worker } = await setup();
+    await gateway.control({ action: "hold", serverId: SERVER_ID });
+    expect(worker.ownership.owns(SERVER_ID)).toBe(false);
+    await gateway.control({ action: "hold", serverId: "free" });
+    await store.claim(clusterKeys.lease("ghost"), "gone", 15000);
+    await gateway.control({ action: "hold", serverId: "ghost" });
+    expect(await store.heldServers()).toEqual(
+      expect.arrayContaining([SERVER_ID, "free", "ghost"]),
+    );
+    const publish = vi.spyOn(store, "publish");
+    await gateway.control({ action: "unhold", serverId: "free" });
+    expect(await store.owners([clusterKeys.hold("free")])).toEqual([null]);
+    expect(publish).toHaveBeenCalledWith(
+      clusterKeys.control,
+      JSON.stringify({ action: "claim" }),
+    );
+  });
+
+  it("publishes worker restarts only for live workers", async () => {
+    const { store, gateway } = await setup();
+    const publish = vi.spyOn(store, "publish");
+    await gateway.control({ action: "restartWorker", workerId: "worker-a" });
+    expect(publish).toHaveBeenCalledWith(
+      clusterKeys.control,
+      JSON.stringify({ action: "restartWorker", workerId: "worker-a" }),
+    );
+    await expect(
+      gateway.control({ action: "restartWorker", workerId: "missing" }),
+    ).rejects.toMatchObject({ code: "NotFound" });
   });
 });

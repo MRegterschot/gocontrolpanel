@@ -16,7 +16,7 @@ export interface ServerInfo {
   isConnected: boolean;
 }
 
-// Connection status of a server runtime (/ws/clients and the internal API)
+// Connection status of a server runtime (cluster overview and the internal API)
 export interface ServerClient {
   serverId: string;
   name: string;

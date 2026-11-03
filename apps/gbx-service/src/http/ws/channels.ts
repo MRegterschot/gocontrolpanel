@@ -51,12 +51,6 @@ function combine(cleanups: (() => void)[]): () => void {
 // Access rules, kept pure so they can be tested on their own
 export const access = {
   serversChannelIds: (claims: SessionClaims) => getAccessibleServers(claims),
-  clientsScope(claims: SessionClaims): "all" | Set<string> {
-    if (hasPermission(claims, ["servers:clients:view"])) return "all";
-    return new Set(
-      claims.servers.filter((s) => s.role === "Admin").map((s) => s.id),
-    );
-  },
   notificationServerIds: (claims: SessionClaims) => getAdminServerIds(claims),
   canViewServer,
   canViewPlayers: (claims: SessionClaims, serverId: string) =>
@@ -94,36 +88,8 @@ const serversChannel: ChannelDefinition = {
           if (ids.has(serverId))
             send({ type: "disconnect", data: { serverId } });
         }),
-      ]),
-    };
-  },
-};
-
-const clientsChannel: ChannelDefinition = {
-  path: "/ws/clients",
-  async open({ claims, gateway, send }) {
-    const scope = access.clientsScope(claims);
-    const visible = (serverId: string) =>
-      scope === "all" || scope.has(serverId);
-
-    send({
-      type: "clients",
-      data: (await gateway.list()).filter((status) => visible(status.serverId)),
-    });
-
-    return {
-      ok: true,
-      cleanup: combine([
-        gateway.events.on("connect", (serverId) => {
-          if (visible(serverId)) send({ type: "connect", data: { serverId } });
-        }),
-        gateway.events.on("disconnect", (serverId) => {
-          if (visible(serverId))
-            send({ type: "disconnect", data: { serverId } });
-        }),
-        gateway.events.on("reconnect", (serverId, type, time) => {
-          if (visible(serverId))
-            send({ type: "reconnect", data: { serverId, type, time } });
+        gateway.events.on("handover", (event) => {
+          if (ids.has(event.serverId)) send({ type: "handover", data: event });
         }),
       ]),
     };
@@ -300,7 +266,6 @@ const playersChannel = serverChannel(
 
 export const channels: ChannelDefinition[] = [
   serversChannel,
-  clientsChannel,
   notificationsChannel,
   liveChannel,
   mapChannel,

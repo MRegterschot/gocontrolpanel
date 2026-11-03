@@ -24,12 +24,15 @@ describe("native system commands", () => {
       server: { enableHelpCommand: false },
       players: [player("driver"), player("spec", { SpectatorStatus: 1 })],
     });
+    const before = h.session.calls.length;
     await h.chat("driver", "/STATUS");
     expect(privateReplies(h)).toContain(
       "Connection: connected. Mode: rounds. Players: 1. Spectators: 1.",
     );
     expect(
-      h.session.calls.filter((call) => call.method === "ChatSendServerMessage"),
+      h.session.calls
+        .slice(before)
+        .filter((call) => call.method === "ChatSendServerMessage"),
     ).toEqual([]);
   });
 

@@ -1,6 +1,6 @@
 // Prints a live WebSocket channel of a locally running GBX service.
-// Usage: ws-watch <servers|clients|notifications|live|map|players> [serverId] [--user <id>] [--full]
-import { signWsTicket, sessionClaimsSchema } from "@tmcontrolpanel/shared";
+// Usage: ws-watch <servers|notifications|live|map|players> [serverId] [--user <id>] [--full]
+import { sessionClaimsSchema, signWsTicket } from "@tmcontrolpanel/shared";
 import WebSocket from "ws";
 
 const args = process.argv.slice(2);
@@ -10,11 +10,14 @@ const flag = (name: string) => {
 };
 const full = args.includes("--full");
 const userId = flag("--user") ?? "e2e-admin";
-const [channel, serverId = process.env.E2E_SERVER_ID ?? "e2e-server"] = args.filter((a) => !a.startsWith("--"));
+const [channel, serverId = process.env.E2E_SERVER_ID ?? "e2e-server"] =
+  args.filter((a) => !a.startsWith("--"));
 
 const perServer = ["live", "map", "players"];
-if (!channel || ![...perServer, "servers", "clients", "notifications"].includes(channel)) {
-  console.error("Usage: ws-watch <servers|clients|notifications|live|map|players> [serverId] [--user <id>] [--full]");
+if (!channel || ![...perServer, "servers", "notifications"].includes(channel)) {
+  console.error(
+    "Usage: ws-watch <servers|notifications|live|map|players> [serverId] [--user <id>] [--full]",
+  );
   process.exit(1);
 }
 
@@ -27,7 +30,14 @@ const claims = sessionClaimsSchema.parse({
   admin: true,
   permissions: ["servers:clients:view"],
   servers: [{ id: serverId, name: "TMCP e2e", role: "Admin" }],
-  groups: [{ id: "e2e", name: "e2e", role: "Admin", servers: [{ id: serverId, name: "TMCP e2e" }] }],
+  groups: [
+    {
+      id: "e2e",
+      name: "e2e",
+      role: "Admin",
+      servers: [{ id: serverId, name: "TMCP e2e" }],
+    },
+  ],
 });
 
 function summarize(type: string, data: any): string {
@@ -35,7 +45,10 @@ function summarize(type: string, data: any): string {
   const round = data?.round?.players;
   if (round) {
     return Object.values(round)
-      .map((p: any) => `${p.login}:cp${p.checkpoint}${p.hasFinished ? "✓" : ""}${p.hasGivenUp ? "✗" : ""}@${p.time}`)
+      .map(
+        (p: any) =>
+          `${p.login}:cp${p.checkpoint}${p.hasFinished ? "✓" : ""}${p.hasGivenUp ? "✗" : ""}@${p.time}`,
+      )
       .join(" ");
   }
   if (data?.info) {
@@ -45,15 +58,21 @@ function summarize(type: string, data: any): string {
   return JSON.stringify(data).slice(0, 200);
 }
 
-const base = process.env.GBX_SERVICE_WS_URL ?? `ws://localhost:${process.env.PORT ?? 3101}`;
-const path = perServer.includes(channel) ? `/ws/${channel}/${serverId}` : `/ws/${channel}`;
+const base =
+  process.env.GBX_SERVICE_WS_URL ??
+  `ws://localhost:${process.env.PORT ?? 3101}`;
+const path = perServer.includes(channel)
+  ? `/ws/${channel}/${serverId}`
+  : `/ws/${channel}`;
 const ticket = await signWsTicket(claims, secret);
 const socket = new WebSocket(`${base}${path}?ticket=${ticket}`);
 
 socket.on("open", () => console.log(`connected to ${path}`));
 socket.on("message", (raw) => {
   const { type, data } = JSON.parse(String(raw));
-  console.log(`${new Date().toISOString().slice(11, 23)} ${type.padEnd(18)} ${summarize(type, data)}`);
+  console.log(
+    `${new Date().toISOString().slice(11, 23)} ${type.padEnd(18)} ${summarize(type, data)}`,
+  );
 });
 socket.on("close", (code, reason) => {
   console.log(`closed ${code} ${reason}`);

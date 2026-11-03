@@ -599,3 +599,22 @@ describe("gateway availability", () => {
     });
   });
 });
+
+describe("cluster routes in single mode", () => {
+  it("reports single mode and rejects controls", async () => {
+    const { request } = await setup();
+    expect((await request("GET", "/internal/cluster")).json().data.mode).toBe(
+      "single",
+    );
+    for (const path of [
+      "servers/server-1/claim",
+      "servers/server-1/hold",
+      "servers/server-1/unhold",
+      "workers/node%3A123.1/restart",
+    ]) {
+      const response = await request("POST", "/internal/cluster/" + path);
+      expect(response.statusCode).toBe(400);
+      expect(response.json().error.code).toBe("BadRequest");
+    }
+  });
+});

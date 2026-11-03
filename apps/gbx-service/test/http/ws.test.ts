@@ -315,17 +315,6 @@ describe("server-wide channels", () => {
     });
   });
 
-  it("shows every client to users with servers:clients:view", async () => {
-    const { base } = await setup();
-    const socket = connect(
-      `${base}/ws/clients?ticket=${await ticketFor({ permissions: ["servers:clients:view"] })}`,
-    );
-    expect((await socket.next("clients")).data).toHaveLength(1);
-
-    const other = connect(`${base}/ws/clients?ticket=${await ticketFor()}`);
-    expect((await other.next("clients")).data).toEqual([]);
-  });
-
   it("delivers admin notifications only to the addressed admin", async () => {
     const { base, h, gateway } = await setup({ players: [player("p1")] });
     h.notifications.adminUserIds = ["user-1", "user-2"];

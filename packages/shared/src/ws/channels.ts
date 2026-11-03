@@ -1,11 +1,7 @@
+import type { HandoverEvent } from "../types/cluster";
 import { DetailedPlayerChat } from "../types/gbx";
 import { ActiveRound, LiveInfo, PlayerRound, Team } from "../types/live";
-import {
-  NotificationDto,
-  PlayerInfo,
-  ServerClient,
-  ServerInfo,
-} from "../types/server";
+import { NotificationDto, PlayerInfo, ServerInfo } from "../types/server";
 
 // Wire format of every socket message: { type, data }
 export interface WsMessage<TType extends string, TData> {
@@ -15,7 +11,6 @@ export interface WsMessage<TType extends string, TData> {
 
 export const wsPaths = {
   servers: "/ws/servers",
-  clients: "/ws/clients",
   notifications: "/ws/notifications",
   live: (serverId: string) => `/ws/live/${serverId}`,
   map: (serverId: string) => `/ws/map/${serverId}`,
@@ -25,16 +20,8 @@ export const wsPaths = {
 export type ServersChannelMessage =
   | WsMessage<"servers", ServerInfo[]>
   | WsMessage<"connect", { serverId: string }>
-  | WsMessage<"disconnect", { serverId: string }>;
-
-export type ClientsChannelMessage =
-  | WsMessage<"clients", ServerClient[]>
-  | WsMessage<"connect", { serverId: string }>
   | WsMessage<"disconnect", { serverId: string }>
-  | WsMessage<
-      "reconnect",
-      { serverId: string; type: "try" | "stop"; time: number | null }
-    >;
+  | WsMessage<"handover", HandoverEvent>;
 
 export type NotificationsChannelMessage = WsMessage<
   "adminCommand",
