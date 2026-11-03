@@ -132,7 +132,7 @@ export default function CompetitionTree({
                   key={match.id}
                   onClick={(e) => {
                     e.stopPropagation();
-                    console.log("match", match.id);
+                    router.push(generatePath(routes.tournaments.match, { id: match.id.toString() }));
                   }}
                   className="match-card p-2 rounded-lg cursor-pointer hover:border-white transition-all"
                 >

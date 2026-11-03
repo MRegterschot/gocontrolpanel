@@ -17,6 +17,7 @@ export const routes = {
   },
   tournaments: {
     competition: "/competitions/:id",
+    match: "/match/:id",
     stage: "/tournaments/:id/stages/:stageId",
     registrations: "/tournaments/:id/stages/:stageId/registrations",
     myServers: "/my-servers",
@@ -332,6 +333,17 @@ export const breadCrumbs: {
         },
         {
           label: "Tournament Info",
+        },
+      ],
+    },
+    {
+      path: routes.tournaments.match,
+      breadCrumbs: [
+        {
+          label: "Tournaments",
+        },
+        {
+          label: "Match",
         },
       ],
     },

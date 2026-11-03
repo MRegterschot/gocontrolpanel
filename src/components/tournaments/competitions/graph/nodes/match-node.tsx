@@ -2,8 +2,9 @@
 
 import MatchStatusBadge from "@/components/tournaments/match/match-status-badge";
 import { MatchV1 } from "@/lib/server-manager/types";
-import { IconSwords } from "@tabler/icons-react";
+import { IconExternalLink, IconSwords } from "@tabler/icons-react";
 import { Handle, Node, NodeProps, Position } from "@xyflow/react";
+import Link from "next/link";
 import { memo } from "react";
 import MatchConfigField from "./match-config-field";
 import NodeCard, { NodeFlag, NodeRow } from "./node-card";
@@ -22,6 +23,10 @@ function MatchV1Node(props: NodeProps<MatchV1NodeType>) {
         <MatchConfigField label="Pre-config" configId={props.data.preConfig} />
         <MatchConfigField label="Config" configId={props.data.config} />
       </div>
+      <Link href={`/match/${props.data.id}`} className="nodrag flex items-center gap-1 text-muted-foreground hover:text-foreground">
+        <IconExternalLink className="size-3.5" />
+        Open match
+      </Link>
     </NodeCard>
   );
 }

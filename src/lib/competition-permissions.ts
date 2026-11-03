@@ -29,6 +29,7 @@ export const PERMISSION = {
   ROLE_ASSIGN: bit(19),
   ROLE_UNASSIGN: bit(20),
   ROLE_REMOVE: bit(21),
+  MATCH_SEND_CHAT: bit(38),
 };
 
 // Owners implicitly have every permission, like on the server.
