@@ -15,7 +15,6 @@ import * as NodeLeaderboardOutputProcedure from "../node_leaderboard_output_proc
 import * as NodeLeaderboardOutputRawProcedure from "../node_leaderboard_output_raw_procedure";
 import * as PostRoundReplayProcedure from "../post_round_replay_procedure";
 import * as TestNodePermittedPlayersInputProcedure from "../test_node_permitted_players_input_procedure";
-import * as UnstableCompetitionRawServerConfigV2Procedure from "../unstable_competition_raw_server_config_v_2_procedure";
 
 export type ConnectionCreateArgs = __Infer<typeof ConnectionCreateProcedure.params>;
 export type ConnectionCreateResult = __Infer<typeof ConnectionCreateProcedure.returnType>;
@@ -35,6 +34,4 @@ export type PostRoundReplayArgs = __Infer<typeof PostRoundReplayProcedure.params
 export type PostRoundReplayResult = __Infer<typeof PostRoundReplayProcedure.returnType>;
 export type TestNodePermittedPlayersInputArgs = __Infer<typeof TestNodePermittedPlayersInputProcedure.params>;
 export type TestNodePermittedPlayersInputResult = __Infer<typeof TestNodePermittedPlayersInputProcedure.returnType>;
-export type UnstableCompetitionRawServerConfigV2Args = __Infer<typeof UnstableCompetitionRawServerConfigV2Procedure.params>;
-export type UnstableCompetitionRawServerConfigV2Result = __Infer<typeof UnstableCompetitionRawServerConfigV2Procedure.returnType>;
 

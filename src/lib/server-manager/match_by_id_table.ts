@@ -9,12 +9,21 @@ import {
   type AlgebraicTypeType as __AlgebraicTypeType,
   type Infer as __Infer,
 } from "spacetimedb";
-
 import {
-  RawServerConfigV2,
+  MatchStatus,
 } from "./types";
 
-export const params = {
-  competitionId: __t.u32(),
-};
-export const returnType = __t.array(RawServerConfigV2)
+
+export default __t.row({
+  name: __t.string(),
+  id: __t.u32(),
+  parentId: __t.u32().name("parent_id"),
+  preConfig: __t.u32().name("pre_config"),
+  config: __t.u32(),
+  get status() {
+    return MatchStatus;
+  },
+  autoProvisionServer: __t.bool().name("auto_provision_server"),
+  open: __t.bool(),
+  template: __t.bool(),
+});
