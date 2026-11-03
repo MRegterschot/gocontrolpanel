@@ -21,11 +21,190 @@ import type { ServerResponse } from "@/types/responses";
 import { useQuery } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
-import { useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { toast } from "sonner";
 
 type Overview = Awaited<ReturnType<typeof getClusterOverview>>["data"];
 type Row = Overview["servers"][number];
+
+type Confirmation = {
+  title: string;
+  description: string;
+  action: () => Promise<ServerResponse<void>>;
+};
+
+// Changing page state for the row menus; columns stay stable so open menus survive refetches
+const ClusterActions = createContext<{
+  canManage: boolean;
+  pending: boolean;
+  mode: Overview["mode"];
+  workers: Overview["workers"];
+  run: (action: () => Promise<ServerResponse<void>>) => Promise<void>;
+  confirm: (confirmation: Confirmation) => void;
+} | null>(null);
+
+function ServerActions({ server: s }: { server: Row }) {
+  const context = useContext(ClusterActions);
+  if (!context) return null;
+  const { canManage, pending, mode, workers, run, confirm } = context;
+  return (
+    <div className="flex justify-end">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className="h-8 w-8 p-0"
+            disabled={!canManage || pending}
+          >
+            <MoreHorizontal />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {s.status && (
+            <>
+              {!s.status.isConnected && (
+                <DropdownMenuItem
+                  onSelect={() =>
+                    void run(() =>
+                      s.status?.isReconnecting
+                        ? clients.stopReconnect(s.id)
+                        : clients.triggerReconnect(s.id),
+                    )
+                  }
+                >
+                  {s.status.isReconnecting
+                    ? "Stop reconnecting"
+                    : "Trigger reconnect"}
+                </DropdownMenuItem>
+              )}
+              {s.status.isConnected && (
+                <>
+                  <DropdownMenuItem
+                    onSelect={() =>
+                      void run(() => clients.disconnectClient(s.id))
+                    }
+                  >
+                    Disconnect
+                  </DropdownMenuItem>
+                </>
+              )}
+            </>
+          )}
+          {mode === "cluster" && (
+            <>
+              {s.owner && workers.some((w) => w.id !== s.owner) && (
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>Move to</DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    {workers
+                      .filter((w) => w.id !== s.owner)
+                      .map((w) => (
+                        <DropdownMenuItem
+                          key={w.id}
+                          onSelect={() =>
+                            void run(() => cluster.moveServer(s.id, w.id))
+                          }
+                        >
+                          {w.id}
+                        </DropdownMenuItem>
+                      ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              )}
+              {!s.owner && !s.held && (
+                <>
+                  <DropdownMenuItem
+                    onSelect={() => void run(() => cluster.claimServer(s.id))}
+                  >
+                    Claim automatically
+                  </DropdownMenuItem>
+                  {workers.length > 0 && (
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        Claim on worker
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        {workers.map((w) => (
+                          <DropdownMenuItem
+                            key={w.id}
+                            onSelect={() =>
+                              void run(() => cluster.claimServer(s.id, w.id))
+                            }
+                          >
+                            {w.id}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  )}
+                </>
+              )}
+              {s.held ? (
+                <DropdownMenuItem
+                  onSelect={() => void run(() => cluster.unholdServer(s.id))}
+                >
+                  Release hold
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  onSelect={() =>
+                    confirm({
+                      title: "Hold server",
+                      description:
+                        "The controller disconnects and nobody reconnects until the hold is released.",
+                      action: () => cluster.holdServer(s.id),
+                    })
+                  }
+                >
+                  Hold
+                </DropdownMenuItem>
+              )}
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
+const columns: ColumnDef<Row>[] = [
+  { accessorKey: "name", header: "Name" },
+  {
+    id: "status",
+    header: "Status",
+    cell: ({ row: { original: s } }) => (
+      <Badge variant="outline">
+        {s.held
+          ? "Held"
+          : !s.status
+            ? "Not running"
+            : s.status.isConnected
+              ? "Connected"
+              : s.status.isReconnecting
+                ? `Reconnecting in ${Math.max(0, Math.ceil(((s.status.reconnectingAt ?? Date.now()) - Date.now()) / 1000))}s`
+                : "Disconnected"}
+      </Badge>
+    ),
+  },
+  {
+    accessorKey: "owner",
+    header: "Owner worker",
+    cell: ({ row }) => row.original.owner ?? "—",
+  },
+  {
+    id: "lease",
+    header: "Lease time left",
+    cell: ({ row }) =>
+      row.original.leaseTtlMs === null
+        ? "—"
+        : `${Math.max(0, Math.ceil(row.original.leaseTtlMs / 1000))}s`,
+  },
+  {
+    id: "actions",
+    cell: ({ row }) => <ServerActions server={row.original} />,
+  },
+];
 
 export default function AdminClusterPage({
   canManage,
@@ -38,11 +217,7 @@ export default function AdminClusterPage({
     refetchInterval: 3000,
   });
   const [pending, setPending] = useState(false);
-  const [confirmation, setConfirmation] = useState<{
-    title: string;
-    description: string;
-    action: () => Promise<ServerResponse<void>>;
-  } | null>(null);
+  const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   async function run(action: () => Promise<ServerResponse<void>>) {
     if (pending) return;
     setPending(true);
@@ -61,167 +236,6 @@ export default function AdminClusterPage({
   const data = query.data;
   if (!data) return <p>{query.error?.message ?? "Loading cluster…"}</p>;
   const workers = data.workers;
-  const columns: ColumnDef<Row>[] = [
-    { accessorKey: "name", header: "Name" },
-    {
-      id: "status",
-      header: "Status",
-      cell: ({ row: { original: s } }) => (
-        <Badge variant="outline">
-          {s.held
-            ? "Held"
-            : !s.status
-              ? "Not running"
-              : s.status.isConnected
-                ? "Connected"
-                : s.status.isReconnecting
-                  ? `Reconnecting in ${Math.max(0, Math.ceil(((s.status.reconnectingAt ?? Date.now()) - Date.now()) / 1000))}s`
-                  : "Disconnected"}
-        </Badge>
-      ),
-    },
-    {
-      accessorKey: "owner",
-      header: "Owner worker",
-      cell: ({ row }) => row.original.owner ?? "—",
-    },
-    {
-      id: "lease",
-      header: "Lease time left",
-      cell: ({ row }) =>
-        row.original.leaseTtlMs === null
-          ? "—"
-          : `${Math.max(0, Math.ceil(row.original.leaseTtlMs / 1000))}s`,
-    },
-    {
-      id: "actions",
-      cell: ({ row: { original: s } }) => (
-        <div className="flex justify-end">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="h-8 w-8 p-0"
-                disabled={!canManage || pending}
-              >
-                <MoreHorizontal />
-                <span className="sr-only">Open menu</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {s.status && (
-                <>
-                  {!s.status.isConnected && (
-                    <DropdownMenuItem
-                      onSelect={() =>
-                        void run(() =>
-                          s.status?.isReconnecting
-                            ? clients.stopReconnect(s.id)
-                            : clients.triggerReconnect(s.id),
-                        )
-                      }
-                    >
-                      {s.status.isReconnecting
-                        ? "Stop reconnecting"
-                        : "Trigger reconnect"}
-                    </DropdownMenuItem>
-                  )}
-                  {s.status.isConnected && (
-                    <>
-                      <DropdownMenuItem
-                        onSelect={() =>
-                          void run(() => clients.disconnectClient(s.id))
-                        }
-                      >
-                        Disconnect
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </>
-              )}
-              {data.mode === "cluster" && (
-                <>
-                  {s.owner && workers.some((w) => w.id !== s.owner) && (
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>Move to</DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent>
-                        {workers
-                          .filter((w) => w.id !== s.owner)
-                          .map((w) => (
-                            <DropdownMenuItem
-                              key={w.id}
-                              onSelect={() =>
-                                void run(() => cluster.moveServer(s.id, w.id))
-                              }
-                            >
-                              {w.id}
-                            </DropdownMenuItem>
-                          ))}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
-                  )}
-                  {!s.owner && !s.held && (
-                    <>
-                      <DropdownMenuItem
-                        onSelect={() =>
-                          void run(() => cluster.claimServer(s.id))
-                        }
-                      >
-                        Claim automatically
-                      </DropdownMenuItem>
-                      {workers.length > 0 && (
-                        <DropdownMenuSub>
-                          <DropdownMenuSubTrigger>
-                            Claim on worker
-                          </DropdownMenuSubTrigger>
-                          <DropdownMenuSubContent>
-                            {workers.map((w) => (
-                              <DropdownMenuItem
-                                key={w.id}
-                                onSelect={() =>
-                                  void run(() =>
-                                    cluster.claimServer(s.id, w.id),
-                                  )
-                                }
-                              >
-                                {w.id}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuSubContent>
-                        </DropdownMenuSub>
-                      )}
-                    </>
-                  )}
-                  {s.held ? (
-                    <DropdownMenuItem
-                      onSelect={() =>
-                        void run(() => cluster.unholdServer(s.id))
-                      }
-                    >
-                      Release hold
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem
-                      onSelect={() =>
-                        setConfirmation({
-                          title: "Hold server",
-                          description:
-                            "The controller disconnects and nobody reconnects until the hold is released.",
-                          action: () => cluster.holdServer(s.id),
-                        })
-                      }
-                    >
-                      Hold
-                    </DropdownMenuItem>
-                  )}
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      ),
-    },
-  ];
   return (
     <div className="flex flex-col gap-4">
       {query.error && <p role="alert">{query.error.message}</p>}
@@ -269,7 +283,24 @@ export default function AdminClusterPage({
           ))}
         </section>
       )}
-      <DataTable columns={columns} data={data.servers} filter />
+      <ClusterActions.Provider
+        value={{
+          canManage,
+          pending,
+          mode: data.mode,
+          workers,
+          run,
+          confirm: setConfirmation,
+        }}
+      >
+        <DataTable
+          columns={columns}
+          // The service lists servers in Redis scan order
+          data={[...data.servers].sort((a, b) => a.name.localeCompare(b.name))}
+          getRowId={(row) => row.id}
+          filter
+        />
+      </ClusterActions.Provider>
       {confirmation && (
         <ConfirmModal
           isOpen={!pending}

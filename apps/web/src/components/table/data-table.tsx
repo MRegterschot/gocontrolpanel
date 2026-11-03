@@ -35,6 +35,8 @@ interface DataTableProps<TData, TValue> {
   globalFilter?: string;
   onGlobalFilterChange?: (value: string) => void;
   className?: string;
+  // Stable row keys, so rows keep their state when the data is refetched or reordered
+  getRowId?: (row: TData) => string;
 }
 
 export function DataTable<TData, TValue>({
@@ -47,6 +49,7 @@ export function DataTable<TData, TValue>({
   globalFilter: globalFilterProp,
   onGlobalFilterChange,
   className,
+  getRowId,
 }: DataTableProps<TData, TValue>) {
   const [internalGlobalFilter, setInternalGlobalFilter] = useState("");
 
@@ -63,6 +66,7 @@ export function DataTable<TData, TValue>({
   const table = useReactTable({
     data,
     columns,
+    ...(getRowId && { getRowId: (row: TData) => getRowId(row) }),
     getCoreRowModel: getCoreRowModel(),
     ...(pagination && { getPaginationRowModel: getPaginationRowModel() }),
     onSortingChange: setSorting,
