@@ -1,0 +1,95 @@
+# Extra node: web + GBX workers only. See docs/backup-host.md.
+# Coolify generates domains only; copy all shared secrets from the existing deployment.
+# Set STACK_NAME to a unique alias on the proxy network.
+services:
+  tmcontrolpanel:
+    image: marijnregterschot/tmcontrolpanel${IMAGE_SUFFIX:-}:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      - SERVICE_URL_TMCONTROLPANEL_3000
+      - DATABASE_URL=${SHARED_DATABASE_URL:?Set SHARED_DATABASE_URL}
+      - REDIS_URI=${SHARED_REDIS_URI:?Set SHARED_REDIS_URI}
+      - SECRETS_KEY=${SECRETS_KEY:?Copy SECRETS_KEY from the existing deployment}
+      - GBX_SERVICE_TOKEN=${GBX_SERVICE_TOKEN:?Copy GBX_SERVICE_TOKEN from the existing deployment}
+      - WS_TICKET_SECRET=${WS_TICKET_SECRET:?Copy WS_TICKET_SECRET from the existing deployment}
+      - PANEL_INTERNAL_TOKEN=${PANEL_INTERNAL_TOKEN:?Copy PANEL_INTERNAL_TOKEN from the existing deployment}
+      - NADEO_SERVER_LOGIN=${NADEO_SERVER_LOGIN:?Set NADEO_SERVER_LOGIN}
+      - NADEO_SERVER_PASSWORD=${NADEO_SERVER_PASSWORD:?Set NADEO_SERVER_PASSWORD}
+      - NADEO_CONTACT=${NADEO_CONTACT:-TMControlPanel}
+      - NADEO_CLIENT_ID=${NADEO_CLIENT_ID:?Set NADEO_CLIENT_ID}
+      - NADEO_CLIENT_SECRET=${NADEO_CLIENT_SECRET:?Set NADEO_CLIENT_SECRET}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - NEXTAUTH_URL=${PANEL_PUBLIC_URL:-${SERVICE_URL_TMCONTROLPANEL}}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:?Copy NEXTAUTH_SECRET from the existing deployment}
+      - DEFAULT_ADMINS=${DEFAULT_ADMINS:-}
+      - DEFAULT_PERMISSIONS=${DEFAULT_PERMISSIONS:-}
+      - NADEO_REDIRECT_URI=${PANEL_PUBLIC_URL:-${SERVICE_URL_TMCONTROLPANEL}}/api/auth/callback/nadeo
+      - HETZNER_KEY=${HETZNER_KEY:?Copy HETZNER_KEY from the existing deployment}
+      - HETZNER_KEY_PREVIOUS=${HETZNER_KEY_PREVIOUS:-}
+      - GBX_SERVICE_URL=http://gbx-service:3100
+      - GBX_SERVICE_WS_URL=${GBX_SERVICE_WS_URL:-wss://${SERVICE_FQDN_GBX_SERVICE}}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    networks:
+      default:
+      npm:
+        aliases:
+          - tmcontrolpanel-${STACK_NAME:-node-b}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health',{signal:AbortSignal.timeout(4000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  gbx-service:
+    image: marijnregterschot/tmcontrolpanel-gbx-service${IMAGE_SUFFIX:-}:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    stop_grace_period: 20s
+    environment:
+      - SERVICE_URL_GBX_SERVICE_3100
+      - DATABASE_URL=${SHARED_DATABASE_URL:?Set SHARED_DATABASE_URL}
+      - REDIS_URI=${SHARED_REDIS_URI:?Set SHARED_REDIS_URI}
+      - SECRETS_KEY=${SECRETS_KEY:?Copy SECRETS_KEY from the existing deployment}
+      - GBX_SERVICE_TOKEN=${GBX_SERVICE_TOKEN:?Copy GBX_SERVICE_TOKEN from the existing deployment}
+      - WS_TICKET_SECRET=${WS_TICKET_SECRET:?Copy WS_TICKET_SECRET from the existing deployment}
+      - PANEL_INTERNAL_TOKEN=${PANEL_INTERNAL_TOKEN:?Copy PANEL_INTERNAL_TOKEN from the existing deployment}
+      - NADEO_SERVER_LOGIN=${NADEO_SERVER_LOGIN:?Set NADEO_SERVER_LOGIN}
+      - NADEO_SERVER_PASSWORD=${NADEO_SERVER_PASSWORD:?Set NADEO_SERVER_PASSWORD}
+      - NADEO_CONTACT=${NADEO_CONTACT:-TMControlPanel}
+      - NADEO_CLIENT_ID=${NADEO_CLIENT_ID:?Set NADEO_CLIENT_ID}
+      - NADEO_CLIENT_SECRET=${NADEO_CLIENT_SECRET:?Set NADEO_CLIENT_SECRET}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - WS_ALLOWED_ORIGINS=${WS_ALLOWED_ORIGINS:-${SERVICE_URL_TMCONTROLPANEL}}
+      - GBX_SERVICE_ENABLED_SERVERS=${GBX_SERVICE_ENABLED_SERVERS:-}
+      - GBX_NODE_ID=${GBX_NODE_ID:?Set a unique GBX_NODE_ID}
+      - GBX_WORKERS=${GBX_WORKERS:-1}
+      - GBX_LEASE_TTL_MS=${GBX_LEASE_TTL_MS:-15000}
+      - PANEL_INTERNAL_URL=http://tmcontrolpanel:3000
+    networks:
+      default:
+      npm:
+        aliases:
+          - gbx-service-${STACK_NAME:-node-b}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3100/healthz',{signal:AbortSignal.timeout(4000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+networks:
+  npm:
+    external: true
+    name: ${NPM_NETWORK:-nginxproxymanager_default}

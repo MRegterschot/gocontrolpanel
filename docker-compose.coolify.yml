@@ -65,7 +65,8 @@ services:
       - GBX_SERVICE_TOKEN=${SERVICE_PASSWORD_64_GBXTOKEN}
       - WS_TICKET_SECRET=${SERVICE_PASSWORD_64_WSTICKET}
       - WS_ALLOWED_ORIGINS=${SERVICE_URL_TMCONTROLPANEL}
-      # Empty manages every server; set an unknown id (e.g. none) on a copy of production
+      # Empty manages every server. Leases only coordinate containers that share this Redis:
+      # a copy of production with its own Redis must set an unknown id (e.g. none) here
       - GBX_SERVICE_ENABLED_SERVERS=${GBX_SERVICE_ENABLED_SERVERS:-}
       # Worker processes for the GBX connections; 0 runs everything in one process
       - GBX_WORKERS=${GBX_WORKERS:-1}

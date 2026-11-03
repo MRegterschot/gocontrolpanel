@@ -173,8 +173,16 @@ The load balancer and floating IP can't include a non-Hetzner primary.
 ## Phases
 
 1. **Workers on one host.** Front/worker split, leases, Redis RPC, event bus, status cache, `/healthz`. This delivers goal 1 on the current single VPS, and everything later builds on it.
-2. **Several nodes.** `GBX_NODE_ID`, cross-host fair share and rebalancing, singleton locks, clean handoff on shutdown, lifecycle events over Redis only, web `/api/health`, migration locking checked.
-3. **Backup deployment.** Compose and Coolify variables for a node without `db`/`redis`, WireGuard setup, firewall notes, docs (`README.md`, `docs/real-server-testing.md`, a new `docs/backup-host.md`).
+2. **Several nodes.**
+   - [x] `GBX_NODE_ID`, cross-host fair share and rebalancing, singleton locks, clean handoff on shutdown and lifecycle events over Redis.
+   - [x] Web `/api/health` checks the database, Redis and the local GBX front.
+   - [x] Startup migrations use Prisma's advisory lock and retry lock contention when replicas start together.
+3. **Backup deployment.**
+   - [x] Node-only stacks: `docker-compose.node.yml` and `docker-compose.coolify.node.yml`.
+   - [x] [Backup host guide](backup-host.md), README pointer, mesh and firewall instructions. Worker failover checks are in `docs/real-server-testing.md`.
+   - [ ] Order the Hetzner host; check availability.
+   - [ ] Set up WireGuard or Tailscale and firewall rules on the real hosts. Verify cross-host takeover there.
+   - [ ] Choose database and Redis option A, B or C (recommendation: B).
 4. **Optional:** database and Redis HA (option C).
 
 ## Testing

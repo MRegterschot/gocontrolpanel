@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/node";
 import { fileURLToPath } from "node:url";
+import pino from "pino";
 import { loadConfig, type Config } from "./config";
 import {
   createBase,
@@ -176,8 +177,10 @@ async function main() {
     });
   }
 
+  // Process-level messages go through pino too, so they land in the same JSON log stream
+  const log = pino({ level: config.LOG_LEVEL }).child({ process: "main" });
   process.on("unhandledRejection", (reason) => {
-    console.error("Unhandled promise rejection", reason);
+    log.error({ err: reason }, "Unhandled promise rejection");
     Sentry.captureException(reason);
   });
 
@@ -190,8 +193,8 @@ async function main() {
   const shutdown = async (signal: string) => {
     if (stopping) return;
     stopping = true;
-    console.info(`Shutting down (${signal})`);
-    await stop().catch((error) => console.error(error));
+    log.info({ signal }, "Shutting down");
+    await stop().catch((error) => log.error({ err: error }, "Shutdown failed"));
     process.exit(0);
   };
 
