@@ -147,7 +147,7 @@ The backup VPS runs the same Coolify stack without `db` and `redis`: web plus `g
 | B. Move MariaDB + Redis to a small third VPS               | Yes, if host A or host B dies; no if the DB VPS dies                   | low                                       |
 | C. MariaDB primary/replica + Redis Sentinel across 3 hosts | Yes, any single host                                                   | high (failover tooling, split-brain care) |
 
-Hetzner has no managed MySQL, PostgreSQL or Redis product on its cloud pages, so B and C are self-managed. Recommendation: start with B, and only go to C if the DB host turns out to be the weak spot.
+Hetzner has no managed MySQL, PostgreSQL or Redis product on its cloud pages, so B and C are self-managed. Recommendation: start with B, and only go to C if the DB host turns out to be the weak spot. Follow the [database host guide](database-host.md) to deploy option B.
 
 ### Costs (Hetzner, EUR/month excl. VAT, Germany/Finland, prices include IPv4)
 
@@ -182,7 +182,7 @@ The load balancer and floating IP can't include a non-Hetzner primary.
    - [x] [Backup host guide](backup-host.md), README pointer, mesh and firewall instructions. Worker failover checks are in `docs/real-server-testing.md`.
    - [ ] Order the Hetzner host; check availability.
    - [ ] Set up WireGuard or Tailscale and firewall rules on the real hosts. Verify cross-host takeover there.
-   - [ ] Choose database and Redis option A, B or C (recommendation: B).
+   - [ ] Choose database and Redis option A, B or C (recommendation: B, see the [database host guide](database-host.md)).
 4. **Optional:** database and Redis HA (option C).
 
 ## Testing

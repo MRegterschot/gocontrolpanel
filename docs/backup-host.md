@@ -8,7 +8,7 @@ For a Contabo primary and a Hetzner Cloud backup, check availability before orde
 
 - Each host runs a web container and a GBX front with `GBX_WORKERS` worker processes.
 - Each web container calls its own front at `http://gbx-service:3100`.
-- Both hosts use the same database and Redis, reached over a private mesh.
+- Both hosts use the same database and Redis, reached over a private mesh. See the [database host guide](database-host.md) to move them off the primary.
 - Redis leases give each dedicated server one worker owner across both hosts.
 - Sessions, Codriver state and the Nadeo token cache live in Redis; web replicas are stateless.
 - Either host's panel and browser WebSockets can serve every server.
@@ -166,7 +166,7 @@ A second application host does not make the database or Redis highly available. 
 The plan has three storage options:
 
 - **A:** keep MariaDB and Redis on the primary. Simple, but losing that host stops both nodes.
-- **B:** move MariaDB and Redis to a small third VPS. Either application host can fail independently. The storage VPS remains a single point of failure. Start with this option.
+- **B:** move MariaDB and Redis to a small third VPS. Either application host can fail independently. The storage VPS remains a single point of failure. Start with this option; follow the [database host guide](database-host.md).
 - **C:** MariaDB primary/replica plus Redis Sentinel across three hosts. This needs database failover tooling, client failover configuration and split-brain care. It is separate work; the node files alone do not provide it.
 
 Choose the storage option before claiming host-level availability. Dedicated servers also need their own availability plan; these nodes only move their controllers.
