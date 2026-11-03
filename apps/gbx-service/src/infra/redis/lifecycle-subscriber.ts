@@ -5,6 +5,7 @@ import {
 } from "@tmcontrolpanel/shared";
 import type { Redis } from "ioredis";
 import type { Logger } from "../../core/logger";
+import { whenReady } from "./redis";
 
 // Listens for server lifecycle events published by the web app; needs its own connection
 export async function subscribeToLifecycleEvents(
@@ -22,10 +23,14 @@ export async function subscribeToLifecycleEvents(
     }
 
     handle(event).catch((error) =>
-      log.error({ err: error, event }, "Failed to handle server lifecycle event"),
+      log.error(
+        { err: error, event },
+        "Failed to handle server lifecycle event",
+      ),
     );
   });
 
+  await whenReady(subscriber);
   await subscriber.subscribe(SERVER_EVENTS_CHANNEL);
   return async () => {
     await subscriber.unsubscribe(SERVER_EVENTS_CHANNEL);

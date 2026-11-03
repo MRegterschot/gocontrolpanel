@@ -56,6 +56,7 @@ async function startSingleProcess(config: Config) {
     log,
   );
   // Registry packages move installs from before the marketplace onto packaged plugins
+  await container.waitForSchema();
   await container.installFirstPartyPlugins();
   await checkMarketplace(marketplace, container);
   await registry.startAll();
@@ -102,6 +103,7 @@ async function startFront(config: Config) {
   );
 
   // One node installs and checks; the others wait, so workers load plugins after it is done
+  await base.waitForSchema();
   await runExclusive(
     cluster,
     "first-party",

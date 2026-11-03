@@ -6,6 +6,7 @@ import {
   type LeaseEntry,
   type WorkerInfo,
 } from "../../core/cluster/protocol";
+import { whenReady } from "./redis";
 
 const renewScript = `if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('PEXPIRE', KEYS[1], ARGV[2]) end return 0`;
 const releaseScript = `if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) end return 0`;
@@ -164,6 +165,7 @@ export class RedisClusterStore implements ClusterStore {
         this.handlers.set(channel, handlers);
         handlers.add(handler);
         try {
+          await whenReady(this.subscriber);
           await this.subscriber.subscribe(channel);
         } catch (error) {
           this.handlers.delete(channel);

@@ -24,6 +24,7 @@ import {
   PrismaRecordRepository,
   PrismaServerRepository,
 } from "./infra/db/prisma-repositories";
+import { waitForSchema } from "./infra/db/schema";
 import { PrismaSystemCommandServices } from "./infra/db/system-command-services";
 import { loadFirstPartyPackages } from "./infra/first-party-packages";
 import { EvotmGbxSession } from "./infra/gbx/evotm-session";
@@ -53,6 +54,7 @@ export function createBase(config: Config, name = "service") {
     subscriber,
     cluster: new RedisClusterStore(redis, subscriber),
     tickets: new TicketVerifier(config.WS_TICKET_SECRET, systemClock),
+    waitForSchema: () => waitForSchema(db, log),
     installFirstPartyPlugins: async () =>
       installFirstPartyPlugins(
         await loadFirstPartyPackages(config.MARKETPLACE_INDEX_URL, log),
