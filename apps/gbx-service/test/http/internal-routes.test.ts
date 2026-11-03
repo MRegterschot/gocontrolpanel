@@ -1,5 +1,6 @@
 import { internalPaths } from "@tmcontrolpanel/shared";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { AppError } from "../../src/core/errors";
 import { serverRecord } from "../fakes/harness";
 import { createApp, SERVICE_TOKEN } from "./app-fixture";
 
@@ -558,5 +559,43 @@ describe("plugin events from the panel", () => {
     });
     expect(res.statusCode).toBe(400);
     expect(received).not.toHaveBeenCalled();
+  });
+});
+
+describe("gateway availability", () => {
+  it("exposes readiness without authentication", async () => {
+    const { app, gateway } = await setup();
+    const healthy = await app.inject({ method: "GET", url: "/healthz" });
+    expect(healthy.statusCode).toBe(200);
+    expect(healthy.json()).toEqual({ status: "ok" });
+    vi.spyOn(gateway, "health").mockResolvedValue({
+      ok: false,
+      servers: 1,
+      connected: 0,
+      workers: 0,
+    });
+    const unavailable = await app.inject({ method: "GET", url: "/healthz" });
+    expect(unavailable.statusCode).toBe(503);
+    expect(unavailable.json()).toEqual({ status: "unavailable" });
+    const health = await app.inject({ method: "GET", url: "/health" });
+    expect(health.statusCode).toBe(503);
+    expect(health.json()).toEqual({
+      status: "degraded",
+      servers: 1,
+      connected: 0,
+      workers: 0,
+    });
+  });
+
+  it("maps unavailable gateway calls to 503", async () => {
+    const { gateway, request } = await setup();
+    vi.spyOn(gateway, "call").mockRejectedValueOnce(
+      new AppError("ServerUnavailable", "Worker unavailable"),
+    );
+    const res = await request("GET", internalPaths.server("server-1"));
+    expect(res.statusCode).toBe(503);
+    expect(res.json()).toEqual({
+      error: { code: "ServerUnavailable", message: "Worker unavailable" },
+    });
   });
 });

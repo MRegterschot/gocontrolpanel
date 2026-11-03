@@ -1,7 +1,8 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["src/main.ts"],
+  // The front forks worker.js next to main.js
+  entry: ["src/main.ts", "src/worker.ts"],
   format: ["esm"],
   platform: "node",
   target: "node22",

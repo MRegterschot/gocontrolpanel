@@ -240,3 +240,12 @@ Copy per test run.
 | ID | Date | Mode / map | Result | Notes / issue |
 |---|---|---|---|---|
 | C1 | | | | |
+
+## Worker failover
+
+Use `GBX_WORKERS=2` or more and several dedicated servers. Open their live pages before testing.
+
+- Find a worker PID with `ps -eo pid,ppid,args` or `docker top <container>`. Run `kill -9 <worker-pid>` (inside the container if using its PID namespace). Other servers' live pages must keep updating. The killed worker's servers should return within about 5s.
+- Run `docker stop <container>` and check that workers dispose runtimes and release leases cleanly. To check handoff, another container must share the database and Redis with a unique `GBX_NODE_ID`. This multi-container setup works but is not yet the documented deployment setup. Without another container, restart the stopped container to restore service.
+- After failover, check `Match` rows and in-game chat for duplicates. In-memory match and plugin state can be lost during takeover.
+- Restart with `GBX_WORKERS=0`. Check connections, live pages, plugins and match recording in single-process mode.

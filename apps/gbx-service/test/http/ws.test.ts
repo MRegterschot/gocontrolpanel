@@ -327,7 +327,7 @@ describe("server-wide channels", () => {
   });
 
   it("delivers admin notifications only to the addressed admin", async () => {
-    const { base, h, registry } = await setup({ players: [player("p1")] });
+    const { base, h, gateway } = await setup({ players: [player("p1")] });
     h.notifications.adminUserIds = ["user-1", "user-2"];
     const admin = {
       servers: [{ id: "server-1", name: "S", role: "Admin" as const }],
@@ -340,7 +340,7 @@ describe("server-wide channels", () => {
     );
     // Both sockets must finish asynchronous ticket verification and subscribe first.
     await vi.waitFor(() => {
-      expect(registry.events.listenerCount("adminCommand")).toBe(2);
+      expect(gateway.events.listenerCount("adminCommand")).toBe(2);
     });
 
     const created = await h.notifications.createForServerAdmins({

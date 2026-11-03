@@ -1,5 +1,10 @@
-import { signWsTicket, sessionClaimsSchema, type SessionClaims } from "@tmcontrolpanel/shared";
+import {
+  sessionClaimsSchema,
+  signWsTicket,
+  type SessionClaims,
+} from "@tmcontrolpanel/shared";
 import type { FastifyInstance } from "fastify";
+import { LocalGateway } from "../../src/core/cluster/gateway";
 import { ServerRegistry } from "../../src/core/server/server-registry";
 import { buildApp } from "../../src/http/app";
 import { TicketVerifier } from "../../src/http/ws/ticket-verifier";
@@ -10,14 +15,21 @@ export const SERVICE_TOKEN = "service-token-".padEnd(40, "x");
 export const TICKET_SECRET = "ticket-secret-".padEnd(40, "y");
 
 export function claims(overrides: Partial<SessionClaims> = {}): SessionClaims {
-  return sessionClaimsSchema.parse({ id: "user-1", admin: false, ...overrides });
+  return sessionClaimsSchema.parse({
+    id: "user-1",
+    admin: false,
+    ...overrides,
+  });
 }
 
 export const ticketFor = (overrides: Partial<SessionClaims> = {}) =>
   signWsTicket(claims(overrides), TICKET_SECRET);
 
 export async function createApp(
-  options: HarnessOptions & { allowedOrigins?: string[]; wsMaxLifetimeMs?: number } = {},
+  options: HarnessOptions & {
+    allowedOrigins?: string[];
+    wsMaxLifetimeMs?: number;
+  } = {},
 ) {
   const h = await createHarness(options);
   const registry = new ServerRegistry({
@@ -27,8 +39,9 @@ export async function createApp(
   });
   registry.add(h.runtime.serverId);
 
+  const gateway = new LocalGateway(registry, silentLogger);
   const app: FastifyInstance = await buildApp({
-    registry,
+    gateway,
     log: silentLogger,
     serviceToken: SERVICE_TOKEN,
     tickets: new TicketVerifier(TICKET_SECRET, h.clock),
@@ -36,7 +49,11 @@ export async function createApp(
     wsMaxLifetimeMs: options.wsMaxLifetimeMs,
   });
 
-  const request = (method: "GET" | "POST" | "PUT", url: string, payload?: unknown) =>
+  const request = (
+    method: "GET" | "POST" | "PUT",
+    url: string,
+    payload?: unknown,
+  ) =>
     app.inject({
       method,
       url,
@@ -44,5 +61,5 @@ export async function createApp(
       headers: { authorization: `Bearer ${SERVICE_TOKEN}` },
     });
 
-  return { h, app, registry, request };
+  return { h, app, registry, gateway, request };
 }

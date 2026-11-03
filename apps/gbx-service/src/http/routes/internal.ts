@@ -17,11 +17,10 @@ import {
 } from "@tmcontrolpanel/shared";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import type { ServerGateway } from "../../core/cluster/gateway";
 import { AppError } from "../../core/errors";
 import { isPassthroughAllowed } from "../../core/gbx/allowlist";
-import { encodePassthroughParams } from "../../core/gbx/params";
-import type { ServerRegistry } from "../../core/server/server-registry";
-import { gbxOperation, parse } from "../errors";
+import { parse } from "../errors";
 import { requireServiceToken } from "../service-auth";
 
 const serverParams = z.object({ id: z.string().min(1) });
@@ -43,189 +42,129 @@ function assertAllowed(method: string) {
 
 export async function internalRoutes(
   app: FastifyInstance,
-  opts: { registry: ServerRegistry; serviceToken: string },
+  opts: { gateway: ServerGateway; serviceToken: string },
 ) {
-  const { registry } = opts;
+  const { gateway } = opts;
   app.addHook("onRequest", requireServiceToken(opts.serviceToken));
-
-  const runtimeFor = (params: unknown) =>
-    registry.get(parse(serverParams, params).id);
-
-  app.get("/internal/servers", async () =>
-    ok(registry.list().map((r) => r.status())),
-  );
-
-  app.get("/internal/servers/:id", async (req) =>
-    ok(runtimeFor(req.params).status()),
-  );
-
-  app.get("/internal/servers/:id/live", async (req) =>
-    ok(runtimeFor(req.params).snapshot()),
-  );
-
+  app.get("/internal/servers", async () => ok(await gateway.list()));
+  app.get("/internal/servers/:id", async (req) => {
+    const { id } = parse(serverParams, req.params);
+    return ok(await gateway.call(id, "status"));
+  });
+  app.get("/internal/servers/:id/live", async (req) => {
+    const { id } = parse(serverParams, req.params);
+    return ok(await gateway.call(id, "snapshot"));
+  });
   app.post("/internal/servers/:id/reconnect", async (req) => {
-    const connected = await runtimeFor(req.params).reconnect();
-    return ok({ connected });
+    const { id } = parse(serverParams, req.params);
+    return ok(await gateway.call(id, "reconnect"));
   });
-
   app.post("/internal/servers/:id/stop-reconnect", async (req) => {
-    runtimeFor(req.params).stopReconnect();
-    return ok(null);
+    const { id } = parse(serverParams, req.params);
+    return ok(await gateway.call(id, "stopReconnect"));
   });
-
   app.post("/internal/servers/:id/disconnect", async (req) => {
-    await runtimeFor(req.params).disconnect();
-    return ok(null);
+    const { id } = parse(serverParams, req.params);
+    return ok(await gateway.call(id, "disconnect"));
   });
-
   app.post("/internal/servers/:id/manialinks/resend", async (req) => {
-    await runtimeFor(req.params).manialinks.resendAll();
-    return ok(null);
+    const { id } = parse(serverParams, req.params);
+    return ok(await gateway.call(id, "resendManialinks"));
   });
-
   app.post("/internal/servers/:id/plugins/reload", async (req) => {
-    await runtimeFor(req.params).reloadPlugins();
-    return ok(null);
+    const { id } = parse(serverParams, req.params);
+    return ok(await gateway.call(id, "reloadPlugins"));
   });
-
   app.post("/internal/servers/:id/plugin-events", async (req) => {
-    const runtime = runtimeFor(req.params);
-    const { source, name, payload } = parse(pluginEventBodySchema, req.body);
-    runtime.emitPluginEvent({ plugin: source, name, payload });
-    return ok(null);
+    const { id } = parse(serverParams, req.params);
+    const args = parse(pluginEventBodySchema, req.body);
+    return ok(
+      await gateway.call(id, "pluginEvent", {
+        source: args.source,
+        name: args.name,
+        payload: args.payload,
+      }),
+    );
   });
-
   app.post("/internal/servers/:id/commands", async (req) => {
-    const runtime = runtimeFor(req.params);
-    const { command, params, login } = parse(commandBodySchema, req.body);
-    return ok(await runtime.executeCommand(command, params, login));
+    const { id } = parse(serverParams, req.params);
+    const args = parse(commandBodySchema, req.body);
+    return ok(await gateway.call(id, "command", args));
   });
-
   app.post("/internal/servers/:id/plugin-commands", async (req) => {
-    const runtime = runtimeFor(req.params);
-    const { pluginId, command, args, login } = parse(
-      pluginCommandBodySchema,
-      req.body,
-    );
-    const handled = await runtime.runPluginCommand(
-      pluginId,
-      command,
-      args,
-      login,
-    );
-    return ok({ handled });
+    const { id } = parse(serverParams, req.params);
+    const args = parse(pluginCommandBodySchema, req.body);
+    return ok(await gateway.call(id, "pluginCommand", args));
   });
-
   app.post("/internal/servers/:id/gbx/call", async (req) => {
-    const runtime = runtimeFor(req.params);
-    const { method, params } = parse(gbxCallBodySchema, req.body);
-    assertAllowed(method);
-    return ok(
-      await gbxOperation(() =>
-        runtime.gbx.call(method, ...encodePassthroughParams(method, params)),
-      ),
-    );
+    const { id } = parse(serverParams, req.params);
+    const args = parse(gbxCallBodySchema, req.body);
+    assertAllowed(args.method);
+    return ok(await gateway.call(id, "gbxCall", args));
   });
-
   app.post("/internal/servers/:id/gbx/multicall", async (req) => {
-    const runtime = runtimeFor(req.params);
-    const { calls } = parse(gbxMulticallBodySchema, req.body);
-    calls.forEach((call) => assertAllowed(call.method));
-    return ok(
-      await gbxOperation(() =>
-        runtime.gbx.multicall(
-          calls.map((call) => [
-            call.method,
-            ...encodePassthroughParams(call.method, call.params),
-          ]),
-        ),
-      ),
-    );
+    const { id } = parse(serverParams, req.params);
+    const args = parse(gbxMulticallBodySchema, req.body);
+    args.calls.forEach((call) => assertAllowed(call.method));
+    return ok(await gateway.call(id, "gbxMulticall", args));
   });
-
   app.post("/internal/servers/:id/chat", async (req) => {
-    const runtime = runtimeFor(req.params);
-    const { message, login } = parse(chatMessageBodySchema, req.body);
-    await gbxOperation(() => runtime.commands.sendChat(message, login));
-    return ok(null);
+    const { id } = parse(serverParams, req.params);
+    const args = parse(chatMessageBodySchema, req.body);
+    return ok(await gateway.call(id, "chat", args));
   });
-
   app.put("/internal/servers/:id/chat-config", async (req) => {
-    const runtime = runtimeFor(req.params);
-    const config = parse(chatConfigBodySchema, req.body);
-    return ok(await runtime.commands.applyChatConfig(config));
+    const { id } = parse(serverParams, req.params);
+    const args = parse(chatConfigBodySchema, req.body);
+    return ok(await gateway.call(id, "chatConfig", args));
   });
-
   app.post("/internal/servers/:id/script", async (req) => {
-    const runtime = runtimeFor(req.params);
-    const { script } = parse(scriptNameBodySchema, req.body);
-    await gbxOperation(() => runtime.commands.setScriptName(script));
-    return ok(null);
+    const { id } = parse(serverParams, req.params);
+    const args = parse(scriptNameBodySchema, req.body);
+    return ok(await gateway.call(id, "script", args));
   });
-
   app.post("/internal/servers/:id/match-settings/load", async (req) => {
-    const runtime = runtimeFor(req.params);
-    const { filename } = parse(matchSettingsBodySchema, req.body);
-    await gbxOperation(() => runtime.commands.loadMatchSettings(filename));
-    return ok(null);
+    const { id } = parse(serverParams, req.params);
+    const args = parse(matchSettingsBodySchema, req.body);
+    return ok(await gateway.call(id, "loadMatchSettings", args));
   });
-
   app.put("/internal/servers/:id/script-settings", async (req) => {
-    const runtime = runtimeFor(req.params);
-    const { settings } = parse(scriptSettingsBodySchema, req.body);
-    await gbxOperation(() => runtime.commands.setScriptSettings(settings));
-    return ok(null);
+    const { id } = parse(serverParams, req.params);
+    const args = parse(scriptSettingsBodySchema, req.body);
+    return ok(await gateway.call(id, "scriptSettings", args));
   });
-
   app.post("/internal/servers/:id/pause", async (req) => {
-    const runtime = runtimeFor(req.params);
-    const { paused } = parse(pauseBodySchema, req.body);
-    await gbxOperation(() => runtime.commands.setPaused(paused));
-    return ok(null);
+    const { id } = parse(serverParams, req.params);
+    const args = parse(pauseBodySchema, req.body);
+    return ok(await gateway.call(id, "pause", args));
   });
-
   app.post("/internal/servers/:id/maps", async (req) => {
-    const runtime = runtimeFor(req.params);
-    const { filenames } = parse(mapsBodySchema, req.body);
-    return ok(await gbxOperation(() => runtime.commands.addMaps(filenames)));
+    const { id } = parse(serverParams, req.params);
+    const args = parse(mapsBodySchema, req.body);
+    return ok(await gateway.call(id, "addMaps", args));
   });
-
   app.post("/internal/servers/:id/maps/remove", async (req) => {
-    const runtime = runtimeFor(req.params);
-    const { filenames } = parse(mapsBodySchema, req.body);
-    return ok(await gbxOperation(() => runtime.commands.removeMaps(filenames)));
+    const { id } = parse(serverParams, req.params);
+    const args = parse(mapsBodySchema, req.body);
+    return ok(await gateway.call(id, "removeMaps", args));
   });
-
   app.put("/internal/servers/:id/maps/order", async (req) => {
-    const runtime = runtimeFor(req.params);
-    const { filenames } = parse(mapsBodySchema, req.body);
-    return ok(
-      await gbxOperation(() => runtime.commands.reorderMaps(filenames)),
-    );
+    const { id } = parse(serverParams, req.params);
+    const args = parse(mapsBodySchema, req.body);
+    return ok(await gateway.call(id, "reorderMaps", args));
   });
-
   app.put("/internal/servers/:id/players/:login/points", async (req) => {
     const { id, login } = parse(playerParams, req.params);
-    const runtime = registry.get(id);
     const { type, points } = parse(pointsBodySchema, req.body);
-    await gbxOperation(() =>
-      runtime.commands.setPlayerPoints(login, type, points),
-    );
-    return ok(null);
+    return ok(await gateway.call(id, "playerPoints", { login, type, points }));
   });
-
   app.put("/internal/servers/:id/teams/:teamId/points", async (req) => {
     const { id, teamId } = parse(teamParams, req.params);
-    const runtime = registry.get(id);
     const { type, points } = parse(pointsBodySchema, req.body);
-    await gbxOperation(() =>
-      runtime.commands.setTeamPoints(teamId, type, points),
-    );
-    return ok(null);
+    return ok(await gateway.call(id, "teamPoints", { teamId, type, points }));
   });
-
   app.post("/internal/server-events", async (req) => {
-    await registry.handleLifecycleEvent(
+    await gateway.handleLifecycleEvent(
       parse(serverLifecycleEventSchema, req.body),
     );
     return ok(null);

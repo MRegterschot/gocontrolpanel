@@ -36,6 +36,7 @@ services:
     ports:
       - "127.0.0.1:3100:3100" # Expose browser WebSockets through a TLS reverse proxy
     restart: unless-stopped
+    stop_grace_period: 20s # Workers hand their servers over cleanly on stop
     environment:
       DATABASE_URL: mysql://tmcontrolpanel:${MARIADB_PASSWORD:?Set MARIADB_PASSWORD}@db:3306/tmcontrolpanel
       SECRETS_KEY: ${SECRETS_KEY:?Set the same SECRETS_KEY in both services}
@@ -50,6 +51,7 @@ services:
       NADEO_CONTACT: TMControlPanel / <your contact info>
       NADEO_CLIENT_ID:
       NADEO_CLIENT_SECRET:
+      GBX_WORKERS: 1 # Worker processes for the GBX connections; 0 runs everything in one process
       LOG_LEVEL: info
     depends_on:
       - db
