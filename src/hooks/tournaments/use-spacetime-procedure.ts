@@ -3,13 +3,16 @@ import { useState, useEffect } from "react";
 
 export function useSpacetimeProcedure<Args, Result>(
     procedureHook: (args: Args) => Promise<Result>,
-    args: Args
+    args: Args,
+    // Procedures are not live, a changed key runs them again.
+    refreshKey?: unknown
 ) {
     const [data, setData] = useState<Result | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
 
     const serializedArgs = JSON.stringify(args);
+    const serializedKey = JSON.stringify(refreshKey);
 
     useEffect(() => {
         let isMounted = true;
@@ -28,7 +31,7 @@ export function useSpacetimeProcedure<Args, Result>(
 
         execute();
         return () => { isMounted = false; };
-    }, [serializedArgs, procedureHook]);
+    }, [serializedArgs, serializedKey, procedureHook]);
 
     return { data, isLoading, error };
 }

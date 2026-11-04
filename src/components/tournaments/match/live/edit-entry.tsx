@@ -11,12 +11,13 @@ import { useState } from "react";
 import { useReducer } from "spacetimedb/react";
 
 // Manual corrections of a round result, the server only allows them for owners.
-export default function EditEntry({ matchId, userId, round, points, position }: {
+export default function EditEntry({ matchId, userId, round, points, position, onSaved }: {
   matchId: number;
   userId: number;
   round: number;
   points: number;
   position: number;
+  onSaved: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState({ points, position });
@@ -28,17 +29,20 @@ export default function EditEntry({ matchId, userId, round, points, position }: 
       draft.points === points || setScore({ matchId, userId, round, score: draft.points }),
       draft.position === position || setPosition({ matchId, userId, round, position: draft.position }),
     ]);
-    if (ok.every(Boolean)) setOpen(false);
+    if (ok.every(Boolean)) {
+      setOpen(false);
+      onSaved();
+    }
   };
 
   return (
     <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) setDraft({ points, position }); }}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-7" onClick={(e) => e.stopPropagation()}>
+        <Button variant="ghost" size="icon" className="size-7">
           <IconPencil className="size-4" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+      <PopoverContent className="w-56 flex flex-col gap-3">
         <div className="flex flex-col gap-1">
           <Label htmlFor="entry-points">Points</Label>
           <Input id="entry-points" type="number" value={draft.points} onChange={(e) => setDraft((d) => ({ ...d, points: Number(e.target.value) }))} />

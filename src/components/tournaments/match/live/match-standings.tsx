@@ -5,26 +5,22 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useServerAction } from "@/hooks/tournaments/use-server-action";
+import { useSpacetimeProcedure } from "@/hooks/tournaments/use-spacetime-procedure";
 import { hasPermission, OWNER } from "@/lib/competition-permissions";
 import { procedures, tables } from "@/lib/server-manager";
-import { MatchV1 } from "@/lib/server-manager/types";
+import { LbEntry, MatchV1, NodeHandle } from "@/lib/server-manager/types";
 import { formatTime } from "@/lib/utils";
 import { useUsers } from "@/providers/users-provider";
-import { IconChevronDown, IconChevronRight, IconDownload } from "@tabler/icons-react";
-import { Fragment, useCallback, useState } from "react";
+import { IconDownload, IconRefresh } from "@tabler/icons-react";
+import { useCallback, useEffect, useState } from "react";
 import { useProcedure, useTable } from "spacetimedb/react";
 import { useMyPermissions } from "../../competitions/permissions/use-competition-access";
 import EditEntry from "./edit-entry";
-import RoundSplits from "./round-splits";
 
 const TOTAL = "total";
-
-// Mounted only while a row is expanded, so the actions of one round are only loaded when needed.
-function PlayerSplits({ matchId, round, userId }: { matchId: number; round: number; userId: number }) {
-  const [rows] = useTable(tables.matchRoundPlayerActions({ matchId, round }));
-  const ext = rows.find((r) => r.matchId === matchId && r.round === round && r.userId === userId);
-  return <RoundSplits actions={ext?.roundActions ?? []} />;
-}
+const LIVE = ["Live", "LiveComitted"];
+// Scores and times that were never set are sent as i32::MIN.
+const UNSET = -2147483648;
 
 function ReplayButton({ match, round }: { match: MatchV1; round: number }) {
   const fetchReplay = useProcedure(procedures.matchRoundReplay);
@@ -50,27 +46,48 @@ function ReplayButton({ match, round }: { match: MatchV1; round: number }) {
   );
 }
 
+// Procedures are not live, so the standings are fetched again whenever the match state changes,
+// every few seconds while the match is live, and on request.
+function useRefreshKey(match: MatchV1) {
+  const [states] = useTable(tables.matchState({ matchId: match.id }));
+  const state = states.find((s) => s.matchId === match.id);
+  const [tick, setTick] = useState(0);
+  const live = LIVE.includes(match.status.tag);
+
+  useEffect(() => {
+    if (!live) return;
+    const interval = setInterval(() => setTick((t) => t + 1), 5000);
+    return () => clearInterval(interval);
+  }, [live]);
+
+  return { key: [state, match.status.tag, tick], refresh: () => setTick((t) => t + 1) };
+}
+
 export default function MatchStandings({ match }: { match: MatchV1 }) {
   const users = useUsers();
   const canEdit = hasPermission(useMyPermissions(match.parentId), OWNER);
-  // The client cache merges the rows of a view for all args, so they are filtered by match.
-  const [rows] = useTable(tables.matchRoundPlayers({ matchId: match.id }));
-  const entries = rows.filter((e) => e.matchId === match.id);
+  const { key, refresh } = useRefreshKey(match);
+  const node = NodeHandle.MatchV1(match.id);
+  const totals = useSpacetimeProcedure(useProcedure(procedures.nodeLeaderboardOutput), { node }, key);
+  const rounds = useSpacetimeProcedure(useProcedure(procedures.nodeLeaderboardOutputRaw), { node }, key);
   const [view, setView] = useState(TOTAL);
-  const [expanded, setExpanded] = useState<number | null>(null);
 
-  const rounds = [...new Set(entries.map((e) => e.round))].sort((a, b) => a - b);
+  const ok = (data: typeof totals.data): LbEntry[] => (data && "ok" in data ? data.ok : []);
+  const entries = ok(rounds.data);
+  const roundNumbers = [...new Set(entries.map((e) => e.round))].sort((a, b) => a - b);
   const round = view === TOTAL ? null : Number(view);
   const name = (userId: number) => users.get(userId)?.name ?? `User ${userId}`;
+  const score = (e: LbEntry) => (e.score === UNSET ? "-" : e.score);
 
-  const totals = [...Map.groupBy(entries, (e) => e.userId)]
-    .map(([userId, rows]) => ({ userId, points: rows.reduce((sum, r) => sum + r.points, 0), rounds: rows.length }))
-    .sort((a, b) => b.points - a.points);
-
-  // Players without a position yet are listed last, by time.
-  const roundEntries = entries
-    .filter((e) => e.round === round)
-    .sort((a, b) => (a.position || Infinity) - (b.position || Infinity) || (a.time || Infinity) - (b.time || Infinity));
+  const shown = round === null
+    ? ok(totals.data)
+    // Players without a position yet are listed last, by time.
+    : entries
+      .filter((e) => e.round === round)
+      .sort((a, b) => (a.position || Infinity) - (b.position || Infinity) || (a.time > 0 ? a.time : Infinity) - (b.time > 0 ? b.time : Infinity));
+  const sorted = round === null ? [...shown].sort((a, b) => a.position - b.position) : shown;
+  const hasTimes = sorted.some((e) => e.time > 0);
+  const error = [totals.data, rounds.data].find((d) => d && "err" in d);
 
   return (
     <Card className="gap-3 px-4 py-4">
@@ -78,78 +95,56 @@ export default function MatchStandings({ match }: { match: MatchV1 }) {
         <h2 className="font-semibold">Standings</h2>
         <div className="flex items-center gap-2">
           {round !== null && <ReplayButton match={match} round={round} />}
-          <Select value={view} onValueChange={(v) => { setView(v); setExpanded(null); }}>
+          <Select value={view} onValueChange={setView}>
             <SelectTrigger size="sm" className="w-32"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value={TOTAL}>Total</SelectItem>
-              {rounds.map((r) => <SelectItem key={r} value={r.toString()}>Round {r}</SelectItem>)}
+              {roundNumbers.map((r) => <SelectItem key={r} value={r.toString()}>Round {r}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Button variant="ghost" size="icon" className="size-8" title="Refresh" onClick={refresh}>
+            <IconRefresh />
+          </Button>
         </div>
       </div>
 
-      {entries.length === 0 ? (
+      {error && "err" in error ? (
+        <p className="text-sm text-destructive">{error.err}</p>
+      ) : !totals.data && totals.isLoading ? (
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      ) : sorted.length === 0 ? (
         <p className="text-sm text-muted-foreground">No results yet.</p>
-      ) : round === null ? (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-12">#</TableHead>
-              <TableHead>Player</TableHead>
-              <TableHead className="text-right">Rounds</TableHead>
-              <TableHead className="text-right">Points</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {totals.map((t, idx) => (
-              <TableRow key={t.userId}>
-                <TableCell className="tabular-nums text-muted-foreground">{idx + 1}</TableCell>
-                <TableCell className="font-medium">{name(t.userId)}</TableCell>
-                <TableCell className="text-right tabular-nums">{t.rounds}</TableCell>
-                <TableCell className="text-right tabular-nums font-semibold">{t.points}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
       ) : (
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-12">#</TableHead>
               <TableHead>Player</TableHead>
-              <TableHead className="text-right">Time</TableHead>
+              {hasTimes && <TableHead className="text-right">Time</TableHead>}
               <TableHead className="text-right">Points</TableHead>
-              {canEdit && <TableHead className="w-10" />}
+              {canEdit && round !== null && <TableHead className="w-10" />}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {roundEntries.map((e) => (
-              <Fragment key={e.id}>
-                <TableRow className="cursor-pointer" onClick={() => setExpanded(expanded === e.id ? null : e.id)}>
-                  <TableCell className="tabular-nums text-muted-foreground">{e.position || "-"}</TableCell>
-                  <TableCell className="font-medium">
-                    <span className="flex items-center gap-1">
-                      {expanded === e.id ? <IconChevronDown className="size-4" /> : <IconChevronRight className="size-4" />}
-                      {name(e.userId)}
-                    </span>
+            {sorted.map((e) => (
+              <TableRow key={`${e.userId}-${e.round}`}>
+                <TableCell className="tabular-nums text-muted-foreground">{e.position || "-"}</TableCell>
+                <TableCell className="font-medium">{name(e.userId)}</TableCell>
+                {hasTimes && <TableCell className="text-right tabular-nums">{formatTime(e.time)}</TableCell>}
+                <TableCell className="text-right tabular-nums font-semibold">{score(e)}</TableCell>
+                {canEdit && round !== null && (
+                  <TableCell>
+                    <EditEntry
+                      matchId={match.id}
+                      userId={e.userId}
+                      round={e.round}
+                      points={e.score === UNSET ? 0 : e.score}
+                      position={e.position}
+                      onSaved={refresh}
+                    />
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">{formatTime(e.time)}</TableCell>
-                  <TableCell className="text-right tabular-nums font-semibold">{e.points}</TableCell>
-                  {canEdit && (
-                    <TableCell>
-                      <EditEntry matchId={match.id} userId={e.userId} round={e.round} points={e.points} position={e.position} />
-                    </TableCell>
-                  )}
-                </TableRow>
-                {expanded === e.id && (
-                  <TableRow className="hover:bg-transparent">
-                    <TableCell />
-                    <TableCell colSpan={canEdit ? 4 : 3}>
-                      <PlayerSplits matchId={match.id} round={e.round} userId={e.userId} />
-                    </TableCell>
-                  </TableRow>
                 )}
-              </Fragment>
+              </TableRow>
             ))}
           </TableBody>
         </Table>
