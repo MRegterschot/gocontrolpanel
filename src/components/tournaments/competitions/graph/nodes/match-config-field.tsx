@@ -5,29 +5,35 @@ import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover"
 import ConfigDetails from "@/forms/tournaments/config/config-details";
 import { ConfigFormSchemaType } from "@/forms/tournaments/config/config-schema";
 import { cn } from "@/lib/utils";
+import { useStore } from "@xyflow/react";
 import { useRef, useState } from "react";
 import { useMatchConfig } from "../graph-context";
 import { NodeRow } from "./node-card";
+
+// The summary only pops up once the node is readable and the pointer rested on the field for a moment.
+const PEEK_ZOOM = 0.75;
+const PEEK_DELAY = 400;
 
 export default function MatchConfigField({ label, configId }: { label: string; configId: number }) {
   const raw = useMatchConfig(configId);
   const config = raw?.config as ConfigFormSchemaType["config"] | undefined;
   const name = !raw ? "None" : raw.competitionId === 0 ? "Inline" : raw.name || `Config ${raw.id}`;
 
+  const readable = useStore((s) => s.transform[2] >= PEEK_ZOOM);
   const [peek, setPeek] = useState(false);
   const [open, setOpen] = useState(false);
-  const closeTimeout = useRef<NodeJS.Timeout | null>(null);
-  const show = () => {
-    if (closeTimeout.current) clearTimeout(closeTimeout.current);
-    setPeek(true);
+  const timeout = useRef<NodeJS.Timeout | null>(null);
+  const later = (fn: () => void, ms: number) => {
+    if (timeout.current) clearTimeout(timeout.current);
+    timeout.current = setTimeout(fn, ms);
   };
-  const hide = () => {
-    closeTimeout.current = setTimeout(() => setPeek(false), 200);
-  };
+  const show = () => readable && later(() => setPeek(true), PEEK_DELAY);
+  const keep = () => timeout.current && clearTimeout(timeout.current);
+  const hide = () => later(() => setPeek(false), 200);
 
   return (
     <>
-      <Popover open={peek && !!config && !open}>
+      <Popover open={peek && readable && !!config && !open}>
         <PopoverAnchor asChild>
           <button
             type="button"
@@ -45,7 +51,7 @@ export default function MatchConfigField({ label, configId }: { label: string; c
           </button>
         </PopoverAnchor>
         {config && (
-          <PopoverContent side="top" className="w-56 text-xs flex flex-col gap-1" onMouseEnter={show} onMouseLeave={hide}>
+          <PopoverContent side="top" className="w-56 text-xs flex flex-col gap-1" onMouseEnter={keep} onMouseLeave={hide}>
             <p className="font-semibold">{name}</p>
             <NodeRow label="Mode">{config.mode.tag}</NodeRow>
             <NodeRow label="Maps">{config.maps.mapUids.length}</NodeRow>
