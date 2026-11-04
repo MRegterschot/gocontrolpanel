@@ -13,6 +13,7 @@ import { useState } from "react";
 import { useTable } from "spacetimedb/react";
 //import CompetitionStatusBadge from "../status/competition-status-badge";
 import MatchStatusBadge from "../match/match-status-badge";
+import MatchOverviewDialog from "../match/live/match-overview-dialog";
 import CompetitionActions from "./competition-actions";
 
 interface CompetitionTreeProps {
@@ -40,6 +41,7 @@ export default function CompetitionTree({
 
   // Stage children toggle
   const [isOpen, setIsOpen] = useState(sectionIndex === 0);
+  const [openMatchId, setOpenMatchId] = useState<number | null>(null);
 
   if (!tree) return null;
 
@@ -132,7 +134,7 @@ export default function CompetitionTree({
                   key={match.id}
                   onClick={(e) => {
                     e.stopPropagation();
-                    router.push(generatePath(routes.tournaments.match, { id: match.id.toString() }));
+                    setOpenMatchId(match.id);
                   }}
                   className="match-card p-2 rounded-lg cursor-pointer hover:border-white transition-all"
                 >
@@ -191,6 +193,7 @@ export default function CompetitionTree({
           </div>
         </div>
       )}
+      <MatchOverviewDialog matchId={openMatchId} onClose={() => setOpenMatchId(null)} />
     </div>
   );
 }

@@ -5,11 +5,13 @@ import { createContext, useContext } from "react";
 type GraphActions = {
   openEdgeSettings: (connectionId: number) => void;
   openNodeSettings: (nodeId: string) => void;
+  openMatch: (matchId: number) => void;
 };
 
 export const GraphActionsContext = createContext<GraphActions>({
   openEdgeSettings: () => {},
   openNodeSettings: () => {},
+  openMatch: () => {},
 });
 
 export const useGraphActions = () => useContext(GraphActionsContext);

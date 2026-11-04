@@ -2,16 +2,17 @@
 
 import MatchStatusBadge from "@/components/tournaments/match/match-status-badge";
 import { MatchV1 } from "@/lib/server-manager/types";
-import { IconExternalLink, IconSwords } from "@tabler/icons-react";
+import { IconArrowsMaximize, IconSwords } from "@tabler/icons-react";
 import { Handle, Node, NodeProps, Position } from "@xyflow/react";
-import Link from "next/link";
 import { memo } from "react";
+import { useGraphActions } from "../graph-context";
 import MatchConfigField from "./match-config-field";
 import NodeCard, { NodeFlag, NodeRow } from "./node-card";
 
 export type MatchV1NodeType = Node<MatchV1>;
 
 function MatchV1Node(props: NodeProps<MatchV1NodeType>) {
+  const { openMatch } = useGraphActions();
   return (
     <NodeCard id={props.id} name={props.data.name} icon={IconSwords} color="bg-green-700">
       <Handle type="source" position={Position.Right} className="h-5! rounded-sm!" />
@@ -23,10 +24,10 @@ function MatchV1Node(props: NodeProps<MatchV1NodeType>) {
         <MatchConfigField label="Pre-config" configId={props.data.preConfig} />
         <MatchConfigField label="Config" configId={props.data.config} />
       </div>
-      <Link href={`/match/${props.data.id}`} className="nodrag flex items-center gap-1 text-muted-foreground hover:text-foreground">
-        <IconExternalLink className="size-3.5" />
+      <button type="button" className="nodrag flex items-center gap-1 text-muted-foreground hover:text-foreground" onClick={() => openMatch(props.data.id)}>
+        <IconArrowsMaximize className="size-3.5" />
         Open match
-      </Link>
+      </button>
     </NodeCard>
   );
 }

@@ -37,6 +37,7 @@ import OutputV1Node, { OutputV1NodeType } from "./nodes/output-node";
 import RegistrationV1Node, { RegistrationV1NodeType } from "./nodes/registration-node";
 import InputV1Node, { InputV1NodeType } from "./nodes/input-node";
 import ServerV1Node, { ServerV1NodeType } from "./nodes/server-node";
+import MatchOverviewDialog from "@/components/tournaments/match/live/match-overview-dialog";
 import { GraphActionsContext, MatchConfigsContext } from "./graph-context";
 import ContextMenu from "./graph-context-menu";
 import { useAutosavePositions } from "./use-autosave-positions";
@@ -173,8 +174,9 @@ export default function CompetitionGraph({
   const [configRows] = useTable(tables.competitionMatchConfigs({ competitionId: competition.id }));
   const matchConfigs = useMemo(() => new Map(configRows.map((c) => [c.id, c])), [configRows]);
 
+  const [openMatchId, setOpenMatchId] = useState<number | null>(null);
   const graphActions = useMemo(
-    () => ({ openEdgeSettings: setSettingsEdgeId, openNodeSettings: setSettingsNodeId }),
+    () => ({ openEdgeSettings: setSettingsEdgeId, openNodeSettings: setSettingsNodeId, openMatch: setOpenMatchId }),
     [],
   );
 
@@ -256,6 +258,7 @@ export default function CompetitionGraph({
           closeModal={() => setSettingsNodeId(null)}
         />
       </Modal>
+      <MatchOverviewDialog matchId={openMatchId} onClose={() => setOpenMatchId(null)} />
     </div>
     </MatchConfigsContext.Provider>
     </GraphActionsContext.Provider>

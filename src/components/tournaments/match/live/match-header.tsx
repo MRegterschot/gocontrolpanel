@@ -21,7 +21,7 @@ function Stat({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-export default function MatchHeader({ match }: { match: MatchV1 }) {
+export default function MatchHeader({ match, embedded }: { match: MatchV1; embedded?: boolean }) {
   const [competitions] = useTable(tables.competition({ competitionId: match.parentId }));
   const [states] = useTable(tables.matchState({ matchId: match.id }));
   // Map rows carry no match id, which is fine as only this match's map is subscribed here.
@@ -31,10 +31,12 @@ export default function MatchHeader({ match }: { match: MatchV1 }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <Link href={`/competitions/${match.parentId}`} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground w-fit">
-        <IconArrowLeft className="size-4" />
-        {competition?.name ?? "Competition"}
-      </Link>
+      {!embedded && (
+        <Link href={`/competitions/${match.parentId}`} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground w-fit">
+          <IconArrowLeft className="size-4" />
+          {competition?.name ?? "Competition"}
+        </Link>
+      )}
       <div className="flex items-center gap-3">
         <h1 className="text-2xl font-bold">{match.name}</h1>
         <MatchStatusBadge status={match.status} />
