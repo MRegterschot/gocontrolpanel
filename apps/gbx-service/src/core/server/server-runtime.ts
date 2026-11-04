@@ -615,13 +615,22 @@ export class ServerRuntime {
     this.state.theme = server.theme;
     this.state.plugins = server.plugins;
 
+    // Callbacks start before the sync below has loaded the map and players, so hold them
+    // until it finishes; otherwise early finishes are dropped as "no active map"
+    let queued: [string, unknown][] | null = [];
     // Late callbacks from a replaced session must not touch the new state
     session.onCallback((method, data) => {
-      if (session === this.session) this.onCallback(method, data);
+      if (session !== this.session) return;
+      if (queued) queued.push([method, data]);
+      else this.onCallback(method, data);
     });
 
     await this.liveSync.syncMap();
     await this.liveSync.syncLiveInfo();
+
+    const held = queued;
+    queued = null;
+    for (const [method, data] of held) this.onCallback(method, data);
   }
 
   private onCallback(method: string, data: unknown): void {

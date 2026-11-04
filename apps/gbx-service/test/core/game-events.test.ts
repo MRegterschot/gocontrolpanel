@@ -1,8 +1,21 @@
 import type { Scores, Waypoint } from "@tmcontrolpanel/shared";
 import { describe, expect, it, vi } from "vitest";
-import { createHarness, MAP_B, player, serverRecord } from "../fakes/harness";
+import { flush } from "../fakes/clock";
+import {
+  createHarness,
+  MAP_A,
+  MAP_B,
+  player,
+  serverRecord,
+} from "../fakes/harness";
+import { silentLogger } from "../fakes/logger";
 
-function waypoint(login: string, racetime: number, isendrace: boolean, checkpointinrace = 2): Waypoint {
+function waypoint(
+  login: string,
+  racetime: number,
+  isendrace: boolean,
+  checkpointinrace = 2,
+): Waypoint {
   return {
     time: 0,
     login,
@@ -21,7 +34,11 @@ function waypoint(login: string, racetime: number, isendrace: boolean, checkpoin
   };
 }
 
-function scores(section: string, players: Partial<Scores["players"][number]>[], responseid = ""): Scores {
+function scores(
+  section: string,
+  players: Partial<Scores["players"][number]>[],
+  responseid = "",
+): Scores {
   return {
     responseid,
     section,
@@ -52,7 +69,9 @@ function scores(section: string, players: Partial<Scores["players"][number]>[], 
 describe("players", () => {
   it("tracks a connecting player and announces them", async () => {
     const h = await createHarness({
-      server: { chat: { ...serverRecord().chat, connectMessage: "Welcome {nickName}" } },
+      server: {
+        chat: { ...serverRecord().chat, connectMessage: "Welcome {nickName}" },
+      },
     });
     h.world.players.push(player("p1"));
     const connected = vi.fn();
@@ -60,10 +79,16 @@ describe("players", () => {
 
     await h.callback("ManiaPlanet.PlayerConnect", ["p1", false]);
 
-    expect(connected).toHaveBeenCalledWith(expect.objectContaining({ login: "p1", nickName: "Nick p1" }));
+    expect(connected).toHaveBeenCalledWith(
+      expect.objectContaining({ login: "p1", nickName: "Nick p1" }),
+    );
     expect(h.players.users.get("p1")).toBe("Nick p1");
-    expect(h.runtime.state.liveInfo.activeRound.players.p1).toMatchObject({ checkpoint: 0 });
-    expect(h.session.callsTo("ChatSendServerMessage").map((c) => c.params[0])).toContain("Welcome Nick p1");
+    expect(h.runtime.state.liveInfo.activeRound.players.p1).toMatchObject({
+      checkpoint: 0,
+    });
+    expect(
+      h.session.callsTo("ChatSendServerMessage").map((c) => c.params[0]),
+    ).toContain("Welcome Nick p1");
   });
 
   it("still tracks the player when the database is down", async () => {
@@ -83,21 +108,29 @@ describe("players", () => {
   it("marks disconnecting players and says goodbye", async () => {
     const h = await createHarness({
       players: [player("p1")],
-      server: { chat: { ...serverRecord().chat, disconnectMessage: "Bye {nickName}" } },
+      server: {
+        chat: { ...serverRecord().chat, disconnectMessage: "Bye {nickName}" },
+      },
     });
     await h.callback("ManiaPlanet.PlayerDisconnect", ["p1", ""]);
 
     expect(h.runtime.state.findActivePlayer("p1")).toBeUndefined();
     expect(h.runtime.state.getPlayerRound("p1")?.connected).toBe(false);
-    expect(h.session.callsTo("ChatSendServerMessage").map((c) => c.params[0])).toContain("Bye Nick p1");
+    expect(
+      h.session.callsTo("ChatSendServerMessage").map((c) => c.params[0]),
+    ).toContain("Bye Nick p1");
   });
 
   it("moves players between racing and spectating on info changes", async () => {
     const h = await createHarness({ players: [player("p1")] });
-    await h.callback("ManiaPlanet.PlayerInfoChanged", [player("p1", { SpectatorStatus: 1 })]);
+    await h.callback("ManiaPlanet.PlayerInfoChanged", [
+      player("p1", { SpectatorStatus: 1 }),
+    ]);
     expect(h.runtime.state.liveInfo.activeRound.players.p1).toBeUndefined();
 
-    await h.callback("ManiaPlanet.PlayerInfoChanged", [player("p1", { NickName: "New" })]);
+    await h.callback("ManiaPlanet.PlayerInfoChanged", [
+      player("p1", { NickName: "New" }),
+    ]);
     expect(h.runtime.state.liveInfo.activeRound.players.p1).toBeDefined();
     expect(h.runtime.state.findActivePlayer("p1")?.nickName).toBe("New");
   });
@@ -155,12 +188,17 @@ describe("race events", () => {
     const checkpoint = vi.fn();
     h.runtime.events.on("live-checkpoint", checkpoint);
     await h.script("Trackmania.Event.WayPoint", waypoint("p1", 5000, false, 0));
-    expect(h.runtime.state.liveInfo.activeRound.players.p1).toMatchObject({ checkpoint: 1, hasFinished: false });
+    expect(h.runtime.state.liveInfo.activeRound.players.p1).toMatchObject({
+      checkpoint: 1,
+      hasFinished: false,
+    });
     expect(checkpoint).toHaveBeenCalled();
   });
 
   it("emits personal bests in time attack only when faster", async () => {
-    const h = await createHarness({ scriptName: "Trackmania/TM_TimeAttack_Online.Script.txt" });
+    const h = await createHarness({
+      scriptName: "Trackmania/TM_TimeAttack_Online.Script.txt",
+    });
     h.runtime.state.patchPlayer("p1", { login: "p1", bestTime: 30000 });
     const pb = vi.fn();
     h.runtime.events.on("personalBest", pb);
@@ -175,18 +213,31 @@ describe("race events", () => {
 
   it("marks give ups under the right login", async () => {
     const h = await createHarness();
-    await h.script("Trackmania.Event.GiveUp", { time: 0, login: "p1", accountid: "a" });
-    expect(h.runtime.state.liveInfo.activeRound.players.p1).toMatchObject({ login: "p1", hasGivenUp: true });
-    expect(h.runtime.state.liveInfo.activeRound.players.undefined).toBeUndefined();
+    await h.script("Trackmania.Event.GiveUp", {
+      time: 0,
+      login: "p1",
+      accountid: "a",
+    });
+    expect(h.runtime.state.liveInfo.activeRound.players.p1).toMatchObject({
+      login: "p1",
+      hasGivenUp: true,
+    });
+    expect(
+      h.runtime.state.liveInfo.activeRound.players.undefined,
+    ).toBeUndefined();
   });
 });
 
 describe("rounds and scores", () => {
   it("counts rounds outside warm-up and rebuilds the active round", async () => {
-    const h = await createHarness({ players: [player("p1"), player("spec", { SpectatorStatus: 1 })] });
+    const h = await createHarness({
+      players: [player("p1"), player("spec", { SpectatorStatus: 1 })],
+    });
     await h.script("Maniaplanet.StartRound_Start");
     expect(h.runtime.state.roundNumber).toBe(1);
-    expect(Object.keys(h.runtime.state.liveInfo.activeRound.players)).toEqual(["p1"]);
+    expect(Object.keys(h.runtime.state.liveInfo.activeRound.players)).toEqual([
+      "p1",
+    ]);
 
     await h.script("Trackmania.WarmUp.Start");
     await h.script("Maniaplanet.StartRound_Start");
@@ -198,7 +249,10 @@ describe("rounds and scores", () => {
     const endRound = vi.fn();
     h.runtime.events.on("live-endRound", endRound);
 
-    await h.script("Trackmania.Scores", scores("EndRound", [{ login: "p1", matchpoints: 50, roundpoints: 10 }]));
+    await h.script(
+      "Trackmania.Scores",
+      scores("EndRound", [{ login: "p1", matchpoints: 50, roundpoints: 10 }]),
+    );
 
     expect(h.runtime.state.getPlayerRound("p1")).toMatchObject({
       login: "p1",
@@ -207,7 +261,9 @@ describe("rounds and scores", () => {
       finalist: true,
     });
     expect(endRound).toHaveBeenCalled();
-    expect(h.session.scriptCalls.at(-1)?.method).toBe("Maniaplanet.Pause.GetStatus");
+    expect(h.session.scriptCalls.at(-1)?.method).toBe(
+      "Maniaplanet.Pause.GetStatus",
+    );
   });
 
   it("saves round results on PreEndRound", async () => {
@@ -215,10 +271,17 @@ describe("rounds and scores", () => {
     await h.script("Maniaplanet.StartRound_Start");
     await h.script(
       "Trackmania.Scores",
-      scores("PreEndRound", [{ login: "p1", prevracetime: 31000, roundpoints: 6 }]),
+      scores("PreEndRound", [
+        { login: "p1", prevracetime: 31000, roundpoints: 6 },
+      ]),
     );
     expect(h.records.saved).toEqual([
-      expect.objectContaining({ login: "p1", time: 31000, points: 6, round: 1 }),
+      expect.objectContaining({
+        login: "p1",
+        time: 31000,
+        points: 6,
+        round: 1,
+      }),
     ]);
   });
 
@@ -226,27 +289,50 @@ describe("rounds and scores", () => {
     const h = await createHarness({ players: [player("p1")] });
     await h.script(
       "Trackmania.Scores",
-      scores("", [{ login: "p1", accountid: "acc-1", matchpoints: 20, name: "P1" }], "tmcp"),
+      scores(
+        "",
+        [{ login: "p1", accountid: "acc-1", matchpoints: 20, name: "P1" }],
+        "tmcp",
+      ),
     );
-    expect(h.runtime.state.getPlayerRound("p1")).toMatchObject({ accountId: "acc-1", matchPoints: 20, connected: true });
-    expect(h.runtime.state.liveInfo.activeRound.players.p1.accountId).toBe("acc-1");
+    expect(h.runtime.state.getPlayerRound("p1")).toMatchObject({
+      accountId: "acc-1",
+      matchPoints: 20,
+      connected: true,
+    });
+    expect(h.runtime.state.liveInfo.activeRound.players.p1.accountId).toBe(
+      "acc-1",
+    );
   });
 
   it("undoes the round count when a pause toggles mid-match", async () => {
     const h = await createHarness();
     h.runtime.state.roundNumber = 3;
-    await h.script("Maniaplanet.Pause.Status", { responseid: "tmcp", available: true, active: true });
+    await h.script("Maniaplanet.Pause.Status", {
+      responseid: "tmcp",
+      available: true,
+      active: true,
+    });
     expect(h.runtime.state.roundNumber).toBe(2);
-    expect(h.runtime.state.liveInfo).toMatchObject({ isPaused: true, pauseAvailable: true });
+    expect(h.runtime.state.liveInfo).toMatchObject({
+      isPaused: true,
+      pauseAvailable: true,
+    });
 
-    await h.script("Maniaplanet.Pause.Status", { responseid: "someone-else", available: true, active: false });
+    await h.script("Maniaplanet.Pause.Status", {
+      responseid: "someone-else",
+      available: true,
+      active: false,
+    });
     expect(h.runtime.state.liveInfo.isPaused).toBe(true);
   });
 
   it("marks eliminated players by account id", async () => {
     const h = await createHarness();
     h.runtime.state.patchPlayer("p1", { login: "p1", accountId: "acc-1" });
-    await h.script("Trackmania.Knockout.Elimination", { accountids: ["acc-1"] });
+    await h.script("Trackmania.Knockout.Elimination", {
+      accountids: ["acc-1"],
+    });
     expect(h.runtime.state.getPlayerRound("p1")?.eliminated).toBe(true);
   });
 });
@@ -276,12 +362,19 @@ describe("maps and matches", () => {
 
   it("queues the next jukebox map on the podium", async () => {
     const h = await createHarness();
-    h.jukebox.queues.set("server-1", [{ fileName: "Campaigns/MapB.Map.Gbx" }, { fileName: "Other.Map.Gbx" }]);
+    h.jukebox.queues.set("server-1", [
+      { fileName: "Campaigns/MapB.Map.Gbx" },
+      { fileName: "Other.Map.Gbx" },
+    ]);
 
     await h.script("Maniaplanet.Podium_Start");
 
-    expect(h.session.callsTo("ChooseNextMap")[0].params).toEqual(["Campaigns/MapB.Map.Gbx"]);
-    expect(h.jukebox.queues.get("server-1")).toEqual([{ fileName: "Other.Map.Gbx" }]);
+    expect(h.session.callsTo("ChooseNextMap")[0].params).toEqual([
+      "Campaigns/MapB.Map.Gbx",
+    ]);
+    expect(h.jukebox.queues.get("server-1")).toEqual([
+      { fileName: "Other.Map.Gbx" },
+    ]);
   });
 
   it("keeps the jukebox entry when the server rejects it", async () => {
@@ -328,16 +421,26 @@ describe("chat", () => {
     const chat = vi.fn();
     h.runtime.events.on("playerChat", chat);
     await h.chat("p1", "gg");
-    expect(chat).toHaveBeenCalledWith(expect.objectContaining({ Login: "p1", Text: "gg", Name: "Nick p1" }));
+    expect(chat).toHaveBeenCalledWith(
+      expect.objectContaining({ Login: "p1", Text: "gg", Name: "Nick p1" }),
+    );
   });
 
   it("re-sends chat in the configured format with manual routing", async () => {
     const h = await createHarness({
       players: [player("p1")],
-      server: { chat: { ...serverRecord().chat, manualRouting: true, messageFormat: "<{nickName}> {message}" } },
+      server: {
+        chat: {
+          ...serverRecord().chat,
+          manualRouting: true,
+          messageFormat: "<{nickName}> {message}",
+        },
+      },
     });
     await h.chat("p1", "gg");
-    expect(h.session.callsTo("ChatSendServerMessage").at(-1)?.params).toEqual(["<Nick p1> gg"]);
+    expect(h.session.callsTo("ChatSendServerMessage").at(-1)?.params).toEqual([
+      "<Nick p1> gg",
+    ]);
   });
 
   it("forwards unformatted chat with manual routing and no format", async () => {
@@ -346,12 +449,65 @@ describe("chat", () => {
       server: { chat: { ...serverRecord().chat, manualRouting: true } },
     });
     await h.chat("p1", "gg");
-    expect(h.session.callsTo("ChatForwardToLogin")[0].params).toEqual(["gg", "p1", ""]);
+    expect(h.session.callsTo("ChatForwardToLogin")[0].params).toEqual([
+      "gg",
+      "p1",
+      "",
+    ]);
   });
 
   it("answers /help with the plugin list", async () => {
     const h = await createHarness({ players: [player("p1")] });
     await h.chat("p1", "/help");
-    expect(h.session.callsTo("ChatSendServerMessageToLogin")[0].params[1]).toBe("p1");
+    expect(h.session.callsTo("ChatSendServerMessageToLogin")[0].params[1]).toBe(
+      "p1",
+    );
+  });
+});
+
+describe("connect-time races", () => {
+  it("keeps a finish that arrives while the connect sync is still running", async () => {
+    let emitted = 0;
+    const h = await createHarness({
+      players: [player("p1")],
+      configure: (session) =>
+        session.respond("GetCurrentMapInfo", () => {
+          // A real server keeps sending callbacks while the controller syncs
+          if (emitted++ === 0)
+            session.emitScript(
+              "Trackmania.Event.WayPoint",
+              waypoint("p1", 42000, true),
+            );
+          return MAP_A;
+        }),
+    });
+    await flush();
+
+    expect(h.records.saved).toEqual([
+      expect.objectContaining({
+        login: "p1",
+        time: 42000,
+        mapUid: "map-a-uid",
+      }),
+    ]);
+  });
+
+  it("ignores a player who left before their connect was handled", async () => {
+    const errors = vi.spyOn(silentLogger, "error");
+    const h = await createHarness({
+      configure: (session) =>
+        session.respond("GetPlayerInfo", () => {
+          throw new Error("Login unknown.");
+        }),
+    });
+    const connects = vi.fn();
+    h.runtime.events.on("playerConnect", connects);
+
+    await h.callback("ManiaPlanet.PlayerConnect", ["gone", false]);
+
+    expect(errors).not.toHaveBeenCalled();
+    errors.mockRestore();
+    expect(connects).not.toHaveBeenCalled();
+    expect(h.runtime.state.findActivePlayer("gone")).toBeUndefined();
   });
 });
