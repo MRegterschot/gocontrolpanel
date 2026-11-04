@@ -33,7 +33,7 @@ import type { Clock, PlayerRepository } from "../ports";
 import type { Jukebox } from "./jukebox";
 import { RESPONSE_ID, type LiveSync } from "./live-sync";
 import type { MatchRecorder } from "./match-recorder";
-import { fetchPlayerInfo } from "./players";
+import { fetchPlayerInfo, isLoginUnknown } from "./players";
 import type { ServerEventMap } from "./server-events";
 
 export interface GameEventHandlerDeps {
@@ -62,7 +62,10 @@ export class GameEventHandler {
     try {
       await this.dispatch(event);
     } catch (error) {
-      this.deps.log.error({ err: error, event: event.type }, "Failed to handle game event");
+      this.deps.log.error(
+        { err: error, event: event.type },
+        "Failed to handle game event",
+      );
     }
   }
 
@@ -128,7 +131,17 @@ export class GameEventHandler {
 
   private async onPlayerConnect(login: string): Promise<void> {
     const { state, bus, log } = this.deps;
-    const player = await fetchPlayerInfo(this.deps.gbx, login);
+    let player: PlayerInfo;
+    try {
+      player = await fetchPlayerInfo(this.deps.gbx, login);
+    } catch (error) {
+      // The player left again before the lookup ran; their disconnect follows
+      if (isLoginUnknown(error)) {
+        log.debug({ login }, "Player left before connect was handled");
+        return;
+      }
+      throw error;
+    }
 
     try {
       await this.deps.players.upsert(player);
@@ -176,7 +189,13 @@ export class GameEventHandler {
       try {
         player = await this.findOrFetchPlayer(login);
       } catch {
-        player = { login, nickName: login, playerId: 0, spectatorStatus: 0, teamId: 0 };
+        player = {
+          login,
+          nickName: login,
+          playerId: 0,
+          spectatorStatus: 0,
+          teamId: 0,
+        };
       }
       await this.deps.chat.announcePlayerDisconnect(player);
     }
@@ -275,13 +294,17 @@ export class GameEventHandler {
     this.deps.bus.emit("playerManialinkPageAnswer", answer);
     this.deps.actions
       .dispatch(answer)
-      .catch((error) => this.deps.log.error({ err: error }, "Action dispatch failed"));
+      .catch((error) =>
+        this.deps.log.error({ err: error }, "Action dispatch failed"),
+      );
   }
 
   private async onPodiumStart(): Promise<void> {
     this.deps.jukebox
       .queueNextMap()
-      .catch((error) => this.deps.log.error({ err: error }, "Failed to queue jukebox map"));
+      .catch((error) =>
+        this.deps.log.error({ err: error }, "Failed to queue jukebox map"),
+      );
     await this.deps.liveSync.prepareNextMode();
   }
 
@@ -289,7 +312,9 @@ export class GameEventHandler {
     if (waypoint.isendrace) {
       this.deps.recorder
         .recordFinish(waypoint)
-        .catch((error) => this.deps.log.error({ err: error }, "Failed to record finish"));
+        .catch((error) =>
+          this.deps.log.error({ err: error }, "Failed to record finish"),
+        );
       this.onFinish(waypoint);
     } else {
       this.onCheckpoint(waypoint);
@@ -423,7 +448,9 @@ export class GameEventHandler {
   private onPreEndRound(scores: Scores): void {
     this.deps.recorder
       .recordRound(scores)
-      .catch((error) => this.deps.log.error({ err: error }, "Failed to record round"));
+      .catch((error) =>
+        this.deps.log.error({ err: error }, "Failed to record round"),
+      );
   }
 
   // Full scoreboard requested by us (responseid) after connect/BeginMatch
@@ -512,7 +539,10 @@ export class GameEventHandler {
 
   private onWarmUpToggle(active: boolean): void {
     this.deps.state.liveInfo.isWarmUp = active;
-    this.deps.bus.emit(active ? "warmUpStart" : "warmUpEnd", this.deps.state.liveInfo);
+    this.deps.bus.emit(
+      active ? "warmUpStart" : "warmUpEnd",
+      this.deps.state.liveInfo,
+    );
   }
 
   private async onWarmUpStartRound(warmUp: WarmUp): Promise<void> {
