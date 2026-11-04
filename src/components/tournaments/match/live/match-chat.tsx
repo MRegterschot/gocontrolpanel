@@ -23,7 +23,9 @@ export default function MatchChat({ match }: { match: MatchV1 }) {
   const send = useServerAction(useReducer(reducers.unstableMatchChatMessage), "Failed to send message");
 
   const bottom = useRef<HTMLDivElement>(null);
-  useEffect(() => bottom.current?.scrollIntoView({ block: "nearest" }), [messages.length]);
+  useEffect(() => {
+    bottom.current?.scrollIntoView({ block: "nearest" });
+  }, [messages.length]);
 
   return (
     <Card className="gap-3 px-4 py-4 h-[32rem]">
