@@ -1,6 +1,7 @@
 # Extra node: web + GBX workers only. See docs/backup-host.md.
 # Coolify generates domains only; copy all shared secrets from the existing deployment.
-# Set STACK_NAME to a unique alias on the proxy network.
+# Set STACK_NAME to a unique alias on the proxy network; internal URLs use it too, since a
+# bare service name would also resolve to other stacks on that network.
 services:
   tmcontrolpanel:
     image: marijnregterschot/tmcontrolpanel${IMAGE_SUFFIX:-}:${IMAGE_TAG:-latest}
@@ -26,11 +27,13 @@ services:
       - NADEO_REDIRECT_URI=${PANEL_PUBLIC_URL:-${SERVICE_URL_TMCONTROLPANEL}}/api/auth/callback/nadeo
       - HETZNER_KEY=${HETZNER_KEY:?Copy HETZNER_KEY from the existing deployment}
       - HETZNER_KEY_PREVIOUS=${HETZNER_KEY_PREVIOUS:-}
-      - GBX_SERVICE_URL=http://gbx-service:3100
+      - GBX_SERVICE_URL=http://gbx-service-${STACK_NAME:-node-b}:3100
       - GBX_SERVICE_WS_URL=${GBX_SERVICE_WS_URL:-wss://${SERVICE_FQDN_GBX_SERVICE}}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
     networks:
       default:
+        aliases:
+          - tmcontrolpanel-${STACK_NAME:-node-b}
       npm:
         aliases:
           - tmcontrolpanel-${STACK_NAME:-node-b}
@@ -70,9 +73,11 @@ services:
       - GBX_NODE_ID=${GBX_NODE_ID:?Set a unique GBX_NODE_ID}
       - GBX_WORKERS=${GBX_WORKERS:-1}
       - GBX_LEASE_TTL_MS=${GBX_LEASE_TTL_MS:-15000}
-      - PANEL_INTERNAL_URL=http://tmcontrolpanel:3000
+      - PANEL_INTERNAL_URL=http://tmcontrolpanel-${STACK_NAME:-node-b}:3000
     networks:
       default:
+        aliases:
+          - gbx-service-${STACK_NAME:-node-b}
       npm:
         aliases:
           - gbx-service-${STACK_NAME:-node-b}

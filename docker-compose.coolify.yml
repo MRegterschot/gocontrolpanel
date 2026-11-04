@@ -6,6 +6,8 @@
 # SECRETS_KEY and HETZNER_KEY are generated: don't recreate the resource, or stored keys become unreadable.
 # NPM reaches the web and gbx containers on its network as tmcontrolpanel-<STACK_NAME>:3000 and
 # gbx-service-<STACK_NAME>:3100; set STACK_NAME per environment so the aliases don't collide.
+# Internal URLs use the same per-stack names (db/redis too): Docker resolves a service name on
+# every network a container joins, so a bare "gbx-service" could reach another stack on the NPM network.
 services:
   tmcontrolpanel:
     image: marijnregterschot/tmcontrolpanel:${IMAGE_TAG:-latest}
@@ -22,10 +24,10 @@ services:
       - NADEO_SERVER_LOGIN=${NADEO_SERVER_LOGIN:?}
       - NADEO_SERVER_PASSWORD=${NADEO_SERVER_PASSWORD:?}
       - NADEO_CONTACT=${NADEO_CONTACT:-TMControlPanel}
-      - DATABASE_URL=mysql://tmcontrolpanel:${SERVICE_PASSWORD_MARIADB}@db:3306/tmcontrolpanel
-      - REDIS_URI=redis://:${SERVICE_PASSWORD_REDIS}@redis:6379
+      - DATABASE_URL=mysql://tmcontrolpanel:${SERVICE_PASSWORD_MARIADB}@db-${STACK_NAME:-production}:3306/tmcontrolpanel
+      - REDIS_URI=redis://:${SERVICE_PASSWORD_REDIS}@redis-${STACK_NAME:-production}:6379
       - HETZNER_KEY=${SERVICE_PASSWORD_64_HETZNER}
-      - GBX_SERVICE_URL=http://gbx-service:3100
+      - GBX_SERVICE_URL=http://gbx-service-${STACK_NAME:-production}:3100
       - GBX_SERVICE_WS_URL=wss://${SERVICE_FQDN_GBX_SERVICE}
       - GBX_SERVICE_TOKEN=${SERVICE_PASSWORD_64_GBXTOKEN}
       - WS_TICKET_SECRET=${SERVICE_PASSWORD_64_WSTICKET}
@@ -35,6 +37,8 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-info}
     networks:
       default:
+        aliases:
+          - tmcontrolpanel-${STACK_NAME:-production}
       npm:
         aliases:
           - tmcontrolpanel-${STACK_NAME:-production}
@@ -59,8 +63,8 @@ services:
     stop_grace_period: 20s
     environment:
       - SERVICE_URL_GBX_SERVICE_3100
-      - DATABASE_URL=mysql://tmcontrolpanel:${SERVICE_PASSWORD_MARIADB}@db:3306/tmcontrolpanel
-      - REDIS_URI=redis://:${SERVICE_PASSWORD_REDIS}@redis:6379
+      - DATABASE_URL=mysql://tmcontrolpanel:${SERVICE_PASSWORD_MARIADB}@db-${STACK_NAME:-production}:3306/tmcontrolpanel
+      - REDIS_URI=redis://:${SERVICE_PASSWORD_REDIS}@redis-${STACK_NAME:-production}:6379
       - SECRETS_KEY=${SERVICE_PASSWORD_64_SECRETS}
       - GBX_SERVICE_TOKEN=${SERVICE_PASSWORD_64_GBXTOKEN}
       - WS_TICKET_SECRET=${SERVICE_PASSWORD_64_WSTICKET}
@@ -71,7 +75,7 @@ services:
       # Worker processes for the GBX connections; 0 runs everything in one process
       - GBX_WORKERS=${GBX_WORKERS:-1}
       - GBX_NODE_ID=${GBX_NODE_ID:-}
-      - PANEL_INTERNAL_URL=http://tmcontrolpanel:3000
+      - PANEL_INTERNAL_URL=http://tmcontrolpanel-${STACK_NAME:-production}:3000
       - PANEL_INTERNAL_TOKEN=${SERVICE_PASSWORD_64_PANELTOKEN}
       - NADEO_SERVER_LOGIN=${NADEO_SERVER_LOGIN:?}
       - NADEO_SERVER_PASSWORD=${NADEO_SERVER_PASSWORD:?}
@@ -81,6 +85,8 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-info}
     networks:
       default:
+        aliases:
+          - gbx-service-${STACK_NAME:-production}
       npm:
         aliases:
           - gbx-service-${STACK_NAME:-production}
@@ -102,6 +108,10 @@ services:
       - MARIADB_DATABASE=tmcontrolpanel
     volumes:
       - db-data:/var/lib/mysql
+    networks:
+      default:
+        aliases:
+          - db-${STACK_NAME:-production}
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
@@ -116,6 +126,10 @@ services:
     command: ["sh", "-c", 'exec redis-server --requirepass "$$REDIS_PASSWORD"']
     volumes:
       - redis-data:/data
+    networks:
+      default:
+        aliases:
+          - redis-${STACK_NAME:-production}
     healthcheck:
       test: ["CMD-SHELL", 'redis-cli -a "$$REDIS_PASSWORD" ping | grep -q PONG']
       interval: 10s

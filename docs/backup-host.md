@@ -7,7 +7,7 @@ For a Contabo primary and a Hetzner Cloud backup, check availability before orde
 ## Architecture
 
 - Each host runs a web container and a GBX front with `GBX_WORKERS` worker processes.
-- Each web container calls its own front at `http://gbx-service:3100`.
+- Each web container calls its own front, at `http://gbx-service-<STACK_NAME>:3100` in the Coolify files. Internal names are per stack, because a bare service name also resolves to other stacks that share the proxy network.
 - Both hosts use the same database and Redis, reached over a private mesh. See the [database host guide](database-host.md) to move them off the primary.
 - Redis leases give each dedicated server one worker owner across both hosts.
 - Sessions, Codriver state and the Nadeo token cache live in Redis; web replicas are stateless.
