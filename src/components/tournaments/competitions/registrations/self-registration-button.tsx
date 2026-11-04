@@ -15,11 +15,10 @@ export default function SelfRegistrationButton({
   const registerPlayer = useReducer(reducers.registerPlayer);
   const unregisterPlayer = useReducer(reducers.unregisterPlayer);
   const [[me]] = useTable(tables.myUser);
-  const [players] = useTable(
-    tables.tabRegisterationPlayer.where((r) => r.registrationId.eq(registrationId)),
-  );
+  const [players] = useTable(tables.registrationPlayers({ registrationId }));
 
-  const registered = players.some((p) => p.userId === me?.id);
+  // The client cache merges the rows of a view for all args, so they are filtered by registration.
+  const registered = players.some((p) => p.registrationId === registrationId && p.userId === me?.id);
 
   async function toggle() {
     try {

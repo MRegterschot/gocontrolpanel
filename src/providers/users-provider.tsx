@@ -9,7 +9,7 @@ const UsersContext = createContext<ReadonlyMap<number, UserV1>>(new Map());
 
 // The user table is global, so it is subscribed to once for the whole session.
 export default function UsersProvider({ children }: { children: React.ReactNode }) {
-  const [rows] = useTable(tables.tabUser);
+  const [rows] = useTable(tables.users);
   const users = useMemo(() => new Map(rows.map((u) => [u.id, u])), [rows]);
 
   return <UsersContext.Provider value={users}>{children}</UsersContext.Provider>;

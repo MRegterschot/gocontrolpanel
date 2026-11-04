@@ -15,6 +15,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { reducers, tables } from "@/lib/server-manager";
 import { getErrorMessage } from "@/lib/utils";
+import { useUsers } from "@/providers/users-provider";
 import { IconCalendar, IconUser } from "@tabler/icons-react";
 import { MoreHorizontal } from "lucide-react";
 import { useState } from "react";
@@ -37,7 +38,7 @@ export default function TournamentInfo({
   );
 
   const tournament = tournaments[0];
-  const [[creator]] = useTable(tables.tabUser.where((u) => u.id.eq(tournament?.userId ?? 0)));
+  const creator = useUsers().get(tournament?.userId ?? 0);
 
   if (!isReady) {
     return null;

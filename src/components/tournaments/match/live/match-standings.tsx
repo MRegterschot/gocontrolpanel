@@ -19,11 +19,10 @@ import RoundSplits from "./round-splits";
 
 const TOTAL = "total";
 
-// Mounted only while a row is expanded, so just one player's actions are subscribed.
+// Mounted only while a row is expanded, so the actions of one round are only loaded when needed.
 function PlayerSplits({ matchId, round, userId }: { matchId: number; round: number; userId: number }) {
-  const [[ext]] = useTable(
-    tables.tabMatchRoundPlayerExt.where((r) => r.matchId.eq(matchId).and(r.round.eq(round)).and(r.userId.eq(userId))),
-  );
+  const [rows] = useTable(tables.matchRoundPlayerActions({ matchId, round }));
+  const ext = rows.find((r) => r.matchId === matchId && r.round === round && r.userId === userId);
   return <RoundSplits actions={ext?.roundActions ?? []} />;
 }
 
@@ -54,7 +53,9 @@ function ReplayButton({ match, round }: { match: MatchV1; round: number }) {
 export default function MatchStandings({ match }: { match: MatchV1 }) {
   const users = useUsers();
   const canEdit = hasPermission(useMyPermissions(match.parentId), OWNER);
-  const [entries] = useTable(tables.tabMatchRoundPlayer.where((r) => r.matchId.eq(match.id)));
+  // The client cache merges the rows of a view for all args, so they are filtered by match.
+  const [rows] = useTable(tables.matchRoundPlayers({ matchId: match.id }));
+  const entries = rows.filter((e) => e.matchId === match.id);
   const [view, setView] = useState(TOTAL);
   const [expanded, setExpanded] = useState<number | null>(null);
 

@@ -16,8 +16,9 @@ import { useMyPermissions } from "../../competitions/permissions/use-competition
 export default function MatchChat({ match }: { match: MatchV1 }) {
   const users = useUsers();
   const canSend = hasPermission(useMyPermissions(match.parentId), PERMISSION.MATCH_SEND_CHAT);
-  const [rows] = useTable(tables.tabMatchChat.where((r) => r.matchId.eq(match.id)));
-  const messages = [...rows].sort((a, b) => a.id - b.id);
+  // The client cache merges the rows of a view for all args, so they are filtered by match.
+  const [rows] = useTable(tables.matchChat({ matchId: match.id }));
+  const messages = rows.filter((m) => m.matchId === match.id).sort((a, b) => a.id - b.id);
   const [message, setMessage] = useState("");
   const send = useServerAction(useReducer(reducers.unstableMatchChatMessage), "Failed to send message");
 
