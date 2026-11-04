@@ -3,13 +3,15 @@ import {
   getAccessibleServers,
   getAdminServerIds,
   hasPermission,
+  type LiveSnapshot,
   serverPermissions,
   type SessionClaims,
   type WsMessage,
 } from "@tmcontrolpanel/shared";
+import type { ServerGateway } from "../../core/cluster/gateway";
+import type { ForwardedServerEvent } from "../../core/cluster/protocol";
+import { AppError } from "../../core/errors";
 import type { ServerEventMap } from "../../core/server/server-events";
-import type { ServerRegistry } from "../../core/server/server-registry";
-import type { ServerRuntime } from "../../core/server/server-runtime";
 
 export const CloseCode = {
   // The socket reached its lifetime; the client reconnects with a fresh ticket
@@ -22,7 +24,7 @@ export const CloseCode = {
 export interface ChannelInput {
   claims: SessionClaims;
   params: Record<string, string>;
-  registry: ServerRegistry;
+  gateway: ServerGateway;
   send: (message: WsMessage<string, unknown>) => void;
   close: (code: number, reason: string) => void;
 }
@@ -33,7 +35,7 @@ export type ChannelResult =
 
 export interface ChannelDefinition {
   path: string;
-  open(input: ChannelInput): ChannelResult;
+  open(input: ChannelInput): Promise<ChannelResult>;
 }
 
 const denied = (code: number, reason: string): ChannelResult => ({
@@ -46,31 +48,9 @@ function combine(cleanups: (() => void)[]): () => void {
   return () => cleanups.forEach((cleanup) => cleanup());
 }
 
-// Closes per-server sockets when the server is removed from the service
-function closeOnRemoval(input: ChannelInput, serverId: string): () => void {
-  return input.registry.events.on("runtimeRemoved", (removed) => {
-    if (removed === serverId) input.close(1001, "Server removed");
-  });
-}
-
-function forward<K extends keyof ServerEventMap>(
-  runtime: ServerRuntime,
-  event: K,
-  toMessage: (...args: ServerEventMap[K]) => WsMessage<string, unknown>,
-  send: ChannelInput["send"],
-): () => void {
-  return runtime.events.on(event, (...args) => send(toMessage(...args)));
-}
-
 // Access rules, kept pure so they can be tested on their own
 export const access = {
   serversChannelIds: (claims: SessionClaims) => getAccessibleServers(claims),
-  clientsScope(claims: SessionClaims): "all" | Set<string> {
-    if (hasPermission(claims, ["servers:clients:view"])) return "all";
-    return new Set(
-      claims.servers.filter((s) => s.role === "Admin").map((s) => s.id),
-    );
-  },
   notificationServerIds: (claims: SessionClaims) => getAdminServerIds(claims),
   canViewServer,
   canViewPlayers: (claims: SessionClaims, serverId: string) =>
@@ -79,9 +59,14 @@ export const access = {
 
 const serversChannel: ChannelDefinition = {
   path: "/ws/servers",
-  open({ claims, registry, send }) {
+  async open({ claims, gateway, send }) {
     const servers = access.serversChannelIds(claims);
     const ids = new Set(servers.map((s) => s.id));
+    const connected = new Set(
+      (await gateway.list())
+        .filter((s) => s.isConnected)
+        .map((s) => s.serverId),
+    );
 
     send({
       type: "servers",
@@ -89,53 +74,22 @@ const serversChannel: ChannelDefinition = {
         id: server.id,
         name: server.name,
         hasFileManager: server.hasFileManager ?? false,
-        isConnected: registry.find(server.id)?.isConnected ?? false,
+        isConnected: connected.has(server.id),
       })),
     });
 
     return {
       ok: true,
       cleanup: combine([
-        registry.events.on("connect", (serverId) => {
+        gateway.events.on("connect", (serverId) => {
           if (ids.has(serverId)) send({ type: "connect", data: { serverId } });
         }),
-        registry.events.on("disconnect", (serverId) => {
+        gateway.events.on("disconnect", (serverId) => {
           if (ids.has(serverId))
             send({ type: "disconnect", data: { serverId } });
         }),
-      ]),
-    };
-  },
-};
-
-const clientsChannel: ChannelDefinition = {
-  path: "/ws/clients",
-  open({ claims, registry, send }) {
-    const scope = access.clientsScope(claims);
-    const visible = (serverId: string) =>
-      scope === "all" || scope.has(serverId);
-
-    send({
-      type: "clients",
-      data: registry
-        .list()
-        .filter((runtime) => visible(runtime.serverId))
-        .map((runtime) => runtime.status()),
-    });
-
-    return {
-      ok: true,
-      cleanup: combine([
-        registry.events.on("connect", (serverId) => {
-          if (visible(serverId)) send({ type: "connect", data: { serverId } });
-        }),
-        registry.events.on("disconnect", (serverId) => {
-          if (visible(serverId))
-            send({ type: "disconnect", data: { serverId } });
-        }),
-        registry.events.on("reconnect", (serverId, type, time) => {
-          if (visible(serverId))
-            send({ type: "reconnect", data: { serverId, type, time } });
+        gateway.events.on("handover", (event) => {
+          if (ids.has(event.serverId)) send({ type: "handover", data: event });
         }),
       ]),
     };
@@ -144,12 +98,12 @@ const clientsChannel: ChannelDefinition = {
 
 const notificationsChannel: ChannelDefinition = {
   path: "/ws/notifications",
-  open({ claims, registry, send }) {
+  async open({ claims, gateway, send }) {
     const adminServers = access.notificationServerIds(claims);
 
     return {
       ok: true,
-      cleanup: registry.events.on("adminCommand", (serverId, notifications) => {
+      cleanup: gateway.events.on("adminCommand", (serverId, notifications) => {
         if (!adminServers.has(serverId)) return;
         const own = notifications.find((n) => n.userId === claims.id);
         if (own) send({ type: "adminCommand", data: own });
@@ -159,11 +113,7 @@ const notificationsChannel: ChannelDefinition = {
 };
 
 // Internal event -> wire message for the live dashboard
-const liveForwards: {
-  [K in keyof ServerEventMap]?: (
-    ...args: ServerEventMap[K]
-  ) => WsMessage<string, unknown>;
-} = {
+const liveForwards: Forwards = {
   "live-finish": (round) => ({ type: "finish", data: { round } }),
   personalBest: (info) => ({ type: "personalBest", data: { info } }),
   "live-checkpoint": (round) => ({ type: "checkpoint", data: { round } }),
@@ -192,34 +142,90 @@ const liveForwards: {
   playerChat: (chat) => ({ type: "playerChat", data: { chat } }),
 };
 
+type Forwards = {
+  [K in ForwardedServerEvent]?: (
+    ...args: ServerEventMap[K]
+  ) => WsMessage<string, unknown>;
+};
+
+// Streams one server's events. The snapshot is fetched after subscribing and events are held
+// back until it arrives, so nothing falls between the two; a new owner sends a fresh snapshot.
 function serverChannel(
   path: string,
   authorize: (claims: SessionClaims, serverId: string) => boolean,
-  attach: (
-    runtime: ServerRuntime,
-    send: ChannelInput["send"],
-  ) => (() => void)[],
+  initial: (snapshot: LiveSnapshot) => WsMessage<string, unknown>,
+  forwards: Forwards,
 ): ChannelDefinition {
   return {
     path,
-    open(input) {
-      const serverId = input.params.id;
-      if (!serverId || !authorize(input.claims, serverId)) {
+    async open({ claims, params, gateway, send, close }) {
+      const serverId = params.id;
+      if (!serverId || !authorize(claims, serverId)) {
         return denied(CloseCode.Forbidden, "Not allowed to view this server");
       }
 
-      const runtime = input.registry.find(serverId);
-      if (!runtime)
-        return denied(
-          CloseCode.NotFound,
-          "Server is not managed by this service",
-        );
+      let buffer: [ForwardedServerEvent, unknown[]][] | null = [];
+      let closed = false;
+      const deliver = (event: ForwardedServerEvent, args: unknown[]) => {
+        const toMessage = forwards[event] as
+          | ((...a: unknown[]) => WsMessage<string, unknown>)
+          | undefined;
+        if (toMessage) send(toMessage(...args));
+      };
+
+      let stopWatching: () => void;
+      try {
+        stopWatching = await gateway.watch(serverId, (event, args) => {
+          if (buffer) buffer.push([event, args]);
+          else deliver(event, args);
+        });
+      } catch (error) {
+        if (error instanceof AppError && error.code === "ServerNotFound") {
+          return denied(
+            CloseCode.NotFound,
+            "Server is not managed by this service",
+          );
+        }
+        throw error;
+      }
+
+      const sync = async () => {
+        buffer ??= [];
+        try {
+          const snapshot = await gateway.call(serverId, "snapshot");
+          if (!closed) send(initial(snapshot));
+        } catch (error) {
+          // No owner right now (failover); the "owned" event triggers another sync
+          if (
+            !(error instanceof AppError) ||
+            error.code !== "ServerUnavailable"
+          )
+            throw error;
+        } finally {
+          const held = buffer ?? [];
+          buffer = null;
+          if (!closed) held.forEach(([event, args]) => deliver(event, args));
+        }
+      };
+
+      try {
+        await sync();
+      } catch (error) {
+        stopWatching();
+        throw error;
+      }
 
       return {
         ok: true,
         cleanup: combine([
-          ...attach(runtime, input.send),
-          closeOnRemoval(input, serverId),
+          () => (closed = true),
+          stopWatching,
+          gateway.events.on("owned", (owned) => {
+            if (owned === serverId) void sync().catch(() => undefined);
+          }),
+          gateway.events.on("removed", (removed) => {
+            if (removed === serverId) close(1001, "Server removed");
+          }),
         ]),
       };
     },
@@ -229,73 +235,37 @@ function serverChannel(
 const liveChannel = serverChannel(
   "/ws/live/:id",
   access.canViewServer,
-  (runtime, send) => {
-    send({ type: "beginMatch", data: { info: runtime.state.liveInfo } });
-    return Object.entries(liveForwards).map(([event, toMessage]) =>
-      forward(runtime, event as keyof ServerEventMap, toMessage as never, send),
-    );
-  },
+  (snapshot) => ({ type: "beginMatch", data: { info: snapshot.liveInfo } }),
+  liveForwards,
 );
 
 const mapChannel = serverChannel(
   "/ws/map/:id",
   access.canViewServer,
-  (runtime, send) => {
-    send({ type: "activeMap", data: runtime.state.activeMapUid ?? undefined });
-    return [
-      forward(
-        runtime,
-        "endMap",
-        (mapUid) => ({ type: "endMap", data: { mapUid } }),
-        send,
-      ),
-      forward(
-        runtime,
-        "startMap",
-        (mapUid) => ({ type: "startMap", data: { mapUid } }),
-        send,
-      ),
-    ];
+  (snapshot) => ({ type: "activeMap", data: snapshot.activeMap ?? undefined }),
+  {
+    endMap: (mapUid) => ({ type: "endMap", data: { mapUid } }),
+    startMap: (mapUid) => ({ type: "startMap", data: { mapUid } }),
   },
 );
 
 const playersChannel = serverChannel(
   "/ws/players/:id",
   access.canViewPlayers,
-  (runtime, send) => {
-    send({ type: "playerList", data: runtime.state.activePlayers });
-    return [
-      forward(
-        runtime,
-        "playerConnect",
-        (player) => ({ type: "playerConnect", data: player }),
-        send,
-      ),
-      forward(
-        runtime,
-        "playerDisconnect",
-        (login) => ({ type: "playerDisconnect", data: { login } }),
-        send,
-      ),
-      forward(
-        runtime,
-        "playerInfo",
-        (player) => ({ type: "playerInfo", data: player }),
-        send,
-      ),
-      forward(
-        runtime,
-        "playerList",
-        (players) => ({ type: "playerList", data: players }),
-        send,
-      ),
-    ];
+  (snapshot) => ({ type: "playerList", data: snapshot.activePlayers }),
+  {
+    playerConnect: (player) => ({ type: "playerConnect", data: player }),
+    playerDisconnect: (login) => ({
+      type: "playerDisconnect",
+      data: { login },
+    }),
+    playerInfo: (player) => ({ type: "playerInfo", data: player }),
+    playerList: (players) => ({ type: "playerList", data: players }),
   },
 );
 
 export const channels: ChannelDefinition[] = [
   serversChannel,
-  clientsChannel,
   notificationsChannel,
   liveChannel,
   mapChannel,

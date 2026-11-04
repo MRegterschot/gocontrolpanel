@@ -1,6 +1,7 @@
 "use client";
 
 import useWebSocket from "@/hooks/use-websocket";
+import { serverStatusToast } from "@/lib/server-status-toast";
 import { getCurrentId } from "@/lib/utils";
 import { connectionRoutes } from "@/routes";
 import { ServerError } from "@/types/responses";
@@ -11,6 +12,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { toast } from "sonner";
@@ -26,7 +28,10 @@ const ServersContext = createContext<ServersContextType | null>(null);
 export const useServers = () => {
   const ctx = useContext(ServersContext);
   if (!ctx) {
-    throw new ServerError("useServers must be used within a ServersProvider", "UseServersError");
+    throw new ServerError(
+      "useServers must be used within a ServersProvider",
+      "UseServersError",
+    );
   }
   return ctx;
 };
@@ -43,7 +48,27 @@ export const ServersProvider = ({
   const [loading, setLoading] = useState(true);
   const [serverId, setServerId] = useState<string | null>(null);
 
+  const serversRef = useRef(servers);
+  serversRef.current = servers;
+  const snapshotAt = useRef(0);
+
   const handleMessage = useCallback((type: string, data: any) => {
+    if (type === "servers") snapshotAt.current = Date.now();
+    const server = serversRef.current.find((s) => s.id === data?.serverId);
+    if (server) {
+      const notification = serverStatusToast(
+        type,
+        server.name,
+        data.kind,
+        snapshotAt.current,
+        Date.now(),
+      );
+      if (notification)
+        toast[notification.level](notification.message, {
+          id: `server-status-${server.id}`,
+          description: notification.description,
+        });
+    }
     switch (type) {
       case "servers":
         setServers(data);
@@ -97,6 +122,9 @@ export const ServersProvider = ({
   useWebSocket({
     path: wsPaths.servers,
     onMessage: handleMessage,
+    onOpen: () => {
+      snapshotAt.current = 0;
+    },
     onError: () => setLoading(false),
   });
 

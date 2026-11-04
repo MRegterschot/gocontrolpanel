@@ -1,5 +1,5 @@
-import type { EventEmitter } from "node:events";
 import { Redis } from "ioredis";
+import type { EventEmitter } from "node:events";
 import type { Logger } from "../../core/logger";
 
 const RETRY_STEP_MS = 500;
@@ -11,7 +11,10 @@ export function redisRetryDelay(attempt: number): number {
 }
 
 export function createRedis(url: string, log: Logger, name: string): Redis {
-  const redis = new Redis(url, { maxRetriesPerRequest: 3, retryStrategy: redisRetryDelay });
+  const redis = new Redis(url, {
+    maxRetriesPerRequest: 3,
+    retryStrategy: redisRetryDelay,
+  });
   watchRedisConnection(redis, log.child({ module: "redis", connection: name }));
   return redis;
 }
@@ -34,4 +37,10 @@ export function watchRedisConnection(redis: EventEmitter, log: Logger): void {
     down = false;
     log.info("Redis connection restored");
   });
+}
+
+// ioredis writes SUBSCRIBE before its ready check, whose INFO then fails in subscriber mode
+export function whenReady(redis: Redis): Promise<void> {
+  if (redis.status === "ready") return Promise.resolve();
+  return new Promise((resolve) => redis.once("ready", () => resolve()));
 }

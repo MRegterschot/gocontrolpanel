@@ -11,7 +11,11 @@ const announcing = {
 };
 
 const broadcasts = (h: Awaited<ReturnType<typeof createHarness>>) =>
-  h.session.callsTo("ChatSendServerMessage").map((c) => c.params[0]);
+  h.session
+    .callsTo("ChatSendServerMessage")
+    .map((c) => c.params[0])
+    // The runtime's own "Connected" notice
+    .filter((message) => !String(message).includes("TMControlPanel$>"));
 
 describe("ServerCommands", () => {
   it("changes the script and announces it", async () => {
@@ -30,8 +34,13 @@ describe("ServerCommands", () => {
   it("saves script settings and triggers the settings echo", async () => {
     const h = await createHarness({ server: { chat: announcing } });
     await h.runtime.commands.setScriptSettings({ S_PointsLimit: 70 });
-    expect(h.session.callsTo("SetModeScriptSettings")[0].params).toEqual([{ S_PointsLimit: 70 }]);
-    expect(h.session.sent).toContainEqual({ method: "Echo", params: ["", "UpdatedSettings"] });
+    expect(h.session.callsTo("SetModeScriptSettings")[0].params).toEqual([
+      { S_PointsLimit: 70 },
+    ]);
+    expect(h.session.sent).toContainEqual({
+      method: "Echo",
+      params: ["", "UpdatedSettings"],
+    });
     expect(broadcasts(h)).toContain("Settings saved");
   });
 
@@ -49,25 +58,38 @@ describe("ServerCommands", () => {
 
   it("adds one map with AddMap and many with AddMapList, announcing stripped names", async () => {
     const h = await createHarness({ server: { chat: announcing } });
-    expect(await h.runtime.commands.addMaps(["Campaigns/MapB.Map.Gbx"])).toEqual({ count: 1 });
+    expect(
+      await h.runtime.commands.addMaps(["Campaigns/MapB.Map.Gbx"]),
+    ).toEqual({ count: 1 });
     expect(h.session.callsTo("AddMap")).toHaveLength(1);
     expect(broadcasts(h)).toContain("1 map(s) added: Map B");
 
     expect(await h.runtime.commands.addMaps(["a", "b"])).toEqual({ count: 2 });
-    expect(h.session.callsTo("AddMapList").at(-1)?.params).toEqual([["a", "b"]]);
+    expect(h.session.callsTo("AddMapList").at(-1)?.params).toEqual([
+      ["a", "b"],
+    ]);
   });
 
   it("refuses to remove the last map", async () => {
     const h = await createHarness();
     await expect(
-      h.runtime.commands.removeMaps(["Campaigns/MapA.Map.Gbx", "Campaigns/MapB.Map.Gbx"]),
+      h.runtime.commands.removeMaps([
+        "Campaigns/MapA.Map.Gbx",
+        "Campaigns/MapB.Map.Gbx",
+      ]),
     ).rejects.toMatchObject({ code: "RemoveLastMapError" });
-    expect(await h.runtime.commands.removeMaps(["Campaigns/MapB.Map.Gbx"])).toEqual({ count: 1 });
+    expect(
+      await h.runtime.commands.removeMaps(["Campaigns/MapB.Map.Gbx"]),
+    ).toEqual({ count: 1 });
   });
 
   it("reports a failed map list change", async () => {
-    const h = await createHarness({ configure: (s) => s.respond("AddMapList", false) });
-    await expect(h.runtime.commands.addMaps(["a", "b"])).rejects.toBeInstanceOf(AppError);
+    const h = await createHarness({
+      configure: (s) => s.respond("AddMapList", false),
+    });
+    await expect(h.runtime.commands.addMaps(["a", "b"])).rejects.toBeInstanceOf(
+      AppError,
+    );
     await expect(h.runtime.commands.reorderMaps(["a"])).rejects.toMatchObject({
       code: "ReorderMapListError",
     });
@@ -77,7 +99,11 @@ describe("ServerCommands", () => {
     const h = await createHarness();
     const updated = vi.fn();
     h.runtime.events.on("playerUpdated", updated);
-    h.runtime.state.patchPlayer("p1", { login: "p1", roundPoints: 1, matchPoints: 5 });
+    h.runtime.state.patchPlayer("p1", {
+      login: "p1",
+      roundPoints: 1,
+      matchPoints: 5,
+    });
 
     await h.runtime.commands.setPlayerPoints("p1", "match", 30);
     expect(h.session.scriptCalls.at(-1)).toEqual({
@@ -101,10 +127,18 @@ describe("ServerCommands", () => {
     await h.runtime.commands.setTeamPoints(1, "round", 3);
     expect(updated).not.toHaveBeenCalled();
 
-    h.runtime.state.setTeam(1, { id: 1, name: "Red", roundPoints: 0, mapPoints: 0, matchPoints: 0 });
+    h.runtime.state.setTeam(1, {
+      id: 1,
+      name: "Red",
+      roundPoints: 0,
+      mapPoints: 0,
+      matchPoints: 0,
+    });
     await h.runtime.commands.setTeamPoints(1, "map", 2);
     expect(h.session.scriptCalls.at(-1)?.params).toEqual(["1", "", "2", ""]);
-    expect(updated).toHaveBeenCalledWith(expect.objectContaining({ mapPoints: 2 }));
+    expect(updated).toHaveBeenCalledWith(
+      expect.objectContaining({ mapPoints: 2 }),
+    );
   });
 
   it("turns manual routing off when the server refuses it", async () => {
@@ -116,7 +150,10 @@ describe("ServerCommands", () => {
         }),
     });
 
-    const result = await h.runtime.commands.applyChatConfig({ ...announcing, manualRouting: true });
+    const result = await h.runtime.commands.applyChatConfig({
+      ...announcing,
+      manualRouting: true,
+    });
 
     expect(result.applied.manualRouting).toBe(false);
     expect(result.error).toContain("routing already taken");
@@ -127,12 +164,17 @@ describe("ServerCommands", () => {
     const h = await createHarness();
     await h.runtime.disconnect();
 
-    const result = await h.runtime.commands.applyChatConfig({ ...announcing, manualRouting: true });
+    const result = await h.runtime.commands.applyChatConfig({
+      ...announcing,
+      manualRouting: true,
+    });
 
     // The stored config is applied when the server connects
     expect(result).toEqual({ applied: { ...announcing, manualRouting: true } });
     expect(h.runtime.state.chat?.manualRouting).toBe(true);
-    expect(h.runtime.state.chat?.connectMessage).toBe(announcing.connectMessage);
+    expect(h.runtime.state.chat?.connectMessage).toBe(
+      announcing.connectMessage,
+    );
   });
 
   it("fails cleanly while disconnected", async () => {

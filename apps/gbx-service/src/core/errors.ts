@@ -5,6 +5,7 @@ const statusByCode: Partial<Record<ErrorCode, number>> = {
   Unauthorized: 401,
   NotFound: 404,
   ServerNotFound: 404,
+  ServerUnavailable: 503,
   PlayerNotFound: 404,
   MethodNotAllowed: 403,
   ServerNotConnected: 409,

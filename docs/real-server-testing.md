@@ -69,13 +69,13 @@ Fake players: `tmcp -X POST $TMCP/gbx/call -d '{"method":"ConnectFakePlayer"}'`.
 | ID | Steps | Expected |
 |---|---|---|
 | C1 | Start the service with the dedicated server up | Log `Connected to GBX server`; `/ws/servers` shows `isConnected: true`; a `maps` row for the current map and a `matches` row exist |
-| C2 | `dce restart dedicated` | `disconnect` on `/ws/servers` and `/ws/clients`, `reconnect try` with a timestamp ~15 s ahead, then `connect`; widgets reappear in game without restarting the client |
-| C3 | `dce stop dedicated` while the service is connected, wait ~2.5 min (10 × 15 s) | Ten retries, then `reconnect stop` on `/ws/clients`; `isReconnecting: false`; no further attempts in the log |
+| C2 | `dce restart dedicated` | `disconnect` on `/ws/servers`, `reconnect try` in the Cluster tab with a timestamp ~15 s ahead, then `connect`; widgets reappear in game without restarting the client |
+| C3 | `dce stop dedicated` while the service is connected, wait ~2.5 min (10 × 15 s) | Ten retries, then the Cluster tab stops showing "Reconnecting"; `isReconnecting: false` in `GET $TMCP`; no further attempts in the log |
 | C4 | After C3: `dce start dedicated`, then `tmcp -X POST $TMCP/reconnect` | `{ "connected": true }` |
 | C5 | `tmcp -X POST $TMCP/disconnect` | Disconnects and **stays** offline (no retries); widgets disappear in game; `POST $TMCP/reconnect` brings it back |
 | C6 | `tmcp -X POST $TMCP/stop-reconnect` while retries are pending (during C3) | `reconnect stop`, no more attempts |
 | C7 | Change `password` of the server row in MariaDB, publish `server.updated` | Reconnects with the new password, fails authentication and retries; restore the password and publish again → connected |
-| C7b | `tmcp -X POST $TMCP/disconnect`, rename the server in MariaDB, publish `server.updated` | The new name shows in `/ws/clients`; the server stays offline and does not reconnect. Changing the host, port, user or password instead reconnects at once |
+| C7b | `tmcp -X POST $TMCP/disconnect`, rename the server in MariaDB, publish `server.updated` | The new name shows in `GET /internal/servers` and the Cluster tab; the server stays offline and does not reconnect. Changing the host, port, user or password instead reconnects at once |
 | C8 | Stop the service with Ctrl+C mid-match and start it again | Clean shutdown log; after restart all widgets are drawn again for players already on the server |
 | C9 | `docker kill` the dedicated server while a player is driving | Same as C2; no unhandled errors, service keeps running |
 | C10 | Start the service with the dedicated server down, start the dedicated server ~5 min later | Service starts and serves `/health` (regression test for the ECONNREFUSED crash); it never connected, so it retries for 15 min (15 s apart, then every minute) and connects once the server is up |
@@ -240,3 +240,18 @@ Copy per test run.
 | ID | Date | Mode / map | Result | Notes / issue |
 |---|---|---|---|---|
 | C1 | | | | |
+
+## Worker failover
+
+Run the automated three-server suite from `apps/gbx-service` with the existing `e2e/.env`:
+1. `npm run e2e:cluster:up` starts three dedicated servers, MariaDB and Redis.
+2. `npm run e2e:cluster:seed` seeds all three targets (run `e2e:migrate` first on a fresh database).
+3. `npm run e2e:cluster` checks worker crash/hang, node handoff, Redis fencing and single-process mode; logs go to `/tmp/tmcp-cluster-e2e-*`.
+4. `npm run e2e:cluster:down` stops the stack when finished; the runner itself leaves Docker running.
+
+Use `GBX_WORKERS=2` or more and several dedicated servers. Open their live pages before testing.
+
+- Find a worker PID with `ps -eo pid,ppid,args` or `docker top <container>`. Run `kill -9 <worker-pid>` (inside the container if using its PID namespace). Other servers' live pages must keep updating. The killed worker's servers should return within about 5s.
+- Run `docker stop <container>` and check that workers dispose runtimes and release leases cleanly. To check handoff, another container must share the database and Redis with a unique `GBX_NODE_ID`. This multi-container setup works but is not yet the documented deployment setup. Without another container, restart the stopped container to restore service.
+- After failover, check `Match` rows and in-game chat for duplicates. In-memory match and plugin state can be lost during takeover.
+- Restart with `GBX_WORKERS=0`. Check connections, live pages, plugins and match recording in single-process mode.

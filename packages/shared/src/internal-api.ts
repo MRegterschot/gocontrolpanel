@@ -15,6 +15,7 @@ export const errorCodes = [
   "Unauthorized",
   "NotFound",
   "ServerNotFound",
+  "ServerUnavailable",
   "ServerNotConnected",
   "MethodNotAllowed",
   "GbxCallFailed",

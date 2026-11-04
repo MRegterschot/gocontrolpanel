@@ -1,11 +1,11 @@
-import { getRecentlyCreatedHetznerServers } from "@/services/hetzner/servers";
 import { PaginationTable } from "@/components/table/pagination-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { hasPermission } from "@/lib/auth";
+import { auth, hasPermission } from "@/lib/auth";
 import { routePermissions, routes } from "@/routes";
+import { getRecentlyCreatedHetznerServers } from "@/services/hetzner/servers";
 import { redirect } from "next/navigation";
 import { createActions } from "./actions";
-import AdminServerClientsPage from "./clients";
+import AdminClusterPage from "./cluster";
 import { createColumns } from "./columns";
 
 export default async function AdminServersPage() {
@@ -15,9 +15,7 @@ export default async function AdminServersPage() {
   }
 
   const canCreate = await hasPermission(routePermissions.admin.servers.create);
-  const canViewClients = await hasPermission(
-    routePermissions.admin.servers.clients.view,
-  );
+  const canViewClients = (await auth())?.user.admin === true;
 
   const { data: recentlyCreatedServers } =
     await getRecentlyCreatedHetznerServers();
@@ -38,7 +36,7 @@ export default async function AdminServersPage() {
         <Tabs defaultValue="servers" className="w-full">
           <TabsList className="w-full">
             <TabsTrigger value="servers">Servers</TabsTrigger>
-            <TabsTrigger value="clients">Clients</TabsTrigger>
+            <TabsTrigger value="cluster">Cluster</TabsTrigger>
           </TabsList>
 
           <TabsContent value="servers">
@@ -52,8 +50,10 @@ export default async function AdminServersPage() {
             />
           </TabsContent>
 
-          <TabsContent value="clients">
-            <AdminServerClientsPage />
+          <TabsContent value="cluster">
+            <AdminClusterPage
+              canManage={await hasPermission(["servers:clients:manage"])}
+            />
           </TabsContent>
         </Tabs>
       ) : (

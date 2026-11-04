@@ -175,6 +175,7 @@ export interface HarnessOptions {
   templates?: Record<string, string>;
   systemCommands?: SystemCommandServices;
   codriver?: CodriverClient;
+  controller?: string;
 }
 
 export type Harness = Awaited<ReturnType<typeof createHarness>>;
@@ -273,6 +274,7 @@ export async function createHarness(options: HarnessOptions = {}) {
     mapMetadata: nadeo,
     nadeo,
     systemCommands: options.systemCommands,
+    controller: options.controller,
     codriver: options.codriver,
   });
 

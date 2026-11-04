@@ -165,13 +165,16 @@ describe("CommandRouter", () => {
       server: { enableHelpCommand: false },
       players: [player("abc")],
     });
+    const before = h.session.calls.length;
     await h.chat("abc", "/VERSION");
     expect(h.session.calls).toContainEqual({
       method: "ChatSendServerMessageToLogin",
       params: [`${appName} v${appVersion}`, "abc"],
     });
     expect(
-      h.session.calls.filter((call) => call.method === "ChatSendServerMessage"),
+      h.session.calls
+        .slice(before)
+        .filter((call) => call.method === "ChatSendServerMessage"),
     ).toEqual([]);
   });
 

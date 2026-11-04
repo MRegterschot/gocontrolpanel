@@ -394,10 +394,18 @@ export class PrismaMapRepository implements MapRepository {
   }
 
   async create(map: NewMap, metadata: MapMetadata | null): Promise<MapRecord> {
-    const row = await this.db.maps.create({
-      data: { ...map, ...metadataFields(metadata) },
-    });
-    return toMapRecord(row);
+    try {
+      const row = await this.db.maps.create({
+        data: { ...map, ...metadataFields(metadata) },
+      });
+      return toMapRecord(row);
+    } catch (error) {
+      // Another worker inserted the same map first; servers often share maps
+      if ((error as { code?: string }).code !== "P2002") throw error;
+      const existing = await this.findByUid(map.uid);
+      if (!existing) throw error;
+      return existing;
+    }
   }
 
   async updateMetadata(

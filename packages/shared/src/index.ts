@@ -5,6 +5,7 @@ export * from "./net/read-limited";
 export * from "./permissions";
 export * from "./plugins";
 export * from "./server-events";
+export * from "./types/cluster";
 export * from "./types/gbx";
 export * from "./types/live";
 export * from "./types/server";

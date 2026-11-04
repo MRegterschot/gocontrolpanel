@@ -7,10 +7,15 @@ import { MarketplaceWatcher } from "./core/plugins/marketplace-watcher";
 import { PackageLoader } from "./core/plugins/sandbox/package-loader";
 import { systemClock } from "./core/ports";
 import { ServerRegistry } from "./core/server/server-registry";
-import { ServerRuntime, type RuntimeDependencies } from "./core/server/server-runtime";
 import {
-  PrismaMapRepository,
+  ServerRuntime,
+  type RuntimeDependencies,
+} from "./core/server/server-runtime";
+import { controllerLabel } from "./core/version";
+import { TicketVerifier } from "./http/ws/ticket-verifier";
+import {
   PrismaFirstPartyRepository,
+  PrismaMapRepository,
   PrismaMatchRepository,
   PrismaNotificationRepository,
   PrismaPlayerRepository,
@@ -20,28 +25,81 @@ import {
   PrismaRecordRepository,
   PrismaServerRepository,
 } from "./infra/db/prisma-repositories";
+import { waitForSchema } from "./infra/db/schema";
 import { PrismaSystemCommandServices } from "./infra/db/system-command-services";
-import { HttpCodriverClient } from "./infra/http/codriver-client";
-import { EvotmGbxSession } from "./infra/gbx/evotm-session";
 import { loadFirstPartyPackages } from "./infra/first-party-packages";
+import { EvotmGbxSession } from "./infra/gbx/evotm-session";
+import { HttpCodriverClient } from "./infra/http/codriver-client";
 import { HttpsPluginClient } from "./infra/http/plugin-http-client";
 import { HttpMarketplaceIndexSource } from "./infra/marketplace/index-source";
 import { NadeoClient } from "./infra/nadeo/nadeo-client";
 import { RedisCache } from "./infra/redis/cache";
+import { RedisClusterStore } from "./infra/redis/cluster-store";
 import { RedisJukeboxStore } from "./infra/redis/jukebox-store";
 import { RedisRateLimiter } from "./infra/redis/rate-limiter";
 import { createRedis } from "./infra/redis/redis";
 import { loadSandboxAssets } from "./infra/sandbox-assets";
 import { loadTemplateSources } from "./infra/templates";
-import { TicketVerifier } from "./http/ws/ticket-verifier";
 
-// Composition root: the only place that picks concrete implementations
-export async function createContainer(config: Config) {
-  const log = pino({ level: config.LOG_LEVEL });
+// Connections every process needs: the front, each worker and the single-process mode
+export function createBase(config: Config, name = "service") {
+  const log = pino({ level: config.LOG_LEVEL }).child({ process: name });
   const db = createPrismaClient({ datasourceUrl: config.DATABASE_URL });
   const redis = createRedis(config.REDIS_URI, log, "commands");
   // Subscriber connections cannot run normal commands
   const subscriber = createRedis(config.REDIS_URI, log, "subscriber");
+  return {
+    log,
+    db,
+    redis,
+    subscriber,
+    cluster: new RedisClusterStore(redis, subscriber),
+    tickets: new TicketVerifier(config.WS_TICKET_SECRET, systemClock),
+    waitForSchema: () => waitForSchema(db, log),
+    installFirstPartyPlugins: async () =>
+      installFirstPartyPlugins(
+        await loadFirstPartyPackages(config.MARKETPLACE_INDEX_URL, log),
+        new PrismaFirstPartyRepository(db),
+        log.child({ module: "first-party" }),
+      ),
+    async close() {
+      subscriber.disconnect();
+      redis.disconnect();
+      await db.$disconnect();
+    },
+  };
+}
+
+export type Base = ReturnType<typeof createBase>;
+
+// Watches the marketplace for withdrawn plugin versions; disable reaches the owning runtime
+export function createMarketplace(
+  config: Config,
+  base: Base,
+  disable: (
+    install: { serverId: string; pluginId: string; name: string },
+    reason: string,
+  ) => Promise<void>,
+) {
+  if (!config.MARKETPLACE_INDEX_URL || config.MARKETPLACE_CHECK_MINUTES <= 0)
+    return null;
+  const log = base.log.child({ module: "marketplace" });
+  return new MarketplaceWatcher({
+    source: new HttpMarketplaceIndexSource(config.MARKETPLACE_INDEX_URL, log),
+    catalog: new PrismaPluginCatalogRepository(base.db),
+    disable,
+    clock: systemClock,
+    log,
+    intervalMs: config.MARKETPLACE_CHECK_MINUTES * 60_000,
+  });
+}
+
+// Composition root for the GBX runtimes: the only place that picks concrete implementations
+export async function createContainer(
+  config: Config,
+  base: Base = createBase(config),
+) {
+  const { log, db, redis } = base;
 
   const players = new PrismaPlayerRepository(db);
   const servers = new PrismaServerRepository(db);
@@ -69,6 +127,7 @@ export async function createContainer(config: Config) {
 
   const runtimeDeps: RuntimeDependencies = {
     log,
+    controller: controllerLabel(config.APP_REVISION),
     clock: systemClock,
     sessionFactory: () => new EvotmGbxSession(log.child({ module: "gbx" })),
     renderer: new TemplateRenderer(loadTemplateSources(config.templatesDir)),
@@ -87,7 +146,10 @@ export async function createContainer(config: Config) {
     nadeo,
     systemCommands: new PrismaSystemCommandServices(db, redis),
     codriver: config.PANEL_INTERNAL_URL
-      ? new HttpCodriverClient(config.PANEL_INTERNAL_URL, config.PANEL_INTERNAL_TOKEN)
+      ? new HttpCodriverClient(
+          config.PANEL_INTERNAL_URL,
+          config.PANEL_INTERNAL_TOKEN,
+        )
       : undefined,
   };
 
@@ -98,41 +160,13 @@ export async function createContainer(config: Config) {
     enabledServerIds: config.GBX_SERVICE_ENABLED_SERVERS,
   });
 
-  const marketplace =
-    config.MARKETPLACE_INDEX_URL && config.MARKETPLACE_CHECK_MINUTES > 0
-      ? new MarketplaceWatcher({
-          source: new HttpMarketplaceIndexSource(
-            config.MARKETPLACE_INDEX_URL,
-            log.child({ module: "marketplace" }),
-          ),
-          catalog: new PrismaPluginCatalogRepository(db),
-          disable: async (install, reason) => {
-            await registry.find(install.serverId)?.disablePlugin(install.pluginId, install.name, reason);
-          },
-          clock: systemClock,
-          log: log.child({ module: "marketplace" }),
-          intervalMs: config.MARKETPLACE_CHECK_MINUTES * 60_000,
-        })
-      : null;
-
   return {
-    log,
+    ...base,
     registry,
-    marketplace,
-    installFirstPartyPlugins: async () =>
-      installFirstPartyPlugins(
-        await loadFirstPartyPackages(config.MARKETPLACE_INDEX_URL, log),
-        new PrismaFirstPartyRepository(db),
-        log.child({ module: "first-party" }),
-      ),
-    tickets: new TicketVerifier(config.WS_TICKET_SECRET, systemClock),
-    subscriber,
+    servers,
     async close() {
-      marketplace?.stop();
       await registry.shutdown();
-      subscriber.disconnect();
-      redis.disconnect();
-      await db.$disconnect();
+      await base.close();
     },
   };
 }

@@ -4,18 +4,27 @@ import { createPrismaClient } from "@tmcontrolpanel/db";
 import { compareVersions, isFirstPartySlug } from "@tmcontrolpanel/shared";
 
 const env = process.env;
-const serverId = env.E2E_SERVER_ID ?? "e2e-server";
+const baseServerId = env.E2E_SERVER_ID ?? "e2e-server";
+const serverCount = Number(env.E2E_CLUSTER_SERVERS ?? 1);
+if (!Number.isInteger(serverCount) || serverCount < 1) {
+  throw new Error("E2E_CLUSTER_SERVERS must be a positive integer");
+}
 const adminLogin = env.E2E_ADMIN_LOGIN?.trim();
 const plugins = (env.E2E_PLUGINS ?? "all").split(",").map((p) => p.trim());
 
 const db = createPrismaClient({ datasourceUrl: env.DATABASE_URL });
 
-async function main() {
+async function seedServer(index: number) {
+  const serverId = index === 1 ? baseServerId : `${baseServerId}-${index}`;
+  const port = Number(
+    (index === 1 ? env.E2E_GBX_PORT : env[`E2E_GBX_PORT_${index}`]) ??
+      5009 + index,
+  );
   await db.servers.upsert({
     where: { id: serverId },
     update: {
       host: env.E2E_GBX_HOST ?? "127.0.0.1",
-      port: Number(env.E2E_GBX_PORT ?? 5010),
+      port,
       password: encryptServerCredential(
         env.E2E_GBX_PASSWORD ?? "SuperAdmin",
         env.SECRETS_KEY ?? "",
@@ -24,10 +33,10 @@ async function main() {
     },
     create: {
       id: serverId,
-      name: "TMCP e2e",
+      name: index === 1 ? "TMCP e2e" : `TMCP e2e ${index}`,
       description: "Real server test target",
       host: env.E2E_GBX_HOST ?? "127.0.0.1",
-      port: Number(env.E2E_GBX_PORT ?? 5010),
+      port,
       user: "SuperAdmin",
       password: encryptServerCredential(
         env.E2E_GBX_PASSWORD ?? "SuperAdmin",
@@ -51,7 +60,7 @@ async function main() {
     });
 
     // The web app's server switcher (/ws/servers) only lists servers reached through a group
-    const groupId = `${serverId}-group`;
+    const groupId = `${baseServerId}-group`;
     await db.groups.upsert({
       where: { id: groupId },
       update: { deletedAt: null },
@@ -121,6 +130,10 @@ async function main() {
     console.log(
       "No E2E_ADMIN_LOGIN set: notifications and admin-only commands can't be tested",
     );
+}
+
+async function main() {
+  for (let index = 1; index <= serverCount; index++) await seedServer(index);
 }
 
 main()

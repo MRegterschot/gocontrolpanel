@@ -47,7 +47,9 @@ export class ServerRegistry {
     this.runtimes.set(serverId, runtime);
 
     runtime.events.on("connect", () => this.events.emit("connect", serverId));
-    runtime.events.on("disconnect", () => this.events.emit("disconnect", serverId));
+    runtime.events.on("disconnect", () =>
+      this.events.emit("disconnect", serverId),
+    );
     runtime.events.on("reconnect", (type, time) =>
       this.events.emit("reconnect", serverId, type, time),
     );
@@ -60,13 +62,13 @@ export class ServerRegistry {
     return runtime;
   }
 
-  async remove(serverId: string): Promise<void> {
+  async remove(serverId: string, reason?: string): Promise<void> {
     const runtime = this.runtimes.get(serverId);
     if (!runtime) return;
 
     // Unregister first, so a duplicate event (HTTP plus the Redis fallback) cannot dispose it twice
     this.runtimes.delete(serverId);
-    await runtime.dispose();
+    await runtime.dispose(reason);
     this.events.emit("runtimeRemoved", serverId);
   }
 
@@ -77,7 +79,10 @@ export class ServerRegistry {
   get(serverId: string): ServerRuntime {
     const runtime = this.runtimes.get(serverId);
     if (!runtime) {
-      throw new AppError("ServerNotFound", `Server ${serverId} is not managed by this service`);
+      throw new AppError(
+        "ServerNotFound",
+        `Server ${serverId} is not managed by this service`,
+      );
     }
     return runtime;
   }
@@ -104,7 +109,7 @@ export class ServerRegistry {
         return;
       }
       case "server.deleted":
-        await this.remove(serverId);
+        await this.remove(serverId, "Server removed from TMControlPanel");
         return;
       case "server.plugins.updated":
         await this.runtimes.get(serverId)?.refreshPlugins();
@@ -113,7 +118,13 @@ export class ServerRegistry {
   }
 
   async shutdown(): Promise<void> {
-    await Promise.all(this.list().map((runtime) => runtime.dispose()));
+    await Promise.all(
+      this.list().map((runtime) =>
+        runtime.dispose(
+          "Controller shutting down, chat commands and widgets are off until it restarts",
+        ),
+      ),
+    );
     this.runtimes.clear();
   }
 }

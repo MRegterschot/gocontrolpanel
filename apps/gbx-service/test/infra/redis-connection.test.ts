@@ -1,12 +1,24 @@
+import type { Redis } from "ioredis";
 import { EventEmitter } from "node:events";
 import pino from "pino";
 import { describe, expect, it } from "vitest";
-import { redisRetryDelay, watchRedisConnection } from "../../src/infra/redis/redis";
+import {
+  redisRetryDelay,
+  watchRedisConnection,
+  whenReady,
+} from "../../src/infra/redis/redis";
 
 function recordingLogger() {
   const lines: { level: number; msg: string }[] = [];
-  const log = pino({ level: "debug" }, { write: (line: string) => lines.push(JSON.parse(line)) });
-  return { log, messages: (minLevel = 0) => lines.filter((l) => l.level >= minLevel).map((l) => l.msg) };
+  const log = pino(
+    { level: "debug" },
+    { write: (line: string) => lines.push(JSON.parse(line)) },
+  );
+  return {
+    log,
+    messages: (minLevel = 0) =>
+      lines.filter((l) => l.level >= minLevel).map((l) => l.msg),
+  };
 }
 
 describe("redisRetryDelay", () => {
@@ -25,7 +37,8 @@ describe("watchRedisConnection", () => {
     watchRedisConnection(redis, log);
 
     redis.emit("ready");
-    for (let i = 0; i < 5; i++) redis.emit("error", new Error("connect ECONNREFUSED"));
+    for (let i = 0; i < 5; i++)
+      redis.emit("error", new Error("connect ECONNREFUSED"));
     redis.emit("ready");
     redis.emit("error", new Error("connect ECONNREFUSED"));
 
@@ -41,5 +54,25 @@ describe("watchRedisConnection", () => {
     const redis = new EventEmitter();
     watchRedisConnection(redis, recordingLogger().log);
     expect(() => redis.emit("error", new Error("boom"))).not.toThrow();
+  });
+});
+
+describe("whenReady", () => {
+  const fakeRedis = (status: string) =>
+    Object.assign(new EventEmitter(), { status }) as unknown as Redis;
+
+  it("resolves immediately when already ready", async () => {
+    await expect(whenReady(fakeRedis("ready"))).resolves.toBeUndefined();
+  });
+
+  it("stays pending until the ready event", async () => {
+    const redis = fakeRedis("connecting");
+    let done = false;
+    const pending = whenReady(redis).then(() => (done = true));
+    await Promise.resolve();
+    expect(done).toBe(false);
+    redis.emit("ready");
+    await pending;
+    expect(done).toBe(true);
   });
 });

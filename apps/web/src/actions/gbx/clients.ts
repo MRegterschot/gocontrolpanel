@@ -32,21 +32,6 @@ export async function triggerReconnect(
   });
 }
 
-export async function resendAllManialinks(
-  serverId: string,
-): Promise<ServerResponse<void>> {
-  assertResourceId(serverId);
-  return doServerActionWithAuth(["servers:clients:manage"], async (session) => {
-    await gbxService.resendManialinks(serverId);
-
-    await logAudit(
-      session.user.id,
-      serverId,
-      "server.clients.manialinks.resend",
-    );
-  });
-}
-
 export async function disconnectClient(
   serverId: string,
 ): Promise<ServerResponse<void>> {

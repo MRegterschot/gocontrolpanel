@@ -1,14 +1,18 @@
 import websocket from "@fastify/websocket";
-import Fastify, { LogController, type FastifyBaseLogger, type FastifyInstance } from "fastify";
+import Fastify, {
+  LogController,
+  type FastifyBaseLogger,
+  type FastifyInstance,
+} from "fastify";
+import type { ServerGateway } from "../core/cluster/gateway";
 import type { Logger } from "../core/logger";
-import type { ServerRegistry } from "../core/server/server-registry";
 import { errorHandler } from "./errors";
 import { internalRoutes } from "./routes/internal";
 import type { TicketVerifier } from "./ws/ticket-verifier";
 import { wsRoutes } from "./ws/ws-routes";
 
 export interface AppOptions {
-  registry: ServerRegistry;
+  gateway: ServerGateway;
   log: Logger;
   serviceToken: string;
   tickets: TicketVerifier;
@@ -29,30 +33,46 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
   // Clients often send a JSON content type on bodyless POSTs (reconnect, disconnect, ...)
   const parseJson = app.getDefaultJsonParser("error", "error");
   app.removeContentTypeParser("application/json");
-  app.addContentTypeParser("application/json", { parseAs: "string" }, (request, body, done) => {
-    if (body === "") return done(null, undefined);
-    parseJson(request, body.toString(), done);
-  });
+  app.addContentTypeParser(
+    "application/json",
+    { parseAs: "string" },
+    (request, body, done) => {
+      if (body === "") return done(null, undefined);
+      parseJson(request, body.toString(), done);
+    },
+  );
 
   app.setErrorHandler(errorHandler);
   app.setNotFoundHandler((request, reply) =>
-    reply.status(404).send({ error: { code: "NotFound", message: `Route ${request.url} not found` } }),
+    reply.status(404).send({
+      error: { code: "NotFound", message: `Route ${request.url} not found` },
+    }),
   );
 
   await app.register(websocket, { options: { maxPayload: 64 * 1024 } });
 
-  app.get("/health", async () => ({
-    status: "ok",
-    servers: options.registry.list().length,
-    connected: options.registry.list().filter((r) => r.isConnected).length,
-  }));
+  app.get("/health", async (_req, reply) => {
+    const { ok, servers, connected, workers } = await options.gateway.health();
+    return reply.status(ok ? 200 : 503).send({
+      status: ok ? "ok" : "degraded",
+      servers,
+      connected,
+      ...(workers === undefined ? {} : { workers }),
+    });
+  });
+  app.get("/healthz", async (_req, reply) => {
+    const { ok } = await options.gateway.health();
+    return reply
+      .status(ok ? 200 : 503)
+      .send({ status: ok ? "ok" : "unavailable" });
+  });
 
   await app.register(internalRoutes, {
-    registry: options.registry,
+    gateway: options.gateway,
     serviceToken: options.serviceToken,
   });
   await app.register(wsRoutes, {
-    registry: options.registry,
+    gateway: options.gateway,
     tickets: options.tickets,
     allowedOrigins: options.allowedOrigins ?? [],
     heartbeatMs: options.heartbeatMs ?? 30_000,

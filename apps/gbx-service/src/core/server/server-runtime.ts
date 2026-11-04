@@ -64,6 +64,8 @@ import type { ServerEventMap } from "./server-events";
 // Shared, server-independent dependencies; one set per process
 export interface RuntimeDependencies {
   log: Logger;
+  // Version shown in the connect notice
+  controller?: string;
   clock: Clock;
   sessionFactory: GbxSessionFactory;
   renderer: TemplateRenderer;
@@ -106,6 +108,10 @@ function sameTarget(a: ConnectionTarget, b: ConnectionTarget): boolean {
   );
 }
 
+const NOTICE_PREFIX = "$<$0cfTMControlPanel$>: ";
+// A goodbye message must not hold up a handover
+const NOTICE_TIMEOUT_MS = 1000;
+
 // Everything TMControlPanel runs for one dedicated server
 export class ServerRuntime {
   readonly events: TypedEventBus<ServerEventMap>;
@@ -128,6 +134,8 @@ export class ServerRuntime {
   private name: string | null = null;
   // Details of the last connection attempt, whether or not it succeeded
   private attemptedTarget: ConnectionTarget | null = null;
+  // Added to the next "connected" chat message, e.g. that this worker took over after a crash
+  private connectNote: string | null = null;
 
   constructor(
     readonly serverId: string,
@@ -338,15 +346,34 @@ export class ServerRuntime {
   }
 
   // Manual disconnect: stays offline until reconnect() is called
-  async disconnect(): Promise<void> {
+  async disconnect(
+    reason = "Disconnected by an admin, chat commands and widgets are off until it reconnects",
+  ): Promise<void> {
     this.supervisor.stop();
-    await this.closeSession();
+    await this.closeSession(reason);
   }
 
-  async dispose(): Promise<void> {
+  async dispose(reason?: string): Promise<void> {
     this.supervisor.stop();
-    await this.closeSession();
+    await this.closeSession(reason);
     this.events.clear();
+  }
+
+  // Shown in chat with the connect message, or straight away when already connected
+  setConnectNote(note: string): void {
+    if (this.connected) void this.notice(note);
+    else this.connectNote = note;
+  }
+
+  private async notice(text: string): Promise<void> {
+    try {
+      await Promise.race([
+        this.chat.send(NOTICE_PREFIX + text),
+        new Promise((resolve) => setTimeout(resolve, NOTICE_TIMEOUT_MS)),
+      ]);
+    } catch (error) {
+      this.log.debug({ err: errorMessage(error) }, "Could not send notice");
+    }
   }
 
   // Runs a plugin's chat command for the panel, as if `login` typed it; false when the
@@ -557,6 +584,10 @@ export class ServerRuntime {
     this.connectedAt = this.deps.clock.now();
     this.log.info({ name: server.name }, "Connected to GBX server");
     this.events.emit("connect");
+    const note = this.connectNote;
+    this.connectNote = null;
+    const about = this.deps.controller ? ` (${this.deps.controller})` : "";
+    void this.notice(`Connected${about}.${note ? ` ${note}` : ""}`);
     // Pages were cleared for the new session; plugins add their buttons as they load
     this.codriverWindows?.showButton();
 
@@ -620,11 +651,12 @@ export class ServerRuntime {
     this.supervisor.handleConnectionLost();
   }
 
-  private async closeSession(): Promise<void> {
+  private async closeSession(reason?: string): Promise<void> {
     const session = this.session;
     if (!session) return;
 
     if (this.connected) {
+      if (reason) await this.notice(`Disconnecting: ${reason}`);
       // Unload first so widgets are removed while the session can still send
       await this.plugins.unloadAll();
       this.connected = false;

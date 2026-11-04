@@ -177,12 +177,20 @@ TMControlPanel runs as two containers next to your database and Redis:
 Both images come in a MariaDB/MySQL and a PostgreSQL (`-postgres` suffix) flavour. The two containers share the database and Redis, and authenticate to each other with `GBX_SERVICE_TOKEN` and `WS_TICKET_SECRET`.
 
 - **Browsers connect to port 3100** for the live pages, so `GBX_SERVICE_WS_URL` must be reachable from your users' browsers. Behind HTTPS it must be a `wss://` URL, see [Expose the GBX service](docs/migrating-from-dev.md#3-open-port-3100-to-browsers).
-- **Run one `gbx-service` per set of servers.** Only one process may hold the connection to a dedicated server, a second one would record everything twice. `GBX_SERVICE_ENABLED_SERVERS` limits which servers an instance manages.
+  The service's main process is a front for the internal HTTP API and browser WebSockets. It never opens a GBX connection.
+  It forks workers that hold GBX connections, run plugins and record matches. Redis leases assign each server to one worker.
+  Commands, live events and status snapshots pass through Redis. Requests for a server with no owner return HTTP 503 (`ServerUnavailable`).
+  A crashed or hung worker is restarted; other workers can take over its servers. Allow roughly 80–150 MB per worker, plus the front.
+  Several containers sharing the database and Redis already split servers by lease, but that setup is not yet documented.
+  `GBX_SERVICE_ENABLED_SERVERS` limits which servers a container may claim.
 - **Keep `/internal/*` private.** Only the web container calls those routes. Don't publish them through a reverse proxy.
 
 # Docker Setup
 
 This repository provides a **Docker Compose** configuration to set up and run **TMControlPanel** and its dependencies using Docker containers.
+
+To add a second host running only the web app and GBX workers against the same database and Redis, use the [backup host guide](docs/backup-host.md). It covers the Docker and Coolify node stacks, private networking and failover checks.
+For option B, move the shared database and Redis off the primary with the [database host guide](docs/database-host.md).
 
 ## Prerequisites
 
@@ -243,7 +251,10 @@ Make sure to update or add the environment variables for the services in your `d
   - `GBX_SERVICE_TOKEN`, `WS_TICKET_SECRET`: The same values as the `tmcontrolpanel` container.
   - `WS_ALLOWED_ORIGINS`: The origin(s) of the panel, comma separated, e.g., `https://panel.example.com`. A browser socket from another origin is refused.
   - `NADEO_SERVER_LOGIN`, `NADEO_SERVER_PASSWORD`, `NADEO_CONTACT`, `NADEO_CLIENT_ID`, `NADEO_CLIENT_SECRET`: The same values as the `tmcontrolpanel` container.
-  - `GBX_SERVICE_ENABLED_SERVERS` (optional): Comma-separated server ids this instance manages. Empty manages every server in the database.
+  - `GBX_SERVICE_ENABLED_SERVERS` (optional): Comma-separated server ids this container may claim. Empty allows every server in the database.
+  - `GBX_WORKERS` (default `1`): Worker processes. Set `0` to roll back to the single-process mode.
+  - `GBX_NODE_ID` (default hostname): Unique id per container.
+  - `GBX_LEASE_TTL_MS` (default `15000`, minimum `6000`): Lease lifetime in milliseconds. Workers renew every TTL/3.
   - `PANEL_INTERNAL_URL`, `PANEL_INTERNAL_TOKEN` (optional): The panel address the service uses for Codriver `/co` commands (`http://tmcontrolpanel:3000`), and the same token as the `tmcontrolpanel` container. Empty turns `/co` off.
   - `LOG_LEVEL`, `SENTRY_DSN`, `SENTRY_ENVIRONMENT` (optional): Logging and error reporting of the service.
   - `MARKETPLACE_INDEX_URL`, `MARKETPLACE_CHECK_MINUTES` (optional): The plugin marketplace the service checks for withdrawn plugin versions, and how often (default every 30 minutes). Empty URL turns the check off.
@@ -521,12 +532,13 @@ Everything that talks to a dedicated server (connection errors, plugins, chat co
 
 ```bash
 docker compose logs gbx-service
-curl http://localhost:3100/health    # {"status":"ok","servers":N,"connected":N}
+curl http://localhost:3100/health    # Includes workers in cluster mode; 503 when degraded
+curl http://localhost:3100/healthz   # 200 when Redis is reachable and a worker heartbeat exists; otherwise 503
 ```
 
 - **A container exits right after starting:** a missing or too short (< 32 characters) `GBX_SERVICE_TOKEN` or `WS_TICKET_SECRET`, or an invalid value, is listed in its log.
 - **Live pages stay empty or the servers show as offline:** the browser can't reach `GBX_SERVICE_WS_URL`, or the panel's origin is missing from `WS_ALLOWED_ORIGINS` (the socket closes with code `4403`). Behind HTTPS the URL must start with `wss://`.
-- **Everything is recorded or announced twice:** two controllers hold a connection to the same dedicated server, for example two `gbx-service` containers on one database. Run one, or split the servers with `GBX_SERVICE_ENABLED_SERVERS`.
+- **Everything is recorded or announced twice:** check for an older controller, a service using another Redis, or overlapping services with `GBX_WORKERS=0`. Cluster workers sharing Redis coordinate ownership through leases.
 
 ---
 
