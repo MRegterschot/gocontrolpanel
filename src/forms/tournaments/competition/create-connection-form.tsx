@@ -2,13 +2,13 @@
 import FormElement from "@/components/form/form-element";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { reducers } from "@/lib/server-manager";
-import { getErrorMessage } from "@/lib/utils";
+import { procedures } from "@/lib/server-manager";
+import { useServerAction } from "@/hooks/tournaments/use-server-action";
+import { NodeHandle } from "@/lib/server-manager/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus } from "@tabler/icons-react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { useReducer } from "spacetimedb/react";
+import { useProcedure } from "spacetimedb/react";
 import {
   CreateConnectionSchema,
   CreateConnectionSchemaType,
@@ -21,43 +21,27 @@ const CONNECTION_OPTIONS =
   }));
 
 export default function CreateConnectionForm({
-  originId,
-  targetId,
+  origin,
+  target,
   callback,
 }: {
-  originId: number;
-  targetId: number;
+  origin: NodeHandle;
+  target: NodeHandle;
   callback?: () => void;
 }) {
-  const createConnection = useReducer(reducers.connectionCreate);
+  const createConnection = useServerAction(
+    useProcedure(procedures.connectionCreate),
+    "Failed to create connection",
+    "Connection successfully created",
+  );
 
   const form = useForm<CreateConnectionSchemaType>({
     resolver: zodResolver(CreateConnectionSchema),
-    defaultValues: {
-      origin: {
-        tag: "MatchV1",
-        value: originId,
-      },
-      target: {
-        tag: "MatchV1",
-        value: targetId,
-      },
-      kind: {
-        tag: "Wait",
-      },
-    },
+    defaultValues: { kind: { tag: "Wait" } },
   });
 
-  async function onSubmit(values: CreateConnectionSchemaType) {
-    try {
-      await createConnection(values);
-      toast.success("Connection successfully created");
-      callback?.();
-    } catch (error) {
-      toast.error("Failed to create connection", {
-        description: getErrorMessage(error),
-      });
-    }
+  async function onSubmit({ kind }: CreateConnectionSchemaType) {
+    if (await createConnection({ origin, target, kind })) callback?.();
   }
 
   return (

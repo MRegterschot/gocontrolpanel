@@ -3,7 +3,7 @@ import { DataTable } from "@/components/table/data-table";
 import { useRegistrationsByCompetitionId } from "@/hooks/tournaments/competitions/registrations/use-registrations";
 import { Competition } from "@/hooks/tournaments/competitions/use-competition";
 import { createActions } from "./actions";
-import { createColumnns } from "./columns";
+import { columns } from "./columns";
 
 export default function CompetitionRegistrations({
   competition,
@@ -14,7 +14,6 @@ export default function CompetitionRegistrations({
     competition.id,
   );
 
-  const columns = createColumnns(registration?.status);
   const actions = createActions(registration);
 
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCompetition } from "@/hooks/tournaments/competitions/use-competition";
-import CompetitionBracket from "./bracket/competition-bracket";
+import CompetitionGraph from "./graph/competition-graph";
 import CompetitionInfo from "./competition-info";
 
 export default function CompetitionDashboard({
@@ -22,7 +22,7 @@ export default function CompetitionDashboard({
   return (
     <div className="flex flex-col gap-2 sm:gap-4">
       <CompetitionInfo competition={competition} />
-      <CompetitionBracket competition={competition} />
+      <CompetitionGraph competition={competition} />
     </div>
   );
 }

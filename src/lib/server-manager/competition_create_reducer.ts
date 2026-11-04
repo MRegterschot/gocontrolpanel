@@ -10,8 +10,15 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
+import {
+  Vec2,
+} from "./types";
+
 export default {
   name: __t.string(),
   parentId: __t.u32(),
+  get position() {
+    return Vec2;
+  },
   withTemplate: __t.u32(),
 };

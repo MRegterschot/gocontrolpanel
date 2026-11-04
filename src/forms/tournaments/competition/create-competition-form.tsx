@@ -33,10 +33,7 @@ export default function CreateCompetitionForm({
 
   async function onSubmit(values: CreateCompetitionSchemaType) {
     try {
-      createCompetition({
-        ...values,
-        withTemplate: values.withTemplate,
-      });
+      await createCompetition({ ...values, position: { x: 0, y: 0 } });
 
       toast.success("Stage successfully created");
       if (callback) {

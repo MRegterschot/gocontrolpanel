@@ -1,6 +1,7 @@
 "use client";
 
-import { useCompetitionTree } from "@/hooks/tournaments/competitions/use-competition-tree";
+import { tables } from "@/lib/server-manager";
+import { useTable } from "spacetimedb/react";
 import CompetitionTree from "../competitions/competition-tree";
 
 export default function TournamentCompetitionTree({
@@ -8,9 +9,9 @@ export default function TournamentCompetitionTree({
 }: {
   tournamentId: number;
 }) {
-  const { tree } = useCompetitionTree(tournamentId);
+  const [[project]] = useTable(tables.myProjects.where((p) => p.id.eq(tournamentId)));
 
-  if (!tree) {
+  if (!project) {
     return <p>No stages found for this tournament.</p>;
   }
 
@@ -18,7 +19,7 @@ export default function TournamentCompetitionTree({
     <div className="flex flex-col">
       <CompetitionTree
         tournamentId={tournamentId}
-        tree={tree}
+        competitionId={project.rootCompetition}
         sectionIndex={0}
       />
     </div>

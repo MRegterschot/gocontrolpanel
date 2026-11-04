@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/sidebar";
 import { generatePath, getCurrentId } from "@/lib/utils";
 import { routes } from "@/routes";
-import { IconLogin, IconPlus, IconTrophy } from "@tabler/icons-react";
+import { IconLogin, IconPlus, IconServer, IconTrophy } from "@tabler/icons-react";
 import Link from "next/link";
 
 import Modal from "@/components/modals/modal";
@@ -88,7 +88,7 @@ export default function NavTournaments() {
                   <span>
                     {spacetime.isActive
                       ? "Loading tournaments..."
-                      : "Not connected to SpacetimeDB"}
+                      : "Not connected to tmservers.live"}
                   </span>
                 </div>
               </SidebarMenuButton>
@@ -114,8 +114,8 @@ export default function NavTournaments() {
             <SidebarMenuItem key={tournament.id}>
               <SidebarMenuButton tooltip={tournament.name} asChild>
                 <Link
-                  href={generatePath(routes.tournaments.tournament, {
-                    id: tournament.id.toString(),
+                  href={generatePath(routes.tournaments.competition, {
+                    id: tournament.rootCompetition.toString(),
                   })}
                   className="select-none cursor-pointer"
                 >
@@ -153,8 +153,8 @@ export default function NavTournaments() {
                       <SidebarMenuItem key={tournament.id}>
                         <SidebarMenuButton tooltip={tournament.name} asChild>
                           <Link
-                            href={generatePath(routes.tournaments.tournament, {
-                              id: tournament.id.toString(),
+                            href={generatePath(routes.tournaments.competition, {
+                              id: tournament.rootCompetition.toString(),
                             })}
                             className="select-none cursor-pointer"
                           >
@@ -171,6 +171,15 @@ export default function NavTournaments() {
               </SidebarMenuItem>
             </Collapsible>
           )}
+
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip="My Servers" isActive={pathname === routes.tournaments.myServers} asChild>
+              <Link href={routes.tournaments.myServers} className="select-none cursor-pointer">
+                <IconServer />
+                <span>My Servers</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>

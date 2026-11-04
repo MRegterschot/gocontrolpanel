@@ -6,6 +6,7 @@
 import { type Infer as __Infer } from "spacetimedb";
 
 // Import all procedure arg schemas
+import * as ConnectionCreateProcedure from "../connection_create_procedure";
 import * as LoginAsServerProcedure from "../login_as_server_procedure";
 import * as MatchRoundReplayProcedure from "../match_round_replay_procedure";
 import * as NodeLeaderboardInputProcedure from "../node_leaderboard_input_procedure";
@@ -15,6 +16,8 @@ import * as NodeLeaderboardOutputRawProcedure from "../node_leaderboard_output_r
 import * as PostRoundReplayProcedure from "../post_round_replay_procedure";
 import * as TestNodePermittedPlayersInputProcedure from "../test_node_permitted_players_input_procedure";
 
+export type ConnectionCreateArgs = __Infer<typeof ConnectionCreateProcedure.params>;
+export type ConnectionCreateResult = __Infer<typeof ConnectionCreateProcedure.returnType>;
 export type LoginAsServerArgs = __Infer<typeof LoginAsServerProcedure.params>;
 export type LoginAsServerResult = __Infer<typeof LoginAsServerProcedure.returnType>;
 export type MatchRoundReplayArgs = __Infer<typeof MatchRoundReplayProcedure.params>;

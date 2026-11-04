@@ -48,7 +48,7 @@ export default async function Navbar() {
     canViewHetzner ||
     canViewAuditLogs;
 
-  const usingSpacetime = config.SPACETIME.URI && config.SPACETIME.MODULE;
+  const usingSpacetime = !config.TMSERVERS.DISABLED;
 
   return (
     <>

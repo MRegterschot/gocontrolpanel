@@ -9,26 +9,14 @@ export type Competition = {
 } & CompetitionV1;
 
 export function useCompetition(competitionId: number) {
-  const [competitionRows, isReady] = useTable(
-    tables.competition.where((row) => row.id.eq(competitionId)),
-  );
+  // The client cache merges the rows of a view for all args, so they are looked up by competition.
+  const [competitions, isReady] = useTable(tables.competition({ competitionId }));
+  const [registrations] = useTable(tables.competitionRegistrations({ competitionId }));
+  const competition = competitions.find((c) => c.id === competitionId);
+  const registration = registrations.find((r) => r.parentId === competitionId);
 
-  const [registrationRows] = useTable(
-    tables.unstable_registration.where((row) => row.parentId.eq(competitionId)),
-  );
-
-  const competition = competitionRows[0];
-  const registration = registrationRows[0];
-
-  if (competition && registration) {
-    return {
-      competition: {
-        ...competition,
-        registration,
-      },
-      isReady,
-    };
-  }
-
-  return { competition, isReady };
+  return {
+    competition: competition && ({ ...competition, registration } as Competition),
+    isReady,
+  };
 }

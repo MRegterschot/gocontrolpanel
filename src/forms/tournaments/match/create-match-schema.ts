@@ -1,9 +1,7 @@
 import z from "zod";
 
 export const CreateMatchSchema = z.object({
-  name: z.string(),
-  parentId: z.number().int().nonnegative(),
-  withTemplate: z.coerce.number().int(),
+  name: z.string().min(1, "Name cannot be empty"),
 });
 
 export type CreateMatchSchemaType = z.infer<typeof CreateMatchSchema>;

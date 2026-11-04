@@ -15,4 +15,5 @@ export default __t.row({
   id: __t.u32(),
   parentId: __t.u32().name("parent_id"),
   template: __t.bool(),
+  templatePublic: __t.bool().name("template_public"),
 });

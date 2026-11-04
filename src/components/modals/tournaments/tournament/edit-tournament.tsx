@@ -1,7 +1,7 @@
 "use client";
 import { Card } from "@/components/ui/card";
 import EditTournamentForm from "@/forms/tournaments/tournament/edit-tournament-form";
-import { TournamentV1 } from "@/lib/server-manager";
+import { ProjectV1 } from "@/lib/server-manager/types";
 import { IconX } from "@tabler/icons-react";
 import { Infer } from "spacetimedb";
 import { DefaultModalProps } from "../../default-props";
@@ -9,7 +9,7 @@ import { DefaultModalProps } from "../../default-props";
 export default function EditTournamentModal({
   data,
   closeModal,
-}: DefaultModalProps<Infer<typeof TournamentV1>>) {
+}: DefaultModalProps<Infer<typeof ProjectV1>>) {
   if (!data) return null;
 
   const stopPropagation = (e: React.MouseEvent) => {
