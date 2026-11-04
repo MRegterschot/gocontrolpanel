@@ -10,16 +10,16 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 import {
-  PlayerAction,
+  MatchStatus,
 } from "./types";
 
 
 export default __t.row({
-  get roundActions() {
-    return __t.array(PlayerAction).name("round_actions");
-  },
+  message: __t.string(),
   userId: __t.u32().name("user_id"),
-  id: __t.u32().primaryKey(),
   matchId: __t.u32().name("match_id"),
-  round: __t.u16(),
+  id: __t.u32(),
+  get status() {
+    return MatchStatus;
+  },
 });
