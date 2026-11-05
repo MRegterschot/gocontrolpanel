@@ -414,6 +414,11 @@ export default function LandingPage({
               TMControlPanel ships as a Docker image that sits next to your
               dedicated server, standalone or alongside PyPlanet and EvoSC.
             </p>
+            <p className="text-sm text-muted-foreground">
+              Self-hosting is recommended for people with some technical
+              knowledge: you should be comfortable with Docker, environment
+              variables and running a database.
+            </p>
             <div className="flex flex-col gap-3 sm:flex-row">
               <SignInButton callbackUrl={callbackUrl} />
               <a

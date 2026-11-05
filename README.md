@@ -189,6 +189,8 @@ Both images come in a MariaDB/MySQL and a PostgreSQL (`-postgres` suffix) flavou
 
 This repository provides a **Docker Compose** configuration to set up and run **TMControlPanel** and its dependencies using Docker containers.
 
+> **Self-hosting takes some technical knowledge.** You should be comfortable with Docker and Docker Compose, editing environment variables, running a database and Redis, and, if you expose the panel, putting it behind a reverse proxy with HTTPS. If that's new to you, ask in the [Discord](https://discord.gg/NjbtRvbCY8) before you start.
+
 To add a second host running only the web app and GBX workers against the same database and Redis, use the [backup host guide](docs/backup-host.md). It covers the Docker and Coolify node stacks, private networking and failover checks.
 For option B, move the shared database and Redis off the primary with the [database host guide](docs/database-host.md).
 
