@@ -1,5 +1,7 @@
 # Upgrading from the `:beta` images to `:release`
 
+> **Recommended: start a new stack instead of migrating.** Setting up a fresh deployment is simpler and safer than carrying an old one over. Migrating is at your own risk, and you are responsible for your data, so back it up first. Questions are welcome in the [Discord](https://discord.gg/NjbtRvbCY8).
+
 This guide moves a Docker Compose deployment that runs the last beta (`marijnregterschot/gocontrolpanel:beta`, v0.12.0-beta) to the current release images **side by side**: you build a second, new stack next to the old one, fill it with a copy of your data, test it, and then switch over. The old stack and its database are never changed, so going back is a matter of starting the old container again.
 
 ## What changes

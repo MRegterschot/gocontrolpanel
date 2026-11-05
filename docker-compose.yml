@@ -30,7 +30,7 @@ services:
       - db
       - redis
 
-  # GBX connections, in-game plugins and live WebSockets (see docs/refactor-plan.md)
+  # GBX connections, in-game plugins and live WebSockets
   gbx-service:
     image: marijnregterschot/tmcontrolpanel-gbx-service:beta # Use marijnregterschot/tmcontrolpanel-gbx-service-postgres:beta if you are using PostgreSQL
     ports:

@@ -1,6 +1,8 @@
 # Migrating from `dev` to the monorepo + GBX service
 
-This guide is for people running TMControlPanel from the `dev` branch (a single Next.js app with a custom server) who want to move to `refactor/monorepo-gbx-service`. For the reasoning behind the split see [refactor-plan.md](./refactor-plan.md).
+> **Recommended: start a new stack instead of migrating.** Setting up a fresh deployment is simpler and safer than carrying an old one over. Migrating is at your own risk, and you are responsible for your data, so back it up first. Questions are welcome in the [Discord](https://discord.gg/NjbtRvbCY8).
+
+This guide is for people running TMControlPanel from the `dev` branch (a single Next.js app with a custom server) who want to move to `refactor/monorepo-gbx-service`.
 
 ## What changed
 
@@ -183,4 +185,3 @@ Never run both at once. Restore the dump only if you made schema changes of your
 - Removed from the web app: `src/server.ts` (custom server), `next-ws`, `/api/ws`, the `gbxclient`/`plugin`/`manialink` managers, `build:templates` and `@evotm/gbxclient`. The web app reaches dedicated servers only through `apps/web/src/lib/gbx-service.ts`.
 - Commands are now run from the repo root: `bun install`, `bun run infra:up`, `bun run deploy` (migrations), `bun run dev` (web) and `bun run dev:gbx` (service). See [CONTRIBUTING.md](../CONTRIBUTING.md).
 - CI: `workspace-check.yml` typechecks, tests and builds both apps; the release workflow builds and pushes both images (`apps/web/Dockerfile` and `apps/gbx-service/Dockerfile`).
-- To test a change against a real dedicated server, follow [real-server-testing.md](./real-server-testing.md).

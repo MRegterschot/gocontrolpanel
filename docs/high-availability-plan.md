@@ -189,7 +189,7 @@ The load balancer and floating IP can't include a non-Hetzner primary.
    - [x] Startup migrations use Prisma's advisory lock and retry lock contention when replicas start together.
 3. **Backup deployment.**
    - [x] Node-only stacks: `docker-compose.node.yml` and `docker-compose.coolify.node.yml`.
-   - [x] [Backup host guide](backup-host.md), README pointer, mesh and firewall instructions. Worker failover checks are in `docs/real-server-testing.md`.
+   - [x] [Backup host guide](backup-host.md), README pointer, mesh and firewall instructions.
    - [ ] Order the Hetzner host; check availability.
    - [ ] Set up WireGuard or Tailscale and firewall rules on the real hosts. Verify cross-host takeover there.
    - [ ] Choose database and Redis option A, B or C (recommendation: B, see the [database host guide](database-host.md)).
@@ -199,7 +199,7 @@ The load balancer and floating IP can't include a non-Hetzner primary.
 
 - Unit: ownership with a fake Redis and clock (claim, renew, lost renewal disposes, fair share, rebalance cooldown); RPC (no receiver → re-lookup, timeout, error mapping); channel buffering between snapshot and stream.
 - Integration against real Redis: two worker processes never own the same server; killing a worker frees its servers within 5s; Redis outage disposes every runtime within the TTL.
-- Real server (`docs/real-server-testing.md` additions):
+- Real server:
   - `kill -9` one worker → the other servers' live pages keep updating.
   - Stop the whole primary container → the backup takes over within about 20s.
   - Check `Match` rows and chat for duplicates after failover.

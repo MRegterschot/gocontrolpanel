@@ -52,49 +52,29 @@ A Dockerized management panel for dedicated Trackmania servers. Works both stand
 
 Manage your general server settings like the server name, password, and other configurations.
 
-![Settings Page](https://i.imgur.com/39jLVUl.png "Settings Page")
-
 #### Game Management
 
 Manage your game settings, this includes map management and mode settings.
-
-![Game Page](https://i.imgur.com/Njkxu0n.png "Game Page")
-![Mode Settings Page](https://i.imgur.com/wgIn7Cn.png "Mode Settings Page")
 
 #### Maps Management
 
 Manage your maps, including adding local maps, changing map order and a jukebox.
 
-![Maps Page](https://i.imgur.com/5f1zr3E.png "Maps Page")
-![Local Maps Page](https://i.imgur.com/9HLf64R.png "Local Maps Page")
-![Map Jukebox Page](https://i.imgur.com/5jgNjiD.png "Map Jukebox Page")
-
 #### Player Management
 
 Manage your players, including banning players and managing blacklists and guestlists.
-
-![Players Page](https://i.imgur.com/A6PDwWd.png "Players Page")
-![Blacklist Page](https://i.imgur.com/9VEFLUB.png "Blacklist Page")
 
 #### Live Match
 
 Monitor live matches, including player scores and match status.
 
-![Live Match Page](https://i.imgur.com/huDKrEA.png "Live Match Page")
-
 #### Records and Matches
 
 View past matches and records, including player scores and match details.
 
-![Matches Page](https://i.imgur.com/ZoAdmhQ.png "Matches Page")
-![Match Details Page](https://i.imgur.com/aiqEsGw.png "Match Details Page")
-
 #### Plugin Management
 
 Manage the server plugins and chat settings of the server.
-
-![Plugins Page](https://i.imgur.com/5LAxOpO.png "Plugins Page")
-![Chat Message Editor Page](https://i.imgur.com/NpvWT3K.png "Chat Message Editor Page")
 
 #### Plugin Marketplace
 
@@ -104,62 +84,29 @@ Browse the plugin marketplace and install plugins on your servers, or upload you
 
 Browse and download maps or mappacks directly from Trackmania Exchange.
 
-![Trackmania Exchange Maps Page](https://i.imgur.com/EVD3CX0.png "Trackmania Exchange Maps Page")
-![Trackmania Exchange Mappacks Page](https://i.imgur.com/n4HLkGV.png "Trackmania Exchange Mappacks Page")
-
 #### Files Management
 
 Manage your server files, including uploading, deleting and editing files.
-
-![Files Page](https://i.imgur.com/eGqC4Oc.png "Files Page")
-![File Editor Page](https://i.imgur.com/Siday3M.png "File Editor Page")
 
 #### User Management
 
 Manage users by modifying roles and permissions.
 
-![User Management Page](https://i.imgur.com/eoErrI2.png "User Management Page")
-![User Details Page](https://i.imgur.com/1hG1tUJ.png "User Details Page")
-
 #### Group Management
 
 Manage groups, including adding new groups, managing group permissions and roles.
-
-![Group Management Page](https://i.imgur.com/qxyYNV7.png "Group Management Page")
-![Group Details Page](https://i.imgur.com/1WMpo4Y.png "Group Details Page")
 
 #### Role Management
 
 Manage roles, including adding new roles and managing role permissions.
 
-![Role Management Page](https://i.imgur.com/NlqVj6P.png "Role Management Page")
-![Role Details Page](https://i.imgur.com/SfCvMNc.png "Role Details Page")
-
 #### Server Management
 
 Manage your servers, add new servers and configure the server settings.
 
-![Server Management Page](https://i.imgur.com/opiwnKL.png "Server Management Page")
-![Add Server Page](https://i.imgur.com/6XDqmlk.png "Add Server Page")
-
 #### Hetzner Management
 
 Manage your Hetzner Cloud servers, networks and volumes. You can create and delete Trackmania servers directly from the panel.
-
-![Hetzner Management Page](https://i.imgur.com/9Joq5dK.png "Hetzner Management Page")
-![Hetzner Details Page](https://i.imgur.com/miUGWWj.png "Hetzner Details Page")
-
-![Hetzner Servers Page](https://i.imgur.com/dWYLLyT.png "Hetzner Servers Page")
-![Hetzner Server Details Page](https://i.imgur.com/N7jfF9f.png "Hetzner Server Details Page")
-![Hetzner Server Metrics Page](https://i.imgur.com/PApEtYb.png "Hetzner Server Metrics Page")
-![Hetzner Server Pricing Page](https://i.imgur.com/u8rflrh.png "Hetzner Server Pricing Page")
-
-![Hetzner Database Create Page](https://i.imgur.com/xB8H67G.png "Hetzner Database Create Page")
-![Hetzner Server Create Page](https://i.imgur.com/o5YPNqL.png "Hetzner Server Create Page")
-![Hetzner Server Create Page Controller Step](https://i.imgur.com/LnS03St.png "Hetzner Server Create Page Controller Step")
-![Hetzner Server Create Page Database Step](https://i.imgur.com/AH4Ixvp.png "Hetzner Server Create Page Database Step")
-![Hetzner Server Create Page Network Step](https://i.imgur.com/f4mEhuJ.png "Hetzner Server Create Page Network Step")
-![Hetzner Server Create Page Summary Step](https://i.imgur.com/oPUo7aC.png "Hetzner Server Create Page Summary Step")
 
 #### Public API
 
@@ -190,6 +137,8 @@ Both images come in a MariaDB/MySQL and a PostgreSQL (`-postgres` suffix) flavou
 This repository provides a **Docker Compose** configuration to set up and run **TMControlPanel** and its dependencies using Docker containers.
 
 > **Self-hosting takes some technical knowledge.** You should be comfortable with Docker and Docker Compose, editing environment variables, running a database and Redis, and, if you expose the panel, putting it behind a reverse proxy with HTTPS. If that's new to you, ask in the [Discord](https://discord.gg/NjbtRvbCY8) before you start.
+>
+> **You are responsible for your own deployment** and any issues with it. Questions and help in the Discord are always welcome, but there is no guaranteed support.
 
 To add a second host running only the web app and GBX workers against the same database and Redis, use the [backup host guide](docs/backup-host.md). It covers the Docker and Coolify node stacks, private networking and failover checks.
 For option B, move the shared database and Redis off the primary with the [database host guide](docs/database-host.md).
@@ -226,7 +175,7 @@ Make sure to update or add the environment variables for the services in your `d
   - **NADEO Configuration**: Make sure to update `NADEO_CLIENT_ID`, `NADEO_CLIENT_SECRET`, `NADEO_REDIRECT_URI`, `NADEO_SERVER_LOGIN`, `NADEO_SERVER_PASSWORD` and `NADEO_CONTACT` with your valid NADEO API credentials. Nadeo API credentials can be obtained from the [Nadeo API manager](https://api.trackmania.com/manager). The server login and password can be obtained from the [Dedicated Server Manager](https://www.trackmania.com/player/dedicated-servers).
   - `HETZNER_KEY`: Required for the Hetzner Cloud integration. Encrypts API tokens and SSH keys before they are stored in the database. Use a random string of at least 32 characters, for example from `openssl rand -hex 32`. When you change it, set the old value as `HETZNER_KEY_PREVIOUS` so stored values can still be decrypted.
   - **GBX service connection**: `GBX_SERVICE_URL` is the address of the `gbx-service` container (`http://gbx-service:3100`). `GBX_SERVICE_WS_URL` is the address the browser uses to open the live WebSockets, so it must be reachable from your users (for example `ws://<your-host>:3100`, or `wss://...` behind HTTPS). `GBX_SERVICE_TOKEN` and `WS_TICKET_SECRET` are secrets of at least 32 characters (`openssl rand -base64 32`) and must be identical in both containers. The panel refuses to start without them.
-  - **Codriver AI assistant (optional)**: the panel operator enables Codriver and stores the Anthropic API keys on the Codriver admin page. `SECRETS_KEY` (at least 32 characters, shared with the GBX service) encrypts those keys and all stored dedicated/file-manager credentials; keep it stable, because changing it makes stored keys unreadable. `ANTHROPIC_API_KEY` is only a fallback for the shared key while none is stored. Optional Jev routing sends request text to TypeSafe and needs its own key, stored on the same page; `TYPESAFE_API_KEY` is its fallback while none is stored, like `ANTHROPIC_API_KEY`. `PANEL_INTERNAL_TOKEN` (at least 32 characters, the same in both containers) authenticates the GBX service when it forwards `/co` chat commands. Leave it empty to turn `/co` off. The server Codriver page provides chat, usage and request history; operator-wide usage is under Admin → Codriver. Apply pending database migrations during upgrades, including the phase 5 model-call tracking column. See [the Codriver plan and evaluation commands](docs/codriver-plan.md).
+  - **Codriver AI assistant (optional)**: the panel operator enables Codriver and stores the Anthropic API keys on the Codriver admin page. `SECRETS_KEY` (at least 32 characters, shared with the GBX service) encrypts those keys and all stored dedicated/file-manager credentials; keep it stable, because changing it makes stored keys unreadable. `ANTHROPIC_API_KEY` is only a fallback for the shared key while none is stored. Optional Jev routing sends request text to TypeSafe and needs its own key, stored on the same page; `TYPESAFE_API_KEY` is its fallback while none is stored, like `ANTHROPIC_API_KEY`. `PANEL_INTERNAL_TOKEN` (at least 32 characters, the same in both containers) authenticates the GBX service when it forwards `/co` chat commands. Leave it empty to turn `/co` off. The server Codriver page provides chat, usage and request history; operator-wide usage is under Admin → Codriver. Apply pending database migrations during upgrades, including the phase 5 model-call tracking column.
   - `MARKETPLACE_INDEX_URL` (optional): The plugin marketplace the panel browses. Defaults to the official marketplace; set it to an empty value to turn browsing off. Uploading private plugins works either way.
   - `LOG_LEVEL`: Set the log level for TMControlPanel. Supported values are `trace`, `debug`, `info`, `warn`, `error` and `fatal`. The default is `info`.
   - `PLAUSIBLE_API_HOST`: Set the Plausible API host for analytics, e.g., `analytics.mywebsite.com`. This is optional and can be left empty if you do not want to use Plausible analytics.
@@ -490,7 +439,7 @@ docker compose pull
 docker compose up -d
 ```
 
-The `tmcontrolpanel` container applies database migrations on start. Check the [changelog](CHANGELOG.md) before upgrading across several versions. If you are coming from the `:beta` images, follow [Upgrading from `:beta` to `:release`](docs/migrating-beta-to-release.md). If you are coming from the single-container setup of the `dev` branch, follow the [migration guide](docs/migrating-from-dev.md). To move a database to a new deployment with new `SECRETS_KEY` and `HETZNER_KEY` values, see [Moving a database to a new deployment](docs/migrating-database.md).
+The `tmcontrolpanel` container applies database migrations on start. Check the [changelog](CHANGELOG.md) before upgrading across several versions. Coming from an older deployment? Starting a new stack is recommended, and migrating is at your own risk. If you do migrate from the `:beta` images, follow [Upgrading from `:beta` to `:release`](docs/migrating-beta-to-release.md). If you are coming from the single-container setup of the `dev` branch, follow the [migration guide](docs/migrating-from-dev.md). To move a database to a new deployment with new `SECRETS_KEY` and `HETZNER_KEY` values, see [Moving a database to a new deployment](docs/migrating-database.md).
 
 ---
 
@@ -570,7 +519,3 @@ Contributions are welcome! If you have suggestions or improvements, please creat
 ## License
 
 This project is licensed under the MIT License - see the [License](License) file for details.
-
-### Security upgrade: account revocation and server credentials
-
-Upgrades that include `20261011140000_user_revocation_and_credentials` require a coordinated database/credential migration. Follow [the security upgrade instructions](docs/security-upgrade-2026-10-11.md) before restarting the services. Existing plaintext server credentials are intentionally rejected until encrypted with the shared `SECRETS_KEY`.

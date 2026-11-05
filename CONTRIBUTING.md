@@ -94,4 +94,4 @@ If one of these is taken, stop whatever uses it. The databases only listen on `1
 
 ### Testing the GBX service
 
-The service has its own unit and integration tests, and an isolated stack for testing against a real dedicated server on separate ports, so it can run next to the setup above. See the [service README](apps/gbx-service/README.md) and [docs/real-server-testing.md](docs/real-server-testing.md).
+The service has its own unit and integration tests, and an isolated stack for testing against a real dedicated server on separate ports, so it can run next to the setup above. See the [service README](apps/gbx-service/README.md).

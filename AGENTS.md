@@ -12,7 +12,7 @@ This is a Bun workspace with TypeScript throughout. Run workspace commands from 
 - `packages/shared` (`@tmcontrolpanel/shared`): shared transport contracts, plugin manifest/config validation, and utilities used across processes.
 - `packages/plugin-sdk` (`@tmcontrolpanel/plugin-sdk`): public plugin API. First-party plugin implementations live in the separate `tmcontrolpanel-plugins` registry repository; see `docs/first-party-plugins.md`.
 
-The web panel and GBX service share the database and Redis. Server-side panel requests reach the service through `GBX_SERVICE_URL`; browsers use `GBX_SERVICE_WS_URL` for live updates. Keep the split intact: the web process must not open its own dedicated-server connection. Internal service calls use `GBX_SERVICE_TOKEN`, and browser WebSocket tickets use `WS_TICKET_SECRET`. Consult `README.md`, `docs/migrating-from-dev.md`, and `docs/real-server-testing.md` for deployment and integration setup.
+The web panel and GBX service share the database and Redis. Server-side panel requests reach the service through `GBX_SERVICE_URL`; browsers use `GBX_SERVICE_WS_URL` for live updates. Keep the split intact: the web process must not open its own dedicated-server connection. Internal service calls use `GBX_SERVICE_TOKEN`, and browser WebSocket tickets use `WS_TICKET_SECRET`. Consult `README.md` and `docs/migrating-from-dev.md` for deployment and integration setup.
 
 ## Web development conventions
 

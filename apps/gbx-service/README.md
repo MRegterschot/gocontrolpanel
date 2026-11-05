@@ -1,6 +1,6 @@
 # GBX service
 
-Long-running Fastify service that owns every connection to the Trackmania dedicated servers. It runs the in-game plugins, records matches, and serves the live WebSockets the panel uses. The web app talks to it over an internal HTTP API. See [docs/refactor-plan.md](../../docs/refactor-plan.md) for the why.
+Long-running Fastify service that owns every connection to the Trackmania dedicated servers. It runs the in-game plugins, records matches, and serves the live WebSockets the panel uses. The web app talks to it over an internal HTTP API.
 
 ## Running
 
@@ -28,8 +28,6 @@ INTEGRATION_REDIS_URL=redis://localhost:56379 \
 docker compose -p tmcp-gbx-test -f apps/gbx-service/docker-compose.test.yml down -v
 DB=mysql bun run generate   # `deploy` regenerated the client for Postgres; switch back if you develop on MySQL
 ```
-
-To test against a real dedicated server (isolated Docker stack, seed script, `ws:watch` socket viewer), follow [docs/real-server-testing.md](../../docs/real-server-testing.md).
 
 `test/fakes/harness.ts` builds a real `ServerRuntime` on top of a scriptable fake dedicated server (`FakeGbxSession`) and in-memory repositories. Most behaviour tests are just "emit a callback, assert state/events/calls".
 

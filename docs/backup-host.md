@@ -151,7 +151,7 @@ Test in a maintenance window with live pages open:
 2. Restart the primary service. Once it owns servers again, simulate a hard failure with `docker compose kill -s SIGKILL gbx-service`. With the default TTL, allow roughly 20s for expired leases and the next claim pass. Restart it after the check. Do not power off a host that still holds the only database and Redis unless testing that outage intentionally.
 3. Verify the surviving node can issue commands for every server. Check recorded matches and in-game chat for duplicates. Test HTTPS and WSS routing separately by removing one application host from the front door.
 
-See [Worker failover](real-server-testing.md#worker-failover) for the automated suite and individual worker crash tests. These commands stop services; they are operational checks, not part of Compose validation.
+These commands stop services; they are operational checks, not part of Compose validation.
 
 ## Front door
 

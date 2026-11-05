@@ -345,7 +345,7 @@ A plugin that is turned off stays off on that server until an admin turns it bac
 
 - Unit-test the plugin's own logic with any test runner. `definePlugin` only registers the plugin when it runs inside a panel.
 - Try it on a test server. Upload the zip on **Plugins → Uploaded**, install it on a server you're an admin of, and watch the GBX service log: everything the plugin logs carries its `pluginId`.
-- To work on TMControlPanel itself, `apps/gbx-service/test/plugins/sandbox.test.ts` runs packaged plugins against a fake dedicated server, and the [real-server test plan](./real-server-testing.md) covers a real one.
+- To work on TMControlPanel itself, `apps/gbx-service/test/plugins/sandbox.test.ts` runs packaged plugins against a fake dedicated server.
 
 ## Publishing to the marketplace
 

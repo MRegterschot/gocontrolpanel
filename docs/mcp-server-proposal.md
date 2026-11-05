@@ -2,7 +2,7 @@
 
 Status: idea for future consideration; not implemented or scheduled.
 
-A Model Context Protocol (MCP) server could give AI assistants structured access to GoControlPanel server state, plugin diagnostics and development workflows. The strongest use case is closing the plugin development feedback loop: inspect the environment, build and validate a plugin, deploy it to a development server, observe its behavior and iterate.
+A Model Context Protocol (MCP) server could give AI assistants structured access to TMControlPanel server state, plugin diagnostics and development workflows. The strongest use case is closing the plugin development feedback loop: inspect the environment, build and validate a plugin, deploy it to a development server, observe its behavior and iterate.
 
 ## Value and scope
 
@@ -31,7 +31,7 @@ Dedicated-server connections and plugin execution must remain in the GBX service
 
 - The [Plugin SDK](plugin-sdk.md) CLI already scaffolds, builds, packages and validates plugins.
 - The [GBX service internal routes](../apps/gbx-service/src/http/routes/internal.ts) already provide server status, live snapshots and plugin reloads; they are internal interfaces, not a user-authorized public API.
-- Existing sandbox tests and the [real-server test plan](real-server-testing.md) provide starting points for verification.
+- Existing sandbox tests provide a starting point for verification.
 - Structured plugin diagnostics, a reusable event-replay harness and an authorized development deployment workflow need design and implementation; MCP does not supply these features itself.
 
 Prioritize reusable diagnostics and testing operations, then expose them through MCP. Evaluate the feature by whether it meaningfully reduces the manual build, upload, reproduce and inspect cycle for plugin authors.
