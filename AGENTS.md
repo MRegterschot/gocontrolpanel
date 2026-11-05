@@ -12,7 +12,14 @@ This is a Bun workspace with TypeScript throughout. Run workspace commands from 
 - `packages/shared` (`@tmcontrolpanel/shared`): shared transport contracts, plugin manifest/config validation, and utilities used across processes.
 - `packages/plugin-sdk` (`@tmcontrolpanel/plugin-sdk`): public plugin API. First-party plugin implementations live in the separate `tmcontrolpanel-plugins` registry repository; see `docs/first-party-plugins.md`.
 
-The web panel and GBX service share the database and Redis. Server-side panel requests reach the service through `GBX_SERVICE_URL`; browsers use `GBX_SERVICE_WS_URL` for live updates. Keep the split intact: the web process must not open its own dedicated-server connection. Internal service calls use `GBX_SERVICE_TOKEN`, and browser WebSocket tickets use `WS_TICKET_SECRET`. Consult `README.md` and `docs/migrating-from-dev.md` for deployment and integration setup.
+The web panel and GBX service share the database and Redis. Server-side panel requests reach the service through `GBX_SERVICE_URL`; browsers use `GBX_SERVICE_WS_URL` for live updates. Keep the split intact: the web process must not open its own dedicated-server connection. Internal service calls use `GBX_SERVICE_TOKEN`, and browser WebSocket tickets use `WS_TICKET_SECRET`. Consult `README.md` for deployment, `docs/backup-host.md` and `docs/database-host.md` for multi-host setups, and `docs/migrating-beta-to-release.md` for upgrades.
+
+## Feature areas
+
+- **GBX worker cluster:** `apps/gbx-service/src/core/cluster`. Workers (`GBX_WORKERS`) and nodes (`GBX_NODE_ID`) claim servers through Redis leases, so only one process ever holds a server's connection. Keep that guarantee when touching connection or ownership code.
+- **Plugins:** the sandbox (QuickJS) is in `apps/gbx-service/src/core/plugins/sandbox`, capabilities and manifests in `packages/shared/src/plugins`, and the marketplace client in `apps/web/src/lib/marketplace.ts`. See `docs/plugin-sdk.md` and `docs/plugin-marketplace.md`.
+- **Public API:** `/api/v1` routes use `publicApiRoute` from `apps/web/src/lib/public-api`, with endpoints in `packages/shared/src/public-api` and scopes in `packages/shared/src/api-keys.ts`. Not `apiRoute`. See `docs/public-api.md`.
+- **Codriver:** the experimental AI assistant. Logic lives in `apps/web/src/lib/codriver`; the in-game `/co` command and window are in `apps/gbx-service/src/core/chat`. Keep it labelled experimental in the UI.
 
 ## Web development conventions
 
@@ -35,4 +42,4 @@ Authorization must be enforced at server entry points, not just by hiding UI con
 - `bun run typecheck`, `bun run test`, and `bun run build`: broader workspace validation; the root scripts load `.env`.
 - `bun run generate`: regenerate the Prisma client for the configured provider.
 
-Run checks appropriate to the changed workspace and use focused tests for behavior that can fail in meaningful ways. Integration and real-server checks require their documented infrastructure. Format changed files with the installed Prettier executable; avoid running the root `pretty` script for a small change because it rewrites the entire repository. Report which checks ran and any verification limits.
+Run checks appropriate to the changed workspace and use focused tests for behavior that can fail in meaningful ways. Integration tests and the real-server stack (`e2e:*` and `ws:watch` scripts in `apps/gbx-service`, using `apps/gbx-service/e2e`) need Docker and a dedicated server login. Format changed files with the installed Prettier executable; avoid running the root `pretty` script for a small change because it rewrites the entire repository. Report which checks ran and any verification limits.
