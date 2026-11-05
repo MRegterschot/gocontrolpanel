@@ -29,11 +29,11 @@ Redis isn't copied. It holds caches, rate limits and short-lived Hetzner setup s
 - **Only one GBX service may control a dedicated server.** Stop the old panel and GBX service before the new GBX service starts with the imported data. If you import a production database into staging, staging will connect to the production servers.
 - Have the old `SECRETS_KEY` and `HETZNER_KEY` at hand. If the old deployment also had `HETZNER_KEY_PREVIOUS` set, you need that too.
 - Have the new keys: the `SECRETS_KEY` and `HETZNER_KEY` the new deployment will run with. Generate them (for example `openssl rand -base64 48`) or copy the ones your platform generated, and save a copy somewhere safe.
-- Check out the repository at the version the new deployment runs, for example the `release` branch for the `release` image, then run `bun install`. You need Docker and Bun on that machine.
+- Check out the repository at the version the new deployment runs, for example `master` for the `latest` image or the matching version tag, then run `bun install`. You need Docker and Bun on that machine.
 
 The re-encryption runs on a throwaway copy of the database on your own machine. The new deployment's database never has to be reachable from outside.
 
-These commands are for MariaDB/MySQL. For PostgreSQL, use `pg_dump`/`psql` and `DB=postgres`; the script supports both.
+The commands in the steps are for MariaDB/MySQL. [PostgreSQL](#postgresql) has its own commands for the steps that touch the database.
 
 ## 1. Dump the old database
 
@@ -53,7 +53,7 @@ docker exec <old db container> mariadb-dump -u tmcontrolpanel -p'<old db passwor
 docker run -d --name tmcp-rekey -e MARIADB_ROOT_PASSWORD=rekey \
   -e MARIADB_DATABASE=tmcontrolpanel -p 127.0.0.1:3307:3306 mariadb:11
 # wait until it accepts connections
-until docker exec tmcp-rekey mariadb -uroot -prekey -e 'select 1' >/dev/null 2>&1; do sleep 1; done
+until docker exec tmcp-rekey mariadb -h127.0.0.1 -uroot -prekey -e 'select 1' >/dev/null 2>&1; do sleep 1; done
 gunzip -c old.sql.gz | docker exec -i tmcp-rekey mariadb -uroot -prekey tmcontrolpanel
 
 export DB=mysql
@@ -133,3 +133,33 @@ shred -u old.sql.gz rekeyed.sql.gz
 `old.sql.gz` together with the old keys exposes every stored secret, so delete it once the new deployment works, or keep it only in an encrypted backup. Remove the old deployment's volumes when you no longer need a way back. Unset the `OLD_*` and new key variables in your shell.
 
 Don't recreate the new deployment from scratch after the import if that regenerates its keys: the imported secrets become unreadable.
+
+## PostgreSQL
+
+Use these commands instead of the MariaDB ones. Steps 3, 4 and 7 stay the same, with `DB=postgres`.
+
+```bash
+# 1. dump the old database
+docker exec <old db container> pg_dump -U tmcontrolpanel --clean --if-exists --no-owner --no-privileges \
+  tmcontrolpanel | gzip > old.sql.gz
+
+# 2. load it into a scratch database
+docker run -d --name tmcp-rekey -e POSTGRES_PASSWORD=rekey -e POSTGRES_DB=tmcontrolpanel \
+  -p 127.0.0.1:5433:5432 postgres:17-alpine
+until docker exec tmcp-rekey pg_isready -h 127.0.0.1 -U postgres >/dev/null 2>&1; do sleep 1; done
+gunzip -c old.sql.gz | docker exec -i tmcp-rekey psql -U postgres -d tmcontrolpanel -q -v ON_ERROR_STOP=1 >/dev/null
+
+export DB=postgres
+export DATABASE_URL=postgresql://postgres:rekey@127.0.0.1:5433/tmcontrolpanel
+
+# 5. dump the re-encrypted database
+docker exec tmcp-rekey pg_dump -U postgres --clean --if-exists --no-owner --no-privileges \
+  tmcontrolpanel | gzip > rekeyed.sql.gz
+
+# 6. import into the new deployment (stop its web and GBX containers first);
+#    the dump drops and recreates the tables, so the database does not need to be emptied
+gunzip -c rekeyed.sql.gz | docker exec -i <new db container> \
+  psql -U tmcontrolpanel -d tmcontrolpanel -q -v ON_ERROR_STOP=1 >/dev/null
+```
+
+Use a scratch image with the same major version as your database or newer. Step 8 is the same, with `docker rm -f tmcp-rekey`.

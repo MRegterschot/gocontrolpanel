@@ -9,7 +9,7 @@ The first-party plugins available to TMControlPanel are ordinary [plugin SDK](./
 | `live-ranking` | Points standings in rounds, cup and teams | `ui` |
 | `live-round` | Live timings of the current round | `ui`, `records:read`, `nadeo:read` |
 | `map-info` | Name and author of the current map | `ui`, `maps:read` |
-| `match` | Pick and ban, match start and stop, pause, lobby | `ui`, `chat:send`, `maps:read`, `maps:write`, `mode:control` |
+| `match` | Pick and ban, match start and stop, pause, lobby | `ui`, `chat:send`, `maps:read`, `maps:write`, `nadeo:read`, `mode:control` |
 | `player-info` | Records, personal bests and setups of the players | `ui`, `records:read`, `nadeo:read` |
 | `records-info` | World record and local record of the map | `ui`, `records:read`, `nadeo:read` |
 | `ta-active-runs` | Players still driving in time attack | `ui` |
@@ -56,9 +56,26 @@ state are retained when updating; no automatic upgrade changes an installed vers
 
 ## Changing and publishing a plugin
 
+Clone the registry and give it a panel checkout as `.controlpanel`, which provides
+the SDK and the sandbox test harness. Link a checkout you already have, or clone one:
+
+```bash
+git clone https://github.com/MRegterschot/tmcontrolpanel-plugins.git
+cd tmcontrolpanel-plugins
+ln -s ../tmcontrolpanel .controlpanel    # or: git clone https://github.com/MRegterschot/tmcontrolpanel.git .controlpanel
+(cd .controlpanel && bun install --frozen-lockfile && DB=mysql bun run generate)
+bun run setup
+bun run check
+```
+
+`generate` only creates the Prisma types the tests need; it does not touch a
+database. Use a panel checkout that has `packages/plugin-sdk` and matches the
+registry's tests: `bun run check` compares rendered manialinks with stored
+snapshots, so a panel branch that changed a shared template makes it fail.
+
 Work in the registry repository's `plugins/<slug>` directory and increase the
-manifest version for every change. Its README describes SDK setup, typechecking,
-sandbox tests, packaging, and publication. `bun run build --publish` writes new
+manifest version for every change. Its README and `wiki/` describe SDK setup,
+typechecking, sandbox tests, packaging, and publication. `bun run build --publish` writes new
 immutable archives and descriptors; `bun run check` verifies source checksums and
 runs the tests. A merged registry PR publishes updates through GitHub Pages without
 rebuilding the panel image.

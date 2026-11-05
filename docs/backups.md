@@ -7,6 +7,9 @@ It only dumps the application database named in `DATABASE_URL`, not the whole da
 ## Setup
 
 1. Copy `scripts/backup.env.example` to `scripts/backup.env` and fill in what you use. Every setting can also be an environment variable.
+
+   The script also needs `DATABASE_URL`. It reads it from the environment, from `scripts/backup.env` or from the `.env` in the repository root. The compose file builds its URL from `MARIADB_PASSWORD`, so a compose `.env` has no `DATABASE_URL`: add the line `DATABASE_URL=mysql://tmcontrolpanel:<MARIADB_PASSWORD>@db:3306/tmcontrolpanel` to `scripts/backup.env`.
+
 2. Run it once by hand and look at the output: `scripts/backup-db.sh --no-upload`.
 3. Test a restore (below) before you rely on it.
 4. Add it to cron, for example every night at 03:15:
@@ -15,7 +18,7 @@ It only dumps the application database named in `DATABASE_URL`, not the whole da
    15 3 * * * /path/to/tmcontrolpanel/scripts/backup-db.sh >> /var/log/tmcp-backup.log 2>&1
    ```
 
-The script exits non-zero when anything fails (cron mails that if `MAILTO` is set), and pings `BACKUP_PING_URL/fail` if you configured one. A second run while one is still going is skipped.
+The script exits non-zero when anything fails (cron mails that if `MAILTO` is set), and pings `BACKUP_PING_URL/fail` if you configured one. A second run while one is still going is skipped: it exits with an error but sends no failure ping.
 
 ## Docker
 
@@ -31,7 +34,7 @@ With the compose setup the database host in `DATABASE_URL` is `db`, which only e
 | `BACKUP_UPLOAD`                     | `none`           | `none`, `rsync` or `rclone`                     |
 | `BACKUP_RSYNC_TARGET`               |                  | `user@host:/path/` for rsync over SSH           |
 | `BACKUP_SSH_KEY`, `BACKUP_SSH_PORT` |                  | SSH key and port for rsync                      |
-| `BACKUP_RCLONE_TARGET`              |                  | An rclone remote, such as `s3:bucket/tmcp`       |
+| `BACKUP_RCLONE_TARGET`              |                  | An rclone remote, such as `s3:bucket/tmcp`      |
 | `BACKUP_REMOTE_KEEP_DAYS`           | empty            | Delete uploaded backups older than this         |
 | `BACKUP_ENCRYPT_PASSFILE`           | empty            | Encrypt with AES-256, passphrase from this file |
 | `BACKUP_PING_URL`                   | empty            | Success/failure ping (healthchecks.io style)    |
@@ -59,6 +62,8 @@ gunzip -c dump.sql.gz | docker exec -i tmcontrolpanel-db-1 mariadb -u tmcontrolp
 
 # PostgreSQL (the dump drops and recreates the tables)
 gunzip -c dump.sql.gz | psql -U tmcontrolpanel -d tmcontrolpanel
+# in Docker
+gunzip -c dump.sql.gz | docker exec -i <db container> psql -U tmcontrolpanel -d tmcontrolpanel
 ```
 
 To look at a backup without risking the live data, restore it into a new database with another name and point a query tool at that.

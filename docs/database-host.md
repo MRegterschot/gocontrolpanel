@@ -1,8 +1,8 @@
 # Move the database and Redis to a separate host
 
-This implements option B of the [high availability plan](high-availability-plan.md#database-and-redis). The primary (Contabo, Coolify) and backup (Hetzner Cloud) share MariaDB or PostgreSQL and Redis on a third VPS. Losing either application host no longer takes storage down. You still need the [backup host and front-door routing](backup-host.md#front-door) to keep the panel available.
+This implements option B of the storage options in [Limits and database placement](backup-host.md#limits-and-database-placement): MariaDB or PostgreSQL and Redis move to a small third VPS, and the primary (Contabo, Coolify) and backup (Hetzner Cloud) share them. Losing either application host no longer takes storage down. You still need the [backup host and front-door routing](backup-host.md#front-door) to keep the panel available.
 
-The database host remains a single point of failure. Option C adds database replication and Redis Sentinel; it needs separate failover tooling. Hetzner has no managed MySQL, PostgreSQL or Redis service. You maintain this host yourself.
+The database host remains a single point of failure. Option C adds database replication and Redis Sentinel across three hosts; it needs separate failover tooling. Hetzner has no managed MySQL, PostgreSQL or Redis service. You maintain this host yourself.
 
 The database holds servers, matches, records and plugins. Back it up. Redis holds GBX leases, RPC, events and status, plus web sessions, Codriver state, jukebox queues and the Nadeo token cache. Losing Redis data logs users out and loses that temporary state, but no recorded match data. During a Redis outage, all GBX runtimes are disposed within the lease TTL. They reconnect within about a second after Redis returns.
 
@@ -68,7 +68,7 @@ chmod 600 .env
 
 Keep these passwords in your password manager. Fresh storage credentials are fine; preserve the application's encryption and auth secrets during cutover. The current Coolify stack uses `SERVICE_PASSWORD_MARIADBROOT`, `SERVICE_PASSWORD_MARIADB` and `SERVICE_PASSWORD_REDIS` for its old storage. Its volumes are `db-data:/var/lib/mysql` and `redis-data:/data`. Keep those old volumes for rollback.
 
-Save this as `/opt/tmcp-storage/compose.yml` on the VPS. MariaDB 11 and Redis 7 match [the Coolify stack](../docker-compose.coolify.yml). These tags pin the major version; pull updates during maintenance.
+Save this as `/opt/tmcp-storage/compose.yml` on the VPS. MariaDB 11 and Redis 7 match [the Coolify stack](../docker-compose.coolify.yml). These tags pin the major version; pull updates during maintenance. The plain Docker `docker-compose.yml` uses `mariadb:latest`; if its database runs a newer major than 11, use that major's tag here, because a dump from a newer MariaDB may not restore into an older one.
 
 ```yaml
 services:
@@ -290,6 +290,15 @@ SHARED_REDIS_URI=redis://:<encoded-new-redis-password>@100.64.0.10:6379/0
 The node file sets `DATABASE_URL=${SHARED_DATABASE_URL}` and `REDIS_URI=${SHARED_REDIS_URI}` in **both** `tmcontrolpanel` and `gbx-service`. URL-encode passwords; generated hex passwords need no encoding. Keep the same Redis logical database everywhere.
 
 Stop the old `db` and `redis` containers after the dump. Remove their service definitions by switching to the node file, and remove any stopped orphan containers if Coolify leaves them behind. Retain their named volumes and the old resource configuration. Do not use `down -v` or delete Coolify persistent storage. Check the volumes with `docker volume ls` before redeploying.
+
+For a plain Docker primary that uses `docker-compose.yml`, do the same with [docker-compose.node.yml](../docker-compose.node.yml). Run `docker compose stop db redis`, then put the shared variables from the [backup host guide](backup-host.md#shared-configuration) in the stack's `.env` with `GBX_NODE_ID=node-a`, and start it from the same directory so the project name stays the same:
+
+```bash
+docker compose -f docker-compose.node.yml config -q
+docker compose -f docker-compose.node.yml up -d
+```
+
+Compose warns about orphan containers `db` and `redis`. Leave them stopped: they keep the old volumes for rollback, and no `--remove-orphans` is needed.
 
 Deploy the node stack. The web container runs `prisma migrate deploy` on start with retries. Prisma's advisory lock serialises concurrent migrations on both MariaDB and PostgreSQL; starting both hosts together is supported. Never disable the advisory lock.
 

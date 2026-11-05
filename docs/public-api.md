@@ -51,6 +51,7 @@ Every key has one or more scopes:
 | `game:write`     | Restarting, skipping, jumping and pausing; changing the game mode, its settings and opponent visibility; match settings files; points; script events |
 | `chat:read`      | The chat history                                                                                                                                     |
 | `chat:write`     | Sending chat messages, shown as `[Admin] <key name> (API key)`                                                                                       |
+| `commands:write` | Executing built-in and plugin chat commands as the key's creator                                                                                     |
 | `settings:read`  | Server settings and the join link, passwords included                                                                                                |
 | `settings:write` | Changing server settings, passwords included                                                                                                         |
 | `plugins:read`   | Installed plugins and their settings, without secrets; the dedicated server's script plugin                                                          |
@@ -114,6 +115,8 @@ Responses wrap their result in `data`. Lists of matches are paged with `page` (f
 }
 ```
 
+The match list only holds matches with at least one finished (non-DNF) record. A match without one is not listed, but can still be fetched by its id.
+
 Times are in milliseconds and `-1` is a DNF. Names can contain Trackmania formatting tags.
 
 ### Errors
@@ -139,13 +142,16 @@ Errors have one shape:
 | 413    | Body over 64 KB, or 16 MB for file contents                                  |
 | 422    | The dedicated server refused the call; `message` has its reason              |
 | 429    | Rate limited; wait for the number of seconds in `Retry-After`                |
-| 503    | The dedicated server is not connected                                        |
+| 500    | Unexpected failure                                                           |
+| 503    | The dedicated server is not connected, or the file manager cannot be reached |
 
 A server the key cannot reach and a server that does not exist both answer `403`.
 
+A path that does not exist answers `404`, and a wrong method `405`, without the JSON error body.
+
 ### Rate limits
 
-Each key may make 120 requests a minute, with bursts of up to 30.
+Each key may make 120 requests a minute, with bursts of up to 30. The limit is per key and counts every request with a valid key, including ones that fail with `400` or `403`. A request over the limit answers `429` with a `Retry-After` header.
 
 ## Contributing an endpoint
 

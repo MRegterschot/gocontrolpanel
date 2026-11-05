@@ -28,7 +28,7 @@ Every panel, self-hosted ones included, can browse a central plugin marketplace 
 
 ## Setting up the registry
 
-1. Create a public repository named `tmcontrolpanel-plugins` from the contents of `packages/plugin-sdk/registry-template`. The template includes the example `hello` plugin as its first entry.
+1. Create a public repository named `tmcontrolpanel-plugins` from the contents of `packages/plugin-sdk/registry-template`. Copy the hidden `.github` folder too, for example with `cp -r packages/plugin-sdk/registry-template/. ~/tmcontrolpanel-plugins`. The template includes the example `hello` plugin as its first entry.
 2. In the repository settings, set **Pages → Source** to **GitHub Actions**.
 3. Optionally set the repository variable `TMCONTROLPANEL_REF` to the TMControlPanel branch whose validator the workflows use (default `master`).
 4. Push to `main`. *Publish marketplace* builds the site, and panels read it at `https://<owner>.github.io/tmcontrolpanel-plugins/index.json`.
@@ -36,6 +36,19 @@ Every panel, self-hosted ones included, can browse a central plugin marketplace 
 `DEFAULT_MARKETPLACE_INDEX_URL` in `packages/shared/src/plugins/marketplace-index.ts` points at `https://mregterschot.github.io/tmcontrolpanel-plugins/index.json`. Change it if the registry lives elsewhere.
 
 The registry's README has the submission steps, the review checklist and the takedown procedure.
+
+### Building the site locally
+
+To try a registry before you push it, run the builder from a clone of this repository (see the note in the [plugin SDK guide](./plugin-sdk.md#quick-start) on running the CLI):
+
+```bash
+bun packages/plugin-sdk/src/cli/main.ts registry --registry ~/tmcontrolpanel-plugins --check
+bun packages/plugin-sdk/src/cli/main.ts registry --registry ~/tmcontrolpanel-plugins --out ~/site
+```
+
+`--registry` defaults to the current folder and `--out` to `site` in the current folder, not in the registry. `--check` only validates. The result is a plain static site, so any file server works, for example `python3 -m http.server 8080 --bind 127.0.0.1` in the output folder. Point `MARKETPLACE_INDEX_URL` at `http://127.0.0.1:8080/index.json` to browse it from a panel.
+
+A version file's `url` must be an `https://` address or a path relative to the version file, as the template's `hello` entry does. The check fails when the package's sha256, slug or version doesn't match its file, or when the slug is reserved.
 
 ### Withdrawing a version (takedown)
 

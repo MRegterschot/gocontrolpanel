@@ -29,6 +29,7 @@ A Dockerized management panel for dedicated Trackmania servers. Works both stand
     - [Hetzner Management](#hetzner-management)
     - [Public API](#public-api)
 - [Architecture](#architecture)
+  - [Expose the GBX service](#expose-the-gbx-service)
 - [Docker Setup](#docker-setup)
   - [Prerequisites](#prerequisites)
   - [Getting Started](#getting-started)
@@ -123,14 +124,48 @@ TMControlPanel runs as two containers next to your database and Redis:
 
 Both images come in a MariaDB/MySQL and a PostgreSQL (`-postgres` suffix) flavour. The two containers share the database and Redis, and authenticate to each other with `GBX_SERVICE_TOKEN` and `WS_TICKET_SECRET`.
 
-- **Browsers connect to port 3100** for the live pages, so `GBX_SERVICE_WS_URL` must be reachable from your users' browsers. Behind HTTPS it must be a `wss://` URL, see [Expose the GBX service](docs/migrating-from-dev.md#3-open-port-3100-to-browsers).
+- **Browsers connect to port 3100** for the live pages, so `GBX_SERVICE_WS_URL` must be reachable from your users' browsers. Behind HTTPS it must be a `wss://` URL, see [Expose the GBX service](#expose-the-gbx-service).
   The service's main process is a front for the internal HTTP API and browser WebSockets. It never opens a GBX connection.
   It forks workers that hold GBX connections, run plugins and record matches. Redis leases assign each server to one worker.
   Commands, live events and status snapshots pass through Redis. Requests for a server with no owner return HTTP 503 (`ServerUnavailable`).
   A crashed or hung worker is restarted; other workers can take over its servers. Allow roughly 80–150 MB per worker, plus the front.
-  Several containers sharing the database and Redis already split servers by lease, but that setup is not yet documented.
+  Several containers sharing the database and Redis split servers by lease; see the [backup host guide](docs/backup-host.md).
   `GBX_SERVICE_ENABLED_SERVERS` limits which servers a container may claim.
 - **Keep `/internal/*` private.** Only the web container calls those routes. Don't publish them through a reverse proxy.
+
+## Expose the GBX service
+
+The live pages, notifications and the server list connect from the browser straight to the GBX service. Make `GBX_SERVICE_WS_URL` reachable from your users' browsers:
+
+- **Plain setup:** publish `3100` and use `ws://<host>:3100`.
+- **HTTPS:** a page served over HTTPS may only open `wss://` sockets. Put a TLS-terminating reverse proxy in front of the service and set `GBX_SERVICE_WS_URL=wss://...`. The proxy must pass WebSocket upgrades.
+- **Only expose `/ws/*` and `/health`.** The `/internal/*` routes are protected by `GBX_SERVICE_TOKEN` but are meant for the web container only; keep them off the public internet.
+- Add the web app's public origin (for example `https://panel.example.com`) to `WS_ALLOWED_ORIGINS`. A socket from another origin is closed with code 4403. An empty value allows any origin.
+
+### Example: Nginx Proxy Manager
+
+1. Create a proxy host (for example `gbx.example.com`) that forwards to `http` / `gbx-service` / `3100`. Use the host IP and port instead if NPM does not share a Docker network with the service. Turn on **Websockets Support**, request a certificate on the **SSL** tab and enable **Force SSL**.
+2. On the **Advanced** tab, add this custom configuration so that only `/ws/*` and `/health` pass through:
+
+   ```nginx
+   location ~ ^/(?!(ws/|health$)) {
+       return 404;
+   }
+   ```
+
+   Nginx checks regex locations before NPM's generated `location /`. The negative lookahead keeps `/ws/` and `/health` out of the regex, so they use the normal proxy block and everything else, including `/internal/*`, returns 404. To also hide `/health`, use `(ws/)`.
+
+3. Set `GBX_SERVICE_WS_URL: wss://gbx.example.com` on the web container and `WS_ALLOWED_ORIGINS: https://panel.example.com` on the service. `GBX_SERVICE_URL` stays `http://gbx-service:3100` because the web container talks to the service directly, not through NPM.
+4. Remove `ports: - 3100:3100` from the `gbx-service` compose entry when NPM reaches it over the Docker network, or bind it to localhost with `127.0.0.1:3100:3100` when NPM runs on the host. Otherwise the port stays open and the proxy rules can be bypassed.
+5. Check it:
+
+   ```bash
+   curl -i https://gbx.example.com/internal/servers   # 404
+   curl -i https://gbx.example.com/health             # 200
+   curl -i http://<server-ip>:3100/health             # should fail from outside
+   ```
+
+   In the browser dev tools the `/ws/live/...` socket should show `101 Switching Protocols`. A close with code 4403 means `WS_ALLOWED_ORIGINS` does not match the panel's origin exactly.
 
 # Docker Setup
 
@@ -186,8 +221,8 @@ Make sure to update or add the environment variables for the services in your `d
     - `SENTRY_ENVIRONMENT` (optional): Environment reported to Sentry. Defaults to `NODE_ENV` (production).
     - `SENTRY_TRACES_SAMPLE_RATE` (optional): Performance trace sampling rate (`0`-`1`). Defaults to `1`.
     - `SENTRY_PROFILES_SAMPLE_RATE` (optional): Profiling sampling rate (`0`-`1`). Defaults to `1`.
-    - `SENTRY_REPLAYS_SESSION_SAMPLE_RATE` (optional): Session Replay sampling rate (`0`-`1`). Defaults to `1`.
-    - `SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE` (optional): Session Replay sampling rate when an error occurs (`0`-`1`). Defaults to `1`.
+    - `NEXT_PUBLIC_SENTRY_REPLAYS_SESSION_SAMPLE_RATE` (optional): Session Replay sampling rate (`0`-`1`). Defaults to `1`.
+    - `NEXT_PUBLIC_SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE` (optional): Session Replay sampling rate when an error occurs (`0`-`1`). Defaults to `1`.
     - `SENTRY_SEND_DEFAULT_PII` (optional): Whether to send personally identifiable information. Defaults to `false`.
     - `SENTRY_ATTACH_STACKTRACE` (optional): Whether to attach stack traces to supported log messages. Defaults to `true`.
     - `SENTRY_ENABLE_LOGS` (optional): Whether to send application logs to Sentry. Defaults to `true`.
@@ -242,7 +277,7 @@ Paste the following configuration into your existing `docker-compose.yml` file.
 
 ```yaml
 tmcontrolpanel:
-  image: marijnregterschot/tmcontrolpanel:beta # Use marijnregterschot/tmcontrolpanel-postgres:beta if you are using PostgreSQL
+  image: marijnregterschot/tmcontrolpanel:latest # Use marijnregterschot/tmcontrolpanel-postgres:latest if you are using PostgreSQL
   ports:
     - 3000:3000
   restart: unless-stopped
@@ -270,7 +305,7 @@ tmcontrolpanel:
     - redis
 
 gbx-service:
-  image: marijnregterschot/tmcontrolpanel-gbx-service:beta # Use marijnregterschot/tmcontrolpanel-gbx-service-postgres:beta if you are using PostgreSQL
+  image: marijnregterschot/tmcontrolpanel-gbx-service:latest # Use marijnregterschot/tmcontrolpanel-gbx-service-postgres:latest if you are using PostgreSQL
   ports:
     - 3100:3100 # WebSockets for the browser; /internal routes require GBX_SERVICE_TOKEN
   restart: unless-stopped
@@ -363,8 +398,8 @@ Make sure to update or add the environment variables for the added services in y
     - `SENTRY_ENVIRONMENT` (optional): Environment reported to Sentry. Defaults to `NODE_ENV` (production).
     - `SENTRY_TRACES_SAMPLE_RATE` (optional): Performance trace sampling rate (`0`-`1`). Defaults to `1`.
     - `SENTRY_PROFILES_SAMPLE_RATE` (optional): Profiling sampling rate (`0`-`1`). Defaults to `1`.
-    - `SENTRY_REPLAYS_SESSION_SAMPLE_RATE` (optional): Session Replay sampling rate (`0`-`1`). Defaults to `1`.
-    - `SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE` (optional): Session Replay sampling rate when an error occurs (`0`-`1`). Defaults to `1`.
+    - `NEXT_PUBLIC_SENTRY_REPLAYS_SESSION_SAMPLE_RATE` (optional): Session Replay sampling rate (`0`-`1`). Defaults to `1`.
+    - `NEXT_PUBLIC_SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE` (optional): Session Replay sampling rate when an error occurs (`0`-`1`). Defaults to `1`.
     - `SENTRY_SEND_DEFAULT_PII` (optional): Whether to send personally identifiable information. Defaults to `false`.
     - `SENTRY_ATTACH_STACKTRACE` (optional): Whether to attach stack traces to supported log messages. Defaults to `true`.
     - `SENTRY_ENABLE_LOGS` (optional): Whether to send application logs to Sentry. Defaults to `true`.
@@ -439,7 +474,7 @@ docker compose pull
 docker compose up -d
 ```
 
-The `tmcontrolpanel` container applies database migrations on start. Check the [changelog](CHANGELOG.md) before upgrading across several versions. Coming from an older deployment? Starting a new stack is recommended, and migrating is at your own risk. If you do migrate from the `:beta` images, follow [Upgrading from `:beta` to `:release`](docs/migrating-beta-to-release.md). If you are coming from the single-container setup of the `dev` branch, follow the [migration guide](docs/migrating-from-dev.md). To move a database to a new deployment with new `SECRETS_KEY` and `HETZNER_KEY` values, see [Moving a database to a new deployment](docs/migrating-database.md).
+The `tmcontrolpanel` container applies database migrations on start. Check the [changelog](CHANGELOG.md) before upgrading across several versions. Coming from an older deployment? Starting a new stack is recommended, and migrating is at your own risk. If you do migrate from the `:beta` images or the single-container `dev` branch, follow [Upgrading from `:beta` to the release](docs/migrating-beta-to-release.md). To move a database to a new deployment with new `SECRETS_KEY` and `HETZNER_KEY` values, see [Moving a database to a new deployment](docs/migrating-database.md).
 
 ---
 

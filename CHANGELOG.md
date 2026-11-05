@@ -6,7 +6,7 @@ Release notes of TMControlPanel, newest first. The entries are the descriptions 
 
 ### Changes
 
-- **Split into two containers.** The GBX connections, in-game plugins, manialinks and live WebSockets moved out of the web app into a separate `gbx-service` container. The web app no longer connects to dedicated servers itself. This needs two new secrets (`GBX_SERVICE_TOKEN`, `WS_TICKET_SECRET`) and port `3100` reachable from the browser. The database schema is unchanged. See the [migration guide](docs/migrating-from-dev.md).
+- **Split into two containers.** The GBX connections, in-game plugins, manialinks and live WebSockets moved out of the web app into a separate `gbx-service` container. The web app no longer connects to dedicated servers itself. This needs two new secrets (`GBX_SERVICE_TOKEN`, `WS_TICKET_SECRET`) and port `3100` reachable from the browser. The database schema is unchanged. See the [migration guide](docs/migrating-beta-to-release.md).
 - Release images are published for both the web app and the GBX service, each with a MariaDB/MySQL and a `-postgres` flavour.
 - The repository is a Bun workspaces monorepo (`apps/web`, `apps/gbx-service`, `packages/db`, `packages/shared`, `packages/plugin-sdk`, `plugins`).
 - New database tables for plugin packages and plugin storage, applied by the migrations on start.

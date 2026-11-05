@@ -2,7 +2,7 @@
 
 Use this setup to add another host to an existing TMControlPanel deployment. The extra host runs only the web app and `gbx-service`. It shares the database and Redis with the first host. Both hosts run workers and can take over each other's dedicated servers.
 
-For a Contabo primary and a Hetzner Cloud backup, check availability before ordering. See the [high availability plan](high-availability-plan.md) for the design.
+For a Contabo primary and a Hetzner Cloud backup, check availability before ordering.
 
 ## Architecture
 
@@ -128,7 +128,7 @@ curl -fsS http://127.0.0.1:3100/health
 curl -fsS http://127.0.0.1:3000/api/health
 ```
 
-Both `/healthz` endpoints must return 200: Redis is reachable and at least one worker is alive. `/health` includes worker details; use it to inspect workers on each node. `/api/health` checks the database, Redis and that web replica's local GBX `/healthz`. It returns 503 if any check fails. Health does not prove every dedicated server is connected; check the live pages too.
+Both `/healthz` endpoints must return 200: Redis is reachable and at least one worker is alive. `/health` also returns the number of servers, how many are connected and how many workers are alive across the whole cluster, not per node. With one 1-worker node and one 2-worker node it shows `"workers":3` on both. To see which worker belongs to which node, use the cluster view on the panel's admin servers page. `/api/health` checks the database, Redis and that web replica's local GBX `/healthz`. It returns 503 if any check fails. Health does not prove every dedicated server is connected; check the live pages too.
 
 Inspect ownership from a mesh host with `redis-cli` installed. Enter the existing Redis password without putting it in shell history:
 
@@ -143,12 +143,12 @@ redis-cli -h 100.64.0.10 --scan --pattern 'gbx:lease:*' |
 unset REDISCLI_AUTH
 ```
 
-Use the same Redis database index as `SHARED_REDIS_URI` (`-n <index>` on both commands if not `0`). Values look like `node-b:0.<incarnation>`. Each key has one owner. With enough idle servers, both nodes should own servers. Rebalancing only moves idle servers and runs once per minute; adding a node may not spread busy servers immediately.
+Use the same Redis database index as `SHARED_REDIS_URI` (`-n <index>` on both commands if not `0`). Values look like `node-b:1.<incarnation>`: node ID, worker number (starting at 1) and a per-start suffix. Each key has one owner. With enough idle servers, both nodes should own servers. Servers spread across workers, not nodes, so a node with 2 workers owns about twice as many as a node with 1. Rebalancing only moves idle servers and runs once per minute; adding a node may not spread busy servers immediately.
 
 Test in a maintenance window with live pages open:
 
-1. Record current lease owners. On the primary, stop only `gbx-service` with `docker compose stop gbx-service` (use its actual Compose file/resource). The 20s stop grace period lets workers release leases. Recheck lease owners, chat and live updates on the backup. Clean handoff normally takes a few seconds; a tested two-node SIGTERM handoff took 1.9s.
-2. Restart the primary service. Once it owns servers again, simulate a hard failure with `docker compose kill -s SIGKILL gbx-service`. With the default TTL, allow roughly 20s for expired leases and the next claim pass. Restart it after the check. Do not power off a host that still holds the only database and Redis unless testing that outage intentionally.
+1. Record current lease owners. On the primary, stop only `gbx-service` with `docker compose stop gbx-service` (use its actual Compose file/resource). The 20s stop grace period lets workers release leases. Recheck lease owners, chat and live updates on the backup. Clean handoff normally takes a few seconds; a tested two-node SIGTERM handoff took 1.9s, and a second local test about 1s.
+2. Restart the primary service. Once it owns servers again, simulate a hard failure with `docker compose kill -s SIGKILL gbx-service`. With the default TTL, allow roughly 20s for expired leases and the next claim pass; a local test moved them after about 12s. Docker does not restart the killed container, so start it again with `docker compose start gbx-service` after the check. Do not power off a host that still holds the only database and Redis unless testing that outage intentionally.
 3. Verify the surviving node can issue commands for every server. Check recorded matches and in-game chat for duplicates. Test HTTPS and WSS routing separately by removing one application host from the front door.
 
 These commands stop services; they are operational checks, not part of Compose validation.

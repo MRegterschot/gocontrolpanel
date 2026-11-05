@@ -1,4 +1,4 @@
-# Upgrading from the `:beta` images to `:release`
+# Upgrading from the `:beta` images to the release
 
 > **Recommended: start a new stack instead of migrating.** Setting up a fresh deployment is simpler and safer than carrying an old one over. Migrating is at your own risk, and you are responsible for your data, so back it up first. Questions are welcome in the [Discord](https://discord.gg/NjbtRvbCY8).
 
@@ -6,7 +6,7 @@ This guide moves a Docker Compose deployment that runs the last beta (`marijnreg
 
 ## What changes
 
-|                            | `:beta` (v0.12.0-beta)                                                                           | `:release`                                                                                                                                         |
+|                            | `:beta` (v0.12.0-beta)                                                                           | Release (`:latest`)                                                                                                                                |
 | -------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Containers                 | One: `gocontrolpanel` runs the web app, the dedicated-server connections, plugins and live pages | Two: `tmcontrolpanel` (web) and `gbx-service` (connections, plugins, live WebSockets)                                                              |
 | Image names                | `marijnregterschot/gocontrolpanel`                                                               | `marijnregterschot/tmcontrolpanel` and `marijnregterschot/tmcontrolpanel-gbx-service`. The old images stay on Docker Hub but are no longer updated |
@@ -17,7 +17,7 @@ This guide moves a Docker Compose deployment that runs the last beta (`marijnreg
 
 You keep `NEXTAUTH_SECRET` (nobody has to log in again) and `HETZNER_KEY` (Hetzner projects keep working). The new stack gets a fresh database and Redis with new passwords, so the old database names and passwords don't matter.
 
-`:release` is built from the `release` branch on every push. Once the release is published you can pin a version tag or `latest` instead.
+The compose file uses the `:latest` tag. To stay on one version, pin a version tag instead, for example `:v1.0.0`.
 
 ## The one rule
 
@@ -34,9 +34,11 @@ You keep `NEXTAUTH_SECRET` (nobody has to log in again) and `HETZNER_KEY` (Hetzn
 
 ```bash
 mkdir ~/tmcontrolpanel && cd ~/tmcontrolpanel
-curl -fsSLO https://raw.githubusercontent.com/MRegterschot/tmcontrolpanel/release/docker-compose.yml
+curl -fsSLO https://raw.githubusercontent.com/MRegterschot/tmcontrolpanel/master/docker-compose.yml
 cp <old directory>/.env .env
 ```
+
+The beta compose file has no `.env` by default. If you filled in `NEXTAUTH_SECRET`, `HETZNER_KEY`, `NADEO_*`, `DEFAULT_ADMINS` and the like directly in the old `docker-compose.yml`, create `.env` with those values instead. The new compose file reads them from `.env`.
 
 Generate the new secrets and append them to `.env`, together with fresh database and Redis passwords. Use URL-safe values, because the database and Redis passwords end up in connection URLs:
 
@@ -113,7 +115,7 @@ The imported server passwords are still plain text. Download the helper script i
 
 ```bash
 curl -fsSLo encrypt-server-credentials.sh \
-  https://raw.githubusercontent.com/MRegterschot/tmcontrolpanel/release/scripts/encrypt-server-credentials.sh
+  https://raw.githubusercontent.com/MRegterschot/tmcontrolpanel/master/scripts/encrypt-server-credentials.sh
 chmod +x encrypt-server-credentials.sh
 ```
 
@@ -124,7 +126,7 @@ Put a space in front of the commands so your shell doesn't save the key in its h
  SECRETS_KEY=$(grep ^SECRETS_KEY= .env | cut -d= -f2) ./encrypt-server-credentials.sh
 ```
 
-The dry run only reports how many passwords are plain text. The real run encrypts the dedicated server and file manager passwords of every server (including deleted ones) in one transaction, then reads them back and checks that they decrypt. It is safe to run again with the same key. Use `--db-service <name>` if your database service isn't called `db`.
+The dry run only reports how many passwords are plain text. The real run first asks you to confirm that the database is backed up and the containers are stopped, then encrypts the dedicated server and file manager passwords of every server (including deleted ones) in one transaction, then reads them back and checks that they decrypt. It is safe to run again with the same key, and it stops with an error if a stored value doesn't decrypt with the key you gave. Use `--db-service <name>` if your database service isn't called `db`, and `--yes` to skip the confirmation question (for example in a script).
 
 ## 4. Test the new web app
 
@@ -153,7 +155,7 @@ This is the only moment with downtime, a couple of minutes. You repeat the comma
 
 2. Dump the old database again, and import it into the new one, run the migrations and encrypt the passwords: the same commands as in steps 2 and 3. Stop the web container between the migration and the encryption, as shown there.
 3. Give the new stack the real ports: change `3001` and `3101` back to `3000` and `3100`, or point your reverse proxy at the new containers. If the old web container stays stopped, nothing else uses those ports.
-4. Open port 3100 to browsers as described in step 3 of [migrating-from-dev.md](./migrating-from-dev.md#3-open-port-3100-to-browsers). Set `GBX_SERVICE_WS_URL` and `WS_ALLOWED_ORIGINS` to match.
+4. Open port 3100 to browsers as described in [Expose the GBX service](../README.md#expose-the-gbx-service). Set `GBX_SERVICE_WS_URL` and `WS_ALLOWED_ORIGINS` to match.
 5. Start everything:
 
    ```bash
@@ -165,7 +167,7 @@ This is the only moment with downtime, a couple of minutes. You repeat the comma
 
 ```bash
 docker compose logs tmcontrolpanel gbx-service
-curl http://localhost:3100/health    # {"status":"ok","servers":N,"connected":N}
+curl http://localhost:3100/health    # {"status":"ok","servers":N,"connected":N,"workers":N}
 ```
 
 - `connected` should reach `servers` within a minute.
@@ -195,6 +197,6 @@ Keep the old stack stopped for a week or so. Then remove its web container, imag
 ## Notes
 
 - **Redis** is only caches and short-lived state, so the new stack starts with a fresh one. Manialink state and the active map are no longer kept there.
-- **Built-in plugins** are plugin packages now and run sandboxed. Servers that had them on keep them on, with their settings. Local code changes you made in a fork don't carry over; see [migrating-from-dev.md](./migrating-from-dev.md#things-that-behave-differently).
+- **Built-in plugins** are plugin packages now and run sandboxed. Servers that had them on keep them on, with their settings. Local code changes you made in a fork don't carry over and must be ported to SDK packages in the [plugin registry](https://github.com/MRegterschot/tmcontrolpanel-plugins); see the [plugin SDK guide](./plugin-sdk.md).
 - **Moving to a new host or new keys:** the same method works, with the new stack on the other machine. To re-encrypt data with different `SECRETS_KEY` or `HETZNER_KEY` values, see [migrating-database.md](./migrating-database.md).
 - **Changelog:** read the [changelog](../CHANGELOG.md) for the full list of changes since the beta.

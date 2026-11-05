@@ -14,7 +14,7 @@ tmcp-plugin pack             # builds and checks dist/my-plugin-0.1.0.zip
 
 Upload the zip on **Plugins → Uploaded**, then install it on one of your servers. It's private to you until you [publish it](#publishing-to-the-marketplace).
 
-> **The SDK is not on npm yet.** Until it is, run the CLI from a clone of this repository, for example `bun packages/plugin-sdk/src/cli/main.ts init ~/my-plugin`. The other commands work the same way. For editor types, install it from the clone: `npm install --save-dev ../tmcontrolpanel/packages/plugin-sdk`. The build doesn't need it installed.
+> **The SDK is not on npm yet.** Until it is, run the CLI from a clone of this repository, for example `bun packages/plugin-sdk/src/cli/main.ts init ~/my-plugin`. The other commands work the same way. For editor types, install it from the clone: `npm install --save-dev ../tmcontrolpanel/packages/plugin-sdk`. The build doesn't need it installed. A plain `npm install` in a generated project fails with a 404, because its `package.json` asks npm for the SDK. The `tmcp-plugin` command that npm links is `packages/plugin-sdk/dist/cli.js`, which is not in Git: run `bun install` and `bun run --filter @tmcontrolpanel/plugin-sdk build` in the clone first, or keep using the `bun packages/plugin-sdk/src/cli/main.ts` form.
 
 | Command | What it does |
 |---|---|
@@ -22,7 +22,7 @@ Upload the zip on **Plugins → Uploaded**, then install it on one of your serve
 | `tmcp-plugin build [dir]` | Bundles `src/index.ts` (or `.js`) into `dist/<entry>`. `--minify` is available, but reviewers prefer readable bundles. |
 | `tmcp-plugin pack [dir]` | Builds, zips and validates the package exactly as a panel will. It prints the sha256 and the registry entry you need to publish. |
 | `tmcp-plugin validate <file.zip>` | Checks an existing package and prints its manifest and capabilities. |
-| `tmcp-plugin registry` | Builds the marketplace site from a registry repository (used by the registry's CI). |
+| `tmcp-plugin registry` | Builds the marketplace site from a registry repository (used by the registry's CI). `--registry <dir>` is the registry (default: the current folder) and `--out <dir>` is where the site goes (default: `site` in the current folder, not in the registry). `--check` validates without writing. See [plugin-marketplace.md](./plugin-marketplace.md#building-the-site-locally). |
 
 ## Project layout
 
@@ -67,17 +67,19 @@ A package may be at most 5 MB, unpack to at most 10 MB and hold at most 500 file
 
 | Field | Rules |
 |---|---|
-| `slug` | 3-40 characters: lowercase letters, digits and dashes, starting with a letter. It identifies the plugin and prefixes its widget ids and actions. The names of the [first-party plugins](./first-party-plugins.md) and a few others (`help`, `plugins`, `server`, ...) are reserved. |
+| `slug` | 3-40 characters: lowercase letters, digits and dashes, starting with a letter and not ending in a dash, with no double dashes. It identifies the plugin and prefixes its widget ids and actions. The names of the [first-party plugins](./first-party-plugins.md) and a few others (`help`, `plugins`, `server`, ...) are reserved. |
 | `name`, `description`, `author` | At most 60, 300 and 100 characters. |
 | `version` | A [semantic version](https://semver.org): `1.2.3`, or `1.2.3-beta.1` for a pre-release. |
 | `sdk` | The plugin SDK version the plugin targets. Currently `4` (SDK 1 to 3 packages remain supported). SDK 3 adds [plugin events](#plugin-events), SDK 4 adds the [theme](#widgets-and-windows) colors. Panels refuse plugins for a newer SDK than they run. |
 | `license`, `repository`, `homepage` | Optional. The links must be `https://`. |
 | `entry` | Path of the bundle inside the package. Default `index.js`. |
 | `gamemodes` | Modes the plugin runs in: `timeattack`, `rounds`, `reversecup`, `cup`, `tmwc`, `tmwt`, `teams`, `knockout`. Leave it out to run in every mode. |
-| `commands` | Chat commands the plugin may register, without the slash. At most 20. `help`, `version`, `uptime`, `status`, `plugins`, `ping`, `sysinfo`, and `diagnostics` belong to the panel. |
+| `commands` | Chat commands the plugin may register, without the slash. At most 20, each 1-32 lowercase letters, digits, `-` or `_`. `help`, `version`, `uptime`, `status`, `plugins`, `ping`, `sysinfo`, `diagnostics`, `co` and `ai` belong to the panel. |
 | `capabilities` | What the plugin may do. See [Capabilities](#capabilities). |
 | `configSchema` | The plugin's settings form. See [Settings](#settings). |
 | `helpText` | Shown by `/help <slug>`. At most 1000 characters. |
+
+The manifest is strict: a field that isn't in this table makes the package invalid.
 
 ## Writing the plugin
 
@@ -124,7 +126,7 @@ Callbacks may be `async`. A callback that throws or rejects is logged with the p
 | `command(name, handler)` | | A chat command from the manifest. The handler gets `(args, login)`. |
 | `action(name, handler)` | | A manialink button. See [Widgets](#widgets-and-windows). |
 | `setTimeout(fn, ms)`, `setInterval(fn, ms)`, `sleep(ms)` | | Timers that are cleared on unload. Both return a cancel function. Intervals run at most every 100 ms. |
-| `live.liveInfo`, `live.activePlayers`, `live.activeMapUid`, `live.roundNumber`, `live.findActivePlayer(login)` | | Read-only live state of the server. |
+| `live.liveInfo`, `live.activePlayers`, `live.activeMapUid`, `live.roundNumber`, `live.isReverseCup`, `live.findActivePlayer(login)`, `live.reverseCupGetPlayerStatus(login)`, `live.reverseCupGetPointsRepartition(playerCount)` | | Read-only live state of the server. |
 | `players.get(login)` | | A player, from the live state or the server. |
 | `ui.widget(options)`, `ui.window(options)`, `ui.addButton(button)`, `ui.removeButton(name)` | `ui` | Widgets, windows and the shared button bar. |
 | `chat.send(message)`, `chat.sendTo(login, message)` | `chat:send` | Chat messages. |
@@ -239,7 +241,7 @@ ctx.action("wave", (answer) => ctx.chat.sendTo(answer.login, "Hi!"));
 
 ## Settings
 
-`configSchema` describes the settings form admins fill in on the server's Plugins page. It is a small subset of JSON Schema: an object whose `properties` are at most 50 fields.
+`configSchema` describes the settings form admins fill in on the server's Plugins page. It is a small subset of JSON Schema: an object whose `properties` are at most 50 fields. Property names start with a letter and continue with letters, digits or `_`, up to 64 characters, so `my-key` is not allowed. Keywords that aren't listed below, such as `pattern`, make the manifest invalid.
 
 | Field type | Keywords |
 |---|---|
@@ -255,7 +257,9 @@ root property exactly once. Switching tabs preserves edited values; saving valid
 all tabs and opens the first tab with an error. Without `tabs`, fields render together.
 
 SDK 2 adds nested objects and lists (at most five nested fields and 500 list items),
-with the same validation in the panel and runtime. Fields can declare
+with the same validation in the panel and runtime. Tabs, nested objects, `visibleWhen`
+and the string `widget`, `format` and `maxItemsFrom` keywords need `"sdk": 2` or higher
+in the manifest; the validator refuses them with `"sdk": 1`. Fields can declare
 `visibleWhen: { "property": "type", "equals": "team" }` relative to their containing
 object. This controls visibility; hidden saved values are still validated and retained.
 
@@ -284,7 +288,7 @@ starting at 1. Imported JSON and CSV are validated before replacing the form val
 
 `required` lists the fields that must have a value. `pattern` is not supported, because the regex would run on the panel.
 
-`secret` fields are top-level strings (API keys) are write-only: the panel never shows a saved value, a field left empty keeps it, and config exports leave it out.
+`secret` fields must be top-level strings (API keys). They are write-only: the panel never shows a saved value, a field left empty keeps it, and config exports leave it out.
 
 `ctx.config()` returns the settings with the defaults filled in. When an update changes the schema, stored values that no longer fit fall back to their default, field by field. Without a `configSchema` the plugin has no settings form, and `ctx.config()` returns `{}` unless the plugin saved something itself.
 
@@ -296,7 +300,7 @@ starting at 1. Imported JSON and CSV are validated before replacing the form val
 
 `ctx.gbx.call(method, ...params)` reaches the dedicated server directly, limited per capability:
 
-- **Always:** `GetCurrentMapInfo`, `GetNextMapInfo`, `GetCurrentMapIndex`, `GetNextMapIndex`, `GetPlayerList`, `GetPlayerInfo`, `GetModeScriptInfo`, `GetModeScriptSettings`, `GetScriptName`, `GetServerName`, `GetServerComment`, `GetVersion`, `GetMaxPlayers`, `GetMaxSpectators`.
+- **Always:** `GetCurrentMapInfo`, `GetNextMapInfo`, `GetCurrentMapIndex`, `GetNextMapIndex`, `GetPlayerList`, `GetPlayerInfo`, `GetMainServerPlayerInfo`, `GetModeScriptInfo`, `GetModeScriptSettings`, `GetScriptName`, `GetServerName`, `GetServerComment`, `GetVersion`, `GetMaxPlayers`, `GetMaxSpectators`.
 - **`maps:read`:** `GetMapList`, `GetMapInfo`.
 - **`maps:write`:** `NextMap`, `RestartMap`, `JumpToMapIndex`, `JumpToMapIdent`, `SetNextMapIndex`, `SetNextMapIdent`, `AddMap`, `AddMapList`, `InsertMap`, `InsertMapList`, `RemoveMap`, `RemoveMapList`, `ChooseNextMap`, `ChooseNextMapList`.
 - **`players:moderate`:** `Kick`, `Ban`, `UnBan`, `BanAndBlackList`, `BlackList`, `UnBlackList`, `ForceSpectator`, `ForceSpectatorTarget`, `SpectatorReleasePlayerSlot`, `ForcePlayerTeam`, `AddGuest`, `RemoveGuest`, `Ignore`, `UnIgnore`, `GetBanList`, `GetBlackList`, `GetGuestList`, `GetIgnoreList`.
