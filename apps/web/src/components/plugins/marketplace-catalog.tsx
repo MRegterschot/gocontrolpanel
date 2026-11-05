@@ -70,8 +70,7 @@ function PluginCard({ plugin }: { plugin: CatalogPlugin }) {
           )}
           {!plugin.latest && <Badge variant="outline">Needs a newer panel</Badge>}
           {risky.length > 0 && (
-            <Badge variant="destructive">
-              <IconAlertTriangle />
+            <Badge variant="outline">
               {risky.map((c) => describeCapability(c).label).join(", ")}
             </Badge>
           )}

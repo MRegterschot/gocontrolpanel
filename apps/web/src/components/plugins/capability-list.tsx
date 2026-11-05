@@ -87,11 +87,7 @@ export function CapabilityBadges({ capabilities }: { capabilities: string[] }) {
         .map((capability) => {
           const info = describeCapability(capability);
           return (
-            <Badge
-              key={capability}
-              variant={info.risk === "high" ? "destructive" : "outline"}
-              title={info.description}
-            >
+            <Badge key={capability} variant="outline" title={info.description}>
               {info.label}
             </Badge>
           );
