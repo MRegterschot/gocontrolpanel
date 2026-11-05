@@ -1,6 +1,7 @@
 import CodriverChat from "@/components/codriver/codriver-chat";
 import CodriverHistoryCard from "@/components/codriver/history-card";
 import ServerCodriver from "@/components/codriver/server-codriver";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { hasPermission } from "@/lib/auth";
 import { routePermissions, routes } from "@/routes";
@@ -25,9 +26,12 @@ export default async function ServerCodriverPage({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold">Codriver</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold">
+          Codriver <Badge variant="outline">Experimental</Badge>
+        </h1>
         <h4 className="text-muted-foreground">
-          Ask Codriver here or use /co and /ai in game chat.
+          Ask Codriver here or use /co and /ai in game chat. Codriver is
+          experimental and can make mistakes.
         </h4>
       </div>
       <Tabs defaultValue="chat">

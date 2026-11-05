@@ -307,7 +307,7 @@ export class CodriverWindows {
       id: CODRIVER_WINDOW_ID,
       template: "codriver-window",
       login,
-      title: "Codriver",
+      title: "Codriver (experimental)",
       size: SIZE,
       data: this.data(chat),
       onClose: () => {

@@ -149,7 +149,7 @@ exports[`TemplateRenderer > renders codriver-window 1`] = `
   <frame pos="0 -5" size="50 40">
     <frame id="codriver" pos="2 -2" size=" 36">
   <frame id="codriver-empty" hidden="1">
-    <label pos="0 -2.25" size=" 5" text="Try “status”, “list plugins” or “skip this map”. Disruptive changes ask for confirmation." textsize="1" textcolor="333" valign="center" textfont="GameFontRegular" />
+    <label pos="0 -2.25" size=" 5" text="Experimental: Codriver can make mistakes. Try “status” or “skip this map”. Disruptive changes ask for confirmation." textsize="1" textcolor="333" valign="center" textfont="GameFontRegular" />
   </frame>
 
   <frame id="codriver-log" size=" 1">
