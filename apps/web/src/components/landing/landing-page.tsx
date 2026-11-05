@@ -417,7 +417,9 @@ export default function LandingPage({
             <p className="text-sm text-muted-foreground">
               Self-hosting is recommended for people with some technical
               knowledge: you should be comfortable with Docker, environment
-              variables and running a database.
+              variables and running a database. You are responsible for your own
+              deployment, though you are always welcome to ask questions in the
+              Discord.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row">
               <SignInButton callbackUrl={callbackUrl} />

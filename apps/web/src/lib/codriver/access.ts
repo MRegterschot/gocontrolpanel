@@ -2,7 +2,7 @@ import { CODRIVER_MODELS } from "./model";
 import type { CodriverRole } from "./types";
 
 // Who may use Codriver where, and which key pays. Pure, so every rule is unit tested; the
-// database side is in settings.ts. See section 5.1 of docs/codriver-plan.md.
+// database side is in settings.ts.
 
 export type CodriverModelName = keyof typeof CODRIVER_MODELS;
 
