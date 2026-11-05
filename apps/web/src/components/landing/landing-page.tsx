@@ -8,6 +8,7 @@ import type { PublicStats } from "@/services/stats";
 import {
   IconAdjustmentsHorizontal,
   IconAlertTriangle,
+  IconApi,
   IconBrandDiscord,
   IconBrandGithub,
   IconBroadcast,
@@ -16,6 +17,8 @@ import {
   IconHistory,
   IconMap,
   IconPuzzle,
+  IconServerCog,
+  IconSettings,
   IconShieldLock,
   IconTrophy,
   IconUsers,
@@ -81,7 +84,27 @@ const features = [
     description:
       "Set up new dedicated servers, databases, networks and volumes on Hetzner Cloud from the panel, and watch their metrics.",
   },
+  {
+    icon: IconSettings,
+    title: "Server settings",
+    description:
+      "Change the server name, password and other general settings from the browser.",
+  },
+  {
+    icon: IconApi,
+    title: "Public API",
+    description:
+      "Create scoped API keys for bots, scoreboards and tournament tools. A server key reaches one server, a group key every server in the group. Comes with an OpenAPI reference.",
+  },
+  {
+    icon: IconServerCog,
+    title: "High availability",
+    description:
+      "Add a second host that runs the web app and GBX workers against the same database. If one worker goes down, another takes over its servers.",
+  },
 ];
+
+const DOCS_URL = `${GITHUB_URL}/blob/master/docs`;
 
 const plugins = [
   {
@@ -245,7 +268,7 @@ export default function LandingPage({
               <p className="max-w-2xl text-lg text-white/80">
                 TMControlPanel manages your dedicated servers from the browser:
                 live matches, maps, players, plugins and files, for one server
-                or a whole league, together with your team.
+                or a whole league.
               </p>
             </div>
 
@@ -338,26 +361,42 @@ export default function LandingPage({
                 <IconPuzzle className="size-5" />
               </span>
               <h2 className="text-3xl font-bold tracking-tight">
-                In-game plugins included
+                Plugin marketplace
               </h2>
               <p className="text-muted-foreground">
-                Turn widgets on per server and change their settings from the
-                panel. Changes show up in game right away, no restart needed.
+                Browse the marketplace and install plugins per server, or upload
+                your own privately. Plugins run in a sandbox with only the
+                permissions you accept, and you can update or roll back to an
+                older version at any time. Changes show up in game right away,
+                no restart needed.
               </p>
+              <a
+                href={`${DOCS_URL}/plugin-sdk.md`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-sm font-medium text-primary hover:underline"
+              >
+                Build your own with the plugin SDK
+              </a>
             </div>
 
-            <ul className="grid gap-3 sm:grid-cols-2">
-              {plugins.map((plugin) => (
-                <Card asChild key={plugin.name} className="gap-1 p-4">
-                  <li>
-                    <span className="font-medium">{plugin.name}</span>
-                    <span className="text-sm text-muted-foreground">
-                      {plugin.description}
-                    </span>
-                  </li>
-                </Card>
-              ))}
-            </ul>
+            <div className="flex flex-col gap-3">
+              <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                First-party plugins
+              </h3>
+              <ul className="grid gap-3 sm:grid-cols-2">
+                {plugins.map((plugin) => (
+                  <Card asChild key={plugin.name} className="gap-1 p-4">
+                    <li>
+                      <span className="font-medium">{plugin.name}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {plugin.description}
+                      </span>
+                    </li>
+                  </Card>
+                ))}
+              </ul>
+            </div>
           </div>
         </section>
 
