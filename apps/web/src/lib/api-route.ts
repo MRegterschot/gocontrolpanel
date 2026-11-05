@@ -25,6 +25,7 @@ export const STATUS_BY_CODE: Record<string, number> = {
   ServerUnavailable: 503,
   ServerNotConnected: 503,
   GbxServiceUnavailable: 503,
+  FileManagerNotHealthy: 503,
 };
 
 // The payloads depend on who is asking, so a shared cache must never store them

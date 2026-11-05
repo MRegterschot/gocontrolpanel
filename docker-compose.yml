@@ -1,6 +1,6 @@
 services:
   tmcontrolpanel:
-    image: marijnregterschot/tmcontrolpanel:beta # Use marijnregterschot/tmcontrolpanel-postgres:beta if you are using PostgreSQL
+    image: marijnregterschot/tmcontrolpanel:latest # Use marijnregterschot/tmcontrolpanel-postgres:latest if you are using PostgreSQL
     ports:
       - 3000:3000
     restart: unless-stopped
@@ -32,7 +32,7 @@ services:
 
   # GBX connections, in-game plugins and live WebSockets
   gbx-service:
-    image: marijnregterschot/tmcontrolpanel-gbx-service:beta # Use marijnregterschot/tmcontrolpanel-gbx-service-postgres:beta if you are using PostgreSQL
+    image: marijnregterschot/tmcontrolpanel-gbx-service:latest # Use marijnregterschot/tmcontrolpanel-gbx-service-postgres:latest if you are using PostgreSQL
     ports:
       - "127.0.0.1:3100:3100" # Expose browser WebSockets through a TLS reverse proxy
     restart: unless-stopped

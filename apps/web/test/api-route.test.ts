@@ -47,6 +47,7 @@ describe("apiRoute", () => {
     ["GbxServiceUnavailable", 503],
     ["ServerNotFound", 404],
     ["ServerNotConnected", 503],
+    ["FileManagerNotHealthy", 503],
     ["SomethingElse", 500],
   ])("maps a %s failure to %i", async (code, status) => {
     const res = await apiRoute(async () => ({
