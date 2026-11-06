@@ -1,0 +1,109 @@
+name: Deploy Production
+
+# Redeploys both production Coolify apps on the :latest images, the primary node
+# first and the secondary only after the primary is healthy again.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      API: ${{ vars.COOLIFY_API_URL }}
+      PRIMARY: ${{ vars.COOLIFY_PROD_PRIMARY_UUID }}
+      SECONDARY: ${{ vars.COOLIFY_PROD_SECONDARY_UUID }}
+      TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+      NAMESPACE: ${{ secrets.DOCKER_USERNAME }}
+      WEB_IMAGE: ${{ vars.DOCKER_WEB_IMAGE_NAME || 'tmcontrolpanel' }}
+      GBX_IMAGE: ${{ vars.DOCKER_GBX_IMAGE_NAME || 'tmcontrolpanel-gbx-service' }}
+
+    steps:
+      - name: Check configuration
+        run: |
+          for name in API PRIMARY SECONDARY TOKEN NAMESPACE; do
+            if [ -z "${!name}" ]; then
+              echo "::error::$name is not set; see the env block of this workflow"
+              exit 1
+            fi
+          done
+
+      # :latest is overwritten by every release, so make sure it is the newest one
+      # and not a stale or half-pushed build
+      - name: Check that :latest is the newest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
+          digest() {
+            curl -fsS --retry 3 "https://hub.docker.com/v2/repositories/$NAMESPACE/$1/tags/$2" | jq -r .digest
+          }
+          for image in "$WEB_IMAGE" "$GBX_IMAGE"; do
+            latest=$(digest "$image" latest)
+            release=$(digest "$image" "$TAG")
+            if [ -z "$latest" ] || [ "$latest" != "$release" ]; then
+              echo "::error::$image:latest ($latest) is not $image:$TAG ($release)"
+              exit 1
+            fi
+          done
+          echo "Deploying $TAG"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+
+      - name: Deploy the primary, then the secondary node
+        run: |
+          api() { curl -fsS --retry 3 -H "Authorization: Bearer $TOKEN" "$@"; }
+
+          deploy() {
+            local uuid=$1 label=$2 deployment status healthy=0
+            deployment=$(api -X POST "$API/deploy?uuid=$uuid&force=false" | jq -r '.deployments[0].deployment_uuid // empty')
+            if [ -z "$deployment" ]; then
+              echo "::error::Coolify did not queue a deployment for the $label node"
+              exit 1
+            fi
+            echo "$label: deployment $deployment"
+
+            for _ in $(seq 1 90); do
+              status=$(api "$API/deployments/$deployment" | jq -r .status)
+              case "$status" in
+                finished) break ;;
+                failed | cancelled*)
+                  echo "::error::$label deployment $deployment ended as $status"
+                  exit 1
+                  ;;
+              esac
+              sleep 10
+            done
+            if [ "$status" != finished ]; then
+              echo "::error::$label deployment $deployment did not finish in 15 minutes"
+              exit 1
+            fi
+
+            # Coolify refreshes the app status periodically, so require it healthy several times in a row
+            for _ in $(seq 1 60); do
+              sleep 10
+              if [ "$(api "$API/applications/$uuid" | jq -r .status)" = "running:healthy" ]; then
+                healthy=$((healthy + 1))
+                if [ "$healthy" -ge 3 ]; then
+                  echo "$label: healthy"
+                  return 0
+                fi
+              else
+                healthy=0
+              fi
+            done
+            echo "::error::The $label node did not become healthy after its deployment"
+            exit 1
+          }
+
+          deploy "$PRIMARY" primary
+          deploy "$SECONDARY" secondary
+
+      - name: Summary
+        run: echo "Production runs $TAG on both nodes" >> "$GITHUB_STEP_SUMMARY"
