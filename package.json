@@ -1,6 +1,6 @@
 {
   "name": "tmcontrolpanel",
-  "version": "0.12.0-beta",
+  "version": "1.0.0",
   "private": true,
   "workspaces": [
     "apps/*",
