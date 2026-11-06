@@ -6,7 +6,7 @@ apt update
 apt install -y docker.io docker-compose-v2 curl unzip dnsutils
 
 cd /root
-curl -sSLf -o tmcp.zip https://github.com/MRegterschot/gocontrolpanel/archive/refs/heads/master.zip
+curl -sSLf -o tmcp.zip https://github.com/tmservers/tmcontrolpanel/archive/refs/heads/master.zip
 unzip tmcp.zip
 # The archive folder is named after the repository; keep one stable name
 TOP_DIR=$(unzip -Z1 tmcp.zip | head -n1 | cut -d/ -f1)

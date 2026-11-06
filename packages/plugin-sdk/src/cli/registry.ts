@@ -290,7 +290,7 @@ function indexPage(index: MarketplaceIndex): string {
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title}</title></head>
 <body style="font-family: system-ui, sans-serif; max-width: 48rem; margin: 2rem auto; padding: 0 1rem">
 <h1>${title}</h1>
-<p>Plugins for <a href="https://github.com/MRegterschot/tmcontrolpanel">TMControlPanel</a>. Install them from the Plugins page of your panel. Panels read <a href="index.json">index.json</a>.</p>
+<p>Plugins for <a href="https://github.com/tmservers/tmcontrolpanel">TMControlPanel</a>. Install them from the Plugins page of your panel. Panels read <a href="index.json">index.json</a>.</p>
 <ul>
 ${rows}
 </ul>

@@ -18,7 +18,7 @@ The first-party plugins available to TMControlPanel are ordinary [plugin SDK](./
 ## Where they live
 
 Plugin source, templates, behavior tests, immutable package archives, and version
-metadata live in the [plugin registry repository](https://github.com/MRegterschot/tmcontrolpanel-plugins).
+metadata live in the [plugin registry repository](https://github.com/tmservers/tmcontrolpanel-plugins).
 This panel repository keeps the SDK, generic sandbox/runtime tests, and management UI.
 The GBX image no longer builds or ships first-party packages.
 
@@ -60,9 +60,9 @@ Clone the registry and give it a panel checkout as `.controlpanel`, which provid
 the SDK and the sandbox test harness. Link a checkout you already have, or clone one:
 
 ```bash
-git clone https://github.com/MRegterschot/tmcontrolpanel-plugins.git
+git clone https://github.com/tmservers/tmcontrolpanel-plugins.git
 cd tmcontrolpanel-plugins
-ln -s ../tmcontrolpanel .controlpanel    # or: git clone https://github.com/MRegterschot/tmcontrolpanel.git .controlpanel
+ln -s ../tmcontrolpanel .controlpanel    # or: git clone https://github.com/tmservers/tmcontrolpanel.git .controlpanel
 (cd .controlpanel && bun install --frozen-lockfile && DB=mysql bun run generate)
 bun run setup
 bun run check

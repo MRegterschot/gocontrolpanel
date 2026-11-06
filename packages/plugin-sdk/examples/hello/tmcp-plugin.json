@@ -6,7 +6,7 @@
   "description": "Greets players when they join, keeps count per player and shows a small greeting widget.",
   "author": "TMControlPanel",
   "license": "MIT",
-  "repository": "https://github.com/MRegterschot/tmcontrolpanel",
+  "repository": "https://github.com/tmservers/tmcontrolpanel",
   "commands": ["hello"],
   "capabilities": ["ui", "chat:send", "storage"],
   "configSchema": {
