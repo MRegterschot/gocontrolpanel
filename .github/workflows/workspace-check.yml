@@ -1,0 +1,94 @@
+name: Workspace Check
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        db: [mysql, postgres]
+
+    env:
+      DB: ${{ matrix.db }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@f4d14e03ff726c06358e5557344e1da148b56cf7 # v1
+        with:
+          bun-version: "1.4.4"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Generate Prisma Client for ${{ matrix.db }}
+        run: bun run generate
+
+      - name: Typecheck shared packages, plugin SDK and GBX service
+        run: |
+          bun run --filter @tmcontrolpanel/shared typecheck
+          bun run --filter @tmcontrolpanel/plugin-sdk typecheck
+          bun run --filter @tmcontrolpanel/gbx-service typecheck
+
+      - name: Unit tests
+        run: |
+          bun run --filter @tmcontrolpanel/shared test
+          bun run --filter @tmcontrolpanel/plugin-sdk test
+          bun run --filter @tmcontrolpanel/gbx-service test
+          bun run --filter @tmcontrolpanel/web test
+
+      - name: Build GBX service and plugin SDK
+        run: |
+          bun run --filter @tmcontrolpanel/gbx-service build
+          bun run --filter @tmcontrolpanel/plugin-sdk build
+
+      # The example registry must keep validating with the current package format
+      - name: Check the plugin registry template
+        run: bun packages/plugin-sdk/src/cli/main.ts registry --registry packages/plugin-sdk/registry-template --check
+
+  integration:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: tmcp
+          POSTGRES_PASSWORD: tmcp
+          POSTGRES_DB: tmcp_test
+        ports:
+          - 5432:5432
+        options: --health-cmd "pg_isready -U tmcp" --health-interval 2s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    env:
+      DB: postgres
+      DATABASE_URL: postgresql://tmcp:tmcp@localhost:5432/tmcp_test
+      INTEGRATION_DATABASE_URL: postgresql://tmcp:tmcp@localhost:5432/tmcp_test
+      INTEGRATION_REDIS_URL: redis://localhost:6379
+      SECRETS_KEY: ci-only-secrets-key-0123456789abcdef
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: oven-sh/setup-bun@f4d14e03ff726c06358e5557344e1da148b56cf7 # v1
+        with:
+          bun-version: "1.4.4"
+
+      - run: bun install --frozen-lockfile
+
+      - name: Apply migrations
+        run: bun run deploy
+
+      - name: Integration tests
+        run: bun run --filter @tmcontrolpanel/gbx-service test:integration

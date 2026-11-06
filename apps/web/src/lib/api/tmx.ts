@@ -1,0 +1,201 @@
+import { TMXMappackSearch, TMXMapSearch } from "@/types/api/tmx";
+import { ServerError } from "@/types/responses";
+import { readBodyLimited } from "@tmcontrolpanel/shared";
+import "server-only";
+import config from "../config";
+import { logger } from "../logger";
+import { withRateLimit } from "../ratelimiter";
+import { assertNumericId } from "../resource-id";
+import { reportException } from "../sentry/report";
+
+const TMX_URL = "https://trackmania.exchange";
+const MAX_MAP_BYTES = 32 * 1024 * 1024;
+
+export async function searchTMXMaps(
+  queryParams: Record<string, string>,
+  count: number = 12,
+): Promise<TMXMapSearch> {
+  const fields = [
+    "Authors",
+    "AwardCount",
+    "GbxMapName",
+    "HasThumbnail",
+    "MapId",
+    "MapUid",
+    "Medals.Author",
+    "Medals.Gold",
+    "Medals.Silver",
+    "Medals.Bronze",
+    "Name",
+    "Tags",
+    "Images",
+  ];
+
+  const params = new URLSearchParams({
+    ...queryParams,
+    fields: fields.join(","),
+    count: count.toString(),
+  });
+
+  const url = `${TMX_URL}/api/maps?${params.toString()}`;
+
+  const data = await doRequest<TMXMapSearch>(url, "tmx:searchMaps");
+
+  return data;
+}
+
+export async function searchTMXMappacks(
+  queryParams: Record<string, string>,
+  count: number = 12,
+): Promise<TMXMappackSearch> {
+  const fields = [
+    "MappackId",
+    "Name",
+    "Description",
+    "MapCount",
+    "Owner.Name",
+    "Owner.UserId",
+    "Image.Width",
+    "Image.Height",
+    "Tags",
+  ];
+
+  const params = new URLSearchParams({
+    ...queryParams,
+    fields: fields.join(","),
+    count: count.toString(),
+  });
+
+  const url = `${TMX_URL}/api/mappacks?${params.toString()}`;
+
+  const data = await doRequest<TMXMappackSearch>(url, "tmx:searchMappacks");
+
+  return data;
+}
+
+export async function downloadTMXMap(
+  mapId: number,
+  mappackId?: number,
+): Promise<File> {
+  assertNumericId(mapId);
+  if (mappackId !== undefined) assertNumericId(mappackId);
+  const url = `${TMX_URL}/mapgbx/${mapId}${mappackId ? `?mappackId=${mappackId}` : ""}`;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000); // 30 seconds
+
+  const meta = {
+    type: "tmx",
+    module: "request",
+    function: "downloadTMXMap",
+  };
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "Content-Type": "application/x-gbx",
+        "User-Agent": config.NADEO.CONTACT,
+      },
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      clearTimeout(timeout);
+      logger.error(
+        {
+          meta,
+          mapId,
+          mappackId,
+          response: {
+            status: res.status,
+            statusText: res.statusText,
+            error: await res.text(),
+          },
+        },
+        "Failed to download map",
+      );
+
+      throw new ServerError(
+        `Failed to download map: ${res.statusText}`,
+        "TMXDownloadError",
+      );
+    }
+
+    // The timeout keeps running while the body downloads
+    const body = await readBodyLimited(res, MAX_MAP_BYTES).finally(() =>
+      clearTimeout(timeout),
+    );
+    return new File([body], `TMX_${mapId}.Map.Gbx`, {
+      type: "application/x-gbx",
+    });
+  } catch (err) {
+    reportException(err, meta);
+    if ((err as any).name === "AbortError") {
+      logger.error({ meta, mapId, mappackId }, "Download for map timed out");
+      throw new ServerError(
+        `Download for map ${mapId} timed out`,
+        "TMXDownloadTimeoutError",
+      );
+    }
+    throw err;
+  }
+}
+
+export interface TMXMetaTag {
+  ID: number;
+  Name: string;
+}
+
+let tagCache: { tags: TMXMetaTag[]; expires: number } | null = null;
+
+// TMX map tags, cached for a day since they rarely change
+export async function getTMXTags(): Promise<TMXMetaTag[]> {
+  if (tagCache && tagCache.expires > Date.now()) return tagCache.tags;
+  const tags = await doRequest<TMXMetaTag[]>(
+    `${TMX_URL}/api/meta/tags`,
+    "tmx:tags",
+  );
+  tagCache = { tags, expires: Date.now() + 86_400_000 };
+  return tags;
+}
+
+async function doRequest<T>(url: string, key: string): Promise<T> {
+  return withRateLimit<T>(key, async () => {
+    const meta = {
+      type: "tmx",
+      module: "request",
+      function: "doRequest",
+    };
+
+    logger.info({ meta, url }, `Requesting TMX API`);
+
+    const res = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": config.NADEO.CONTACT,
+      },
+    });
+
+    if (!res.ok) {
+      reportException(res, meta);
+      logger.error(
+        {
+          meta,
+          url,
+          response: {
+            status: res.status,
+            statusText: res.statusText,
+            error: await res.text(),
+          },
+        },
+        "Failed to fetch data from TMX API",
+      );
+      throw new ServerError(
+        `Failed to fetch data: ${res.statusText}`,
+        "TMXRequestError",
+      );
+    }
+
+    return res.json();
+  });
+}

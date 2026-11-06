@@ -1,10 +1,10 @@
-![Docker Pulls](https://img.shields.io/docker/pulls/marijnregterschot/gocontrolpanel?logo=docker&link=https%3A%2F%2Fhub.docker.com%2Fr%2Fmarijnregterschot%2Fgocontrolpanel)
-![Docker Image Size](https://img.shields.io/docker/image-size/marijnregterschot/gocontrolpanel?logo=docker&link=https%3A%2F%2Fhub.docker.com%2Fr%2Fmarijnregterschot%2Fgocontrolpanel)
-![Docker Version](https://img.shields.io/docker/v/marijnregterschot/gocontrolpanel?logo=docker&link=https%3A%2F%2Fhub.docker.com%2Fr%2Fmarijnregterschot%2Fgocontrolpanel)
+![Docker Pulls](https://img.shields.io/docker/pulls/marijnregterschot/tmcontrolpanel?logo=docker&link=https%3A%2F%2Fhub.docker.com%2Fr%2Fmarijnregterschot%2Ftmcontrolpanel)
+![Docker Image Size](https://img.shields.io/docker/image-size/marijnregterschot/tmcontrolpanel?logo=docker&link=https%3A%2F%2Fhub.docker.com%2Fr%2Fmarijnregterschot%2Ftmcontrolpanel)
+![Docker Version](https://img.shields.io/docker/v/marijnregterschot/tmcontrolpanel?logo=docker&link=https%3A%2F%2Fhub.docker.com%2Fr%2Fmarijnregterschot%2Ftmcontrolpanel)
 ![Discord Widget](https://img.shields.io/discord/1397578984023261284?logo=discord&link=https%3A%2F%2Fdiscord.gg%2FNjbtRvbCY8)
-![Github Commits](https://img.shields.io/github/commit-activity/t/mregterschot/gocontrolpanel?logo=github)
+![Github Commits](https://img.shields.io/github/commit-activity/t/tmservers/tmcontrolpanel?logo=github)
 
-# GoControlPanel
+# TMControlPanel
 
 A Dockerized management panel for dedicated Trackmania servers. Works both standalone and with existing stacks like [PyPlanet](#pyplanetevosc-stack-setup) or [EvoSC](#pyplanetevosc-stack-setup) and others.
 
@@ -12,148 +12,153 @@ A Dockerized management panel for dedicated Trackmania servers. Works both stand
 
 - [Overview](#overview)
   - [Features](#features)
-    - [Server Settings](#server-settings)
-    - [Game Management](#game-management)
-    - [Maps Management](#maps-management)
-    - [Player Management](#player-management)
-    - [Live Match](#live-match)
-    - [Records and Matches](#records-and-matches)
-    - [Plugin Management](#plugin-management)
-    - [Trackmania Exchange](#trackmania-exchange)
-    - [Files Management](#files-management)
-    - [User Management](#user-management)
-    - [Group Management](#group-management)
-    - [Role Management](#role-management)
-    - [Server Management](#server-management)
-    - [Hetzner Management](#hetzner-management)
+- [Architecture](#architecture)
+  - [Expose the GBX service](#expose-the-gbx-service)
 - [Docker Setup](#docker-setup)
   - [Prerequisites](#prerequisites)
   - [Getting Started](#getting-started)
     - [New Stack Setup](#new-stack-setup)
     - [PyPlanet/EvoSC Stack Setup](#pyplanetevosc-stack-setup)
   - [Permissions](#permissions)
+  - [Upgrading](#upgrading)
   - [Troubleshooting](#troubleshooting)
+  - [Changelog](#changelog)
+  - [Plugins and the marketplace](#plugins-and-the-marketplace)
   - [Contributing](#contributing)
   - [License](#license)
 
 # Overview
 
-**GoControlPanel** is a management panel designed for dedicated Trackmania servers. It provides an easy-to-use interface for managing server settings, players and maps. The panel can be run as a standalone service or integrated with other server controllers like **PyPlanet** or **EvoSC**.
+**TMControlPanel** is a management panel designed for dedicated Trackmania servers. It provides an easy-to-use interface for managing server settings, players and maps. The panel can be run as a standalone service or integrated with other server controllers like **PyPlanet** or **EvoSC**.
 
 ## Features
 
-#### Server Settings
+You can use the free hosted panel at [tmcontrolpanel.com](https://tmcontrolpanel.com) or self-host it with Docker.
 
-Manage your general server settings like the server name, password, and other configurations.
+#### Multiple servers
 
-![Settings Page](https://i.imgur.com/39jLVUl.png "Settings Page")
+Manage all your dedicated servers from one panel and switch between them in a click. Group servers together, for example for a league or a team, and give people access per server or per group.
 
-#### Game Management
+#### Hetzner Cloud
 
-Manage your game settings, this includes map management and mode settings.
+Create and delete Trackmania servers on Hetzner Cloud straight from the panel, together with databases, networks and volumes, and keep an eye on their metrics.
 
-![Game Page](https://i.imgur.com/Njkxu0n.png "Game Page")
-![Mode Settings Page](https://i.imgur.com/wgIn7Cn.png "Mode Settings Page")
+#### Server settings
 
-#### Maps Management
+Change the server name, password, player and spectator limits and the other general settings from the browser.
 
-Manage your maps, including adding local maps, changing map order and a jukebox.
+#### Game and mode settings
 
-![Maps Page](https://i.imgur.com/5f1zr3E.png "Maps Page")
-![Local Maps Page](https://i.imgur.com/9HLf64R.png "Local Maps Page")
-![Map Jukebox Page](https://i.imgur.com/5jgNjiD.png "Map Jukebox Page")
+Switch game modes, edit mode script settings, load and save match settings and manage the playlist without touching a file.
 
-#### Player Management
+#### Maps and jukebox
 
-Manage your players, including banning players and managing blacklists and guestlists.
+Add maps from the server, reorder the map list by dragging, jump to a map and queue the next ones in the jukebox.
 
-![Players Page](https://i.imgur.com/A6PDwWd.png "Players Page")
-![Blacklist Page](https://i.imgur.com/9VEFLUB.png "Blacklist Page")
+#### Trackmania Exchange and Nadeo
 
-#### Live Match
+Search maps and mappacks on Trackmania Exchange, or pull in seasonal campaigns, Track of the Day, weekly shorts and club campaigns and rooms, straight onto the server.
 
-Monitor live matches, including player scores and match status.
+#### Live match view
 
-![Live Match Page](https://i.imgur.com/huDKrEA.png "Live Match Page")
+Follow rounds, checkpoints, scores and chat as they happen. Pause the match, set round, map and match points, and talk to players from the browser.
 
-#### Records and Matches
+#### Players
 
-View past matches and records, including player scores and match details.
+Kick, ban and force players to spectator, and keep the blacklist and guestlist in order across restarts.
 
-![Matches Page](https://i.imgur.com/ZoAdmhQ.png "Matches Page")
-![Match Details Page](https://i.imgur.com/aiqEsGw.png "Match Details Page")
+#### Records and matches
 
-#### Plugin Management
+Every round and finish is recorded. Browse match history per map, look up player results and export them to CSV.
 
-Manage the server plugins and chat settings of the server.
+#### Plugins and marketplace
 
-![Plugins Page](https://i.imgur.com/5LAxOpO.png "Plugins Page")
-![Chat Message Editor Page](https://i.imgur.com/NpvWT3K.png "Chat Message Editor Page")
+Turn in-game widgets on per server, such as a match manager with pick and ban, live rankings, a Time Attack leaderboard and map and record info, and change their settings from the panel without a restart. Browse the plugin marketplace to install more, or upload your own privately. Plugins run in a sandbox with only the permissions you accept when you install them, and you can update or roll back a plugin from the server's Plugins page. See [Plugins and the marketplace](#plugins-and-the-marketplace).
 
-#### Trackmania Exchange
+#### File manager
 
-Browse and download maps or mappacks directly from Trackmania Exchange.
+Browse, upload, delete and edit the server's files, match settings and scripts with a built-in code editor.
 
-![Trackmania Exchange Maps Page](https://i.imgur.com/EVD3CX0.png "Trackmania Exchange Maps Page")
-![Trackmania Exchange Mappacks Page](https://i.imgur.com/n4HLkGV.png "Trackmania Exchange Mappacks Page")
+#### Users, groups and roles
 
-#### Files Management
+Give people access to exactly the servers and actions they need with roles and permissions on users, groups and servers. Every change is written to an audit log.
 
-Manage your server files, including uploading, deleting and editing files.
+#### Public API
 
-![Files Page](https://i.imgur.com/eGqC4Oc.png "Files Page")
-![File Editor Page](https://i.imgur.com/Siday3M.png "File Editor Page")
+Server and group admins create API keys for external tools such as scoreboards, bots and tournament software. A server key reaches its server; a group key reaches every server in the group. Keys are limited to scopes, and stop working when their creator is no longer an admin. The versioned API lives at `/api/v1`, with an OpenAPI document at `/api/v1/openapi.json` and an interactive reference at `/api/v1/docs`. See [the public API guide](docs/public-api.md).
 
-#### User Management
+#### High availability
 
-Manage users by modifying roles and permissions.
+Self-hosters can add a second host that runs the web panel and GBX workers against the same database. If a worker goes down, another one takes over its servers. See [the backup host guide](docs/backup-host.md).
 
-![User Management Page](https://i.imgur.com/eoErrI2.png "User Management Page")
-![User Details Page](https://i.imgur.com/1hG1tUJ.png "User Details Page")
+#### Codriver (experimental)
 
-#### Group Management
+An AI assistant for running your servers, in the panel and in game with the `/co` chat command. It uses an AI provider API key that you add per server or for the whole panel. It is still experimental, so expect rough edges.
 
-Manage groups, including adding new groups, managing group permissions and roles.
+# Architecture
 
-![Group Management Page](https://i.imgur.com/qxyYNV7.png "Group Management Page")
-![Group Details Page](https://i.imgur.com/1WMpo4Y.png "Group Details Page")
+TMControlPanel runs as two containers next to your database and Redis:
 
-#### Role Management
+| Container        | Image                                          | What it does                                                                                                                                                       |
+| ---------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `tmcontrolpanel` | `marijnregterschot/tmcontrolpanel`             | The web panel: UI, sign in, database, Nadeo, Trackmania Exchange, Hetzner and file manager. Runs the database migrations on start. Port `3000`.                    |
+| `gbx-service`    | `marijnregterschot/tmcontrolpanel-gbx-service` | Holds the connections to your dedicated servers, runs the in-game plugins and widgets, records matches and serves the live WebSockets to the browser. Port `3100`. |
 
-Manage roles, including adding new roles and managing role permissions.
+Both images come in a MariaDB/MySQL and a PostgreSQL (`-postgres` suffix) flavour. The two containers share the database and Redis, and authenticate to each other with `GBX_SERVICE_TOKEN` and `WS_TICKET_SECRET`.
 
-![Role Management Page](https://i.imgur.com/NlqVj6P.png "Role Management Page")
-![Role Details Page](https://i.imgur.com/SfCvMNc.png "Role Details Page")
+- **Browsers connect to port 3100** for the live pages, so `GBX_SERVICE_WS_URL` must be reachable from your users' browsers. Behind HTTPS it must be a `wss://` URL, see [Expose the GBX service](#expose-the-gbx-service).
+  The service's main process is a front for the internal HTTP API and browser WebSockets. It never opens a GBX connection.
+  It forks workers that hold GBX connections, run plugins and record matches. Redis leases assign each server to one worker.
+  Commands, live events and status snapshots pass through Redis. Requests for a server with no owner return HTTP 503 (`ServerUnavailable`).
+  A crashed or hung worker is restarted; other workers can take over its servers. Allow roughly 80–150 MB per worker, plus the front.
+  Several containers sharing the database and Redis split servers by lease; see the [backup host guide](docs/backup-host.md).
+  `GBX_SERVICE_ENABLED_SERVERS` limits which servers a container may claim.
+- **Keep `/internal/*` private.** Only the web container calls those routes. Don't publish them through a reverse proxy.
 
-#### Server Management
+## Expose the GBX service
 
-Manage your servers, add new servers and configure the server settings.
+The live pages, notifications and the server list connect from the browser straight to the GBX service. Make `GBX_SERVICE_WS_URL` reachable from your users' browsers:
 
-![Server Management Page](https://i.imgur.com/opiwnKL.png "Server Management Page")
-![Add Server Page](https://i.imgur.com/6XDqmlk.png "Add Server Page")
+- **Plain setup:** publish `3100` and use `ws://<host>:3100`.
+- **HTTPS:** a page served over HTTPS may only open `wss://` sockets. Put a TLS-terminating reverse proxy in front of the service and set `GBX_SERVICE_WS_URL=wss://...`. The proxy must pass WebSocket upgrades.
+- **Only expose `/ws/*` and `/health`.** The `/internal/*` routes are protected by `GBX_SERVICE_TOKEN` but are meant for the web container only; keep them off the public internet.
+- Add the web app's public origin (for example `https://panel.example.com`) to `WS_ALLOWED_ORIGINS`. A socket from another origin is closed with code 4403. An empty value allows any origin.
 
-#### Hetzner Management
+### Example: Nginx Proxy Manager
 
-Manage your Hetzner Cloud servers, networks and volumes. You can create and delete Trackmania servers directly from the panel.
+1. Create a proxy host (for example `gbx.example.com`) that forwards to `http` / `gbx-service` / `3100`. Use the host IP and port instead if NPM does not share a Docker network with the service. Turn on **Websockets Support**, request a certificate on the **SSL** tab and enable **Force SSL**.
+2. On the **Advanced** tab, add this custom configuration so that only `/ws/*` and `/health` pass through:
 
-![Hetzner Management Page](https://i.imgur.com/9Joq5dK.png "Hetzner Management Page")
-![Hetzner Details Page](https://i.imgur.com/miUGWWj.png "Hetzner Details Page")
+   ```nginx
+   location ~ ^/(?!(ws/|health$)) {
+       return 404;
+   }
+   ```
 
-![Hetzner Servers Page](https://i.imgur.com/dWYLLyT.png "Hetzner Servers Page")
-![Hetzner Server Details Page](https://i.imgur.com/N7jfF9f.png "Hetzner Server Details Page")
-![Hetzner Server Metrics Page](https://i.imgur.com/PApEtYb.png "Hetzner Server Metrics Page")
-![Hetzner Server Pricing Page](https://i.imgur.com/u8rflrh.png "Hetzner Server Pricing Page")
+   Nginx checks regex locations before NPM's generated `location /`. The negative lookahead keeps `/ws/` and `/health` out of the regex, so they use the normal proxy block and everything else, including `/internal/*`, returns 404. To also hide `/health`, use `(ws/)`.
 
-![Hetzner Database Create Page](https://i.imgur.com/xB8H67G.png "Hetzner Database Create Page")
-![Hetzner Server Create Page](https://i.imgur.com/o5YPNqL.png "Hetzner Server Create Page")
-![Hetzner Server Create Page Controller Step](https://i.imgur.com/LnS03St.png "Hetzner Server Create Page Controller Step")
-![Hetzner Server Create Page Database Step](https://i.imgur.com/AH4Ixvp.png "Hetzner Server Create Page Database Step")
-![Hetzner Server Create Page Network Step](https://i.imgur.com/f4mEhuJ.png "Hetzner Server Create Page Network Step")
-![Hetzner Server Create Page Summary Step](https://i.imgur.com/oPUo7aC.png "Hetzner Server Create Page Summary Step")
+3. Set `GBX_SERVICE_WS_URL: wss://gbx.example.com` on the web container and `WS_ALLOWED_ORIGINS: https://panel.example.com` on the service. `GBX_SERVICE_URL` stays `http://gbx-service:3100` because the web container talks to the service directly, not through NPM.
+4. Remove `ports: - 3100:3100` from the `gbx-service` compose entry when NPM reaches it over the Docker network, or bind it to localhost with `127.0.0.1:3100:3100` when NPM runs on the host. Otherwise the port stays open and the proxy rules can be bypassed.
+5. Check it:
+
+   ```bash
+   curl -i https://gbx.example.com/internal/servers   # 404
+   curl -i https://gbx.example.com/health             # 200
+   curl -i http://<server-ip>:3100/health             # should fail from outside
+   ```
+
+   In the browser dev tools the `/ws/live/...` socket should show `101 Switching Protocols`. A close with code 4403 means `WS_ALLOWED_ORIGINS` does not match the panel's origin exactly.
 
 # Docker Setup
 
-This repository provides a **Docker Compose** configuration to set up and run **GoControlPanel** and its dependencies using Docker containers.
+This repository provides a **Docker Compose** configuration to set up and run **TMControlPanel** and its dependencies using Docker containers.
+
+> **Self-hosting takes some technical knowledge.** You should be comfortable with Docker and Docker Compose, editing environment variables, running a database and Redis, and, if you expose the panel, putting it behind a reverse proxy with HTTPS. If that's new to you, ask in the [Discord](https://discord.gg/NjbtRvbCY8) before you start.
+>
+> **You are responsible for your own deployment** and any issues with it. Questions and help in the Discord are always welcome, but there is no guaranteed support.
+
+To add a second host running only the web app and GBX workers against the same database and Redis, use the [backup host guide](docs/backup-host.md). It covers the Docker and Coolify node stacks, private networking and failover checks.
+For option B, move the shared database and Redis off the primary with the [database host guide](docs/database-host.md).
 
 ## Prerequisites
 
@@ -162,7 +167,7 @@ Before using this `docker-compose.yml` file, ensure you have the following insta
 - **Docker**: [Install Docker](https://www.docker.com/get-started)
 - **Docker Compose**: [Install Docker Compose](https://docs.docker.com/compose/install/)
 
-You will also need some credentials for the **Nadeo API** to configure the **GoControlPanel**. You can obtain these credentials from the [Nadeo API manager](https://api.trackmania.com/manager). Additionally, you will need a dedicated server login and password, which can be found in the [dedicated server manager](https://www.trackmania.com/player/dedicated-servers).
+You will also need some credentials for the **Nadeo API** to configure the **TMControlPanel**. You can obtain these credentials from the [Nadeo API manager](https://api.trackmania.com/manager). Additionally, you will need a dedicated server login and password, which can be found in the [dedicated server manager](https://www.trackmania.com/player/dedicated-servers).
 
 ## Getting Started
 
@@ -180,23 +185,26 @@ First, copy the `docker-compose.yml` file from the repository to your desired di
 
 Make sure to update or add the environment variables for the services in your `docker-compose.yml` file:
 
-- **GoControlPanel Environment Variables**:
+- **TMControlPanel Environment Variables**:
   - `NEXTAUTH_URL`, `NEXTAUTH_SECRET`: NextAuth configuration for authentication. `NEXTAUTH_SECRET` can be any random string, e.g., `VettePanel123`.
   - `DEFAULT_ADMINS`: Comma-separated list of default admin logins. Probably your own login, e.g., `v8vgGbx_TuKkBabAyn7nsQ`.
   - `DEFAULT_PERMISSIONS`: Comma-separated list of default permissions for new users. You can find a list of available permissions in the [Permissions](#permissions) section.
   - **NADEO Configuration**: Make sure to update `NADEO_CLIENT_ID`, `NADEO_CLIENT_SECRET`, `NADEO_REDIRECT_URI`, `NADEO_SERVER_LOGIN`, `NADEO_SERVER_PASSWORD` and `NADEO_CONTACT` with your valid NADEO API credentials. Nadeo API credentials can be obtained from the [Nadeo API manager](https://api.trackmania.com/manager). The server login and password can be obtained from the [Dedicated Server Manager](https://www.trackmania.com/player/dedicated-servers).
-  - `HETZNER_KEY`: If you are using the Hetzner Cloud API, set this environment variable so that your API tokens are encrypted before being stored in the database. This can be any random string, e.g., `myhetznerkey`.
-  - `LOG_LEVEL`: Set the log level for GoControlPanel. Supported values are `trace`, `debug`, `info`, `warn`, `error` and `fatal`. The default is `info`.
+  - `HETZNER_KEY`: Required for the Hetzner Cloud integration. Encrypts API tokens and SSH keys before they are stored in the database. Use a random string of at least 32 characters, for example from `openssl rand -hex 32`. When you change it, set the old value as `HETZNER_KEY_PREVIOUS` so stored values can still be decrypted.
+  - **GBX service connection**: `GBX_SERVICE_URL` is the address of the `gbx-service` container (`http://gbx-service:3100`). `GBX_SERVICE_WS_URL` is the address the browser uses to open the live WebSockets, so it must be reachable from your users (for example `ws://<your-host>:3100`, or `wss://...` behind HTTPS). `GBX_SERVICE_TOKEN` and `WS_TICKET_SECRET` are secrets of at least 32 characters (`openssl rand -base64 32`) and must be identical in both containers. The panel refuses to start without them.
+  - **Codriver AI assistant (optional)**: the panel operator enables Codriver and stores the Anthropic API keys on the Codriver admin page. `SECRETS_KEY` (at least 32 characters, shared with the GBX service) encrypts those keys and all stored dedicated/file-manager credentials; keep it stable, because changing it makes stored keys unreadable. `ANTHROPIC_API_KEY` is only a fallback for the shared key while none is stored. Optional Jev routing sends request text to TypeSafe and needs its own key, stored on the same page; `TYPESAFE_API_KEY` is its fallback while none is stored, like `ANTHROPIC_API_KEY`. `PANEL_INTERNAL_TOKEN` (at least 32 characters, the same in both containers) authenticates the GBX service when it forwards `/co` chat commands. Leave it empty to turn `/co` off. The server Codriver page provides chat, usage and request history; operator-wide usage is under Admin → Codriver. Apply pending database migrations during upgrades, including the phase 5 model-call tracking column.
+  - `MARKETPLACE_INDEX_URL` (optional): The plugin marketplace the panel browses. Defaults to the official marketplace; set it to an empty value to turn browsing off. Uploading private plugins works either way.
+  - `LOG_LEVEL`: Set the log level for TMControlPanel. Supported values are `trace`, `debug`, `info`, `warn`, `error` and `fatal`. The default is `info`.
   - `PLAUSIBLE_API_HOST`: Set the Plausible API host for analytics, e.g., `analytics.mywebsite.com`. This is optional and can be left empty if you do not want to use Plausible analytics.
-  - **Sentry Configuration (Optional)**: GoControlPanel can send errors, performance traces, session replays and logs to Sentry. No Sentry configuration is required unless you want to enable telemetry.
+  - **Sentry Configuration (Optional)**: TMControlPanel can send errors, performance traces, session replays and logs to Sentry. No Sentry configuration is required unless you want to enable telemetry.
     - `NEXT_PUBLIC_SENTRY_ENABLED`: Set to `true` to enable Sentry.
     - `NEXT_PUBLIC_SENTRY_DSN`: The Sentry DSN. Required when Sentry is enabled.
     - `SENTRY_SERVER_DSN` (optional): Server-side DSN. Defaults to `NEXT_PUBLIC_SENTRY_DSN`.
     - `SENTRY_ENVIRONMENT` (optional): Environment reported to Sentry. Defaults to `NODE_ENV` (production).
     - `SENTRY_TRACES_SAMPLE_RATE` (optional): Performance trace sampling rate (`0`-`1`). Defaults to `1`.
     - `SENTRY_PROFILES_SAMPLE_RATE` (optional): Profiling sampling rate (`0`-`1`). Defaults to `1`.
-    - `SENTRY_REPLAYS_SESSION_SAMPLE_RATE` (optional): Session Replay sampling rate (`0`-`1`). Defaults to `1`.
-    - `SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE` (optional): Session Replay sampling rate when an error occurs (`0`-`1`). Defaults to `1`.
+    - `NEXT_PUBLIC_SENTRY_REPLAYS_SESSION_SAMPLE_RATE` (optional): Session Replay sampling rate (`0`-`1`). Defaults to `1`.
+    - `NEXT_PUBLIC_SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE` (optional): Session Replay sampling rate when an error occurs (`0`-`1`). Defaults to `1`.
     - `SENTRY_SEND_DEFAULT_PII` (optional): Whether to send personally identifiable information. Defaults to `false`.
     - `SENTRY_ATTACH_STACKTRACE` (optional): Whether to attach stack traces to supported log messages. Defaults to `true`.
     - `SENTRY_ENABLE_LOGS` (optional): Whether to send application logs to Sentry. Defaults to `true`.
@@ -206,9 +214,22 @@ Make sure to update or add the environment variables for the services in your `d
     - `SENTRY_NORMALIZE_DEPTH` (optional): Maximum object serialization depth. Defaults to `3`.
     - `SENTRY_IGNORE_ERRORS` (optional): Comma-separated list of error messages that should not be reported.
 
+- **GBX Service Environment Variables** (`gbx-service` container):
+  - `DATABASE_URL`, `REDIS_URI`: The same values as the `tmcontrolpanel` container.
+  - `GBX_SERVICE_TOKEN`, `WS_TICKET_SECRET`: The same values as the `tmcontrolpanel` container.
+  - `WS_ALLOWED_ORIGINS`: The origin(s) of the panel, comma separated, e.g., `https://panel.example.com`. A browser socket from another origin is refused.
+  - `NADEO_SERVER_LOGIN`, `NADEO_SERVER_PASSWORD`, `NADEO_CONTACT`, `NADEO_CLIENT_ID`, `NADEO_CLIENT_SECRET`: The same values as the `tmcontrolpanel` container.
+  - `GBX_SERVICE_ENABLED_SERVERS` (optional): Comma-separated server ids this container may claim. Empty allows every server in the database.
+  - `GBX_WORKERS` (default `1`): Worker processes. Set `0` to roll back to the single-process mode.
+  - `GBX_NODE_ID` (default hostname): Unique id per container.
+  - `GBX_LEASE_TTL_MS` (default `15000`, minimum `6000`): Lease lifetime in milliseconds. Workers renew every TTL/3.
+  - `PANEL_INTERNAL_URL`, `PANEL_INTERNAL_TOKEN` (optional): The panel address the service uses for Codriver `/co` commands (`http://tmcontrolpanel:3000`), and the same token as the `tmcontrolpanel` container. Empty turns `/co` off.
+  - `LOG_LEVEL`, `SENTRY_DSN`, `SENTRY_ENVIRONMENT` (optional): Logging and error reporting of the service.
+  - `MARKETPLACE_INDEX_URL`, `MARKETPLACE_CHECK_MINUTES` (optional): The plugin marketplace the service checks for withdrawn plugin versions, and how often (default every 30 minutes). Empty URL turns the check off.
+
 - **Dedicated Server Environment Variables**:
-  - `TM_MASTERSERVER_LOGIN`: Login for the dedicated server (same as `NADEO_SERVER_LOGIN` in GoControlPanel).
-  - `TM_MASTERSERVER_PASSWORD`: Password for the dedicated server (same as `NADEO_SERVER_PASSWORD` in GoControlPanel).
+  - `TM_MASTERSERVER_LOGIN`: Login for the dedicated server (same as `NADEO_SERVER_LOGIN` in TMControlPanel).
+  - `TM_MASTERSERVER_PASSWORD`: Password for the dedicated server (same as `NADEO_SERVER_PASSWORD` in TMControlPanel).
 
 ### 3. Start the Services
 
@@ -218,15 +239,15 @@ Run the following command to start all services defined in the `docker-compose.y
 docker compose up -d
 ```
 
-### 4. Access the GoControlPanel
+### 4. Access the TMControlPanel
 
-That's it! You can now access your **GoControlPanel** at `http://localhost:3000` or your own configured url.
+That's it! You can now access your **TMControlPanel** at `http://localhost:3000` or your own configured url.
 
 ---
 
 ## PyPlanet/EvoSC Stack Setup
 
-This section will guide you through setting up the **GoControlPanel** with an existing **PyPlanet** or **EvoSC** stack.
+This section will guide you through setting up the **TMControlPanel** with an existing **PyPlanet** or **EvoSC** stack.
 
 ### 1. Navigate to Your Existing Stack Directory
 
@@ -237,8 +258,8 @@ First you need to navigate to your existing stack directory. Navigate to the dir
 Paste the following configuration into your existing `docker-compose.yml` file.
 
 ```yaml
-gocontrolpanel:
-  image: marijnregterschot/gocontrolpanel:beta # Use marijnregterschot/gocontrolpanel-postgres:beta if you are using PostgreSQL
+tmcontrolpanel:
+  image: marijnregterschot/tmcontrolpanel:latest # Use marijnregterschot/tmcontrolpanel-postgres:latest if you are using PostgreSQL
   ports:
     - 3000:3000
   restart: unless-stopped
@@ -252,14 +273,40 @@ gocontrolpanel:
     NADEO_REDIRECT_URI: http://localhost:3000/api/auth/callback/nadeo
     NADEO_SERVER_LOGIN:
     NADEO_SERVER_PASSWORD:
-    NADEO_CONTACT: GoControlPanel / <your contact info>
+    NADEO_CONTACT: TMControlPanel / <your contact info>
     REDIS_URI: redis://redis:6379
-    DATABASE_URL: mysql://gocontrolpanel:VettePanel123@db:3306/gocontrolpanel
+    DATABASE_URL: mysql://tmcontrolpanel:VettePanel123@db:3306/tmcontrolpanel
     HETZNER_KEY:
+    GBX_SERVICE_URL: http://gbx-service:3100
+    GBX_SERVICE_WS_URL: ws://localhost:3100 # Must be reachable from the browser
+    GBX_SERVICE_TOKEN: # Same value as the GBX service, at least 32 characters
+    WS_TICKET_SECRET: # Same value as the GBX service, at least 32 characters
     LOG_LEVEL: info
   depends_on:
     - db
     - redis
+
+gbx-service:
+  image: marijnregterschot/tmcontrolpanel-gbx-service:latest # Use marijnregterschot/tmcontrolpanel-gbx-service-postgres:latest if you are using PostgreSQL
+  ports:
+    - 3100:3100 # WebSockets for the browser; /internal routes require GBX_SERVICE_TOKEN
+  restart: unless-stopped
+  environment:
+    DATABASE_URL: mysql://tmcontrolpanel:VettePanel123@db:3306/tmcontrolpanel
+    REDIS_URI: redis://redis:6379
+    GBX_SERVICE_TOKEN: # Same value as the web app, at least 32 characters
+    WS_TICKET_SECRET: # Same value as the web app, at least 32 characters
+    WS_ALLOWED_ORIGINS: http://localhost:3000
+    NADEO_SERVER_LOGIN:
+    NADEO_SERVER_PASSWORD:
+    NADEO_CONTACT: TMControlPanel / <your contact info>
+    NADEO_CLIENT_ID:
+    NADEO_CLIENT_SECRET:
+    LOG_LEVEL: info
+  depends_on:
+    - db
+    - redis
+    - tmcontrolpanel # Runs the database migrations
 
 filemanager:
   image: marijnregterschot/trackmania-server-fm:latest
@@ -287,7 +334,7 @@ volumes:
 
 ### 3. Create Database
 
-Create a new database for GoControlPanel in your existing database service. For the default PyPlanet and EvoSC stacks, this is usually a MariaDB database.
+Create a new database for TMControlPanel in your existing database service. For the default PyPlanet and EvoSC stacks, this is usually a MariaDB database.
 The container name is likely something like `<current-folder>-db-1`.
 
 1. Log into the database container.
@@ -301,14 +348,14 @@ docker exec -it <container-name> mariadb -u root -p
 2. Create a new database:
 
 ```sql
-CREATE DATABASE gocontrolpanel;
+CREATE DATABASE tmcontrolpanel;
 ```
 
 3. Create a new user and grant permissions:
 
 ```sql
-CREATE USER 'gocontrolpanel'@'%' IDENTIFIED BY 'VettePanel123';
-GRANT ALL PRIVILEGES ON gocontrolpanel.* TO 'gocontrolpanel'@'%';
+CREATE USER 'tmcontrolpanel'@'%' IDENTIFIED BY 'VettePanel123';
+GRANT ALL PRIVILEGES ON tmcontrolpanel.* TO 'tmcontrolpanel'@'%';
 FLUSH PRIVILEGES;
 ```
 
@@ -316,23 +363,25 @@ FLUSH PRIVILEGES;
 
 Make sure to update or add the environment variables for the added services in your `docker-compose.yml` file:
 
-- **GoControlPanel Environment Variables**:
+- **TMControlPanel Environment Variables**:
   - `NEXTAUTH_URL`, `NEXTAUTH_SECRET`: NextAuth configuration for authentication. `NEXTAUTH_SECRET` can be any random string, e.g., `VettePanel123`.
   - `DEFAULT_ADMINS`: Comma-separated list of default admin logins.
   - `DEFAULT_PERMISSIONS`: Comma-separated list of default permissions for new users. You can find a list of available permissions in the [Permissions](#permissions) section.
   - **NADEO Configuration**: Make sure to update `NADEO_CLIENT_ID`, `NADEO_CLIENT_SECRET`, `NADEO_REDIRECT_URI`, `NADEO_SERVER_LOGIN`, `NADEO_SERVER_PASSWORD` and `NADEO_CONTACT` with your valid NADEO API credentials. Nadeo API credentials can be obtained from the [Nadeo API manager](https://api.trackmania.com/manager). The server login and password can be found in your existing stack configuration under the `dedicated` or `trackmania` service.
-  - `HETZNER_KEY`: If you are using the Hetzner Cloud API, set this environment variable so that your API tokens are encrypted before being stored in the database. This can be any random string, e.g., `myhetznerkey`.
-  - `LOG_LEVEL`: Set the log level for GoControlPanel. Supported values are `trace`, `debug`, `info`, `warn`, `error` and `fatal`. The default is `info`.
+  - `HETZNER_KEY`: Required for the Hetzner Cloud integration. Encrypts API tokens and SSH keys before they are stored in the database. Use a random string of at least 32 characters, for example from `openssl rand -hex 32`. When you change it, set the old value as `HETZNER_KEY_PREVIOUS` so stored values can still be decrypted.
+  - **GBX service connection**: `GBX_SERVICE_URL` is the address of the `gbx-service` container (`http://gbx-service:3100`). `GBX_SERVICE_WS_URL` is the address the browser uses to open the live WebSockets, so it must be reachable from your users (for example `ws://<your-host>:3100`, or `wss://...` behind HTTPS). `GBX_SERVICE_TOKEN` and `WS_TICKET_SECRET` are secrets of at least 32 characters (`openssl rand -base64 32`) and must be identical in both containers. The panel refuses to start without them.
+  - `MARKETPLACE_INDEX_URL` (optional): The plugin marketplace the panel browses. Defaults to the official marketplace; set it to an empty value to turn browsing off. Uploading private plugins works either way.
+  - `LOG_LEVEL`: Set the log level for TMControlPanel. Supported values are `trace`, `debug`, `info`, `warn`, `error` and `fatal`. The default is `info`.
   - `PLAUSIBLE_API_HOST`: Set the Plausible API host for analytics, e.g., `analytics.mywebsite.com`. This is optional and can be left empty if you do not want to use Plausible analytics.
-  - **Sentry Configuration (Optional)**: GoControlPanel can send errors, performance traces, session replays and logs to Sentry. No Sentry configuration is required unless you want to enable telemetry.
+  - **Sentry Configuration (Optional)**: TMControlPanel can send errors, performance traces, session replays and logs to Sentry. No Sentry configuration is required unless you want to enable telemetry.
     - `NEXT_PUBLIC_SENTRY_ENABLED`: Set to `true` to enable Sentry.
     - `NEXT_PUBLIC_SENTRY_DSN`: The Sentry DSN. Required when Sentry is enabled.
     - `SENTRY_SERVER_DSN` (optional): Server-side DSN. Defaults to `NEXT_PUBLIC_SENTRY_DSN`.
     - `SENTRY_ENVIRONMENT` (optional): Environment reported to Sentry. Defaults to `NODE_ENV` (production).
     - `SENTRY_TRACES_SAMPLE_RATE` (optional): Performance trace sampling rate (`0`-`1`). Defaults to `1`.
     - `SENTRY_PROFILES_SAMPLE_RATE` (optional): Profiling sampling rate (`0`-`1`). Defaults to `1`.
-    - `SENTRY_REPLAYS_SESSION_SAMPLE_RATE` (optional): Session Replay sampling rate (`0`-`1`). Defaults to `1`.
-    - `SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE` (optional): Session Replay sampling rate when an error occurs (`0`-`1`). Defaults to `1`.
+    - `NEXT_PUBLIC_SENTRY_REPLAYS_SESSION_SAMPLE_RATE` (optional): Session Replay sampling rate (`0`-`1`). Defaults to `1`.
+    - `NEXT_PUBLIC_SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE` (optional): Session Replay sampling rate when an error occurs (`0`-`1`). Defaults to `1`.
     - `SENTRY_SEND_DEFAULT_PII` (optional): Whether to send personally identifiable information. Defaults to `false`.
     - `SENTRY_ATTACH_STACKTRACE` (optional): Whether to attach stack traces to supported log messages. Defaults to `true`.
     - `SENTRY_ENABLE_LOGS` (optional): Whether to send application logs to Sentry. Defaults to `true`.
@@ -342,9 +391,11 @@ Make sure to update or add the environment variables for the added services in y
     - `SENTRY_NORMALIZE_DEPTH` (optional): Maximum object serialization depth. Defaults to `3`.
     - `SENTRY_IGNORE_ERRORS` (optional): Comma-separated list of error messages that should not be reported.
 
+- **GBX Service Environment Variables** (`gbx-service`): use the same `DATABASE_URL`, `REDIS_URI`, `GBX_SERVICE_TOKEN`, `WS_TICKET_SECRET` and Nadeo values as the `tmcontrolpanel` service, and set `WS_ALLOWED_ORIGINS` to the origin of the panel. See [Architecture](#architecture) for what each variable does.
+
 > **Note:** Make sure you are using the correct service name for the dedicated server. For **PyPlanet**, the service name is usually `dedicated`, and for **EvoSC**, it is `trackmania`.
 
-### 6. Start the Services
+### 5. Start the Services
 
 Run the following command to start the services.
 
@@ -352,15 +403,15 @@ Run the following command to start the services.
 docker compose up -d
 ```
 
-### 7. Access the GoControlPanel
+### 6. Access the TMControlPanel
 
-That's it! You can now access your **GoControlPanel** at `http://localhost:3000` or your own configured url.
+That's it! You can now access your **TMControlPanel** at `http://localhost:3000` or your own configured url.
 
 ---
 
 ## Permissions
 
-The **GoControlPanel** supports a permission system that allows you to manage user access to various features. You can set default permissions for new users using the `DEFAULT_PERMISSIONS` environment variable in your `docker-compose.yml` file. Here is a list of available permissions:
+The **TMControlPanel** supports a permission system that allows you to manage user access to various features. You can set default permissions for new users using the `DEFAULT_PERMISSIONS` environment variable in your `docker-compose.yml` file. Here is a list of available permissions:
 
 - users:view
 - users:edit
@@ -388,6 +439,24 @@ The **GoControlPanel** supports a permission system that allows you to manage us
 - hetzner:servers:delete
 - audit-logs:view
 - audit-logs:delete
+- plugins:upload
+- codriver:view
+- codriver:edit
+- api-keys:view
+- api-keys:revoke
+
+---
+
+## Upgrading
+
+Back up your database first (`mysqldump` or `pg_dump`), then pull the new images and recreate the containers:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+The `tmcontrolpanel` container applies database migrations on start. Check the [changelog](CHANGELOG.md) before upgrading across several versions. Coming from an older deployment? Starting a new stack is recommended, and migrating is at your own risk. If you do migrate from the `:beta` images or the single-container `dev` branch, follow [Upgrading from `:beta` to the release](docs/migrating-beta-to-release.md). To move a database to a new deployment with new `SECRETS_KEY` and `HETZNER_KEY` values, see [Moving a database to a new deployment](docs/migrating-database.md).
 
 ---
 
@@ -399,17 +468,68 @@ If you encounter any issues, check the logs of a specific service by running:
 docker compose logs <service-name>
 ```
 
-For example, to view the logs of the **GoControlPanel** service:
+For example, to view the logs of the **TMControlPanel** service:
 
 ```bash
-docker compose logs gocontrolpanel
+docker compose logs tmcontrolpanel
 ```
+
+Players can type `/version` in game to receive the control panel app version in a
+private chat reply. This native command works without plugins, even when `/help`
+is disabled. The version comes from the root `package.json` and is bundled into
+the GBX service build. `/help version` describes the command when help is enabled.
+
+Other native commands also reply privately and work without plugins:
+
+| Command        | Information                                                         | Access        |
+| -------------- | ------------------------------------------------------------------- | ------------- |
+| `/uptime`      | Service uptime and duration of the current server connection        | Everyone      |
+| `/status`      | Connection state, game mode, drivers and spectators                 | Everyone      |
+| `/plugins`     | Installed versions and disabled/running/not-running state           | Everyone      |
+| `/ping`        | Dedicated server XML-RPC round-trip time (not gameplay latency)     | Everyone      |
+| `/sysinfo`     | Node version, platform, process memory, CPU count and host CPU load | Server admins |
+| `/diagnostics` | Database, Redis and GBX connectivity checked separately             | Server admins |
+
+Global panel admins, direct server Admins, and Admins of groups containing the
+server can use the restricted commands. Probes and permission checks time out
+after three seconds. Error details remain in service logs. `/help <command>`
+describes each command when help is enabled. These native command names are
+reserved and cannot be claimed by plugins.
+
+Everything that talks to a dedicated server (connection errors, plugins, chat commands, match recording) is logged by the **GBX service**:
+
+```bash
+docker compose logs gbx-service
+curl http://localhost:3100/health    # Includes workers in cluster mode; 503 when degraded
+curl http://localhost:3100/healthz   # 200 when Redis is reachable and a worker heartbeat exists; otherwise 503
+```
+
+- **A container exits right after starting:** a missing or too short (< 32 characters) `GBX_SERVICE_TOKEN` or `WS_TICKET_SECRET`, or an invalid value, is listed in its log.
+- **Live pages stay empty or the servers show as offline:** the browser can't reach `GBX_SERVICE_WS_URL`, or the panel's origin is missing from `WS_ALLOWED_ORIGINS` (the socket closes with code `4403`). Behind HTTPS the URL must start with `wss://`.
+- **Everything is recorded or announced twice:** check for an older controller, a service using another Redis, or overlapping services with `GBX_WORKERS=0`. Cluster workers sharing Redis coordinate ownership through leases.
+
+---
+
+## Changelog
+
+The release notes of every version are in [CHANGELOG.md](CHANGELOG.md).
+
+---
+
+## Plugins and the marketplace
+
+Admins of a server can install plugins from the marketplace on the **Plugins** page, or upload their own (with the `plugins:upload` permission). Plugins run sandboxed in the GBX service, and a plugin that misbehaves is turned off and its admins are notified.
+
+- `MARKETPLACE_INDEX_URL` on **both** containers selects the marketplace. The default is the official one; leave it empty to turn browsing off.
+- [Plugin marketplace](docs/plugin-marketplace.md): how it works, running your own registry, withdrawing plugins, and the security model.
+- [Plugin SDK](docs/plugin-sdk.md): writing, testing and publishing a plugin.
+- [First-party plugins](docs/first-party-plugins.md): the first-party plugins published in the registry.
 
 ---
 
 ## Contributing
 
-Contributions are welcome! If you have suggestions or improvements, please create a pull request or open an issue. Feel free to fork the repository and make changes as needed.
+Contributions are welcome! If you have suggestions or improvements, please create a pull request or open an issue. Feel free to fork the repository and make changes as needed. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to set up a local development environment.
 
 ---
 

@@ -1,0 +1,77 @@
+import { doServerActionWithAuth } from "@/lib/actions";
+import { getTotdRoyalMaps } from "@/lib/api/nadeo";
+import { getLogger } from "@/lib/logger";
+import { getKeyTotdMonth, getRedisClient } from "@/lib/redis";
+import { getMapsByUids } from "@/services/database/maps";
+import { MonthMapListWithDayMaps } from "@/types/api/nadeo";
+import { ServerError, ServerResponse } from "@/types/responses";
+import "server-only";
+
+export async function getTotdMonth(
+  serverId: string,
+  offset: number,
+): Promise<ServerResponse<MonthMapListWithDayMaps | null>> {
+  return doServerActionWithAuth(
+    [
+      `servers:${serverId}:moderator`,
+      `servers:${serverId}:admin`,
+      `group:servers:${serverId}:moderator`,
+      `group:servers:${serverId}:admin`,
+    ],
+    async () => {
+      const meta = {
+        type: "nadeo",
+        module: "totd",
+        function: "getTotdMonth",
+      };
+      const log = getLogger(serverId);
+      const redis = await getRedisClient();
+      const key = getKeyTotdMonth(offset);
+
+      const cached = await redis.get(key);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+
+      const mapListResponse = await getTotdRoyalMaps(1, offset);
+
+      const monthList = mapListResponse.monthList?.[0];
+
+      if (!monthList) {
+        return null;
+      }
+
+      const { data: maps, error } = await getMapsByUids(
+        monthList.days.map((m) => m.mapUid).filter(Boolean),
+      );
+      if (error) {
+        log.error({ meta, error, offset }, "Failed to get maps");
+        throw new ServerError(error, "GetMapsByUidsError");
+      }
+
+      const response: MonthMapListWithDayMaps = {
+        ...monthList,
+        days: monthList.days
+          .map((day) => ({
+            ...day,
+            map: maps.find((m) => m.uid === day.mapUid),
+          }))
+          .filter((day) => day.map !== undefined)
+          .map((day) => ({
+            ...day,
+            // TypeScript: map is guaranteed to be defined after filter
+            map: day.map!,
+          })),
+      };
+
+      await redis.set(
+        key,
+        JSON.stringify(response),
+        "EX",
+        Math.max(1, mapListResponse.relativeNextRequest),
+      );
+
+      return response;
+    },
+  );
+}
