@@ -12,22 +12,6 @@ A Dockerized management panel for dedicated Trackmania servers. Works both stand
 
 - [Overview](#overview)
   - [Features](#features)
-    - [Server Settings](#server-settings)
-    - [Game Management](#game-management)
-    - [Maps Management](#maps-management)
-    - [Player Management](#player-management)
-    - [Live Match](#live-match)
-    - [Records and Matches](#records-and-matches)
-    - [Plugin Management](#plugin-management)
-    - [Plugin Marketplace](#plugin-marketplace)
-    - [Trackmania Exchange](#trackmania-exchange)
-    - [Files Management](#files-management)
-    - [User Management](#user-management)
-    - [Group Management](#group-management)
-    - [Role Management](#role-management)
-    - [Server Management](#server-management)
-    - [Hetzner Management](#hetzner-management)
-    - [Public API](#public-api)
 - [Architecture](#architecture)
   - [Expose the GBX service](#expose-the-gbx-service)
 - [Docker Setup](#docker-setup)
@@ -49,69 +33,67 @@ A Dockerized management panel for dedicated Trackmania servers. Works both stand
 
 ## Features
 
-#### Server Settings
+You can use the free hosted panel at [tmcontrolpanel.com](https://tmcontrolpanel.com) or self-host it with Docker.
 
-Manage your general server settings like the server name, password, and other configurations.
+#### Multiple servers
 
-#### Game Management
+Manage all your dedicated servers from one panel and switch between them in a click. Group servers together, for example for a league or a team, and give people access per server or per group.
 
-Manage your game settings, this includes map management and mode settings.
+#### Hetzner Cloud
 
-#### Maps Management
+Create and delete Trackmania servers on Hetzner Cloud straight from the panel, together with databases, networks and volumes, and keep an eye on their metrics.
 
-Manage your maps, including adding local maps, changing map order and a jukebox.
+#### Server settings
 
-#### Player Management
+Change the server name, password, player and spectator limits and the other general settings from the browser.
 
-Manage your players, including banning players and managing blacklists and guestlists.
+#### Game and mode settings
 
-#### Live Match
+Switch game modes, edit mode script settings, load and save match settings and manage the playlist without touching a file.
 
-Monitor live matches, including player scores and match status.
+#### Maps and jukebox
 
-#### Records and Matches
+Add maps from the server, reorder the map list by dragging, jump to a map and queue the next ones in the jukebox.
 
-View past matches and records, including player scores and match details.
+#### Trackmania Exchange and Nadeo
 
-#### Plugin Management
+Search maps and mappacks on Trackmania Exchange, or pull in seasonal campaigns, Track of the Day, weekly shorts and club campaigns and rooms, straight onto the server.
 
-Manage the server plugins and chat settings of the server.
+#### Live match view
 
-#### Plugin Marketplace
+Follow rounds, checkpoints, scores and chat as they happen. Pause the match, set round, map and match points, and talk to players from the browser.
 
-Browse the plugin marketplace and install plugins on your servers, or upload your own privately. Plugins run in a sandbox with only the permissions you accept when you install them. Updates, rolling back to an older version and settings are all on the server's Plugins page. See [Plugins and the marketplace](#plugins-and-the-marketplace).
+#### Players
 
-#### Trackmania Exchange
+Kick, ban and force players to spectator, and keep the blacklist and guestlist in order across restarts.
 
-Browse and download maps or mappacks directly from Trackmania Exchange.
+#### Records and matches
 
-#### Files Management
+Every round and finish is recorded. Browse match history per map, look up player results and export them to CSV.
 
-Manage your server files, including uploading, deleting and editing files.
+#### Plugins and marketplace
 
-#### User Management
+Turn in-game widgets on per server, such as a match manager with pick and ban, live rankings, a Time Attack leaderboard and map and record info, and change their settings from the panel without a restart. Browse the plugin marketplace to install more, or upload your own privately. Plugins run in a sandbox with only the permissions you accept when you install them, and you can update or roll back a plugin from the server's Plugins page. See [Plugins and the marketplace](#plugins-and-the-marketplace).
 
-Manage users by modifying roles and permissions.
+#### File manager
 
-#### Group Management
+Browse, upload, delete and edit the server's files, match settings and scripts with a built-in code editor.
 
-Manage groups, including adding new groups, managing group permissions and roles.
+#### Users, groups and roles
 
-#### Role Management
-
-Manage roles, including adding new roles and managing role permissions.
-
-#### Server Management
-
-Manage your servers, add new servers and configure the server settings.
-
-#### Hetzner Management
-
-Manage your Hetzner Cloud servers, networks and volumes. You can create and delete Trackmania servers directly from the panel.
+Give people access to exactly the servers and actions they need with roles and permissions on users, groups and servers. Every change is written to an audit log.
 
 #### Public API
 
 Server and group admins create API keys for external tools such as scoreboards, bots and tournament software. A server key reaches its server; a group key reaches every server in the group. Keys are limited to scopes, and stop working when their creator is no longer an admin. The versioned API lives at `/api/v1`, with an OpenAPI document at `/api/v1/openapi.json` and an interactive reference at `/api/v1/docs`. See [the public API guide](docs/public-api.md).
+
+#### High availability
+
+Self-hosters can add a second host that runs the web panel and GBX workers against the same database. If a worker goes down, another one takes over its servers. See [the backup host guide](docs/backup-host.md).
+
+#### Codriver (experimental)
+
+An AI assistant for running your servers, in the panel and in game with the `/co` chat command. It uses an AI provider API key that you add per server or for the whole panel. It is still experimental, so expect rough edges.
 
 # Architecture
 
