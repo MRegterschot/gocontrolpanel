@@ -1,0 +1,48 @@
+import { currentApiKeyId } from "@/lib/api-keys/context";
+import { getClient } from "@/lib/dbclient";
+import { Prisma } from "@tmcontrolpanel/db";
+import "server-only";
+
+export function auditLogData(
+  // null for a player without a panel account
+  userId: string | null,
+  targetId: string,
+  action: string,
+  details?: Prisma.InputJsonValue,
+  error?: string,
+): Prisma.AuditLogsUncheckedCreateInput {
+  const apiKeyId = currentApiKeyId();
+  return {
+    userId,
+    action,
+    targetType: action.split(".")[0],
+    targetId,
+    details,
+    error,
+    ...(apiKeyId && { apiKeyId }),
+  };
+}
+
+export async function logAudit(
+  userId: string | null,
+  targetId: string,
+  action: string,
+  details?: Prisma.InputJsonValue,
+  error?: string,
+): Promise<void> {
+  await getClient().auditLogs.create({
+    data: auditLogData(userId, targetId, action, details, error),
+  });
+}
+
+// Runs a write and its audit entry in one transaction: both happen, or neither does
+export async function withAudit<T>(
+  write: (tx: Prisma.TransactionClient) => Promise<T>,
+  audit: (result: T) => Parameters<typeof auditLogData>,
+): Promise<T> {
+  return getClient().$transaction(async (tx) => {
+    const result = await write(tx);
+    await tx.auditLogs.create({ data: auditLogData(...audit(result)) });
+    return result;
+  });
+}

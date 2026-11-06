@@ -1,0 +1,131 @@
+#!/bin/bash
+
+set -x -e
+
+apt update
+apt install -y docker.io docker-compose-v2 curl unzip dnsutils
+
+cd /root
+curl -sSLf -o tmcp.zip https://github.com/MRegterschot/gocontrolpanel/archive/refs/heads/master.zip
+unzip tmcp.zip
+# The archive folder is named after the repository; keep one stable name
+TOP_DIR=$(unzip -Z1 tmcp.zip | head -n1 | cut -d/ -f1)
+if [ "$TOP_DIR" != "tmcontrolpanel-master" ]; then
+  mv "$TOP_DIR" tmcontrolpanel-master
+fi
+# The workspace layout keeps these under apps/web/hetzner; scripts expect tmcontrolpanel-master/hetzner
+if [ -d tmcontrolpanel-master/apps/web/hetzner ] && [ ! -d tmcontrolpanel-master/hetzner ]; then
+  mv tmcontrolpanel-master/apps/web/hetzner tmcontrolpanel-master/hetzner
+fi
+cd tmcontrolpanel-master/hetzner
+
+STACK_NAME={{sh stack_name}}
+STACK_DIR="/root/tmcontrolpanel-master/hetzner/$STACK_NAME"
+ENV_FILE="$STACK_DIR/.env"
+mkdir -p "$(dirname "$ENV_FILE")"
+
+CONTROLLER_TYPE={{sh server_controller.type}}
+COMPOSE_DIR="/root/tmcontrolpanel-master/hetzner/$CONTROLLER_TYPE"
+COMPOSE_FILES="-f $COMPOSE_DIR/docker-compose.yml"
+
+TM_SYSTEM_FORCE_IP_ADDRESS=$(dig +short myip.opendns.com @resolver1.opendns.com)
+
+if [ -z "$TM_SYSTEM_FORCE_IP_ADDRESS" ]; then
+    echo "Warning: Could not get public IP via DNS, using local interface IP"
+    TM_SYSTEM_FORCE_IP_ADDRESS=$(ip -4 addr show scope global | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -n1)
+fi
+
+cat > "$ENV_FILE" <<'EOF'
+COMPOSE_PROJECT_NAME={{env stack_name}}
+TM_MASTERSERVER_LOGIN={{env dedi_login}}
+TM_MASTERSERVER_PASSWORD={{env dedi_password}}
+TM_SERVER_PASSWORD={{env room_password}}
+TM_AUTHORIZATION_SUPERADMIN_PASSWORD={{env superadmin_password}}
+TM_AUTHORIZATION_ADMIN_PASSWORD={{env admin_password}}
+TM_AUTHORIZATION_USER_PASSWORD={{env user_password}}
+FM_PASSWORD={{env filemanager_password}}
+TM_PORT={{env port}}
+TM_XMLRPC_PORT={{env xmlrpc_port}}
+FM_PORT={{env fm_port}}
+EOF
+
+cat >> "$ENV_FILE" <<EOF
+TM_SYSTEM_FORCE_IP_ADDRESS=${TM_SYSTEM_FORCE_IP_ADDRESS}
+EOF
+
+{{#if server_controller}}
+{{#if server_controller.type}}
+cat >> "$ENV_FILE" <<'EOF'
+DB_HOST={{env db.host}}
+DB_PORT={{env db.port}}
+DB_NAME={{env db.name}}
+DB_USER={{env db.user}}
+DB_PASSWORD={{env db.password}}
+DB_ROOT_PASSWORD={{env db.root_password}}
+EOF
+
+{{#if db.local}}
+DB_TYPE={{sh db.type}}
+sed -i "s/^DB_HOST=.*/DB_HOST=$DB_TYPE/" "$ENV_FILE"
+
+COMPOSE_FILES="$COMPOSE_FILES -f /root/tmcontrolpanel-master/hetzner/docker-configs/docker-compose.$DB_TYPE.yml"
+{{/if}}
+{{/if}}
+
+{{#if (eq server_controller.type "evosc")}}
+{{/if}}
+
+{{#if (eq server_controller.type "maniacontrol")}}
+cat >> "$ENV_FILE" <<'EOF'
+MC_ADMINS={{env server_controller.admins}}
+EOF
+{{/if}}
+
+{{#if (eq server_controller.type "minicontrol")}}
+cat >> "$ENV_FILE" <<'EOF'
+MINI_ADMINS={{env server_controller.admins}}
+MINI_EXCLUDED_PLUGINS={{env server_controller.excludedPlugins}}
+MINI_CONTACT_INFO={{env server_controller.contactInfo}}
+MINI_IDENTIFIER={{env server_controller.identifier}}
+MINI_SECRET={{env server_controller.secret}}
+EOF
+{{/if}}
+
+{{#if (eq server_controller.type "pyplanet")}}
+cat >> "$ENV_FILE" <<'EOF'
+PY_ADMINS={{env server_controller.admins}}
+EOF
+{{/if}}
+{{/if}}
+
+docker compose \
+  --env-file "$ENV_FILE" \
+  $COMPOSE_FILES \
+  up -d
+
+cat > "$STACK_DIR/restart.sh" <<EOF
+#!/bin/bash
+set -e
+
+docker pull evoesports/trackmania:latest
+docker pull marijnregterschot/trackmania-server-fm:latest
+
+docker compose \
+  --env-file "$ENV_FILE" \
+  $COMPOSE_FILES \
+  up -d
+EOF
+
+chmod +x "$STACK_DIR/restart.sh"
+
+cat > "$STACK_DIR/down.sh" <<EOF
+#!/bin/bash
+set -e
+
+docker compose \
+  --env-file "$ENV_FILE" \
+  $COMPOSE_FILES \
+  down
+EOF
+
+chmod +x "$STACK_DIR/down.sh"

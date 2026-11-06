@@ -1,0 +1,3 @@
+ALTER TABLE `servers` ADD COLUMN `theme` JSON NULL;
+
+ALTER TABLE `groups` ADD COLUMN `theme` JSON NULL;

@@ -1,0 +1,141 @@
+"use client";
+
+import { createHetznerVolume } from "@/actions/hetzner/volumes";
+import FormElement from "@/components/form/form-element";
+import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
+import { useHetznerLocations } from "@/hooks/use-hetzner-queries";
+import { useQueryErrorToast } from "@/hooks/use-query-error-toast";
+import { getErrorMessage } from "@/lib/utils";
+import { ServerError } from "@/types/responses";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { IconPlus } from "@tabler/icons-react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import Flag from "react-world-flags";
+import { toast } from "sonner";
+import {
+  AddHetznerVolumeSchema,
+  AddHetznerVolumeSchemaType,
+} from "./add-hetzner-volume-schema";
+
+export default function AddHetznerVolumeForm({
+  projectId,
+  callback,
+}: {
+  projectId: string;
+  callback: () => void;
+}) {
+  const form = useForm<AddHetznerVolumeSchemaType>({
+    resolver: zodResolver(AddHetznerVolumeSchema),
+    defaultValues: {
+      size: 10,
+    },
+  });
+
+  const locationsQuery = useHetznerLocations(projectId);
+  const locations = locationsQuery.data ?? [];
+  const loading = locationsQuery.isPending;
+  const error = locationsQuery.error
+    ? "Failed to get locations: " + getErrorMessage(locationsQuery.error)
+    : null;
+  useQueryErrorToast(locationsQuery.error, "Failed to fetch locations");
+
+  useEffect(() => {
+    const data = locationsQuery.data;
+    if (!data) return;
+    form.setValue(
+      "location",
+      data.length > 0
+        ? data.find((loc) => loc.name === "fsn1")?.name || data[0].name
+        : "",
+    );
+     
+  }, [locationsQuery.data]);
+
+  async function onSubmit(values: AddHetznerVolumeSchemaType) {
+    try {
+      const { error } = await createHetznerVolume(projectId, values);
+      if (error) {
+        throw new ServerError(error, "CreateHetznerVolumeError");
+      }
+
+      toast.success("Hetzner volume successfully created");
+      if (callback) {
+        callback();
+      }
+    } catch (err) {
+      toast.error("Failed to create Hetzner volume", {
+        description: getErrorMessage(err),
+      });
+    }
+  }
+
+  const location = locations.find((loc) => loc.name === form.watch("location"));
+
+  if (loading) {
+    return <span className="text-muted-foreground">Loading...</span>;
+  }
+
+  if (error) {
+    return <span>{error}</span>;
+  }
+
+  return (
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="flex flex-col gap-4"
+      >
+        <FormElement
+          name="name"
+          label="Volume Name"
+          placeholder="Enter volume name"
+          isRequired
+        />
+
+        <FormElement
+          name="size"
+          label="Size (GB)"
+          placeholder="Enter size in GB"
+          type="number"
+          isRequired
+        />
+
+        <div className="flex gap-4 items-end truncate">
+          <FormElement
+            name="location"
+            label="Location"
+            placeholder="Select a location"
+            type="select"
+            options={locations.map((location) => ({
+              value: location.name,
+              label: location.description,
+            }))}
+            isRequired
+          />
+
+          {location && (
+            <div className="flex items-center gap-2">
+              <Flag
+                code={location.country}
+                className="h-10 w-10"
+                fallback={location.country}
+              />
+              <span>{location.name}</span>
+            </div>
+          )}
+        </div>
+
+        <Button
+          type="submit"
+          className="w-full mt-4"
+          disabled={form.formState.isSubmitting}
+        >
+          <IconPlus />
+          Add Volume
+        </Button>
+      </form>
+    </Form>
+  );
+}

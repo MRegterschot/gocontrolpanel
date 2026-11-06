@@ -1,0 +1,75 @@
+#!/bin/bash
+
+set -x -e
+
+# Machines provisioned before the rename keep the old directory
+BASE_DIR=/root/tmcontrolpanel-master
+if [ ! -d "$BASE_DIR" ]; then
+  BASE_DIR=/root/gocontrolpanel-master
+fi
+cd "$BASE_DIR/hetzner"
+
+STACK_NAME={{sh stack_name}}
+STACK_DIR="$BASE_DIR/hetzner/$STACK_NAME"
+ENV_FILE="$STACK_DIR/.env"
+mkdir -p "$(dirname "$ENV_FILE")"
+
+COMPOSE_DIR="$BASE_DIR/hetzner"
+COMPOSE_FILES="-f $COMPOSE_DIR/docker-compose.yml"
+
+TM_SYSTEM_FORCE_IP_ADDRESS=$(dig +short myip.opendns.com @resolver1.opendns.com)
+
+if [ -z "$TM_SYSTEM_FORCE_IP_ADDRESS" ]; then
+    echo "Warning: Could not get public IP via DNS, using local interface IP"
+    TM_SYSTEM_FORCE_IP_ADDRESS=$(ip -4 addr show scope global | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -n1)
+fi
+
+cat > "$ENV_FILE" <<'EOF'
+COMPOSE_PROJECT_NAME={{env stack_name}}
+TM_MASTERSERVER_LOGIN={{env dedi_login}}
+TM_MASTERSERVER_PASSWORD={{env dedi_password}}
+TM_SERVER_PASSWORD={{env room_password}}
+TM_AUTHORIZATION_SUPERADMIN_PASSWORD={{env superadmin_password}}
+TM_AUTHORIZATION_ADMIN_PASSWORD={{env admin_password}}
+TM_AUTHORIZATION_USER_PASSWORD={{env user_password}}
+FM_PASSWORD={{env filemanager_password}}
+TM_PORT={{env port}}
+TM_XMLRPC_PORT={{env xmlrpc_port}}
+FM_PORT={{env fm_port}}
+EOF
+
+cat >> "$ENV_FILE" <<EOF
+TM_SYSTEM_FORCE_IP_ADDRESS=${TM_SYSTEM_FORCE_IP_ADDRESS}
+EOF
+
+docker compose \
+  --env-file "$ENV_FILE" \
+  $COMPOSE_FILES \
+  up -d
+
+cat > "$STACK_DIR/restart.sh" <<EOF
+#!/bin/bash
+set -e
+
+docker pull evoesports/trackmania:latest
+docker pull marijnregterschot/trackmania-server-fm:latest
+
+docker compose \
+  --env-file "$ENV_FILE" \
+  $COMPOSE_FILES \
+  up -d
+EOF
+
+chmod +x "$STACK_DIR/restart.sh"
+
+cat > "$STACK_DIR/down.sh" <<EOF
+#!/bin/bash
+set -e
+
+docker compose \
+  --env-file "$ENV_FILE" \
+  $COMPOSE_FILES \
+  down
+EOF
+
+chmod +x "$STACK_DIR/down.sh"

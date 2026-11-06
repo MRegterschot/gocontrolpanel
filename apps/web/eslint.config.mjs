@@ -1,0 +1,43 @@
+import { FlatCompat } from "@eslint/eslintrc";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const compat = new FlatCompat({
+  baseDirectory: __dirname,
+});
+
+const eslintConfig = [
+  {
+    ignores: ["src/lib/manialink/*.js"],
+  },
+  ...compat.extends("next/core-web-vitals", "next/typescript", "prettier"),
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          ignoreRestSiblings: true,
+        },
+      ],
+      "react-hooks/exhaustive-deps": "off",
+      "react-hooks/rules-of-hooks": "warn",
+      "@typescript-eslint/no-explicit-any": "off",
+      // tmtags does not escape HTML; use the safe wrapper in @/lib/tmtags
+      "no-restricted-imports": [
+        "error",
+        { paths: [{ name: "tmtags", message: "Import from @/lib/tmtags." }] },
+      ],
+    },
+  },
+  {
+    files: ["src/lib/tmtags.ts"],
+    rules: { "no-restricted-imports": "off" },
+  },
+];
+
+export default eslintConfig;

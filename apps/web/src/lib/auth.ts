@@ -1,0 +1,321 @@
+import {
+  getAllGroupsWithServersAndMembers,
+  getPublicGroupsWithServers,
+  getUserById,
+  getUserByLogin,
+  upsertUserAuth,
+  UsersWithGroupsWithServers,
+} from "@/actions/database/server-only/auth";
+import { UserGroup } from "@/types/auth";
+import { ServerError } from "@/types/responses";
+import { GroupRole } from "@tmcontrolpanel/db";
+import {
+  GetServerSidePropsContext,
+  NextApiRequest,
+  NextApiResponse,
+} from "next";
+import { getServerSession, NextAuthOptions, Profile, Session } from "next-auth";
+import { OAuthConfig } from "next-auth/providers/oauth";
+import { cache } from "react";
+import slugid from "slugid";
+import { getWebIdentities } from "./api/nadeo";
+import config from "./config";
+import { logger } from "./logger";
+import { reportException } from "./sentry/report";
+import { getList, hasPermissionSync } from "./utils";
+
+const NadeoProvider = (): OAuthConfig<Profile> => ({
+  id: "nadeo",
+  name: "Nadeo",
+  type: "oauth",
+  authorization: {
+    url: "https://api.trackmania.com/oauth/authorize",
+    params: {
+      response_type: "code",
+      client_id: config.NADEO.CLIENT_ID,
+      redirect_uri: config.NADEO.REDIRECT_URI,
+      scope: "",
+    },
+  },
+  token: {
+    url: "https://api.trackmania.com/api/access_token",
+    async request({ params }) {
+      const response = await fetch(
+        "https://api.trackmania.com/api/access_token",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            grant_type: "authorization_code",
+            client_id: process.env.NADEO_CLIENT_ID!,
+            client_secret: process.env.NADEO_CLIENT_SECRET!,
+            code: params.code ?? "",
+            redirect_uri: process.env.NADEO_REDIRECT_URI!,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const meta = {
+          type: "nadeo",
+          module: "auth",
+          function: "NadeoProvider.token.request",
+        };
+        reportException(response, meta);
+        logger.error(
+          {
+            meta,
+            response: {
+              status: response.status,
+              statusText: response.statusText,
+              error: await response.text(),
+            },
+          },
+          "Failed to fetch access token",
+        );
+        throw new ServerError(
+          "Failed to fetch access token",
+          "NadeoProviderTokenRequestError",
+        );
+      }
+
+      const data = await response.json();
+
+      return { tokens: data };
+    },
+  },
+  userinfo: "https://api.trackmania.com/api/user",
+  clientId: config.NADEO.CLIENT_ID,
+  clientSecret: config.NADEO.CLIENT_SECRET,
+  async profile(profile) {
+    return {
+      id: profile.accountId,
+      accountId: profile.accountId,
+      displayName: profile.displayName,
+    };
+  },
+});
+
+export const authOptions: NextAuthOptions = {
+  providers: [NadeoProvider()],
+  callbacks: {
+    async session({ session, token }) {
+      if (!token) {
+        const error = new ServerError(
+          "Token is missing",
+          "SessionCallbackTokenMissing",
+        );
+        reportException(error);
+        throw error;
+      }
+
+      session.user = {
+        id: token.id,
+        accountId: token.accountId,
+        login: token.login,
+        displayName: token.displayName,
+        admin: token.admin,
+        ubiId: token.ubiId || undefined,
+        permissions: token.permissions,
+        groups: token.groups,
+        adminGroups: token.adminGroups,
+        projects: token.projects,
+        servers: token.servers,
+      };
+
+      return session;
+    },
+    async jwt({ token, user }) {
+      let dbUser: UsersWithGroupsWithServers | null = null;
+      if (user) {
+        token.accountId = user.accountId;
+        token.login = slugid.encode(user.accountId);
+        token.displayName = user.displayName;
+        dbUser = await getUserByLogin(token.login);
+        if (dbUser?.deletedAt) {
+          throw new ServerError("Account disabled", "Unauthorized");
+        }
+        // Bootstrap only a real sign-in. Database errors must never reset permissions.
+        if (!dbUser || !dbUser.authenticated) {
+          let ubiUid = dbUser?.ubiUid ?? "";
+          if (!ubiUid) {
+            try {
+              const { data } = await getWebIdentities([token.accountId]);
+              ubiUid = data?.[0]?.uid ?? "";
+            } catch {
+              logger.warn("Could not fetch Ubisoft identity during sign-in");
+            }
+          }
+          dbUser = await upsertUserAuth({
+            login: token.login,
+            nickName: token.displayName,
+            admin: config.DEFAULT_ADMINS.includes(token.login),
+            path: "",
+            ubiUid,
+            permissions: config.DEFAULT_PERMISSIONS,
+            authenticated: true,
+          });
+        }
+      } else {
+        // A missing/disabled account or a database failure invalidates this session.
+        dbUser = await getUserById(token.id);
+      }
+
+      if (!dbUser) {
+        const error = new ServerError(
+          "Failed to fetch user from database",
+          "FetchUserFromDatabaseError",
+        );
+        reportException(error);
+        throw error;
+      }
+
+      if (dbUser.admin) {
+        const allGroups = await getAllGroupsWithServersAndMembers();
+        const adminGroups = allGroups.filter(
+          (g) => !g.groupMembers.some((gm) => gm.userId === dbUser.id),
+        );
+
+        token.adminGroups = adminGroups
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((g) => ({
+            id: g.id,
+            name: g.name,
+            servers: g.groupServers.map((s) => ({
+              id: s.server.id,
+              name: s.server.name,
+              description: s.server.description,
+              hasFileManager: !!s.server.filemanagerUrl,
+            })),
+          }));
+      } else {
+        token.adminGroups = [];
+      }
+
+      token.id = dbUser.id;
+      token.admin = dbUser.admin;
+      token.ubiId = dbUser.ubiUid || undefined;
+      token.permissions = getList<string>(dbUser.permissions);
+
+      token.groups = dbUser.groupMembers
+        .sort(
+          (a, b) =>
+            a.order - b.order || a.group.name.localeCompare(b.group.name),
+        )
+        .map((g, i) =>
+          orderServers({
+            id: g.group.id,
+            name: g.group.name,
+            servers: g.group.groupServers.map((s) => ({
+              id: s.server.id,
+              name: s.server.name,
+              description: s.server.description,
+              hasFileManager: !!s.server.filemanagerUrl,
+            })),
+            role: g.role,
+            order: i,
+            serversOrder: g.serversOrder?.split(",") || [],
+          }),
+        );
+      token.projects = dbUser.hetznerProjectUsers.map((p) => ({
+        id: p.project.id,
+        name: p.project.name,
+        role: p.role,
+      }));
+      token.servers = dbUser.userServers.map((s) => ({
+        id: s.server.id,
+        name: s.server.name,
+        role: s.role,
+      }));
+
+      const publicGroups = await getPublicGroupsWithServers();
+
+      token.groups.push(
+        ...publicGroups
+          .filter((g) => !token.groups.some((tg) => tg.id === g.id))
+          .map((g) => ({
+            id: g.id,
+            name: g.name,
+            role: "Member" as GroupRole,
+            servers: g.servers,
+            order: 9999,
+          })),
+      );
+
+      return token;
+    },
+  },
+  session: {
+    strategy: "jwt",
+    maxAge: 1 * 86400, // 1 day,
+    updateAge: 6 * 3600, // 6 hours
+  },
+  // A failed OAuth round trip lands back on the landing page with ?error=, not on NextAuth's own page
+  pages: {
+    signIn: "/login",
+    error: "/login",
+  },
+};
+
+const requestSession = cache(() => getServerSession(authOptions));
+
+export function auth(
+  ...args:
+    | [GetServerSidePropsContext["req"], GetServerSidePropsContext["res"]]
+    | [NextApiRequest, NextApiResponse]
+    | []
+) {
+  return args.length === 0
+    ? requestSession()
+    : getServerSession(...args, authOptions);
+}
+
+export async function withAuth(
+  permissions?: string[],
+  id = "",
+): Promise<Session> {
+  const session = await auth();
+  if (!session || !hasPermissionSync(session, permissions, id)) {
+    const error = new ServerError("Unauthorized", "Unauthorized");
+    reportException(error);
+    throw error;
+  }
+
+  return session;
+}
+
+export async function hasPermission(
+  permissions?: string[],
+  id = "",
+): Promise<boolean> {
+  const session = await auth();
+  if (!session) {
+    return false;
+  }
+
+  return hasPermissionSync(session, permissions, id);
+}
+
+function orderServers(group: UserGroup): UserGroup {
+  // Order servers that are in serversOrder first, then the rest by name
+  const ordered = group.servers.slice().sort((a, b) => {
+    if (!group.serversOrder) {
+      return a.name.localeCompare(b.name);
+    }
+
+    const indexA = group.serversOrder.findIndex((s) => s === a.id);
+    const indexB = group.serversOrder.findIndex((s) => s === b.id);
+
+    if (indexA === -1 && indexB === -1) {
+      return a.name.localeCompare(b.name);
+    }
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+
+    return indexA - indexB;
+  });
+
+  group.serversOrder = ordered.map((s) => s.id);
+
+  return group;
+}

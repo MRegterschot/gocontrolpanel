@@ -1,0 +1,84 @@
+import websocket from "@fastify/websocket";
+import Fastify, {
+  LogController,
+  type FastifyBaseLogger,
+  type FastifyInstance,
+} from "fastify";
+import type { ServerGateway } from "../core/cluster/gateway";
+import type { Logger } from "../core/logger";
+import { errorHandler } from "./errors";
+import { internalRoutes } from "./routes/internal";
+import type { TicketVerifier } from "./ws/ticket-verifier";
+import { wsRoutes } from "./ws/ws-routes";
+
+export interface AppOptions {
+  gateway: ServerGateway;
+  log: Logger;
+  serviceToken: string;
+  tickets: TicketVerifier;
+  allowedOrigins?: string[];
+  heartbeatMs?: number;
+  wsMaxLifetimeMs?: number;
+}
+
+// Builds the HTTP/WS app without listening, so tests can inject requests or bind port 0
+export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
+  const app = Fastify({
+    loggerInstance: options.log as FastifyBaseLogger,
+    bodyLimit: 1024 * 1024,
+    // Routes log their own failures; per-request lines are noise for an internal API
+    logController: new LogController({ disableRequestLogging: true }),
+  });
+
+  // Clients often send a JSON content type on bodyless POSTs (reconnect, disconnect, ...)
+  const parseJson = app.getDefaultJsonParser("error", "error");
+  app.removeContentTypeParser("application/json");
+  app.addContentTypeParser(
+    "application/json",
+    { parseAs: "string" },
+    (request, body, done) => {
+      if (body === "") return done(null, undefined);
+      parseJson(request, body.toString(), done);
+    },
+  );
+
+  app.setErrorHandler(errorHandler);
+  app.setNotFoundHandler((request, reply) =>
+    reply.status(404).send({
+      error: { code: "NotFound", message: `Route ${request.url} not found` },
+    }),
+  );
+
+  await app.register(websocket, { options: { maxPayload: 64 * 1024 } });
+
+  app.get("/health", async (_req, reply) => {
+    const { ok, servers, connected, workers } = await options.gateway.health();
+    return reply.status(ok ? 200 : 503).send({
+      status: ok ? "ok" : "degraded",
+      servers,
+      connected,
+      ...(workers === undefined ? {} : { workers }),
+    });
+  });
+  app.get("/healthz", async (_req, reply) => {
+    const { ok } = await options.gateway.health();
+    return reply
+      .status(ok ? 200 : 503)
+      .send({ status: ok ? "ok" : "unavailable" });
+  });
+
+  await app.register(internalRoutes, {
+    gateway: options.gateway,
+    serviceToken: options.serviceToken,
+  });
+  await app.register(wsRoutes, {
+    gateway: options.gateway,
+    tickets: options.tickets,
+    allowedOrigins: options.allowedOrigins ?? [],
+    heartbeatMs: options.heartbeatMs ?? 30_000,
+    // Bounds how long a revoked permission keeps receiving live data
+    maxLifetimeMs: options.wsMaxLifetimeMs ?? 10 * 60_000,
+  });
+
+  return app;
+}

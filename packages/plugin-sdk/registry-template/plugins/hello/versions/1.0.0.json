@@ -1,0 +1,6 @@
+{
+  "url": "hello-1.0.0.zip",
+  "sha256": "c4f9b0b20dfab71709bc46faa536c7709cf33dcbb95037902aded8e3b7f895f3",
+  "publishedAt": "2026-10-04T12:00:00Z",
+  "changelog": "First version: greets players, counts greetings and shows a widget."
+}

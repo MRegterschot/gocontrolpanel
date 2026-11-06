@@ -1,0 +1,16 @@
+# Throwaway databases for `bun run test:integration` (see README)
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: tmcp
+      POSTGRES_PASSWORD: tmcp
+      POSTGRES_DB: tmcp_test
+    ports:
+      - "55432:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "56379:6379"

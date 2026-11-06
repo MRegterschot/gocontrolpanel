@@ -1,7 +1,10 @@
-Dockerfile
-.dockerignore
-node_modules
+**/node_modules
+**/.next
+**/dist
+**/coverage
+**/.env
+**/.env.*
+!**/.env.example
 npm-debug.log
-README.md
-.next
 .git
+docs

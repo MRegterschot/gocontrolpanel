@@ -1,0 +1,164 @@
+import { z } from "zod";
+import { CUSTOM_EVENT_NAME } from "./plugins/events";
+import { LiveInfo } from "./types/live";
+import {
+  ChatConfig,
+  chatConfigSchema,
+  PlayerInfo,
+  ServerClient,
+} from "./types/server";
+
+// Contract for web -> GBX service calls. All routes require `Authorization: Bearer <service token>`.
+
+export const errorCodes = [
+  "BadRequest",
+  "Unauthorized",
+  "NotFound",
+  "ServerNotFound",
+  "ServerUnavailable",
+  "ServerNotConnected",
+  "MethodNotAllowed",
+  "GbxCallFailed",
+  "RemoveLastMapError",
+  "AddMapListError",
+  "RemoveMapListError",
+  "ReorderMapListError",
+  "PlayerNotFound",
+  "UpstreamError",
+  "InternalError",
+] as const;
+
+export type ErrorCode = (typeof errorCodes)[number];
+
+export interface ApiSuccess<T> {
+  data: T;
+}
+
+export interface ApiErrorBody {
+  error: {
+    code: ErrorCode;
+    message: string;
+  };
+}
+
+export const internalPaths = {
+  command: (id: string) => `/internal/servers/${id}/commands`,
+  servers: "/internal/servers",
+  server: (id: string) => `/internal/servers/${id}`,
+  live: (id: string) => `/internal/servers/${id}/live`,
+  reconnect: (id: string) => `/internal/servers/${id}/reconnect`,
+  stopReconnect: (id: string) => `/internal/servers/${id}/stop-reconnect`,
+  disconnect: (id: string) => `/internal/servers/${id}/disconnect`,
+  resendManialinks: (id: string) => `/internal/servers/${id}/manialinks/resend`,
+  reloadPlugins: (id: string) => `/internal/servers/${id}/plugins/reload`,
+  gbxCall: (id: string) => `/internal/servers/${id}/gbx/call`,
+  gbxMulticall: (id: string) => `/internal/servers/${id}/gbx/multicall`,
+  chat: (id: string) => `/internal/servers/${id}/chat`,
+  chatConfig: (id: string) => `/internal/servers/${id}/chat-config`,
+  script: (id: string) => `/internal/servers/${id}/script`,
+  matchSettings: (id: string) => `/internal/servers/${id}/match-settings/load`,
+  scriptSettings: (id: string) => `/internal/servers/${id}/script-settings`,
+  pause: (id: string) => `/internal/servers/${id}/pause`,
+  maps: (id: string) => `/internal/servers/${id}/maps`,
+  mapsRemove: (id: string) => `/internal/servers/${id}/maps/remove`,
+  mapsOrder: (id: string) => `/internal/servers/${id}/maps/order`,
+  playerPoints: (id: string, login: string) =>
+    `/internal/servers/${id}/players/${encodeURIComponent(login)}/points`,
+  teamPoints: (id: string, teamId: number) =>
+    `/internal/servers/${id}/teams/${teamId}/points`,
+  serverEvents: "/internal/server-events",
+  pluginEvent: (id: string) => `/internal/servers/${id}/plugin-events`,
+  pluginCommand: (id: string) => `/internal/servers/${id}/plugin-commands`,
+} as const;
+
+const xmlRpcValue: z.ZodType<unknown> = z.unknown();
+
+export const gbxCallBodySchema = z.object({
+  method: z.string().min(1),
+  params: z.array(xmlRpcValue).default([]),
+});
+export type GbxCallBody = z.infer<typeof gbxCallBodySchema>;
+
+export const gbxMulticallBodySchema = z.object({
+  calls: z.array(gbxCallBodySchema).min(1).max(100),
+});
+export type GbxMulticallBody = z.infer<typeof gbxMulticallBodySchema>;
+
+export const chatMessageBodySchema = z.object({
+  message: z.string().min(1),
+  login: z.string().min(1).optional(),
+});
+export type ChatMessageBody = z.infer<typeof chatMessageBodySchema>;
+
+export const chatConfigBodySchema = chatConfigSchema;
+export type ChatConfigBody = ChatConfig;
+
+export interface ChatConfigResult {
+  // Config as applied; manualRouting is forced off when the server rejected it
+  applied: ChatConfig;
+  error?: string;
+}
+
+export const scriptNameBodySchema = z.object({ script: z.string().min(1) });
+export const matchSettingsBodySchema = z.object({
+  filename: z.string().min(1),
+});
+export const scriptSettingsBodySchema = z.object({
+  settings: z.record(z.union([z.string(), z.number(), z.boolean()])),
+});
+export const pauseBodySchema = z.object({ paused: z.boolean() });
+export const mapsBodySchema = z.object({
+  filenames: z.array(z.string().min(1)).min(1),
+});
+export const pointsBodySchema = z.object({
+  type: z.enum(["round", "map", "match"]),
+  points: z.number().int(),
+});
+export type PointsBody = z.infer<typeof pointsBodySchema>;
+
+export interface MapsChangeResult {
+  count: number;
+}
+
+export interface LiveSnapshot {
+  liveInfo: LiveInfo;
+  activePlayers: PlayerInfo[];
+  activeMap: string | null;
+}
+
+export type ServerStatus = ServerClient;
+
+// Events from parts of the panel that are not plugins, delivered to plugins as "<source>:<name>".
+// Each source is a slug no plugin may use.
+export const pluginEventBodySchema = z.object({
+  source: z.enum(["codriver"]),
+  name: z.string().regex(CUSTOM_EVENT_NAME),
+  payload: z.unknown(),
+});
+export type PluginEventBody = z.infer<typeof pluginEventBodySchema>;
+
+export const pluginCommandBodySchema = z.object({
+  pluginId: z.string().min(1),
+  command: z.string().regex(/^[a-z0-9_-]{1,32}$/i),
+  args: z.array(z.string().max(100)).max(20).default([]),
+  login: z.string().min(1),
+});
+export type PluginCommandBody = z.input<typeof pluginCommandBodySchema>;
+
+export const commandBodySchema = z.object({
+  command: z.string().regex(/^[a-z0-9_-]{1,32}\+?$/i),
+  params: z.array(z.string().max(1000)).max(20).default([]),
+  login: z.string().min(1),
+});
+export type CommandBody = z.input<typeof commandBodySchema>;
+
+export interface CommandResult {
+  command: string;
+  login: string;
+  handled: boolean;
+  source: "builtin" | "plugin" | null;
+  messages: string[];
+  messagesTruncated: boolean;
+  outputComplete: boolean;
+  durationMs: number;
+}
