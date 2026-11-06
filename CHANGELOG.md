@@ -2,38 +2,49 @@
 
 Release notes of TMControlPanel, newest first. The entries are the descriptions of the [GitHub releases](https://github.com/tmservers/tmcontrolpanel/releases).
 
-## [Unreleased]
+## [1.0.0] - 2026-11-06
 
-### Changes
+### 🎉 TMControlPanel Release 
 
-- **Split into two containers.** The GBX connections, in-game plugins, manialinks and live WebSockets moved out of the web app into a separate `gbx-service` container. The web app no longer connects to dedicated servers itself. This needs two new secrets (`GBX_SERVICE_TOKEN`, `WS_TICKET_SECRET`) and port `3100` reachable from the browser. The database schema is unchanged. See the [migration guide](docs/migrating-beta-to-release.md).
-- Release images are published for both the web app and the GBX service, each with a MariaDB/MySQL and a `-postgres` flavour.
-- The repository is a Bun workspaces monorepo (`apps/web`, `apps/gbx-service`, `packages/db`, `packages/shared`, `packages/plugin-sdk`, `plugins`).
-- New database tables for plugin packages and plugin storage, applied by the migrations on start.
-- The web app reads through GET API routes and TanStack Query. Server Actions are kept for writes.
-- **The built-in plugins are plugin packages now** and run sandboxed like any other plugin, with only the access they need. The GBX service ships them and installs them on start. Servers that had them on keep them on, with their settings. A server installs or removes them on its Plugins page, which no longer has a separate built-in list. See [first-party plugins](docs/first-party-plugins.md).
-- The `ECM_URL` setting is gone; the eCircuitMania plugin calls the eCircuitMania API itself.
+### ⚠️ Breaking changes
+- GoControlPanel is now **TMControlPanel**. New name, branding and identifiers.
+- The panel is split into two containers: the web panel and a new **GBX service** that holds the dedicated server connections, live updates, match recording and plugins. You now run both images (`tmcontrolpanel` + `tmcontrolpanel-gbx-service`, with `-postgres` variants).
+- Server credentials are now stored encrypted.
+- Upgrading from the beta is a side-by-side migration. Follow `docs/migrating-beta-to-release.md` before pulling `:latest`.
 
-### New Features
+### 🚀 New Features
+- **Plugin marketplace**: install third-party plugins that run in a sandbox. The built-in plugins are now first-party marketplace packages.
+  - Plugin settings use config schemas and tabbed forms.
+  - Plugins can send events to other plugins.
+  - Manialink themes for plugin UIs (SDK 4).
+- **Public API** (`/api/v1`) with API keys per server or group. Covers players, maps, jukebox, game control, chat, server settings, plugins, file manager, fake players and server commands. Interactive docs are built in.
+- **Codriver** (experimental): an AI assistant that runs server tasks in the panel or in game via `/co`. Includes budgets, usage history and permissions.
+- **Clustering**: run several GBX workers and nodes. Servers are spread across them and handed over automatically, and a cluster status view is included.
+- Send selected match rounds to eCircuitMania from Records (admin only).
+- File manager: move, rename and download files.
+- Hetzner: update Trackmania servers and file managers over SSH.
+- Native system commands for server management and diagnostics.
+- Database backup script, plus guides for moving the database and Redis to their own host.
+- Mode type strings listed in the script generator.
+- Trackmania formatting shown in map and nickname pickers.
+- New landing page.
 
-- **Plugin marketplace.** Browse a central plugin marketplace from any panel, self-hosted ones included, and install plugins per server after accepting what they may do. Update, roll back, turn off, configure and uninstall them on the server's Plugins page. Plugins run sandboxed (QuickJS in WebAssembly) in the GBX service. One that breaks its time, memory or rate limits is turned off, and its admins are notified. See [plugin marketplace](docs/plugin-marketplace.md).
-- **Private plugins.** Users with the new `plugins:upload` permission can upload plugin packages and install them on servers they are an admin of.
-- **Plugin themes (SDK 4).** Plugins get the panel theme colors in their templates as `{{@theme.quad.*}}` for quads and `{{@theme.label.*}}` for labels. Set a theme per server in the Theme tab of its Plugins page, or per group under Admin, Groups; servers without their own use their group's, then the default.
-- **Update all plugins.** One button on a server's Plugins page updates every plugin that asks for no new permissions; the others are listed so you can accept theirs one by one.
-- **Public API.** A versioned HTTP API at `/api/v1` for servers, players, maps, the jukebox and matches, described by an OpenAPI document at `/api/v1/openapi.json`. Server admins create API keys on the server's new API Keys page and group admins under Admin, Groups; a group key reaches every server in its group. Keys have scopes, can expire, are revoked from the panel and stop working when their creator loses admin. The new `api-keys:view` and `api-keys:revoke` permissions open the Admin, API Keys overview. Apply the `api_keys` and `audit_api_key` migrations. See [public API](docs/public-api.md).
-- **Codriver permissions.** The panel-wide Codriver page can be given to non-admins: `codriver:view` shows settings overview, usage, history and the access check; `codriver:edit` also changes settings, the shared key and access rules.
-- **Plugin SDK.** Types and a `tmcp-plugin` command line tool to create, build, check and package plugins, with an example plugin. See [plugin SDK](docs/plugin-sdk.md).
-- **Takedowns.** Versions withdrawn from the marketplace are turned off on every server within 30 minutes.
-- Landing page for signed-out visitors with live totals, the feature set and the in-game plugins, and a loading state after signing in.
-- Search engine metadata for the landing page: canonical URL, Open Graph tags, structured data, `robots.txt` and `sitemap.xml`.
+### 🔒 Security
+- Admin actions are authorized on the server side for every linked resource, and match deletion and exports are scoped to their server.
+- Audit log access limited to targets you administer. Secrets stay out of audit entries and the browser.
+- Map downloads restricted to public hosts.
+- SSH host keys verified for provisioned servers.
+- Security headers and request size limits added.
+- Revoking a user's permissions now takes effect on open live connections.
+- Runtime dependencies with published advisories upgraded.
 
-### Bug Fixes
-
-- Server passwords are no longer sent to the browser or written to the audit log.
-- The chat config is saved before it is applied to the live server.
-- Servers that have never connected, for example a cloud server that is still booting, keep being retried.
-- The web app shows a notice instead of crashing when a server is unreachable, and requests to the GBX service time out instead of hanging.
-- Per-item GBX calls on large ban lists and map lists are batched into multicalls.
+### 🐛 Bug Fixes
+- Panel shows a notice instead of crashing when a server is unreachable.
+- Servers that have never connected keep retrying instead of giving up.
+- Fixed lost records and errors when players connect.
+- Chat config is saved before it's applied to the server.
+- Dialogs fit on small screens.
+- Trackmania-formatted text is escaped properly before rendering.
 
 ## [0.12.0-beta] - 2026-08-26
 
