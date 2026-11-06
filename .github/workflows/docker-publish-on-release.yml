@@ -59,8 +59,3 @@ jobs:
     needs: build-and-push
     uses: ./.github/workflows/discord-changelog.yml
     secrets: inherit
-
-  deploy:
-    needs: build-and-push
-    uses: ./.github/workflows/deploy-production.yml
-    secrets: inherit
