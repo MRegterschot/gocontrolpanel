@@ -5,6 +5,7 @@ import "server-only";
 import config from "../config";
 import { logger } from "../logger";
 import { withRateLimit } from "../ratelimiter";
+import { assertNumericId } from "../resource-id";
 import { reportException } from "../sentry/report";
 
 const TMX_URL = "https://trackmania.exchange";
@@ -76,6 +77,8 @@ export async function downloadTMXMap(
   mapId: number,
   mappackId?: number,
 ): Promise<File> {
+  assertNumericId(mapId);
+  if (mappackId !== undefined) assertNumericId(mappackId);
   const url = `${TMX_URL}/mapgbx/${mapId}${mappackId ? `?mappackId=${mappackId}` : ""}`;
 
   const controller = new AbortController();

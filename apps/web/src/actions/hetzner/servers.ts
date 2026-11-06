@@ -1,5 +1,5 @@
 "use server";
-import { assertResourceId } from "@/lib/resource-id";
+import { assertNumericId, assertResourceId } from "@/lib/resource-id";
 
 import { AddHetznerDatabaseSchemaType } from "@/forms/admin/hetzner/database/add-hetzner-database-schema";
 import { AttachHetznerServerToNetworkSchemaType } from "@/forms/admin/hetzner/server/attach-hetzner-server-to-network-schema";
@@ -53,6 +53,7 @@ export async function deleteHetznerServer(
   serverId: number,
 ): Promise<ServerResponse> {
   assertResourceId(projectId);
+  assertNumericId(serverId);
   return doServerActionWithAuth(
     ["hetzner:servers:delete", `hetzner:${projectId}:admin`],
     async (session) => {
@@ -180,6 +181,7 @@ export async function attachHetznerServerToNetwork(
   data: AttachHetznerServerToNetworkSchemaType,
 ): Promise<ServerResponse> {
   assertResourceId(projectId);
+  assertNumericId(serverId);
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
@@ -218,6 +220,7 @@ export async function detachHetznerServerFromNetwork(
   network: number,
 ): Promise<ServerResponse> {
   assertResourceId(projectId);
+  assertNumericId(serverId);
   return doServerActionWithAuth(
     ["hetzner:servers:create", `hetzner:${projectId}:admin`],
     async (session) => {
@@ -251,6 +254,7 @@ export async function updateHetznerServer(
   labels: Record<string, string>,
 ): Promise<ServerResponse> {
   assertResourceId(projectId);
+  assertNumericId(serverId);
   return doServerActionWithAuth(
     ["hetzner:servers:update", `hetzner:${projectId}:admin`],
     async (session) => {

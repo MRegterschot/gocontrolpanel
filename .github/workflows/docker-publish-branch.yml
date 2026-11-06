@@ -8,6 +8,9 @@ concurrency:
   group: docker-branch-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -57,6 +60,7 @@ jobs:
     needs: build-and-push
     if: github.ref_name == 'dev'
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
       - name: Trigger Coolify deploy
         env:

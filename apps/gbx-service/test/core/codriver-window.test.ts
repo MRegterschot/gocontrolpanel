@@ -16,7 +16,7 @@ import { createHarness, player, type Harness } from "../fakes/harness";
 
 // Tags outside the script must open and close in order
 function expectWellFormed(xml: string) {
-  const markup = xml.replace(/<script>[\s\S]*?<\/script>/g, "");
+  const markup = xml.replace(/<script>[\s\S]*?<\/script>/gi, "");
   const stack: string[] = [];
   for (const [tag, closing, name, selfClosing] of markup.matchAll(
     /<(\/?)([a-z]+)\b[^>]*?(\/?)>/gi,
