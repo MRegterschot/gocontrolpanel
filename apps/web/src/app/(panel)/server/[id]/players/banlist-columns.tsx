@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { parseTmTags } from "@/lib/tmtags";
+import { parseTmTags, stripTmTags } from "@/lib/tmtags";
 import { getErrorMessage } from "@/lib/utils";
 import { ServerError } from "@/types/responses";
 import { ColumnDef } from "@tanstack/react-table";
@@ -88,7 +88,7 @@ export const createColumns = (
             isOpen={confirmUnban}
             onClose={() => setConfirmUnban(false)}
             title="Unban player"
-            description={`Are you sure you want to unban ${player.nickName}?`}
+            description={`Are you sure you want to unban ${stripTmTags(player.nickName)}?`}
             onConfirm={handleUnban}
             confirmText="Unban"
             cancelText="Cancel"

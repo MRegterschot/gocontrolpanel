@@ -1,6 +1,7 @@
 "use client";
 
 import { ModalContent } from "@/components/modals/modal";
+import { TmText } from "@/components/tm-text";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EditUserForm from "@/forms/admin/user/edit-user-form";
 import { Users } from "@tmcontrolpanel/db";
@@ -21,7 +22,9 @@ export default function EditUserModal({
   return (
     <ModalContent>
       <DialogHeader className="pr-6">
-        <DialogTitle>Edit {data.nickName}</DialogTitle>
+        <DialogTitle>
+          Edit <TmText text={data.nickName} />
+        </DialogTitle>
       </DialogHeader>
       <EditUserForm user={data} callback={handleCallback} />
     </ModalContent>

@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { parseTmTags } from "@/lib/tmtags";
+import { parseTmTags, stripTmTags } from "@/lib/tmtags";
 import { getErrorMessage } from "@/lib/utils";
 import { ServerError } from "@/types/responses";
 import { ColumnDef } from "@tanstack/react-table";
@@ -88,7 +88,7 @@ export const createColumns = (
             isOpen={confirmUnblacklist}
             onClose={() => setConfirmUnblacklist(false)}
             title="Remove from blacklist"
-            description={`Are you sure you want to remove ${player.nickName} from the blacklist?`}
+            description={`Are you sure you want to remove ${stripTmTags(player.nickName)} from the blacklist?`}
             onConfirm={handleUnblacklist}
             confirmText="Remove"
             cancelText="Cancel"

@@ -1,6 +1,7 @@
 "use client";
 
 import { ModalContent } from "@/components/modals/modal";
+import { TmText } from "@/components/tm-text";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import SetPlayerMatchPointsForm from "@/forms/server/live/player/set-player-match-points-form";
 import { PlayerRound } from "@tmcontrolpanel/shared";
@@ -16,7 +17,9 @@ export default function SetPlayerMatchPointsModal({
   return (
     <ModalContent>
       <DialogHeader className="pr-6">
-        <DialogTitle>Set Points for {data.name}</DialogTitle>
+        <DialogTitle>
+          Set Points for <TmText text={data.name} />
+        </DialogTitle>
       </DialogHeader>
       <SetPlayerMatchPointsForm
         serverId={serverId}

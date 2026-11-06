@@ -1,5 +1,7 @@
 "use client";
 
+import { TmText } from "@/components/tm-text";
+import { stripTmTags } from "@/lib/tmtags";
 import { cn } from "@/lib/utils";
 import { Check, LoaderCircle, Search } from "lucide-react";
 import React from "react";
@@ -80,7 +82,7 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
       completedQuery === query
         ? (results ??
           searchResults.filter((result) =>
-            [result.label, result.value].some((text) =>
+            [stripTmTags(result.label), result.value].some((text) =>
               text.toLowerCase().includes(query.trim().toLowerCase()),
             ),
           ))
@@ -168,21 +170,23 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
             className="size-4 shrink-0 text-green-600"
             aria-hidden="true"
           />
-          <span className="min-w-0 flex-1 truncate" title={selectedLabel}>
-            {selectedLabel}
-          </span>
+          <TmText
+            className="min-w-0 flex-1 truncate"
+            text={selectedLabel}
+            title={stripTmTags(selectedLabel ?? "")}
+          />
           <span className="text-xs text-muted-foreground">Selected</span>
           <Button
             ref={changeButton}
             type="button"
             disabled={disabled}
-            aria-label={`Change selected user ${selectedLabel}`}
+            aria-label={`Change selected user ${stripTmTags(selectedLabel ?? "")}`}
             variant="ghost"
             size="sm"
             className="px-2 text-xs"
             onClick={() => {
               setFocusInput(true);
-              edit(selectedLabel ?? "");
+              edit(stripTmTags(selectedLabel ?? ""));
             }}
           >
             Change
@@ -311,7 +315,7 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => select(result)}
                   >
-                    <span>{result.label}</span>
+                    <TmText text={result.label} />
                     <span className="text-xs text-muted-foreground">
                       Select
                     </span>

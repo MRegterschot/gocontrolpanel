@@ -1,5 +1,6 @@
 "use client";
 
+import { TmText } from "@/components/tm-text";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FileUploadButton } from "@/components/ui/file-upload-button";
@@ -533,7 +534,11 @@ export function PluginConfigForm({
       const options =
         field.enum?.map((option) => ({ label: option, value: option })) ??
         (field.widget === "map"
-          ? maps.map((map) => ({ label: map.Name, value: map.FileName }))
+          ? maps.map((map) => ({
+              label: map.Name,
+              value: map.FileName,
+              tm: true,
+            }))
           : scripts.map((script) => ({ label: script, value: script })));
       if (value && !options.some((option) => option.value === value))
         options.push({ label: String(value), value: String(value) });
@@ -552,7 +557,11 @@ export function PluginConfigForm({
                 .filter((option) => option.value)
                 .map((option) => (
                   <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                    {"tm" in option && option.tm ? (
+                      <TmText text={option.label} />
+                    ) : (
+                      option.label
+                    )}
                   </SelectItem>
                 ))}
             </SelectContent>

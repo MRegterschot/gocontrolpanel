@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { parseTmTags } from "@/lib/tmtags";
+import { parseTmTags, stripTmTags } from "@/lib/tmtags";
 import { getErrorMessage, getList, hasPermissionSync } from "@/lib/utils";
 import { routePermissions } from "@/routes";
 import { ServerError } from "@/types/responses";
@@ -170,7 +170,7 @@ export const createColumns = (refetch: () => void): ColumnDef<Users>[] => [
               onClose={() => setIsOpen(false)}
               onConfirm={handleDelete}
               title="Delete user"
-              description={`Are you sure you want to delete ${user.nickName}?`}
+              description={`Are you sure you want to delete ${stripTmTags(user.nickName)}?`}
               confirmText="Delete"
               cancelText="Cancel"
             />

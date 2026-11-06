@@ -1,18 +1,19 @@
 "use client";
 
-import { getMapList } from "@/lib/api-client/database";
 import { addMapList } from "@/actions/gbx/map";
 import { createColumns as createLocalMapColumns } from "@/app/(panel)/server/[id]/maps/local-maps-columns";
-import { Maps } from "@tmcontrolpanel/db";
+import { getMapList } from "@/lib/api-client/database";
+import { stripTmTags } from "@/lib/tmtags";
 import { getErrorMessage } from "@/lib/utils";
 import { LocalMapInfo } from "@/types/map";
+import { ServerError } from "@/types/responses";
 import { IconMapPlus } from "@tabler/icons-react";
+import { Maps } from "@tmcontrolpanel/db";
 import { Dispatch, SetStateAction, useState } from "react";
 import { toast } from "sonner";
 import ConfirmModal from "../modals/confirm-modal";
 import { DataTable } from "../table/data-table";
 import { Button } from "../ui/button";
-import { ServerError } from "@/types/responses";
 
 export default function LocalMapsTable({
   serverId,
@@ -33,8 +34,10 @@ export default function LocalMapsTable({
       (map) =>
         map.Path.toLowerCase().includes(filter.toLowerCase()) ||
         map.FileName.toLowerCase().includes(filter.toLowerCase()) ||
-        map.Name.toLowerCase().includes(filter.toLowerCase()) ||
-        map.AuthorNickname.toLowerCase().includes(filter.toLowerCase()),
+        stripTmTags(map.Name).toLowerCase().includes(filter.toLowerCase()) ||
+        stripTmTags(map.AuthorNickname)
+          .toLowerCase()
+          .includes(filter.toLowerCase()),
     );
   };
 
