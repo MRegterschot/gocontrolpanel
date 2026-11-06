@@ -4,15 +4,15 @@ Release notes of TMControlPanel, newest first. The entries are the descriptions 
 
 ## [1.0.0] - 2026-11-06
 
-### 🎉 TMControlPanel Release 
+### TMControlPanel Release
 
-### ⚠️ Breaking changes
+### Breaking changes
 - GoControlPanel is now **TMControlPanel**. New name, branding and identifiers.
 - The panel is split into two containers: the web panel and a new **GBX service** that holds the dedicated server connections, live updates, match recording and plugins. You now run both images (`tmcontrolpanel` + `tmcontrolpanel-gbx-service`, with `-postgres` variants).
 - Server credentials are now stored encrypted.
 - Upgrading from the beta is a side-by-side migration. Follow `docs/migrating-beta-to-release.md` before pulling `:latest`.
 
-### 🚀 New Features
+### New Features
 - **Plugin marketplace**: install third-party plugins that run in a sandbox. The built-in plugins are now first-party marketplace packages.
   - Plugin settings use config schemas and tabbed forms.
   - Plugins can send events to other plugins.
@@ -29,7 +29,7 @@ Release notes of TMControlPanel, newest first. The entries are the descriptions 
 - Trackmania formatting shown in map and nickname pickers.
 - New landing page.
 
-### 🔒 Security
+### Security
 - Admin actions are authorized on the server side for every linked resource, and match deletion and exports are scoped to their server.
 - Audit log access limited to targets you administer. Secrets stay out of audit entries and the browser.
 - Map downloads restricted to public hosts.
@@ -38,7 +38,7 @@ Release notes of TMControlPanel, newest first. The entries are the descriptions 
 - Revoking a user's permissions now takes effect on open live connections.
 - Runtime dependencies with published advisories upgraded.
 
-### 🐛 Bug Fixes
+### Bug Fixes
 - Panel shows a notice instead of crashing when a server is unreachable.
 - Servers that have never connected keep retrying instead of giving up.
 - Fixed lost records and errors when players connect.
