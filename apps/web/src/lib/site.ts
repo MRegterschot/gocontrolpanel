@@ -1,4 +1,4 @@
-export const SITE_URL = "https://gocontrolpanel.com";
+export const SITE_URL = "https://tmcontrolpanel.com";
 export const SITE_NAME = "TMControlPanel";
 export const SITE_TITLE = "TMControlPanel · Trackmania server management";
 export const SITE_DESCRIPTION =

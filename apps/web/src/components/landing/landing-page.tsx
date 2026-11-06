@@ -257,7 +257,7 @@ export default function LandingPage({
               variant="outline"
               className="border-white/20 bg-white/10 px-3 py-1 text-white backdrop-blur-sm"
             >
-              Open source · Self-hosted · Free
+              Open source · Free · Self-hostable
             </Badge>
 
             <div className="flex max-w-3xl flex-col gap-5">
@@ -268,7 +268,7 @@ export default function LandingPage({
               <p className="max-w-2xl text-lg text-white/80">
                 TMControlPanel manages your dedicated servers from the browser:
                 live matches, maps, players, plugins and files, for one server
-                or a whole league.
+                or a whole league. Use it here for free, or host it yourself.
               </p>
             </div>
 
@@ -410,9 +410,10 @@ export default function LandingPage({
               Ready to take over your server?
             </h2>
             <p className="text-muted-foreground">
-              Sign in to see the servers you have access to. Running your own?
-              TMControlPanel ships as a Docker image that sits next to your
-              dedicated server, standalone or alongside PyPlanet and EvoSC.
+              Sign in to use the free hosted panel and see the servers you have
+              access to. Rather run it yourself? TMControlPanel ships as a
+              Docker image that sits next to your dedicated server, standalone
+              or alongside PyPlanet and EvoSC.
             </p>
             <p className="text-sm text-muted-foreground">
               Self-hosting is recommended for people with some technical
