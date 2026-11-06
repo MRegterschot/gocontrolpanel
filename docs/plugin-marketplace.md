@@ -33,7 +33,7 @@ Every panel, self-hosted ones included, can browse a central plugin marketplace 
 3. Optionally set the repository variable `TMCONTROLPANEL_REF` to the TMControlPanel branch whose validator the workflows use (default `master`).
 4. Push to `main`. *Publish marketplace* builds the site, and panels read it at `https://<owner>.github.io/tmcontrolpanel-plugins/index.json`.
 
-`DEFAULT_MARKETPLACE_INDEX_URL` in `packages/shared/src/plugins/marketplace-index.ts` points at `https://mregterschot.github.io/tmcontrolpanel-plugins/index.json`. Change it if the registry lives elsewhere.
+`DEFAULT_MARKETPLACE_INDEX_URL` in `packages/shared/src/plugins/marketplace-index.ts` points at `https://plugins.tmcontrolpanel.com/index.json`, the custom domain of the official registry's Pages site. Change it if the registry lives elsewhere. A custom domain (**Pages → Custom domain**, with a DNS-only `CNAME` to `<owner>.github.io`) keeps the URL stable if the repository moves to another account; the `github.io` address doesn't.
 
 The registry's README has the submission steps, the review checklist and the takedown procedure.
 

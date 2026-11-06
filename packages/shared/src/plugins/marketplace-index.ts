@@ -9,8 +9,9 @@ import { compareVersions, isPrerelease, isValidVersion } from "./version";
 // download packages from the origin the index is served from, and check their sha256.
 
 export const MARKETPLACE_SCHEMA_VERSION = 1;
+// Custom domain of the registry's GitHub Pages site, so the URL survives moving the repository
 export const DEFAULT_MARKETPLACE_INDEX_URL =
-  "https://mregterschot.github.io/tmcontrolpanel-plugins/index.json";
+  "https://plugins.tmcontrolpanel.com/index.json";
 
 // Relative to the index, or an absolute https URL
 const reference = z.string().min(1).max(500);
