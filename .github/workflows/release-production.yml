@@ -57,8 +57,23 @@ jobs:
           echo "TAG=$TAG" >> "$GITHUB_ENV"
 
       - name: Deploy the primary, then the secondary node
+        shell: bash
         run: |
-          api() { curl -fsS --retry 3 -H "Authorization: Bearer $TOKEN" "$@"; }
+          # Fails the step on any HTTP error; a 401/403 means COOLIFY_TOKEN lacks the read or deploy ability
+          api() {
+            local body code
+            body=$(curl -sS --retry 3 -w '\n%{http_code}' -H "Authorization: Bearer $TOKEN" "$@") || exit 1
+            code=${body##*$'\n'}
+            body=${body%$'\n'*}
+            if [ "$code" = 401 ] || [ "$code" = 403 ]; then
+              echo "::error::Coolify answered $code for $*. COOLIFY_TOKEN needs the read and deploy abilities." >&2
+              exit 1
+            elif [ "$code" -ge 400 ]; then
+              echo "::error::Coolify answered $code for $*: $body" >&2
+              exit 1
+            fi
+            printf '%s\n' "$body"
+          }
 
           deploy() {
             local uuid=$1 label=$2 deployment status healthy=0
@@ -88,7 +103,8 @@ jobs:
             # Coolify refreshes the app status periodically, so require it healthy several times in a row
             for _ in $(seq 1 60); do
               sleep 10
-              if [ "$(api "$API/applications/$uuid" | jq -r .status)" = "running:healthy" ]; then
+              status=$(api "$API/applications/$uuid" | jq -r .status)
+              if [ "$status" = "running:healthy" ]; then
                 healthy=$((healthy + 1))
                 if [ "$healthy" -ge 3 ]; then
                   echo "$label: healthy"
