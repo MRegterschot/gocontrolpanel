@@ -32,7 +32,7 @@ import { toast } from "sonner";
 import { CapabilityBadges } from "./capability-list";
 import { InstallDialog } from "./install-dialog";
 
-const SDK_GUIDE = "https://github.com/MRegterschot/tmcontrolpanel/blob/master/docs/plugin-sdk.md";
+const SDK_GUIDE = "https://github.com/tmservers/tmcontrolpanel/blob/master/docs/plugin-sdk.md";
 
 function UploadDialog() {
   const router = useRouter();

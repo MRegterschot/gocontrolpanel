@@ -2,7 +2,7 @@
 ![Docker Image Size](https://img.shields.io/docker/image-size/marijnregterschot/tmcontrolpanel?logo=docker&link=https%3A%2F%2Fhub.docker.com%2Fr%2Fmarijnregterschot%2Ftmcontrolpanel)
 ![Docker Version](https://img.shields.io/docker/v/marijnregterschot/tmcontrolpanel?logo=docker&link=https%3A%2F%2Fhub.docker.com%2Fr%2Fmarijnregterschot%2Ftmcontrolpanel)
 ![Discord Widget](https://img.shields.io/discord/1397578984023261284?logo=discord&link=https%3A%2F%2Fdiscord.gg%2FNjbtRvbCY8)
-![Github Commits](https://img.shields.io/github/commit-activity/t/mregterschot/tmcontrolpanel?logo=github)
+![Github Commits](https://img.shields.io/github/commit-activity/t/tmservers/tmcontrolpanel?logo=github)
 
 # TMControlPanel
 

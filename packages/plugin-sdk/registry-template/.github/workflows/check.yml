@@ -12,7 +12,7 @@ jobs:
       # The registry is checked with the same validator panels use
       - uses: actions/checkout@v4
         with:
-          repository: MRegterschot/gocontrolpanel
+          repository: tmservers/tmcontrolpanel
           ref: ${{ vars.TMCONTROLPANEL_REF || 'master' }}
           path: .controlpanel
 

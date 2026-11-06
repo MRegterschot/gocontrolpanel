@@ -34,7 +34,7 @@ The compose file uses the `:latest` tag. To stay on one version, pin a version t
 
 ```bash
 mkdir ~/tmcontrolpanel && cd ~/tmcontrolpanel
-curl -fsSLO https://raw.githubusercontent.com/MRegterschot/tmcontrolpanel/master/docker-compose.yml
+curl -fsSLO https://raw.githubusercontent.com/tmservers/tmcontrolpanel/master/docker-compose.yml
 cp <old directory>/.env .env
 ```
 
@@ -115,7 +115,7 @@ The imported server passwords are still plain text. Download the helper script i
 
 ```bash
 curl -fsSLo encrypt-server-credentials.sh \
-  https://raw.githubusercontent.com/MRegterschot/tmcontrolpanel/master/scripts/encrypt-server-credentials.sh
+  https://raw.githubusercontent.com/tmservers/tmcontrolpanel/master/scripts/encrypt-server-credentials.sh
 chmod +x encrypt-server-credentials.sh
 ```
 
@@ -197,6 +197,6 @@ Keep the old stack stopped for a week or so. Then remove its web container, imag
 ## Notes
 
 - **Redis** is only caches and short-lived state, so the new stack starts with a fresh one. Manialink state and the active map are no longer kept there.
-- **Built-in plugins** are plugin packages now and run sandboxed. Servers that had them on keep them on, with their settings. Local code changes you made in a fork don't carry over and must be ported to SDK packages in the [plugin registry](https://github.com/MRegterschot/tmcontrolpanel-plugins); see the [plugin SDK guide](./plugin-sdk.md).
+- **Built-in plugins** are plugin packages now and run sandboxed. Servers that had them on keep them on, with their settings. Local code changes you made in a fork don't carry over and must be ported to SDK packages in the [plugin registry](https://github.com/tmservers/tmcontrolpanel-plugins); see the [plugin SDK guide](./plugin-sdk.md).
 - **Moving to a new host or new keys:** the same method works, with the new stack on the other machine. To re-encrypt data with different `SECRETS_KEY` or `HETZNER_KEY` values, see [migrating-database.md](./migrating-database.md).
 - **Changelog:** read the [changelog](../CHANGELOG.md) for the full list of changes since the beta.

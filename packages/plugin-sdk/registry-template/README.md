@@ -1,9 +1,9 @@
 # TMControlPanel plugins
 
-The plugin marketplace of [TMControlPanel](https://github.com/MRegterschot/tmcontrolpanel). Every panel,
+The plugin marketplace of [TMControlPanel](https://github.com/tmservers/tmcontrolpanel). Every panel,
 self-hosted ones included, reads the index published from this repository and installs plugins from it.
 
-- **Panels read** `https://mregterschot.github.io/tmcontrolpanel-plugins/index.json`, built by the
+- **Panels read** `https://plugins.tmcontrolpanel.com/index.json`, built by the
   *Publish marketplace* workflow on every push to `main`.
 - **Pull requests are the review.** A plugin version is public once its pull request is merged.
 - **Packages are pinned.** Every version is pinned by sha256 and copied to the site, and panels only
@@ -12,7 +12,7 @@ self-hosted ones included, reads the index published from this repository and in
 ## Publishing a plugin
 
 1. Build the package with the SDK (see the
-   [plugin SDK guide](https://github.com/MRegterschot/tmcontrolpanel/blob/master/docs/plugin-sdk.md)):
+   [plugin SDK guide](https://github.com/tmservers/tmcontrolpanel/blob/master/docs/plugin-sdk.md)):
 
    ```bash
    tmcp-plugin pack            # dist/<slug>-<version>.zip, prints its sha256
